@@ -14,7 +14,7 @@ public class PropertiesASTFactory extends ASTFactory {
   @Nullable
   public CompositeElement createComposite(final IElementType type) {
     if (type instanceof IFileElementType) {
-      return new FileElement(type);
+      return new FileElement(type, null);
     }
     return new CompositeElement(type);
   }

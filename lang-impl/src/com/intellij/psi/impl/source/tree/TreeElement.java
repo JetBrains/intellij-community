@@ -67,6 +67,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
 
   public abstract TreeElement getLastChildNode();
 
+  public abstract int getNotCachedLength();
+
   public TextRange getTextRange() {
     int start = getStartOffset();
     return new TextRange(start, start + getTextLength());
@@ -111,23 +113,10 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   public boolean textMatches(CharSequence buffer, int startOffset, int endOffset) {
-    return textMatches(this, buffer, startOffset) == endOffset;
+    return textMatches(buffer, startOffset) == endOffset;
   }
 
-  private static int textMatches(ASTNode element, CharSequence buffer, int startOffset) {
-    if (element instanceof LeafElement) {
-      final LeafElement leaf = (LeafElement)element;
-      return leaf.textMatches(buffer, startOffset);
-    }
-    else {
-      int curOffset = startOffset;
-      for (TreeElement child = ((CompositeElement)element).getFirstChildNode(); child != null; child = child.myNextSibling) {
-        curOffset = textMatches(child, buffer, curOffset);
-        if (curOffset == -1) return -1;
-      }
-      return curOffset;
-    }
-  }
+  protected abstract int textMatches(CharSequence buffer, int start);
 
   public boolean textMatches(@NotNull CharSequence seq) {
     return textMatches(seq, 0, seq.length());

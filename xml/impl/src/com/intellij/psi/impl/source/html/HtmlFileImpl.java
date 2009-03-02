@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.source.html;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
-import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
 
@@ -27,6 +27,8 @@ public class HtmlFileImpl extends XmlFileImpl {
   public XmlDocument getDocument() {
     CompositeElement treeElement = calcTreeElement();
     ChameleonTransforming.transformChildren(treeElement);
-    return (XmlDocument)treeElement.findChildByRoleAsPsiElement(XmlChildRole.HTML_DOCUMENT);
+
+    ASTNode node = treeElement.findChildByType(XmlElementType.HTML_DOCUMENT);
+    return node != null ? (XmlDocument)node.getPsi() : null;
   }
 }

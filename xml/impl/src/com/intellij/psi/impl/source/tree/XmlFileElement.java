@@ -10,12 +10,12 @@ import com.intellij.psi.xml.XmlElementType;
 public class XmlFileElement extends FileElement implements XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.XmlFileElement");
 
-  public XmlFileElement() {
-    super(XML_FILE);
+  public XmlFileElement(CharSequence text) {
+    super(XML_FILE, text);
   }
 
-  public XmlFileElement(IElementType type) {
-    super(type);
+  public XmlFileElement(IElementType type, CharSequence text) {
+    super(type, text);
   }
 
   public int getChildRole(ASTNode child) {

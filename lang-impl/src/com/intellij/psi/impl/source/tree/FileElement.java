@@ -8,7 +8,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 
-public class FileElement extends CompositeElement{
+public class FileElement extends LazyParseableElement {
   private CharTable myCharTable = new CharTableImpl();
   private PsiManagerEx myManager;
 
@@ -16,8 +16,8 @@ public class FileElement extends CompositeElement{
     return myCharTable;
   }
 
-  public FileElement(IElementType type) {
-    super(type);
+  public FileElement(IElementType type, CharSequence text) {
+    super(type, text);
   }
 
   public void setManager(final PsiManagerEx manager) {
@@ -26,7 +26,7 @@ public class FileElement extends CompositeElement{
 
   public PsiManagerEx getManager() {
     if (myManager == null) {
-      if(getTreeParent() != null) return getTreeParent().getManager();
+      if (getTreeParent() != null) return getTreeParent().getManager();
       return (PsiManagerEx)SourceTreeToPsiMap.treeElementToPsi(this).getManager(); //TODO: cache?
     }
     return myManager;

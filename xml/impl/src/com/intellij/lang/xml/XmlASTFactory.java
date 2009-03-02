@@ -11,97 +11,106 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.xml.*;
 import com.intellij.psi.templateLanguages.TemplateDataElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import static com.intellij.psi.xml.XmlElementType.*;
 
 public class XmlASTFactory extends ASTFactory {
   public CompositeElement createComposite(final IElementType type) {
-    CompositeElement element = null;
-
     if (type == XML_TAG) {
-      element = new XmlTagImpl();
-    } else if (type == XML_CONDITIONAL_SECTION) {
-      element = new XmlConditionalSectionImpl();
+      return new XmlTagImpl();
+    }
+    else if (type == XML_CONDITIONAL_SECTION) {
+      return new XmlConditionalSectionImpl();
     }
     else if (type == HTML_TAG) {
-      element = new HtmlTagImpl();
+      return new HtmlTagImpl();
     }
     else if (type == XML_TEXT) {
-      element = new XmlTextImpl();
+      return new XmlTextImpl();
     }
     else if (type == XML_PROCESSING_INSTRUCTION) {
-      element = new XmlProcessingInstructionImpl();
+      return new XmlProcessingInstructionImpl();
     }
     else if (type == XML_DOCUMENT) {
-      element = new XmlDocumentImpl();
-    } else if (type == HTML_DOCUMENT) {
-      element = new HtmlDocumentImpl();
+      return new XmlDocumentImpl();
+    }
+    else if (type == HTML_DOCUMENT) {
+      return new HtmlDocumentImpl();
     }
     else if (type == XML_PROLOG) {
-      element = new XmlPrologImpl();
+      return new XmlPrologImpl();
     }
     else if (type == XML_DECL) {
-      element = new XmlDeclImpl();
+      return new XmlDeclImpl();
     }
     else if (type == XML_ATTRIBUTE) {
-      element = new XmlAttributeImpl();
+      return new XmlAttributeImpl();
     }
     else if (type == XML_ATTRIBUTE_VALUE) {
-      element = new XmlAttributeValueImpl();
+      return new XmlAttributeValueImpl();
     }
     else if (type == XML_COMMENT) {
-      element = new XmlCommentImpl();
+      return new XmlCommentImpl();
     }
     else if (type == XML_DOCTYPE) {
-      element = new XmlDoctypeImpl();
+      return new XmlDoctypeImpl();
     }
     else if (type == XML_MARKUP_DECL) {
-      element = new XmlMarkupDeclImpl();
+      return new XmlMarkupDeclImpl();
     }
     else if (type == XML_ELEMENT_DECL) {
-      element = new XmlElementDeclImpl();
+      return new XmlElementDeclImpl();
     }
     else if (type == XML_ENTITY_DECL) {
-      element = new XmlEntityDeclImpl();
+      return new XmlEntityDeclImpl();
     }
     else if (type == XML_ATTLIST_DECL) {
-      element = new XmlAttlistDeclImpl();
+      return new XmlAttlistDeclImpl();
     }
     else if (type == XML_ATTRIBUTE_DECL) {
-      element = new XmlAttributeDeclImpl();
+      return new XmlAttributeDeclImpl();
     }
     else if (type == XML_NOTATION_DECL) {
-      element = new XmlNotationDeclImpl();
+      return new XmlNotationDeclImpl();
     }
     else if (type == XML_ELEMENT_CONTENT_SPEC) {
-      element = new XmlElementContentSpecImpl();
+      return new XmlElementContentSpecImpl();
     }
     else if (type == XML_ENTITY_REF) {
-      element = new XmlEntityRefImpl();
+      return new XmlEntityRefImpl();
     }
     else if (type == XML_ENUMERATED_TYPE) {
-      element = new XmlEnumeratedTypeImpl();
-    }
-    else if (type == XML_FILE) {
-      element = new XmlFileElement(type);
-    }
-    else if (type == DTD_FILE) {
-      element = new XmlFileElement(type);
-    }
-    else if (type == XHTML_FILE) {
-      element = new XmlFileElement(type);
-    }
-    else if (type == HTML_FILE) {
-      element = new HtmlFileElement();
+      return new XmlEnumeratedTypeImpl();
     }
     else if (type == XML_CDATA) {
-      element = new CompositePsiElement(XML_CDATA) {};
+      return new CompositePsiElement(XML_CDATA) {};
     }
     else if (type instanceof TemplateDataElementType) {
-      element = new XmlFileElement(type);
+      return new XmlFileElement(type, null);
     }
 
-    return element;
+    return null;
+  }
+
+  @Override
+  public LazyParseableElement createLazy(ILazyParseableElementType type, CharSequence text) {
+    if (type == XML_FILE) {
+      return new XmlFileElement(type, text);
+    }
+    else if (type == DTD_FILE) {
+      return new XmlFileElement(type, text);
+    }
+    else if (type == XHTML_FILE) {
+      return new XmlFileElement(type, text);
+    }
+    else if (type == HTML_FILE) {
+      return new HtmlFileElement(text);
+    }
+    else if (type instanceof TemplateDataElementType) {
+      return new XmlFileElement(type, text);
+    }
+    return null;
   }
 
   public LeafElement createLeaf(final IElementType type, CharSequence text) {

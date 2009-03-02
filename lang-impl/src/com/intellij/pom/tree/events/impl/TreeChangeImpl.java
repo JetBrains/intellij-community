@@ -8,7 +8,6 @@ import com.intellij.pom.tree.events.ReplaceChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import gnu.trove.THashMap;
 
 import java.util.*;
@@ -81,7 +80,7 @@ public class TreeChangeImpl implements TreeChange {
 
     if(changeInfo.getChangeType() == ChangeInfo.REMOVED){
       if(child instanceof LeafElement){
-        final CharSequence charTabIndex = ((LeafElement)child).getInternedText();
+        final CharSequence charTabIndex = child.getChars();
         if(checkLeaf(child.getTreeNext(), charTabIndex) || checkLeaf(child.getTreePrev(), charTabIndex)) return;
       }
       addChangeInternal(child, changeInfo);
@@ -144,7 +143,7 @@ public class TreeChangeImpl implements TreeChange {
     if(!(treeNext instanceof LeafElement)) return false;
     final ChangeInfo right = myChanges.get(treeNext);
     if(right != null && right.getChangeType() == ChangeInfo.ADD){
-      if(charTabIndex == ((LeafElement)treeNext).getInternedText()){
+      if(charTabIndex == treeNext.getChars()){
         removeChangeInternal(treeNext);
         return true;
       }
@@ -246,11 +245,11 @@ public class TreeChangeImpl implements TreeChange {
   }
 
   public int getOldLength() {
-    int oldLength = TreeUtil.getNotCachedLength(myParent);
+    int oldLength = ((TreeElement)myParent).getNotCachedLength();
     for (final Map.Entry<ASTNode, ChangeInfo> entry : myChanges.entrySet()) {
       final ASTNode key = entry.getKey();
       final ChangeInfo change = entry.getValue();
-      final int length = TreeUtil.getNotCachedLength(key);
+      final int length = ((TreeElement)key).getNotCachedLength();
       switch (change.getChangeType()) {
         case ChangeInfo.ADD:
           oldLength -= length;

@@ -53,6 +53,7 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
     ASTNode current = element.getFirstChildNode();
     while (current != null) {
       // we expand the chameleons here for effectiveness
+      current.getFirstChildNode();
       if (current instanceof ChameleonElement) {
         ASTNode next = current.getTreeNext();
         final ASTNode astNode = ChameleonTransforming.transform((ChameleonElement)current);

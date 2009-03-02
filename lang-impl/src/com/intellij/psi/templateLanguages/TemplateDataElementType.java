@@ -66,7 +66,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)originalFile.getViewProvider();
 
     final Language language = viewProvider.getTemplateDataLanguage();
-    final CharSequence chars = ((LeafElement)chameleon).getInternedText();
+    final CharSequence chars = chameleon.getChars();
 
     final Lexer baseLexer = createBaseLexer(viewProvider);
     final CharSequence templateText = createTemplateText(chars, baseLexer);

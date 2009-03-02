@@ -85,6 +85,8 @@ public class ParseUtil implements Constants {
     }
 
     private static void bindComments(ASTNode root) {
+      if (TreeUtil.isLeafOrCollapsedChameleon(root)) return;
+      
       TreeElement child = (TreeElement)root.getFirstChildNode();
       while (child != null) {
         if (child.getElementType() == JavaDocElementType.DOC_COMMENT) {

@@ -16,13 +16,36 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ASTFactory {
-  public static final ASTFactory DEFAULT = new DefaultFactory();
+  public static final DefaultFactory DEFAULT = new DefaultFactory();
   private static final CharTable WHITSPACES = new CharTableImpl();
 
   @Nullable
   public abstract CompositeElement createComposite(IElementType type);
+
+  @Nullable
+  public LazyParseableElement createLazy(ILazyParseableElementType type, CharSequence text) {
+    if (type instanceof IFileElementType) {
+      return new FileElement(type, text);
+    }
+    
+    return new LazyParseableElement(type, text);
+  }
+
   @Nullable
   public abstract LeafElement createLeaf(IElementType type, CharSequence text);
+
+  @NotNull
+  public static LazyParseableElement lazy(ILazyParseableElementType type, CharSequence text) {
+    ASTNode node = type.createNode(text);
+    if (node != null) return (LazyParseableElement)node;
+
+    if (type == TokenType.CODE_FRAGMENT) {
+      return new CodeFragmentElement(null);
+    }
+
+    LazyParseableElement psi = factory(type).createLazy(type, text);
+    return psi != null ? psi : DEFAULT.createLazy(type, text);
+  }
 
   @Deprecated
   @NotNull
@@ -44,10 +67,12 @@ public abstract class ASTFactory {
       return (LeafElement)((ILeafElementType)type).createLeafNode(text);
     }
 
-    final Language lang = type.getLanguage();
-    final ASTFactory factory = LanguageASTFactory.INSTANCE.forLanguage(lang);
-    final LeafElement customLeaf = factory.createLeaf(type, text);
+    final LeafElement customLeaf = factory(type).createLeaf(type, text);
     return customLeaf != null ? customLeaf : DEFAULT.createLeaf(type, text);
+  }
+
+  private static ASTFactory factory(IElementType type) {
+    return LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
   }
 
   public static LeafElement whitespace(CharSequence text) {
@@ -71,11 +96,10 @@ public abstract class ASTFactory {
     }
 
     if (type == TokenType.CODE_FRAGMENT) {
-      return new CodeFragmentElement();
+      return new CodeFragmentElement(null);
     }
 
-    final ASTFactory factory = LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
-    final CompositeElement customComposite = factory.createComposite(type);
+    final CompositeElement customComposite = factory(type).createComposite(type);
     return customComposite != null ? customComposite : DEFAULT.createComposite(type);
   }
 
@@ -84,7 +108,7 @@ public abstract class ASTFactory {
     @NotNull
     public CompositeElement createComposite(IElementType type) {
       if (type instanceof IFileElementType) {
-        return new FileElement(type);
+        return new FileElement(type, null);
       }
 
       return new CompositeElement(type);

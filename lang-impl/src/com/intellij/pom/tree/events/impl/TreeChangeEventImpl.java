@@ -9,7 +9,6 @@ import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.CharTable;
 import gnu.trove.THashMap;
 
@@ -66,7 +65,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
         if(prevParent != element){
           final ChangeInfo newChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent);
           if (change.getChangeType() != ChangeInfo.REMOVED) {
-            ((ChangeInfoImpl)newChange).processElementaryChange(currentParent, change, element);
+            ((ChangeInfoImpl)newChange).processElementaryChange(change, element);
           }
           change = newChange;
         }
@@ -141,7 +140,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
         if(isUnderCompacted){
           final ChangeInfoImpl compactedChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, treeElement);
-          compactedChange.compactChange(treeElement, getChangesByElement(treeElement));
+          compactedChange.compactChange(getChangesByElement(treeElement));
 
           iterator.remove();
           removeAssociatedChanges(treeElement, currentDepth);
@@ -258,9 +257,9 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
         while(currentParent != null){
           if(myChangedElements.containsKey(currentParent)){
             final ChangeInfoImpl newChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent);
-            final int newLength = TreeUtil.getNotCachedLength(changed);
+            final int newLength = ((TreeElement)changed).getNotCachedLength();
             final int oldLength = entry.getValue().getOldLength();
-            newChange.setOldLength(TreeUtil.getNotCachedLength(prevParent) - newLength + oldLength);
+            newChange.setOldLength(prevParent.getNotCachedLength() - newLength + oldLength);
             processElementaryChange(currentParent, prevParent, newChange, -1);
             iterator.remove();
             break;

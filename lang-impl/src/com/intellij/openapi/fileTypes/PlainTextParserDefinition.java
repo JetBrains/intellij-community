@@ -15,7 +15,6 @@ import com.intellij.psi.PlainTextTokenTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public class PlainTextParserDefinition implements ParserDefinition {
   private static final IFileElementType PLAIN_FILE_ELEMENT_TYPE = new IFileElementType(FileTypes.PLAIN_TEXT.getLanguage()) {
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
+      final CharSequence chars = chameleon.getChars();
       return ASTFactory.leaf(PlainTextTokenTypes.PLAIN_TEXT, chars);
     }
   };

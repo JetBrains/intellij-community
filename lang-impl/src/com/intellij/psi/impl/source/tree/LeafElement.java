@@ -24,12 +24,12 @@ public abstract class LeafElement extends TreeElement {
     return myText.length();
   }
 
-  public CharSequence getInternedText() {
+  public CharSequence getChars() {
     return myText;
   }
 
   public String getText() {
-    return getInternedText().toString();
+    return myText.toString();
   }
 
   public char charAt(int position) {
@@ -59,12 +59,16 @@ public abstract class LeafElement extends TreeElement {
     return false;
   }
 
-  public int textMatches(CharSequence buffer, int start) {
-    final CharSequence entry = myText;
-    final int length = entry.length();
+  protected int textMatches(CharSequence buffer, int start) {
+    final CharSequence text = myText;
+    return leafTextMatches(text, buffer, start);
+  }
+
+  public static int leafTextMatches(CharSequence text, CharSequence buffer, int start) {
+    final int length = text.length();
     if(buffer.length() - start < length) return -1;
     for(int i = 0; i < length; i++){
-      if(entry.charAt(i) != buffer.charAt(i + start)) return -1;
+      if(text.charAt(i) != buffer.charAt(i + start)) return -1;
     }
     return start + length;
   }
@@ -89,7 +93,7 @@ public abstract class LeafElement extends TreeElement {
 
   @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
   public boolean textMatches(final CharSequence buf, int start, int end) {
-    final CharSequence text = getInternedText();
+    final CharSequence text = getChars();
     final int len = text.length();
 
     if (end - start != len) return false;
@@ -125,7 +129,10 @@ public abstract class LeafElement extends TreeElement {
   }
 
   public int hc() {
-    final CharSequence text = getInternedText();
+    return leafHC(getChars());
+  }
+
+  public static int leafHC(CharSequence text) {
     final int len = text.length();
     int hc = 0;
 
@@ -151,6 +158,11 @@ public abstract class LeafElement extends TreeElement {
 
   public TreeElement getLastChildNode() {
     return null;
+  }
+
+  @Override
+  public int getNotCachedLength() {
+    return myText.length();
   }
 
   public ASTNode[] getChildren(TokenSet filter) {

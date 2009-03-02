@@ -23,11 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBlock, Constants {
+public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCodeBlock, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl");
 
-  public PsiCodeBlockImpl() {
-    super(CODE_BLOCK);
+  public PsiCodeBlockImpl(CharSequence text) {
+    super(CODE_BLOCK, text);
   }
 
   public void clearCaches() {

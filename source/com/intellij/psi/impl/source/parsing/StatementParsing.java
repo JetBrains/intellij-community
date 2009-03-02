@@ -60,7 +60,7 @@ public class StatementParsing extends Parsing {
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
-    CompositeElement block = ASTFactory.composite(CODE_BLOCK);
+    CompositeElement block = ASTFactory.lazy(CODE_BLOCK, null);
     dummyRoot.rawAddChildren(block);
     parseCodeBlockDeep(block, filterLexer, true);
     if (block.getFirstChildNode() == null) return null;
@@ -157,14 +157,14 @@ public class StatementParsing extends Parsing {
           lexer.advance();
         }
       }
-      final TreeElement chameleon = ASTFactory.leaf(CODE_BLOCK, myContext.getCharTable().intern(lexer.getBufferSequence(), start, end));
+      final TreeElement chameleon = ASTFactory.lazy(CODE_BLOCK, myContext.getCharTable().intern(lexer.getBufferSequence(), start, end));
       if (braceCount != 0){
         chameleon.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
       }
       return chameleon;
     }
     else{
-      CompositeElement codeBlock = ASTFactory.composite(CODE_BLOCK);
+      CompositeElement codeBlock = ASTFactory.lazy(CODE_BLOCK, null);
       parseCodeBlockDeep(codeBlock, lexer, false);
       return codeBlock;
     }

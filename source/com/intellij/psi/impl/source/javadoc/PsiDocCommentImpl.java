@@ -15,9 +15,9 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +69,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == DOC_TAG) {
         PsiDocTag tag = (PsiDocTag)SourceTreeToPsiMap.treeElementToPsi(child);
-        final CharSequence nameText = ((LeafElement)tag.getNameElement()).getInternedText();
+        final CharSequence nameText = ((LeafElement)tag.getNameElement()).getChars();
 
         if (nameText.length() > 0 && nameText.charAt(0) == '@' && CharArrayUtil.regionMatches(nameText, 1, name)) {
           return tag;

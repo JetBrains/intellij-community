@@ -21,8 +21,8 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -138,7 +138,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
                                                                                                                                           JavaDocElementType.DOC_TYPE_HOLDER) {
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == TokenType.CODE_FRAGMENT) {
+    else if (isCodeFragmentType(i)) {
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)getTreeParent().getPsi();
       return fragment.isClassesAccepted() ? CLASS_FQ_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
     }
@@ -146,6 +146,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       LOG.error("Unknown parent for java code reference:" + getTreeParent());
       return CLASS_NAME_KIND;
     }
+  }
+
+  private static boolean isCodeFragmentType(IElementType type) {
+    return type == TokenType.CODE_FRAGMENT || type instanceof ICodeFragmentElementType;
   }
 
   public void deleteChildInternal(@NotNull final ASTNode child) {
@@ -721,7 +725,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         superParent = superParent.getParent();
       }
     }
-    if (!smartCompletion && getTreeParent().getElementType() != TokenType.CODE_FRAGMENT && !(getParent() instanceof PsiAnnotation)) {
+    if (!smartCompletion && !isCodeFragmentType(getTreeParent().getElementType()) && !(getParent() instanceof PsiAnnotation)) {
       /*filter.addFilter(new ClassFilter(PsiClass.class));
       filter.addFilter(new ClassFilter(PsiPackage.class));*/
       filter.addFilter(new AndFilter(new ClassFilter(PsiMethod.class), new NotFilter(new ConstructorFilter())));

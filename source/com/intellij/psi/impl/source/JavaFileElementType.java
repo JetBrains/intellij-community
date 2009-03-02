@@ -14,10 +14,7 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.parsing.FileTextParsing;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -50,12 +47,14 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
   }
 
   public ASTNode parseContents(ASTNode chameleon) {
-    final CharSequence seq = ((LeafElement)chameleon).getInternedText();
+    FileElement node = (FileElement)chameleon;
+    final CharSequence seq = node.getChars();
 
-    final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
-    final JavaLexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(TreeUtil.getFileElement((TreeElement)chameleon).getPsi()));
-    return FileTextParsing.parseFileText(manager, lexer, seq, 0, seq.length(), SharedImplUtil.findCharTableByTree(chameleon));
+    final PsiManager manager = node.getManager();
+    final JavaLexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(node.getPsi()));
+    return FileTextParsing.parseFileText(manager, lexer, seq, 0, seq.length(), node.getCharTable());
   }
+
   public boolean isParsable(CharSequence buffer, final Project project) {return true;}
 
   public String getExternalId() {

@@ -84,6 +84,26 @@ public class TreeUtil {
     }
   }
 
+  public static boolean isLeafOrCollapsedChameleon(ASTNode node) {
+    if (node instanceof LeafElement) return true;
+    if (node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsed()) return true;
+    return false;
+  }
+
+  @Nullable
+  public static TreeElement findFirstLeafOrChameleon(TreeElement element) {
+    if (isLeafOrCollapsedChameleon(element)) {
+      return element;
+    }
+    else{
+      for(TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()){
+        TreeElement leaf = findFirstLeafOrChameleon(child);
+        if (leaf != null) return leaf;
+      }
+      return null;
+    }
+  }
+
   @Nullable
   public static LeafElement findLastLeaf(ASTNode element) {
     if (element instanceof LeafElement){
@@ -124,22 +144,6 @@ public class TreeUtil {
     return null;
   }
 
-  public static int getNotCachedLength(ASTNode tree) {
-    int length = 0;
-
-    if (tree instanceof LeafElement) {
-      length += tree.getTextLength();
-    }
-    else{
-      TreeElement firstChild = (TreeElement)tree.getFirstChildNode();
-      while(firstChild != null){
-        length += getNotCachedLength(firstChild);
-        firstChild = firstChild.getTreeNext();
-      }
-    }
-    return length;
-  }
-
   public static void clearCaches(TreeElement tree) {
     tree.clearCaches();
     TreeElement child = tree.getFirstChildNode();
@@ -176,11 +180,13 @@ public class TreeUtil {
 
   @Nullable
   public static LeafElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent) {
-    return (LeafElement)nextLeaf(start, commonParent, null);
+    return (LeafElement)nextLeaf(start, commonParent, null, true);
   }
 
   @Nullable
-  public static TreeElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent, IElementType searchedType) {
+  public static TreeElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent,
+                                     IElementType searchedType,
+                                     boolean expandChameleons) {
     if (commonParent != null) {
       commonParent.startLeafBranchStart = start;
       initStrongWhitespaceHolder(commonParent, start, true);
@@ -191,7 +197,7 @@ public class TreeUtil {
       if (nextTree.getElementType() == searchedType) {
         return nextTree;
       }
-      next = findFirstLeaf(nextTree, searchedType, commonParent);
+      next = findFirstLeaf(nextTree, searchedType, commonParent, expandChameleons);
     }
     if (next != null) {
       if (commonParent != null) commonParent.nextLeafBranchStart = nextTree;
@@ -199,7 +205,7 @@ public class TreeUtil {
     }
     final CompositeElement parent = start.getTreeParent();
     if (parent == null) return null;
-    return nextLeaf(parent, commonParent, searchedType);
+    return nextLeaf(parent, commonParent, searchedType, expandChameleons);
   }
 
   private static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
@@ -211,16 +217,24 @@ public class TreeUtil {
   }
 
   @Nullable
-  private static TreeElement findFirstLeaf(TreeElement element, IElementType searchedType, CommonParentState commonParent) {
+  private static TreeElement findFirstLeaf(TreeElement element, 
+                                           IElementType searchedType,
+                                           CommonParentState commonParent,
+                                           boolean expandChameleons) {
     if (commonParent != null) {
       initStrongWhitespaceHolder(commonParent, element, false);
     }
+
+    if (!expandChameleons && isLeafOrCollapsedChameleon(element)) {
+      return element;
+    }
+
     if (element instanceof LeafElement || element.getElementType() == searchedType) {
       return element;
     }
     else {
       for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        TreeElement leaf = findFirstLeaf(child, searchedType, commonParent);
+        TreeElement leaf = findFirstLeaf(child, searchedType, commonParent, expandChameleons);
         if (leaf != null) return leaf;
       }
       return null;

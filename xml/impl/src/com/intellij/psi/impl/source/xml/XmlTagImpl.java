@@ -592,8 +592,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
     for (final XmlAttribute attribute : attributes) {
       final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
-      if (attrNameElement != null && (caseSensitive && attrNameElement.getInternedText().equals(charTableIndex) ||
-                                      !caseSensitive && Comparing.equal(attrNameElement.getInternedText(), charTableIndex, false)
+      if (attrNameElement != null && (caseSensitive && attrNameElement.getChars().equals(charTableIndex) ||
+                                      !caseSensitive && Comparing.equal(attrNameElement.getChars(), charTableIndex, false)
       )) {
         return attribute;
       }

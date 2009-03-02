@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.xml.XmlElementType;
 import static com.intellij.psi.xml.XmlElementType.*;
 import com.intellij.psi.xml.XmlTokenType;
@@ -246,7 +247,7 @@ public class XmlParsing {
         advance();
         error.error(XmlErrorMessages.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
       }
-      else if (tt instanceof IChameleonElementType) {
+      else if (tt instanceof IChameleonElementType || tt instanceof ILazyParseableElementType) {
         xmlText = terminateText(xmlText);
         advance();
       }

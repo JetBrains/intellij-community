@@ -35,6 +35,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
@@ -92,6 +93,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public TreeElement createContentLeafElement(CharSequence leafText) {
+    if (myContentElementType instanceof ILazyParseableElementType) {
+      return ASTFactory.lazy((ILazyParseableElementType)myContentElementType, leafText);
+    }
     return ASTFactory.leaf(myContentElementType, leafText);
   }
 
@@ -270,18 +274,23 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   protected FileElement createFileElement(final CharSequence docText) {
+    final FileElement treeElement;
+    final TreeElement contentLeaf = createContentLeafElement(docText);
 
-    final CompositeElement xxx = ASTFactory.composite(myElementType);
-    if (!(xxx instanceof FileElement)) {
-      LOG.error("BUMM!");
+    if (contentLeaf instanceof FileElement) {
+      treeElement = (FileElement)contentLeaf;
     }
-    final FileElement treeElement = (FileElement)xxx;
+    else {
+      final CompositeElement xxx = ASTFactory.composite(myElementType);
+      assert xxx instanceof FileElement : "BUMM";
+      treeElement = (FileElement)xxx;
+      treeElement.rawAddChildren(contentLeaf);
+    }
+
     if (CacheUtil.isCopy(this)) {
       treeElement.setCharTable(new IdentityCharTable());
     }
 
-    TreeElement contentElement = createContentLeafElement(treeElement.getCharTable().intern(docText, 0, docText.length()));
-    treeElement.rawAddChildren(contentElement);
     return treeElement;
   }
 

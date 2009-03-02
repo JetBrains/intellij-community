@@ -1,11 +1,9 @@
 package com.intellij.pom.tree.events.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.util.CharTable;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NonNls;
 
 public class ChangeInfoImpl implements ChangeInfo {
@@ -25,7 +23,7 @@ public class ChangeInfoImpl implements ChangeInfo {
 
   protected ChangeInfoImpl(short type, ASTNode changed){
     this.type = type;
-    myOldLength = type != ADD ? TreeUtil.getNotCachedLength(changed) : 0;
+    myOldLength = type != ADD ? ((TreeElement)changed).getNotCachedLength() : 0;
   }
 
   public int getChangeType(){
@@ -36,34 +34,27 @@ public class ChangeInfoImpl implements ChangeInfo {
     return TO_STRING[getChangeType()];
   }
 
-  public void compactChange(ASTNode parent, TreeChange change){
-    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(parent);
-    final ASTNode[] affectedChildren = change.getAffectedChildren();
-    for (int i = 0; i < affectedChildren.length; i++) {
-      final ASTNode treeElement = affectedChildren[i];
+  public void compactChange(TreeChange change){
+    for (final ASTNode treeElement : change.getAffectedChildren()) {
       final ChangeInfo changeByChild = change.getChangeByChild(treeElement);
-      processElementaryChange(changeByChild, treeElement, charTableByTree);
+      processElementaryChange(changeByChild, treeElement);
     }
   }
 
-  public void processElementaryChange(ASTNode parent, final ChangeInfo changeByChild, final ASTNode treeElement) {
-    processElementaryChange(changeByChild, treeElement, SharedImplUtil.findCharTableByTree(parent));
-  }
-
-  private void processElementaryChange(final ChangeInfo changeByChild, final ASTNode treeElement, final CharTable charTableByTree) {
+  public void processElementaryChange(final ChangeInfo changeByChild, final ASTNode treeElement) {
     switch(changeByChild.getChangeType()){
       case ADD:
-        myOldLength -= TreeUtil.getNotCachedLength(treeElement);
+        myOldLength -= ((TreeElement)treeElement).getNotCachedLength();
         break;
       case REMOVED:
         myOldLength += changeByChild.getOldLength();
         break;
       case REPLACE:
-        myOldLength -= TreeUtil.getNotCachedLength(treeElement);
+        myOldLength -= ((TreeElement)treeElement).getNotCachedLength();
         myOldLength += changeByChild.getOldLength();
         break;
       case CONTENTS_CHANGED:
-        myOldLength -= TreeUtil.getNotCachedLength(treeElement);
+        myOldLength -= ((TreeElement)treeElement).getNotCachedLength();
         myOldLength += changeByChild.getOldLength();
         break;
     }

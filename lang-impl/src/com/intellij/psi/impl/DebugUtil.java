@@ -192,24 +192,27 @@ public class DebugUtil {
   }
 
   private static void checkSubtree(ASTNode root) {
-    if (root.getFirstChildNode() == null) {
-      if (root.getLastChildNode() != null) {
-        throw new IncorrectTreeStructureException(root, "firstChild == null, but lastChild != null");
+    if (!(root instanceof CompositeElement)) return;
+    CompositeElement node = (CompositeElement)root;
+
+    if (node.rawFirstChild() == null) {
+      if (node.rawLastChild() != null) {
+        throw new IncorrectTreeStructureException(node, "firstChild == null, but lastChild != null");
       }
     }
     else {
       Set<ASTNode> children = new HashSet<ASTNode>();
-      for (ASTNode child = root.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      for (ASTNode child = node.rawFirstChild(); child != null; child = child.getTreeNext()) {
         if (children.contains(child)) {
           throw new IncorrectTreeStructureException(child, "Looping in next siblings");
         }
 
         children.add(child);
-        checkChild(root, child);
+        checkChild(node, child);
       }
 
       Set<ASTNode> prevs = new HashSet<ASTNode>();
-      for (ASTNode child = root.getLastChildNode(); child != null; child = child.getTreePrev()) {
+      for (ASTNode child = node.rawLastChild(); child != null; child = child.getTreePrev()) {
         if (prevs.contains(child)) {
           throw new IncorrectTreeStructureException(child, "Looping in prev siblings");
         }

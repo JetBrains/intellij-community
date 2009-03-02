@@ -20,9 +20,9 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspJavaComment;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -40,6 +40,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private Spacing myResult;
   private ASTNode myChild1;
   private ASTNode myChild2;
+
+  private IElementType myType1;
+  private IElementType myType2;
+
   private ImportHelper myImportHelper;
 
   private static final ThreadLocal<JavaSpacePropertyProcessor> mySharedProcessorAllocator = new ThreadLocal<JavaSpacePropertyProcessor>();
@@ -121,7 +125,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       final CompositeElement parent = (CompositeElement)treePrev.getTreeParent();
       myParent = SourceTreeToPsiMap.treeElementToPsi(parent);
       myRole1 = parent.getChildRole(treePrev);
+      myType1 = treePrev.getElementType();
       myRole2 = parent.getChildRole(child);
+      myType2 = child.getElementType();
     }
   }
 
@@ -408,30 +414,30 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override public void visitFile(PsiFile file) {
-    if (myRole1 == ChildRole.PACKAGE_STATEMENT) {
+    if (myType1 == JavaElementType.PACKAGE_STATEMENT) {
       int lf = mySettings.BLANK_LINES_AFTER_PACKAGE + 1;
       myResult = Spacing
         .createSpacing(0, 0, lf, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
 
-    else if (myRole2 == ChildRole.PACKAGE_STATEMENT) {
+    else if (myType2 == JavaElementType.PACKAGE_STATEMENT) {
       int lf = mySettings.BLANK_LINES_BEFORE_PACKAGE + 1;
       myResult = Spacing
         .createSpacing(0, 0, lf, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
 
-    else if (myRole1 == ChildRole.IMPORT_LIST) {
+    else if (myType1 == JavaElementType.IMPORT_LIST) {
       int lf = mySettings.BLANK_LINES_AFTER_IMPORTS + 1;
       myResult = Spacing
         .createSpacing(0, 0, lf, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
 
-    else if (myRole2 == ChildRole.IMPORT_LIST) {
+    else if (myType2 == JavaElementType.IMPORT_LIST) {
       int lf = mySettings.BLANK_LINES_BEFORE_IMPORTS + 1;
       myResult = Spacing
         .createSpacing(0, 0, lf, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
-    else if (myRole2 == ChildRole.CLASS) {
+    else if (myType2 == JavaElementType.CLASS) {
       int lf = mySettings.BLANK_LINES_AROUND_CLASS + 1;
       myResult = Spacing
         .createSpacing(0, 0, lf, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);

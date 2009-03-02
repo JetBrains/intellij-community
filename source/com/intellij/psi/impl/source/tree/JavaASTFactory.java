@@ -10,293 +10,287 @@ import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 
 public class JavaASTFactory extends ASTFactory implements Constants {
-  public CompositeElement createComposite(final IElementType type) {
-    //TODO: Replace whole method with type.createPsiElement();
-    CompositeElement element = null;
-    if (type == TYPE_PARAMETER_LIST) {
-      element = new TypeParameterListElement();
-    }
-    else if (type == TYPE_PARAMETER) {
-      element = new TypeParameterElement();
-    }
-    else if (type == EXTENDS_BOUND_LIST) {
-      element = new TypeParameterExtendsBoundsListElement();
-    }
-    else if (type == ERROR_ELEMENT) {
-      element = new PsiErrorElementImpl();
-    }
-    else if (type == JAVA_FILE) {
-      element = new JavaFileElement();
+
+  @Override
+  public LazyParseableElement createLazy(ILazyParseableElementType type, CharSequence text) {
+    if (type == JAVA_FILE) {
+      return new JavaFileElement(text);
     }
     else if (type == PlainTextTokenTypes.PLAIN_TEXT_FILE) {
-      element = new PlainTextFileElement();
+      return new PlainTextFileElement(text);
     }
     else if (type == CODE_FRAGMENT) {
-      element = new CodeFragmentElement();
+      return new CodeFragmentElement(text);
     }
     else if (type == DUMMY_HOLDER) {
-      element = new DummyHolderElement();
+      return new DummyHolderElement(text);
+    }
+    else if(type instanceof IFileElementType) {
+      return new FileElement(type, text);
+    }
+
+    return null;
+  }
+
+  public CompositeElement createComposite(final IElementType type) {
+    //TODO: Replace whole method with type.createPsiElement();
+    if (type == TYPE_PARAMETER_LIST) {
+      return new TypeParameterListElement();
+    }
+    else if (type == TYPE_PARAMETER) {
+      return new TypeParameterElement();
+    }
+    else if (type == EXTENDS_BOUND_LIST) {
+      return new TypeParameterExtendsBoundsListElement();
+    }
+    else if (type == ERROR_ELEMENT) {
+      return new PsiErrorElementImpl();
     }
     else if (type == JavaDocElementType.DOC_COMMENT) {
-      element = new PsiDocCommentImpl();
+      return new PsiDocCommentImpl();
     }
     else if (type == DOC_TAG) {
-      element = new PsiDocTagImpl();
+      return new PsiDocTagImpl();
     }
     else if (type == DOC_TAG_VALUE_TOKEN) {
-      element = new PsiDocTagValueImpl();
+      return new PsiDocTagValueImpl();
     }
     else if (type == DOC_METHOD_OR_FIELD_REF) {
-      element = new PsiDocMethodOrFieldRef();
+      return new PsiDocMethodOrFieldRef();
     }
     else if (type == DOC_PARAMETER_REF) {
-      element = new PsiDocParamRef();
+      return new PsiDocParamRef();
     }
     else if (type == DOC_INLINE_TAG) {
-      element = new PsiInlineDocTagImpl();
+      return new PsiInlineDocTagImpl();
     }
     else if (type == CLASS) {
-      element = new ClassElement(type);
+      return new ClassElement(type);
     }
     else if (type == ANONYMOUS_CLASS) {
-      element = new AnonymousClassElement();
+      return new AnonymousClassElement();
     }
     else if (type == ENUM_CONSTANT_INITIALIZER) {
-      element = new EnumConstantInitializerElement();
+      return new EnumConstantInitializerElement();
     }
     else if (type == FIELD) {
-      element = new FieldElement();
+      return new FieldElement();
     }
     else if (type == ENUM_CONSTANT) {
-      element = new EnumConstantElement();
+      return new EnumConstantElement();
     }
     else if (type == METHOD) {
-      element = new MethodElement();
+      return new MethodElement();
     }
     else if (type == LOCAL_VARIABLE) {
-      element = new PsiLocalVariableImpl();
+      return new PsiLocalVariableImpl();
     }
     else if (type == PARAMETER) {
-      element = new ParameterElement();
+      return new ParameterElement();
     }
     else if (type == PARAMETER_LIST) {
-      element = new ParameterListElement();
+      return new ParameterListElement();
     }
     else if (type == CLASS_INITIALIZER) {
-      element = new ClassInitializerElement();
+      return new ClassInitializerElement();
     }
     else if (type == PACKAGE_STATEMENT) {
-      element = new PsiPackageStatementImpl();
+      return new PsiPackageStatementImpl();
     }
     else if (type == IMPORT_LIST) {
-      element = new ImportListElement();
+      return new ImportListElement();
     }
     else if (type == IMPORT_STATEMENT) {
-      element = new ImportStatementElement();
+      return new ImportStatementElement();
     }
     else if (type == IMPORT_STATIC_STATEMENT) {
-      element = new ImportStaticStatementElement();
+      return new ImportStaticStatementElement();
     }
     else if (type == IMPORT_STATIC_REFERENCE) {
-      element = new PsiImportStaticReferenceElementImpl();
+      return new PsiImportStaticReferenceElementImpl();
     }
     else if (type == JAVA_CODE_REFERENCE) {
-      element = new PsiJavaCodeReferenceElementImpl();
+      return new PsiJavaCodeReferenceElementImpl();
     }
     else if (type == REFERENCE_PARAMETER_LIST) {
-      element = new PsiReferenceParameterListImpl();
+      return new PsiReferenceParameterListImpl();
     }
     else if (type == TYPE) {
-      element = new PsiTypeElementImpl();
+      return new PsiTypeElementImpl();
     }
     else if (type == MODIFIER_LIST) {
-      element = new ModifierListElement();
+      return new ModifierListElement();
     }
     else if (type == EXTENDS_LIST) {
-      element = new ExtendsListElement();
+      return new ExtendsListElement();
     }
     else if (type == IMPLEMENTS_LIST) {
-      element = new ImplementsListElement();
+      return new ImplementsListElement();
     }
     else if (type == THROWS_LIST) {
-      element = new PsiThrowsListImpl();
+      return new PsiThrowsListImpl();
     }
     else if (type == EXPRESSION_LIST) {
-      element = new PsiExpressionListImpl();
+      return new PsiExpressionListImpl();
     }
     else if (type == REFERENCE_EXPRESSION) {
-      element = new PsiReferenceExpressionImpl();
+      return new PsiReferenceExpressionImpl();
     }
     else if (type == LITERAL_EXPRESSION) {
-      element = new PsiLiteralExpressionImpl();
+      return new PsiLiteralExpressionImpl();
     }
     else if (type == THIS_EXPRESSION) {
-      element = new PsiThisExpressionImpl();
+      return new PsiThisExpressionImpl();
     }
     else if (type == SUPER_EXPRESSION) {
-      element = new PsiSuperExpressionImpl();
+      return new PsiSuperExpressionImpl();
     }
     else if (type == PARENTH_EXPRESSION) {
-      element = new PsiParenthesizedExpressionImpl();
+      return new PsiParenthesizedExpressionImpl();
     }
     else if (type == METHOD_CALL_EXPRESSION) {
-      element = new PsiMethodCallExpressionImpl();
+      return new PsiMethodCallExpressionImpl();
     }
     else if (type == TYPE_CAST_EXPRESSION) {
-      element = new PsiTypeCastExpressionImpl();
+      return new PsiTypeCastExpressionImpl();
     }
     else if (type == PREFIX_EXPRESSION) {
-      element = new PsiPrefixExpressionImpl();
+      return new PsiPrefixExpressionImpl();
     }
     else if (type == POSTFIX_EXPRESSION) {
-      element = new PsiPostfixExpressionImpl();
+      return new PsiPostfixExpressionImpl();
     }
     else if (type == BINARY_EXPRESSION) {
-      element = new PsiBinaryExpressionImpl();
+      return new PsiBinaryExpressionImpl();
     }
     else if (type == CONDITIONAL_EXPRESSION) {
-      element = new PsiConditionalExpressionImpl();
+      return new PsiConditionalExpressionImpl();
     }
     else if (type == ASSIGNMENT_EXPRESSION) {
-      element = new PsiAssignmentExpressionImpl();
+      return new PsiAssignmentExpressionImpl();
     }
     else if (type == NEW_EXPRESSION) {
-      element = new PsiNewExpressionImpl();
+      return new PsiNewExpressionImpl();
     }
     else if (type == ARRAY_ACCESS_EXPRESSION) {
-      element = new PsiArrayAccessExpressionImpl();
+      return new PsiArrayAccessExpressionImpl();
     }
     else if (type == ARRAY_INITIALIZER_EXPRESSION) {
-      element = new PsiArrayInitializerExpressionImpl();
+      return new PsiArrayInitializerExpressionImpl();
     }
     else if (type == INSTANCE_OF_EXPRESSION) {
-      element = new PsiInstanceOfExpressionImpl();
+      return new PsiInstanceOfExpressionImpl();
     }
     else if (type == CLASS_OBJECT_ACCESS_EXPRESSION) {
-      element = new PsiClassObjectAccessExpressionImpl();
+      return new PsiClassObjectAccessExpressionImpl();
     }
     else if (type == EMPTY_EXPRESSION) {
-      element = new PsiEmptyExpressionImpl();
+      return new PsiEmptyExpressionImpl();
     }
     else if (type == EMPTY_STATEMENT) {
-      element = new PsiEmptyStatementImpl();
+      return new PsiEmptyStatementImpl();
     }
     else if (type == BLOCK_STATEMENT) {
-      element = new PsiBlockStatementImpl();
+      return new PsiBlockStatementImpl();
     }
     else if (type == EXPRESSION_STATEMENT) {
-      element = new PsiExpressionStatementImpl();
+      return new PsiExpressionStatementImpl();
     }
     else if (type == EXPRESSION_LIST_STATEMENT) {
-      element = new PsiExpressionListStatementImpl();
+      return new PsiExpressionListStatementImpl();
     }
     else if (type == DECLARATION_STATEMENT) {
-      element = new PsiDeclarationStatementImpl();
+      return new PsiDeclarationStatementImpl();
     }
     else if (type == IF_STATEMENT) {
-      element = new PsiIfStatementImpl();
+      return new PsiIfStatementImpl();
     }
     else if (type == WHILE_STATEMENT) {
-      element = new PsiWhileStatementImpl();
+      return new PsiWhileStatementImpl();
     }
     else if (type == FOR_STATEMENT) {
-      element = new PsiForStatementImpl();
+      return new PsiForStatementImpl();
     }
     else if (type == FOREACH_STATEMENT) {
-      element = new PsiForeachStatementImpl();
+      return new PsiForeachStatementImpl();
     }
     else if (type == DO_WHILE_STATEMENT) {
-      element = new PsiDoWhileStatementImpl();
+      return new PsiDoWhileStatementImpl();
     }
     else if (type == SWITCH_STATEMENT) {
-      element = new PsiSwitchStatementImpl();
+      return new PsiSwitchStatementImpl();
     }
     else if (type == SWITCH_LABEL_STATEMENT) {
-      element = new PsiSwitchLabelStatementImpl();
+      return new PsiSwitchLabelStatementImpl();
     }
     else if (type == BREAK_STATEMENT) {
-      element = new PsiBreakStatementImpl();
+      return new PsiBreakStatementImpl();
     }
     else if (type == CONTINUE_STATEMENT) {
-      element = new PsiContinueStatementImpl();
+      return new PsiContinueStatementImpl();
     }
     else if (type == RETURN_STATEMENT) {
-      element = new PsiReturnStatementImpl();
+      return new PsiReturnStatementImpl();
     }
     else if (type == THROW_STATEMENT) {
-      element = new PsiThrowStatementImpl();
+      return new PsiThrowStatementImpl();
     }
     else if (type == SYNCHRONIZED_STATEMENT) {
-      element = new PsiSynchronizedStatementImpl();
+      return new PsiSynchronizedStatementImpl();
     }
     else if (type == ASSERT_STATEMENT) {
-      element = new PsiAssertStatementImpl();
+      return new PsiAssertStatementImpl();
     }
     else if (type == TRY_STATEMENT) {
-      element = new PsiTryStatementImpl();
+      return new PsiTryStatementImpl();
     }
     else if (type == LABELED_STATEMENT) {
-      element = new PsiLabeledStatementImpl();
-    }
-    else if (type == CODE_BLOCK) {
-      element = new PsiCodeBlockImpl();
+      return new PsiLabeledStatementImpl();
     }
     else if (type == CATCH_SECTION) {
-      element = new PsiCatchSectionImpl();
+      return new PsiCatchSectionImpl();
     }
     else if (type == ANNOTATION_METHOD) {
-      element = new AnnotationMethodElement();
+      return new AnnotationMethodElement();
     }
     else if (type == ANNOTATION) {
-      element = new AnnotationElement();
+      return new AnnotationElement();
     }
     else if (type == ANNOTATION_ARRAY_INITIALIZER) {
-      element = new PsiArrayInitializerMemberValueImpl();
+      return new PsiArrayInitializerMemberValueImpl();
     }
     else if (type == NAME_VALUE_PAIR) {
-      element = new PsiNameValuePairImpl();
+      return new PsiNameValuePairImpl();
     }
     else if (type == ANNOTATION_PARAMETER_LIST) {
-      element = new PsiAnnotationParameterListImpl();
+      return new PsiAnnotationParameterListImpl();
     }
 
-    if (element == null) {
-      if(type instanceof IFileElementType) {
-        element = new FileElement(type);
-      } else {
-        element = new CompositePsiElement(type){};
-      }
-    }
-
-    return element;
+    return new CompositePsiElement(type){};
   }
 
   public LeafElement createLeaf(final IElementType type, CharSequence text) {
-    LeafElement element = null;
     if (type == C_STYLE_COMMENT || type == END_OF_LINE_COMMENT) {
-      element = new PsiCommentImpl(type, text);
+      return new PsiCommentImpl(type, text);
     }
     else if (type == IDENTIFIER) {
-      element = new PsiIdentifierImpl(text);
+      return new PsiIdentifierImpl(text);
     }
     else if (KEYWORD_BIT_SET.contains(type)) {
-      element = new PsiKeywordImpl(type, text);
+      return new PsiKeywordImpl(type, text);
     }
     else if (type instanceof IJavaElementType) {
-      element = new PsiJavaTokenImpl(type, text);
+      return new PsiJavaTokenImpl(type, text);
     }
     else if (type instanceof IJavaDocElementType) {
-      element = new PsiDocTokenImpl(type, text);
+      return new PsiDocTokenImpl(type, text);
     }
 
-    if (element == null) {
-      element = new LeafPsiElement(type, text);
-    }
-
-    return element;
+    return new LeafPsiElement(type, text);
   }
 }

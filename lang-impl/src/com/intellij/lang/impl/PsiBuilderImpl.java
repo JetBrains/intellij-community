@@ -21,10 +21,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.ASTDiffBuilder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.psi.tree.IChameleonElementType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ILeafElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
@@ -109,7 +106,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-    assert parserDefinition != null;
+    if (parserDefinition == null) {
+      System.out.println("OOOO");
+    }
+    assert parserDefinition != null : "ParserDefinition absent for language: " + lang.getID();
     myLexer = lexer != null ? lexer : parserDefinition.createLexer(project);
     myWhitespaces = parserDefinition.getWhitespaceTokens();
     myComments = parserDefinition.getCommentTokens();
@@ -117,8 +117,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     if (chameleon instanceof ChameleonElement) { // Shall always be true BTW
       myOriginalTree = chameleon.getTreeParent().getUserData(BlockSupport.TREE_TO_BE_REPARSED);
+      myInjectionHost = chameleon.getTreeParent().getPsi().getContext();
     }
-    myInjectionHost = chameleon.getTreeParent().getPsi().getContext();
+    else {
+      myOriginalTree = chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED);
+      myInjectionHost = chameleon.getPsi().getContext();
+    }
 
     myFileLevelParsing = myCharTable == null || myOriginalTree != null;
     cacheLexems();
@@ -676,7 +680,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private ASTNode createRootAST(final StartMarker rootMarker) {
     final ASTNode rootNode;
     if (myFileLevelParsing) {
-      rootNode = new FileElement(rootMarker.myType);
+      rootNode = new FileElement(rootMarker.myType, null);
       myCharTable = ((FileElement)rootNode).getCharTable();
     }
     else {
@@ -852,7 +856,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       final int end = myLexEnds[curToken];
       if (start < end || myLexTypes[curToken] instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in phyton
         final IElementType type = myLexTypes[curToken];
-        final LeafElement leaf = createLeaf(type, start, end);
+        final TreeElement leaf = createLeaf(type, start, end);
         curNode.rawAddChildren(leaf);
       }
       curToken++;
@@ -895,7 +899,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                  : ThreeState.NO;
         }
 
-        if (oldNode.getElementType() instanceof IChameleonElementType && newNode.getTokenType() instanceof IChameleonElementType) {
+        if (oldNode.getElementType() instanceof IChameleonElementType && newNode.getTokenType() instanceof IChameleonElementType ||
+            oldNode.getElementType() instanceof ILazyParseableElementType && newNode.getTokenType() instanceof ILazyParseableElementType) {
           return ((TreeElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd)
                  ? ThreeState.YES
                  : ThreeState.NO;
@@ -1077,12 +1082,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @NotNull
-  private LeafElement createLeaf(final IElementType type, final int start, final int end) {
+  private TreeElement createLeaf(final IElementType type, final int start, final int end) {
+    CharSequence text = myCharTable.intern(myText, start, end);
     if (myWhitespaces.contains(type)) {
-      return new PsiWhiteSpaceImpl(myCharTable.intern(myText, start, end));
+      return new PsiWhiteSpaceImpl(text);
     }
 
-    return ASTFactory.leaf(type, myCharTable.intern(myText, start, end));
+    if (type instanceof ILazyParseableElementType) {
+      return ASTFactory.lazy((ILazyParseableElementType)type, text);
+    }
+
+    return ASTFactory.leaf(type, text);
   }
 
   /**

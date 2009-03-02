@@ -51,6 +51,13 @@ public interface ASTNode extends UserDataHolder {
   String getText();
 
   /**
+   * Returns same text getText() returns but might be more effective eliminating toString() transformation from internal CharSequence representation
+   *
+   * @return the node text.
+   */
+  CharSequence getChars();
+
+  /**
    * Checks if the specified character is present in the text of this node.
    *
    * @param c the character to search for.

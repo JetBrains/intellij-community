@@ -512,7 +512,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   private static ASTNode splitSpaceElement(TreeElement space, int offset, CharTable charTable) {
     LOG.assertTrue(space.getElementType() == TokenType.WHITE_SPACE);
-    CharSequence chars = ((LeafElement)space).getInternedText();
+    CharSequence chars = space.getChars();
     LeafElement space1 = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, chars, 0, offset, charTable, SharedImplUtil.getManagerByTree(space));
     LeafElement space2 = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, chars, offset, chars.length(), charTable, SharedImplUtil.getManagerByTree(space));
     ASTNode parent = space.getTreeParent();

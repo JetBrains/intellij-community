@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +19,7 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
@@ -82,7 +83,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   public PsiPackageStatement getPackageStatement() {
-    return (PsiPackageStatement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.PACKAGE_STATEMENT);
+    ASTNode node = calcTreeElement().findChildByType(JavaElementType.PACKAGE_STATEMENT);
+    return node != null ? (PsiPackageStatement)node.getPsi() : null;
   }
 
   @NotNull
@@ -103,7 +105,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       return stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, PsiImportList.ARRAY_FACTORY)[0];
     }
 
-    return (PsiImportList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_LIST);
+    ASTNode node = calcTreeElement().findChildByType(JavaElementType.IMPORT_LIST);
+    assert node != null;
+
+    return (PsiImportList)node.getPsi();
   }
 
   @NotNull

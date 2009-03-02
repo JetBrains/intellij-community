@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ public class CompositeElement extends TreeElement {
 
   private volatile TreeElement firstChild = null; // might be modified by transforming chameleons
   private volatile TreeElement lastChild = null; // might be modified by transforming chameleons
+
   private volatile int myModificationsCount = 0;
   private volatile int myCachedLength = -1;
   private volatile int myHC = -1;
@@ -49,7 +51,7 @@ public class CompositeElement extends TreeElement {
     clone.lastChild = null;
     clone.myModificationsCount = 0;
     clone.myWrapper = null;
-    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+    for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
       clone.rawAddChildren((TreeElement)child.clone());
     }
     return clone;
@@ -78,7 +80,7 @@ public class CompositeElement extends TreeElement {
     myModificationsCount++;
     myHC = -1;
     
-    clearRelativeOffsets(getFirstChildNode());
+    clearRelativeOffsets(rawFirstChild());
   }
 
   public void acceptTree(TreeElementVisitor visitor) {
@@ -86,7 +88,7 @@ public class CompositeElement extends TreeElement {
   }
 
   public LeafElement findLeafElementAt(int offset) {
-    TreeElement child = firstChild;
+    TreeElement child = getFirstChildNode();
     while (child != null) {
       final int textLength = child.getTextLength();
       if (textLength > offset) {
@@ -146,6 +148,22 @@ public class CompositeElement extends TreeElement {
     return StringFactory.createStringFromConstantArray(buffer);    
   }
 
+  public CharSequence getChars() {
+    char[] buffer = new char[getTextLength()];
+    AstBufferUtil.toBuffer(this, buffer, 0);
+    return new CharArrayCharSequence(buffer); 
+  }
+
+  public int getNotCachedLength() {
+    int length = 0;
+    TreeElement child = getFirstChildNode();
+    while(child != null){
+      length += child.getNotCachedLength();
+      child = child.getTreeNext();
+    }
+    return length;
+  }
+
   @NotNull
   public char[] textToCharArray() {
     char[] buffer = new char[getTextLength()];
@@ -158,6 +176,15 @@ public class CompositeElement extends TreeElement {
       if (child.textContains(c)) return true;
     }
     return false;
+  }
+
+  protected int textMatches(CharSequence buffer, int start) {
+    int curOffset = start;
+    for (TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      curOffset = child.textMatches(buffer, curOffset);
+      if (curOffset == -1) return -1;
+    }
+    return curOffset;
   }
 
   public final PsiElement findChildByRoleAsPsiElement(int role) {
@@ -250,7 +277,7 @@ public class CompositeElement extends TreeElement {
       anchorBefore = before.booleanValue() ? anchor : anchor.getTreeNext();
     }
     else {
-      anchorBefore = before == null || before.booleanValue() ? null : firstChild;
+      anchorBefore = before == null || before.booleanValue() ? null : getFirstChildNode();
     }
     return (TreeElement)CodeEditUtil.addChildren(this, first, last, anchorBefore);
   }
@@ -451,9 +478,9 @@ public class CompositeElement extends TreeElement {
   }
 
   public void rawAddChildren(@NotNull TreeElement first) {
-    final TreeElement last = lastChild;
+    final TreeElement last = getLastChildNode();
     if (last == null){
-      firstChild = first;
+      setFirstChildNode(first);
       first.setTreePrev(null);
       while(true){
         final TreeElement treeNext = first.getTreeNext();
@@ -461,7 +488,7 @@ public class CompositeElement extends TreeElement {
         if(treeNext == null) break;
         first = treeNext;
       }
-      lastChild = first;
+      setLastChildNode(first);
       first.setTreeParent(this);
     }
     else {
@@ -566,4 +593,12 @@ public class CompositeElement extends TreeElement {
     }
   }
 
+
+  public TreeElement rawFirstChild() {
+    return firstChild;
+  }
+
+  public TreeElement rawLastChild() {
+    return lastChild;
+  }
 }

@@ -8,14 +8,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.html.ScriptSupportUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +27,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
   }
 
   public XmlDocument getDocument() {
-    CompositeElement treeElement = calcTreeElement();
-    ChameleonTransforming.transformChildren(treeElement);
-    return (XmlDocument)treeElement.findChildByRoleAsPsiElement(XmlChildRole.XML_DOCUMENT);
+    return findChildByClass(XmlDocument.class);
   }
 
   public boolean processElements(PsiElementProcessor processor, PsiElement place){

@@ -1037,10 +1037,10 @@ public class OldXmlParsing implements XmlElementType {
       final IElementType tokenType = lexer.getTokenType();
       final TreeElement next;
       if (tokenType instanceof IChameleonElementType) {
-        next = TreeUtil.nextLeaf(leaf, commonParents, tokenType);
+        next = TreeUtil.nextLeaf(leaf, commonParents, tokenType, false);
       }
       else {
-        next = TreeUtil.nextLeaf(leaf, commonParents, null);
+        next = TreeUtil.nextLeaf(leaf, commonParents, null, false);
       }
 
       if (next == null || tokenType == null || next == endToken) break;

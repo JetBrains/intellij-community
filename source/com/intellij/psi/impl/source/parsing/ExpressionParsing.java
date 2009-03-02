@@ -74,7 +74,7 @@ public class ExpressionParsing extends Parsing {
   }
 
   public TreeElement parseExpressionTextFragment(PsiManager manager, CharSequence buffer, int startOffset, int endOffset, int state) {
-    Lexer originalLexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
+    Lexer originalLexer = new JavaLexer(myContext.getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state >= 0) {
       lexer.start(buffer, startOffset, endOffset, state);
@@ -98,8 +98,7 @@ public class ExpressionParsing extends Parsing {
       }
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), state, WhiteSpaceAndCommentsProcessor.INSTANCE,
-                                  myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), state, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return dummyRoot.getFirstChildNode();
   }
 

@@ -18,6 +18,13 @@ public class AstBufferUtil {
     if (element instanceof LeafElement) {
       return ((LeafElement)element).copyTo(buffer, offset);
     }
+
+    if (element instanceof LazyParseableElement) {
+      LazyParseableElement lpe = (LazyParseableElement)element;
+      int lpeResult = lpe.copyTo(buffer, offset);
+      if (lpeResult > 0) return lpeResult;
+    }
+
     int curOffset = offset;
     for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       curOffset = toBuffer(child, buffer, curOffset, skipTypes);

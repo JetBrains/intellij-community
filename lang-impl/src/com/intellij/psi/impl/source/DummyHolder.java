@@ -92,7 +92,7 @@ public class DummyHolder extends PsiFileImpl {
 
   public FileElement getTreeElementNoLock() {
     if(myFileElement == null){
-      myFileElement = new FileElement(TokenType.DUMMY_HOLDER);
+      myFileElement = new FileElement(TokenType.DUMMY_HOLDER, null);
       myFileElement.setPsi(this);
       if(myTable != null) myFileElement.setCharTable(myTable);
       clearCaches();
