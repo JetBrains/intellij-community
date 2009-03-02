@@ -439,6 +439,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     else if (selectedModule != null) {
       newPane.select(selectedModule, selectedModule.getModuleFile(), true);
     }
+    myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
     installLabelFocusListener();
   }
 
