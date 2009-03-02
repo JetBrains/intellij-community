@@ -233,7 +233,7 @@ public class VariableDefinitions implements GroovyElementTypes {
             tupleMarker.drop();
             return WRONGWAY;
           }
-
+          break;
         } else {
           PsiBuilder.Marker varMarker = builder.mark();
           if (!ParserUtils.getToken(builder, mIDENT)) {
