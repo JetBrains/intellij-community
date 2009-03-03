@@ -2,6 +2,8 @@ package com.siyeh.igtest.junit;
 
 import junit.framework.TestCase;
 
+import java.util.Collection;
+
 public class SimplifiableJUnitAssertionInspection extends TestCase{
     public void test()
     {
@@ -9,6 +11,8 @@ public class SimplifiableJUnitAssertionInspection extends TestCase{
         assertEquals(false, new Object() != null);
         assertTrue(false);
         assertFalse("foo", true);
+        Collection collection = null;
+        assertTrue(collection.size() == 2);
     }
 
 

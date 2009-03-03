@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -715,23 +714,17 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         if (!ComparisonUtils.isEqualityComparison(binaryExpression)) {
             return false;
         }
-        final PsiExpression rhs =
-                binaryExpression.getROperand();
+        final PsiExpression rhs = binaryExpression.getROperand();
         if (rhs == null) {
             return false;
         }
-        if(!PsiUtil.isLanguageLevel5OrHigher(expression)){
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            final PsiType lhsType = lhs.getType();
-            if (lhsType instanceof PsiPrimitiveType) {
-                return false;
-            }
-            final PsiType rhsType = rhs.getType();
-            if (rhsType instanceof PsiPrimitiveType) {
-                return false;
-            }
+        final PsiExpression lhs = binaryExpression.getLOperand();
+        final PsiType lhsType = lhs.getType();
+        if (lhsType instanceof PsiPrimitiveType) {
+            return false;
         }
-        return true;
+        final PsiType rhsType = rhs.getType();
+        return !(rhsType instanceof PsiPrimitiveType);
     }
 
     private static boolean isNullComparison(PsiExpression expression) {
