@@ -36,6 +36,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,7 +168,7 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     if (')' == charTyped || ']' == charTyped){
-      if (handleRParen(editor, fileType)) return;
+      if (handleRParen(editor, fileType, charTyped)) return;
     }
     else if ('"' == charTyped || '\'' == charTyped){
       if (handleQuote(editor, charTyped, dataContext, file)) return;
@@ -293,7 +294,7 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  public static boolean handleRParen(Editor editor, FileType fileType){
+  public static boolean handleRParen(Editor editor, FileType fileType, char charTyped) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
 
     int offset = editor.getCaretModel().getOffset();
@@ -302,6 +303,17 @@ public class TypedHandler implements TypedActionHandler {
 
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return false;
+
+    Language language = iterator.getTokenType().getLanguage();
+    final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    if (definition != null) {
+      final Lexer lexer = definition.createLexer(editor.getProject());
+      lexer.start(Character.toString(charTyped), 0, 1, 0);
+      final IElementType tokenType = lexer.getTokenType();
+      if (tokenType != iterator.getTokenType()) {
+        return false;        
+      }
+    }
 
     BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
     if (!braceMatcher.isRBraceToken(iterator, editor.getDocument().getCharsSequence(), fileType)) {
