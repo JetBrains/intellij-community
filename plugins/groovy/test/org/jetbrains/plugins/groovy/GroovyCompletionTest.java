@@ -32,31 +32,33 @@ public class GroovyCompletionTest extends CodeInsightFixtureTestCase {
     return "/svnPlugins/groovy/testdata/groovy/completion/";
   }
 
+  public void testFinishMethodWithLParen() throws Throwable {
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getBar", "getFoo");
+    myFixture.type('(');
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
+
   public void testSmartCompletionAfterNewInDeclaration() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART);
-    //myFixture.testCompletionVariants();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "Bar", "Foo");
-    
-    //myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
   public void testSmartCompletionAfterNewInDeclarationWithInterface() throws Throwable {
+    doSmartTest();
+  }
+
+  private void doSmartTest() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART);
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
   public void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.SMART);
-    //assertOrderedEquals(myFixture.getLookupElementStrings(), "Bar");
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    doSmartTest();
   }
   
   public void testSmartCompletionAfterNewInDeclarationWithAbstractClass() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.SMART);
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    doSmartTest();
   }
 }

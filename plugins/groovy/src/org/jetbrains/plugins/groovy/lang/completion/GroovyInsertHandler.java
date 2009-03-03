@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
@@ -26,15 +27,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 
@@ -73,29 +74,25 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
 
       if (PsiTreeUtil.getParentOfType(elementAt, GrImportStatement.class) != null) return;
 
-      if (parameters.length == 0) {
-        if (offset == document.getTextLength() || document.getCharsSequence().charAt(offset) != '(') {
-          document.insertString(offset, "()");
-        }
+      if (parameters.length == 1 && CLOSURE_CLASS.equals(parameters[0].getType().getCanonicalText())) {
+        document.insertString(offset, " {}");
         caretModel.moveToOffset(offset + 2);
-      } else {
-        if (parameters.length == 1 && CLOSURE_CLASS.equals(parameters[0].getType().getCanonicalText())) {
-          document.insertString(offset, " {}");
-          caretModel.moveToOffset(offset + 2);
-        } else {
-          PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
-          docManager.commitDocument(document);
-          PsiFile psiFile = docManager.getPsiFile(document);
-          if (isExpressionStatement(psiFile, context.getStartOffset()) && PsiType.VOID.equals(method.getReturnType())) {
-            document.insertString(offset, " ");
-          } else if (!document.getText().substring(offset).trim().startsWith("(")) {
-            document.insertString(offset, "()");
-            caretModel.moveToOffset(offset + 1);
-          }
-        }
+        return;
       }
+
+      PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
+      docManager.commitDocument(document);
+      PsiFile psiFile = docManager.getPsiFile(document);
+      if (isExpressionStatement(psiFile, context.getStartOffset()) && PsiType.VOID.equals(method.getReturnType()) && '(' != context.getCompletionChar()) {
+        TailType.insertChar(editor, offset, ' ');
+        return;
+      }
+
+      new MethodParenthesesHandler(method, true).handleInsert(context, item);
       return;
-    } else if (obj instanceof String && !"assert".equals(obj)) {
+    }
+
+    if (obj instanceof String && !"assert".equals(obj)) {
       Editor editor = context.getEditor();
       Document document = editor.getDocument();
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
