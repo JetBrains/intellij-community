@@ -14,7 +14,7 @@ import java.util.Calendar;
  */
 @SuppressWarnings({"ALL"})
 public class StructuralReplaceTest extends StructuralReplaceTestCase {
-  public void testReplaceInLiterals() {
+  public void _testReplaceInLiterals() {
     String s1 = "String ID_SPEED = \"Speed\";";
     String s2 = "String 'name = \"'string\";";
     String s2_2 = "String 'name = \"'string:[regex( .* )]\";";
@@ -1476,7 +1476,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   @Bombed(day = 28, description = "support it", month = Calendar.JULY, user = "maxim.mossienko")
-  public void testClassReplacement10() throws IOException {
+  public void _testClassReplacement10() throws IOException {
     String s1 = TestUtils.loadFile("before2.java");
     String s2 = "class '_Class {\n" +
                 "  '_ReturnType+ '_MethodName+('_ParameterType* '_Parameter*){\n" +
@@ -1526,7 +1526,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
-  public void testClassReplacement2() {
+  public void _testClassReplacement2() {
     final String actualResult;
     String s40 = "class A {\n" +
                  "  /* special comment*/\n" +
@@ -1953,7 +1953,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
-  public void testReplaceFinalModifier() throws Exception {
+  public void _testReplaceFinalModifier() throws Exception {
     String s1 = "class Foo {\n" +
                 "  void foo(final int i,final int i2, final int i3) {\n" +
                 "     final int x = 5;\n" +
