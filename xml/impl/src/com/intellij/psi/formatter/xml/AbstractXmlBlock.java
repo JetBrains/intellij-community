@@ -271,10 +271,13 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, childPsi);
     LOG.assertTrue(builder != null);
     final FormattingModel childModel = builder.createModel(childPsi, getSettings());
-    result.add(new AnotherLanguageBlockWrapper(child,
-                                               myXmlFormattingPolicy,
-                                               childModel.getRootBlock(),
-                                               indent, offset, range));
+    Block original = childModel.getRootBlock();
+    
+    if (original.isLeaf() || original.getSubBlocks().size() != 0) {
+      result.add(new AnotherLanguageBlockWrapper(child,
+                                                 myXmlFormattingPolicy, original,
+                                                 indent, offset, range));
+    }
     return child;
   }
 
