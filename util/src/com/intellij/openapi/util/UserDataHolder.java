@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 
 public interface UserDataHolder {
-  <T> T getUserData(Key<T> key);
+  <T> T getUserData(@NotNull Key<T> key);
 
-  <T> void putUserData(Key<T> key, T value);
+  <T> void putUserData(@NotNull Key<T> key, @Nullable T value);
 }

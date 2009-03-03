@@ -50,7 +50,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private final Map<String, Pair<PsiImportStatementBase, PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStatementBase, PsiClass>>();
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
-  private volatile boolean released = true;
   private PsiFile myFile;
   private final PsiElementVisitor REGISTER_REFERENCES_VISITOR = new PsiRecursiveElementWalkingVisitor() {
     @Override public void visitElement(PsiElement element) {
@@ -111,8 +110,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   public boolean analyze(final Runnable action, final boolean updateWholeFile, final PsiFile file) {
     myFile = file;
-    assert released;
-    released = false;
     boolean success = true;
     try {
       if (updateWholeFile) {
@@ -139,7 +136,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
       myRefCountHolder = null;
       myFile = null;
-      released = true;
       myHolder = null;
     }
 

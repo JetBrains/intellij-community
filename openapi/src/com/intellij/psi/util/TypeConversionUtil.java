@@ -369,7 +369,7 @@ public class TypeConversionUtil {
     return typeRank <= MAX_NUMERIC_RANK;
   }
   public static boolean isNumericType(PsiType type) {
-    return isNumericType(getTypeRank(type));
+    return type != null && isNumericType(getTypeRank(type));
   }
 
   /**

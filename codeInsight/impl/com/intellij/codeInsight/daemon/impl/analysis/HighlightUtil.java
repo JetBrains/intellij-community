@@ -1795,7 +1795,7 @@ public class HighlightUtil {
   static HighlightInfo checkConstantExpressionOverflow(PsiExpression expr) {
     boolean overflow = false;
     try {
-      if (expr.getUserData(HAS_OVERFLOW_IN_CHILD) == null) {
+      if (expr.getUserData(HAS_OVERFLOW_IN_CHILD) == null && TypeConversionUtil.isNumericType(expr.getType())) {
         JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr, true);
       }
       else {
@@ -1804,12 +1804,11 @@ public class HighlightUtil {
     }
     catch (ConstantEvaluationOverflowException e) {
       overflow = true;
-      return HighlightInfo
-        .createHighlightInfo(HighlightInfoType.OVERFLOW_WARNING, expr, JavaErrorMessages.message("numeric.overflow.in.expression"));
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.OVERFLOW_WARNING, expr, JavaErrorMessages.message("numeric.overflow.in.expression"));
     }
     finally {
       PsiElement parent = expr.getParent();
-      if (parent instanceof PsiExpression && overflow) {
+      if (overflow && parent instanceof PsiExpression) {
         parent.putUserData(HAS_OVERFLOW_IN_CHILD, "");
       }
     }
