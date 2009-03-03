@@ -16,6 +16,7 @@ import com.intellij.psi.filters.getters.AllWordsGetter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import static com.intellij.patterns.StandardPatterns.*;
 
 import java.util.Set;
 import java.util.HashSet;
@@ -59,10 +60,15 @@ public class WordCompletionContributor extends CompletionContributor{
       while (textContainer != null) {
         final IElementType elementType = textContainer.getElementType();
         if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) || elementType == PlainTextTokenTypes.PLAIN_TEXT) {
-          final String prefix = CompletionUtil.findJavaIdentifierPrefix(insertedElement, startOffset);
-          final CompletionResultSet resultSet = result.withPrefixMatcher(prefix);
+          final CompletionResultSet javaResultSet = result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(insertedElement, startOffset));
+          final CompletionResultSet plainResultSet = result.withPrefixMatcher(CompletionUtil.findIdentifierPrefix(insertedElement,
+                                                                                                                  startOffset,
+                                                                                                                  character().javaIdentifierPart().andNot(character().equalTo('$')),
+                                                                                                                  character().javaIdentifierStart()));
           for (final String word : AllWordsGetter.getAllWords(insertedElement, startOffset)) {
-            resultSet.addElement(new LookupItem<String>(word, word).setTailType(TailType.SPACE));
+            final LookupItem<String> item = new LookupItem<String>(word, word).setTailType(TailType.SPACE);
+            javaResultSet.addElement(item);
+            plainResultSet.addElement(item);
           }
         }
         textContainer = textContainer.getTreeParent();

@@ -10,17 +10,14 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.getters.AllWordsGetter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.XmlTokenTypeFilter;
-import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -79,10 +76,29 @@ public class XmlCompletionData extends CompletionData {
 
     {
       final CompletionVariant variant = new CompletionVariant(
-          new AndFilter(new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), new NotFilter(entityCompletionFilter)));
+        new AndFilter(new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), new NotFilter(entityCompletionFilter), new ElementFilter() {
+          public boolean isAcceptable(Object element, PsiElement context) {
+            XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
+            if (tag != null) {
+              return XmlUtil.getSchemaSimpleContent(tag) != null;
+            }
+            return false;
+          }
+
+          public boolean isClassAcceptable(Class hintClass) {
+            return true;
+          }
+        }));
       variant.includeScopeClass(XmlToken.class, true);
       variant.addCompletion(new SimpleTagContentEnumerationValuesGetter(), TailType.NONE);
 
+      registerVariant(variant);
+    }
+    
+    {
+      final CompletionVariant variant = new CompletionVariant(
+        new AndFilter(new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), new NotFilter(entityCompletionFilter)));
+      variant.includeScopeClass(XmlToken.class, true);
       registerVariant(variant);
     }
 
@@ -191,17 +207,11 @@ public class XmlCompletionData extends CompletionData {
         if (simpleContent != null) {
           final HashSet<String> variants = new HashSet<String>();
           XmlUtil.collectEnumerationValues(simpleContent, variants);
-          if (variants.size() > 0) return variants.toArray(new Object[variants.size()]);
-        }
-
-        for (final PsiReference reference : tag.getReferences()) {
-          if (!(reference instanceof TagNameReference)) {
-            return ArrayUtil.EMPTY_OBJECT_ARRAY;
-          }
+          return variants.toArray(new Object[variants.size()]);
         }
       }
 
-      return new AllWordsGetter().get(context, completionContext);
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
   }
 

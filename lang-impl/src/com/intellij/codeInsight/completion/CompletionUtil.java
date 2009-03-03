@@ -10,6 +10,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.patterns.ElementPattern;
+import static com.intellij.patterns.PlatformPatterns.character;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.TrueFilter;
@@ -106,13 +108,21 @@ public class CompletionUtil {
   }
 
   public static String findJavaIdentifierPrefix(final PsiElement insertedElement, final int offset) {
+    return findIdentifierPrefix(insertedElement, offset, character().javaIdentifierPart(), character().javaIdentifierStart());
+  }
+
+  public static String findIdentifierPrefix(PsiElement insertedElement, int offset, ElementPattern<Character> idPart,
+                                             ElementPattern<Character> idStart) {
     if(insertedElement == null) return "";
     final String text = insertedElement.getText();
     final int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
     int start = offsetInElement - 1;
-    while(start >=0 ) {
-      if(!Character.isJavaIdentifierPart(text.charAt(start))) break;
+    while (start >=0 ) {
+      if (!idPart.accepts(text.charAt(start))) break;
       --start;
+    }
+    while (start + 1 < offsetInElement && !idStart.accepts(text.charAt(start + 1))) {
+      start++;
     }
 
     return text.substring(start + 1, offsetInElement).trim();

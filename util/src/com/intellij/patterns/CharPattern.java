@@ -22,6 +22,15 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
       }
     });
   }
+
+  public CharPattern javaIdentifierStart() {
+    return with(new PatternCondition<Character>("javaIdentifierStart") {
+      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+        return Character.isJavaIdentifierStart(character.charValue());
+      }
+    });
+  }
+
   public CharPattern whitespace() {
     return with(new PatternCondition<Character>("whitespace") {
       public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
