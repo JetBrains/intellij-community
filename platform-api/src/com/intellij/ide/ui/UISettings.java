@@ -73,7 +73,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean SHOW_ICONS_IN_QUICK_NAVIGATION = true;
   public boolean CLOSE_NON_MODIFIED_FILES_FIRST = false;
   public boolean ACTIVATE_MRU_EDITOR_ON_CLOSE = false;
-  public boolean ANTIALIASING_IN_EDITOR;
+  public boolean ANTIALIASING_IN_EDITOR = true;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;
   public int ALPHA_MODE_DELAY = 1500;
@@ -96,7 +96,6 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   /** Invoked by reflection */
   public UISettings(){
     myListenerList=new EventListenerList();
-    ANTIALIASING_IN_EDITOR = SystemInfo.isMac;
     setSystemFontFaceAndSize();
   }
 
