@@ -276,4 +276,8 @@ public class DefaultActionGroup extends ActionGroup {
       add(each);
     }
   }
+
+  public void addSeparator(@Nullable String separatorText) {
+    add(new Separator(separatorText));
+  }
 }
