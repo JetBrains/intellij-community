@@ -477,7 +477,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     editorDocument.setCyclicBufferSize(bufferSize);
 
     final EditorEx editor = (EditorEx) editorFactory.createViewer(editorDocument,myProject);
-    final EditorHighlighter highlighter = new MyHighghlighter();
+    final EditorHighlighter highlighter = new MyHighlighter();
     editor.setHighlighter(highlighter);
     editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this);
 
@@ -668,7 +668,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     }
   }
 
-  private class MyHighghlighter extends DocumentAdapter implements EditorHighlighter {
+  private class MyHighlighter extends DocumentAdapter implements EditorHighlighter {
     private boolean myHasEditor;
 
     public HighlighterIterator createIterator(final int startOffset) {
