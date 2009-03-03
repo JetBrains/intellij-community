@@ -102,6 +102,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     @Nullable
     public Object getData(@NonNls final String dataId) {
       if (DataConstantsEx.CONTENT_MANAGER.equals(dataId)) return ContentManagerImpl.this;
+      if (DataConstantsEx.NONEMPTY_CONTENT_MANAGER.equals(dataId) && getContentCount() > 1) {
+        return ContentManagerImpl.this;
+      }
 
       for (DataProvider each : myProviders) {
         final Object data = each.getData(dataId);

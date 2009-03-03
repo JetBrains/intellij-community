@@ -45,6 +45,8 @@ public interface DataConstantsEx extends DataConstants {
    */
   @NonNls String CONTENT_MANAGER = "contentManager";
 
+  @NonNls String NONEMPTY_CONTENT_MANAGER = "nonemptyContentManager";
+
   /**
    * Returns {@link com.intellij.execution.configurations.RuntimeConfiguration}
    */

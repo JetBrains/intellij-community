@@ -35,7 +35,7 @@ abstract class TabNavigationActionBase extends AnAction {
       return;
     }
 
-    ContentManager contentManager = (ContentManager)dataContext.getData(DataConstantsEx.CONTENT_MANAGER);
+    ContentManager contentManager = (ContentManager)dataContext.getData(DataConstantsEx.NONEMPTY_CONTENT_MANAGER);
     if (contentManager == null) return;
     doNavigate(contentManager);
   }
@@ -62,7 +62,7 @@ abstract class TabNavigationActionBase extends AnAction {
       return;
     }
 
-    ContentManager contentManager = (ContentManager)dataContext.getData(DataConstantsEx.CONTENT_MANAGER);
+    ContentManager contentManager = (ContentManager)dataContext.getData(DataConstantsEx.NONEMPTY_CONTENT_MANAGER);
     presentation.setEnabled(contentManager != null && contentManager.getContentCount() > 1 && contentManager.isSingleSelection());
   }
 

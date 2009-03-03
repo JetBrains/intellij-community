@@ -256,6 +256,9 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
         if (DataConstantsEx.CONTENT_MANAGER.equals(dataId)) {
           return myManager;
         }
+        if (DataConstantsEx.NONEMPTY_CONTENT_MANAGER.equals(dataId) && myManager.getContentCount() > 1) {
+          return myManager;
+        }
         return null;
       }
     }
