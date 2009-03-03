@@ -35,6 +35,13 @@
       <action id="OpenDirectoryProject" class="com.intellij.platform.OpenDirectoryProjectAction"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
+
+    <group id="AnalyzePlatformMenu">
+      <separator/>
+      <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction"/>
+
+      <add-to-group group-id="AnalyzeMenu" anchor="last"/>
+    </group>
   </actions>
 
 </component>

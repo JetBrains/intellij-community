@@ -12,7 +12,7 @@ public final class UnscrambleFromClipboardAction extends AnAction {
 
     // If there's a text in clipboard and log is specified or not needed, unscramble w/o extra questions
 
-    String text = UnscrambleDialog.getTextInClipboard();
+    String text = AnalyzeStacktraceUtil.getTextInClipboard();
     if (text != null) {
       String file = UnscrambleDialog.getLastUsedLogUrl();
       if (file != null && file.trim().length() == 0) {

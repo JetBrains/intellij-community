@@ -1,0 +1,172 @@
+package com.intellij.unscramble;
+
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+
+/**
+ * @author yole
+ */
+public class AnalyzeStacktraceUtil {
+  private AnalyzeStacktraceUtil() {
+  }
+
+  static void printStacktrace(final ConsoleView consoleView, final String unscrambledTrace) {
+    consoleView.clear();
+    consoleView.print(unscrambledTrace+"\n", ConsoleViewContentType.ERROR_OUTPUT);
+    consoleView.performWhenNoDeferredOutput(
+      new Runnable() {
+        public void run() {
+          consoleView.scrollTo(0);
+        }
+      }
+    );
+  }
+
+  @Nullable
+  public static String getTextInClipboard() {
+    String text = null;
+    try {
+      Transferable contents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(AnalyzeStacktraceUtil.class);
+      if (contents != null) {
+        text = (String)contents.getTransferData(DataFlavor.stringFlavor);
+      }
+    }
+    catch (Exception ex) {
+    }
+    return text;
+  }
+
+  interface ConsoleFactory {
+    JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions);
+  }
+
+  public static ConsoleView addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final String tabTitle) {
+    final ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    final DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    JComponent consoleComponent = consoleFactory != null
+                                  ? consoleFactory.createConsoleComponent(consoleView, toolbarActions)
+                                  : new MyConsolePanel(consoleView, toolbarActions);
+    final RunContentDescriptor descriptor =
+      new RunContentDescriptor(consoleView, null, consoleComponent, tabTitle) {
+      public boolean isContentReuseProhibited() {
+        return true;
+      }
+    };
+
+    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    toolbarActions.add(new CloseAction(executor, descriptor, project));
+    for (AnAction action: consoleView.createUpDownStacktraceActions()) {
+      toolbarActions.add(action);
+    }
+    ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
+    return consoleView;
+  }
+
+  private static final class MyConsolePanel extends JPanel {
+    public MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
+      super(new BorderLayout());
+      JPanel toolbarPanel = new JPanel(new BorderLayout());
+      toolbarPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions,false).getComponent());
+      add(toolbarPanel, BorderLayout.WEST);
+      add(consoleView.getComponent(), BorderLayout.CENTER);
+    }
+  }
+
+  public static StacktraceEditorPanel createEditorPanel(Project project, @NotNull Disposable parentDisposable) {
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    Document document = editorFactory.createDocument("");
+    Editor editor = editorFactory.createEditor(document);
+    EditorSettings settings = editor.getSettings();
+    settings.setFoldingOutlineShown(false);
+    settings.setLineMarkerAreaShown(false);
+    settings.setLineNumbersShown(false);
+    settings.setRightMarginShown(false);
+
+    StacktraceEditorPanel editorPanel = new StacktraceEditorPanel(project, editor);
+    editorPanel.setPreferredSize(new Dimension(600, 400));
+    Disposer.register(parentDisposable, editorPanel);
+    return editorPanel;
+  }
+
+  public static final class StacktraceEditorPanel extends JPanel implements DataProvider, Disposable {
+    private Project myProject;
+    private final Editor myEditor;
+
+    public StacktraceEditorPanel(Project project, Editor editor) {
+      super(new BorderLayout());
+      myProject = project;
+      myEditor = editor;
+      add(myEditor.getComponent());
+    }
+
+    public Object getData(String dataId) {
+      if (DataConstants.EDITOR.equals(dataId)) {
+        return myEditor;
+      }
+      return null;
+    }
+
+    public Editor getEditor() {
+      return myEditor;
+    }
+
+    public final void setText(@NotNull final String text) {
+      Runnable runnable = new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              final Document document = myEditor.getDocument();
+              document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
+            }
+          });
+        }
+      };
+      CommandProcessor.getInstance().executeCommand(myProject, runnable, "", this);
+    }
+
+    public void pasteTextFromClipboard() {
+      String text = getTextInClipboard();
+      if (text != null) {
+        setText(text);
+      }
+
+    }
+
+    public void dispose() {
+      EditorFactory.getInstance().releaseEditor(myEditor);
+    }
+
+    public String getText() {
+      return myEditor.getDocument().getText();
+    }
+
+    public JComponent getEditorComponent() {
+      return myEditor.getContentComponent();
+    }
+  }
+}

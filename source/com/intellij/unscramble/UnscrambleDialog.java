@@ -3,24 +3,13 @@
  */
 package com.intellij.unscramble;
 
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.Executor;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -32,22 +21,18 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -72,10 +57,10 @@ public class UnscrambleDialog extends DialogWrapper{
   private JPanel myLogFileChooserPanel;
   private JComboBox myUnscrambleChooser;
   private JPanel myPanel;
-  private Editor myEditor;
   private TextFieldWithHistory myLogFile;
   private JCheckBox myUseUnscrambler;
   private JPanel myUnscramblePanel;
+  protected AnalyzeStacktraceUtil.StacktraceEditorPanel myStacktraceEditorPanel;
 
   public UnscrambleDialog(Project project) {
     super(false);
@@ -142,7 +127,7 @@ public class UnscrambleDialog extends DialogWrapper{
     }
 
     useUnscramblerChanged();
-    pasteTextFromClipboard();
+    myStacktraceEditorPanel.pasteTextFromClipboard();
   }
 
   public static String getLastUsedLogUrl() {
@@ -172,40 +157,6 @@ public class UnscrambleDialog extends DialogWrapper{
     return res;
   }
 
-  private void pasteTextFromClipboard() {
-    String text = getTextInClipboard();
-    if (text != null) {
-      setText(text);
-    }
-  }
-
-  public final void setText(@NotNull final String text) {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final Document document = myEditor.getDocument();
-            document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
-          }
-        });
-      }
-    };
-    CommandProcessor.getInstance().executeCommand(myProject, runnable, "", this);
-  }
-
-  public static String getTextInClipboard() {
-    String text = null;
-    try {
-      Transferable contents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(UnscrambleDialog.class);
-      if (contents != null) {
-        text = (String)contents.getTransferData(DataFlavor.stringFlavor);
-      }
-    }
-    catch (Exception ex) {
-    }
-    return text;
-  }
-
   @Nullable
   private UnscrambleSupport getSelectedUnscrambler() {
     if (!myUseUnscrambler.isSelected()) return null;
@@ -213,20 +164,9 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   private void createEditor() {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    Document document = editorFactory.createDocument("");
-    myEditor = editorFactory.createEditor(document);
-    EditorSettings settings = myEditor.getSettings();
-    settings.setFoldingOutlineShown(false);
-    settings.setLineMarkerAreaShown(false);
-    settings.setLineNumbersShown(false);
-    settings.setRightMarginShown(false);
-
-    EditorPanel editorPanel = new EditorPanel(myEditor);
-    editorPanel.setPreferredSize(new Dimension(600, 400));
-
+    myStacktraceEditorPanel = AnalyzeStacktraceUtil.createEditorPanel(myProject, myDisposable);
     myEditorPanel.setLayout(new BorderLayout());
-    myEditorPanel.add(editorPanel, BorderLayout.CENTER);
+    myEditorPanel.add(myStacktraceEditorPanel, BorderLayout.CENTER);
   }
 
   protected Action[] createActions(){
@@ -275,9 +215,6 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   public void dispose() {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    editorFactory.releaseEditor(myEditor);
-
     if (isOK()){
       final List list = myLogFile.getHistory();
       String res = null;
@@ -299,6 +236,10 @@ public class UnscrambleDialog extends DialogWrapper{
     super.dispose();
   }
 
+  public void setText(String trace) {
+    myStacktraceEditorPanel.setText(trace);
+  }
+
   private final class NormalizeTextAction extends AbstractAction {
     public NormalizeTextAction(){
       putValue(Action.NAME, IdeBundle.message("unscramble.normalize.button"));
@@ -306,19 +247,8 @@ public class UnscrambleDialog extends DialogWrapper{
     }
 
     public void actionPerformed(ActionEvent e){
-      String text = myEditor.getDocument().getText();
-      text = normalizeText(text);
-
-      final String newText = text;
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), newText);
-            }
-          });
-        }
-      }, "", null);
+      String text = myStacktraceEditorPanel.getText();
+      myStacktraceEditorPanel.setText(normalizeText(text));
     }
 
   }
@@ -377,23 +307,6 @@ public class UnscrambleDialog extends DialogWrapper{
     return false;
   }
 
-  private static final class EditorPanel extends JPanel implements DataProvider{
-    private final Editor myEditor;
-
-    public EditorPanel(Editor editor) {
-      super(new BorderLayout());
-      myEditor = editor;
-      add(myEditor.getComponent());
-    }
-
-    public Object getData(String dataId) {
-      if (DataConstants.EDITOR.equals(dataId)) {
-        return myEditor;
-      }
-      return null;
-    }
-  }
-
   protected void doOKAction() {
     if (performUnscramble()) {
       myLogFile.addCurrentTextToHistory();
@@ -407,7 +320,7 @@ public class UnscrambleDialog extends DialogWrapper{
 
   private boolean performUnscramble() {
     UnscrambleSupport selectedUnscrambler = getSelectedUnscrambler();
-    return showUnscrambledText(selectedUnscrambler, myLogFile.getText(), myProject, myEditor.getDocument().getText());
+    return showUnscrambledText(selectedUnscrambler, myLogFile.getText(), myProject, myStacktraceEditorPanel.getText());
   }
 
   static boolean showUnscrambledText(UnscrambleSupport unscrambleSupport, String logName, Project project, String textToUnscramble) {
@@ -415,53 +328,16 @@ public class UnscrambleDialog extends DialogWrapper{
     if (unscrambledTrace == null) return false;
     List<ThreadState> threadStates = ThreadDumpParser.parse(unscrambledTrace);
     final ConsoleView consoleView = addConsole(project, threadStates);
-    printStacktrace(consoleView, unscrambledTrace);
+    AnalyzeStacktraceUtil.printStacktrace(consoleView, unscrambledTrace);
     return true;
   }
 
-  private static void printStacktrace(final ConsoleView consoleView, final String unscrambledTrace) {
-    consoleView.clear();
-    consoleView.print(unscrambledTrace+"\n", ConsoleViewContentType.ERROR_OUTPUT);
-    consoleView.performWhenNoDeferredOutput(
-      new Runnable() {
-        public void run() {
-          consoleView.scrollTo(0);
-        }
-      }
-    );
-  }
-
   public static ConsoleView addConsole(final Project project, final List<ThreadState> threadDump) {
-    final ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
-    final DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    JComponent consoleComponent = threadDump.size() > 1
-                                  ? new ThreadDumpPanel(consoleView, toolbarActions, threadDump)
-                                  : new MyConsolePanel(consoleView, toolbarActions);
-    final RunContentDescriptor descriptor =
-      new RunContentDescriptor(consoleView, null, consoleComponent,
-                               IdeBundle.message("unscramble.unscrambled.stacktrace.tab")) {
-      public boolean isContentReuseProhibited() {
-        return true;
+    return AnalyzeStacktraceUtil.addConsole(project, threadDump.size() > 1 ? new AnalyzeStacktraceUtil.ConsoleFactory() {
+      public JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions) {
+        return new ThreadDumpPanel(consoleView, toolbarActions, threadDump);
       }
-    };
-
-    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    toolbarActions.add(new CloseAction(executor, descriptor, project));
-    for (AnAction action: consoleView.createUpDownStacktraceActions()) {
-      toolbarActions.add(action);
-    }
-    ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
-    return consoleView;
-  }
-
-  private static final class MyConsolePanel extends JPanel {
-    public MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
-      super(new BorderLayout());
-      JPanel toolbarPanel = new JPanel(new BorderLayout());
-      toolbarPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions,false).getComponent());
-      add(toolbarPanel, BorderLayout.WEST);
-      add(consoleView.getComponent(), BorderLayout.CENTER);
-    }
+    } : null, IdeBundle.message("unscramble.unscrambled.stacktrace.tab"));
   }
 
   private static class ThreadDumpPanel extends JPanel {
@@ -476,10 +352,10 @@ public class UnscrambleDialog extends DialogWrapper{
           int index = threadList.getSelectedIndex();
           if (index >= 0) {
             ThreadState selection = threadDump.get(index);
-            printStacktrace(consoleView, selection.getStackTrace());
+            AnalyzeStacktraceUtil.printStacktrace(consoleView, selection.getStackTrace());
           }
           else {
-            printStacktrace(consoleView, "");
+            AnalyzeStacktraceUtil.printStacktrace(consoleView, "");
           }
           threadList.repaint();
         }
@@ -569,6 +445,6 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myEditor.getContentComponent();
+    return myStacktraceEditorPanel.getEditorComponent();
   }
 }
