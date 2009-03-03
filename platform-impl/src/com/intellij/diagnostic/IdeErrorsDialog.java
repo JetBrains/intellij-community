@@ -15,6 +15,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -406,7 +408,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     public void actionPerformed(ActionEvent e) {
       myMessagePool.setJvmIsShuttingDown();
-      ApplicationManager.getApplication().exit();
+      LaterInvocator.invokeLater(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().exit();
+        }
+      }, ModalityState.NON_MODAL);
+      doOKAction();
     }
   }
 
