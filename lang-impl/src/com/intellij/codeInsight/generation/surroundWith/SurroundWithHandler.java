@@ -71,19 +71,27 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     for (SurroundDescriptor descriptor : surroundDescriptors) {
       final PsiElement[] elements = descriptor.getElementsToSurround(file, startOffset, endOffset);
       if (elements.length > 0) {
-        if (surrounder == null) {
+        if (surrounder == null) { //production
           PopupActionChooser popupActionChooser = new PopupActionChooser(CHOOSER_TITLE);
-          popupActionChooser.invoke(project, editor, descriptor.getSurrounders(), elements);
+          popupActionChooser.invoke(project, editor, file, descriptor.getSurrounders(), elements);
           if (popupActionChooser.isHasEnabledSurrounders()) return;
         }
         else {
+          doSurround(project, editor, surrounder, elements);
+          return;
+          /*
           if (surroundDescriptors.size() == 1) {
-            doSurround(project, editor, surrounder, elements);
           } else {
             if (invokeSurroundInTestMode(project, editor, surrounder, descriptor, elements)) break;
           }
+          */
         }
       }
+    }
+
+    if (surrounder == null) { //if only templates are available
+      PopupActionChooser popupActionChooser = new PopupActionChooser(CHOOSER_TITLE);
+      popupActionChooser.invoke(project, editor, file, new Surrounder[0], new PsiElement[0]);
     }
   }
 

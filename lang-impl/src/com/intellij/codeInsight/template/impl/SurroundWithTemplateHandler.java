@@ -7,17 +7,13 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ui.UIUtil;
 
 import java.util.*;
 
@@ -74,41 +70,5 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  private static String extractMnemonic(final TemplateImpl template, Set<Character> usedMnemonics) {
-    final String key = template.getKey();
-    if (StringUtil.isEmpty(key)) return "";
 
-    for (int i = 0; i < key.length(); i++) {
-      char c = key.charAt(i);
-      if (!usedMnemonics.contains(c)) {
-        usedMnemonics.add(c);
-        return key.substring(0, i) + UIUtil.MNEMONIC + key.substring(i) + " ";
-      }
-    }
-
-    return key + " ";
-  }
-
-  private static class InvokeTemplateAction extends AnAction {
-    private final TemplateImpl myTemplate;
-    private final Editor myEditor;
-    private final Project myProject;
-
-    public InvokeTemplateAction(final TemplateImpl template, final Editor editor, final Project project, final Set<Character> usedMnemonicsSet) {
-      super(extractMnemonic(template, usedMnemonicsSet) + template.getDescription());
-      myTemplate = template;
-      myProject = project;
-      myEditor = editor;
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      String selectionString = myEditor.getSelectionModel().getSelectedText();
-
-      if (selectionString != null) {
-        if (myTemplate.isToReformat()) selectionString = selectionString.trim();
-      }
-
-      TemplateManager.getInstance(myProject).startTemplate(myEditor, selectionString, myTemplate);
-    }
-  }
 }

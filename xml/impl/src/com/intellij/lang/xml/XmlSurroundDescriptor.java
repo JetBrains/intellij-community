@@ -1,11 +1,9 @@
 package com.intellij.lang.xml;
 
-import com.intellij.codeInsight.generation.surroundWith.TemplateSurrounder;
+import com.intellij.codeInsight.template.HtmlContextType;
+import com.intellij.codeInsight.template.XmlContextType;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.codeInsight.template.XmlContextType;
-import com.intellij.codeInsight.template.HtmlContextType;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.util.Pair;
@@ -47,19 +45,7 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
   }
 
   @NotNull public Surrounder[] getSurrounders() {
-    List<TemplateSurrounder> surrounders = new ArrayList<TemplateSurrounder>();
-    TemplateImpl[] templates = TemplateSettings.getInstance().getTemplates();
-    for (TemplateImpl template : templates) {
-      if (template.isDeactivated() || !template.isSelectionTemplate()) continue;
-      if (isEnabled(template)) {
-        surrounders.add(createSurrounder(template));
-      }
-    }
-    return surrounders.toArray(new Surrounder[surrounders.size()]);
-  }
-
-  protected TemplateSurrounder createSurrounder(final TemplateImpl template) {
-    return new TemplateSurrounder(template);
+    return new Surrounder[0]; //everything is in live templates now
   }
 
   protected boolean isEnabled(final TemplateImpl template) {

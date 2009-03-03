@@ -4,7 +4,7 @@
     name="B" toReformat="true" toShortenFQNames="true" value="{$SELECTION$}">
     <variable alwaysStopAt="false" defaultValue="" expression="" name="SELECTION" />
     <context>
-      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_CODE" value="false" />
       <option name="JAVA_COMMENT" value="false" />
       <option name="JAVA_STRING" value="false" />
       <option name="XML" value="false" />
@@ -12,14 +12,14 @@
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
       <option name="GROOVY" value="true" />
-      <option name="OTHER" value="false" />
+      <option name="OTHER" value="true" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.parens"
     name="P" toReformat="false" toShortenFQNames="true" value="($SELECTION$)">
     <variable alwaysStopAt="false" defaultValue="" expression="" name="SELECTION" />
     <context>
-      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_CODE" value="false" />
       <option name="JAVA_COMMENT" value="false" />
       <option name="JAVA_STRING" value="false" />
       <option name="XML" value="false" />
@@ -27,26 +27,12 @@
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
       <option name="GROOVY" value="true" />
-      <option name="OTHER" value="false" />
+      <option name="OTHER" value="true" />
     </context>
   </template>
   <template name="C" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.callable"
             value="java.util.concurrent.Callable&lt;$RET$&gt; callable = new java.util.concurrent.Callable&lt;$RET$&gt;() {&#10;  public $RET$ call() throws Exception {&#10;    $SELECTION$&#10;    $END$ &#10;  }&#10;};" toReformat="true" toShortenFQNames="true">
     <variable name="RET" expression="" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="true" />
-    <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
-    <context>
-      <option name="JAVA_CODE" value="true" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
-      <option name="OTHER" value="false" />
-    </context>
-  </template>
-  <template name="R" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.runnable"
-            value="java.lang.Runnable runnable = new java.lang.Runnable() {&#10;  public void run() {&#10;    $SELECTION$ &#10;  }&#10;};&#10;$END$" toReformat="true" toShortenFQNames="true">
     <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
     <context>
       <option name="JAVA_CODE" value="true" />
@@ -69,7 +55,7 @@
       <option name="JAVA_STRING" value="false" />
       <option name="XML" value="false" />
       <option name="HTML" value="false" />
-      <option name="JSP" value="false" />                G
+      <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
       <option name="OTHER" value="false" />
     </context>
@@ -89,7 +75,7 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template name="itover" value="for ($ELEMENT_TYPE$ $VAR$ : $SELECTION$) {&#10;  $END$&#10;}&#10;"
+  <template name="I" value="for ($ELEMENT_TYPE$ $VAR$ : $SELECTION$) {&#10;  $END$&#10;}&#10;"
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.iter" toReformat="true" toShortenFQNames="true">
     <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
     <variable name="ELEMENT_TYPE" expression="iterableComponentType(SELECTION)" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="false" />
