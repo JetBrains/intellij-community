@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
+import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -55,7 +56,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
   public ProblemDescriptor[] checkClass(@NotNull final PsiClass aClass,
                                         @NotNull final InspectionManager manager,
                                         final boolean isOnTheFly) {
-    if (TestNGUtil.hasTest(aClass)) {
+    if (TestNGUtil.hasTest(aClass) && PsiClassUtil.isRunnableClass(aClass, true)) {
       final Project project = aClass.getProject();
       final String qName = aClass.getQualifiedName();
       if (qName == null) return null;
