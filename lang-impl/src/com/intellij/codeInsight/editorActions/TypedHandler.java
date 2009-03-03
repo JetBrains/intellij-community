@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
@@ -306,7 +307,7 @@ public class TypedHandler implements TypedActionHandler {
 
     Language language = iterator.getTokenType().getLanguage();
     final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-    if (definition != null) {
+    if (definition != null && !(language instanceof TemplateLanguage)) {
       final Lexer lexer = definition.createLexer(editor.getProject());
       lexer.start(Character.toString(charTyped), 0, 1, 0);
       final IElementType tokenType = lexer.getTokenType();
