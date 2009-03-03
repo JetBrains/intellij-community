@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,72 +101,44 @@ public class ConstantMathCallInspection extends BaseInspection {
             final PsiMethodCallExpression call =
                     (PsiMethodCallExpression) reference.getParent();
             assert call != null;
-            final PsiExpressionList argList = call.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
+            final PsiExpressionList argumentList = call.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
             final String methodName = reference.getReferenceName();
-            final PsiExpression arg = args[0];
-            final Double argValue =
-                    (Double) ConstantExpressionUtil.computeCastTo(arg,
-                            PsiType.DOUBLE);
-            final String newExpression =
-                    createValueString(methodName, argValue.doubleValue());
+            final PsiExpression argument = arguments[0];
+            final PsiMethod method = call.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+            if (parameters.length != 1) {
+                return;
+            }
+            final PsiType type = parameters[0].getType();
+            final Object argumentValue =
+                    ConstantExpressionUtil.computeCastTo(argument, type);
+            final String newExpression;
+            if (argumentValue instanceof Float ||
+                    argumentValue instanceof Double) {
+                final Number number = (Number)argumentValue;
+                newExpression = createValueString(methodName,
+                        number.doubleValue());
+            } else {
+                final Number number = (Number) argumentValue;
+                newExpression = createValueString(methodName,
+                        number.longValue());
+            }
             if (newExpression == null) {
                 return;
             }
-            replaceExpressionAndShorten(call, newExpression);
+            if (type == PsiType.LONG) {
+                replaceExpressionAndShorten(call, newExpression + 'L');
+            } else {
+                replaceExpressionAndShorten(call, newExpression);
+            }
         }
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new ConstantMathCallVisitor();
-    }
-
-    private static class ConstantMathCallVisitor extends BaseInspectionVisitor{
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if(!constantMathCall.contains(methodName)){
-                return;
-            }
-            final PsiExpressionList argList = expression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            if(args.length == 0){
-                return;
-            }
-            final PsiExpression arg = args[0];
-            final Object argValue =
-                    ConstantExpressionUtil.computeCastTo(arg, PsiType.DOUBLE);
-            if (argValue == null || !(argValue instanceof Double)){
-                return;
-            }
-            final double doubleValue = ((Double) argValue).doubleValue();
-            final String valueString = createValueString(methodName,
-                                                         doubleValue);
-            if(valueString == null){
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if(method == null){
-                return;
-            }
-            final PsiClass referencedClass = method.getContainingClass();
-            if(referencedClass == null){
-                return;
-            }
-            final String className = referencedClass.getQualifiedName();
-            if(!"java.lang.Math".equals(className)
-                    && !"java.lang.StrictMath".equals(className)){
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-    }
-
+    
     @SuppressWarnings({"NestedMethodCall", "FloatingPointEquality"})
     @Nullable
     @NonNls
@@ -283,5 +255,64 @@ public class ConstantMathCallInspection extends BaseInspection {
             }
         }
         return null;
+    }
+
+    @Nullable
+    @NonNls
+    static String createValueString(@NonNls String name, long value){
+        if("abs".equals(name)){
+            return Long.toString(Math.abs(value));
+        }
+        return null;
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor(){
+        return new ConstantMathCallVisitor();
+    }
+
+    private static class ConstantMathCallVisitor extends BaseInspectionVisitor{
+
+        @Override public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if(!constantMathCall.contains(methodName)){
+                return;
+            }
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if(arguments.length == 0){
+                return;
+            }
+            final PsiExpression argument = arguments[0];
+            final Object argumentValue =
+                    ConstantExpressionUtil.computeCastTo(argument, PsiType.DOUBLE);
+            if (argumentValue == null || !(argumentValue instanceof Double)){
+                return;
+            }
+            final double doubleValue = ((Double) argumentValue).doubleValue();
+            final String valueString = createValueString(methodName,
+                                                         doubleValue);
+            if(valueString == null){
+                return;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if(method == null){
+                return;
+            }
+            final PsiClass referencedClass = method.getContainingClass();
+            if(referencedClass == null){
+                return;
+            }
+            final String className = referencedClass.getQualifiedName();
+            if(!"java.lang.Math".equals(className)
+                    && !"java.lang.StrictMath".equals(className)){
+                return;
+            }
+            registerMethodCallError(expression);
+        }
     }
 }
