@@ -37,6 +37,7 @@ import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -103,7 +104,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
   protected void checkComments(PsiElement last, boolean commentHere, List<PsiComment> comments) {
     try {
-      ArrayList<CommentRange> found = new ArrayList<CommentRange>();
+      LinkedHashSet<CommentRange> found = new LinkedHashSet<CommentRange>();
       Pattern pattern = Pattern.compile(myOptions.getKeyword(), Pattern.CASE_INSENSITIVE);
       Document doc = FileDocumentManager.getInstance().getDocument(getFile().getVirtualFile());
       for (int i = 0; i < comments.size(); i++) {
@@ -123,7 +124,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
       }
 
       if (commentHere && found.size() == 1) {
-        CommentRange range = found.get(0);
+        CommentRange range = found.iterator().next();
         // Is the comment in the right place?
         if ((langOpts.isRelativeBefore() && range.getFirst() == comments.get(0)) ||
             (!langOpts.isRelativeBefore() && range.getLast() == comments.get(comments.size() - 1))) {
@@ -335,6 +336,26 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
     private final PsiElement first;
     private final PsiElement last;
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CommentRange that = (CommentRange)o;
+
+      if (first != null ? !first.equals(that.first) : that.first != null) return false;
+      if (last != null ? !last.equals(that.last) : that.last != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = first != null ? first.hashCode() : 0;
+      result = 31 * result + (last != null ? last.hashCode() : 0);
+      return result;
+    }
   }
 
   protected static class CommentAction implements Comparable<CommentAction> {
