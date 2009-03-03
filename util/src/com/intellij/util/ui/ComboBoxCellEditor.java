@@ -6,8 +6,8 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
-import java.util.List;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author peter
@@ -24,9 +24,19 @@ public abstract class ComboBoxCellEditor extends DefaultCellEditor {
     return false;
   }
 
+  @Override
+  public boolean stopCellEditing() {
+    final JComboBox comboBox = (JComboBox)editorComponent;
+    comboBox.removeActionListener(delegate);
+    final boolean result = super.stopCellEditing();
+    comboBox.addActionListener(delegate);
+    return result;
+  }
+
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     String currentValue = (String)value;
     final JComboBox component = (JComboBox)super.getTableCellEditorComponent(table, value, isSelected, row, column);
+    component.removeActionListener(delegate);
     component.setBorder(null);
     component.removeAllItems();
     final List<String> items = getComboBoxItems();
@@ -46,6 +56,7 @@ public abstract class ComboBoxCellEditor extends DefaultCellEditor {
       component.setSelectedIndex(selected);
     }
     component.setEditable(isComboboxEditable());
+    component.addActionListener(delegate);
     return component;
   }
 }
