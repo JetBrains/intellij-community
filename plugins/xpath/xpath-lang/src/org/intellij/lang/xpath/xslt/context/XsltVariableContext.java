@@ -51,6 +51,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     public static final XsltVariableContext INSTANCE = new XsltVariableContext();
     
     private static final ResolveCache.Resolver RESOLVER = new ResolveCache.Resolver() {
+        @Nullable
         public PsiElement resolve(PsiReference psiReference, boolean incompleteCode) {
             return resolveInner((XPathVariableReference)psiReference);
         }
@@ -73,6 +74,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         return resolveInner(reference);
     }
 
+    @Nullable
     private static XPathVariable resolveInner(XPathVariableReference reference) {
         final XmlTag context = getContextTag(reference);
         final ResolveProcessor processor = new ResolveProcessor(reference.getReferencedName(), context);
@@ -80,13 +82,15 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         final XPathVariable variable = (XPathVariable)ResolveUtil.treeWalkUp(processor, context);
         if (variable == null) {
             final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class, true);
-            XsltIncludeIndex.processBackwardDependencies(file, new Processor<XmlFile>() {
-                public boolean process(XmlFile xmlFile) {
-                    processor.processExternalFile(xmlFile, context);
-                    return processor.shouldContinue();
-                }
-            });
-            return (XPathVariable)processor.getResult();
+            if (file != null) {
+                XsltIncludeIndex.processBackwardDependencies(file, new Processor<XmlFile>() {
+                    public boolean process(XmlFile xmlFile) {
+                        processor.processExternalFile(xmlFile, context);
+                        return processor.shouldContinue();
+                    }
+                });
+                return (XPathVariable)processor.getResult();
+            }
         }
         return variable;
     }

@@ -64,17 +64,22 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
             return new ResolveResult[]{ new PsiElementResolveResult(element) };
         }
 
-        final List<PsiElementResolveResult> targets = new SmartList<PsiElementResolveResult>();
-        XsltIncludeIndex.processBackwardDependencies((XmlFile)getElement().getContainingFile(), new Processor<XmlFile>() {
-            public boolean process(XmlFile xmlFile) {
-                final PsiElement e = ResolveUtil.resolve(new NamedTemplateMatcher(xmlFile.getDocument(), myName));
-                if (e != null) {
-                    targets.add(new PsiElementResolveResult(e));
+        final XmlFile xmlFile = (XmlFile)getElement().getContainingFile();
+        if (xmlFile != null) {
+            final List<PsiElementResolveResult> targets = new SmartList<PsiElementResolveResult>();
+            XsltIncludeIndex.processBackwardDependencies(xmlFile, new Processor<XmlFile>() {
+                public boolean process(XmlFile xmlFile) {
+                    final PsiElement e = ResolveUtil.resolve(new NamedTemplateMatcher(xmlFile.getDocument(), myName));
+                    if (e != null) {
+                        targets.add(new PsiElementResolveResult(e));
+                    }
+                    return true;
                 }
-                return true;
-            }
-        });
-        return targets.toArray(new ResolveResult[targets.size()]);
+            });
+            return targets.toArray(new ResolveResult[targets.size()]);
+        } else {
+            return ResolveResult.EMPTY_ARRAY;
+        }
     }
 
     public void registerQuickfix(HighlightInfo highlightInfo, TemplateReference psiReference) {

@@ -129,7 +129,7 @@ public class XsltIncludeIndex implements PsiIncludeManager.PsiIncludeHandler {
 //        System.out.println("event = " + event);
     }
 
-    public static boolean processBackwardDependencies(XmlFile file, Processor<XmlFile> processor) {
+    public static boolean processBackwardDependencies(@NotNull XmlFile file, Processor<XmlFile> processor) {
         final PsiIncludeManager manager = file.getProject().getComponent(PsiIncludeManager.class);
         return _processBackwardDependencies(manager, manager.getIncludingFiles(file), processor);
     }
