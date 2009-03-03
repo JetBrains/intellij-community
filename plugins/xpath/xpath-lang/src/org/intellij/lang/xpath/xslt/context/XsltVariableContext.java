@@ -15,6 +15,19 @@
  */
 package org.intellij.lang.xpath.xslt.context;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.XPathVariable;
@@ -31,26 +44,13 @@ import org.intellij.lang.xpath.xslt.quickfix.CreateVariableFix;
 import org.intellij.lang.xpath.xslt.util.ElementProcessor;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Processor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class XsltVariableContext implements VariableContext<XsltVariable> {
     public static final XsltVariableContext INSTANCE = new XsltVariableContext();
     
-    private static final ResolveCache.Resolver RESOLVER = new ResolveCache.Resolver() {
+    private final ResolveCache.Resolver RESOLVER = new ResolveCache.Resolver() {
         @Nullable
         public PsiElement resolve(PsiReference psiReference, boolean incompleteCode) {
             return resolveInner((XPathVariableReference)psiReference);
@@ -59,7 +59,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
 
     @NotNull
     public XsltVariable[] getVariablesInScope(XPathElement element) {
-        final XmlTag context = getContextTag(element);
+        final XmlTag context = getContextTagImpl(element);
         final VariantsProcessor processor = new VariantsProcessor(context);
 
         ResolveUtil.treeWalkUp(processor, context);
@@ -75,8 +75,8 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     }
 
     @Nullable
-    private static XPathVariable resolveInner(XPathVariableReference reference) {
-        final XmlTag context = getContextTag(reference);
+    private XPathVariable resolveInner(XPathVariableReference reference) {
+        final XmlTag context = getContextTagImpl(reference);
         final ResolveProcessor processor = new ResolveProcessor(reference.getReferencedName(), context);
 
         final XPathVariable variable = (XPathVariable)ResolveUtil.treeWalkUp(processor, context);
@@ -96,7 +96,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     }
 
     @Nullable
-    protected static XmlTag getContextTag(XPathElement element) {
+    protected XmlTag getContextTagImpl(XPathElement element) {
         return PsiTreeUtil.getContextOfType(element, XmlTag.class, true);
     }
 
