@@ -111,6 +111,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
     return documentWindow.injectedToHost(textRange);
   }
+  public int injectedToHost(@NotNull PsiElement element, int offset) {
+    PsiFile file = element.getContainingFile();
+    if (file == null) return offset;
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(file);
+    if (!(document instanceof DocumentWindowImpl)) return offset;
+    DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
+    return documentWindow.injectedToHost(offset);
+  }
 
   private final ConcurrentMap<Class, MultiHostInjector[]> injectors = new ConcurrentHashMap<Class, MultiHostInjector[]>();
   private final ClassMapCachingNulls<MultiHostInjector> cachedInjectors = new ClassMapCachingNulls<MultiHostInjector>(injectors, new MultiHostInjector[0]);

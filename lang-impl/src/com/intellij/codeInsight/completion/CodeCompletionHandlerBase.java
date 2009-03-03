@@ -30,7 +30,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -187,7 +186,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                 });
               }
             }
-            catch (ProcessCanceledException e) {
+            catch (ProcessCanceledException ignored) {
             }
           }
         }, indicator);
@@ -283,13 +282,13 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Project project = hostFile.getProject();
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     // is null in tests
-    int hostStartOffset = injectedLanguageManager == null ? context.getStartOffset() : injectedLanguageManager.injectedToHost(oldFileCopy, TextRange.from(
-        context.getStartOffset(), 0)).getStartOffset();
+    int hostStartOffset = injectedLanguageManager == null
+                          ? context.getStartOffset()
+                          : injectedLanguageManager.injectedToHost(oldFileCopy, context.getStartOffset());
 
     Document document = oldFileCopy.getViewProvider().getDocument();
     assert document != null;
     patcher.patchFileCopy(oldFileCopy, document, context.getOffsetMap());
-    String s = document.getText();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostStartOffset);
     if (fileCopy == null) {
