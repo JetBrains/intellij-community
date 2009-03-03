@@ -51,7 +51,7 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
     return type == CustomHighlighterTokenType.L_BRACE || type == CustomHighlighterTokenType.R_BRACE;
   }
 
-  public IElementType getOppositeBraceTokenType(IElementType type) {
+  public IElementType getOppositeBraceTokenType(@NotNull IElementType type) {
     if (!(type instanceof CustomHighlighterTokenType.CustomElementType)) {
       return null;
     }
