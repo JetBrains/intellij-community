@@ -5,6 +5,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.util.text.CharArrayUtil;
@@ -13,7 +14,8 @@ import org.jetbrains.annotations.NotNull;
 public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseableElement");
 
-  private final Object lock = new Object();
+  //private final Object lock = new Object();
+  private final Object lock = PsiLock.LOCK;
   private CharSequence myText;
 
   public LazyParseableElement(@NotNull IElementType type, CharSequence text) {
