@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +28,10 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition){
+    if (position instanceof XmlTag && ((XmlTag)position).getValue().getTextElements().length == 0) {
+      return PsiReference.EMPTY_ARRAY; 
+    }
+
     if (str.length() < 2) {
       return PsiReference.EMPTY_ARRAY;
     }
