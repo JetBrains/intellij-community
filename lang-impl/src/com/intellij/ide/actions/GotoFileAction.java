@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -232,7 +233,7 @@ public class GotoFileAction extends GotoActionBase {
           .setResizable(true).setCancelOnClickOutside(false).setMinSize(new Dimension(200, 200))
           .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false).createPopup();
       myPopup.addListener(new JBPopupListener.Adapter() {
-        public void onClosed(final JBPopup popup) {
+        public void onClosed(LightweightWindowEvent event) {
           myPopup = null;
         }
       });

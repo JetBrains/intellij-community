@@ -3,6 +3,9 @@ package com.intellij.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindow;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
@@ -25,8 +28,9 @@ import java.awt.event.*;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.CopyOnWriteArraySet;
 
-public class BalloonImpl implements Disposable, Balloon {
+public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
 
   private MyComponent myComp;
   private JLayeredPane myLayeredPane;
@@ -88,6 +92,8 @@ public class BalloonImpl implements Disposable, Balloon {
   private Dimension myDefaultPrefSize;
   private ActionListener myClickHandler;
   private boolean myCloseOnClick;
+
+  private CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<JBPopupListener>();
 
   private boolean isInsideBalloon(MouseEvent me) {
     if (!me.getComponent().isShowing()) return true;
@@ -198,6 +204,12 @@ public class BalloonImpl implements Disposable, Balloon {
     myComp.clear();
     myComp.myAlpha = 0f;
 
+
+    for (JBPopupListener each : myListeners) {
+      each.beforeShown(new LightweightWindowEvent(this));
+    }
+
+
     myLayeredPane.add(myComp, JLayeredPane.POPUP_LAYER);
 
 
@@ -300,6 +312,15 @@ public class BalloonImpl implements Disposable, Balloon {
 
   public void hide() {
     Disposer.dispose(this);
+
+
+    for (JBPopupListener each : myListeners) {
+      each.onClosed(new LightweightWindowEvent(this));
+    }
+  }
+
+  public void addListener(JBPopupListener listener) {
+    myListeners.add(listener);
   }
 
   public void dispose() {

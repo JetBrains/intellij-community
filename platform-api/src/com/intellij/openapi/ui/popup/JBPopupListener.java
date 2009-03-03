@@ -16,18 +16,16 @@
 
 package com.intellij.openapi.ui.popup;
 
-import com.intellij.openapi.project.Project;
-
 public interface JBPopupListener {
-  void beforeShown(Project project, JBPopup popup);
+  void beforeShown(LightweightWindowEvent event);
 
-  void onClosed(JBPopup popup);
+  void onClosed(LightweightWindowEvent event);
 
   class Adapter implements JBPopupListener{
-    public void beforeShown(final Project project, final JBPopup popup) {
+    public void beforeShown(LightweightWindowEvent event) {
     }
 
-    public void onClosed(final JBPopup popup) {
+    public void onClosed(LightweightWindowEvent event) {
     }
   }
 

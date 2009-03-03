@@ -174,7 +174,7 @@ public class ShowImplementationsAction extends AnAction {
     }
     final ImplementationViewComponent component = new ImplementationViewComponent(impls, index);
     if (component.hasElementsToShow()) {
-      final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor() {
+      final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
         public void updatePopup(Object lookupItemObject) {
           final PsiElement element = lookupItemObject instanceof PsiElement ? (PsiElement)lookupItemObject : DocumentationManager.getInstance(project).getElementFromLookup(editor, file);
           updateElementImplementations(element, editor, project, file);

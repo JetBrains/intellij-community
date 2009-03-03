@@ -36,7 +36,7 @@ import java.awt.*;
  * @see com.intellij.openapi.ui.popup.JBPopupFactory
  * @since 6.0
  */
-public interface JBPopup extends Disposable {
+public interface JBPopup extends Disposable, LightweightWindow {
 
   @NonNls String KEY = "JBPopup";
 

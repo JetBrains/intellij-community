@@ -281,7 +281,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       myPopup = JBPopupFactory.getInstance().createListPopup(this);
       myPopup.addListener(new JBPopupListener.Adapter() {
         @Override
-        public void onClosed(final JBPopup popup) {
+        public void onClosed(LightweightWindowEvent event) {
           myPopupShown = false;
         }
       });

@@ -7,6 +7,7 @@ package com.intellij.ui.popup;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -67,7 +68,7 @@ public class FramelessNotificationPopup {
       .setMovable(true)
       .setLocateWithinScreenBounds(false)
       .setAlpha(0.2f).addListener(new JBPopupAdapter() {
-      public void onClosed(final JBPopup popup) {
+      public void onClosed(LightweightWindowEvent event) {
         if (myFadeInTimer.isRunning()) {
           myFadeInTimer.stop();
         }

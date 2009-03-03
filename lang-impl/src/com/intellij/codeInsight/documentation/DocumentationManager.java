@@ -98,7 +98,7 @@ public class DocumentationManager {
   }
 
   public JBPopup showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
-    PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor() {
+    PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
           doShowJavaDocInfo((PsiElement)lookupItemObject, true, false, this, original);
@@ -146,7 +146,7 @@ public class DocumentationManager {
 
     storeOriginalElement(project, originalElement, element);
 
-    final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor() {
+    final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       public void updatePopup(Object lookupIteObject) {
         if (lookupIteObject instanceof PsiElement) {
           doShowJavaDocInfo((PsiElement)lookupIteObject, false, false, this, originalElement);

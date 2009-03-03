@@ -2,10 +2,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.components.panels.Wrapper;
@@ -104,7 +101,7 @@ public class ProcessPopup  {
 
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myRootContent, toFocus);
     builder.addListener(new JBPopupAdapter() {
-      public void onClosed(final JBPopup popup) {
+      public void onClosed(LightweightWindowEvent event) {
         myProgressPanel.hideProcessPopup();
       }
     });

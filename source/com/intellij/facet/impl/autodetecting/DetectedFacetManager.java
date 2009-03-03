@@ -19,9 +19,9 @@ import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ public class DetectedFacetManager implements Disposable {
   public static final Icon FACET_DETECTED_ICON = IconLoader.getIcon("/ide/facetDetected.png");
   private static final int NOTIFICATION_DELAY = 200;
   private final JBPopupListener myNotificationPopupListener = new JBPopupAdapter() {
-    public void onClosed(final JBPopup popup) {
+    public void onClosed(LightweightWindowEvent event) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           myNotificationPopup = null;
@@ -64,7 +65,7 @@ public class DetectedFacetManager implements Disposable {
   private StatusBar myStatusBar;
   private boolean myUIInitialized;
   private final Set<DetectedFacetInfo<Module>> myPendingNewFacets = new HashSet<DetectedFacetInfo<Module>>();
-  private JBPopup myNotificationPopup;
+  private NotificationPopup myNotificationPopup;
   private final Alarm myNotificationAlarm = new Alarm();
   private final ProjectFacetInfoSet myDetectedFacetSet;
 
@@ -108,7 +109,7 @@ public class DetectedFacetManager implements Disposable {
           if (isDisposed()) return;
 
           if (!removed.isEmpty() && myNotificationPopup != null) {
-            myNotificationPopup.cancel();
+            myNotificationPopup.hide();
           }
 
           myPendingNewFacets.addAll(added);

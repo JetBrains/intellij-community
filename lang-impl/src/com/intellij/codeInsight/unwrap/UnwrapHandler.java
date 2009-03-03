@@ -14,10 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -113,7 +110,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
         })
         .addListener(new JBPopupAdapter() {
           @Override
-          public void onClosed(JBPopup popup) {
+          public void onClosed(LightweightWindowEvent event) {
             highlighter.dropHighlight();
           }
         });

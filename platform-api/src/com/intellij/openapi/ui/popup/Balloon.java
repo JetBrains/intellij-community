@@ -16,6 +16,10 @@ public interface Balloon extends Disposable {
 
   void setBounds(Rectangle bounds);
 
+  void addListener(JBPopupListener listener);
+
+  void hide();
+
   enum Position {
     below, above, atLeft, atRight
   }

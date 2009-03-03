@@ -11,7 +11,6 @@ import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -337,7 +336,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myList.getSelectionModel().clearSelection();
     final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
     builder.addListener(new JBPopupListener() {
-      public void beforeShown(final Project project, final JBPopup popup) {
+      public void beforeShown(LightweightWindowEvent event) {
         myPathTextField
           .registerKeyboardAction(myCancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
         for (Action each : myDisabledTextActions) {
@@ -345,7 +344,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         }
       }
 
-      public void onClosed(final JBPopup popup) {
+      public void onClosed(LightweightWindowEvent event) {
         myPathTextField.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
         for (Action each : myDisabledTextActions) {
           each.setEnabled(true);

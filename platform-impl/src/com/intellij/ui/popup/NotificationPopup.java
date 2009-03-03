@@ -7,6 +7,7 @@ package com.intellij.ui.popup;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -19,6 +20,9 @@ import java.awt.event.ActionListener;
  * @author max
  */
 public class NotificationPopup {
+
+  private Impl myImpl;
+
   public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
     this(owner, content, backgroud, true);
   }
@@ -34,7 +38,17 @@ public class NotificationPopup {
       if (clickHandler != null) {
         throw new UnsupportedOperationException("Click handler is not supported in frameless mode");
       }
-      new FramelessNotificationPopup(owner, content, backgroud, useDefaultPreferredSize);
+      final FramelessNotificationPopup popup = new FramelessNotificationPopup(owner, content, backgroud, useDefaultPreferredSize);
+
+      myImpl = new Impl() {
+        public void addListener(JBPopupListener listener) {
+          popup.getPopup().addListener(listener);
+        }
+
+        public void hide() {
+          popup.getPopup().cancel();
+        }
+      };
     } else {
       final Wrapper wrapper = new NonOpaquePanel(content) {
         @Override
@@ -62,6 +76,16 @@ public class NotificationPopup {
         .createBalloon();
 
       frame.getBalloonLayout().add(frame.getLayeredPane(), balloon);
+
+      myImpl = new Impl() {
+        public void addListener(JBPopupListener listener) {
+          balloon.addListener(listener);
+        }
+
+        public void hide() {
+          balloon.hide();
+        }
+      };
     }
   }
 
@@ -79,4 +103,14 @@ public class NotificationPopup {
   }
 
 
+  interface Impl {
+    void addListener(JBPopupListener listener);
+    void hide();
+  }
+
+  public void addListener(JBPopupListener listener) {
+  }
+
+  public void hide() {
+  }
 }

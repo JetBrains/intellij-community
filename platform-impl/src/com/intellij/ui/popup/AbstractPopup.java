@@ -429,13 +429,14 @@ public class AbstractPopup implements JBPopup, Disposable {
 
       if (myListeners != null) {
         for (JBPopupListener each : myListeners) {
-          each.onClosed(this);
+          each.onClosed(new LightweightWindowEvent(this));
         }
       }
     }
 
     Disposer.dispose(this, false);
   }
+
 
   private void disposePopup() {
     if (myPopup != null) {
@@ -581,7 +582,7 @@ public class AbstractPopup implements JBPopup, Disposable {
     }
 
     for(JBPopupListener listener: myListeners) {
-      listener.beforeShown(myProject, this);
+      listener.beforeShown(new LightweightWindowEvent(this));
     }
 
     myPopup.show();

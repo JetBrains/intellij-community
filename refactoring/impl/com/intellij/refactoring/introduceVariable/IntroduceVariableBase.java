@@ -18,9 +18,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -188,7 +188,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                                   })
           .addListener(new JBPopupAdapter() {
                           @Override
-                          public void onClosed(JBPopup popup) {
+                          public void onClosed(LightweightWindowEvent event) {
                             highlighter.dropHighlight();
                           }
                        })
