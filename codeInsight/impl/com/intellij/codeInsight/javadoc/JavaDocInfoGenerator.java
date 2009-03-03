@@ -944,7 +944,7 @@ public class JavaDocInfoGenerator {
     Object value = null;
     if (valueField != null) {
       PsiExpression initializer = valueField.getInitializer();
-      value = ConstantExpressionEvaluator.computeConstantExpression(initializer, null, false);
+      value = ConstantExpressionEvaluator.computeConstantExpression(initializer, false);
     }
 
     if (value != null) {

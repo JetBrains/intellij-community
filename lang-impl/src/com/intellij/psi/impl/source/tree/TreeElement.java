@@ -303,22 +303,22 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     rawRemoveUpTo(null);
   }
 
-  // remove nodes from start[including] to end[excluding] from the parent
+  // remove nodes from this[including] to end[excluding] from the parent
   public void rawRemoveUpTo(TreeElement end) {
     if(this == end) return;
 
-    final CompositeElement prnt = getTreeParent();
+    final CompositeElement parent = getTreeParent();
     final TreeElement startPrev = getTreePrev();
     final TreeElement endPrev = end != null ? end.getTreePrev() : null;
 
-    assert end == null || end.getTreeParent() == prnt : "Trying to remove non-child";
+    assert end == null || end.getTreeParent() == parent : "Trying to remove non-child";
 
-    if (prnt != null){
-      if (this == prnt.getFirstChildNode()) {
-        prnt.setFirstChildNode(end);
+    if (parent != null){
+      if (this == parent.getFirstChildNode()) {
+        parent.setFirstChildNode(end);
       }
       if (end == null) {
-        prnt.setLastChildNode(startPrev);
+        parent.setLastChildNode(startPrev);
       }
     }
     if (startPrev != null){
@@ -333,7 +333,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       endPrev.setTreeNext(null);
     }
 
-    if (prnt != null){
+    if (parent != null){
       for(TreeElement element = this; element != null; element = element.getTreeNext()){
         element.setTreeParent(null);
         element.onInvalidated();
@@ -341,8 +341,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     }
 
     if (DebugUtil.CHECK){
-      if (prnt != null){
-        DebugUtil.checkTreeStructure(prnt);
+      if (parent != null){
+        DebugUtil.checkTreeStructure(parent);
       }
       DebugUtil.checkTreeStructure(this);
     }

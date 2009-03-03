@@ -5,10 +5,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
@@ -16,13 +15,12 @@ import com.intellij.psi.jsp.AbstractJspJavaLexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import com.intellij.util.SmartList;
 
-/**
- *
- */
-public class ParseUtil implements Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ParseUtil");
+import java.util.List;
+import java.util.Iterator;
 
+public class ParseUtil {
   public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
@@ -86,7 +84,47 @@ public class ParseUtil implements Constants {
 
     private static void bindComments(ASTNode root) {
       if (TreeUtil.isLeafOrCollapsedChameleon(root)) return;
-      
+
+      final List<ASTNode> comments = new SmartList<ASTNode>();
+      ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+        @Override
+        protected boolean visitNode(TreeElement child) {
+          IElementType type = child.getElementType();
+          if (type == JavaDocElementType.DOC_COMMENT ||
+              type == JavaTokenType.END_OF_LINE_COMMENT ||
+              type == JavaTokenType.C_STYLE_COMMENT) {
+            comments.add(child);
+          }
+          if (TreeUtil.isLeafOrCollapsedChameleon(child)) return false;
+
+          return true;
+        }
+      });
+
+      Iterator<ASTNode> iterator = comments.iterator();
+      while (iterator.hasNext()) {
+        ASTNode child = iterator.next();
+        IElementType type = child.getElementType();
+        if (type == JavaDocElementType.DOC_COMMENT) {
+          if (bindDocComment((TreeElement)child)) iterator.remove();
+        }
+        // bind "trailing comments" (like "int a; // comment")
+        else if (type == JavaTokenType.END_OF_LINE_COMMENT || type == JavaTokenType.C_STYLE_COMMENT) {
+          if (bindTrailingComment((TreeElement)child)) iterator.remove();
+        }
+      }
+
+      //pass 2: bind preceding comments (like "// comment \n void f();")
+      for (ASTNode child : comments) {
+        if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
+          TreeElement next = (TreeElement)TreeUtil.skipElements(child, PRECEDING_COMMENT_OR_SPACE_BIT_SET);
+          bindPrecedingComment((TreeElement)child, next);
+        }
+      }
+    }
+
+    /*
+    private static void bindComments(ASTNode root) {
       TreeElement child = (TreeElement)root.getFirstChildNode();
       while (child != null) {
         if (child.getElementType() == JavaDocElementType.DOC_COMMENT) {
@@ -97,7 +135,7 @@ public class ParseUtil implements Constants {
         }
 
         // bind "trailing comments" (like "int a; // comment")
-        if (child.getElementType() == END_OF_LINE_COMMENT || child.getElementType() == C_STYLE_COMMENT) {
+        if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
           if (bindTrailingComment(child)) {
             child = child.getTreeParent();
             continue;
@@ -111,7 +149,7 @@ public class ParseUtil implements Constants {
       //pass 2: bind preceding comments (like "// comment \n void f();")
       child = (TreeElement)root.getFirstChildNode();
       while(child != null) {
-        if (child.getElementType() == END_OF_LINE_COMMENT || child.getElementType() == C_STYLE_COMMENT) {
+        if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
           TreeElement next = (TreeElement)TreeUtil.skipElements(child, PRECEDING_COMMENT_OR_SPACE_BIT_SET);
           bindPrecedingComment(child, next);
           child = next;
@@ -120,6 +158,7 @@ public class ParseUtil implements Constants {
         }
       }
     }
+    */
 
     private static boolean bindDocComment(TreeElement docComment) {
       TreeElement element = docComment.getTreeNext();
@@ -128,16 +167,21 @@ public class ParseUtil implements Constants {
 
       TreeElement importList = null;
       // Bypass meaningless tokens and hold'em in hands
-      while (element.getElementType() == WHITE_SPACE || element.getElementType() == C_STYLE_COMMENT ||
-             element.getElementType() == END_OF_LINE_COMMENT || (element.getElementType() == IMPORT_LIST && element.getTextLength() == 0)) {
-        if (element.getElementType() == IMPORT_LIST) importList = element;
+      while (element.getElementType() == TokenType.WHITE_SPACE ||
+             element.getElementType() == JavaTokenType.C_STYLE_COMMENT ||
+             element.getElementType() == JavaTokenType.END_OF_LINE_COMMENT ||
+             element.getElementType() == JavaElementType.IMPORT_LIST && element.getTextLength() == 0) {
+        if (element.getElementType() == JavaElementType.IMPORT_LIST) importList = element;
         if (startSpaces == null) startSpaces = element;
         element = element.getTreeNext();
         if (element == null) return false;
       }
 
-      if (element.getElementType() == CLASS || element.getElementType() == FIELD || element.getElementType() == METHOD ||
-          element.getElementType() == ENUM_CONSTANT || element.getElementType() == ANNOTATION_METHOD) {
+      if (element.getElementType() == JavaElementType.CLASS ||
+          element.getElementType() == JavaElementType.FIELD ||
+          element.getElementType() == JavaElementType.METHOD ||
+          element.getElementType() == JavaElementType.ENUM_CONSTANT ||
+          element.getElementType() == JavaElementType.ANNOTATION_METHOD) {
         TreeElement first = element.getFirstChildNode();
         if (startSpaces != null) {
           docComment.rawRemoveUpTo(element);
@@ -159,14 +203,15 @@ public class ParseUtil implements Constants {
     }
 
     private static final TokenSet BIND_TRAILING_COMMENT_BIT_SET = TokenSet.orSet(
-      TokenSet.create(FIELD, METHOD, CLASS, CLASS_INITIALIZER, IMPORT_STATEMENT, IMPORT_STATIC_STATEMENT, PACKAGE_STATEMENT),
-      JAVA_STATEMENT_BIT_SET);
+      TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD, JavaElementType.CLASS, JavaElementType.CLASS_INITIALIZER,
+                      JavaElementType.IMPORT_STATEMENT, JavaElementType.IMPORT_STATIC_STATEMENT, JavaElementType.PACKAGE_STATEMENT),
+      ElementType.JAVA_STATEMENT_BIT_SET);
 
     private static boolean bindTrailingComment(TreeElement comment) {
       TreeElement element = comment.getTreePrev();
       if (element == null) return false;
       TreeElement space = null;
-      if (element.getElementType() == WHITE_SPACE) {
+      if (element.getElementType() == TokenType.WHITE_SPACE) {
         space = element;
         element = element.getTreePrev();
       }
@@ -186,27 +231,28 @@ public class ParseUtil implements Constants {
       return false;
     }
 
-    private static final TokenSet BIND_PRECEDING_COMMENT_BIT_SET = TokenSet.create(FIELD, METHOD, CLASS, CLASS_INITIALIZER);
+    private static final TokenSet BIND_PRECEDING_COMMENT_BIT_SET = TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD,
+                                                                                   JavaElementType.CLASS, JavaElementType.CLASS_INITIALIZER);
 
-    private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = TokenSet.create(C_STYLE_COMMENT, END_OF_LINE_COMMENT, WHITE_SPACE);
+    private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = TokenSet.create(JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT,
+                                                                                       TokenType.WHITE_SPACE);
 
     private static void bindPrecedingComment(TreeElement comment, ASTNode bindTo) {
-      if (bindTo == null || bindTo.getFirstChildNode() != null &&
-                             bindTo.getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT) return;
+      if (bindTo == null || bindTo.getFirstChildNode() != null && bindTo.getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT) return;
 
-      if (bindTo.getElementType() == IMPORT_LIST && bindTo.getTextLength() == 0) {
+      if (bindTo.getElementType() == JavaElementType.IMPORT_LIST && bindTo.getTextLength() == 0) {
         bindTo = bindTo.getTreeNext();
       }
 
       ASTNode toStart = isBindingComment(comment) ? comment : null;
       if (bindTo != null && BIND_PRECEDING_COMMENT_BIT_SET.contains(bindTo.getElementType())) {
         for (ASTNode child = comment; child != bindTo; child = child.getTreeNext()) {
-          if (child.getElementType() == WHITE_SPACE) {
+          if (child.getElementType() == TokenType.WHITE_SPACE) {
             int count = StringUtil.getLineBreakCount(child.getText());
             if (count > 1) toStart = null;
           }
           else {
-            if (child.getTreePrev() != null && child.getTreePrev().getElementType() == WHITE_SPACE) {
+            if (child.getTreePrev() != null && child.getTreePrev().getElementType() == TokenType.WHITE_SPACE) {
               LeafElement prev = (LeafElement)child.getTreePrev();
               char lastC = prev.charAt(prev.getTextLength() - 1);
               if (lastC == '\n' || lastC == '\r') toStart = isBindingComment(child) ? child : null;
@@ -223,7 +269,7 @@ public class ParseUtil implements Constants {
         TreeElement child = (TreeElement)toStart;
         while (child != bindTo) {
           TreeElement next = child.getTreeNext();
-          if (child.getElementType() != IMPORT_LIST) {
+          if (child.getElementType() != JavaElementType.IMPORT_LIST) {
             child.rawRemove();
             first.rawInsertBeforeMe(child);
           }
@@ -235,7 +281,7 @@ public class ParseUtil implements Constants {
     private static boolean isBindingComment(final ASTNode node) {
       ASTNode prev = node.getTreePrev();
       if (prev != null) {
-        if (prev.getElementType() != WHITE_SPACE) {
+        if (prev.getElementType() != TokenType.WHITE_SPACE) {
           return false;
         }
         else {

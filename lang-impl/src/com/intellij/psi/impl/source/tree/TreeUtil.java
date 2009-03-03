@@ -184,28 +184,28 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static TreeElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent,
-                                     IElementType searchedType,
-                                     boolean expandChameleons) {
-    if (commonParent != null) {
-      commonParent.startLeafBranchStart = start;
-      initStrongWhitespaceHolder(commonParent, start, true);
-    }
-    TreeElement nextTree = start;
-    TreeElement next = null;
-    while (next == null && (nextTree = nextTree.getTreeNext()) != null) {
-      if (nextTree.getElementType() == searchedType) {
-        return nextTree;
+  public static TreeElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent, IElementType searchedType,boolean expandChameleons) {
+    TreeElement element = start;
+    while (element != null) {
+      if (commonParent != null) {
+        commonParent.startLeafBranchStart = element;
+        initStrongWhitespaceHolder(commonParent, element, true);
       }
-      next = findFirstLeaf(nextTree, searchedType, commonParent, expandChameleons);
+      TreeElement nextTree = element;
+      TreeElement next = null;
+      while (next == null && (nextTree = nextTree.getTreeNext()) != null) {
+        if (nextTree.getElementType() == searchedType) {
+          return nextTree;
+        }
+        next = findFirstLeafOrType(nextTree, searchedType, commonParent, expandChameleons);
+      }
+      if (next != null) {
+        if (commonParent != null) commonParent.nextLeafBranchStart = nextTree;
+        return next;
+      }
+      element = element.getTreeParent();
     }
-    if (next != null) {
-      if (commonParent != null) commonParent.nextLeafBranchStart = nextTree;
-      return next;
-    }
-    final CompositeElement parent = start.getTreeParent();
-    if (parent == null) return null;
-    return nextLeaf(parent, commonParent, searchedType, expandChameleons);
+    return element;
   }
 
   private static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
@@ -217,72 +217,63 @@ public class TreeUtil {
   }
 
   @Nullable
-  private static TreeElement findFirstLeaf(TreeElement element, 
-                                           IElementType searchedType,
-                                           CommonParentState commonParent,
-                                           boolean expandChameleons) {
-    if (commonParent != null) {
-      initStrongWhitespaceHolder(commonParent, element, false);
-    }
+  private static TreeElement findFirstLeafOrType(@NotNull TreeElement element, final IElementType searchedType, final CommonParentState commonParent,final boolean expandChameleons) {
+    final TreeElement[] result = {null};
+    element.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+      @Override
+      protected boolean visitNode(TreeElement node) {
+        if (result[0] != null) return false;
 
-    if (!expandChameleons && isLeafOrCollapsedChameleon(element)) {
-      return element;
-    }
+        if (commonParent != null) {
+          initStrongWhitespaceHolder(commonParent, node, false);
+        }
+        if (!expandChameleons && isLeafOrCollapsedChameleon(node)) {
+          result[0] = node;
+          return false;
+        }
 
-    if (element instanceof LeafElement || element.getElementType() == searchedType) {
-      return element;
-    }
-    else {
-      for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        TreeElement leaf = findFirstLeaf(child, searchedType, commonParent, expandChameleons);
-        if (leaf != null) return leaf;
+        if (node instanceof LeafElement || node.getElementType() == searchedType) {
+          result[0] = node;
+          return false;
+        }
+        return super.visitNode(node);
       }
-      return null;
-    }
+    });
+    return result[0];
   }
 
   @Nullable
   public static LeafElement prevLeaf(TreeElement start, @Nullable CommonParentState commonParent) {
-    if (start == null) return null;
-    if (commonParent != null) {
-      if (commonParent.strongWhiteSpaceHolder != null && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) {
-        commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
+    while (true) {
+      if (start == null) return null;
+      if (commonParent != null) {
+        if (commonParent.strongWhiteSpaceHolder != null && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) {
+          commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
+        }
+        commonParent.nextLeafBranchStart = start;
       }
-      commonParent.nextLeafBranchStart = start;
+      ASTNode prevTree = start;
+      LeafElement prev = null;
+      while (prev == null && (prevTree = prevTree.getTreePrev()) != null) {
+        prev = findLastLeaf(prevTree);
+      }
+      if (prev != null) {
+        if (commonParent != null) commonParent.startLeafBranchStart = (TreeElement)prevTree;
+        return prev;
+      }
+      start = start.getTreeParent();
     }
-    ASTNode prevTree = start;
-    LeafElement prev = null;
-    while (prev == null && (prevTree = prevTree.getTreePrev()) != null) {
-      prev = findLastLeaf(prevTree);
-    }
-    if (prev != null) {
-      if (commonParent != null) commonParent.startLeafBranchStart = (TreeElement)prevTree;
-      return prev;
-    }
-    final CompositeElement parent = start.getTreeParent();
-    if (parent == null) return null;
-    return prevLeaf(parent, commonParent);
   }
 
   @Nullable
-  public static ASTNode getLastChild(final ASTNode element) {
-    if (element == null) {
-      return null;
+  public static ASTNode getLastChild(ASTNode element) {
+    ASTNode child = element;
+    while (child != null) {
+      element = child;
+      if (element instanceof LeafElement) ChameleonTransforming.transform((LeafElement)element);
+      child = element.getLastChildNode();
     }
-    if (element instanceof LeafElement) {
-      return element;
-    }
-    else {
-      final ASTNode node = element.getLastChildNode();
-      if (node instanceof LeafElement) ChameleonTransforming.transform((LeafElement)node);
-      final ASTNode lastChild = element.getLastChildNode();
-      if (lastChild == null) {
-        return element;
-      }
-      else {
-        return getLastChild(lastChild);
-      }
-    }
+    return element;
   }
 
   public static final class CommonParentState {

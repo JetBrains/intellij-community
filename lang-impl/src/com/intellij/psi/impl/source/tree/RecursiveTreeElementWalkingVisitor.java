@@ -30,9 +30,9 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
 
   private void walk(TreeElement root) {
     for (TreeElement element = next(root, root); element != null; element = next(element, root)) {
-      if (myDoTransform) ChameleonTransforming.transformChildren(element);
       CompositeElement parent = element.getTreeParent();
       TreeElement next = element.getTreeNext();
+      isDown = false; // if client visitor did not call default visitElement it means skip subtree
       element.acceptTree(this);
       assert element.getTreeNext() == next;
       assert element.getTreeParent() == parent;
@@ -44,14 +44,14 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
       TreeElement child = element.getFirstChildNode();
       if (child != null) return child;
     }
-    else {
-      isDown = true;
-    }
 
     // up
     while (element != root) {
       TreeElement next = element.getTreeNext();
-      if (next != null) return next;
+      if (next != null) {
+        assert next.getTreePrev() == element;
+        return next;
+      }
       element = element.getTreeParent();
     }
     return null;

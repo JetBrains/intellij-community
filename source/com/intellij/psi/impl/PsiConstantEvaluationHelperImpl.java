@@ -17,7 +17,7 @@ public class PsiConstantEvaluationHelperImpl extends PsiConstantEvaluationHelper
   }
 
   public Object computeConstantExpression(PsiExpression expression, boolean throwExceptionOnOverflow) {
-    return ConstantExpressionEvaluator.computeConstantExpression(expression, null, throwExceptionOnOverflow);
+    return ConstantExpressionEvaluator.computeConstantExpression(expression, throwExceptionOnOverflow);
   }
 
   public static Object computeCastTo(PsiExpression expression, PsiType castTo, Set<PsiVariable> visitedVars) {

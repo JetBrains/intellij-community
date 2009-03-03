@@ -2,20 +2,20 @@ package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.IOException;
 
 public class ConstantValuesTest extends PsiTestCase{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ConstantValuesTest");
-
   private PsiClass myClass;
 
   protected void setUp() throws Exception {
@@ -43,8 +43,9 @@ public class ConstantValuesTest extends PsiTestCase{
       }
     );
 
-    myClass = myJavaFacade.findClass("ClassWithConstants");
+    myClass = myJavaFacade.findClass("ClassWithConstants", GlobalSearchScope.allScope(getProject()));
     assertNotNull(myClass);
+    assertEquals(StdFileTypes.JAVA, myClass.getContainingFile().getVirtualFile().getFileType());
   }
 
   protected void invokeTestRunnable(Runnable runnable) throws Exception {
@@ -77,10 +78,10 @@ public class ConstantValuesTest extends PsiTestCase{
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
     assertEquals(PsiType.INT, initializer.getType());
-    assertEquals(new Integer(1), initializer.getValue());
+    assertEquals(Integer.valueOf(1), initializer.getValue());
     assertEquals("1", initializer.getText());
 
-    assertEquals(new Integer(1), field.computeConstantValue());
+    assertEquals(Integer.valueOf(1), field.computeConstantValue());
   }
 
   public void testInt2(){
@@ -90,10 +91,10 @@ public class ConstantValuesTest extends PsiTestCase{
     assertNotNull(initializer);
     assertEquals(PsiType.INT, initializer.getType());
     PsiLiteralExpression operand = (PsiLiteralExpression)initializer.getOperand();
-    assertEquals(new Integer(1), operand.getValue());
+    assertEquals(Integer.valueOf(1), operand.getValue());
     assertEquals("-1", initializer.getText());
 
-    assertEquals(new Integer(-1), field.computeConstantValue());
+    assertEquals(Integer.valueOf(-1), field.computeConstantValue());
   }
 
   public void testInt3(){
@@ -105,7 +106,7 @@ public class ConstantValuesTest extends PsiTestCase{
     int value = -1 << 31;
     assertEquals(Integer.toString(value), initializer.getText());
 
-    assertEquals(new Integer(value), field.computeConstantValue());
+    assertEquals(Integer.valueOf(value), field.computeConstantValue());
   }
 
   public void testLong1(){
@@ -115,9 +116,9 @@ public class ConstantValuesTest extends PsiTestCase{
     assertNotNull(initializer);
     assertEquals("2", initializer.getText());
     assertEquals(PsiType.INT, initializer.getType());
-    assertEquals(new Integer(2), initializer.getValue());
+    assertEquals(Integer.valueOf(2), initializer.getValue());
 
-    assertEquals(new Long(2), field.computeConstantValue());
+    assertEquals(Long.valueOf(2), field.computeConstantValue());
   }
 
   public void testLong2(){
@@ -126,10 +127,10 @@ public class ConstantValuesTest extends PsiTestCase{
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
     assertEquals(PsiType.LONG, initializer.getType());
-    assertEquals(new Long(1000000000000L), initializer.getValue());
+    assertEquals(Long.valueOf(1000000000000L), initializer.getValue());
     assertEquals("1000000000000L", initializer.getText());
 
-    assertEquals(new Long(1000000000000L), field.computeConstantValue());
+    assertEquals(Long.valueOf(1000000000000L), field.computeConstantValue());
   }
 
   public void testLong3(){
@@ -141,7 +142,7 @@ public class ConstantValuesTest extends PsiTestCase{
     long value = -1L << 63;
     assertEquals(value + "L", initializer.getText());
 
-    assertEquals(new Long(value), field.computeConstantValue());
+    assertEquals(Long.valueOf(value), field.computeConstantValue());
   }
 
   public void testShort(){
@@ -150,10 +151,10 @@ public class ConstantValuesTest extends PsiTestCase{
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
     assertEquals(PsiType.INT, initializer.getType());
-    assertEquals(new Integer(3), initializer.getValue());
+    assertEquals(Integer.valueOf(3), initializer.getValue());
     assertEquals("3", initializer.getText());
 
-    assertEquals(new Short((short) 3), field.computeConstantValue());
+    assertEquals(Short.valueOf((short)3), field.computeConstantValue());
   }
 
   public void testByte(){
@@ -162,10 +163,10 @@ public class ConstantValuesTest extends PsiTestCase{
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
     assertEquals(PsiType.INT, initializer.getType());
-    assertEquals(new Integer(4), initializer.getValue());
+    assertEquals(Integer.valueOf(4), initializer.getValue());
     assertEquals("4", initializer.getText());
 
-    assertEquals(new Byte((byte) 4), field.computeConstantValue());
+    assertEquals(Byte.valueOf((byte)4), field.computeConstantValue());
   }
 
   public void testChar(){
@@ -252,5 +253,20 @@ public class ConstantValuesTest extends PsiTestCase{
     assertEquals(PsiType.DOUBLE, initializer3.getType());
     assertEquals("Double.NaN", initializer3.getText());
     assertEquals(new Double(Double.NaN), field3.computeConstantValue());
+  }
+
+  public void testConstantEvaluatorStackOverflowResistance() {
+    String text ="class X { String s = \"\" ";
+    for (int i=0;i<10000;i++) {
+      text += "+ \"\"";
+    }
+    text += "; }";
+    PsiJavaFile file = (PsiJavaFile)createDummyFile("a.java", text);
+
+    PsiExpression expression = file.getClasses()[0].findFieldByName("s", false).getInitializer();
+
+    Object o = ConstantExpressionEvaluator.computeConstantExpression(expression, false);
+
+    assertEquals("", o);
   }
 }

@@ -65,7 +65,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
               if (!(o instanceof PsiField)) continue;
               PsiField field = (PsiField) o;
               if (!(field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() != null &&
-                  ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), null, false) != null)) continue;
+                  ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false) != null)) continue;
             }
 
             ((LookupItem)item).setAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);

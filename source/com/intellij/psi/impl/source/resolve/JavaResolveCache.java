@@ -94,7 +94,7 @@ public class JavaResolveCache {
     return result;
   }
 
-  public static interface ConstValueComputer{
+  public interface ConstValueComputer{
     Object execute(PsiVariable variable, Set<PsiVariable> visitedVars);
   }
 }

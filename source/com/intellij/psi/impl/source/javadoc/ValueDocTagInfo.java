@@ -55,7 +55,7 @@ public class ValueDocTagInfo implements JavadocTagInfo {
             return JavaErrorMessages.message("javadoc.value.static.field.required");
           }
           if (field.getInitializer() == null ||
-              ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), null, false) == null) {
+              ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false) == null) {
             return JavaErrorMessages.message("javadoc.value.field.with.initializer.required");
           }
         }

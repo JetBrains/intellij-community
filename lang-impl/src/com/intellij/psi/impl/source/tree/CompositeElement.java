@@ -305,6 +305,14 @@ public class CompositeElement extends TreeElement {
     return cachedLength;
   }
 
+  public void assertLengthCorrect() {
+    int length = myCachedLength;
+    if (length != -1) {
+      int inner = getLengthInner();
+      assert length == inner : length +";"+inner;
+    }
+  }
+
   public int hc() {
     int hc = myHC;
     if (hc == -1) {

@@ -268,7 +268,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             PsiElementFactory elementFactory = JavaPsiFacade.getInstance(localVariable.getProject()).getElementFactory();
             try {
               PsiExpression initialValue = elementFactory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(type), null);
-              Object value = ConstantExpressionEvaluator.computeConstantExpression(initialValue, null, true);
+              Object value = ConstantExpressionEvaluator.computeConstantExpression(initialValue, true);
               myCurrentFragmentEvaluator.setInitialValue(localVariable.getName(), value);
             }
             catch (IncorrectOperationException e) {
