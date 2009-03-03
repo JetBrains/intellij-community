@@ -5,16 +5,19 @@ package com.intellij.extapi.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
@@ -271,6 +274,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     CheckUtil.checkWritable(this);
     ASTNode firstElement = SourceTreeToPsiMap.psiElementToTree(first);
     ASTNode lastElement = SourceTreeToPsiMap.psiElementToTree(last);
+
     LOG.assertTrue(firstElement.getTreeParent() == getNode());
     LOG.assertTrue(lastElement.getTreeParent() == getNode());
     CodeEditUtil.removeChildren(getNode(), firstElement, lastElement);
