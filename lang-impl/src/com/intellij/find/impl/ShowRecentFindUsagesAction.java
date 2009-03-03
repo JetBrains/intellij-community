@@ -13,12 +13,15 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,7 +88,14 @@ public class ShowRecentFindUsagesAction extends AnAction {
           return FINAL_CHOICE;
         }
       };
-    JBPopupFactory.getInstance().createListPopup(step).show(usageView.getComponent());
+    RelativePoint point;
+    if (e.getInputEvent() instanceof MouseEvent) {
+      point = new RelativePoint((MouseEvent) e.getInputEvent());
+    }
+    else {
+      point = new RelativePoint(usageView.getComponent(), new Point(4, 4));
+    }
+    JBPopupFactory.getInstance().createListPopup(step).show(point);
 
   }
 }
