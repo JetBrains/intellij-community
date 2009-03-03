@@ -2,6 +2,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.usageView.UsageViewUtil;
@@ -46,5 +47,10 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
 
   public String getLabelText() {
     return StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)) + " " + UsageViewUtil.getDescriptiveName(myPsiElement);
+  }
+
+  @Override
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(FindUsagesManager.getHelpID(myPsiElement));
   }
 }
