@@ -30,7 +30,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
   private MultiplePsiFilesPerDocumentFileViewProvider myOriginal = null;
 
   public MultiplePsiFilesPerDocumentFileViewProvider(PsiManager manager, VirtualFile virtualFile, boolean physical) {
-    super(manager, virtualFile, physical);
+    super(manager, virtualFile, physical, Language.ANY);
   }
 
   @NotNull
