@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
  */
 package com.siyeh.ipp.concatenation;
 
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
@@ -86,12 +85,8 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
         } else if (expression instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) expression;
-            final Project project = expression.getProject();
-            final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-            final PsiConstantEvaluationHelper evaluationHelper =
-                    facade.getConstantEvaluationHelper();
             final Object result =
-                    evaluationHelper.computeConstantExpression(expression);
+                    ExpressionUtils.computeConstantExpression(expression);
             if (result != null) {
                 out.append(result.toString());
             } else {
@@ -103,7 +98,7 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
                 }
             }
         } else {
-            out.append("?");
+            out.append('?');
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ClassUtil;
 import org.jetbrains.annotations.NonNls;
 
 class ConvertIntegerToDecimalPredicate implements PsiElementPredicate{
@@ -42,9 +41,6 @@ class ConvertIntegerToDecimalPredicate implements PsiElementPredicate{
             return text.charAt(0) == '0';
         }
         if(PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)){
-            if(!ClassUtil.classExists("javax.xml.xpath.XPath")){
-                return false;
-            }
             if(!PsiUtil.isLanguageLevel5OrHigher(expression)){
                 return false;
             }

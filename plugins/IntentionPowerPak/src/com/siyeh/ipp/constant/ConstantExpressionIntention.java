@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,25 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantExpressionIntention extends Intention {
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new ConstantExpressionPredicate();
     }
 
+    @Override
     public void processIntention(PsiElement element)
             throws IncorrectOperationException {
         final PsiExpression expression =
                 (PsiExpression)element;
-        final PsiManager psiManager = expression.getManager();
-      final PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(psiManager.getProject()).getConstantEvaluationHelper();
-        final Object value = helper.computeConstantExpression(expression);
+        final Object value =
+                ExpressionUtils.computeConstantExpression(expression);
         @NonNls final String newExpression;
         if (value instanceof String) {
             final String string = (String)value;
@@ -49,15 +51,31 @@ public class ConstantExpressionIntention extends Intention {
         } else if (value instanceof Long) {
             newExpression = value.toString() + 'L';
         } else if (value instanceof Double) {
-          double v = ((Double)value).doubleValue();
-          if (Double.isNaN(v)) newExpression = "java.lang.Double.NaN";
-          else if (Double.isInfinite(v)) newExpression = v > 0 ? "java.lang.Double.POSITIVE_INFINITY" : "java.lang.Double.NEGATIVE_INFINITY";
-          else newExpression = Double.toString(v); 
+          final double v = ((Double)value).doubleValue();
+          if (Double.isNaN(v)) {
+              newExpression = "java.lang.Double.NaN";
+          } else if (Double.isInfinite(v)) {
+              if (v > 0.0) {
+                  newExpression = "java.lang.Double.POSITIVE_INFINITY";
+              } else {
+                  newExpression = "java.lang.Double.NEGATIVE_INFINITY";
+              }
+          } else {
+              newExpression = Double.toString(v);
+          }
         } else if (value instanceof Float) {
-          float v = ((Float)value).floatValue();
-          if (Float.isNaN(v)) newExpression = "java.lang.Float.NaN";
-          else if (Float.isInfinite(v)) newExpression = v > 0 ? "java.lang.Float.POSITIVE_INFINITY" : "java.lang.Float.NEGATIVE_INFINITY";
-          else newExpression = Float.toString(v) + "f";
+          final float v = ((Float)value).floatValue();
+          if (Float.isNaN(v)) {
+              newExpression = "java.lang.Float.NaN";
+          } else if (Float.isInfinite(v)) {
+              if (v > 0.0F) {
+                  newExpression = "java.lang.Float.POSITIVE_INFINITY";
+              } else {
+                  newExpression = "java.lang.Float.NEGATIVE_INFINITY";
+              }
+          } else {
+              newExpression = Float.toString(v) + 'f';
+          }
         } else if (value == null) {
             newExpression = "null";
         } else {

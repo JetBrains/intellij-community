@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,27 @@
 package com.siyeh.ipp.constant;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
+import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantSubexpressionIntention extends MutablyNamedIntention {
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new ConstantSubexpressionPredicate();
     }
 
+    @Override
     protected String getTextForElement(PsiElement element) {
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression)element.getParent();
@@ -53,11 +59,9 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
                 ' ' + operationSign.getText() + ' ' + rhs.getText());
     }
 
+    @Override
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiManager manager = element.getManager();
-      final PsiConstantEvaluationHelper constantEvaluationHelper =
-        JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
         final PsiExpression expression = (PsiExpression)element.getParent();
         assert expression != null;
         String newExpression = "";
@@ -79,13 +83,11 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
                 constantValue = computeConstantStringExpression(copy);
             } else {
                 constantValue =
-                        constantEvaluationHelper.computeConstantExpression(
-                                copy);
+                        ExpressionUtils.computeConstantExpression(copy);
             }
         } else {
             constantValue =
-                    constantEvaluationHelper.computeConstantExpression(
-                            expression);
+                    ExpressionUtils.computeConstantExpression(expression);
         }
         if (constantValue instanceof String) {
             newExpression += '"' + StringUtil.escapeStringCharacters(

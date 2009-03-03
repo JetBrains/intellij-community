@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,15 @@
  */
 package com.siyeh.ipp.integer;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
-
-import java.math.BigInteger;
 
 public class ConvertIntegerToDecimalIntention extends Intention {
     
-    private static final BigInteger BINARY_ONES =
-            new BigInteger("ffffffffffffffff", 16);
-
     @Override @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new ConvertIntegerToDecimalPredicate();
@@ -40,53 +33,43 @@ public class ConvertIntegerToDecimalIntention extends Intention {
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiExpression expression = (PsiExpression)element;
+        final boolean negated = ExpressionUtils.isNegated(expression);
+        final Number value =
+                (Number)ExpressionUtils.computeConstantExpression(expression);
         final PsiType type = expression.getType();
-        if(PsiType.INT.equals(type) || PsiType.LONG.equals(type)){
-            @NonNls String textString = expression.getText();
-            final int textLength = textString.length();
-            final char lastChar = textString.charAt(textLength - 1);
-            final boolean isLong = lastChar == 'l' || lastChar == 'L';
-            final int testBit;
-            if (isLong) {
-                testBit = 63;
-                textString = textString.substring(0, textLength - 1);
+        final String decimalString;
+        if (type == PsiType.INT) {
+            if (negated) {
+                decimalString = String.valueOf(-value.intValue());
             } else {
-                testBit = 31;
+                decimalString = String.valueOf(value.intValue());
             }
-            BigInteger value;
-            if (textString.startsWith("0x")) {
-                final String rawIntString = textString.substring(2);
-                value = new BigInteger(rawIntString, 16);
+        } else if (type == PsiType.LONG) {
+            if (negated) {
+                decimalString = String.valueOf(-value.longValue());
             } else {
-                final String rawIntString = textString.substring(1);
-                value = new BigInteger(rawIntString, 8);
+                decimalString = String.valueOf(value.longValue());
             }
-            if (value.testBit(testBit)) {
-                // 2's complement
-                value = value.xor(BINARY_ONES).add(BigInteger.ONE).negate();
+        } else if (type == PsiType.FLOAT) {
+            if (negated) {
+                decimalString = String.valueOf(-value.floatValue());
+            } else {
+                decimalString = String.valueOf(value.floatValue());
             }
-            String decimalString = value.toString(10);
-            if (isLong) {
-                decimalString += 'L';
+        } else if (type == PsiType.DOUBLE) {
+            if (negated) {
+                decimalString = String.valueOf(-value.doubleValue());
+            } else {
+                decimalString = String.valueOf(value.doubleValue());
             }
-            replaceExpression(decimalString, expression);
         } else {
-            String textString = expression.getText();
-            final int textLength = textString.length();
-            final char lastChar = textString.charAt(textLength - 1);
-            final boolean isFloat = lastChar == 'f' || lastChar == 'F';
-            if (isFloat) {
-                textString = textString.substring(0, textLength - 1);
-            }
-            if (isFloat) {
-                final float floatValue = Float.parseFloat(textString);
-                final String floatString = Float.toString(floatValue) + lastChar;
-                replaceExpression(floatString, expression);
-            } else {
-                final double floatValue = Double.parseDouble(textString);
-                final String floatString = Double.toString(floatValue);
-                replaceExpression(floatString, expression);
-            }
+            return;
+        }
+        if (negated) {
+            replaceExpression(decimalString,
+                    (PsiExpression)expression.getParent());
+        } else {
+            replaceExpression(decimalString, expression);
         }
     }
 }

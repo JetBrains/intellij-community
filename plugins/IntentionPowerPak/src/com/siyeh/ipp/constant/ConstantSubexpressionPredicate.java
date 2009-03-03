@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ipp.constant;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nullable;
 
 class ConstantSubexpressionPredicate implements PsiElementPredicate{
@@ -31,17 +32,17 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate{
         if(!(parent instanceof PsiBinaryExpression)){
             return false;
         }
-	    final PsiBinaryExpression binaryExpression =
-			    (PsiBinaryExpression) parent;
-	    final PsiType type = binaryExpression.getType();
-	    if(type == null || type.equalsToText("java.lang.String")){
-		    // handled by JoinConcatenatedStringLiteralsIntention
-		    return false;
-	    }
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression) parent;
+        final PsiType type = binaryExpression.getType();
+        if(type == null || type.equalsToText("java.lang.String")){
+            // handled by JoinConcatenatedStringLiteralsIntention
+            return false;
+        }
         final PsiBinaryExpression subexpression =
-		        getSubexpression(binaryExpression);
+                getSubexpression(binaryExpression);
         if(subexpression == null){
-	        return false;
+            return false;
         }
         if(binaryExpression.equals(subexpression) &&
                 !isPartOfConstantExpression(binaryExpression)){
@@ -51,18 +52,17 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate{
         if(!PsiUtil.isConstantExpression(subexpression)){
             return false;
         }
-        final PsiManager manager = element.getManager();
-      final PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
-        final Object value = helper.computeConstantExpression(subexpression);
+        final Object value =
+                ExpressionUtils.computeConstantExpression(subexpression);
         return value != null;
     }
 
     private static boolean isPartOfConstantExpression(
-		    PsiBinaryExpression binaryExpression){
+            PsiBinaryExpression binaryExpression){
         final PsiElement containingElement = binaryExpression.getParent();
         if(containingElement instanceof PsiExpression){
             final PsiExpression containingExpression =
-		            (PsiExpression) containingElement;
+                    (PsiExpression) containingElement;
             if(!PsiUtil.isConstantExpression(containingExpression)){
                 return false;
             }
@@ -79,27 +79,27 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate{
      */
     @Nullable
     private static PsiBinaryExpression getSubexpression(
-		    PsiBinaryExpression expression){
+            PsiBinaryExpression expression){
         final PsiExpression rhs = expression.getROperand();
-	    if(rhs == null){
-		    return null;
-	    }
-	    final PsiExpression lhs = expression.getLOperand();
+        if(rhs == null){
+            return null;
+        }
+        final PsiExpression lhs = expression.getLOperand();
         if(!(lhs instanceof PsiBinaryExpression)){
             return expression;
         }
         final PsiBinaryExpression lhsBinaryExpression =
-		        (PsiBinaryExpression) lhs;
+                (PsiBinaryExpression) lhs;
         final PsiExpression leftSide = lhsBinaryExpression.getROperand();
         if(leftSide == null){
-	        return null;
+            return null;
         }
         try{
-	        final PsiBinaryExpression binaryExpression =
-			        (PsiBinaryExpression) expression.copy();
-	        final PsiExpression lOperand = binaryExpression.getLOperand();
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) expression.copy();
+            final PsiExpression lOperand = binaryExpression.getLOperand();
             lOperand.replace(leftSide);
-	        return binaryExpression;
+            return binaryExpression;
         } catch(Throwable ignore){
             return null;
         }
