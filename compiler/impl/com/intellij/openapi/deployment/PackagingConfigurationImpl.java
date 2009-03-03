@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +52,6 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
   public void readExternal(Element element) throws InvalidDataException {
     clearContainer();
     LOG.assertTrue(myParentModule != null);
-    Set<ContainerElement> created = new THashSet<ContainerElement>(IGNORING_ATTRIBUTES_EQUALITY);
 
     final List<Element> children = element.getChildren(CONTAINER_ELEMENT_NAME);
     for (Element child : children) {
@@ -63,9 +61,7 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
 
       containerElement.readExternal(child);
 
-      if (created.add(containerElement)) {
-        addElement(containerElement);
-      }
+      addElement(containerElement);
     }
   }
 
