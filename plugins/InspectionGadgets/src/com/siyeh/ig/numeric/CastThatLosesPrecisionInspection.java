@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.psi.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -107,13 +110,8 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
                     return;
                 }
             }
-            final Project project = expression.getProject();
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final PsiConstantEvaluationHelper evaluationHelper =
-                  psiFacade.getConstantEvaluationHelper();
             Object result =
-                    evaluationHelper.computeConstantExpression(operand);
-
+                    ExpressionUtils.computeConstantExpression(operand);
             if (result instanceof Character) {
                 result = Integer.valueOf(((Character) result).charValue());
             }

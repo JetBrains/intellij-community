@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,29 +27,33 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
 
     @SuppressWarnings({"PublicField"})
     public boolean ignoreNegations = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "size.replaceable.by.isempty.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "size.replaceable.by.isempty.problem.descriptor", infos[0]);
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
@@ -57,6 +61,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
                 "ignoreNegations");
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new SizeReplaceableByIsEmptyFix();
@@ -71,6 +76,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
                     "size.replaceable.by.isempty.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiBinaryExpression binaryExpression =
@@ -102,6 +108,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SizeReplaceableByIsEmptyVisitor();
     }
@@ -142,11 +149,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
             if (!isSizeCall(callExpression)) {
                 return false;
             }
-            final PsiManager manager = rhs.getManager();
-          final PsiConstantEvaluationHelper constantEvaluationHelper =
-            JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final Object object =
-                    constantEvaluationHelper.computeConstantExpression(rhs);
+                    ExpressionUtils.computeConstantExpression(rhs);
             if (!(object instanceof Integer)) {
                 return false;
             }

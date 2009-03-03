@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,13 +238,13 @@ public class ManualArrayCopyInspection extends BaseInspection {
         private static String collapseConstant(@NonNls String expressionText,
                                                PsiElement context)
                 throws IncorrectOperationException {
-            final PsiManager manager = context.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-          final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
+            final Project project = context.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = psiFacade.getElementFactory();
             final PsiExpression fromOffsetExpression =
                     factory.createExpressionFromText(expressionText, context);
             final Object fromOffsetConstant =
-                    evaluationHelper.computeConstantExpression(
+                    ExpressionUtils.computeConstantExpression(
                             fromOffsetExpression);
             if (fromOffsetConstant != null) {
                 return fromOffsetConstant.toString();
@@ -270,7 +270,8 @@ public class ManualArrayCopyInspection extends BaseInspection {
 
     private static class ManualArrayCopyVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(
+                @NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiStatement initialization =
                     statement.getInitialization();

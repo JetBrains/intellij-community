@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Bas Leijdekkers
+ * Copyright 2005-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,26 +19,31 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class SuspiciousSystemArraycopyInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "suspicious.system.arraycopy.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return (String)infos[0];
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SuspiciousSystemArraycopyVisitor();
     }
@@ -132,12 +137,8 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
 
         private static boolean isNegativeArgument(
                 @NotNull PsiExpression argument) {
-            final PsiManager manager = argument.getManager();
-          final PsiConstantEvaluationHelper constantEvaluationHelper =
-            JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final Object constant =
-                    constantEvaluationHelper.computeConstantExpression(
-                            argument);
+                    ExpressionUtils.computeConstantExpression(argument);
             if (!(constant instanceof Integer)) {
                 return false;
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,12 +35,14 @@ import org.jetbrains.annotations.Nullable;
 public class ListIndexOfReplaceableByContainsInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "indexof.replaceable.by.contains.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
@@ -60,6 +63,7 @@ public class ListIndexOfReplaceableByContainsInspection
                 "indexof.replaceable.by.contains.problem.descriptor", text);
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new IndexOfReplaceableByContainsFix();
@@ -68,6 +72,7 @@ public class ListIndexOfReplaceableByContainsInspection
     private static class IndexOfReplaceableByContainsFix
             extends InspectionGadgetsFix {
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiBinaryExpression expression =
@@ -130,6 +135,7 @@ public class ListIndexOfReplaceableByContainsInspection
         return newExpressionText;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new IndexOfReplaceableByContainsVisitor();
     }
@@ -168,11 +174,8 @@ public class ListIndexOfReplaceableByContainsInspection
             if (!isIndexOfCall(callExpression)) {
                 return false;
             }
-            final PsiManager manager = lhs.getManager();
-          final PsiConstantEvaluationHelper constantEvaluationHelper =
-            JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final Object object =
-                    constantEvaluationHelper.computeConstantExpression(rhs);
+                    ExpressionUtils.computeConstantExpression(rhs);
             if (!(object instanceof Integer)) {
                 return false;
             }
@@ -228,14 +231,15 @@ public class ListIndexOfReplaceableByContainsInspection
                 return false;
             }
             final Project project = expression.getProject();
-            final PsiManager manager = expression.getManager();
             final GlobalSearchScope projectScope =
                     GlobalSearchScope.allScope(project);
-          final PsiClass javaUtilListClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.List", projectScope);
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiClass javaUtilListClass =
+                    psiFacade.findClass("java.util.List", projectScope);
             if (javaUtilListClass == null) {
                 return false;
             }
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final PsiElementFactory factory = psiFacade.getElementFactory();
             final PsiClassType javaUtilListType =
                     factory.createType(javaUtilListClass);
             return javaUtilListType.isAssignableFrom(qualifierType);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -23,28 +24,31 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 
 public class MagicNumberInspection extends BaseInspection {
 
-	/** @noinspection PublicField*/
+    /** @noinspection PublicField*/
     public boolean m_ignoreInHashCode = true;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("magic.number.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "magic.number.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -52,14 +56,17 @@ public class MagicNumberInspection extends BaseInspection {
                 this, "m_ignoreInHashCode");
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new IntroduceConstantFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new MagicNumberVisitor();
     }
@@ -117,13 +124,8 @@ public class MagicNumberInspection extends BaseInspection {
         }
 
         private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
-            final PsiManager manager = expression.getManager();
-            final JavaPsiFacade facade =
-                    JavaPsiFacade.getInstance(manager.getProject());
-            final PsiConstantEvaluationHelper evaluationHelper =
-                  facade.getConstantEvaluationHelper();
-            final Object object = evaluationHelper.computeConstantExpression(
-                    expression);
+            final Object object =
+                    ExpressionUtils.computeConstantExpression(expression);
             if (object instanceof Integer) {
                 final int i = ((Integer)object).intValue();
                 return i >= 0 && i <= 10 || i == 100 || i == 1000;

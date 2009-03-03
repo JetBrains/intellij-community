@@ -19,12 +19,27 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExpressionUtils {
 
     private ExpressionUtils() {}
+
+    public static Object computeConstantExpression(PsiExpression expression) {
+        return computeConstantExpression(expression, false);
+    }
+
+    public static Object computeConstantExpression(
+            PsiExpression expression, boolean throwExceptionOnOverflow) {
+        final Project project = expression.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiConstantEvaluationHelper constantEvaluationHelper =
+                psiFacade.getConstantEvaluationHelper();
+        return constantEvaluationHelper.computeConstantExpression(expression,
+                throwExceptionOnOverflow);
+    }
 
     public static boolean isConstant(PsiField field) {
         if (!field.hasModifierProperty(PsiModifier.FINAL) ||

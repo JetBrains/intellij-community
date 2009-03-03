@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Bas Leijdekkers
+ * Copyright 2003-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,19 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class PointlessIndexOfComparisonInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "pointless.indexof.comparison.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
@@ -75,6 +78,7 @@ public class PointlessIndexOfComparisonInspection extends BaseInspection {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new PointlessIndexOfComparisonVisitor();
     }
@@ -82,7 +86,8 @@ public class PointlessIndexOfComparisonInspection extends BaseInspection {
     private static class PointlessIndexOfComparisonVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(
+                PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {
@@ -107,16 +112,13 @@ public class PointlessIndexOfComparisonInspection extends BaseInspection {
 
         private static boolean isPointLess(PsiExpression lhs, PsiJavaToken sign,
                                            PsiExpression rhs, boolean flipped) {
-            final PsiManager manager = lhs.getManager();
             final PsiMethodCallExpression callExpression =
                     (PsiMethodCallExpression)lhs;
             if (!isIndexOfCall(callExpression)) {
                 return false;
             }
-          final PsiConstantEvaluationHelper constantEvaluationHelper =
-            JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final Object object =
-                    constantEvaluationHelper.computeConstantExpression(rhs);
+                    ExpressionUtils.computeConstantExpression(rhs);
             if (!(object instanceof Integer)) {
                 return false;
             }

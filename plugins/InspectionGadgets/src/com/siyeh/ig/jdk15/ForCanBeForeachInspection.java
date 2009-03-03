@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.jdk15;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.tree.IElementType;
@@ -30,15 +29,14 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.StringUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -111,7 +109,6 @@ public class ForCanBeForeachInspection extends BaseInspection{
         @Nullable
         private static String createListIterationText(
                 @NotNull PsiForStatement forStatement){
-            @NonNls final StringBuilder out = new StringBuilder();
             final PsiBinaryExpression condition =
                     (PsiBinaryExpression)forStatement.getCondition();
             if(condition == null){
@@ -197,6 +194,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 finalString = "";
                 statementToSkip = null;
             }
+            @NonNls final StringBuilder out = new StringBuilder();
             out.append("for(");
             out.append(finalString);
             out.append(typeString);
@@ -309,14 +307,13 @@ public class ForCanBeForeachInspection extends BaseInspection{
         private static String createCollectionIterationText(
                 @NotNull PsiForStatement forStatement)
                 throws IncorrectOperationException{
-            @NonNls final StringBuilder out = new StringBuilder();
             final PsiStatement body = forStatement.getBody();
             final PsiStatement firstStatement = getFirstStatement(body);
             final PsiStatement initialization =
                     forStatement.getInitialization();
-	        if(!(initialization instanceof PsiDeclarationStatement)){
-		        return null;
-	        }
+            if(!(initialization instanceof PsiDeclarationStatement)){
+                return null;
+            }
             final PsiDeclarationStatement declaration =
                     (PsiDeclarationStatement) initialization;
             final PsiVariable iterator =
@@ -406,6 +403,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
             } else{
                 castString = '(' + iterableTypeString + ')';
             }
+            final @NonNls StringBuilder out = new StringBuilder();
             out.append("for(");
             out.append(finalString);
             out.append(contentTypeString);
@@ -427,7 +425,6 @@ public class ForCanBeForeachInspection extends BaseInspection{
         @Nullable
         private static String createArrayIterationText(
                 @NotNull PsiForStatement forStatement){
-            @NonNls final StringBuilder out = new StringBuilder();
             final PsiExpression condition = forStatement.getCondition();
             final PsiBinaryExpression strippedCondition =
                     (PsiBinaryExpression)ParenthesesUtils.stripParentheses(
@@ -496,6 +493,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 finalString = "";
                 statementToSkip = null;
             }
+            final @NonNls StringBuilder out = new StringBuilder();
             out.append("for(");
             out.append(finalString);
             out.append(typeText);
@@ -950,12 +948,8 @@ public class ForCanBeForeachInspection extends BaseInspection{
         if(initialValue == null){
             return false;
         }
-        final PsiManager manager = initialValue.getManager();
-      final PsiConstantEvaluationHelper constantEvaluationHelper =
-        JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
         final Object constant =
-                constantEvaluationHelper.computeConstantExpression(
-                        initialValue);
+                ExpressionUtils.computeConstantExpression(initialValue);
         if (!(constant instanceof Integer)){
             return false;
         }
@@ -1217,10 +1211,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
             return false;
         }
         final PsiExpression rhs = binaryExp.getROperand();
-        if(rhs == null){
-            return false;
-        }
-        return expressionIsArrayLengthLookup(rhs);
+        return rhs != null && expressionIsArrayLengthLookup(rhs);
     }
 
     private static boolean isListSizeComparison(PsiExpression condition,

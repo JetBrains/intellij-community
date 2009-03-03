@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Bas Leijdekkers
+ * Copyright 2005-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,12 +36,14 @@ import org.jetbrains.annotations.Nullable;
 public class IndexOfReplaceableByContainsInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "indexof.replaceable.by.contains.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
@@ -61,6 +64,7 @@ public class IndexOfReplaceableByContainsInspection
                 "indexof.replaceable.by.contains.problem.descriptor", text);
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new IndexOfReplaceableByContainsFix();
@@ -69,6 +73,7 @@ public class IndexOfReplaceableByContainsInspection
     private static class IndexOfReplaceableByContainsFix
             extends InspectionGadgetsFix {
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiBinaryExpression expression =
@@ -131,6 +136,7 @@ public class IndexOfReplaceableByContainsInspection
         return newExpressionText;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new IndexOfReplaceableByContainsVisitor();
     }
@@ -172,11 +178,8 @@ public class IndexOfReplaceableByContainsInspection
             if (!isIndexOfCall(callExpression)) {
                 return false;
             }
-            final PsiManager manager = lhs.getManager();
-          final PsiConstantEvaluationHelper constantEvaluationHelper =
-            JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final Object object =
-                    constantEvaluationHelper.computeConstantExpression(rhs);
+                    ExpressionUtils.computeConstantExpression(rhs);
             if (!(object instanceof Integer)) {
                 return false;
             }

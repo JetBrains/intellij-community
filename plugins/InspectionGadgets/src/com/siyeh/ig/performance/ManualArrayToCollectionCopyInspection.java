@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,9 +178,6 @@ public class ManualArrayToCollectionCopyInspection
             final PsiArrayAccessExpression arrayAccessExpression =
                     (PsiArrayAccessExpression)
                             deparenthesizedArgument;
-            if (arrayAccessExpression == null) {
-                return null;
-            }
             final PsiExpression arrayExpression =
                     arrayAccessExpression.getArrayExpression();
             final String arrayText = arrayExpression.getText();
@@ -267,13 +264,13 @@ public class ManualArrayToCollectionCopyInspection
         private static String collapseConstant(String expressionText,
                                                PsiElement context)
                 throws IncorrectOperationException {
-            final PsiManager manager = context.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-          final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
+            final Project project = context.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = psiFacade.getElementFactory();
             final PsiExpression fromOffsetExpression =
                     factory.createExpressionFromText(expressionText, context);
             final Object fromOffsetConstant =
-                    evaluationHelper.computeConstantExpression(
+                    ExpressionUtils.computeConstantExpression(
                             fromOffsetExpression);
             if (fromOffsetConstant != null) {
                 return fromOffsetConstant.toString();
