@@ -460,19 +460,22 @@ public class FileBasedIndex implements ApplicationComponent {
     boolean process(VirtualFile file, V value);
   }
 
-  public <K, V> void processValues(final ID<K, V> indexId, final @NotNull K dataKey, @Nullable final VirtualFile inFile,
+  /**
+   * @return false if ValueProcessor.process() returned false; true otherwise or if ValueProcessor was not called at all 
+   */
+  public <K, V> boolean processValues(final ID<K, V> indexId, final @NotNull K dataKey, @Nullable final VirtualFile inFile,
                                    ValueProcessor<V> processor, final VirtualFileFilter filter) {
-    processValuesImpl(indexId, dataKey, false, inFile, processor, filter);
+    return processValuesImpl(indexId, dataKey, false, inFile, processor, filter);
   }
 
-  private <K, V> void processValuesImpl(final ID<K, V> indexId, final K dataKey, boolean ensureValueProcessedOnce,
+  private <K, V> boolean processValuesImpl(final ID<K, V> indexId, final K dataKey, boolean ensureValueProcessedOnce,
                                         @Nullable final VirtualFile restrictToFile, ValueProcessor<V> processor,
                                         final VirtualFileFilter filter) {
     try {
       ensureUpToDate(indexId);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
-        return;
+        return true;
       }
 
       final Lock readLock = index.getReadLock();
@@ -480,16 +483,18 @@ public class FileBasedIndex implements ApplicationComponent {
         readLock.lock();
         final ValueContainer<V> container = index.getData(dataKey);
 
-        if (restrictToFile != null) {
-          if (!(restrictToFile instanceof VirtualFileWithId)) return;
+        boolean shouldContinue = true;
 
-          final int restrictedFileId = getFileId(restrictToFile);
-          for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
-            final V value = valueIt.next();
-            if (container.isAssociated(value, restrictedFileId)) {
-              final boolean shouldContinue = processor.process(restrictToFile, value);
-              if (!shouldContinue) {
-                break;
+        if (restrictToFile != null) {
+          if (restrictToFile instanceof VirtualFileWithId) {
+            final int restrictedFileId = getFileId(restrictToFile);
+            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
+              final V value = valueIt.next();
+              if (container.isAssociated(value, restrictedFileId)) {
+                shouldContinue = processor.process(restrictToFile, value);
+                if (!shouldContinue) {
+                  break;
+                }
               }
             }
           }
@@ -502,7 +507,7 @@ public class FileBasedIndex implements ApplicationComponent {
               final int id = inputIdsIterator.next();
               VirtualFile file = IndexInfrastructure.findFileById(fs, id);
               if (file != null && filter.accept(file)) {
-                final boolean shouldContinue = processor.process(file, value);
+                shouldContinue = processor.process(file, value);
                 if (!shouldContinue) {
                   break VALUES_LOOP;
                 }
@@ -513,6 +518,7 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
         }
+        return shouldContinue;
       }
       finally {
         index.getReadLock().unlock();
@@ -530,6 +536,7 @@ public class FileBasedIndex implements ApplicationComponent {
         throw e;
       }
     }
+    return true;
   }
 
   public interface AllValuesProcessor<V> {
