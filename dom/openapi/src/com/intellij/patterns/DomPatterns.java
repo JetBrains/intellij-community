@@ -37,19 +37,18 @@ public class DomPatterns {
   }
 
   public static XmlElementPattern.Capture withDom(final ElementPattern pattern) {
-    return new XmlElementPattern.Capture().with(new PatternCondition<XmlElement>("withDom") {
+    return new XmlElementPattern.Capture().with(new PatternCondition<XmlElement>("tagWithDom") {
       public boolean accepts(@NotNull final XmlElement xmlElement, final ProcessingContext context) {
         final DomManager manager = DomManager.getDomManager(xmlElement.getProject());
         if (xmlElement instanceof XmlAttribute) {
           return pattern.getCondition().accepts(manager.getDomElement((XmlAttribute)xmlElement), context);
         }
-        if (xmlElement instanceof XmlTag) {
-          return pattern.getCondition().accepts(manager.getDomElement((XmlTag)xmlElement), context);
-        }
-        return false;
+        return xmlElement instanceof XmlTag && pattern.getCondition().accepts(manager.getDomElement((XmlTag)xmlElement), context);
       }
     });
   }
 
-
+  public static XmlTagPattern.Capture tagWithDom(String tagName, Class<? extends DomElement> aClass) {
+    return XmlPatterns.xmlTag().withName(tagName).and(withDom(domElement(aClass)));
+  }
 }
