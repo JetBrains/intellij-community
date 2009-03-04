@@ -26,6 +26,11 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
     return new GroovyFileStubBuilder();
   }
 
+  @Override
+  public int getStubVersion() {
+    return super.getStubVersion() + 1;
+  }
+
   public String getExternalId() {
     return "groovy.FILE";
   }

@@ -14,9 +14,7 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -25,13 +23,10 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyCacheUtil;
 
 import java.util.ArrayList;
@@ -51,7 +46,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
 
     final SearchScope scope = p.getScope();
 
-    GrMember[] candidates;
+    PsiMember[] candidates;
     if (scope instanceof GlobalSearchScope) {
       candidates = GroovyCacheUtil.getAnnotatedMemberCandidates(annClass, ((GlobalSearchScope)scope));
     } else {
@@ -70,18 +65,16 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
           });
         }
       }
-      candidates = collector.toArray(new GrMember[collector.size()]);
+      candidates = collector.toArray(new PsiMember[collector.size()]);
     }
 
-    for (GrMember candidate : candidates) {
-      GrModifierList list = candidate.getModifierList();
+    for (PsiMember candidate : candidates) {
+      PsiModifierList list = candidate.getModifierList();
       if (list != null) {
-        GrAnnotation[] annotations = list.getAnnotations();
-        for (GrAnnotation annotation : annotations) {
-          GrCodeReferenceElement ref = annotation.getClassReference();
-          if (ref != null && ref.isReferenceTo(annClass)) {
+        for (PsiAnnotation annotation : list.getAnnotations()) {
+          if (annotationFQN.equals(annotation.getQualifiedName())) {
             PsiClass clazz = candidate.getContainingClass();
-            if (clazz == null || clazz instanceof GroovyScriptClass) continue;
+            if (clazz instanceof GroovyScriptClass) continue;
             if (!consumer.process(candidate)) return false;
           }
         }

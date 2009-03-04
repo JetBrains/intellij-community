@@ -17,4 +17,6 @@ public interface GrTypeDefinitionStub extends NamedStub<GrTypeDefinition> {
   String getQualifiedName();
 
   String getSourceFileName();
+
+  String[] getAnnotations();
 }

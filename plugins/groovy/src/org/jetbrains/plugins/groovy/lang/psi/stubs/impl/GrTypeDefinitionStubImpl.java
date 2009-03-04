@@ -15,13 +15,14 @@ public class GrTypeDefinitionStubImpl extends StubBase<GrTypeDefinition> impleme
   private final String[] mySuperClasses;
   private final StringRef myQualifiedName;
   private StringRef mySourceFileName;
+  private final String[] myAnnotations;
 
-  public GrTypeDefinitionStubImpl(StubElement parent, 
-                                  final String name,
+  public GrTypeDefinitionStubImpl(StubElement parent, final String name,
                                   final String[] supers,
                                   final IStubElementType elementType,
-                                  final String qualifiedName) {
+                                  final String qualifiedName, String[] annotations) {
     super(parent, elementType);
+    myAnnotations = annotations;
     myName = StringRef.fromString(name);
     mySuperClasses = supers;
     myQualifiedName = StringRef.fromString(qualifiedName);
@@ -33,6 +34,10 @@ public class GrTypeDefinitionStubImpl extends StubBase<GrTypeDefinition> impleme
 
   public String getName() {
     return StringRef.toString(myName);
+  }
+
+  public String[] getAnnotations() {
+    return myAnnotations;
   }
 
   public String getQualifiedName() {
