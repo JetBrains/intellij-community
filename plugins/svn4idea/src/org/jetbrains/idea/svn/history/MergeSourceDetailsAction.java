@@ -25,7 +25,7 @@ public class MergeSourceDetailsAction extends AnAction {
 
   private Icon getIcon() {
     if (myIcon == null) {
-      myIcon = IconLoader.getIcon("/icons/mergeSourcesTree.PNG");
+      myIcon = IconLoader.getIcon("/icons/mergeSourcesDetails.png");
     }
     return myIcon;
   }
