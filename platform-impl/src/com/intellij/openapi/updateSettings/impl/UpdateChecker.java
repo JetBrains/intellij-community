@@ -246,7 +246,8 @@ public final class UpdateChecker {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
-          final InputStream inputStream = new URL(url).openStream();
+          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuildNumber());
+          final InputStream inputStream = requestUrl.openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);
           }
