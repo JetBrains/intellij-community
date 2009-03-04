@@ -370,12 +370,14 @@ public class SvnVcs extends AbstractVcs {
   public SVNRepository createRepository(String url) throws SVNException {
     SVNRepository repos = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
     repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(myProject));
+    repos.setTunnelProvider(myConfiguration.getOptions(myProject));
     return repos;
   }
 
   public SVNRepository createRepository(SVNURL url) throws SVNException {
     SVNRepository repos = SVNRepositoryFactory.create(url);
     repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(myProject));
+    repos.setTunnelProvider(myConfiguration.getOptions(myProject));
     return repos;
   }
 
