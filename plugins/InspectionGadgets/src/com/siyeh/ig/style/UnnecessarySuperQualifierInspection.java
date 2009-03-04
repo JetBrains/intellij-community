@@ -18,11 +18,8 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -125,30 +122,23 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
             }
             final PsiField superField = (PsiField)target;
             final String name = superField.getName();
-            if (name == null) {
-                return false;
-            }
             final PsiField field = parentClass.findFieldByName(name, false);
             return field == null;
         }
 
-        private static boolean hasUnnecessarySuperQualifier(
-                PsiMethodCallExpression methodCallExpression) {
+        private static boolean hasUnnecessarySuperQualifier(PsiMethodCallExpression methodCallExpression) {
             final PsiMethod superMethod =
                     methodCallExpression.resolveMethod();
             if (superMethod == null) {
                 return false;
             }
-            final PsiClass parentClass =
-                    PsiTreeUtil.getParentOfType(methodCallExpression,
-                            PsiClass.class);
-            if (parentClass == null) {
-                return false;
-            }
-            final Query<PsiMethod> query = OverridingMethodsSearch.search(
-                    superMethod, new LocalSearchScope(parentClass), false);
-            final PsiMethod method = query.findFirst();
-            return method == null;
+          // check that super.m() and m() resolve to the same method
+          PsiMethodCallExpression copy = (PsiMethodCallExpression)methodCallExpression.copy();
+          copy.getMethodExpression().getQualifier().delete(); //remove super
+          PsiExpression expression = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory()
+            .createExpressionFromText(copy.getText(), methodCallExpression);
+          PsiMethod noSuper = ((PsiMethodCallExpression)expression).resolveMethod();
+            return superMethod == noSuper;
         }
     }
 }
