@@ -49,29 +49,29 @@ public class ParenthesesUtils{
     private static final int ASSIGNMENT_PRECEDENCE = 16;
     private static final int NUM_PRECEDENCES = 17;
 
-    private static final Map<String, Integer> s_binaryOperatorPrecedence =
-            new HashMap<String, Integer>(NUM_PRECEDENCES);
+    private static final Map<IElementType, Integer> s_binaryOperatorPrecedence =
+            new HashMap<IElementType, Integer>(NUM_PRECEDENCES);
 
     static {
-        s_binaryOperatorPrecedence.put("+", ADDITIVE_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("-", ADDITIVE_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("*", MULTIPLICATIVE_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("/", MULTIPLICATIVE_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("%", MULTIPLICATIVE_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("&&", AND_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("||", OR_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("&", BINARY_AND_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("|", BINARY_OR_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("^", BINARY_XOR_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("<<", SHIFT_PRECEDENCE);
-        s_binaryOperatorPrecedence.put(">>", SHIFT_PRECEDENCE);
-        s_binaryOperatorPrecedence.put(">>>", SHIFT_PRECEDENCE);
-        s_binaryOperatorPrecedence.put(">", RELATIONAL_PRECEDENCE);
-        s_binaryOperatorPrecedence.put(">=", RELATIONAL_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("<", RELATIONAL_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("<=", RELATIONAL_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("==", EQUALITY_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("!=", EQUALITY_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.PLUS, ADDITIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.MINUS, ADDITIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.ASTERISK, MULTIPLICATIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.DIV, MULTIPLICATIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.PERC, MULTIPLICATIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.ANDAND, AND_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.OROR, OR_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.AND, BINARY_AND_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.OR, BINARY_OR_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.XOR, BINARY_XOR_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.LTLT, SHIFT_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.GTGT, SHIFT_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.GTGTGT, SHIFT_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.GT, RELATIONAL_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.GE, RELATIONAL_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.LT, RELATIONAL_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.LE, RELATIONAL_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.EQEQ, EQUALITY_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.NE, EQUALITY_PRECEDENCE);
     }
 
     @Nullable
@@ -148,9 +148,12 @@ public class ParenthesesUtils{
         return -1;
     }
 
-    private static int getPrecedenceForBinaryOperator(
-            @NotNull PsiJavaToken sign){
-        final String operator = sign.getText();
+    public static int getPrecedenceForBinaryOperator(@NotNull PsiJavaToken sign){
+        final IElementType tokenType = sign.getTokenType();
+        return getPrecedenceForBinaryOperator(tokenType);
+    }
+
+    public static int getPrecedenceForBinaryOperator(IElementType operator) {
         final Integer precedence = s_binaryOperatorPrecedence.get(operator);
         return precedence.intValue();
     }
@@ -249,7 +252,7 @@ public class ParenthesesUtils{
     }
 
     private static void removeParensFromParenthesizedExpression(
-            @NotNull PsiParenthesizedExpression parenthesizedExpression, 
+            @NotNull PsiParenthesizedExpression parenthesizedExpression,
             boolean ignoreClarifyingParentheses)
             throws IncorrectOperationException {
         final PsiExpression body = parenthesizedExpression.getExpression();
@@ -484,36 +487,49 @@ public class ParenthesesUtils{
             PsiParenthesizedExpression expression,
             boolean ignoreClarifyingParentheses) {
         final PsiElement parent = expression.getParent();
-        final PsiElement child = expression.getExpression();
-        if (parent instanceof PsiBinaryExpression &&
-                child instanceof PsiBinaryExpression) {
+        final PsiExpression child = expression.getExpression();
+        return areParenthesesNeeded(child, parent,
+                ignoreClarifyingParentheses);
+    }
+
+    public static boolean areParenthesesNeeded(
+            PsiExpression expression, PsiElement parentExpression,
+            boolean ignoreClarifyingParentheses) {
+        if (parentExpression instanceof PsiBinaryExpression) {
             final PsiBinaryExpression parentBinaryExpression =
-                    (PsiBinaryExpression)parent;
-            final PsiBinaryExpression childBinaryExpression =
-                    (PsiBinaryExpression)child;
-            final IElementType childOperator =
-                    childBinaryExpression.getOperationTokenType();
-            final IElementType parentOperator =
-                    parentBinaryExpression.getOperationTokenType();
-            if (ignoreClarifyingParentheses &&
-                    !childOperator.equals(parentOperator)) {
-                return true;
-            }
-            final PsiType parentType =
-                    parentBinaryExpression.getType();
-            if (parentType == null) {
-                return true;
-            }
-            final PsiType childType = childBinaryExpression.getType();
-            if (!parentType.equals(childType)) {
-                return true;
-            }
-            if (parentBinaryExpression.getROperand() == expression) {
-                if (!isCommutativeBinaryOperator(parentOperator)) {
+                    (PsiBinaryExpression) parentExpression;
+            if (expression instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression childBinaryExpression =
+                        (PsiBinaryExpression)expression;
+                final IElementType childOperator =
+                        childBinaryExpression.getOperationTokenType();
+                final IElementType parentOperator =
+                        parentBinaryExpression.getOperationTokenType();
+                if (ignoreClarifyingParentheses &&
+                        !childOperator.equals(parentOperator)) {
+                    return true;
+                }
+                final PsiType parentType = parentBinaryExpression.getType();
+                if (parentType == null) {
+                    return true;
+                }
+                final PsiType childType = childBinaryExpression.getType();
+                if (!parentType.equals(childType)) {
+                    return true;
+                }
+                if (PsiTreeUtil.isAncestor(parentBinaryExpression.getROperand(),
+                        expression, false)) {
+                    if (!isCommutativeBinaryOperator(parentOperator)) {
+                        return true;
+                    }
+                }
+                return false;
+            } else if (expression instanceof PsiConditionalExpression) {
+                if (PsiTreeUtil.isAncestor(parentBinaryExpression.getROperand(),
+                        expression, false)) {
                     return true;
                 }
             }
-            return false;
         }
         return false;
     }
