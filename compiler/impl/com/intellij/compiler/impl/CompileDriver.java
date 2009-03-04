@@ -571,7 +571,7 @@ public class CompileDriver {
                                                       myProcessingCompilerAdapterFactory, isRebuild, false, onlyCheckStatus);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory,
-                                                      isRebuild, true, onlyCheckStatus);
+                                                      isRebuild, false, onlyCheckStatus);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, Validator.class, myProcessingCompilerAdapterFactory,
                                                       forceCompile, true, onlyCheckStatus);
@@ -671,6 +671,24 @@ public class CompileDriver {
       // Ignore. Failed to create optional classpath index
     }
   }
+
+  //private static void jarOutputDir(File outputDir) {
+  //  final File jarFile = new File(outputDir.getParentFile(), outputDir.getName() + "_.jar");
+  //  FileUtil.delete(jarFile);
+  //  try {
+  //    jarFile.createNewFile();
+  //    final JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(jarFile));
+  //    try {
+  //      ZipUtil.addDirToZipRecursively(jarOut, jarFile, outputDir, "", null, new HashSet<String>());
+  //    }
+  //    finally {
+  //      jarOut.close();
+  //    }
+  //  }
+  //  catch (IOException e) {
+  //    e.printStackTrace();
+  //  }
+  //}
 
   private static void writeIndex(final BufferedWriter writer, final VirtualFile root, final VirtualFile file) throws IOException {
     writer.write(VfsUtil.getRelativePath(file, root, '/'));
@@ -778,7 +796,7 @@ public class CompileDriver {
     return didSomething;
   }
 
-  private static interface FileProcessingCompilerAdapterFactory {
+  private interface FileProcessingCompilerAdapterFactory {
     FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler);
   }
 

@@ -155,8 +155,7 @@ public class HtmlLinkTagIndex extends SingleEntryFileBasedIndexExtension<HtmlLin
 
     FileBasedIndex.getInstance()
       .processValues(INDEX_ID, FileBasedIndex.getFileId(_file), null, new FileBasedIndex.ValueProcessor<InfoHolder<LinkInfo>>() {
-        public void process(final VirtualFile file, final InfoHolder<LinkInfo> value) {
-
+        public boolean process(final VirtualFile file, final InfoHolder<LinkInfo> value) {
           final PsiManager psiManager = PsiManager.getInstance(project);
           final PsiFile psiFile = psiManager.findFile(file);
           if (psiFile != null) {
@@ -185,6 +184,7 @@ public class HtmlLinkTagIndex extends SingleEntryFileBasedIndexExtension<HtmlLin
               }
             }
           }
+          return true;
         }
       }, VirtualFileFilter.ALL);
 

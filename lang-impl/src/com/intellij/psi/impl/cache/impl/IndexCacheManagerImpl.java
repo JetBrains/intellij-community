@@ -86,11 +86,12 @@ public class IndexCacheManagerImpl implements CacheManager{
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-          public void process(final VirtualFile file, final Integer value) {
+          public boolean process(final VirtualFile file, final Integer value) {
             final int mask = value.intValue();
             if ((mask & occurrenceMask) != 0) {
               vFiles.add(file);
             }
+            return true;
           }
         }, VirtualFileFilter.ALL);
       }
@@ -149,8 +150,9 @@ public class IndexCacheManagerImpl implements CacheManager{
     fileBasedIndex.processValues(
       TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,
       new FileBasedIndex.ValueProcessor<Integer>() {
-        public void process(final VirtualFile file, final Integer value) {
+        public boolean process(final VirtualFile file, final Integer value) {
           count[0] += value.intValue();
+          return true;
         }
       }, VirtualFileFilter.ALL);
     return count[0];

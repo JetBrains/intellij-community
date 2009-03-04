@@ -26,11 +26,12 @@ public class IndexedRelevantResource<K, V> implements Comparable<IndexedRelevant
     final ArrayList<IndexedRelevantResource<K, V>> resources = new ArrayList<IndexedRelevantResource<K, V>>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     FileBasedIndex.getInstance().processValues(indexId, key, null, new FileBasedIndex.ValueProcessor<V>() {
-      public void process(VirtualFile file, V value) {
+      public boolean process(VirtualFile file, V value) {
         ResourceRelevance relevance = ResourceRelevance.getRelevance(file, module, fileIndex);
         if (relevance != ResourceRelevance.NONE) {
           resources.add(new IndexedRelevantResource<K, V>(file, key, value, relevance));
         }
+        return true;
       }
     }, VirtualFileFilter.ALL);
     Collections.sort(resources);

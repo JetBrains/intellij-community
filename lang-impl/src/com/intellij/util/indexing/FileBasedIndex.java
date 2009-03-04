@@ -430,8 +430,9 @@ public class FileBasedIndex implements ApplicationComponent {
   public <K, V> List<V> getValues(final ID<K, V> indexId, @NotNull K dataKey, final VirtualFileFilter filter) {
     final List<V> values = new ArrayList<V>();
     processValuesImpl(indexId, dataKey, true, null, new ValueProcessor<V>() {
-      public void process(final VirtualFile file, final V value) {
+      public boolean process(final VirtualFile file, final V value) {
         values.add(value);
+        return true;
       }
     }, filter);
     return values;
@@ -441,8 +442,9 @@ public class FileBasedIndex implements ApplicationComponent {
   public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, @NotNull K dataKey, final VirtualFileFilter filter) {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
     processValuesImpl(indexId, dataKey, false, null, new ValueProcessor<V>() {
-      public void process(final VirtualFile file, final V value) {
+      public boolean process(final VirtualFile file, final V value) {
         files.add(file);
+        return true;
       }
     }, filter);
     return files;
@@ -450,7 +452,12 @@ public class FileBasedIndex implements ApplicationComponent {
 
 
   public interface ValueProcessor<V> {
-    void process(VirtualFile file, V value);
+    /**
+     * @param value a value to process
+     * @param file the file the value came from
+     * @return false if no further processing is needed, true otherwise
+     */
+    boolean process(VirtualFile file, V value);
   }
 
   public <K, V> void processValues(final ID<K, V> indexId, final @NotNull K dataKey, @Nullable final VirtualFile inFile,
@@ -480,19 +487,25 @@ public class FileBasedIndex implements ApplicationComponent {
           for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
             final V value = valueIt.next();
             if (container.isAssociated(value, restrictedFileId)) {
-              processor.process(restrictToFile, value);
+              final boolean shouldContinue = processor.process(restrictToFile, value);
+              if (!shouldContinue) {
+                break;
+              }
             }
           }
         }
         else {
           final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
-          for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
+          VALUES_LOOP: for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
             final V value = valueIt.next();
             for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
               final int id = inputIdsIterator.next();
               VirtualFile file = IndexInfrastructure.findFileById(fs, id);
               if (file != null && filter.accept(file)) {
-                processor.process(file, value);
+                final boolean shouldContinue = processor.process(file, value);
+                if (!shouldContinue) {
+                  break VALUES_LOOP;
+                }
                 if (ensureValueProcessedOnce) {
                   break; // continue with the next value
                 }
