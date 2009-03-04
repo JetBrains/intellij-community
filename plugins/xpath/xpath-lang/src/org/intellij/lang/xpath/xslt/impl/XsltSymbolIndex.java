@@ -16,9 +16,6 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.*;
-
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -30,13 +27,15 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumDataDescriptor;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.xml.NanoXmlUtil;
-import com.intellij.util.ArrayUtil;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -202,7 +201,7 @@ public class XsltSymbolIndex implements FileBasedIndexExtension<String, XsltSymb
             myName = name;
         }
 
-        public void process(VirtualFile file, Kind kind) {
+        public boolean process(VirtualFile file, Kind kind) {
             if (myScope.contains(file)) {
                 final PsiFile psiFile = myMgr.findFile(file);
                 if (XsltSupport.isXsltFile(psiFile)) {
@@ -219,7 +218,7 @@ public class XsltSymbolIndex implements FileBasedIndexExtension<String, XsltSymb
                         }
                     } catch (NullPointerException e) {
                         // something is null, don't bother
-                        return;
+                        return true;
                     }
 
                     for (XmlTag tag : tags) {
@@ -234,6 +233,7 @@ public class XsltSymbolIndex implements FileBasedIndexExtension<String, XsltSymb
                     }
                 }
             }
+          return true;
         }
 
         public NavigationItem[] getResult() {

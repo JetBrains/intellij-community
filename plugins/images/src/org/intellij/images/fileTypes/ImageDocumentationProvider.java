@@ -27,7 +27,7 @@ public class ImageDocumentationProvider extends QuickDocumentationProvider {
     if (element instanceof PsiFileSystemItem && !((PsiFileSystemItem)element).isDirectory()) {
       final VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
       ImageInfoIndex.processValues(file, new FileBasedIndex.ValueProcessor<ImageInfoIndex.ImageInfo>() {
-        public void process(VirtualFile file, ImageInfoIndex.ImageInfo value) {
+        public boolean process(VirtualFile file, ImageInfoIndex.ImageInfo value) {
           int imageWidth = value.width;
           int imageHeight = value.height;
 
@@ -45,6 +45,7 @@ public class ImageDocumentationProvider extends QuickDocumentationProvider {
           catch (URISyntaxException e) {
             // nothing
           }
+          return true;
         }
       });
     }
