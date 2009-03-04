@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
@@ -41,11 +42,13 @@ public class PropertyReferenceViaLastWordSearcher implements QueryExecutor<PsiRe
       final PsiSearchHelper helper = PsiManager.getInstance(refElement.getProject()).getSearchHelper();
       final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
         public boolean execute(PsiElement element, int offsetInElement) {
+          ProgressManager.getInstance().checkCanceled();
           final PsiReference[] refs = element.getReferences();
           for (PsiReference ref : refs) {
             if (ref.getRangeInElement().contains(offsetInElement) && ref.isReferenceTo(refElement)) {
               return consumer.process(ref);
             }
+            ProgressManager.getInstance().checkCanceled();
           }
           return true;
         }
