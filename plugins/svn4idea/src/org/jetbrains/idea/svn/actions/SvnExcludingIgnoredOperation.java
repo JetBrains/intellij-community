@@ -8,35 +8,49 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 
 public class SvnExcludingIgnoredOperation {
-  private final Project myProject;
   private final Operation myImportAction;
   private final SVNDepth myDepth;
-  private final ExcludedFileIndex myIndex;
-  private final ChangeListManager myClManager;
+  private final Filter myFilter;
 
   public SvnExcludingIgnoredOperation(final Project project, final Operation importAction, final SVNDepth depth) {
-    myProject = project;
     myImportAction = importAction;
     myDepth = depth;
 
-    if (! project.isDefault()) {
-      myIndex = ExcludedFileIndex.getInstance(project);
-      myClManager = ChangeListManager.getInstance(project);
-    } else {
-      myIndex = null;
-      myClManager = null;
+    myFilter = new Filter(project);
+  }
+
+  public static class Filter {
+    private final Project myProject;
+    private final ExcludedFileIndex myIndex;
+    private final ChangeListManager myClManager;
+
+    public Filter(final Project project) {
+      myProject = project;
+
+      if (! project.isDefault()) {
+        myIndex = ExcludedFileIndex.getInstance(project);
+        myClManager = ChangeListManager.getInstance(project);
+      } else {
+        myIndex = null;
+        myClManager = null;
+      }
+    }
+
+    public boolean accept(final VirtualFile file) {
+      if (! myProject.isDefault()) {
+        if (myIndex.isExcludedFile(file)) {
+          return false;
+        }
+        if (myClManager.isIgnoredFile(file)) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 
   private boolean operation(final VirtualFile file) throws SVNException {
-    if (! myProject.isDefault()) {
-      if (myIndex.isExcludedFile(file)) {
-        return false;
-      }
-      if (myClManager.isIgnoredFile(file)) {
-        return false;
-      }
-    }
+    if (! myFilter.accept(file)) return false;
 
     myImportAction.doOperation(file);
     return true;

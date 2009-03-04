@@ -25,10 +25,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -39,6 +40,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
@@ -221,20 +223,18 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                 // do not pay attention to ignored/excluded settings
                 client.doImport(target, url, message, null, !includeIgnored, false, depth);
               } else {
-                final SvnExcludingIgnoredOperation operation = new SvnExcludingIgnoredOperation(project,
-                  new SvnExcludingIgnoredOperation.Operation() {
-                    public void doOperation(final VirtualFile file) throws SVNException {
-                      final String current = FileUtil.toSystemIndependentName(file.getPath());
-                      final String subpath = current.substring(targetPath.length());
-                      final SVNURL subUrl = url.appendPath(subpath, false);
+                final SvnExcludingIgnoredOperation.Filter filter = new SvnExcludingIgnoredOperation.Filter(project);
+                final LocalFileSystem lfs = LocalFileSystem.getInstance();
+                final DefaultSVNCommitHandler commitHandler = new DefaultSVNCommitHandler() {
+                  @Override
+                  public boolean accept(final File file) throws SVNException {
+                    final VirtualFile vf = lfs.findFileByIoFile(file);
+                    return vf != null && filter.accept(vf);
+                  }
+                };
 
-                      final File ioFile = new File(file.getPath());
-
-                      // todo think of grouping files
-                      client.doImport(ioFile, subUrl, message, null, !includeIgnored, false, SVNDepth.EMPTY);
-                    }
-                  }, depth);
-                operation.execute(targetVf);
+                client.setCommitHandler(commitHandler);
+                client.doImport(target, url, message, null, !includeIgnored, false, depth);
               }
             }
             catch (SVNException e) {
