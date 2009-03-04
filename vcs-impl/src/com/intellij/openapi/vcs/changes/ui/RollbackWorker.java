@@ -99,7 +99,7 @@ public class RollbackWorker {
               changesToRefresh.addAll(changes);
 
               if (myIndicator != null) {
-                myIndicator.setText(vcs.getDisplayName() + ": doing rollback...");
+                myIndicator.setText(vcs.getDisplayName() + ": performing rollback...");
                 myIndicator.setIndeterminate(false);
                 myIndicator.checkCanceled();
               }

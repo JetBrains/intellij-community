@@ -151,7 +151,7 @@ public class RollbackAction extends AnAction {
               final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
               if (rollbackEnvironment != null) {
                 if (indicator != null) {
-                  indicator.setText(vcs.getDisplayName() + ": doing rollback...");
+                  indicator.setText(vcs.getDisplayName() + ": performing rollback...");
                   indicator.setIndeterminate(false);
                 }
                 rollbackEnvironment.rollbackModifiedWithoutCheckout(items, exceptions, new RollbackProgressModifier(items.size(), indicator));
