@@ -49,29 +49,29 @@ public class ParenthesesUtils{
     private static final int ASSIGNMENT_PRECEDENCE = 16;
     private static final int NUM_PRECEDENCES = 17;
 
-    private static final Map<String, Integer> s_binaryOperatorPrecedence =
-            new HashMap<String, Integer>(NUM_PRECEDENCES);
+    private static final Map<IElementType, Integer> s_binaryOperatorPrecedence =
+            new HashMap<IElementType, Integer>(NUM_PRECEDENCES);
 
     static {
-        s_binaryOperatorPrecedence.put("+", ADDITIVE_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("-", ADDITIVE_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("*", MULTIPLICATIVE_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("/", MULTIPLICATIVE_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("%", MULTIPLICATIVE_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("&&", AND_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("||", OR_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("&", BINARY_AND_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("|", BINARY_OR_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("^", BINARY_XOR_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("<<", SHIFT_PRECEDENCE);
-        s_binaryOperatorPrecedence.put(">>", SHIFT_PRECEDENCE);
-        s_binaryOperatorPrecedence.put(">>>", SHIFT_PRECEDENCE);
-        s_binaryOperatorPrecedence.put(">", RELATIONAL_PRECEDENCE);
-        s_binaryOperatorPrecedence.put(">=", RELATIONAL_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("<", RELATIONAL_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("<=", RELATIONAL_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("==", EQUALITY_PRECEDENCE);
-        s_binaryOperatorPrecedence.put("!=", EQUALITY_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.PLUS, ADDITIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.MINUS, ADDITIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.ASTERISK, MULTIPLICATIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.DIV, MULTIPLICATIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.PERC, MULTIPLICATIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.ANDAND, AND_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.OROR, OR_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.AND, BINARY_AND_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.OR, BINARY_OR_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.XOR, BINARY_XOR_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.LTLT, SHIFT_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.GTGT, SHIFT_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.GTGTGT, SHIFT_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.GT, RELATIONAL_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.GE, RELATIONAL_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.LT, RELATIONAL_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.LE, RELATIONAL_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.EQEQ, EQUALITY_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(JavaTokenType.NE, EQUALITY_PRECEDENCE);
     }
 
     @Nullable
@@ -149,11 +149,11 @@ public class ParenthesesUtils{
     }
 
     public static int getPrecedenceForBinaryOperator(@NotNull PsiJavaToken sign){
-        final String operator = sign.getText();
-        return getPrecedenceForBinaryOperator(operator);
+        final IElementType tokenType = sign.getTokenType();
+        return getPrecedenceForBinaryOperator(tokenType);
     }
 
-    public static int getPrecedenceForBinaryOperator(String operator) {
+    public static int getPrecedenceForBinaryOperator(IElementType operator) {
         final Integer precedence = s_binaryOperatorPrecedence.get(operator);
         return precedence.intValue();
     }
@@ -255,18 +255,14 @@ public class ParenthesesUtils{
             @NotNull PsiParenthesizedExpression parenthesizedExpression,
             boolean ignoreClarifyingParentheses)
             throws IncorrectOperationException {
-        PsiExpression body = parenthesizedExpression.getExpression();
-        while(body instanceof PsiParenthesizedExpression){
-            final PsiParenthesizedExpression innerParenthesizedExpression =
-                    (PsiParenthesizedExpression)body;
-            body = innerParenthesizedExpression.getExpression();
-        }
+        final PsiExpression body = parenthesizedExpression.getExpression();
         if (body == null) {
             parenthesizedExpression.delete();
             return;
         }
         final PsiElement parent = parenthesizedExpression.getParent();
-        if(!(parent instanceof PsiExpression)){
+        if(!(parent instanceof PsiExpression) ||
+                parent instanceof PsiParenthesizedExpression){
             final PsiExpression newExpression =
                     (PsiExpression) parenthesizedExpression.replace(body);
             removeParentheses(newExpression, ignoreClarifyingParentheses);
@@ -314,9 +310,10 @@ public class ParenthesesUtils{
                         return;
                     }
                 }
-                if (ignoreClarifyingParentheses &&
-                        !parentOperator.equals(bodyOperator)) {
-                    removeParentheses(body, ignoreClarifyingParentheses);
+                if (ignoreClarifyingParentheses) {
+                    if (parentOperator.equals(bodyOperator)) {
+                        removeParentheses(body, ignoreClarifyingParentheses);
+                    }
                 } else {
                     final PsiExpression newExpression = (PsiExpression)
                             parenthesizedExpression.replace(body);
@@ -328,10 +325,17 @@ public class ParenthesesUtils{
                         (PsiExpression) parenthesizedExpression.replace(body);
                 removeParentheses(newExpression, ignoreClarifyingParentheses);
             }
-        } else{
-            final PsiExpression newExpression =
-                    (PsiExpression) parenthesizedExpression.replace(body);
-            removeParentheses(newExpression, ignoreClarifyingParentheses);
+        } else {
+            if (ignoreClarifyingParentheses &&
+                    parent instanceof PsiBinaryExpression &&
+                    (body instanceof PsiBinaryExpression ||
+                            body instanceof PsiInstanceOfExpression)) {
+                removeParentheses(body, ignoreClarifyingParentheses);
+            } else {
+                final PsiExpression newExpression =
+                        (PsiExpression) parenthesizedExpression.replace(body);
+                removeParentheses(newExpression, ignoreClarifyingParentheses);
+            }
         }
     }
 
@@ -515,7 +519,7 @@ public class ParenthesesUtils{
                 }
                 if (PsiTreeUtil.isAncestor(parentBinaryExpression.getROperand(),
                         expression, false)) {
-                    if (!isCommutativeBinaryOperator(childOperator)) {
+                    if (!isCommutativeBinaryOperator(parentOperator)) {
                         return true;
                     }
                 }

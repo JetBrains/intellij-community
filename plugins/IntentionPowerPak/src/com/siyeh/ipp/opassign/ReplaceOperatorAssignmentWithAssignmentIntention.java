@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -23,14 +24,34 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+import java.util.HashMap;
+
 public class ReplaceOperatorAssignmentWithAssignmentIntention
         extends MutablyNamedIntention {
 
+    private static final Map<IElementType, IElementType> tokenMap = new HashMap();
+    static {
+        tokenMap.put(JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
+        tokenMap.put(JavaTokenType.MINUSEQ, JavaTokenType.MINUS);
+        tokenMap.put(JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
+        tokenMap.put(JavaTokenType.DIVEQ, JavaTokenType.DIV);
+        tokenMap.put(JavaTokenType.ANDEQ, JavaTokenType.AND);
+        tokenMap.put(JavaTokenType.OREQ, JavaTokenType.OR);
+        tokenMap.put(JavaTokenType.XOREQ, JavaTokenType.XOR);
+        tokenMap.put(JavaTokenType.PERCEQ, JavaTokenType.PERC);
+        tokenMap.put(JavaTokenType.LTLTEQ, JavaTokenType.LTLT);
+        tokenMap.put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
+        tokenMap.put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
+    }
+
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new OperatorAssignmentPredicate();
     }
 
+    @Override
     protected String getTextForElement(PsiElement element) {
         final PsiAssignmentExpression assignmentExpression =
                 (PsiAssignmentExpression)element;
@@ -41,6 +62,7 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
                 operator);
     }
 
+    @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiAssignmentExpression assignmentExpression =
@@ -48,8 +70,8 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
         final PsiJavaToken sign = assignmentExpression.getOperationSign();
         final PsiExpression lhs = assignmentExpression.getLExpression();
         final PsiExpression rhs = assignmentExpression.getRExpression();
-        final String operand = sign.getText();
-        final String newOperand = operand.substring(0, operand.length() - 1);
+        final String operator = sign.getText();
+        final String newOperator = operator.substring(0, operator.length() - 1);
         final String lhsText = lhs.getText();
         final String rhsText;
         if (rhs == null) {
@@ -63,15 +85,20 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
             final PsiJavaToken javaToken = binaryExpression.getOperationSign();
             final int precedence1 =
                     ParenthesesUtils.getPrecedenceForBinaryOperator(javaToken);
+            final IElementType signTokenType = sign.getTokenType();
+            final IElementType newOperatorToken = tokenMap.get(signTokenType);
             final int precedence2 =
-                    ParenthesesUtils.getPrecedenceForBinaryOperator(newOperand);
-            if (precedence1 > precedence2) {
+                    ParenthesesUtils.getPrecedenceForBinaryOperator(
+                            newOperatorToken);
+            if (precedence1 > precedence2 ||
+                    !ParenthesesUtils.isCommutativeBinaryOperator(
+                            newOperatorToken)) {
                 final String expString;
                 if (needsCast(rhs)) {
-                    expString = lhsText + "=(int)" + lhsText + newOperand
+                    expString = lhsText + "=(int)" + lhsText + newOperator
                                 + '(' + rhsText + "))";
                 } else {
-                    expString = lhsText + '=' + lhsText + newOperand
+                    expString = lhsText + '=' + lhsText + newOperator
                                 + '(' + rhsText + ')';
                 }
                 replaceExpression(expString, assignmentExpression);
@@ -80,10 +107,10 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
         }
         final String expString;
         if (needsCast(rhs)) {
-            expString = lhsText + "=(int)(" + lhsText + newOperand + rhsText
+            expString = lhsText + "=(int)(" + lhsText + newOperator + rhsText
                         + ')';
         } else {
-            expString = lhsText + '=' + lhsText + newOperand + rhsText;
+            expString = lhsText + '=' + lhsText + newOperator + rhsText;
         }
         replaceExpression(expString, assignmentExpression);
     }
