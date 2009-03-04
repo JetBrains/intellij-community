@@ -457,8 +457,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     PsiClassType[] superTypes = typeParam.getSuperTypes();
     PsiType[] erasureTypes = new PsiType[superTypes.length];
     for (int i = 0; i < superTypes.length; i++) {
-      PsiClassType superType = superTypes[i];
-      erasureTypes[i] = TypeConversionUtil.erasure(superType);
+      erasureTypes[i] = TypeConversionUtil.erasure(superTypes[i]);
     }
     PsiType[] types = ArrayUtil.append(erasureTypes, arg, PsiType.class);
     assert types.length != 0;

@@ -38,7 +38,7 @@ public class PsiSuperMethodUtil {
         PsiElement firstChild = statements[0].getFirstChild();
         if (firstChild instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)firstChild).getMethodExpression();
-          final @NonNls String text = methodExpr.getText();
+          @NonNls final String text = methodExpr.getText();
           if (text.equals("super")) {
             PsiElement superConstructor = methodExpr.resolve();
             if (superConstructor instanceof PsiMethod) {
@@ -65,5 +65,15 @@ public class PsiSuperMethodUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isSuperMethod(PsiMethod method, PsiMethod superMethod) {
+    HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
+    for (HierarchicalMethodSignature supsig : signature.getSuperSignatures()) {
+      PsiMethod supsigme = supsig.getMethod();
+      if (superMethod.equals(supsigme) || isSuperMethod(supsigme, superMethod)) return true;
+    }
+
+    return false;
   }
 }

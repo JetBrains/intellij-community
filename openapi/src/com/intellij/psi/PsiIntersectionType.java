@@ -145,4 +145,13 @@ public class PsiIntersectionType extends PsiType {
   public int hashCode() {
     return myConjuncts[0].hashCode();
   }
+
+  @Override
+  public String toString() {
+    String s = "PsiIntersectionType: ";
+    for (PsiType conjunct : myConjuncts) {
+      s += conjunct.getPresentableText() +", ";
+    }
+    return s;
+  }
 }

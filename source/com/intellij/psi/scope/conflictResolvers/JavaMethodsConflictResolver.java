@@ -6,14 +6,11 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -115,12 +112,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new HashMap<MethodSignature, CandidateInfo>();
-    for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
-      CandidateInfo info = iterator.next();
+    for (int i=0; i<conflicts.size();i++) {
+      CandidateInfo info = conflicts.get(i);
       PsiMethod method = (PsiMethod)info.getElement();
       assert method != null;
       PsiClass class1 = method.getContainingClass();
-      MethodSignature signature = method.getSignature(info.getSubstitutor());
+      PsiSubstitutor infoSubstitutor = info.getSubstitutor();
+      MethodSignature signature = method.getSignature(infoSubstitutor);
       CandidateInfo existing = signatures.get(signature);
 
       if (existing == null) {
@@ -137,22 +135,59 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (method == existingMethod) {
         PsiElement scope1 = info.getCurrentFileResolveScope();
         PsiElement scope2 = existing.getCurrentFileResolveScope();
-        if (scope1 instanceof PsiClass && scope2 instanceof PsiClass && PsiTreeUtil.isAncestor(scope1, scope2, true) && !existing.isAccessible()) { //prefer methods from outer class to inaccessible base class methods
+        if (scope1 instanceof PsiClass &&
+            scope2 instanceof PsiClass &&
+            PsiTreeUtil.isAncestor(scope1, scope2, true) &&
+            !existing.isAccessible()) { //prefer methods from outer class to inaccessible base class methods
           signatures.put(signature, info);
           continue;
         }
       }
+
+      // filter out methods with incorrect inferred bounds (for unrelated methods only)
+      boolean existingTypeParamAgree = areTypeParametersAgree(existing);
+      boolean infoTypeParamAgree = areTypeParametersAgree(info);
+      if (existingTypeParamAgree && !infoTypeParamAgree && !PsiSuperMethodUtil.isSuperMethod(method, existingMethod)) {
+        conflicts.remove(i);
+        i--;
+        continue;
+      }
+      else if (!existingTypeParamAgree && infoTypeParamAgree && !PsiSuperMethodUtil.isSuperMethod(existingMethod, method)) {
+        signatures.put(signature, info);
+        int index = ContainerUtil.findByEquals(conflicts, existing);
+        conflicts.remove(index);
+        i--;
+        continue;
+      }
+
       PsiType returnType1 = method.getReturnType();
       PsiType returnType2 = existingMethod.getReturnType();
       if (returnType1 != null && returnType2 != null) {
-        returnType1 = info.getSubstitutor().substitute(returnType1);
+        returnType1 = infoSubstitutor.substitute(returnType1);
         returnType2 = existing.getSubstitutor().substitute(returnType2);
-        if (returnType1.isAssignableFrom(returnType2) && (InheritanceUtil.isInheritorOrSelf(class1, existingClass, true) ||
-                                                          InheritanceUtil.isInheritorOrSelf(existingClass, class1, true))) {
-          iterator.remove();
+        if (returnType1.isAssignableFrom(returnType2) &&
+            (InheritanceUtil.isInheritorOrSelf(class1, existingClass, true) ||
+             InheritanceUtil.isInheritorOrSelf(existingClass, class1, true))) {
+          conflicts.remove(i);
+          i--;
         }
       }
     }
+  }
+
+  private static boolean areTypeParametersAgree(CandidateInfo info) {
+    PsiSubstitutor substitutor = info.getSubstitutor();
+    PsiMethod method = ((MethodCandidateInfo)info).getElement();
+
+    Iterator<PsiTypeParameter> li = PsiUtil.typeParametersIterator(method);
+    while (li.hasNext()) {
+      PsiTypeParameter typeParameter = li.next();
+      PsiType type = substitutor.substitute(typeParameter);
+      for (PsiClassType bound : typeParameter.getExtendsListTypes()) {
+        if (!TypeConversionUtil.isAssignable(type, bound)) return false;
+      }
+    }
+    return true;
   }
 
   private static void checkParametersNumber(final List<CandidateInfo> conflicts, final int argumentsCount) {

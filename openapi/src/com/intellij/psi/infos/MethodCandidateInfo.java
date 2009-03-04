@@ -72,9 +72,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     if (myArgumentTypes == null) return ApplicabilityLevel.NOT_APPLICABLE;
 
     int level = PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(), myArgumentTypes, PsiUtil.getLanguageLevel(myArgumentList));
-    if (level > ApplicabilityLevel.NOT_APPLICABLE) {
-      if (!isTypeArgumentsApplicable()) level = ApplicabilityLevel.NOT_APPLICABLE;
-    }
+    if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable()) level = ApplicabilityLevel.NOT_APPLICABLE;
     return level;
   }
 

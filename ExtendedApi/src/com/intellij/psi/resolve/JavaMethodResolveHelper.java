@@ -40,8 +40,7 @@ public class JavaMethodResolveHelper {
       protected MethodCandidateInfo createCandidateInfo(final PsiMethod method, final PsiSubstitutor substitutor,
                                                         final boolean staticProblem,
                                                         final boolean accessible) {
-        return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
-                                    parameterTypes, PsiType.EMPTY_ARRAY);
+        return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext, parameterTypes, PsiType.EMPTY_ARRAY);
       }
 
       @Override
@@ -90,7 +89,7 @@ public class JavaMethodResolveHelper {
     myProcessor.handleEvent(event, associated);
   }
 
-  public static enum ErrorType {
+  public enum ErrorType {
     NONE, STATIC, RESOLVE
   }
 
