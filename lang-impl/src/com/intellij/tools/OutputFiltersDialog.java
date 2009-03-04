@@ -40,7 +40,7 @@ class OutputFiltersDialog extends DialogWrapper {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("preferences.externalToolsFilters");
+    HelpManager.getInstance().invokeHelp("reference.settings.ide.settings.external.tools.output.filters");
   }
 
   private void initGui() {

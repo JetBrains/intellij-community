@@ -537,6 +537,11 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       }
       super.doOKAction();
     }
+
+    @Override
+    protected String getHelpId() {
+      return "reference.dialogs.newfiletype";
+    }
   }
 
   public String getId() {

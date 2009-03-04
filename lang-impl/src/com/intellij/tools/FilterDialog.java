@@ -147,6 +147,11 @@ class FilterDialog extends DialogWrapper {
     return "#com.intellij.tools.FilterDialog";
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.settings.ide.settings.external.tools.output.filters.add.filter";
+  }
+
   private class MenuItemListener implements ActionListener {
     private final String myMacrosName;
 
