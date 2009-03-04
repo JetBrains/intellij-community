@@ -184,20 +184,21 @@ public class MethodResolverProcessor extends ResolverProcessor {
     if (parent instanceof GrReturnStatement) {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class);
       if (method != null) rType = method.getDeclaredReturnType();
-    } else
-    if (parent instanceof GrAssignmentExpression && myPlace.equals(((GrAssignmentExpression) parent).getRValue())) {
-      rType = ((GrAssignmentExpression) parent).getLValue().getType();
-    } else if (parent instanceof GrVariable) {
-      rType = ((GrVariable) parent).getDeclaredType();
+    }
+    else if (parent instanceof GrAssignmentExpression && myPlace.equals(((GrAssignmentExpression)parent).getRValue())) {
+      rType = ((GrAssignmentExpression)parent).getLValue().getType();
+    }
+    else if (parent instanceof GrVariable) {
+      rType = ((GrVariable)parent).getDeclaredType();
     }
     return rType;
   }
 
   public GroovyResolveResult[] getCandidates() {
-    if (myCandidates.size() > 0) {
+    if (!myCandidates.isEmpty()) {
       return filterCandidates();
     }
-    if (myInapplicableCandidates.size() > 0) {
+    if (!myInapplicableCandidates.isEmpty()) {
       return ResolveUtil.filterSameSignatureCandidates(myInapplicableCandidates);
     }
     return GroovyResolveResult.EMPTY_ARRAY;
@@ -288,7 +289,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
 
   public boolean hasCandidates() {
-    return super.hasCandidates() || myInapplicableCandidates.size() > 0;
+    return super.hasCandidates() || !myInapplicableCandidates.isEmpty();
   }
 
   @Nullable
