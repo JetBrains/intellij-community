@@ -18,20 +18,23 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PsiJavaPatterns.*;
+import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.filters.getters.ExpectedTypesGetter;
-import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.filters.getters.ExpectedTypesGetter;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PairConsumer;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +54,12 @@ public class JavaCompletionContributor extends CompletionContributor {
       INSIDE_METHOD_TYPE_ELEMENT);
   private static final Java15CompletionData ourJava15CompletionData = new Java15CompletionData();
   private static final JavaCompletionData ourJavaCompletionData = new JavaCompletionData();
+  private static final PsiNameValuePairPattern NAME_VALUE_PAIR = psiNameValuePair().withSuperParent(
+          2,
+          psiElement(PsiAnnotation.class));
+  private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =
+    or(psiElement(PsiIdentifier.class).withParent(NAME_VALUE_PAIR),
+       psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
 
   public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet _result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) return true;
@@ -67,6 +76,15 @@ public class JavaCompletionContributor extends CompletionContributor {
       });
 
       final boolean checkAccess = parameters.getInvocationCount() == 1;
+
+      if (ANNOTATION_ATTRIBUTE_NAME.accepts(insertedElement)) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            completeAnnotationAttributeName(_result, file, insertedElement, completionData, checkAccess);
+          }
+        });
+        return false;
+      }
 
       LegacyCompletionContributor.processReferences(parameters, _result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {
         public void consume(final PsiReference ref, final CompletionResultSet completionResultSet) {
@@ -93,11 +111,6 @@ public class JavaCompletionContributor extends CompletionContributor {
           for (final LookupElement element : lookupSet) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
-                final Object completion = element.getObject();
-                if (completion instanceof PsiElement &&
-                    JavaCompletionUtil.isCompletionOfAnnotationMethod((PsiElement)completion, insertedElement)) {
-                  ((LookupItem)element).setTailType(TailType.EQ);
-                }
                 JavaCompletionUtil.highlightMemberOfContainer((LookupItem)element);
               }
             });
@@ -129,6 +142,54 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     return true;
+  }
+
+  private static void completeAnnotationAttributeName(CompletionResultSet result, PsiFile file, PsiElement insertedElement,
+                                                      JavaAwareCompletionData completionData, boolean checkAccess) {
+    PsiNameValuePair pair = PsiTreeUtil.getParentOfType(insertedElement, PsiNameValuePair.class);
+    PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)pair.getParent();
+    PsiAnnotation anno = (PsiAnnotation)parameterList.getParent();
+    boolean showClasses = psiElement().afterLeaf("(").accepts(insertedElement);
+    PsiClass annoClass = null;
+    final PsiJavaCodeReferenceElement referenceElement = anno.getNameReferenceElement();
+    if (referenceElement != null) {
+      final PsiElement element = referenceElement.resolve();
+      if (element instanceof PsiClass) {
+        annoClass = (PsiClass)element;
+        if (annoClass.findMethodsByName("value", false).length == 0) {
+          showClasses = false;
+        }
+      }
+    }
+
+    if (showClasses && insertedElement.getParent() instanceof PsiReferenceExpression) {
+      final THashSet<LookupElement> set = new THashSet<LookupElement>();
+      completionData.completeReference((PsiReference) insertedElement.getParent(),
+                                       insertedElement, set, TailType.NONE, file, TrueFilter.INSTANCE,
+                                       completionData.myGenericVariant, checkAccess);
+      for (final LookupElement element : set) {
+        result.addElement(element);
+      }
+
+    }
+
+    if (annoClass != null) {
+      final PsiNameValuePair[] existingPairs = parameterList.getAttributes();
+
+      methods: for (PsiMethod method : annoClass.getMethods()) {
+        final String attrName = method.getName();
+        for (PsiNameValuePair apair : existingPairs) {
+          if (Comparing.equal(apair.getName(), attrName)) continue methods;
+        }
+        result.addElement(new LookupItem<PsiMethod>(method, attrName).setInsertHandler(new InsertHandler<LookupElement>() {
+          public void handleInsert(InsertionContext context, LookupElement item) {
+            final Editor editor = context.getEditor();
+            TailType.EQ.processTail(editor, editor.getCaretModel().getOffset());
+            context.setAddCompletionChar(false);
+          }
+        }));
+      }
+    }
   }
 
   private static JavaAwareCompletionData getCompletionDataByElementInner(PsiElement element) {
@@ -383,6 +444,10 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
 
       if (psiElement(PsiIdentifier.class).withParent(PsiMethod.class).accepts(element)) {
+        return;
+      }
+
+      if (psiElement().inside(PsiAnnotation.class).accepts(element)) {
         return;
       }
 

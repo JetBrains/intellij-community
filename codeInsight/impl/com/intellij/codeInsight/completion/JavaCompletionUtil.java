@@ -17,7 +17,6 @@ import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.html.HtmlTag;
@@ -452,17 +451,6 @@ public class JavaCompletionUtil {
       }
     }
     return isExcluded;
-  }
-
-  public static boolean isCompletionOfAnnotationMethod(final PsiElement method, final PsiElement place) {
-    if (!(method instanceof PsiAnnotationMethod)) return false;
-
-    return psiElement(PsiIdentifier.class).withParent(
-        PsiJavaPatterns.or(
-            psiElement(PsiNameValuePair.class),
-            psiElement().withParent(PsiNameValuePair.class),
-            psiElement().withSuperParent(2, psiElement(PsiClassObjectAccessExpression.class).withParent(PsiNameValuePair.class))
-            )).accepts(place);
   }
 
   @SuppressWarnings({"unchecked"})

@@ -106,9 +106,6 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
 
   private boolean isToInsertParenth(PsiElement place){
     if (place == null) return true;
-    if (JavaCompletionUtil.isCompletionOfAnnotationMethod(myMethod, place)) {
-      return false;
-    }
     return !(place.getParent() instanceof PsiImportStaticReferenceElement);
   }
 
