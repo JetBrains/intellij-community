@@ -1,10 +1,8 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.*;
@@ -54,22 +52,7 @@ public class PopupActionChooser {
       }
     }
 
-    int offset = editor.getCaretModel().getOffset();
-    TemplateContextType contextType = TemplateManager.getInstance(project).getContextType(file, offset);
-    TemplateImpl[] templates = TemplateSettings.getInstance().getTemplates();
-    ArrayList<TemplateImpl> array = new ArrayList<TemplateImpl>();
-    for (TemplateImpl template : templates) {
-      if (template.isDeactivated()) continue;
-      if (template.getTemplateContext().isEnabled(contextType) && template.isSelectionTemplate()) {
-        array.add(template);
-      }
-    }
-
-    Collections.sort(array, new Comparator<TemplateImpl>() {
-      public int compare(TemplateImpl o1, TemplateImpl o2) {
-        return o1.getKey().compareTo(o2.getKey());
-      }
-    });
+    List<TemplateImpl> array = SurroundWithTemplateHandler.getApplicableTemplates(editor, file);
 
     if (!array.isEmpty()) {
       applicable.addSeparator("Live templates");

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,28 +28,13 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       if (!editor.getSelectionModel().hasSelection()) return;
     }
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    int offset = editor.getCaretModel().getOffset();
-    TemplateContextType contextType = TemplateManager.getInstance(project).getContextType(file, offset);
-    TemplateImpl[] templates = TemplateSettings.getInstance().getTemplates();
-    ArrayList<TemplateImpl> array = new ArrayList<TemplateImpl>();
-    for (TemplateImpl template : templates) {
-      if (template.isDeactivated()) continue;
-      if (template.getTemplateContext().isEnabled(contextType) && template.isSelectionTemplate()) {
-        array.add(template);
-      }
-    }
+    ArrayList<TemplateImpl> array = getApplicableTemplates(editor, file);
     if (array.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
       return;
     }
 
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
-
-    Collections.sort(array, new Comparator<TemplateImpl>() {
-      public int compare(TemplateImpl o1, TemplateImpl o2) {
-        return o1.getKey().compareTo(o2.getKey());
-      }
-    });
 
     Set<Character> usedMnemonicsSet = new HashSet<Character>();
     DefaultActionGroup group = new DefaultActionGroup();
@@ -71,4 +57,28 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   }
 
 
+  public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file) {
+    Project project = file.getProject();
+    int offset = editor.getCaretModel().getOffset();
+    Set<TemplateImpl> array = new LinkedHashSet<TemplateImpl>();
+    for (Language language : file.getViewProvider().getLanguages()) {
+      final PsiFile psi = file.getViewProvider().getPsi(language);
+      if (psi != null) {
+        TemplateContextType contextType = TemplateManager.getInstance(project).getContextType(psi, offset);
+        for (TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
+          if (template.isDeactivated()) continue;
+          if (template.getTemplateContext().isEnabled(contextType) && template.isSelectionTemplate()) {
+            array.add(template);
+          }
+        }
+      }
+    }
+    final ArrayList<TemplateImpl> list = new ArrayList<TemplateImpl>(array);
+    Collections.sort(list, new Comparator<TemplateImpl>() {
+      public int compare(TemplateImpl o1, TemplateImpl o2) {
+        return o1.getKey().compareTo(o2.getKey());
+      }
+    });
+    return list;
+  }
 }
