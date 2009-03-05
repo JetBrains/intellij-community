@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -417,9 +416,16 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
 
   protected static void type(char c) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
-    TypedAction action = actionManager.getTypedAction();
-
-    action.actionPerformed(getEditor(), c, DataManager.getInstance().getDataContext());
+    final DataContext dataContext = DataManager.getInstance().getDataContext();
+    if (c == '\n') {
+      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(getEditor(), dataContext);
+    }
+    else if (c == '\b') {
+      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE).execute(getEditor(), dataContext);
+    }
+    else {
+      actionManager.getTypedAction().actionPerformed(getEditor(), c, dataContext);
+    }
   }
 
   protected static void type(@NonNls String s) {
