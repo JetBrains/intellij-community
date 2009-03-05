@@ -20,10 +20,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.grails.lang.gsp.parsing.GspGroovyElementTypes;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.*;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.GrGspClassImpl;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.GrGspRunBlockImpl;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.GrGspRunMethodImpl;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -96,9 +97,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem instanceof IGroovyDocElementType) {
       return GroovyDocPsiCreator.createElement(node);
     }
-
-    // Groovydoc comment
-    if (elem.equals(GROOVY_DOC_COMMENT)) return new GrDocCommentImpl();
 
     //Identifiers & literal
     if (elem.equals(LITERAL)) return new GrLiteralImpl(node);
@@ -254,8 +252,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
 
     // GSP-specific Element types
-    if (GROOVY_EXPR_CODE.equals(elem)) return new GrGspExprInjectionImpl();
-    if (GROOVY_DECLARATION.equals(elem)) return new GrGspDeclarationHolderImpl();
 
     if (GSP_CLASS.equals(elem)) return new GrGspClassImpl(node);
     if (GSP_RUN_METHOD.equals(elem)) return new GrGspRunMethodImpl(node);

@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -84,8 +83,6 @@ public abstract class SpacingUtil {
     if (element instanceof LeafElement) {
       return element;
     } else {
-      final ASTNode node = element.getLastChildNode();
-      if (node instanceof LeafElement) ChameleonTransforming.transform((LeafElement) node);
       final ASTNode lastChild = element.getLastChildNode();
       if (lastChild == null) {
         return element;

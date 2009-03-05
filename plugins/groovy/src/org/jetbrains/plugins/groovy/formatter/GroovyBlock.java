@@ -22,23 +22,22 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.tree.ChameleonElement;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessorBasic;
-import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 
 import java.util.List;
 
@@ -164,15 +163,14 @@ public class GroovyBlock implements Block, GroovyElementTypes {
    * @return true if node is incomplete
    */
   public boolean isIncomplete(@NotNull final ASTNode node) {
-    if (node.getElementType() instanceof IChameleonElementType) return false;
+    if (node.getElementType() instanceof ILazyParseableElementType) return false;
     ASTNode lastChild = node.getLastChildNode();
     while (lastChild != null &&
-        !(lastChild.getElementType() instanceof IChameleonElementType) &&
+        !(lastChild.getElementType() instanceof ILazyParseableElementType) &&
         (lastChild.getPsi() instanceof PsiWhiteSpace || lastChild.getPsi() instanceof PsiComment)) {
       lastChild = lastChild.getTreePrev();
     }
-    return lastChild != null && !(lastChild instanceof ChameleonElement) &&
-        (lastChild.getPsi() instanceof PsiErrorElement || isIncomplete(lastChild));
+    return lastChild != null && (lastChild.getPsi() instanceof PsiErrorElement || isIncomplete(lastChild));
   }
 
   public boolean isLeaf() {

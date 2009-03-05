@@ -15,14 +15,13 @@
  */
 package org.intellij.lang.xpath;
 
+import com.intellij.lang.Language;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.IChameleonElementType;
-import com.intellij.lang.Language;
 
 public final class XPathElementTypes {
-    public static final IElementType EMBEDDED_CONTENT = new IChameleonElementType("EMBEDDED_CONTENT", Language.findInstance(XPathLanguage.class));
+    public static final IElementType EMBEDDED_CONTENT = new IElementType("EMBEDDED_CONTENT", Language.findInstance(XPathLanguage.class));
 
     public static final IFileElementType FILE = new IFileElementType("XPATH_FILE", XPathFileType.XPATH.getLanguage());
 

@@ -15,9 +15,9 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -26,9 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author ilyas
  */
-public class GrDocCommentImpl extends CompositePsiElement implements GroovyDocElementTypes, GrDocComment {
-  public GrDocCommentImpl() {
-    super(GROOVY_DOC_COMMENT);
+public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyDocElementTypes, GrDocComment {
+  public GrDocCommentImpl(CharSequence text) {
+    super(GROOVY_DOC_COMMENT, text);
   }
 
   public String toString() {

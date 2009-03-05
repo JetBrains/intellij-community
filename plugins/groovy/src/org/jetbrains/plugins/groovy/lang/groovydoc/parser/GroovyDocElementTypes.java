@@ -23,13 +23,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IChameleonElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementTypeImpl;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentImpl;
 
 /**
  * @author ilyas
@@ -39,7 +40,7 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes {
   /**
    * GroovyDoc comment
    */
-  IChameleonElementType GROOVY_DOC_COMMENT = new IChameleonElementType("GrDocComment") {
+  ILazyParseableElementType GROOVY_DOC_COMMENT = new ILazyParseableElementType("GrDocComment") {
     @NotNull
     public Language getLanguage() {
       return GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
@@ -54,6 +55,11 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes {
       final PsiParser parser = new GroovyDocParser();
 
       return parser.parse(this, builder).getFirstChildNode();
+    }
+
+    @Override
+    public ASTNode createNode(CharSequence text) {
+      return new GrDocCommentImpl(text);
     }
   };
 

@@ -15,8 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements;
 
-import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.lang.Language;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 /**
  * @author ilyas
  */
-public abstract class GroovyDocChameleonElementType extends IChameleonElementType{
+public abstract class GroovyDocChameleonElementType extends ILazyParseableElementType {
   public GroovyDocChameleonElementType(@NonNls String debugName) {
     super(debugName);
   }
