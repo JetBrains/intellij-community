@@ -280,11 +280,15 @@ public class EclipseClasspathWriter {
         }
       }
 
+      final String compilerOutputUrl = compilerModuleExtension.getCompilerOutputUrl();
       for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
-        Element element = new Element(IdeaXml.EXCLUDE_FOLDER_TAG);
-        root.addContent(element);
-        element.setAttribute(IdeaXml.URL_ATTR, excludeFolder.getUrl());
-        isModified = true;
+        final String exludeFolderUrl = excludeFolder.getUrl();
+        if (!Comparing.strEqual(exludeFolderUrl, compilerOutputUrl)) {
+          Element element = new Element(IdeaXml.EXCLUDE_FOLDER_TAG);
+          root.addContent(element);
+          element.setAttribute(IdeaXml.URL_ATTR, exludeFolderUrl);
+          isModified = true;
+        }
       }
     }
 
