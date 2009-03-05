@@ -53,6 +53,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
+  @NotNull
   public final String getName() {
     String cachedName = myCachedName;
     if (cachedName == null){

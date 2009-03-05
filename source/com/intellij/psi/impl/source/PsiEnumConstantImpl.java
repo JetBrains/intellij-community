@@ -122,6 +122,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     return (PsiIdentifier)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
+  @NotNull
   public String getName() {
     final PsiFieldStub stub = getStub();
     if (stub != null) {

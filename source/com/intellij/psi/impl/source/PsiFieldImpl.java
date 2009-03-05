@@ -82,6 +82,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return (PsiIdentifier)getNode().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
+  @NotNull
   public String getName() {
     final PsiFieldStub stub = getStub();
     if (stub != null) {

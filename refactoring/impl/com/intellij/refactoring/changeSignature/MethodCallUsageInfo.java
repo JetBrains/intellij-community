@@ -28,7 +28,7 @@ public class MethodCallUsageInfo extends UsageInfo {
     myReferencedMethod = resolveMethod(ref);
   }
 
-  private PsiMethod resolveMethod(final PsiElement ref) {
+  private static PsiMethod resolveMethod(final PsiElement ref) {
     if (ref instanceof PsiEnumConstant) return ((PsiEnumConstant)ref).resolveConstructor();
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiCall) {

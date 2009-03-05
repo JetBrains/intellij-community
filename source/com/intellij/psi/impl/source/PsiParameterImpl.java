@@ -48,6 +48,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     return clone;
   }
 
+  @NotNull
   public final String getName() {
     final PsiParameterStub stub = getStub();
     if (stub != null) {

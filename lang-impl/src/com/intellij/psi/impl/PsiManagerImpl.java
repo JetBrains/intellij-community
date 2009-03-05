@@ -94,8 +94,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
                         PsiBuilderFactory psiBuilderFactory) {
     myProject = project;
 
-    //noinspection UnnecessaryLocalVariable. We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
-    Object used = psiBuilderFactory;
+    //We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
+    @SuppressWarnings({"UnusedDeclaration", "UnnecessaryLocalVariable"}) Object used = psiBuilderFactory;
 
     boolean isProjectDefault = project.isDefault();
 
@@ -169,7 +169,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     VirtualFile virtualFile = null;
     if (file != null) {
       virtualFile = file.getViewProvider().getVirtualFile();
-    } else if (element instanceof PsiFileSystemItem) {
+    }
+    else if (element instanceof PsiFileSystemItem) {
       virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
     }
 

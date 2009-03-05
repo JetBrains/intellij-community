@@ -81,6 +81,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     }
   }
 
+  @NotNull
   @NonNls
   public String getName() {
     return getStub().getName();
