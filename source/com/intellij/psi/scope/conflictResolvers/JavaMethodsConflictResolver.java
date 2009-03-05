@@ -183,6 +183,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     while (li.hasNext()) {
       PsiTypeParameter typeParameter = li.next();
       PsiType type = substitutor.substitute(typeParameter);
+      if (type == null) continue;
       for (PsiClassType bound : typeParameter.getExtendsListTypes()) {
         if (!TypeConversionUtil.isAssignable(type, bound)) return false;
       }
