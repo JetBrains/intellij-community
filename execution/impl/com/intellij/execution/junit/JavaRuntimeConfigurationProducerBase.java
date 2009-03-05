@@ -59,22 +59,30 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
   }
 
   protected TestSearchScope setupPackageConfiguration(ConfigurationContext context, Project project, ModuleBasedConfiguration configuration, TestSearchScope scope) {
-    final RunnerAndConfigurationSettingsImpl template =
-        ((RunManagerImpl)context.getRunManager()).getConfigurationTemplate(getConfigurationFactory());
+    copyStepsBeforeRun(project, configuration);
     if (scope != TestSearchScope.WHOLE_PROJECT) {
+      if (!setupConfigurationModule(context, configuration)) {
+        return TestSearchScope.WHOLE_PROJECT;
+      }
+    }
+    return scope;
+  }
+
+  protected boolean setupConfigurationModule(@Nullable ConfigurationContext context, ModuleBasedConfiguration configuration) {
+    if (context != null) {
+      final RunnerAndConfigurationSettingsImpl template =
+        ((RunManagerImpl)context.getRunManager()).getConfigurationTemplate(getConfigurationFactory());
       final Module contextModule = context.getModule();
       final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
       if (predefinedModule != null) {
         configuration.setModule(predefinedModule);
+        return true;
       }
       else if (contextModule != null) {
         configuration.setModule(contextModule);
-      }
-      else {
-        return TestSearchScope.WHOLE_PROJECT;
+        return true;
       }
     }
-    copyStepsBeforeRun(project, configuration);
-    return scope;
+    return false;
   }
 }
