@@ -106,7 +106,7 @@ class ExtractedClassBuilder {
       out.append('>');
     }
     if (!interfaces.isEmpty()) {
-      out.append("implements ");
+      out.append(" implements ");
       boolean first = true;
       for (PsiClass implemented : interfaces) {
         if (!first) {
