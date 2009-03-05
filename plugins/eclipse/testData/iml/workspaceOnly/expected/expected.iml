@@ -10,24 +10,24 @@
   <orderEntry type="module-library">
     <library name="test.jar">
       <CLASSES>
-        <root url="file://$MODULE_DIR$/test.jar" />
+        <root url="jar://$MODULE_DIR$/test.jar!/" />
       </CLASSES>
       <JAVADOC>
         <root url="jar://$PROJECT_DIR$//test/testJavadoc.jar!/a" />
       </JAVADOC>
       <SOURCES>
-        <root url="file://$MODULE_DIR$/testSrc.jar" />
+        <root url="jar://$MODULE_DIR$/testSrc.jar!/" />
       </SOURCES>
     </library>
   </orderEntry>
   <orderEntry type="module-library">
     <library name="testOut.jar">
       <CLASSES>
-        <root url="file://$PROJECT_DIR$/testOut.jar" />
+        <root url="jar://$PROJECT_DIR$/testOut.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES>
-        <root url="file://$PROJECT_DIR$/testOutSrc.jar" />
+        <root url="jar://$PROJECT_DIR$/testOutSrc.jar!/" />
       </SOURCES>
     </library>
   </orderEntry>

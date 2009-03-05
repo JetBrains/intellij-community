@@ -10,7 +10,7 @@
   <orderEntry type="module-library">
     <library name="test.jar">
       <CLASSES>
-        <root url="file://$MODULE_DIR$/test.jar" />
+        <root url="jar://$MODULE_DIR$/test.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES>

@@ -34,6 +34,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
@@ -314,16 +315,30 @@ public class EclipseClasspathReader {
   }
 
   private String getUrl(final String path) {
+    String url = null;
     if (path.startsWith("/")) {
       final String relativePath = new File(myRootPath).getParent() + "/" + path;
       final File file = new File(relativePath);
       if (file.exists()) {
-        return VfsUtil.pathToUrl(relativePath);
+        url = VfsUtil.pathToUrl(relativePath);
       }
     }
-    final String absPath = myRootPath + "/" + path;
-    if (new File(absPath).exists()) return VfsUtil.pathToUrl(absPath);
-    return VfsUtil.pathToUrl(path);
+    if (url == null) {
+      final String absPath = myRootPath + "/" + path;
+      if (new File(absPath).exists()) {
+        url = VfsUtil.pathToUrl(absPath);
+      } else {
+        url = VfsUtil.pathToUrl(path);
+      }
+    }
+    final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (localFile != null) {
+      final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
+      if (jarFile != null) {
+        url = jarFile.getUrl();
+      }
+    }
+    return url;
   }
 
   @Nullable
