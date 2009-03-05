@@ -40,7 +40,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
           listenerList.add(listener);
         }
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.error(e);
       }
     }
@@ -72,7 +72,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
             try {
               refactoringElementListener.elementMoved(newElement);
             }
-            catch (Exception e) {
+            catch (Throwable e) {
               LOG.error(e);
             }
           }
@@ -87,7 +87,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
             try {
               refactoringElementListener.elementRenamed(newElement);
             }
-            catch (Exception e) {
+            catch (Throwable e) {
               LOG.error(e);
             }
           }
