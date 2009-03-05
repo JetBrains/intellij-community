@@ -189,7 +189,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             tool.inspectionStarted(session);
             for (PsiElement element : elements) {
               progressManager.checkCanceled();
-              element.accept(elementVisitor);
+              if (!(ignoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(element, tool))) {
+                element.accept(elementVisitor);
+              }
             }
             tool.inspectionFinished(session);
             advanceProgress(elements.length);
