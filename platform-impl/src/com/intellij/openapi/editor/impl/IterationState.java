@@ -180,16 +180,14 @@ public final class IterationState {
   }
 
   public void advance() {
-    myCurrentFold = null;
     myStartOffset = myEndOffset;
-    FoldRegion range = myFoldingModel.fetchOutermost(myStartOffset);
+    advanceSegmentHighlighters();
 
-    if (range != null) {
-      myEndOffset = range.getEndOffset();
-      myCurrentFold = range;
+    myCurrentFold = myFoldingModel.fetchOutermost(myStartOffset);
+    if (myCurrentFold != null) {
+      myEndOffset = myCurrentFold.getEndOffset();
     }
     else {
-      advanceSegmentHighlighters();
       myEndOffset = Math.min(getHighlighterEnd(myStartOffset), getSelectionEnd(myStartOffset));
       myEndOffset = Math.min(myEndOffset, getSegmentHighlightersEnd());
       myEndOffset = Math.min(myEndOffset, getFoldRangesEnd(myStartOffset));

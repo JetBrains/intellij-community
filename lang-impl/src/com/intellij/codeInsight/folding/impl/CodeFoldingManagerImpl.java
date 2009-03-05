@@ -212,7 +212,11 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void forceDefaultState(final Editor editor) {
-    updateFoldRegions(editor);
+    PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
+    Runnable runnable = updateFoldRegions(editor, true);
+    if (runnable != null) {
+      runnable.run();
+    }
 
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {

@@ -3705,9 +3705,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         FoldRegion fold = myFoldingModel.getFoldingPlaceholderAt(e.getPoint());
         TooltipController controller = TooltipController.getInstance();
         if (fold != null) {
-          final FoldingGroup group = fold.getGroup();
-          final int endOffset = group == null ? fold.getEndOffset() : myFoldingModel.getEndOffset(group);
-          DocumentFragment range = new DocumentFragment(myDocument, fold.getStartOffset(), endOffset);
+          DocumentFragment range = createDocumentFragment(fold);
           final Point p =
             SwingUtilities.convertPoint((Component)e.getSource(), e.getPoint(), getComponent().getRootPane().getLayeredPane());
           controller.showTooltip(EditorImpl.this, p, new DocumentFragmentTooltipRenderer(range), false, FOLDING_TOOLTIP_GROUP);
@@ -3720,6 +3718,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       for (EditorMouseMotionListener listener : myMouseMotionListeners) {
         listener.mouseMoved(event);
       }
+    }
+
+    private DocumentFragment createDocumentFragment(FoldRegion fold) {
+      final FoldingGroup group = fold.getGroup();
+      final int foldStart = fold.getStartOffset();
+      if (group != null) {
+        final int endOffset = myFoldingModel.getEndOffset(group);
+        if (offsetToVisualPosition(endOffset).line == offsetToVisualPosition(foldStart).line) {
+          return new DocumentFragment(myDocument, foldStart, endOffset);
+        }
+      }
+
+      final int oldEnd = fold.getEndOffset();
+      return new DocumentFragment(myDocument, foldStart, oldEnd);
     }
   }
 
