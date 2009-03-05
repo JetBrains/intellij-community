@@ -180,8 +180,8 @@ public abstract class CallerChooser extends DialogWrapper {
   }
 
   private Tree createTree() {
-    final CheckedTreeNode root = new MethodNode(null);
-    myRoot = new MethodNode(myMethod);
+    final CheckedTreeNode root = new MethodNode(null, new HashSet<PsiMethod>());
+    myRoot = new MethodNode(myMethod, new HashSet<PsiMethod>());
     root.add(myRoot);
     final CheckboxTree.CheckboxTreeCellRenderer cellRenderer = new CheckboxTree.CheckboxTreeCellRenderer() {
       public void customizeCellRenderer(JTree tree,

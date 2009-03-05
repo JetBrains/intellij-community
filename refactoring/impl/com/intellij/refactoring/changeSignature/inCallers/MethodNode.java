@@ -18,20 +18,21 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * @author ven
  */
 public class MethodNode extends CheckedTreeNode {
   private final PsiMethod myMethod;
+  private final Set<PsiMethod> myCalled;
   private boolean myOldChecked;
 
-  public MethodNode(final PsiMethod method) {
+  public MethodNode(final PsiMethod method, Set<PsiMethod> called) {
     super(method);
     myMethod = method;
+    myCalled = called;
     isChecked = false;
   }
 
@@ -45,7 +46,9 @@ public class MethodNode extends CheckedTreeNode {
       final PsiMethod[] callers = findCallers();
       children = new Vector(callers.length);
       for (PsiMethod caller : callers) {
-        final MethodNode child = new MethodNode(caller);
+        final HashSet<PsiMethod> called = new HashSet<PsiMethod>(myCalled);
+        called.add(myMethod);
+        final MethodNode child = new MethodNode(caller, called);
         children.add(child);
         child.parent = this;
       }
@@ -81,7 +84,7 @@ public class MethodNode extends CheckedTreeNode {
               !(((PsiReferenceExpression) element).getQualifierExpression() instanceof PsiSuperExpression)) {
             final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
             if (enclosingContext instanceof PsiMethod &&
-                !myMethod.equals(enclosingContext)) { //do not add recursive methods, TODO: mutually recursive methods
+                !myMethod.equals(enclosingContext) && !myCalled.contains(myMethod)) { //do not add recursive methods
               callers.add((PsiMethod) enclosingContext);
             }
           }
