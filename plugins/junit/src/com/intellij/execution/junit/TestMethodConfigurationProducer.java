@@ -36,6 +36,7 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
     if (myMethodLocation == null) return null;
     RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
     final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
+    setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.beMethodConfiguration(myMethodLocation);
     configuration.restoreOriginalModule(originalModule);

@@ -36,6 +36,7 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
     if (myTestClass == null) return null;
     RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
     final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
+    setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.beClassConfiguration(myTestClass);
     configuration.restoreOriginalModule(originalModule);

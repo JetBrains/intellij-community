@@ -51,6 +51,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
     final Project project = location.getProject();
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final TestNGConfiguration configuration = (TestNGConfiguration)settings.getConfiguration();
+    setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.setClassConfiguration(psiClass);
     PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
