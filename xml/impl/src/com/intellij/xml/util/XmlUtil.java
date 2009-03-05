@@ -23,10 +23,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import static com.intellij.patterns.StandardPatterns.string;
 import com.intellij.patterns.StringPattern;
-import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
-import static com.intellij.patterns.XmlPatterns.xmlTag;
+import com.intellij.patterns.XmlPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.filters.ClassFilter;
@@ -113,20 +112,20 @@ public class XmlUtil {
     {"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd", "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"};
 
   @NonNls public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
-  public static final @NonNls String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
-  public static final @NonNls String SCHEMA_LOCATION_ATT = "schemaLocation";
-  public static final @NonNls String[] WEB_XML_URIS = {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee",
+  @NonNls public static final String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
+  @NonNls public static final String SCHEMA_LOCATION_ATT = "schemaLocation";
+  @NonNls public static final String[] WEB_XML_URIS = {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee",
     "http://java.sun.com/dtd/web-app_2_3.dtd", "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
-  public static final @NonNls String FACELETS_URI = "http://java.sun.com/jsf/facelets";
-  public static final @NonNls String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
-  public static final @NonNls String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
-  public static final @NonNls String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
+  @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
+  @NonNls public static final String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
+  @NonNls public static final String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
+  @NonNls public static final String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
-  public static final @NonNls String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
-  public static final List<String> ourSchemaUrisList = Arrays.asList(XmlUtil.SCHEMA_URIS);
+  @NonNls public static final String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
+  public static final List<String> ourSchemaUrisList = Arrays.asList(SCHEMA_URIS);
   private static final ThreadLocal<String> XML_FILE_IN_PROGRESS = new ThreadLocal<String>();
   public static final Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
-  public static final  @NonNls String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
+  @NonNls public static final String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
   @NonNls public static final String VALUE_ATTR_NAME = "value";
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
 
@@ -342,7 +341,7 @@ public class XmlUtil {
     //LOG.assertTrue(text.startsWith("&#") && text.endsWith(";"));
     if (text.charAt(1) != '#') {
       text = text.substring(1, text.length() - 1);
-      return XmlTagTextUtil.getCharacterByEntityName(text).charValue();
+      return XmlTagUtil.getCharacterByEntityName(text).charValue();
     }
     text = text.substring(2, text.length() - 1);
     int code;
@@ -360,8 +359,8 @@ public class XmlUtil {
     return "jsfc".equals(name) && tag.getNSDescriptor(JSF_HTML_URI, true) != null;
   }
 
-  public static
   @Nullable
+  public static
   String getTargetSchemaNsFromTag(@Nullable final XmlTag xmlTag) {
     if (xmlTag == null) return null;
     String targetNamespace = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME, XML_SCHEMA_URI);
@@ -384,7 +383,7 @@ public class XmlUtil {
           public boolean execute(final PsiElement element) {
             if (element instanceof XmlTag) {
               final XmlTag tag = (XmlTag)element;
-              final @NonNls String s = ((XmlTag)element).getLocalName();
+              @NonNls final String s = ((XmlTag)element).getLocalName();
 
               if((s.equals(XSD_SIMPLE_CONTENT_TAG) ||
                   s.equals("restriction") && "string".equals(findLocalNameByQualifiedName(tag.getAttributeValue("base")))
@@ -556,15 +555,14 @@ public class XmlUtil {
     }
 
     private boolean processXInclude(final boolean deepFlag, final boolean wideFlag, final XmlTag xincludeTag) {
-      final PsiElement[] inclusion;
 
-      inclusion = xincludeTag.getManager().getCachedValuesManager()
+      final PsiElement[] inclusion = xincludeTag.getManager().getCachedValuesManager()
         .getCachedValue(xincludeTag, KEY_RESOLVED_XINCLUDE, new CachedValueProvider<PsiElement[]>() {
-              public Result<PsiElement[]> compute() {
-                final Result<PsiElement[]> result = computeInclusion(xincludeTag);
-                result.setLockValue(true);
-                return result;
-            }
+          public Result<PsiElement[]> compute() {
+            final Result<PsiElement[]> result = computeInclusion(xincludeTag);
+            result.setLockValue(true);
+            return result;
+          }
         }, false);
 
       if (inclusion != null) {
@@ -576,13 +574,13 @@ public class XmlUtil {
       return true;
     }
 
-    private CachedValueProvider.Result<PsiElement[]> computeInclusion(final XmlTag xincludeTag) {
-      PsiElement[] result = null;
+    private static CachedValueProvider.Result<PsiElement[]> computeInclusion(final XmlTag xincludeTag) {
       List<Object> deps = new ArrayList<Object>();
       deps.add(xincludeTag.getContainingFile());
 
       final XmlFile xmlFile = XmlIncludeHandler.resolveXIncludeFile(xincludeTag);
 
+      PsiElement[] result = null;
       if (xmlFile != null) {
         deps.add(xmlFile);
         final XmlDocument document = xmlFile.getDocument();
@@ -734,11 +732,11 @@ public class XmlUtil {
 
       if (value == null) {
         value = entityDecl.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiElement>() {
-          public CachedValueProvider.Result<PsiElement> compute() {
+          public Result<PsiElement> compute() {
             final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
             if (res == null) return new Result<PsiElement>(res, targetFile);
             if (!entityDecl.isInternalReference()) XmlEntityRefImpl.copyEntityCaches(res.getContainingFile(), targetFile);
-            return new CachedValueProvider.Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile,
+            return new Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile,
                                                               entityRef);
           }
         }, false);
@@ -857,7 +855,7 @@ public class XmlUtil {
     if (tag == null) return null;
 
     if (file != null) {
-      final @NotNull XmlFileNSInfoProvider[] nsProviders = Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
+      @NotNull final XmlFileNSInfoProvider[] nsProviders = Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
 
       NextProvider:
       for (XmlFileNSInfoProvider nsProvider : nsProviders) {
@@ -996,7 +994,6 @@ public class XmlUtil {
 
   @Nullable
   public static XmlElementDescriptor findXmlDescriptorByType(final XmlTag xmlTag, @Nullable XmlTag context) {
-    XmlElementDescriptor elementDescriptor = null;
     String type = xmlTag.getAttributeValue("type", XML_SCHEMA_INSTANCE_URI);
 
     if (type == null) {
@@ -1006,6 +1003,7 @@ public class XmlUtil {
       }
     }
 
+    XmlElementDescriptor elementDescriptor = null;
     if (type != null) {
       final String namespaceByPrefix = findNamespaceByPrefix(findPrefixByQualifiedName(type), xmlTag);
       XmlNSDescriptor typeDecr = xmlTag.getNSDescriptor(namespaceByPrefix, true);
@@ -1091,9 +1089,9 @@ public class XmlUtil {
       finally {
         StringBuilderSpinAllocator.dispose(tagStartBuilder);
       }
-      XmlTag retTag;
       Language language = xmlTag.getLanguage();
       if (!(language instanceof HTMLLanguage)) language = StdFileTypes.XML.getLanguage();
+      XmlTag retTag;
       if (bodyText != null && bodyText.length() > 0) {
         retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">",
                                                                                       language);
@@ -1196,7 +1194,7 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static PsiNamedElement findRealNamedElement(final @NotNull PsiNamedElement _element) {
+  public static PsiNamedElement findRealNamedElement(@NotNull final PsiNamedElement _element) {
     PsiElement currentElement = _element;
     final XmlEntityRef lastEntityRef = PsiTreeUtil.getParentOfType(currentElement, XmlEntityRef.class);
 
@@ -1553,24 +1551,26 @@ public class XmlUtil {
                                                          boolean caseSensitive,
                                                          @NotNull PsiReferenceProvider provider) {
     if (attributeNames == null) {
-      registrar.registerReferenceProvider(xmlAttributeValue().and(new FilterPattern(elementFilter)), provider);
+      registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(new FilterPattern(elementFilter)), provider);
       return;
     }
 
-    final StringPattern namePattern = caseSensitive ? string().oneOf(attributeNames) : string().oneOfIgnoreCase(attributeNames);
-    registrar.registerReferenceProvider(xmlAttributeValue().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider);
+    final StringPattern namePattern = caseSensitive ? StandardPatterns.string().oneOf(attributeNames) : com.intellij
+      .patterns.StandardPatterns.string().oneOfIgnoreCase(attributeNames);
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider);
   }
 
   public static void registerXmlTagReferenceProvider(PsiReferenceRegistrar registrar, @NonNls String[] names, @Nullable ElementFilter elementFilter,
                                               boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
     if (names == null) {
-      registrar.registerReferenceProvider(xmlTag().and(new FilterPattern(elementFilter)), provider, PsiReferenceRegistrar.DEFAULT_PRIORITY);
+      registrar.registerReferenceProvider(XmlPatterns.xmlTag().and(new FilterPattern(elementFilter)), provider, PsiReferenceRegistrar.DEFAULT_PRIORITY);
       return;
     }
 
 
-    final StringPattern namePattern = caseSensitive ? string().oneOf(names) : string().oneOfIgnoreCase(names);
-    registrar.registerReferenceProvider(xmlTag().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider,
+    final StringPattern namePattern = caseSensitive ? StandardPatterns.string().oneOf(names) : com.intellij.patterns
+      .StandardPatterns.string().oneOfIgnoreCase(names);
+    registrar.registerReferenceProvider(XmlPatterns.xmlTag().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider,
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 

@@ -112,16 +112,17 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   };
 
   private static final XmlUtil.DuplicationInfoProvider<XmlTag> SCHEMA_ATTR_DUP_INFO_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlTag>() {
-    public String getName(final XmlTag t) {
+    public String getName(@NotNull final XmlTag t) {
       return t.getAttributeValue(NAME_ATTR_NAME);
     }
 
-    public String getNameKey(final XmlTag t, String name) {
+    @NotNull
+    public String getNameKey(@NotNull final XmlTag t, @NotNull String name) {
       return name;
     }
 
     @NotNull
-    public PsiElement getNodeForMessage(final XmlTag t) {
+    public PsiElement getNodeForMessage(@NotNull final XmlTag t) {
       return t.getAttribute(NAME_ATTR_NAME, null).getValueElement();
     }
   };

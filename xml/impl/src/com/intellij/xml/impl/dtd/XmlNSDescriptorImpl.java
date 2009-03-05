@@ -44,17 +44,17 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
 
   private volatile CachedValue<Map<String, XmlElementDescriptor>> myCachedDecls;
   private static final XmlUtil.DuplicationInfoProvider<XmlElementDecl> XML_ELEMENT_DECL_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlElementDecl>() {
-    public String getName(final XmlElementDecl psiElement) {
+    public String getName(@NotNull final XmlElementDecl psiElement) {
       return psiElement.getName();
     }
 
     @NotNull
-    public String getNameKey(final XmlElementDecl psiElement, final String name) {
+    public String getNameKey(@NotNull final XmlElementDecl psiElement, @NotNull final String name) {
       return name;
     }
 
     @NotNull
-    public PsiElement getNodeForMessage(final XmlElementDecl psiElement) {
+    public PsiElement getNodeForMessage(@NotNull final XmlElementDecl psiElement) {
       return psiElement.getNameElement();
     }
   };
