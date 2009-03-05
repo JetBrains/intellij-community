@@ -171,7 +171,7 @@ public class EclipseClasspathReader {
 
       modifiableModel.commit();
 
-      setLibraryEntryExported(rootModel, exported, libName);
+      setLibraryEntryExported(rootModel, exported, library);
     }
     else if (kind.equals(EclipseXml.VAR_KIND)) {
       int slash = path.indexOf("/");
@@ -225,7 +225,7 @@ public class EclipseClasspathReader {
 
       modifiableModel.commit();
 
-      setLibraryEntryExported(rootModel, exported, libName);
+      setLibraryEntryExported(rootModel, exported, library);
     }
     else if (kind.equals(EclipseXml.CON_KIND)) {
       if (path.equals(EclipseXml.ECLIPSE_PLATFORM)) {
@@ -267,9 +267,10 @@ public class EclipseClasspathReader {
     }
   }
 
-  private static void setLibraryEntryExported(ModifiableRootModel rootModel, boolean exported, String libName) {
+  private static void setLibraryEntryExported(ModifiableRootModel rootModel, boolean exported, Library library) {
     for (OrderEntry orderEntry : rootModel.getOrderEntries()) {
-      if (orderEntry instanceof LibraryOrderEntry && ((LibraryOrderEntry)orderEntry).isModuleLevel() && Comparing.strEqual(orderEntry.getPresentableName(), libName)) {
+      if (orderEntry instanceof LibraryOrderEntry && ((LibraryOrderEntry)orderEntry).isModuleLevel()
+          && Comparing.equal(((LibraryOrderEntry)orderEntry).getLibrary(), library)) {
         ((LibraryOrderEntry)orderEntry).setExported(exported);
         break;
       }
