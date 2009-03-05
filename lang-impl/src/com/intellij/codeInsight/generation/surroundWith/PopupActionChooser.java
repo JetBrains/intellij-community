@@ -1,14 +1,15 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -16,7 +17,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.UIUtil;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class PopupActionChooser {
   private final String myTitle;
@@ -61,6 +64,10 @@ public class PopupActionChooser {
     for (TemplateImpl template : array) {
       applicable.add(new InvokeTemplateAction(template, editor, project, usedMnemonicsSet));
       hasEnabledSurrounders = true;
+    }
+    if (!array.isEmpty()) {
+      applicable.addSeparator();
+      applicable.add(new ConfigureTemplatesAction());
     }
 
     if (hasEnabledSurrounders) {
@@ -109,5 +116,15 @@ public class PopupActionChooser {
 
   public boolean isHasEnabledSurrounders() {
     return hasEnabledSurrounders;
+  }
+
+  private static class ConfigureTemplatesAction extends AnAction {
+    private ConfigureTemplatesAction() {
+      super("Configure Live Templates...");
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(e.getData(PlatformDataKeys.PROJECT), "Live Templates");
+    }
   }
 }
