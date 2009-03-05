@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -35,6 +36,14 @@ import java.util.*;
  */
 public class DomUtil {
   public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = ReflectionCache.getTypeParameters(GenericValue.class)[0];
+  private static final Class<Void> DUMMY = void.class;
+  private static final ConcurrentFactoryMap<Type, Class> ourTypeParameters = new ConcurrentFactoryMap<Type, Class>() {
+    @NotNull
+    protected Class create(final Type key) {
+      final Class<?> result = ReflectionUtil.substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, key);
+      return result == null ? DUMMY : result;
+    }
+  };
 
   private DomUtil() {
   }
@@ -132,8 +141,10 @@ public class DomUtil {
     return description != null ? description.getGetterMethod(description.getValues(parent).indexOf(element)) : null;
   }
 
+  @Nullable
   public static Class getGenericValueParameter(Type type) {
-    return ReflectionUtil.substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, type);
+    final Class aClass = ourTypeParameters.get(type);
+    return aClass == DUMMY ? null : aClass;
   }
 
   @Nullable

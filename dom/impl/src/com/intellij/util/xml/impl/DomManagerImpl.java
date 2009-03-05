@@ -38,7 +38,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
@@ -66,7 +65,7 @@ public final class DomManagerImpl extends DomManager {
   static final Key<DomFileDescription> MOCK_DESCIPRTION = Key.create("MockDescription");
   static final Key<DomInvocationHandler> CACHED_DOM_HANDLER = Key.create("CACHED_DOM_HANDLER");
 
-  private final FactoryMap<Type, StaticGenericInfo> myGenericInfos = new FactoryMap<Type, StaticGenericInfo>() {
+  private final ConcurrentFactoryMap<Type, StaticGenericInfo> myGenericInfos = new ConcurrentFactoryMap<Type, StaticGenericInfo>() {
     @NotNull
     protected StaticGenericInfo create(final Type type) {
       final Class<?> rawType = ReflectionUtil.getRawType(type);
@@ -74,7 +73,7 @@ public final class DomManagerImpl extends DomManager {
       return new StaticGenericInfo(rawType, DomManagerImpl.this);
     }
   };
-  private final FactoryMap<Pair<Type, Type>, InvocationCache> myInvocationCaches = new FactoryMap<Pair<Type, Type>, InvocationCache>() {
+  private final ConcurrentFactoryMap<Pair<Type, Type>, InvocationCache> myInvocationCaches = new ConcurrentFactoryMap<Pair<Type, Type>, InvocationCache>() {
     @NotNull
     protected InvocationCache create(final Pair<Type, Type> key) {
       return new InvocationCache();
@@ -314,15 +313,11 @@ public final class DomManagerImpl extends DomManager {
   }
 
   public final StaticGenericInfo getStaticGenericInfo(final Type type) {
-    synchronized (myGenericInfos) {
-      return myGenericInfos.get(type);
-    }
+    return myGenericInfos.get(type);
   }
 
   final InvocationCache getInvocationCache(final Pair<Type, Type> type) {
-    synchronized (myInvocationCaches) {
-      return myInvocationCaches.get(type);
-    }
+    return myInvocationCaches.get(type);
   }
 
   @Nullable

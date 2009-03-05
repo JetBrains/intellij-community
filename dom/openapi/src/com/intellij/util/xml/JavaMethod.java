@@ -15,14 +15,13 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.Map;
 
 /**
  * @author peter
@@ -43,7 +42,12 @@ public final class JavaMethod implements AnnotatedElement{
   private final JavaMethodSignature mySignature;
   private final Class myDeclaringClass;
   private final Method myMethod;
-  private Map<Class, Annotation> myAnnotationsMap;
+  private FactoryMap<Class, Annotation> myAnnotationsMap = new ConcurrentFactoryMap<Class, Annotation>() {
+
+    protected Annotation create(Class key) {
+      return mySignature.findAnnotation(key, myDeclaringClass);
+    }
+  };
 
   private JavaMethod(final Class declaringClass, final JavaMethodSignature signature) {
     mySignature = signature;
@@ -96,18 +100,7 @@ public final class JavaMethod implements AnnotatedElement{
   }
 
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    synchronized (ourMethods) {
-      if (myAnnotationsMap == null) {
-        myAnnotationsMap = new THashMap<Class, Annotation>();
-      }
-      else if (myAnnotationsMap.containsKey(annotationClass)) {
-        return (T)myAnnotationsMap.get(annotationClass);
-      }
-
-      final T value = mySignature.findAnnotation(annotationClass, myDeclaringClass);
-      myAnnotationsMap.put(annotationClass, value);
-      return value;
-    }
+    return (T)myAnnotationsMap.get(annotationClass);
   }
 
   @Override
