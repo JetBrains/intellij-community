@@ -258,6 +258,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     return super.getUseScope();
   }
 
+  @NotNull
   public String getName() {
     return PsiImplUtil.getName(this);
   }

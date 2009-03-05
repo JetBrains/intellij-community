@@ -49,6 +49,7 @@ public class LightParameter extends LightVariableBase implements PsiParameter {
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
