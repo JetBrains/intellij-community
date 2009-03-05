@@ -28,7 +28,7 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerUISettings");
   
   public int AVAILABLE_SORT_COLUMN = 0;
-  public int INSTALLED_SORT_COLUMN = 0;
+  public int INSTALLED_SORT_COLUMN = 1;
   public int CART_SORT_COLUMN = 0;
   public int AVAILABLE_SORT_COLUMN_ORDER = SortableColumnModel.SORT_ASCENDING;
   public int INSTALLED_SORT_COLUMN_ORDER = SortableColumnModel.SORT_ASCENDING;
