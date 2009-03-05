@@ -18,7 +18,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -73,8 +72,6 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     final PsiFile templateFile = createFromText(language, templateText, file.getManager());
 
     final TreeElement parsed = ((PsiFileImpl)templateFile).calcTreeElement();
-    ChameleonTransforming.transformChildren(parsed, false);
-
     Lexer langLexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(file.getProject());
     final Lexer lexer = new MergingLexerAdapter(
       new TemplateBlackAndWhiteLexer(createBaseLexer(viewProvider), langLexer, myTemplateElementType, myOuterElementType),
@@ -119,12 +116,6 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         while (leaf != null && treeOffset < lexer.getTokenStart()) {
           treeOffset += leaf.getTextLength();
           if (treeOffset > lexer.getTokenStart()) {
-            if (leaf instanceof ChameleonElement) {
-              final ASTNode transformed = ChameleonTransforming.transform(leaf);
-              treeOffset -= leaf.getTextLength();
-              leaf = TreeUtil.findFirstLeaf(transformed);
-              continue;
-            }
             leaf = patcher.split(leaf, leaf.getTextLength() - (treeOffset - lexer.getTokenStart()), table);
             treeOffset = lexer.getTokenStart();
           }

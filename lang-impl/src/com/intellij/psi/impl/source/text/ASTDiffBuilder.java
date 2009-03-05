@@ -15,7 +15,6 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 
@@ -38,11 +37,8 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
       BlockSupportImpl.replaceFileElement(myFile, (FileElement)oldNode, (FileElement)newNode, myPsiManager);
     }
     else {
-      if (oldNode instanceof ChameleonElement) {
-        oldNode = ChameleonTransforming.transform((ChameleonElement)oldNode);
-      }
-
-      newNode = transformNewChameleon(oldNode, newNode);
+      TreeUtil.ensureParsed(oldNode);
+      transformNewChameleon(oldNode, newNode);
 
       ((TreeElement)newNode).rawRemove();
       ((TreeElement)oldNode).rawReplaceWithList((TreeElement)newNode);
@@ -59,22 +55,21 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     }
   }
 
-  private static ASTNode transformNewChameleon(final ASTNode oldNode, ASTNode newNode) {
-    if (newNode instanceof ChameleonElement) {
+  private static void transformNewChameleon(final ASTNode oldNode, ASTNode newNode) {
+    if (newNode instanceof LazyParseableElement) {
       final FileElement dummyRoot = new DummyHolder(
           oldNode.getPsi().getManager(),
-          oldNode.getPsi().getContainingFile(), 
+          oldNode.getPsi().getContainingFile(),
           SharedImplUtil.findCharTableByTree(oldNode)
       ).getTreeElement();
       dummyRoot.rawAddChildren((TreeElement)newNode);
-      newNode = ChameleonTransforming.transform((ChameleonElement)newNode);
+      TreeUtil.ensureParsed(newNode);
     }
-    return newNode;
   }
 
   public void nodeDeleted(ASTNode parent, final ASTNode child) {
     PsiElement psiParent = parent.getPsi();
-    PsiElement psiChild = myIsPhysicalScope && !(child instanceof ChameleonElement) ? child.getPsi() : null;
+    PsiElement psiChild = myIsPhysicalScope ? child.getPsi() : null;
 
     PsiTreeChangeEventImpl event = null;
     if (psiParent != null && psiChild != null) {
@@ -96,7 +91,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
   }
 
   public void nodeInserted(final ASTNode oldParent, ASTNode node, final int pos) {
-    node = transformNewChameleon(oldParent, node);
+    transformNewChameleon(oldParent, node);
 
     ASTNode anchor = null;
     for (int i = 0; i < pos; i++) {

@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,6 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   protected List<Block> buildChildren() {
-    ChameleonTransforming.transformChildren(myNode);
     ASTNode child = myNode.getFirstChildNode();
     final Wrap attrWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false);
     final Wrap textWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getTextWrap(getTag())), true);
@@ -203,7 +201,6 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   private ASTNode createXmlTextBlocks(final List<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
-    ChameleonTransforming.transformChildren(myNode);
     ASTNode child = textNode.getFirstChildNode();
     return createXmlTextBlocks(list, textNode, child, wrap, alignment);
   }

@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -26,36 +25,20 @@ public class SharedImplUtil {
   }
 
   public static PsiElement getFirstChild(ASTNode element) {
-    final TreeElement firstChild = (TreeElement)element.getFirstChildNode();
-    if (firstChild == null) return null;
-    ASTNode transformed = firstChild.getTransformedFirstOrSelf();
-    if (transformed == null) {
-      transformed = element.getFirstChildNode();
-    }
-    return SourceTreeToPsiMap.treeElementToPsi(transformed);
+    return SourceTreeToPsiMap.treeElementToPsi(element.getFirstChildNode());
   }
 
   @Nullable
   public static PsiElement getLastChild(ASTNode element) {
-    final TreeElement lastChild = (TreeElement)element.getLastChildNode();
-    if (lastChild == null) return null;
-    final ASTNode last = lastChild.getTransformedLastOrSelf(); // this may be null on a zero-length file
-    return last == null ? null : last.getPsi();
+    return SourceTreeToPsiMap.treeElementToPsi(element.getLastChildNode());
   }
 
   public static PsiElement getNextSibling(ASTNode thisElement) {
-    final TreeElement treeNext = ((TreeElement)thisElement).getTreeNext();
-    if (treeNext == null) return null;
-    ASTNode transformed = treeNext.getTransformedFirstOrSelf();
-    if (transformed == null) {
-      transformed = ((TreeElement)thisElement).getTreeNext();
-    }
-    return SourceTreeToPsiMap.treeElementToPsi(transformed);
+    return SourceTreeToPsiMap.treeElementToPsi(thisElement.getTreeNext());
   }
 
   public static PsiElement getPrevSibling(ASTNode thisElement) {
-    final TreeElement treePrev = ((TreeElement)thisElement).getTreePrev();
-    return treePrev == null ? null : SourceTreeToPsiMap.treeElementToPsi(treePrev.getTransformedLastOrSelf());
+    return SourceTreeToPsiMap.treeElementToPsi(thisElement.getTreePrev());
   }
 
   public static PsiFile getContainingFile(ASTNode thisElement) {
@@ -151,8 +134,6 @@ public class SharedImplUtil {
   }
 
   private static int countChildrenOfType(@NotNull ASTNode node, @NotNull IElementType elementType) {
-    ChameleonTransforming.transformChildren(node);
-
     // no lock is needed because all chameleons are expanded already
     int count = 0;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -167,17 +148,7 @@ public class SharedImplUtil {
   public static void acceptChildren(PsiElementVisitor visitor, CompositeElement root) {
     TreeElement childNode = root.getFirstChildNode();
 
-    TreeElement prevSibling = null;
     while (childNode != null) {
-      if (childNode instanceof ChameleonElement) {
-      TreeElement newChild = (TreeElement)childNode.getTransformedFirstOrSelf();
-        if (newChild == null) {
-          childNode = prevSibling == null ? root.getFirstChildNode() : prevSibling.getTreeNext();
-          continue;
-        }
-        childNode = newChild;
-      }
-
       final PsiElement psi;
       if (childNode instanceof PsiElement) {
         psi = (PsiElement)childNode;
@@ -187,7 +158,6 @@ public class SharedImplUtil {
       }
       psi.accept(visitor);
 
-      prevSibling = childNode;
       childNode = childNode.getTreeNext();
     }
   }

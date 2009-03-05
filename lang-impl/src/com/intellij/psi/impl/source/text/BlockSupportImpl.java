@@ -20,9 +20,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.templateLanguages.ITemplateDataElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
@@ -91,9 +89,8 @@ public class BlockSupportImpl extends BlockSupport {
 
     final FileElement treeFileElement = fileImpl.getTreeElement();
 
-    if (treeFileElement.getElementType() instanceof ITemplateDataElementType ||
-        treeFileElement.getFirstChildNode() instanceof ChameleonElement
-      ) { // Not able to perform incremental reparse for template data in JSP
+    if (true/*treeFileElement.getElementType() instanceof ITemplateDataElementType*/) {
+      // Not able to perform incremental reparse for template data in JSP
       makeFullParse(treeFileElement, newFileText, textLength, fileImpl);
       return;
     }
@@ -121,6 +118,7 @@ public class BlockSupportImpl extends BlockSupport {
           }
 
           CharSequence newTextStr = newFileText.subSequence(textRange.getStartOffset(), textRange.getStartOffset() + textRange.getLength() + lengthShift);
+          /* TODO: bring chams reparse back
           if (reparseable.isParsable(newTextStr, project)) {
             final ChameleonElement chameleon = (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText,
                                                                                                  textRange.getStartOffset(),
@@ -130,6 +128,7 @@ public class BlockSupportImpl extends BlockSupport {
             mergeTrees(fileImpl, parent, reparsed);
             return;
           }
+          */
           if (reparseable instanceof IErrorCounterChameleonElementType) {
             int currentErrorLevel = ((IErrorCounterChameleonElementType)reparseable).getErrorsCount(newTextStr, project);
             if (currentErrorLevel == IErrorCounterChameleonElementType.FATAL_ERROR) {
@@ -150,6 +149,7 @@ public class BlockSupportImpl extends BlockSupport {
     }
 
     if (bestReparseable != null && !theOnlyReparseable) {
+      /*
       // best reparseable available
       final TextRange textRange = bestReparseable.getTextRange();
       final ChameleonElement chameleon =
@@ -160,6 +160,7 @@ public class BlockSupportImpl extends BlockSupport {
       chameleon.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
       chameleon.setTreeParent((CompositeElement)parent);
       bestReparseable.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable()).getTreeParent());
+      */
     }
     else {
       //boolean leafChangeOptimized = false;
@@ -281,13 +282,13 @@ public class BlockSupportImpl extends BlockSupport {
         newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
 
         try {
-          ChameleonTransforming.transformChildren(newRoot);
+          newRoot.getFirstChildNode(); // Ensure parsed
         }
         catch (ReparsedSuccessfullyException e) {
           return; // Successfully merged in PsiBuilderImpl
         }
-        
-        ChameleonTransforming.transformChildren(oldRoot, true);
+
+        TreeUtil.ensureParsedRecursively(oldRoot);
 
         model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
           public PomModelEvent runInner() {

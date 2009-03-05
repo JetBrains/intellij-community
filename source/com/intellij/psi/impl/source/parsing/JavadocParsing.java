@@ -90,7 +90,7 @@ public class JavadocParsing extends Parsing {
       }
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, new TokenProcessor(this), myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, new JDTokenProcessor(this), myContext);
     return dummyRoot.getFirstChildNode();
   }
 
@@ -161,7 +161,7 @@ public class JavadocParsing extends Parsing {
           return parseSeeTagValue(lexer);
         }
         else if (!isInlineItem && (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName))) {
-          final LeafElement element = parseReferenceOrType(lexer, false);
+          final TreeElement element = parseReferenceOrType(lexer, false);
           lexer.advance();
           final CompositeElement tagValue = ASTFactory.composite(DOC_TAG_VALUE_TOKEN);
           tagValue.rawAddChildren(element);
@@ -233,7 +233,7 @@ public class JavadocParsing extends Parsing {
 
       while (TAG_VALUE.contains(lexer.getTokenType())) {
         if (lexer.getTokenType() == DOC_TAG_VALUE_TOKEN) {
-          final LeafElement reference = parseReferenceOrType(lexer, true);
+          final TreeElement reference = parseReferenceOrType(lexer, true);
           lexer.advance();
           subValue.rawAddChildren(reference);
 
@@ -268,7 +268,7 @@ public class JavadocParsing extends Parsing {
       return (TreeElement)parseMethodRef(lexer);
     }
     else if (lexer.getTokenType() == DOC_TAG_VALUE_TOKEN) {
-      final LeafElement element = parseReferenceOrType(lexer, false);
+      final TreeElement element = parseReferenceOrType(lexer, false);
       lexer.advance();
 
       if (lexer.getTokenType() == DOC_TAG_VALUE_SHARP_TOKEN) {
@@ -289,8 +289,8 @@ public class JavadocParsing extends Parsing {
     }
   }
 
-  private LeafElement parseReferenceOrType(Lexer lexer, boolean isType) {
-    return ASTFactory.leaf(isType ? DOC_TYPE_HOLDER : DOC_REFERENCE_HOLDER, myContext.tokenText(lexer));
+  private TreeElement parseReferenceOrType(Lexer lexer, boolean isType) {
+    return ASTFactory.lazy(isType ? DOC_TYPE_HOLDER : DOC_REFERENCE_HOLDER, myContext.tokenText(lexer));
   }
 
   private LeafElement createTokenElement(Lexer lexer) {
@@ -305,10 +305,10 @@ public class JavadocParsing extends Parsing {
     return ASTFactory.leaf(tokenType, myContext.tokenText(lexer));
   }
 
-  private static class TokenProcessor implements com.intellij.psi.impl.source.parsing.TokenProcessor {
+  private static class JDTokenProcessor implements TokenProcessor {
     private final JavadocParsing myParsing;
 
-    private TokenProcessor(JavadocParsing theParsing) {
+    private JDTokenProcessor(JavadocParsing theParsing) {
       myParsing = theParsing;
     }
 

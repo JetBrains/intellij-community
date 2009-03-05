@@ -205,8 +205,4 @@ public abstract class LeafElement extends TreeElement {
     return null;
   }
 
-  public boolean isChameleon(){
-    return false;
-  }
-
 }

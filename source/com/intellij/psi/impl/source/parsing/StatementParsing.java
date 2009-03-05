@@ -8,8 +8,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.AbstractJspJavaLexer;
-import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
@@ -314,9 +314,9 @@ public class StatementParsing extends Parsing {
     else if (tokenType == LBRACE) {
       return parseBlockStatement(lexer);
     }
-    else if (tokenType instanceof IChameleonElementType) {
-      LeafElement declaration =
-        ASTFactory.leaf(tokenType, myContext.tokenText(lexer));
+    else if (tokenType instanceof ILazyParseableElementType) {
+      TreeElement declaration =
+        ASTFactory.lazy((ILazyParseableElementType)tokenType, myContext.tokenText(lexer));
       lexer.advance();
       return declaration;
     }

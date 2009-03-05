@@ -59,10 +59,6 @@ public abstract class ASTFactory {
       return new PsiWhiteSpaceImpl(text);
     }
 
-    if (type instanceof IChameleonElementType) {
-      return new ChameleonElement(type, text);
-    }
-
     if (type instanceof ILeafElementType) {
       return (LeafElement)((ILeafElementType)type).createLeafNode(text);
     }

@@ -24,7 +24,6 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
@@ -62,7 +61,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
     PsiFileImpl file = (PsiFileImpl)element.getContainingFile();
     FileType fileType = StdFileTypes.JAVA;
     if (file != null) {
@@ -107,6 +105,12 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   }
 
+  private static void transformAllChildren(final ASTNode file) {
+    for (ASTNode child = file.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      transformAllChildren(child);
+    }
+  }
+
 
   public void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException {
 
@@ -116,7 +120,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(file);
-    ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
+    transformAllChildren(treeElement);
+
     FileType fileType = file.getFileType();
     Helper helper = HelperFactory.createHelper(fileType, myProject);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
@@ -155,7 +160,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
     FileType fileType = StdFileTypes.JAVA;
     PsiFile file = element.getContainingFile();
     if (file != null) {

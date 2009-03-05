@@ -1,10 +1,9 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
@@ -37,7 +36,6 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   }
 
   private void buildChildren(final ArrayList<Block> result, final Alignment childAlignment, final Wrap childWrap) {
-    ChameleonTransforming.transformChildren(myNode);
     ASTNode child = myNode.getFirstChildNode();
 
     int state = BEFORE_FIRST;

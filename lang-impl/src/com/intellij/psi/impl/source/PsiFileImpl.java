@@ -26,7 +26,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -225,10 +224,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private static ASTNode findTreeForStub(ASTNode tree, final Iterator<StubElement<?>> stubs, final StubElement stub) {
-    if (tree instanceof ChameleonElement) {
-      tree = ChameleonTransforming.transform((ChameleonElement)tree);
-    }
-
     final IElementType type = tree.getElementType();
 
     if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
@@ -246,10 +241,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
 
   private void switchFromStubToAST(ASTNode tree, Iterator<StubElement<?>> stubs) {
-    if (tree instanceof ChameleonElement) {
-      tree = ChameleonTransforming.transform((ChameleonElement)tree);
-    }
-
     final IElementType type = tree.getElementType();
 
     if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
@@ -854,10 +845,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Nullable
   private StubElement bindStubs(ASTNode tree, Iterator<StubElement<?>> stubs) {
-    if (tree instanceof ChameleonElement) {
-      tree = ChameleonTransforming.transform((ChameleonElement)tree);
-    }
-
     final IElementType type = tree.getElementType();
 
     if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {

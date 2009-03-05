@@ -186,7 +186,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
       model.runTransaction(new PomTransactionBase(getParent(), aspect) {
         public PomModelEvent runInner() throws IncorrectOperationException {
-          final XmlTagImpl tag = (XmlTagImpl)getParentTag();
+          final XmlTag tag = getParentTag();
           assert tag != null;
 
           final XmlText rightPart = _splitText(displayOffset);

@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 
 /**
@@ -12,14 +11,10 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   private final ASTNode myRoot;
 
   public ASTStructure(final ASTNode root) {
-    ChameleonTransforming.transformChildren(root);
     myRoot = root;
   }
 
   public ASTNode prepareForGetChildren(final ASTNode astNode) {
-    if (astNode instanceof ChameleonElement) {
-      return ChameleonTransforming.transform((LeafElement)astNode);
-    }
     return astNode;
   }
 

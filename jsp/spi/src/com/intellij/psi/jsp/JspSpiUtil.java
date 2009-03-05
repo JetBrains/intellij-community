@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.tree.IChameleonElementType;
+import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlComment;
@@ -52,12 +52,12 @@ public abstract class JspSpiUtil {
   }
 
   @Nullable
-  public static IChameleonElementType createSimpleChameleon(@NonNls String debugName, IElementType start, IElementType end, final int startLength) {
+  public static CustomParsingType createSimpleChameleon(@NonNls String debugName, IElementType start, IElementType end, final int startLength) {
     final JspSpiUtil util = getJspSpiUtil();
     return util != null ? util._createSimpleChameleon(debugName, start, end, startLength) : null;
   }
 
-  protected abstract IChameleonElementType _createSimpleChameleon(@NonNls String debugName, IElementType start, IElementType end,
+  protected abstract CustomParsingType _createSimpleChameleon(@NonNls String debugName, IElementType start, IElementType end,
                                                                   final int startLength);
 
   public static int escapeCharsInJspContext(JspFile file, int offset, String toEscape) throws IncorrectOperationException {

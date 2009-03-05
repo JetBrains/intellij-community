@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
@@ -20,7 +19,6 @@ public class ParameterListElement extends CompositeElement implements Constants 
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    ChameleonTransforming.transformChildren(this);
     if (anchor == null) {
       if (before == null || before.booleanValue()) {
         anchor = findChildByRole(ChildRole.RPARENTH);
@@ -89,7 +87,6 @@ public class ParameterListElement extends CompositeElement implements Constants 
 
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    ChameleonTransforming.transformChildren(this);
     switch (role) {
       default:
         return null;

@@ -37,19 +37,13 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiElement getFirstChild() {
-    TreeElement child = getFirstChildNode();
-    if (child instanceof ChameleonElement) {
-      child = (TreeElement)child.getTransformedFirstOrSelf();
-      if (child == null) {
-        child = getFirstChildNode();
-      }
-    }
-    if (child == null) return null;
-    return child.getPsi();
+    ASTNode node = getFirstChildNode();
+    return node != null ? node.getPsi() : null;
   }
 
   public PsiElement getLastChild() {
-    return SharedImplUtil.getLastChild(this);
+    ASTNode node = getLastChildNode();
+    return node != null ? node.getPsi() : null;
   }
 
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
@@ -61,18 +55,18 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiElement getParent() {
-    final CompositeElement treeParent = getTreeParent();
-    if (treeParent == null) return null;
-    if (treeParent instanceof PsiElement) return (PsiElement)treeParent;
-    return treeParent.getPsi();
+    final CompositeElement parentNode = getTreeParent();
+    return parentNode != null ? parentNode.getPsi() : null;
   }
 
   public PsiElement getNextSibling() {
-    return SharedImplUtil.getNextSibling(this);
+    ASTNode node = getTreeNext();
+    return node != null ? node.getPsi() : null;
   }
 
   public PsiElement getPrevSibling() {
-    return SharedImplUtil.getPrevSibling(this);
+    ASTNode node = getTreePrev();
+    return node != null ? node.getPsi() : null;
   }
 
   public PsiFile getContainingFile() {

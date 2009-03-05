@@ -9,7 +9,7 @@ import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlElementChangedImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.psi.impl.source.xml.XmlElementImpl;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,12 +65,12 @@ public class XmlIncludeHandler implements PsiIncludeManager.PsiIncludeHandler {
 
   public void includeChanged(final PsiElement includeDirective, final PsiFile targetFile, final PomModelEvent event) {
     final PsiElement parent = includeDirective.getParent();
-    assert parent instanceof XmlElementImpl;
+    assert parent instanceof XmlElement;
 
     final XmlFile xmlFile = (XmlFile)includeDirective.getContainingFile();
 
-    final XmlElementImpl xmlParent = (XmlElementImpl)parent;
-    xmlParent.clearCaches();
+    final XmlElement xmlParent = (XmlElement)parent;
+    ((CompositeElement)xmlParent).clearCaches();
 
     final XmlAspectChangeSetImpl changeSet = event.registerChangeSetIfAbsent(myXmlAspect, new XmlAspectChangeSetImpl(myModel));
     changeSet.addChangedFile(xmlFile);

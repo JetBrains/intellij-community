@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
@@ -78,7 +77,6 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     if (node == null) return false;
     if (node.getElementType() == TokenType.WHITE_SPACE) return true;
     if (node instanceof LeafElement) return false;
-    ChameleonTransforming.transformChildren(node);
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       if (!containsWhiteSpacesOnly(child)) return false;

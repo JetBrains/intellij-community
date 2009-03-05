@@ -10,7 +10,6 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
@@ -104,7 +103,6 @@ public class ReferenceAdjuster implements Constants {
       }
     }
 
-    ChameleonTransforming.transformChildren(element);
     for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       child = process(child, addImports, uncompleteCode);
     }
@@ -151,8 +149,6 @@ public class ReferenceAdjuster implements Constants {
                                                        final TreeElement parent,
                                                        final int startOffset,
                                                        final int endOffset) {
-    ChameleonTransforming.transformChildren(parent);
-
     int offset = 0;
     for (TreeElement child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       int length = child.getTextLength();

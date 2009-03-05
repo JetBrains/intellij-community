@@ -6,8 +6,9 @@ package com.intellij.lang.html;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IChameleonElementType;
+import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
@@ -265,7 +266,7 @@ public class HtmlParsing {
         advance();
         error.error(XmlErrorMessages.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
       }
-      else if (tt instanceof IChameleonElementType) {
+      else if (tt instanceof CustomParsingType || tt instanceof ILazyParseableElementType) {
         xmlText = terminateText(xmlText);
         advance();
       }

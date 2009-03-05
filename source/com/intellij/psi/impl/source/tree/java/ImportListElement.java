@@ -8,7 +8,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -19,7 +18,6 @@ public class ImportListElement extends CompositeElement{
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before){
-    ChameleonTransforming.transformChildren(this);
     if (before == null){
       if (first == last && (first.getElementType() == ElementType.IMPORT_STATEMENT || first.getElementType() == ElementType.IMPORT_STATIC_STATEMENT)){
         anchor = getDefaultAnchor((PsiImportList)SourceTreeToPsiMap.treeElementToPsi(this),

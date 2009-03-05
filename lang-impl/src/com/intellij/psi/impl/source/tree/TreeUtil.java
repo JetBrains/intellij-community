@@ -5,7 +5,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -19,6 +18,24 @@ public class TreeUtil {
   public static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
 
   private TreeUtil() {
+  }
+
+  public static void ensureParsed(ASTNode node) {
+    if (node != null) {
+      node.getFirstChildNode();
+    }
+  }
+
+  public static void ensureParsedRecursively(ASTNode node) {
+    if (node != null) {
+      for (ASTNode cur = node.getFirstChildNode(); cur != null; cur = cur.getTreeNext()) {
+        ensureParsedRecursively(cur);
+      }
+    }
+  }
+
+  public static boolean isCollapsedChameleon(ASTNode node) {
+    return node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsed();
   }
 
   @Nullable
@@ -219,7 +236,7 @@ public class TreeUtil {
   @Nullable
   private static TreeElement findFirstLeafOrType(@NotNull TreeElement element, final IElementType searchedType, final CommonParentState commonParent,final boolean expandChameleons) {
     final TreeElement[] result = {null};
-    element.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+    element.acceptTree(new RecursiveTreeElementWalkingVisitor(expandChameleons) {
       @Override
       protected boolean visitNode(TreeElement node) {
         if (result[0] != null) return false;
@@ -270,7 +287,6 @@ public class TreeUtil {
     ASTNode child = element;
     while (child != null) {
       element = child;
-      if (element instanceof LeafElement) ChameleonTransforming.transform((LeafElement)element);
       child = element.getLastChildNode();
     }
     return element;

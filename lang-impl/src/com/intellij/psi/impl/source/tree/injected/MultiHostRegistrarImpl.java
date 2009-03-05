@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -266,7 +265,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     // need to keep tree reacheable to avoid being garbage-collected (via WeakReference in PsiFileImpl)
     // and then being reparsed from wrong (escaped) document content
     ASTNode node = psiFile.getNode();
-    assert !(node.getFirstChildNode() instanceof ChameleonElement);
+    assert !TreeUtil.isCollapsedChameleon(node);
     psiFile.putUserData(TREE_HARD_REF, node);
   }
 
@@ -436,8 +435,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     if (!(injectedNode instanceof CompositeElement) || !(oldFileNode instanceof CompositeElement)) return false;
     CompositeElement element1 = (CompositeElement)injectedNode;
     CompositeElement element2 = (CompositeElement)oldFileNode;
-    ChameleonTransforming.transformChildren(element1);
-    ChameleonTransforming.transformChildren(element2);
     TreeElement child1 = element1.getFirstChildNode();
     TreeElement child2 = element2.getFirstChildNode();
     while (child1  != null && child2 != null) {

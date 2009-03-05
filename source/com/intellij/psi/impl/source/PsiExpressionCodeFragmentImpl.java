@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NonNls;
 
@@ -22,7 +21,6 @@ public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implement
   }
 
   public PsiExpression getExpression() {
-    ChameleonTransforming.transformChildren(calcTreeElement());
     ASTNode exprChild = calcTreeElement().findChildByType(Constants.EXPRESSION_BIT_SET);
     if (exprChild == null) return null;
     return (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(exprChild);

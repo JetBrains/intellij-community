@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpressionStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
@@ -109,7 +108,6 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    ChameleonTransforming.transformChildren(this);
     if (anchor == null){
       if (before == null || before.booleanValue()){
         anchor = findChildByRole(ChildRole.RBRACE);
@@ -139,7 +137,6 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
 
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    ChameleonTransforming.transformChildren(this);
     switch(role){
       default:
         return null;

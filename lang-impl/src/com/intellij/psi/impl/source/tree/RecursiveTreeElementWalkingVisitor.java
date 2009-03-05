@@ -1,7 +1,5 @@
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-
 public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisitor{
   private boolean startedWalking;
   private boolean isDown;
@@ -19,11 +17,12 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
   }
 
   @Override public void visitComposite(CompositeElement composite) {
-    if (myDoTransform) ChameleonTransforming.transformChildren(composite);
     isDown = visitNode(composite);
     if (!startedWalking) {
       startedWalking = true;
-      walk(composite);
+      if (myDoTransform || !TreeUtil.isCollapsedChameleon(composite)) {
+        walk(composite);
+      }
       startedWalking = false;
     }
   }

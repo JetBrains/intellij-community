@@ -33,6 +33,9 @@ public class JavaASTFactory extends ASTFactory implements Constants {
     else if(type instanceof IFileElementType) {
       return new FileElement(type, text);
     }
+    else if (type == JavaDocElementType.DOC_COMMENT) {
+      return new PsiDocCommentImpl(text);
+    }
 
     return null;
   }
@@ -50,9 +53,6 @@ public class JavaASTFactory extends ASTFactory implements Constants {
     }
     else if (type == ERROR_ELEMENT) {
       return new PsiErrorElementImpl();
-    }
-    else if (type == JavaDocElementType.DOC_COMMENT) {
-      return new PsiDocCommentImpl();
     }
     else if (type == DOC_TAG) {
       return new PsiDocTagImpl();

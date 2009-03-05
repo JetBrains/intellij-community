@@ -17,7 +17,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
@@ -127,8 +126,7 @@ public class XmlAspectImpl implements XmlAspect {
               }
             }*/
 
-            if (treeElement instanceof ChameleonElement ||
-                !(treeElement.getPsi() instanceof XmlTagChild)) {
+            if (!(treeElement.getPsi() instanceof XmlTagChild)) {
               visitElement(tag);
               return;
             }

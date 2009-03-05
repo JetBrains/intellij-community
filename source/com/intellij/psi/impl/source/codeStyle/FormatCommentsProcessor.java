@@ -11,8 +11,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 
 public class FormatCommentsProcessor implements PreFormatProcessor {
@@ -54,12 +52,6 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
     while (current != null) {
       // we expand the chameleons here for effectiveness
       current.getFirstChildNode();
-      if (current instanceof ChameleonElement) {
-        ASTNode next = current.getTreeNext();
-        final ASTNode astNode = ChameleonTransforming.transform((ChameleonElement)current);
-        if (astNode == null) current = next;
-        else current = astNode;
-      }
       result = formatCommentsInner(project, current, result);
       current = current.getTreeNext();
     }

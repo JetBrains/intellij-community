@@ -10,7 +10,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl;
-import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
@@ -77,6 +76,7 @@ public interface JavaElementType {
 
   IElementType EMPTY_STATEMENT = new IJavaElementType("EMPTY_STATEMENT");
   IElementType BLOCK_STATEMENT = new IJavaElementType("BLOCK_STATEMENT");
+  IElementType EXPRESSION_STATEMENT = new IJavaElementType("EXPRESSION_STATEMENT");
   IElementType EXPRESSION_LIST_STATEMENT = new IJavaElementType("EXPRESSION_LIST_STATEMENT");
   IElementType DECLARATION_STATEMENT = new IJavaElementType("DECLARATION_STATEMENT");
   IElementType IF_STATEMENT = new IJavaElementType("IF_STATEMENT");
@@ -152,17 +152,6 @@ public interface JavaElementType {
       return context.getStatementParsing().parseCodeBlockText(manager, new JavaLexer(languageLevel),
                                                               seq, 0, seq.length(), 0).getFirstChildNode();
     }
-  };
-
-  IElementType EXPRESSION_STATEMENT = new IChameleonElementType("EXPRESSION_STATEMENT", StdLanguages.JAVA){
-    public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = chameleon.getChars();
-      final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
-      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
-      final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), languageLevel);
-      return context.getExpressionParsing().parseExpressionTextFragment(manager, chars, 0, chars.length(), 0);
-    }
-    public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
 
   //The following are the children of code fragment

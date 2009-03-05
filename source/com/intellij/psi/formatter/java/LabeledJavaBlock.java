@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,6 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
 
   protected List<Block> buildChildren() {
     final ArrayList<Block> result = new ArrayList<Block>();
-    ChameleonTransforming.transformChildren(myNode);
     ASTNode child = myNode.getFirstChildNode();
     Indent currentIndent = getLabelIndent();
     Wrap currentWrap = null;

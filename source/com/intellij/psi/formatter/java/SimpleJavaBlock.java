@@ -6,7 +6,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
@@ -28,7 +27,6 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
   }
 
   protected List<Block> buildChildren() {
-    ChameleonTransforming.transformChildren(myNode);
     ASTNode child = myNode.getFirstChildNode();
     int offset = myStartOffset != -1 ? myStartOffset : child != null ? child.getTextRange().getStartOffset():0;
     final ArrayList<Block> result = new ArrayList<Block>();

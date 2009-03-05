@@ -21,7 +21,6 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -75,8 +74,6 @@ public class ChangeUtil {
     }
 
     if (original instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren(element);
-      ChameleonTransforming.transformChildren(original);
       TreeElement child = element.getFirstChildNode();
       ASTNode child1 = original.getFirstChildNode();
       while (child != null) {
@@ -92,7 +89,6 @@ public class ChangeUtil {
   }
 
   private static TreeElement decodeInformation(TreeElement element, Map<Object, Object> state) {
-    ChameleonTransforming.transformChildren(element);
     TreeElement child = element.getFirstChildNode();
     while (child != null) {
       child = decodeInformation(child, state);

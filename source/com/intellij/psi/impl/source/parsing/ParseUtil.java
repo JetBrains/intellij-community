@@ -17,15 +17,15 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.SmartList;
 
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 
 public class ParseUtil {
   public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
     if (tokenType == JavaTokenType.DOC_COMMENT) {
-      return ASTFactory.leaf(JavaDocElementType.DOC_COMMENT, LexerUtil.internToken(lexer, table));
+      return ASTFactory.lazy(JavaDocElementType.DOC_COMMENT, LexerUtil.internToken(lexer, table));
     }
     else {
       return ASTFactory.leaf(tokenType, LexerUtil.internToken(lexer, table));

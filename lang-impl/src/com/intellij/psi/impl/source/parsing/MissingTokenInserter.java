@@ -3,10 +3,13 @@ package com.intellij.psi.impl.source.parsing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.impl.source.ParsingContext;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 
 public class MissingTokenInserter {
   protected final CompositeElement myRoot;
@@ -88,7 +91,7 @@ public class MissingTokenInserter {
     while (leaf != null) {
       commonParents.strongWhiteSpaceHolder = null;
       final IElementType tokenType = getNextTokenType();
-      final TreeElement next = TreeUtil.nextLeaf(leaf, commonParents, tokenType instanceof IChameleonElementType ? tokenType : null, false);
+      final TreeElement next = TreeUtil.nextLeaf(leaf, commonParents, tokenType instanceof ILazyParseableElementType ? tokenType : null, false);
 
       if (next == null || tokenType == null) break;
       if (tokenType != next.getElementType() && myProcessor.isTokenValid(tokenType)) {
@@ -135,15 +138,15 @@ public class MissingTokenInserter {
     return false;
   }
 
-  private void passTokenOrChameleon(final ASTNode next) {
-    if (next instanceof LeafElement && (((LeafElement)next).isChameleon() || next instanceof OuterLanguageElement)
-        || next instanceof LazyParseableElement && !((LazyParseableElement)next).isParsed()) {
-      final int endOfChameleon = next.getTextLength() + myLexer.getTokenStart();
+  private void passTokenOrChameleon(final ASTNode node) {
+    if (node instanceof LeafElement && node instanceof OuterLanguageElement
+        || TreeUtil.isCollapsedChameleon(node)) {
+      final int endOfChameleon = node.getTextLength() + myLexer.getTokenStart();
       while (myLexer.getTokenType() != null && myLexer.getTokenEnd() < endOfChameleon) {
         myLexer.advance();
       }
     }
-    advanceLexer(next);
+    advanceLexer(node);
   }
 
   protected void advanceLexer(final ASTNode next) {

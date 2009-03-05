@@ -10,7 +10,6 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.formatter.common.JavaBlockUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.jsp.JspElementType;
@@ -640,7 +639,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   private static void collectNodes(List<ASTNode> nodes, ASTNode node) {
-    ChameleonTransforming.transformChildren(node);
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child)) {

@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
@@ -52,7 +51,6 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
 
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
-    ChameleonTransforming.transformChildren(this);
     switch(role){
       default:
         return null;

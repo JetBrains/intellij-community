@@ -1,13 +1,12 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 
@@ -20,7 +19,6 @@ public class ExtendsListBlock extends AbstractJavaBlock{
   }
 
   protected List<Block> buildChildren() {
-    ChameleonTransforming.transformChildren(myNode);
     final ArrayList<Block> result = new ArrayList<Block>();
     ArrayList<Block> elementsExceptKeyword = new ArrayList<Block>();
     myChildAlignment = createChildAlignment();

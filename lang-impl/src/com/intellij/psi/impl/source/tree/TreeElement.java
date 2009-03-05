@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
-  private volatile TreeElement myNextSibling = null;
-  private volatile TreeElement myPrevSibling = null;
-  private volatile CompositeElement myParent = null;
+  private TreeElement myNextSibling = null;
+  private TreeElement myPrevSibling = null;
+  private CompositeElement myParent = null;
 
   private final IElementType myType;
   private volatile int myStartOffsetInParent = -1;
@@ -177,14 +177,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   public abstract int hc(); // Used in tree diffing
-
-  public ASTNode getTransformedFirstOrSelf() {
-    return this;
-  }
-
-  public ASTNode getTransformedLastOrSelf() {
-    return this;
-  }
 
   public abstract void acceptTree(TreeElementVisitor visitor);
 

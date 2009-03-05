@@ -9,8 +9,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,9 +83,9 @@ public class DeclarationParsing extends Parsing {
     else if (tokenType == IDENTIFIER || PRIMITIVE_TYPE_BIT_SET.contains(tokenType)){
       if (context == Context.FILE_CONTEXT) return null;
     }
-    else if (tokenType instanceof IChameleonElementType) {
-      LeafElement declaration =
-        ASTFactory.leaf(tokenType, myContext.tokenText(lexer));
+    else if (tokenType instanceof ILazyParseableElementType) {
+      TreeElement declaration =
+        ASTFactory.lazy((ILazyParseableElementType)tokenType, myContext.tokenText(lexer));
       lexer.advance();
       return declaration;
     }

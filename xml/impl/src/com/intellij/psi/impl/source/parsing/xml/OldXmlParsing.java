@@ -11,7 +11,6 @@ import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.parsing.TokenProcessor;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
@@ -892,30 +891,36 @@ public class OldXmlParsing implements XmlElementType {
     return element;
   }
 
-  public TreeElement parseMarkupDecl(Lexer originalLexer, CharSequence text, int start, int end, PsiManager manager) {
-    final Lexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
+  public TreeElement parseMarkupDecl(CharSequence text) {
+    CompositeElement root = ASTFactory.composite(XML_MARKUP_DECL);
 
-    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
-    parseMarkupContent(lexer, dummyRoot);
+    OldXmlLexer originalLexer = new OldXmlLexer();
+    final Lexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
+    lexer.start(text, 0, text.length(), _OldXmlLexer.DOCTYPE);
+
+    parseMarkupContent(lexer, root);
     while (lexer.getTokenType() != null) {
       final TreeElement children;
 
-      if(lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
+      if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
         children = parseEntityRef(lexer);
-      } else if (lexer.getTokenType() == XML_ENTITY_DECL_START) {
+      }
+      else if (lexer.getTokenType() == XML_ENTITY_DECL_START) {
         children = parseEntityDecl(lexer);
-      } else {
-        children = createTokenElement(lexer, dummyRoot.getCharTable());
+      }
+      else {
+        children = createTokenElement(lexer, myContext.getCharTable());
         lexer.advance();
       }
 
-      dummyRoot.rawAddChildren(children);
+      root.rawAddChildren(children);
     }
-    originalLexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
-    insertMissingTokens(dummyRoot, originalLexer, start, end, _OldXmlLexer.DOCTYPE,
-                                  WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
-    return dummyRoot.getFirstChildNode();
+
+    originalLexer.start(text, 0, text.length(), _OldXmlLexer.DOCTYPE);
+    insertMissingTokens(root, originalLexer, 0, text.length(), _OldXmlLexer.DOCTYPE, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+
+    return root;
+
   }
 
   public static class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
@@ -1035,13 +1040,7 @@ public class OldXmlParsing implements XmlElementType {
     while (leaf != null) {
       commonParents.strongWhiteSpaceHolder = null;
       final IElementType tokenType = lexer.getTokenType();
-      final TreeElement next;
-      if (tokenType instanceof IChameleonElementType) {
-        next = TreeUtil.nextLeaf(leaf, commonParents, tokenType, false);
-      }
-      else {
-        next = TreeUtil.nextLeaf(leaf, commonParents, null, false);
-      }
+      final TreeElement next = TreeUtil.nextLeaf(leaf, commonParents, null, false);
 
       if (next == null || tokenType == null || next == endToken) break;
       if (tokenType != next.getElementType() && processor.isTokenValid(tokenType)) {
@@ -1081,7 +1080,7 @@ public class OldXmlParsing implements XmlElementType {
   }
 
   private static void passTokenOrChameleon(final ASTNode next, Lexer lexer) {
-    if (next instanceof LeafElement && (((LeafElement)next).isChameleon() || next instanceof OuterLanguageElement)) {
+    if (next instanceof LeafElement && next instanceof OuterLanguageElement) {
       final int endOfChameleon = next.getTextLength() + lexer.getTokenStart();
       while (lexer.getTokenType() != null && lexer.getTokenEnd() < endOfChameleon) {
         lexer.advance();

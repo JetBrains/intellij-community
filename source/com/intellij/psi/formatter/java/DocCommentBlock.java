@@ -4,7 +4,6 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +17,6 @@ public class DocCommentBlock extends AbstractJavaBlock{
   }
 
   protected List<Block> buildChildren() {
-    ChameleonTransforming.transformChildren(myNode);
-
     final ArrayList<Block> result = new ArrayList<Block>();
 
     ASTNode child = myNode.getFirstChildNode();

@@ -9,7 +9,7 @@ import com.intellij.lexer.OldXmlLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.tree.IChameleonElementType;
+import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
@@ -62,24 +62,12 @@ public interface XmlElementType extends XmlTokenType {
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 
-  IElementType XML_MARKUP = new IChameleonElementType("XML_MARKUP_DECL", XMLLanguage.INSTANCE){
-    public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = chameleon.getChars();
-      final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
+  IElementType XML_MARKUP = new CustomParsingType("XML_MARKUP_DECL", XMLLanguage.INSTANCE){
+    public ASTNode parse(CharSequence text, CharTable table) {
       final XmlParsingContext parsingContext = new XmlParsingContext(table);
-      return parsingContext.getXmlParsing().parseMarkupDecl(new OldXmlLexer(), chars, 0, chars.length(), SharedImplUtil.getManagerByTree(chameleon));
-    }
-
-    public boolean isParsable(CharSequence buffer, final Project project) {
-      final OldXmlLexer oldXmlLexer = new OldXmlLexer();
-      oldXmlLexer.start(buffer, 0, buffer.length(),0);
-
-      while(oldXmlLexer.getTokenType() != null && oldXmlLexer.getTokenEnd() != buffer.length()){
-        if(oldXmlLexer.getTokenType() == XmlTokenType.XML_MARKUP_END) return false;
-        oldXmlLexer.advance();
-      }
-      return true;
+      return parsingContext.getXmlParsing().parseMarkupDecl(text);
     }
   };
+
   IElementType XML_MARKUP_DECL = XmlElementType.XML_MARKUP;
 }

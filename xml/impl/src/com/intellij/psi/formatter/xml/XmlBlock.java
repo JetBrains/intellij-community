@@ -9,7 +9,6 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
@@ -69,7 +68,6 @@ public class XmlBlock extends AbstractXmlBlock {
 
     if (myNode.getFirstChildNode() != null) {
       final ArrayList<Block> result = new ArrayList<Block>(5);
-      ChameleonTransforming.transformChildren(myNode);
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
         if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {

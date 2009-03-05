@@ -10,7 +10,6 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -75,11 +74,6 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
 
   public PsiElement getParent(){
     return getContext();
-  }
-
-  public TextRange getTextRange() {
-    final int textOffset = getStartOffset();
-    return new TextRange(textOffset, textOffset + getTextLength());
   }
 
   @NotNull

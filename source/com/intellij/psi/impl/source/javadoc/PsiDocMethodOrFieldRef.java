@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -152,7 +151,6 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   private PsiElement getScope(){
-    ChameleonTransforming.transformChildren(this);
     if (getFirstChildNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
       final PsiElement firstChildPsi = SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode().getFirstChildNode());
       if (firstChildPsi instanceof PsiJavaCodeReferenceElement) {
@@ -240,7 +238,6 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
 
 
-      ChameleonTransforming.transformChildren(getNode());
       if (getFirstChild().getNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
         PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) getFirstChild().getFirstChild();
         referenceElement.bindToElement(containingClass);

@@ -6,8 +6,8 @@ package com.intellij.lang.java;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -69,7 +69,7 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
   private static ASTNode findNearestExpressionParent(final ASTNode current) {
     ASTNode result = current;
     while (result != null) {
-      PsiElement psi = ((TreeElement)result).getTransformedFirstOrSelf().getPsi();
+      PsiElement psi = result.getPsi();
       if (psi instanceof PsiExpression && !(psi.getParent() instanceof PsiExpression)) {
         return result;
       }

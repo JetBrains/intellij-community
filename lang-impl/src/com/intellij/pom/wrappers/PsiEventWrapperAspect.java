@@ -16,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -115,7 +114,7 @@ public class PsiEventWrapperAspect implements PomModelAspect{
 
   private static boolean checkPsiForChildren(final ASTNode[] affectedChildren) {
     for (final ASTNode astNode : affectedChildren) {
-      if (astNode instanceof LeafElement && ((LeafElement)astNode).isChameleon()) return false;
+      //if (TreeUtil.isCollapsedChameleon(astNode)) return false;
       if (astNode.getPsi() == null) return false;
     }
     return true;

@@ -15,11 +15,11 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
   }
 
   private static ThreeState textMatches(final ASTNode oldNode, final ASTNode newNode) {
-    if (oldNode instanceof ChameleonElement) {
+    if (TreeUtil.isCollapsedChameleon(oldNode)) {
       return ((TreeElement)newNode).textMatches(oldNode.getText()) ? ThreeState.YES : ThreeState.UNSURE;
     }
 
-    if (newNode instanceof ChameleonElement) {
+    if (TreeUtil.isCollapsedChameleon(newNode)) {
       return ((TreeElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.UNSURE;
     }
 

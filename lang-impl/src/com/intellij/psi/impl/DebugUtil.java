@@ -10,9 +10,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.ArrayUtil;
@@ -93,7 +91,6 @@ public class DebugUtil {
     if (showRanges) buffer.append(root.getTextRange());
     buffer.append("\n");
     if (root instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren(root);
       ASTNode child = root.getFirstChildNode();
 
       if (child == null) {
@@ -129,7 +126,7 @@ public class DebugUtil {
     }
     buffer.append(root.getUserDataString());
     buffer.append("\n");
-    if (root instanceof CompositeElement || ((LeafElement)root).isChameleon()) {
+    if (root instanceof CompositeElement) {
       PsiElement[] children = SourceTreeToPsiMap.treeElementToPsi(root).getChildren();
 
       for (PsiElement child : children) {

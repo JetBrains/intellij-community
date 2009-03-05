@@ -17,7 +17,6 @@ import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -27,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
 
-  private volatile TreeElement firstChild = null; // might be modified by transforming chameleons
-  private volatile TreeElement lastChild = null; // might be modified by transforming chameleons
+  private TreeElement firstChild = null;
+  private TreeElement lastChild = null;
 
   private volatile int myModificationsCount = 0;
   private volatile int myCachedLength = -1;
@@ -92,14 +91,8 @@ public class CompositeElement extends TreeElement {
     while (child != null) {
       final int textLength = child.getTextLength();
       if (textLength > offset) {
-        if (child instanceof LeafElement) {
-          if (((LeafElement)child).isChameleon()) {
-            child = (TreeElement)ChameleonTransforming.transform((LeafElement)child);
-            continue;
-          }
-          else if (child instanceof ForeignLeafPsiElement) {
-            continue;
-          }
+        if (child instanceof ForeignLeafPsiElement) {
+          continue;
         }
         return child.findLeafElementAt(offset);
       }
@@ -190,9 +183,6 @@ public class CompositeElement extends TreeElement {
   public final PsiElement findChildByRoleAsPsiElement(int role) {
     ASTNode element = findChildByRole(role);
     if (element == null) return null;
-    if (element instanceof LeafElement && ((LeafElement)element).isChameleon()) {
-      element = ChameleonTransforming.transform((LeafElement)element);
-    }
     return SourceTreeToPsiMap.treeElementToPsi(element);
   }
 
@@ -255,8 +245,6 @@ public class CompositeElement extends TreeElement {
   }
 
   public int countChildren(TokenSet filter) {
-    ChameleonTransforming.transformChildren(this);
-
     // no lock is needed because all chameleons are expanded already
     int count = 0;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -353,9 +341,10 @@ public class CompositeElement extends TreeElement {
 
   public void addChild(@NotNull ASTNode child, final ASTNode anchorBefore) {
     LOG.assertTrue(anchorBefore == null || ((TreeElement)anchorBefore).getTreeParent() == this, "anchorBefore == null || anchorBefore.getTreeParent() == parent");
-    transformAll(getFirstChildNode());
+    TreeUtil.ensureParsed(getFirstChildNode());
+    TreeUtil.ensureParsed(child);
     final TreeElement last = ((TreeElement)child).getTreeNext();
-    final TreeElement first = transformAll((TreeElement)child);
+    final TreeElement first = (TreeElement)child;
 
     removeChildrenInner(first, last);
 
@@ -394,9 +383,9 @@ public class CompositeElement extends TreeElement {
 
   public void replaceChild(@NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
     LOG.assertTrue(((TreeElement)oldChild).getTreeParent() == this);
-    final TreeElement oldChild1 = transformAll((TreeElement)oldChild);
+    final TreeElement oldChild1 = (TreeElement)oldChild;
     final TreeElement newChildNext = ((TreeElement)newChild).getTreeNext();
-    final TreeElement newChild1 = transformAll((TreeElement)newChild);
+    final TreeElement newChild1 = (TreeElement)newChild;
 
     if(oldChild1 == newChild1) return;
 
@@ -411,9 +400,8 @@ public class CompositeElement extends TreeElement {
   }
 
   public void replaceAllChildrenToChildrenOf(final ASTNode anotherParent) {
-    transformAll(getFirstChildNode());
-    transformAll((TreeElement)anotherParent.getFirstChildNode());
-
+    TreeUtil.ensureParsed(getFirstChildNode());
+    TreeUtil.ensureParsed(anotherParent.getFirstChildNode());
     final ASTNode firstChild1 = anotherParent.getFirstChildNode();
     ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
       public void makeChange(TreeChangeEvent destinationTreeChange) {
@@ -511,24 +499,6 @@ public class CompositeElement extends TreeElement {
     if (first != null) {
       first.rawRemoveUpToLast();
     }
-  }
-
-  private static TreeElement transformAll(TreeElement first){
-    ASTNode newFirst = null;
-    ASTNode child = first;
-    while (child != null) {
-      if (child instanceof ChameleonElement) {
-        ASTNode next = child.getTreeNext();
-        child = ChameleonTransforming.transform((ChameleonElement)child);
-        if (child == null) {
-          child = next;
-        }
-        continue;
-      }
-      if(newFirst == null) newFirst = child;
-      child = child.getTreeNext();
-    }
-    return (TreeElement)newFirst;
   }
 
   private static void repairRemovedElement(final CompositeElement oldParent, final TreeElement oldChild) {

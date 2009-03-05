@@ -106,23 +106,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-    if (parserDefinition == null) {
-      System.out.println("OOOO");
-    }
     assert parserDefinition != null : "ParserDefinition absent for language: " + lang.getID();
     myLexer = lexer != null ? lexer : parserDefinition.createLexer(project);
     myWhitespaces = parserDefinition.getWhitespaceTokens();
     myComments = parserDefinition.getCommentTokens();
     myCharTable = SharedImplUtil.findCharTableByTree(chameleon);
 
-    if (chameleon instanceof ChameleonElement) { // Shall always be true BTW
-      myOriginalTree = chameleon.getTreeParent().getUserData(BlockSupport.TREE_TO_BE_REPARSED);
-      myInjectionHost = chameleon.getTreeParent().getPsi().getContext();
-    }
-    else {
-      myOriginalTree = chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED);
-      myInjectionHost = chameleon.getPsi().getContext();
-    }
+    myOriginalTree = chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED);
+    myInjectionHost = chameleon.getPsi().getContext();
 
     myFileLevelParsing = myCharTable == null || myOriginalTree != null;
     cacheLexems();
@@ -899,8 +890,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                  : ThreeState.NO;
         }
 
-        if (oldNode.getElementType() instanceof IChameleonElementType && newNode.getTokenType() instanceof IChameleonElementType ||
-            oldNode.getElementType() instanceof ILazyParseableElementType && newNode.getTokenType() instanceof ILazyParseableElementType) {
+        if (oldNode.getElementType() instanceof ILazyParseableElementType && newNode.getTokenType() instanceof ILazyParseableElementType ||
+            oldNode.getElementType() instanceof CustomParsingType && newNode.getTokenType() instanceof CustomParsingType) {
           return ((TreeElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd)
                  ? ThreeState.YES
                  : ThreeState.NO;
@@ -1086,6 +1077,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     CharSequence text = myCharTable.intern(myText, start, end);
     if (myWhitespaces.contains(type)) {
       return new PsiWhiteSpaceImpl(text);
+    }
+
+    if (type instanceof CustomParsingType) {
+      return (TreeElement)((CustomParsingType)type).parse(text, myCharTable);
     }
 
     if (type instanceof ILazyParseableElementType) {

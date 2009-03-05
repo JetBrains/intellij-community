@@ -11,7 +11,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComment, JavaTokenType, Constants {
+public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDocComment, JavaTokenType, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl");
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(DOC_TAG);
@@ -39,12 +38,11 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
   private static final Pattern WS_PATTERN = Pattern.compile("\\s*");
 
 
-  public PsiDocCommentImpl() {
-    super(JavaDocElementType.DOC_COMMENT);
+  public PsiDocCommentImpl(CharSequence text) {
+    super(JavaDocElementType.DOC_COMMENT, text);
   }
 
   public PsiElement[] getDescriptionElements() {
-    ChameleonTransforming.transformChildren(this);
     ArrayList<ASTNode> array = new ArrayList<ASTNode>();
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       IElementType i = child.getElementType();
@@ -65,7 +63,6 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
       if (getFirstChildNode().getText().indexOf(name) < 0) return null;
     }
 
-    ChameleonTransforming.transformChildren(this);
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == DOC_TAG) {
         PsiDocTag tag = (PsiDocTag)SourceTreeToPsiMap.treeElementToPsi(child);
@@ -98,7 +95,6 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
 
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    ChameleonTransforming.transformChildren(this);
     switch (role) {
       default:
         return null;

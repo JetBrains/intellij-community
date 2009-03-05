@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -36,11 +33,9 @@ class FoldingPolicy {
     if (foldingBuilder != null) {
       //PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
       final ASTNode node = file.getNode();
-      ChameleonTransforming.transformChildren(node, true);
       final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(node, document);
       for (FoldingDescriptor descriptor : foldingDescriptors) {
         ASTNode descriptorNode = descriptor.getElement();
-        if (descriptorNode instanceof LeafElement) descriptorNode = ChameleonTransforming.transform((LeafElement)descriptorNode);
         map.put(SourceTreeToPsiMap.treeElementToPsi(descriptorNode), descriptor);
       }
     }

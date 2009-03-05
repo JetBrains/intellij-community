@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -23,7 +22,6 @@ public class JavaFileElement extends FileElement implements Constants {
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    ChameleonTransforming.transformChildren(this);
     if (before == null && first == last && first.getElementType() == ElementType.PACKAGE_STATEMENT){ //?
       anchor = getFirstChildNode();
       before = Boolean.TRUE;
@@ -44,7 +42,6 @@ public class JavaFileElement extends FileElement implements Constants {
 
   @Nullable
   public ASTNode findChildByRole(int role) {
-    ChameleonTransforming.transformChildren(this);
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
       default:

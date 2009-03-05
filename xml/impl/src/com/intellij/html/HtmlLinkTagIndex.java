@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -252,7 +251,6 @@ public class HtmlLinkTagIndex extends SingleEntryFileBasedIndexExtension<HtmlLin
         }
       };
 
-      ChameleonTransforming.transformChildrenNoLock(psiFile.getNode(), true);
       psiFile.accept(visitor);
     }
   }

@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +63,6 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
           final ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
                                element instanceof ASTNode? (ASTNode)element : null;
           if (root != null) {
-            ChameleonTransforming.transformChildren(root);
             ASTNode child = root.getFirstChildNode();
             while (child != null) {
               if (myShowWhiteSpaces || child.getElementType() != TokenType.WHITE_SPACE) {
