@@ -76,8 +76,7 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
               ASTNode[] nodes = propertyNode.getChildren(null);
               PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
               String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
-              ProblemDescriptor descriptor = manager
-                .createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+              ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
               synchronized (descriptors) {
                 descriptors.add(descriptor);
               }
@@ -87,7 +86,10 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
         }, "Searching properties usages");
       }
     }, progress);
-    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+
+    synchronized (descriptors) {
+      return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+    }
   }
 
 
@@ -97,18 +99,27 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
 
   public boolean isSuppressedFor(PsiElement element) {
     Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);
-    if (property == null) return false;
-
-    PsiElement prev = property.getPrevSibling();
-    while (prev instanceof PsiWhiteSpace || prev instanceof PsiComment) {
-      if (prev instanceof PsiComment) {
-        @NonNls String text = prev.getText();
-        if (text.contains("suppress") && text.contains("\"unused property\"")) return true;
+    PropertiesFile file;
+    if (property == null) {
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile instanceof PropertiesFile) {
+        file = (PropertiesFile)containingFile;
       }
-      prev = prev.getPrevSibling();
+      else {
+        return false;
+      }
     }
-
-    final PropertiesFile file = property.getContainingFile();
+    else {
+      PsiElement prev = property.getPrevSibling();
+      while (prev instanceof PsiWhiteSpace || prev instanceof PsiComment) {
+        if (prev instanceof PsiComment) {
+          @NonNls String text = prev.getText();
+          if (text.contains("suppress") && text.contains("\"unused property\"")) return true;
+        }
+        prev = prev.getPrevSibling();
+      }
+      file = property.getContainingFile();
+    }
     PsiElement leaf = file.findElementAt(0);
     while (leaf instanceof PsiWhiteSpace) leaf = leaf.getNextSibling();
 
@@ -155,10 +166,6 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
 
       doc.insertString(lineStart, "# suppress inspection \"unused property\"\n");
     }
-
-    public boolean startInWriteAction() {
-      return true;
-    }
   }
 
   private static class SuppressForFile extends SuppressIntentionAction {
@@ -183,10 +190,6 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
       @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
 
       doc.insertString(0, "# suppress inspection \"unused property\" for whole file\n");
-    }
-
-    public boolean startInWriteAction() {
-      return true;
     }
   }
 }
