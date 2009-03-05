@@ -605,6 +605,29 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         }
       });
 
+      ListenerUtil.addMouseListener(myNodePopup.getComponent(), new MouseAdapter() {
+      public void mouseReleased(final MouseEvent e) {
+        if (SystemInfo.isWindows) {
+          click(e);
+        }
+      }
+
+      public void mousePressed(final MouseEvent e) {
+        if (!SystemInfo.isWindows) {
+          click(e);
+        }
+      }
+
+      private void click(final MouseEvent e) {
+        if (!e.isConsumed() && e.isPopupTrigger()) {
+          myModel.setSelectedIndex(index);
+          requestFocusInWindow();
+          rightClick(index);
+          e.consume();
+        }
+      }
+    });
+
       myNodePopup.showUnderneathOf(item.getColoredComponent());
     }
     repaint();
@@ -936,17 +959,26 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
 
     private void update() {
-      myColoredComponent.clear();
-      final boolean selected = myModel.getSelectedIndex() == myIndex;
-      final Color fg = selected
-                       ? UIUtil.getListSelectionForeground() : myModel.getSelectedIndex() < myIndex && myModel.getSelectedIndex() != -1 ? UIUtil.getInactiveTextColor() : myAttributes.getFgColor();
-      final Color bg = selected ? UIUtil.getListSelectionBackground() : myAttributes.getBgColor();
-      myColoredComponent.append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
-      if (selected || (myModel.getSelectedIndex() == -1 && myIndex == myModel.size() - 1)) {
-        myColoredComponent.setBorder(new DottedBorder(new Insets(0, 0, 0, 0), UIUtil.getListForeground()));
-      } else {
-        myColoredComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-      }
+      final Runnable updateRunnable = new Runnable() {
+        public void run() {
+          myColoredComponent.clear();
+          final boolean selected = myModel.getSelectedIndex() == myIndex;
+          final Color fg = selected
+                           ? UIUtil.getListSelectionForeground()
+                           : myModel.getSelectedIndex() < myIndex && myModel.getSelectedIndex() != -1
+                             ? UIUtil.getInactiveTextColor()
+                             : myAttributes.getFgColor();
+          final Color bg = selected ? UIUtil.getListSelectionBackground() : myAttributes.getBgColor();
+          myColoredComponent.append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
+          if (selected || (myModel.getSelectedIndex() == -1 && myIndex == myModel.size() - 1)) {
+            myColoredComponent.setBorder(new DottedBorder(new Insets(0, 0, 0, 0), UIUtil.getListForeground()));
+          }
+          else {
+            myColoredComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+          }
+        }
+      };
+      SwingUtilities.invokeLater(updateRunnable);
     }
   }
 
