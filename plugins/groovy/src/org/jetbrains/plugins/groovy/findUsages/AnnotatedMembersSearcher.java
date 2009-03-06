@@ -15,10 +15,11 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.AnnotatedElementsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -35,9 +36,9 @@ import java.util.List;
 /**
  * @author ven
  */
-public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, AnnotatedMembersSearch.Parameters> {
+public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, AnnotatedElementsSearch.Parameters> {
 
-  public boolean execute(final AnnotatedMembersSearch.Parameters p, final Processor<PsiMember> consumer) {
+  public boolean execute(final AnnotatedElementsSearch.Parameters p, final Processor<PsiMember> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated members search";
 
@@ -69,6 +70,10 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
     }
 
     for (PsiMember candidate : candidates) {
+      if (!AnnotatedElementsSearcher.isInstanceof(candidate, p.getTypes())) {
+        continue;
+      }
+
       PsiModifierList list = candidate.getModifierList();
       if (list != null) {
         for (PsiAnnotation annotation : list.getAnnotations()) {
