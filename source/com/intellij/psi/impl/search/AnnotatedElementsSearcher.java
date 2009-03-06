@@ -10,7 +10,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -21,10 +21,10 @@ import java.util.Collection;
 /**
  * @author max
  */
-public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, AnnotatedMembersSearch.Parameters> {
+public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.AnnotatedMembersSearcher");
 
-  public boolean execute(final AnnotatedMembersSearch.Parameters p, final Processor<PsiMember> consumer) {
+  public boolean execute(final AnnotatedElementsSearch.Parameters p, final Processor<PsiModifierListOwner> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated members search";
 
@@ -34,6 +34,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
     PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(annClass.getProject());
 
     final SearchScope useScope = p.getScope();
+    Class<? extends PsiModifierListOwner>[] types = p.getTypes();
 
     final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : null;
     final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), scope);
@@ -46,12 +47,13 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
 
       PsiElement parent = ann.getParent();
       if (!(parent instanceof PsiModifierList)) continue; // Can be a PsiNameValuePair, if annotation is used to annotate annotation parameters
-      
+
       PsiModifierList modlist = (PsiModifierList)parent;
       final PsiElement owner = modlist.getParent();
-      if (!(owner instanceof PsiMember)) continue;
 
-      PsiMember candidate = (PsiMember)owner;
+      if (!isInstanceof(owner, types)) continue;
+
+      PsiModifierListOwner candidate = (PsiModifierListOwner)owner;
 
       if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) continue;
       if (useScope instanceof GlobalSearchScope &&
@@ -64,6 +66,13 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
     }
 
     return true;
+  }
+
+  public static boolean isInstanceof(PsiElement owner, Class<? extends PsiModifierListOwner>[] types) {
+    for (Class<? extends PsiModifierListOwner> type : types) {
+        if(type.isInstance(owner)) return true;
+    }
+    return false;
   }
 
   private static boolean notAnnotation(final PsiElement found) {

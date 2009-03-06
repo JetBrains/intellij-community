@@ -25,31 +25,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class AnnotatedMembersSearch extends ExtensibleQueryFactory<PsiMember, AnnotatedMembersSearch.Parameters> {
-  public static final AnnotatedMembersSearch INSTANCE = new AnnotatedMembersSearch();
-
-  public static class Parameters {
-    private final PsiClass myAnnotationClass;
-    private final SearchScope myScope;
-
-    public Parameters(final PsiClass annotationClass, final SearchScope scope) {
-      myAnnotationClass = annotationClass;
-      myScope = scope;
-    }
-
-    public PsiClass getAnnotationClass() {
-      return myAnnotationClass;
-    }
-
-    public SearchScope getScope() {
-      return myScope;
-    }
-  }
+public class AnnotatedMembersSearch {
 
   private AnnotatedMembersSearch() {}
 
   public static Query<PsiMember> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
-    return INSTANCE.createQuery(new Parameters(annotationClass, scope));
+    return AnnotatedElementsSearch.searchPsiMetmbers(annotationClass, scope);
   }
 
   public static Query<PsiMember> search(@NotNull PsiClass annotationClass) {
