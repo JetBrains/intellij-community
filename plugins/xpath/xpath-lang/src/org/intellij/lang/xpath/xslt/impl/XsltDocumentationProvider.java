@@ -18,11 +18,7 @@ package org.intellij.lang.xpath.xslt.impl;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -32,8 +28,10 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import org.intellij.lang.xpath.completion.ElementProvider;
 import org.intellij.lang.xpath.completion.FunctionLookup;
@@ -236,7 +234,7 @@ class XsltDocumentationProvider implements DocumentationProvider {
         return null;
     }
 
-    static class DocElement extends LightElement {
+    static class DocElement extends LightElement implements PsiNamedElement {
         private final PsiElement myElement;
         private final String myCategory;
         private final String myName;
@@ -250,6 +248,10 @@ class XsltDocumentationProvider implements DocumentationProvider {
 
         public String getCategory() {
             return myCategory;
+        }
+
+        public PsiElement setName(@NotNull @NonNls String name) throws IncorrectOperationException {
+            throw new IncorrectOperationException("Unsupported");
         }
 
         public String getName() {
