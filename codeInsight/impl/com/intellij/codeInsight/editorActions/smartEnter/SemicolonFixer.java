@@ -1,9 +1,11 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -43,7 +45,18 @@ public class SemicolonFixer implements Fixer {
                                             ((PsiMethod) psiElement).hasModifierProperty(PsiModifier.ABSTRACT))) {
       String text = psiElement.getText();
 
-      int insertionOffset = psiElement.getTextRange().getEndOffset();
+      int tailLength = 0;
+      ASTNode leaf = TreeUtil.findLastLeaf(psiElement.getNode());
+      while (JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(leaf.getElementType())) {
+        tailLength += leaf.getTextLength();
+        leaf = TreeUtil.prevLeaf(leaf);
+      }
+
+      if (tailLength > 0) {
+        text = text.substring(0, text.length() - tailLength);
+      }
+
+      int insertionOffset = leaf.getTextRange().getEndOffset();
       Document doc = editor.getDocument();
       if (psiElement instanceof PsiField && ((PsiField) psiElement).hasModifierProperty(PsiModifier.ABSTRACT)) {
         // absract rarely seem to be field. It is rather incomplete method.
