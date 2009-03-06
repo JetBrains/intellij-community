@@ -363,6 +363,8 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   }
 
   public void moduleAdded() {
+    if (myModuleAdded) return;
+
     for (Facet facet : getAllFacets()) {
       facet.initFacet();
     }
