@@ -226,6 +226,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
 
         PsiFile newFile = registerDocument(documentWindow, psiFile, place, myHostPsiFile, documentManager);
         if (newFile != psiFile) {
+          InjectedLanguageUtil.clearCaches(psiFile);
           psiFile = newFile;
           viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
           viewProvider.forceCachedPsi(psiFile);
