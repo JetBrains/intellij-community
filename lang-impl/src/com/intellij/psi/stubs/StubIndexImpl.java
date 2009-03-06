@@ -175,6 +175,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                 if (_psifile instanceof PsiFileWithStubSupport) {
                   psiFile = (PsiFileWithStubSupport)_psifile;
                   stubTree = psiFile.getStubTree();
+                  if (stubTree == null && psiFile instanceof PsiFileImpl) {
+                    stubTree = ((PsiFileImpl)psiFile).calcStubTree();
+                  }
                 } else if (_psifile instanceof PsiBinaryFile) {
                   final SoftReference<StubTree> reference = _psifile.getUserData(ourCachedStubTreeRefKey);
                   stubTree = reference != null ? reference.get():null;
