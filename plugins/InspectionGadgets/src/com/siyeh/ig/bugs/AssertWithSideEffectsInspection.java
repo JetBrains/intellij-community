@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
@@ -109,12 +110,20 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
 
         @Override
         public void visitPrefixExpression(PsiPrefixExpression expression) {
-            hasSideEffects = true;
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
+                    JavaTokenType.MINUSMINUS.equals(tokenType)) {
+                hasSideEffects = true;
+            }
         }
 
         @Override
         public void visitPostfixExpression(PsiPostfixExpression expression) {
-            hasSideEffects = true;
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
+                    JavaTokenType.MINUSMINUS.equals(tokenType)) {
+                hasSideEffects = true;
+            }
         }
     }
 
@@ -148,7 +157,11 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
             if (hasSideEffects) {
                 return;
             }
-            checkExpression(expression.getOperand());
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
+                    JavaTokenType.MINUSMINUS.equals(tokenType)) {
+                checkExpression(expression.getOperand());
+            }
             super.visitPrefixExpression(expression);
 
         }
@@ -158,7 +171,11 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
             if (hasSideEffects) {
                 return;
             }
-            checkExpression(expression.getOperand());
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
+                    JavaTokenType.MINUSMINUS.equals(tokenType)) {
+                checkExpression(expression.getOperand());
+            }
             super.visitPostfixExpression(expression);
         }
 

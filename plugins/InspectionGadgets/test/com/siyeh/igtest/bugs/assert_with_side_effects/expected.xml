@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AssertWithSideEffects.java</file>
+    <line>13</line>
+    <problem_class>'assert' statement with side effects</problem_class>
+    <description>&lt;code&gt;assert&lt;/code&gt; has side effects #loc</description>
+  </problem>
+
+  <problem>
+    <file>AssertWithSideEffects.java</file>
+    <line>17</line>
+    <problem_class>'assert' statement with side effects</problem_class>
+    <description>&lt;code&gt;assert&lt;/code&gt; has side effects #loc</description>
+  </problem>
+
+</problems>
