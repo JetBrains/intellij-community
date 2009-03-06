@@ -158,7 +158,7 @@ public interface JavaElementType {
   IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
       final CharSequence chars = chameleon.getChars();
-      final PsiManager manager = chameleon.getPsi().getManager();
+      final PsiManager manager = ((FileElement)chameleon).getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.HIGHEST);
       return context.getStatementParsing().parseStatements(manager, null, chars, 0, chars.length(), 0);
