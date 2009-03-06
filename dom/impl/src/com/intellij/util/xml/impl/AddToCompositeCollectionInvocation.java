@@ -5,6 +5,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xml.EvaluatedXmlName;
 
 import java.lang.reflect.Type;
@@ -25,8 +26,9 @@ class AddToCompositeCollectionInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+    Set<XmlTag> set = CollectionFactory.newTroveSet();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
-      handler.getCollectionChildren(qname, qname.getTagsGetter());
+      set.addAll(qname.getTagsGetter().fun(handler));
     }
 
     final XmlTag tag = handler.ensureTagExists();
@@ -37,12 +39,9 @@ class AddToCompositeCollectionInvocation implements Invocation {
     final XmlTag[] tags = tag.getSubTags();
     for (final XmlTag subTag : tags) {
       if (i == index) break;
-      if (DomImplUtil.containsTagName(myQnames, subTag, handler)) {
-        final DomInvocationHandler element = handler.getManager().getCachedHandler(subTag);
-        if (element instanceof CollectionElementInvocationHandler) {
-          lastTag = subTag;
-          i++;
-        }
+      if (set.contains(subTag)) {
+        lastTag = subTag;
+        i++;
       }
     }
     final DomManagerImpl manager = handler.getManager();

@@ -6,11 +6,10 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -24,20 +23,18 @@ class GetCompositeCollectionInvocation implements Invocation {
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
     handler.checkIsValid();
+    Map<XmlTag,DomElement> map = new THashMap<XmlTag, DomElement>();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
-      handler.getCollectionChildren(qname, qname.getTagsGetter());
+      for (DomElement element : handler.getCollectionChildren(qname, qname.getTagsGetter())) {
+        map.put(element.getXmlTag(), element);
+      }
     }
     final XmlTag tag = handler.getXmlTag();
     if (tag == null) return Collections.emptyList();
 
     final List<DomElement> list = new ArrayList<DomElement>();
     for (final XmlTag subTag : tag.getSubTags()) {
-      if (DomImplUtil.containsTagName(myQnames, subTag, handler)) {
-        final DomInvocationHandler element = handler.getManager().getCachedHandler(subTag);
-        if (element instanceof CollectionElementInvocationHandler) {
-          list.add(element.getProxy());
-        }
-      }
+      ContainerUtil.addIfNotNull(map.get(subTag), list);
     }
     return list;
   }

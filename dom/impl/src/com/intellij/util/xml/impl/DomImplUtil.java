@@ -135,14 +135,6 @@ public class DomImplUtil {
     return (localName1.equals(localName) || localName1.equals(qName)) && evaluatedXmlName.isNamespaceAllowed(namespace, file);
   }
 
-  public static boolean containsTagName(final Set<CollectionChildDescriptionImpl> descriptions, final XmlTag subTag, final DomInvocationHandler handler) {
-    return ContainerUtil.find(descriptions, new Condition<CollectionChildDescriptionImpl>() {
-      public boolean value(CollectionChildDescriptionImpl description) {
-        return isNameSuitable(description.getXmlName(), subTag, handler, handler.getFile());
-      }
-    }) != null;
-  }
-
   @NotNull 
   public static XmlFileHeader getXmlFileHeader(final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();

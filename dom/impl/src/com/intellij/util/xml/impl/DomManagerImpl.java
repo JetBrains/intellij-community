@@ -27,15 +27,13 @@ import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.xml.*;
@@ -55,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
@@ -98,7 +97,7 @@ public final class DomManagerImpl extends DomManager {
   private final DomApplicationComponent myApplicationComponent;
   private final DomElementAnnotationsManagerImpl myAnnotationsManager;
   private final PsiFileFactory myFileFactory;
-  private final Map<XmlElement,Object> myHandlerCache = new ConcurrentHashMap<XmlElement, Object>();
+  private final ConcurrentMap<XmlElement,Object> myHandlerCache = new ConcurrentHashMap<XmlElement, Object>();
 
   private long myModificationCount;
   private boolean myChanging;
@@ -134,7 +133,14 @@ public final class DomManagerImpl extends DomManager {
 
     project.getMessageBus().connect().subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
       public void modificationCountChanged() {
-        ApplicationManager.getApplication().assertWriteAccessAllowed();
+        if (!myBulkChange) {
+          myHandlerCache.clear();
+        }
+      }
+    });
+
+    ((PsiManagerEx)psiManager).registerRunnableToRunOnChange(new Runnable() {
+      public void run() {
         if (!myBulkChange) {
           myHandlerCache.clear();
         }
@@ -219,12 +225,10 @@ public final class DomManagerImpl extends DomManager {
   }
 
   public DomInvocationHandler getCachedHandler(XmlElement element) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     return (DomInvocationHandler)myHandlerCache.get(element);
   }
 
   public void cacheHandler(XmlElement element, DomInvocationHandler handler) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (handler != null) {
       myHandlerCache.put(element, handler);
     } else {
@@ -369,7 +373,7 @@ public final class DomManagerImpl extends DomManager {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     FileDescriptionCachedValueProvider provider = (FileDescriptionCachedValueProvider)myHandlerCache.get(xmlFile);
     if (provider == null) {
-      myHandlerCache.put(xmlFile, provider = new FileDescriptionCachedValueProvider(this, xmlFile));
+      return (FileDescriptionCachedValueProvider<T>)ConcurrencyUtil.cacheOrGet(myHandlerCache, xmlFile, new FileDescriptionCachedValueProvider(this, xmlFile));
     }
     return provider;
   }
@@ -489,8 +493,13 @@ public final class DomManagerImpl extends DomManager {
     final AbstractDomChildrenDescription childDescription = findChildrenDescription(tag, parent);
     if (childDescription == null) return null;
 
-    childDescription.getValues(parent.getProxy());
-    return getCachedHandler(tag);
+    for (DomElement element : childDescription.getValues(parent.getProxy())) {
+      DomInvocationHandler handler = getDomInvocationHandler(element);
+      if (handler != null && tag.equals(handler.getXmlTag())) {
+        return handler;
+      }
+    }
+    return null;
   }
 
   @Nullable
