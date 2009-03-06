@@ -55,7 +55,7 @@ public class PopupActionChooser {
       }
     }
 
-    List<TemplateImpl> array = SurroundWithTemplateHandler.getApplicableTemplates(editor, file);
+    List<TemplateImpl> array = SurroundWithTemplateHandler.getApplicableTemplates(editor, file, true);
 
     if (!array.isEmpty()) {
       applicable.addSeparator("Live templates");

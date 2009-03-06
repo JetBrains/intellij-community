@@ -17,10 +17,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
   protected Project myProject;
@@ -209,7 +212,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       },
       "", null
     );
-    if (!templateManager.checkContext(template, file, caretOffset - template.getKey().length())) {
+    if (!isApplicable(file, caretOffset - template.getKey().length(), template)) {
       return false;
     }
     if (!editor.getDocument().isWritable()) {
@@ -246,12 +249,6 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
   }
 
-  private boolean checkContext(final TemplateImpl template, final PsiFile file, final int offset) {
-    TemplateContextType contextType = getContextType(file, offset);
-    TemplateContext templateContext = template.getTemplateContext();
-    return templateContext.isEnabled(contextType);
-  }
-
   public TemplateContextType getContextType(@NotNull PsiFile file, int offset) {
     final TemplateContextType[] typeCollection = getAllContextTypes();
     LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
@@ -281,5 +278,22 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   public Template getActiveTemplate(@NotNull Editor editor) {
     final TemplateState templateState = getTemplateState(editor);
     return templateState != null ? templateState.getTemplate() : null;
+  }
+
+  static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
+    TemplateManager instance = getInstance(file.getProject());
+    TemplateContext context = template.getTemplateContext();
+    if (context.isEnabled(instance.getContextType(file, offset))) {
+      return true;
+    }
+    Language baseLanguage = file.getViewProvider().getBaseLanguage();
+    if (baseLanguage != file.getLanguage()) {
+      PsiFile basePsi = file.getViewProvider().getPsi(baseLanguage);
+      if (basePsi != null && context.isEnabled(instance.getContextType(basePsi, offset))) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

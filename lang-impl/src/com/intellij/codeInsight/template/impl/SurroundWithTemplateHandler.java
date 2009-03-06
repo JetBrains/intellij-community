@@ -4,10 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.DataManager;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -28,7 +25,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       if (!editor.getSelectionModel().hasSelection()) return;
     }
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    ArrayList<TemplateImpl> array = getApplicableTemplates(editor, file);
+    ArrayList<TemplateImpl> array = getApplicableTemplates(editor, file, true);
     if (array.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
       return;
@@ -57,20 +54,14 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   }
 
 
-  public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file) {
-    Project project = file.getProject();
+  public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file, boolean selection) {
     int offset = editor.getCaretModel().getOffset();
     Set<TemplateImpl> array = new LinkedHashSet<TemplateImpl>();
-    for (Language language : file.getViewProvider().getLanguages()) {
-      final PsiFile psi = file.getViewProvider().getPsi(language);
-      if (psi != null) {
-        TemplateContextType contextType = TemplateManager.getInstance(project).getContextType(psi, offset);
-        for (TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
-          if (template.isDeactivated()) continue;
-          if (template.getTemplateContext().isEnabled(contextType) && template.isSelectionTemplate()) {
-            array.add(template);
-          }
-        }
+    for (TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
+      if (!template.isDeactivated() &&
+          template.isSelectionTemplate() == selection &&
+          TemplateManagerImpl.isApplicable(file, offset, template)) {
+        array.add(template);
       }
     }
     final ArrayList<TemplateImpl> list = new ArrayList<TemplateImpl>(array);
