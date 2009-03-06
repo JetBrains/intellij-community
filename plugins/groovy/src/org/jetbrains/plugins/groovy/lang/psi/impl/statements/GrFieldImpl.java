@@ -17,15 +17,19 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.grails.util.GrailsUtils;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -77,6 +81,38 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   public boolean isDeprecated() {
     return false;
+  }
+
+  @Override
+  public PsiType getTypeGroovy() {
+    String name = getName();
+    if (getDeclaredType() == null && getInitializer() == null && name.endsWith("Service")) {
+      VirtualFile grailsApp = GrailsUtils.findModuleGrailsAppDir(ModuleUtil.findModuleForPsiElement(this));
+      VirtualFile vFile = getVirtualFile(this);
+      if (vFile != null && grailsApp != null && VfsUtil.isAncestor(grailsApp, vFile, true)) {
+        VirtualFile servicesDir = grailsApp.findChild("services");
+        if (servicesDir != null) {
+          JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+          for (PsiClass candidate : facade.getShortNamesCache().getClassesByName(StringUtil.capitalize(name), getResolveScope())) {
+            VirtualFile candidateFile = getVirtualFile(candidate);
+            if (candidateFile != null && VfsUtil.isAncestor(servicesDir, candidateFile, true)) {
+              return facade.getElementFactory().createType(candidate);
+            }
+          }
+        }
+      }
+    }
+    return super.getTypeGroovy();
+  }
+
+  @Nullable
+  private static VirtualFile getVirtualFile(PsiElement candidate) {
+    PsiFile file = candidate.getContainingFile();
+    PsiFile original = file.getOriginalFile();
+    if (original != null) {
+      return original.getVirtualFile();
+    }
+    return file.getVirtualFile();
   }
 
   public PsiClass getContainingClass() {
