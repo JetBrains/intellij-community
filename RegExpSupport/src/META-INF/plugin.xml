@@ -16,7 +16,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
 
-    <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentionProvider"/>
+    <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentationProvider"/>
     <completion.contributor implementation="org.intellij.lang.regexp.RegExpCompletionContributor"/>
     <fileTypeFactory implementation="org.intellij.lang.regexp.RegExpSupportLoader" />
   </extensions>
