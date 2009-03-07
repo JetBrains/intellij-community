@@ -157,8 +157,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     try {
       try {
-        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index  
-        FileBasedIndex.getInstance().disableUpToDateCheckForCurrentThread(); 
+        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
+        FileBasedIndex.getInstance().disableUpToDateCheckForCurrentThread();
         index.getReadLock().lock();
         final ValueContainer<TIntArrayList> container = index.getData(key);
 
@@ -177,20 +177,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                   stubTree = psiFile.getStubTree();
                   if (stubTree == null && psiFile instanceof PsiFileImpl) {
                     stubTree = ((PsiFileImpl)psiFile).calcStubTree();
-                  }
-                } else if (_psifile instanceof PsiBinaryFile) {
-                  final SoftReference<StubTree> reference = _psifile.getUserData(ourCachedStubTreeRefKey);
-                  stubTree = reference != null ? reference.get():null;
-
-                  if (stubTree == null) {
-                    BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(file.getFileType());
-                    assert builder != null:"Null Binary Stub Builder for FileType:"+file.getFileType();
-                    try {
-                      stubTree = StubTree.getTreeFromTopLevelStub((PsiFileStub)builder.buildStubTree(file, file.contentsToByteArray(), project));
-                    } catch (IOException ex) {
-                      LOG.error(ex);
-                    }
-                    _psifile.putUserData(ourCachedStubTreeRefKey, new SoftReference<StubTree>(stubTree));
                   }
                 }
               }
