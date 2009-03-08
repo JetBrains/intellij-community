@@ -24,6 +24,7 @@ public class XmlInspectionToolProvider implements InspectionToolProvider {
       HtmlUnknownAttributeInspection.class,
       HtmlDeprecatedTagInspection.class,
       HtmlPresentationalElementInspection.class,
+      HtmlFormInputWithoutLabelInspection.class,
       XmlUnboundNsPrefixInspection.class
     };
   }
