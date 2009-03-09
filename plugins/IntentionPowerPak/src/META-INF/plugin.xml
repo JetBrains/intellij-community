@@ -102,22 +102,6 @@
     </intentionAction>
 
     <!-- JUnit -->
-    <!-- todo is ReplaceAssertEqualsWithAssertTrueEqualityIntention() the same as new ReplaceAssertEqualsWithAssertLiteralIntention(project, "true", "assertTrue") ? -->
-    <!--
-    <intentionAction>
-      <className>com.siyeh.ipp.junit.ReplaceAssertEqualsWithAssertTrueEqualityIntention</className>
-      <categoryKey>intention.category.junit</categoryKey>
-    </intentionAction>
-    -->
-
-    <!-- todo is ReplaceAssertTrueEqualityWithAssertEqualsIntention() the same as new ReplaceAssertLiteralWithAssertEqualsIntention(project, "true", "assertTrue") ? -->
-    <!--
-    <intentionAction>
-      <className>com.siyeh.ipp.junit.ReplaceAssertTrueEqualityWithAssertEqualsIntention</className>
-      <categoryKey>intention.category.junit</categoryKey>
-    </intentionAction>
-    -->
-
     <intentionAction>
       <className>com.siyeh.ipp.junit.ReplaceAssertEqualsWithAssertLiteralIntention</className>
       <categoryKey>intention.category.junit</categoryKey>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ipp.junit;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -26,17 +27,33 @@ import org.jetbrains.annotations.NonNls;
 public class ReplaceAssertLiteralWithAssertEqualsIntention
         extends MutablyNamedIntention {
 
+    @Override
     protected String getTextForElement(PsiElement element) {
         final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
         final PsiExpressionList argumentList = call.getArgumentList();
-        final PsiExpression[] args = argumentList.getExpressions();
+        final PsiExpression[] arguments = argumentList.getExpressions();
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         @NonNls final String methodName = methodExpression.getReferenceName();
         assert methodName != null;
         final String postfix = methodName.substring("assert".length());
+        final PsiExpression lastArgument = arguments[arguments.length - 1];
+        if (lastArgument instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression)lastArgument;
+            final IElementType tokenType =
+                    binaryExpression.getOperationTokenType();
+            if (("assertTrue".equals(methodName) &&
+                    JavaTokenType.EQEQ.equals(tokenType)) ||
+                    ("assertFalse".equals(methodName) &&
+                            JavaTokenType.NE.equals(tokenType))) {
+                return IntentionPowerPackBundle.message(
+                        "replace.assert.literal.with.assert.equals.intention.name2",
+                        methodName);
+            }
+        }
         final String literal = postfix.toLowerCase();
-        if (args.length == 1) {
+        if (arguments.length == 1) {
             return IntentionPowerPackBundle.message(
                     "replace.assert.literal.with.assert.equals.intention.name",
                     methodName, literal);
@@ -47,40 +64,64 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
         }
     }
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new AssertLiteralPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    @Override
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiMethodCallExpression call =
                 (PsiMethodCallExpression)element;
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        final PsiElement qualifier =
-                methodExpression.getQualifier();
+        final PsiElement qualifier = methodExpression.getQualifier();
         @NonNls final String methodName = methodExpression.getReferenceName();
         assert methodName != null;
-        final String qualifierText;
-        if (qualifier == null) {
-            qualifierText = "";
-        } else {
-            qualifierText = qualifier.getText() + '.';
+        final StringBuilder newExpression = new StringBuilder();
+        if (qualifier != null) {
+            newExpression.append(qualifier.getText());
+            newExpression.append('.');
         }
+        newExpression.append("assertEquals(");
         final String postfix = methodName.substring("assert".length());
         final String literal = postfix.toLowerCase();
         final PsiExpressionList argumentList = call.getArgumentList();
         final PsiExpression[] arguments = argumentList.getExpressions();
-        @NonNls final String callString;
-        if (arguments.length == 1) {
-            callString = qualifierText + "assertEquals(" + literal + ", " +
-                    arguments[0].getText() + ')';
-        } else {
-            callString =
-                    qualifierText + "assertEquals(" + arguments[0].getText() +
-                            ", " + literal + ", " + arguments[1].getText() + ')';
+        if (arguments.length > 1) {
+            newExpression.append(arguments[0].getText());
+            newExpression.append(", ");
         }
-        replaceExpression(callString, call);
+        final PsiExpression lastArgument = arguments[arguments.length - 1];
+        if (lastArgument instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression)lastArgument;
+            final IElementType tokenType =
+                    binaryExpression.getOperationTokenType();
+            if (("assertTrue".equals(methodName) &&
+                                JavaTokenType.EQEQ.equals(tokenType)) ||
+                    ("assertFalse".equals(methodName) &&
+                            JavaTokenType.NE.equals(tokenType))) {
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                newExpression.append(lhs.getText());
+                newExpression.append(", ");
+                final PsiExpression rhs = binaryExpression.getROperand();
+                if (rhs != null) {
+                    newExpression.append(rhs.getText());
+                }
+            } else {
+                newExpression.append(literal);
+                newExpression.append(", ");
+                newExpression.append(lastArgument.getText());
+            }
+        } else {
+            newExpression.append(literal);
+            newExpression.append(", ");
+            newExpression.append(lastArgument.getText());
+        }
+        newExpression.append(')');
+        replaceExpression(newExpression.toString(), call);
     }
 }
