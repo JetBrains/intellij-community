@@ -103,11 +103,11 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
                                                                                                     projectRootManagerEx);
     mySearchHelper = new PsiSearchHelperImpl(this);
     final CompositeCacheManager cacheManager = new CompositeCacheManager();
-    if (!isProjectDefault) {
-      cacheManager.addCacheManager(new IndexCacheManagerImpl(this));
+    if (isProjectDefault) {
+      cacheManager.addCacheManager(new EmptyCacheManager());
     }
     else {
-      cacheManager.addCacheManager(new EmptyCacheManager());
+      cacheManager.addCacheManager(new IndexCacheManagerImpl(this));
     }
     final CacheManager[] managers = myProject.getComponents(CacheManager.class);
     for (CacheManager manager : managers) {

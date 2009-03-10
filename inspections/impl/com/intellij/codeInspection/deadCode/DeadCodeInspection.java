@@ -50,6 +50,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -76,7 +77,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   @NonNls private static final String DELETE = "delete";
   @NonNls private static final String COMMENT = "comment";
-  @NonNls private static final String [] HINTS = new String[] {COMMENT, DELETE};
+  @NonNls private static final String [] HINTS = {COMMENT, DELETE};
 
   public final UnusedCodeExtension[] myExtensions;
 
@@ -392,7 +393,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private static class StrictUnreferencedFilter extends UnreferencedFilter {
-    public StrictUnreferencedFilter(final InspectionTool tool) {
+    private StrictUnreferencedFilter(final InspectionTool tool) {
       super(tool);
     }
 
@@ -404,7 +405,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private static class WeakUnreferencedFilter extends UnreferencedFilter {
-    public WeakUnreferencedFilter(final InspectionTool tool) {
+    private WeakUnreferencedFilter(final InspectionTool tool) {
       super(tool);
     }
 
@@ -419,7 +420,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     checkForReachables();
     final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this) : new RefUnreachableFilter(this);
-    final boolean[] requestAdded = new boolean[]{false};
+    final boolean[] requestAdded = {false};
 
     getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
@@ -646,7 +647,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private class PermanentDeleteAction extends QuickFixAction {
-    public PermanentDeleteAction() {
+    private PermanentDeleteAction() {
       super(DELETE_QUICK_FIX, IconLoader.getIcon("/actions/cancel.png"), KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), DeadCodeInspection.this);
     }
 
@@ -678,7 +679,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   private static class PermanentDeleteFix implements IntentionAction {
     private final PsiElement myElement;
 
-    public PermanentDeleteFix(final PsiElement element) {
+    private PermanentDeleteFix(final PsiElement element) {
       myElement = element;
     }
 
@@ -713,8 +714,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private class CommentOutBin extends QuickFixAction {
-    public CommentOutBin() {
-      super(COMMENT_OUT_QUICK_FIX, null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
+    private CommentOutBin() {
+      super(COMMENT_OUT_QUICK_FIX, null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
             DeadCodeInspection.this);
     }
 
@@ -741,7 +742,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   private static class CommentOutFix implements IntentionAction {
     private final PsiElement myElement;
 
-    public CommentOutFix(final PsiElement element) {
+    private CommentOutFix(final PsiElement element) {
       myElement = element;
     }
 
@@ -815,9 +816,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private EntryPointsManager getEntryPointsManager() {
-    final EntryPointsManager entryPointsManager =
-       getContext().getExtension(GlobalJavaInspectionContextImpl.CONTEXT).getEntryPointsManager(getContext().getRefManager());
-    return entryPointsManager;
+    return getContext().getExtension(GlobalJavaInspectionContext.CONTEXT).getEntryPointsManager(getContext().getRefManager());
   }
 
   private static class CodeScanner extends RefJavaVisitor {

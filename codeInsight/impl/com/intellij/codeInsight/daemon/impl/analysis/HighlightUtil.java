@@ -650,7 +650,7 @@ public class HighlightUtil {
   public static HighlightInfo checkUnhandledExceptions(PsiElement element, TextRange fixRange) {
     List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
     HighlightInfo errorResult = null;
-    if (unhandledExceptions.size() > 0) {
+    if (!unhandledExceptions.isEmpty()) {
       if (fixRange == null) {
         fixRange = element.getTextRange();
       }
@@ -731,7 +731,7 @@ public class HighlightUtil {
   @Nullable
   private static Map<String, Set<String>> getIncompatibleModifierMap(PsiModifierList modifierList) {
     PsiElement parent = modifierList.getParent();
-    if (parent == null || PsiUtil.hasErrorElementChild(parent)) return null;
+    if (parent == null || PsiUtilBase.hasErrorElementChild(parent)) return null;
     return parent instanceof PsiClass
            ? ((PsiClass)parent).isInterface() ? ourInterfaceIncompatibleModifiers : ourClassIncompatibleModifiers
            : parent instanceof PsiMethod
@@ -744,7 +744,7 @@ public class HighlightUtil {
   @Nullable
   public static String getIncompatibleModifier(String modifier, PsiModifierList modifierList) {
     PsiElement parent = modifierList.getParent();
-    if (parent == null || PsiUtil.hasErrorElementChild(parent)) return null;
+    if (parent == null || PsiUtilBase.hasErrorElementChild(parent)) return null;
     final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
     if (incompatibleModifierMap == null) return null;
     return getIncompatibleModifier(modifier, modifierList, incompatibleModifierMap);
@@ -755,7 +755,7 @@ public class HighlightUtil {
   public static HighlightInfo checkNotAllowedModifier(PsiKeyword keyword, PsiModifierList modifierList) {
     PsiElement modifierOwner = modifierList.getParent();
     if (modifierOwner == null) return null;
-    if (PsiUtil.hasErrorElementChild(modifierOwner)) return null;
+    if (PsiUtilBase.hasErrorElementChild(modifierOwner)) return null;
     @Modifier String modifier = keyword.getText();
     final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
     if (incompatibleModifierMap == null) return null;
@@ -883,7 +883,7 @@ public class HighlightUtil {
 
   @Nullable
   static HighlightInfo checkNotAStatement(PsiStatement statement) {
-    if (!PsiUtil.isStatement(statement) && !PsiUtil.hasErrorElementChild(statement)) {
+    if (!PsiUtil.isStatement(statement) && !PsiUtilBase.hasErrorElementChild(statement)) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, JavaErrorMessages.message("not.a.statement"));
     }
     return null;
@@ -1333,7 +1333,7 @@ public class HighlightUtil {
         // like in Class c = void.class;
         return null;
       }
-      else if (typeOwner != null && PsiUtil.hasErrorElementChild(typeOwner)) {
+      else if (typeOwner != null && PsiUtilBase.hasErrorElementChild(typeOwner)) {
         // do not highlight incomplete declarations
         return null;
       }

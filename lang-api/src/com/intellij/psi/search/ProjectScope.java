@@ -24,7 +24,7 @@ public class ProjectScope {
     GlobalSearchScope allScope = project.getUserData(ALL_SCOPE_KEY);
 
     if (allScope == null) {
-      final ProjectRootManager projectRootManager = project.getComponent(ProjectRootManager.class);
+      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
       if (projectRootManager == null) {
         allScope = new EverythingGlobalScope();
       }
@@ -40,7 +40,7 @@ public class ProjectScope {
   public static GlobalSearchScope getProjectScope(Project project) {
     GlobalSearchScope projectScope = project.getUserData(PROJECT_SCOPE_KEY);
     if (projectScope == null) {
-      final ProjectRootManager projectRootManager = project.getComponent(ProjectRootManager.class);
+      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
       if (projectRootManager == null) {
         projectScope = new EverythingGlobalScope() {
           public boolean isSearchInLibraries() {
