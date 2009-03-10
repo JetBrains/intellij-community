@@ -4,7 +4,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -29,7 +28,7 @@ public final class FileContent extends UserDataHolderBase {
   public Project getProject() {
     Project project = getUserData(FileBasedIndex.PROJECT);
     if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
+      throw new RuntimeException("Project instance was not set");
     }
     return project;
   }
