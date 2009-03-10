@@ -59,20 +59,18 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
 
         @Override public void visitThrowStatement(PsiThrowStatement statement) {
           super.visitThrowStatement(statement);
-          PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(statement, myPlace);
-          for (final PsiClassType actualType : exceptionTypes) {
-            if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
-              PsiExpression psiExpression = statement.getException();
-              if (psiExpression instanceof PsiReferenceExpression) {
-                addOccurrence(psiExpression);
-              }
-              else if (psiExpression instanceof PsiNewExpression) {
-                PsiJavaCodeReferenceElement ref = ((PsiNewExpression)psiExpression).getClassReference();
-                addOccurrence(ref);
-              }
-              else {
-                addOccurrence(statement.getException());
-              }
+          PsiClassType actualType = ExceptionUtil.getUnhandledException(statement, myPlace);
+          if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+            PsiExpression psiExpression = statement.getException();
+            if (psiExpression instanceof PsiReferenceExpression) {
+              addOccurrence(psiExpression);
+            }
+            else if (psiExpression instanceof PsiNewExpression) {
+              PsiJavaCodeReferenceElement ref = ((PsiNewExpression)psiExpression).getClassReference();
+              addOccurrence(ref);
+            }
+            else {
+              addOccurrence(statement.getException());
             }
           }
         }
@@ -81,7 +79,7 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
           super.visitMethodCallExpression(expression);
           PsiReference reference = expression.getMethodExpression().getReference();
           if (reference == null) return;
-          PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, myPlace);
+          List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, myPlace);
           for (final PsiClassType actualType : exceptionTypes) {
             if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
               addOccurrence(expression.getMethodExpression());
@@ -94,7 +92,7 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
           super.visitNewExpression(expression);
           PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
           if (classReference == null) return;
-          PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, myPlace);
+          List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, myPlace);
           for (PsiClassType actualType : exceptionTypes) {
             if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
               addOccurrence(classReference);

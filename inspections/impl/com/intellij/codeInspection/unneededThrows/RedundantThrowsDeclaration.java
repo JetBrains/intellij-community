@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -97,8 +96,8 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
       return null;
     }
 
-    PsiClassType[] types = ExceptionUtil.collectUnhandledExceptions(body, method);
-    Collection<PsiClassType> unhandled = new HashSet<PsiClassType>(Arrays.asList(types));
+    Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method);
+    Collection<PsiClassType> unhandled = new HashSet<PsiClassType>(types);
     if (method.isConstructor()) {
       // there may be field initializer throwing exception
       // that exception must be caught in the constructor
@@ -107,7 +106,7 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
         if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
         PsiExpression initializer = field.getInitializer();
         if (initializer == null) continue;
-        unhandled.addAll(Arrays.asList(ExceptionUtil.collectUnhandledExceptions(initializer, field)));
+        unhandled.addAll(ExceptionUtil.collectUnhandledExceptions(initializer, field));
       }
     }
 

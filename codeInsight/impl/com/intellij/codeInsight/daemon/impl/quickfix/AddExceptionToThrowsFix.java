@@ -42,12 +42,12 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     PsiElement element = findElement(myWrongElement, targetMethod);
     LOG.assertTrue(element != null);
 
-    final PsiClassType[] unhandledExceptions = filterInProjectExceptions(ExceptionUtil.getUnhandledExceptions(element), targetMethod);
+    final Set<PsiClassType> unhandledExceptions = filterInProjectExceptions(targetMethod, ExceptionUtil.getUnhandledExceptions(element));
 
     addExceptionsToThrowsList(project, targetMethod, unhandledExceptions);
   }
 
-  static void addExceptionsToThrowsList(final Project project, final PsiMethod targetMethod, final PsiClassType... unhandledExceptions) {
+  static void addExceptionsToThrowsList(final Project project, final PsiMethod targetMethod, final Set<PsiClassType> unhandledExceptions) {
     final PsiMethod[] superMethods = getSuperMethods(targetMethod);
 
     boolean hasSuperMethodsWithoutExceptions = hasSuperMethodsWithoutExceptions(superMethods, unhandledExceptions);
@@ -108,11 +108,11 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     }
   }
 
-  private static boolean hasSuperMethodsWithoutExceptions(PsiMethod[] superMethods, PsiClassType[] unhandledExceptions) {
+  private static boolean hasSuperMethodsWithoutExceptions(PsiMethod[] superMethods, Set<PsiClassType> unhandledExceptions) {
     for (PsiMethod superMethod : superMethods) {
       PsiClassType[] referencedTypes = superMethod.getThrowsList().getReferencedTypes();
 
-      Set<PsiClassType> exceptions = new HashSet<PsiClassType>(Arrays.asList(unhandledExceptions));
+      Set<PsiClassType> exceptions = new HashSet<PsiClassType>(unhandledExceptions);
       for (PsiClassType referencedType : referencedTypes) {
         for (PsiClassType exception : unhandledExceptions) {
           if (referencedType.isAssignableFrom(exception)) exceptions.remove(exception);
@@ -125,7 +125,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     return false;
   }
 
-  private static void processMethod(Project project, PsiMethod targetMethod, PsiClassType[] unhandledExceptions) throws IncorrectOperationException {
+  private static void processMethod(Project project, PsiMethod targetMethod, Set<PsiClassType> unhandledExceptions) throws IncorrectOperationException {
     for (PsiClassType unhandledException : unhandledExceptions) {
       PsiClass exceptionClass = unhandledException.resolve();
       if (exceptionClass != null) {
@@ -156,16 +156,15 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
 
   private static PsiElement findElement(PsiElement element, PsiMethod topElement) {
     if (element == null) return null;
-    PsiClassType[] unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
-    unhandledExceptions = filterInProjectExceptions(unhandledExceptions, topElement);
-    if (unhandledExceptions.length > 0) {
+    List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
+    if (!filterInProjectExceptions(topElement, unhandledExceptions).isEmpty()) {
       return element;
     }
     return findElement(element.getParent(), topElement);
   }
 
-  private static PsiClassType[] filterInProjectExceptions(PsiClassType[] unhandledExceptions, PsiMethod targetMethod) {
-    if (targetMethod == null) return PsiClassType.EMPTY_ARRAY;
+  private static Set<PsiClassType> filterInProjectExceptions(PsiMethod targetMethod, List<PsiClassType> unhandledExceptions) {
+    if (targetMethod == null) return Collections.emptySet();
 
     Set<PsiClassType> result = new HashSet<PsiClassType>();
 
@@ -182,15 +181,15 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     else {
       PsiMethod[] superMethods = targetMethod.findSuperMethods();
       for (PsiMethod superMethod : superMethods) {
-        PsiClassType[] classTypes = filterInProjectExceptions(unhandledExceptions, superMethod);
-        result.addAll(Arrays.asList(classTypes));
+        Set<PsiClassType> classTypes = filterInProjectExceptions(superMethod, unhandledExceptions);
+        result.addAll(classTypes);
       }
 
       if (superMethods.length == 0) {
-        result.addAll(Arrays.asList(unhandledExceptions));
+        result.addAll(unhandledExceptions);
       }
     }
 
-    return result.toArray(new PsiClassType[result.size()]);
+    return result;
   }
 }

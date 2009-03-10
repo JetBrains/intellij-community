@@ -266,7 +266,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     //generate jumps to all handled exception handlers
     //if (myCatchBlocks.size() != 0) {
     //}
-    final PsiClassType[] unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, element.getParent());
+    Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, element.getParent());
     for (PsiClassType unhandledException : unhandledExceptions) {
       generateThrow(unhandledException, element);
     }

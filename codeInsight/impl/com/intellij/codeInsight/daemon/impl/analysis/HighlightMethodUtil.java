@@ -970,8 +970,8 @@ public class HighlightMethodUtil {
 
     // if we have unhandled exception inside method body, we could not have been called here,
     // so the only problem it can catch here is with super ctr only
-    PsiClassType[] unhandled = ExceptionUtil.collectUnhandledExceptions(method, method.getContainingClass());
-    if (unhandled.length == 0) return null;
+    Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(method, method.getContainingClass());
+    if (unhandled.isEmpty()) return null;
     String description = HighlightUtil.getUnhandledExceptionsDescriptor(unhandled);
     TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,

@@ -440,7 +440,7 @@ public class HighlightClassUtil {
       }
     }
     if (!exceptions.isEmpty()) {
-      return HighlightUtil.getUnhandledExceptionsDescriptor(exceptions.toArray(new PsiClassType[exceptions.size()]));
+      return HighlightUtil.getUnhandledExceptionsDescriptor(exceptions);
     }
     return null;
   }

@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -18,6 +18,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author mike
  */
@@ -32,7 +35,8 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
 
     PsiElement element = findElement(file, offset);
     PsiTryStatement tryStatement = (PsiTryStatement) element.getParent();
-    PsiClassType[] unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, null);
+    List<PsiClassType> unhandledExceptions = new ArrayList<PsiClassType>(ExceptionUtil.collectUnhandledExceptions(element, null));
+    ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
@@ -46,10 +50,9 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
         catchBlockToSelect = tryStatement.getCatchBlocks()[0];
       }
       else {
-        for (int i = 0; i < unhandledExceptions.length; i++) {
-          PsiClassType unhandledException = unhandledExceptions[i];
+        for (PsiClassType unhandledException : unhandledExceptions) {
           PsiCodeBlock codeBlock = addCatchStatement(tryStatement, unhandledException, file);
-          if (i == 0) catchBlockToSelect = codeBlock;
+          if (catchBlockToSelect == null) catchBlockToSelect = codeBlock;
         }
       }
     }
@@ -80,7 +83,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     }
     else {
       PsiElement finallyElement = finallyBlock;
-      while (!(finallyElement instanceof PsiKeyword) && !finallyElement.getText().equals(PsiKeyword.FINALLY)) {
+      while (!(finallyElement instanceof PsiKeyword) && !PsiKeyword.FINALLY.equals(finallyElement.getText())) {
         finallyElement = finallyElement.getPrevSibling();
       }
       tryStatement.addBefore(catchSection, finallyElement);
@@ -89,9 +92,8 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
     parameters[parameters.length - 1].getTypeElement().replace(factory.createTypeElement(exceptionType));
     PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-    PsiCodeBlock catchBlock = catchBlocks[catchBlocks.length - 1];
 
-    return catchBlock;
+    return catchBlocks[catchBlocks.length - 1];
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
@@ -115,7 +117,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     PsiTryStatement statement = (PsiTryStatement) parent;
     PsiCodeBlock tryBlock = statement.getTryBlock();
     if (tryBlock.getTextRange().getStartOffset() <= offset && tryBlock.getTextRange().getEndOffset() > offset) {
-      if (ExceptionUtil.collectUnhandledExceptions(tryBlock, statement.getParent()).length != 0) {
+      if (!ExceptionUtil.collectUnhandledExceptions(tryBlock, statement.getParent()).isEmpty()) {
         return tryBlock;
       }
     }

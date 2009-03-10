@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 
 /**
  * @author mike
@@ -32,7 +34,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
     PsiClassType aClass = getRuntimeExceptionAtCaret(editor, file);
     PsiMethod method = PsiTreeUtil.getParentOfType(elementAtCaret(editor, file), PsiMethod.class);
 
-    AddExceptionToThrowsFix.addExceptionsToThrowsList(project, method, aClass);
+    AddExceptionToThrowsFix.addExceptionsToThrowsList(project, method, Collections.singleton(aClass));
   }
 
 
@@ -72,8 +74,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
 
   private static PsiElement elementAtCaret(final Editor editor, final PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-    return element;
+    return file.findElementAt(offset);
   }
 
 

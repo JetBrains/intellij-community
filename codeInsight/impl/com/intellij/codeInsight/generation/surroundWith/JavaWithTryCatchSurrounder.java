@@ -13,6 +13,9 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.Collections;
+import java.util.List;
+
 public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
   protected boolean myGenerateFinally = false;
 
@@ -31,11 +34,11 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
       return null;
     }
 
-    PsiClassType[] exceptions = ExceptionUtil.getUnhandledExceptions(statements);
-    if (exceptions.length == 0) {
+    List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(statements);
+    if (exceptions.isEmpty()) {
       exceptions = ExceptionUtil.getThrownExceptions(statements);
-      if (exceptions.length == 0) {
-        exceptions = new PsiClassType[]{factory.createTypeByFQClassName("java.lang.Exception", container.getResolveScope())};
+      if (exceptions.isEmpty()) {
+        exceptions = Collections.singletonList(factory.createTypeByFQClassName("java.lang.Exception", container.getResolveScope()));
       }
     }
 
@@ -58,18 +61,16 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
 
     PsiCatchSection[] catchSections = tryStatement.getCatchSections();
 
-    for (int i = 0; i < exceptions.length; i++) {
-      PsiClassType exception = exceptions[i];
-      String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, exception)
-        .names;
+    for (int i = 0; i < exceptions.size(); i++) {
+      PsiClassType exception = exceptions.get(i);
+      String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, exception).names;
       String name = codeStyleManager.suggestUniqueVariableName(nameSuggestions[0], tryBlock, false);
       PsiCatchSection catchSection;
       try {
         catchSection = factory.createCatchSection(exception, name, null);
       }
       catch (IncorrectOperationException e) {
-        Messages.showErrorDialog(project,
-                                 CodeInsightBundle.message("surround.with.try.catch.incorrect.template.message"),
+        Messages.showErrorDialog(project, CodeInsightBundle.message("surround.with.try.catch.incorrect.template.message"),
                                  CodeInsightBundle.message("surround.with.try.catch.incorrect.template.title"));
         return null;
       }

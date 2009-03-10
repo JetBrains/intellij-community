@@ -381,7 +381,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
       myTypeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(((PsiMethod)container).getTypeParameterList(), elements);
     }
-    myThrownExceptions = ExceptionUtil.getThrownCheckedExceptions(myElements);
+    List<PsiClassType> exceptions = ExceptionUtil.getThrownCheckedExceptions(myElements);
+    myThrownExceptions = exceptions.toArray(new PsiClassType[exceptions.size()]);
     myStatic = shouldBeStatic();
 
     if (myTargetClass.getContainingClass() == null || myTargetClass.hasModifierProperty(PsiModifier.STATIC)) {

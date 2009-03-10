@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author yole
@@ -41,8 +42,8 @@ public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandler
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) return null;
-    final PsiClassType[] psiClassTypes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
-    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes, tryBlock, Condition.TRUE);
+    final Collection<PsiClassType> psiClassTypes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
+    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]), tryBlock, Condition.TRUE);
   }
 
   @Nullable
@@ -60,7 +61,7 @@ public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandler
 
     final PsiParameter[] catchBlockParameters = tryStatement.getCatchBlockParameters();
 
-    final PsiClassType[] allThrownExceptions = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(),
+    final Collection<PsiClassType> allThrownExceptions = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(),
                                                                                         tryStatement.getTryBlock());
     Condition<PsiType> filter = new Condition<PsiType>() {
       public boolean value(PsiType type) {
@@ -94,7 +95,8 @@ public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandler
     PsiMethod method = (PsiMethod)grand;
     if (method.getBody() == null) return null;
 
-    final PsiClassType[] psiClassTypes = ExceptionUtil.collectUnhandledExceptions(method.getBody(), method.getBody());
-    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes, method.getBody(), Condition.TRUE);
+    final Collection<PsiClassType> psiClassTypes = ExceptionUtil.collectUnhandledExceptions(method.getBody(), method.getBody());
+
+    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]), method.getBody(), Condition.TRUE);
   }
 }

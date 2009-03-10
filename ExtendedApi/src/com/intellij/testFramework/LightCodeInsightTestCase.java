@@ -350,7 +350,8 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
           selEndCol + 1,
           myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) +
           1);
-    } else {
+    }
+    else {
       assertTrue(getMessage("must not have selection", message), !myEditor.getSelectionModel().hasSelection());
     }
   }

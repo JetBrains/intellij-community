@@ -726,7 +726,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
 
       //Remove unused catches
-      PsiClassType[] classes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
+      Collection<PsiClassType> classes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
       PsiParameter[] catchParameters = tryStatement.getCatchBlockParameters();
       for (PsiParameter parameter : catchParameters) {
         final PsiType caughtType = parameter.getType();
@@ -821,7 +821,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return result.toArray(new PsiClassType[result.size()]);
   }
 
-  private static boolean isCatchParameterRedundant (PsiClassType catchParamType, PsiType[] thrownTypes) {
+  private static boolean isCatchParameterRedundant (PsiClassType catchParamType, Collection<PsiClassType> thrownTypes) {
     for (PsiType exceptionType : thrownTypes) {
       if (exceptionType.isConvertibleFrom(catchParamType)) return false;
     }

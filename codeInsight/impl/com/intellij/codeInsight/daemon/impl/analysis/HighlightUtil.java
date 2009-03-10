@@ -40,10 +40,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class HighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
@@ -565,15 +562,14 @@ public class HighlightUtil {
     return errorResult;
   }
 
-  public static String getUnhandledExceptionsDescriptor(PsiClassType... unhandledExceptions) {
+  public static String getUnhandledExceptionsDescriptor(Collection<PsiClassType> unhandledExceptions) {
     StringBuilder exceptionsText = new StringBuilder();
-    for (int i = 0; i < unhandledExceptions.length; i++) {
-      PsiClassType unhandledException = unhandledExceptions[i];
-      if (i > 0) exceptionsText.append(", ");
+    for (PsiClassType unhandledException : unhandledExceptions) {
+      if (exceptionsText.length() != 0) exceptionsText.append(", ");
       exceptionsText.append(formatType(unhandledException));
     }
 
-    return JavaErrorMessages.message("unhandled.exceptions", exceptionsText.toString(), unhandledExceptions.length);
+    return JavaErrorMessages.message("unhandled.exceptions", exceptionsText.toString(), unhandledExceptions.size());
   }
 
 
@@ -652,9 +648,9 @@ public class HighlightUtil {
 
 
   public static HighlightInfo checkUnhandledExceptions(PsiElement element, TextRange fixRange) {
-    PsiClassType[] unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
+    List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
     HighlightInfo errorResult = null;
-    if (unhandledExceptions.length > 0) {
+    if (unhandledExceptions.size() > 0) {
       if (fixRange == null) {
         fixRange = element.getTextRange();
       }
@@ -664,8 +660,8 @@ public class HighlightUtil {
       QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToCatchFix());
       QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToThrowsFix(element));
       QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithTryCatchFix(element));
-      if (unhandledExceptions.length == 1) {
-        QuickFixAction.registerQuickFixAction(errorResult, new GeneralizeCatchFix(element, unhandledExceptions[0]));
+      if (unhandledExceptions.size() == 1) {
+        QuickFixAction.registerQuickFixAction(errorResult, new GeneralizeCatchFix(element, unhandledExceptions.get(0)));
       }
     }
     return errorResult;
@@ -867,7 +863,7 @@ public class HighlightUtil {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (!(declarationScope instanceof PsiCatchSection)) return null;
     PsiTryStatement statement = ((PsiCatchSection)declarationScope).getTryStatement();
-    PsiClassType[] classes = ExceptionUtil.collectUnhandledExceptions(statement.getTryBlock(), statement.getTryBlock());
+    Collection<PsiClassType> classes = ExceptionUtil.collectUnhandledExceptions(statement.getTryBlock(), statement.getTryBlock());
 
     PsiType caughtType = parameter.getType();
     if (!(caughtType instanceof PsiClassType)) return null;
