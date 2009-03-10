@@ -74,13 +74,12 @@ public class CreateClassDialog extends DialogWrapper {
 
     init();
 
-    setTitle(title);
-
     if (!myClassNameEditable) {
-      myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.name", kind.getDescription(), targetClassName));
+      setTitle(CodeInsightBundle.message("dialog.create.class.name", kind.getDescription(), targetClassName));
     }
     else {
       myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.label", kind.getDescription()));
+      setTitle(title);
     }
 
     myTfClassName.setText(myClassName);
@@ -102,16 +101,15 @@ public class CreateClassDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    panel.setBorder(IdeBorderFactory.createBorder());
-
     gbConstraints.insets = new Insets(4, 8, 4, 8);
-    gbConstraints.weightx = myClassNameEditable ? 0 : 1;
-    gbConstraints.gridwidth = myClassNameEditable ? 1 : 2;
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(myInformationLabel, gbConstraints);
 
     if (myClassNameEditable) {
+      gbConstraints.weightx = 0;
+      gbConstraints.gridwidth = 1;
+      panel.add(myInformationLabel, gbConstraints);
+      panel.setBorder(IdeBorderFactory.createBorder());
       gbConstraints.insets = new Insets(4, 8, 4, 8);
       gbConstraints.gridx = 1;
       gbConstraints.weightx = 1;
