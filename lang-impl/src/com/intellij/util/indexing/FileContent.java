@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -28,11 +29,7 @@ public final class FileContent extends UserDataHolderBase {
   private CharSequence myContentAsText = null;
 
   public Project getProject() {
-    Project project = getUserData(FileBasedIndex.PROJECT);
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    return project;
+    return getUserData(FileBasedIndex.PROJECT);
   }
 
   private final Key<PsiFile> ourCachedPsiFromContentKey = Key.create("cached psi from content");
@@ -48,7 +45,16 @@ public final class FileContent extends UserDataHolderBase {
     }
 
     if (psi == null) {
-      psi = PsiFileFactory.getInstance(getProject()).createFileFromText(
+      Project project = getProject();
+      if (project == null) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          project = ProjectManager.getInstance().getDefaultProject();
+        }
+        else {
+          throw new RuntimeException("Project was not set");
+        }
+      }
+      psi = PsiFileFactory.getInstance(project).createFileFromText(
         getFileName(),
         getFileType(),
         getContentAsText(),

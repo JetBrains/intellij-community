@@ -18,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -888,6 +889,9 @@ public class FileBasedIndex implements ApplicationComponent {
             fc.putUserData(PSI_FILE, psiFile);
           }
           Project project = content.getUserData(PROJECT);
+          if (project == null) {
+            project = ProjectUtil.guessProjectForFile(file);
+          }
           fc.putUserData(PROJECT, project);
           oldContent = oldBytes != null? new FileContent(file, oldBytes) : null;
         }
