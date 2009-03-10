@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -34,11 +35,17 @@ public final class FileContent extends UserDataHolderBase {
     return project;
   }
 
+  private final Key<PsiFile> ourCachedPsiFromContentKey = Key.create("cached psi from content");
+
   /**
    * @return psiFile associated with the content. If the file was not set on FileContentCreation, it will be created on the spot
    */
   public PsiFile getPsiFile() {
     PsiFile psi = getUserData(FileBasedIndex.PSI_FILE);
+
+    if (psi == null) {
+      psi = getUserData(ourCachedPsiFromContentKey);
+    }
 
     if (psi == null) {
       psi = PsiFileFactory.getInstance(getProject()).createFileFromText(
@@ -51,6 +58,7 @@ public final class FileContent extends UserDataHolderBase {
       );
 
       psi.putUserData(FileBasedIndex.VIRTUAL_FILE, getFile());
+      putUserData(ourCachedPsiFromContentKey, psi);
     }
     return psi;
   }
