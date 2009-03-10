@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,22 +34,24 @@ public class AssignmentToDateFieldFromParameterInspection
     /** @noinspection PublicField*/
     public boolean ignorePrivateMethods = true;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assignment.to.date.calendar.field.from.parameter.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
-        final PsiField field = (PsiField) infos[0];
+        final String type = (String) infos[0];
         final PsiExpression rhs = (PsiExpression)infos[1];
-        final PsiType type = field.getType();
         return InspectionGadgetsBundle.message(
                 "assignment.to.date.calendar.field.from.parameter.problem.descriptor",
-                type.getPresentableText(), rhs.getText());
+                type, rhs.getText());
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
@@ -58,6 +60,7 @@ public class AssignmentToDateFieldFromParameterInspection
                 "ignorePrivateMethods");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new AssignmentToDateFieldFromParameterVisitor();
     }
@@ -77,8 +80,9 @@ public class AssignmentToDateFieldFromParameterInspection
             if (!(lhs instanceof PsiReferenceExpression)) {
                 return;
             }
-            if (!TypeUtils.expressionHasTypeOrSubtype(lhs,
-                    "java.util.Date", "java.util.Calendar")) {
+            final String type = TypeUtils.expressionHasTypeOrSubtype(lhs,
+                    "java.util.Date", "java.util.Calendar");
+            if (type == null) {
                 return;
             }
             final PsiExpression rhs = expression.getRExpression();
@@ -106,7 +110,7 @@ public class AssignmentToDateFieldFromParameterInspection
                     return;
                 }
             }
-            registerError(lhs, lhsReferent, rhs);
+            registerError(lhs, type, rhs);
         }
     }
 }

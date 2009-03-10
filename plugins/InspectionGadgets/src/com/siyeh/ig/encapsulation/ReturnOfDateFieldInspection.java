@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,28 +24,22 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReturnOfDateFieldInspection extends BaseInspection{
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "return.date.calendar.field.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
-        final PsiExpression expression = (PsiExpression)infos[0];
-	    final boolean date = TypeUtils.expressionHasTypeOrSubtype(
-			    expression, "java.util.Date");
-        if (date) {
-            return InspectionGadgetsBundle.message(
-                    "return.date.calendar.field.problem.descriptor",
-                    "Date");
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "return.date.calendar.field.problem.descriptor",
-                    "Calendar");
-        }
+        final String type = (String)infos[0];
+        return InspectionGadgetsBundle.message(
+                "return.date.calendar.field.problem.descriptor", type);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new ReturnOfDateFieldVisitor();
     }
@@ -53,7 +47,8 @@ public class ReturnOfDateFieldInspection extends BaseInspection{
     private static class ReturnOfDateFieldVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitReturnStatement(@NotNull PsiReturnStatement statement){
+        @Override public void visitReturnStatement(
+                @NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
             if(!(returnValue instanceof PsiReferenceExpression)){
@@ -65,11 +60,12 @@ public class ReturnOfDateFieldInspection extends BaseInspection{
             if(!(element instanceof PsiField)){
                 return;
             }
-            if (!TypeUtils.expressionHasTypeOrSubtype(
-                    returnValue, "java.util.Date", "java.util.Calendar")) {
-	            return;
+            final String type = TypeUtils.expressionHasTypeOrSubtype(
+                    returnValue, "java.util.Date", "java.util.Calendar");
+            if (type == null) {
+                return;
             }
-	        registerError(returnValue, returnValue);
+            registerError(returnValue, type);
         }
     }
 }

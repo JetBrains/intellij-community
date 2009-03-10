@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Bas Leijdekkers
+ * Copyright 2007-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,22 +28,28 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
     
+    @Override
     @Nls @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "throwable.instance.never.thrown.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiExpression expression = (PsiExpression)infos[0];
-        if (TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.RuntimeException")) {
+        final String type =
+                TypeUtils.expressionHasTypeOrSubtype(expression,
+                        "java.lang.RuntimeException", "java.lang.Exception",
+                        "java.lang.Error");
+        if ("java.lang.RuntimeException".equals(type)) {
             return InspectionGadgetsBundle.message(
                     "throwable.instance.never.thrown.runtime.exception.problem.descriptor");
-        } else if (TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.Exception")) {
+        } else if ("java.lang.Exception".equals(type)) {
             return InspectionGadgetsBundle.message(
                     "throwable.instance.never.thrown.checked.exception.problem.descriptor");
-        } else if (TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.Error")) {
+        } else if ("java.lang.Error".equals(type)) {
             return InspectionGadgetsBundle.message(
                     "throwable.instance.never.thrown.error.problem.descriptor");
         } else {
@@ -52,10 +58,12 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
         }
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ExceptionInstanceNeverThrownVisitor();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class IOResourceInspection extends ResourceInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "IOResourceOpenedButNotSafelyClosed";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "i.o.resource.opened.not.closed.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final PsiExpression expression = (PsiExpression) infos[0];
@@ -45,6 +48,7 @@ public class IOResourceInspection extends ResourceInspection {
                 "resource.opened.not.closed.problem.descriptor", text);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new IOResourceVisitor();
     }
@@ -108,24 +112,24 @@ public class IOResourceInspection extends ResourceInspection {
 
     private static boolean isNonTrivialReader(PsiExpression expression){
         return TypeUtils.expressionHasTypeOrSubtype(expression,
-		        "java.io.Reader") &&
-                !TypeUtils.expressionHasTypeOrSubtype(expression,
-		                "java.io.CharArrayReader", "java.io.StringReader");
+                "java.io.Reader") &&
+                TypeUtils.expressionHasTypeOrSubtype(expression,
+                        "java.io.CharArrayReader", "java.io.StringReader") == null;
     }
 
     private static boolean isNonTrivialWriter(PsiExpression expression){
         return TypeUtils.expressionHasTypeOrSubtype(expression,
-		        "java.io.Writer") &&
-                !TypeUtils.expressionHasTypeOrSubtype(expression,
-		                "java.io.CharArrayWriter", "java.io.StringWriter");
+                "java.io.Writer") &&
+                TypeUtils.expressionHasTypeOrSubtype(expression,
+                        "java.io.CharArrayWriter", "java.io.StringWriter") == null;
     }
 
     private static boolean isNonTrivialInputStream(PsiExpression expression){
         return TypeUtils.expressionHasTypeOrSubtype(expression,
-		        "java.io.InputStream") &&
-                !TypeUtils.expressionHasTypeOrSubtype(expression,
-		                "java.io.ByteArrayInputStream",
-		                "java.io.StringBufferInputStream");
+                "java.io.InputStream") &&
+                TypeUtils.expressionHasTypeOrSubtype(expression,
+                        "java.io.ByteArrayInputStream",
+                        "java.io.StringBufferInputStream") == null;
     }
 
     private static boolean isArgumentOfResourceCreation(
@@ -143,7 +147,6 @@ public class IOResourceInspection extends ResourceInspection {
         private final PsiVariable ioResource;
 
         private UsedAsIOResourceArgumentVisitor(PsiVariable ioResource){
-            super();
             this.ioResource = ioResource;
         }
 

@@ -61,15 +61,14 @@ public class SynchronizeOnLockInspection extends BaseInspection {
             if (lockExpression == null) {
                 return;
             }
-            if (TypeUtils.expressionHasTypeOrSubtype(lockExpression,
-                    "java.util.concurrent.locks.Lock")) {
-                registerError(lockExpression,
-                        "java.util.concurrent.locks.Lock");
-            } else if (TypeUtils.expressionHasTypeOrSubtype(lockExpression,
-                    "java.util.concurrent.locks.ReadWriteLock")) {
-                registerError(lockExpression,
-                        "java.util.concurrent.locks.ReadWriteLock");
+            final String type = TypeUtils.expressionHasTypeOrSubtype(
+                    lockExpression,
+                    "java.util.concurrent.locks.Lock",
+                    "java.util.concurrent.locks.ReadWriteLock");
+            if (type == null) {
+                return;
             }
+            registerError(lockExpression, type);
         }
     }
 }

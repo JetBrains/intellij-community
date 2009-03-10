@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class ChannelResourceInspection extends ResourceInspection{
 
+    @Override
     @NotNull
     public String getID(){
         return "ChannelOpenedButNotSafelyClosed";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "channel.opened.not.closed.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final PsiExpression expression = (PsiExpression) infos[0];
@@ -46,6 +49,7 @@ public class ChannelResourceInspection extends ResourceInspection{
                 "channel.opened.not.closed.problem.descriptor", text);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new ChannelResourceVisitor();
     }
@@ -84,7 +88,7 @@ public class ChannelResourceInspection extends ResourceInspection{
             if (!(qualifier instanceof PsiReferenceExpression)) {
                 return false;
             }
-            PsiReferenceExpression referenceExpression =
+            final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) qualifier;
             final PsiElement target = referenceExpression.resolve();
             if (!(target instanceof PsiVariable)) {
@@ -122,14 +126,14 @@ public class ChannelResourceInspection extends ResourceInspection{
                 return false;
             }
             return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-		            "java.net.Socket",
-		            "java.net.DatagramSocket",
-		            "java.net.ServerSocket",
-		            "java.io.FileInputStream",
-		            "java.io.FileOutputStream",
-		            "java.io.RandomAccessFile",
+                    "java.net.Socket",
+                    "java.net.DatagramSocket",
+                    "java.net.ServerSocket",
+                    "java.io.FileInputStream",
+                    "java.io.FileOutputStream",
+                    "java.io.RandomAccessFile",
                     "com.sun.corba.se.pept.transport.EventHandler",
-                    "sun.nio.ch.InheritedChannel");
+                    "sun.nio.ch.InheritedChannel") != null;
         }
     }
 }

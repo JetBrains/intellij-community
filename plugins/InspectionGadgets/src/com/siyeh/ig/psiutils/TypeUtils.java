@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class TypeUtils {
 
-    private TypeUtils() {
-        super();
-    }
+    private TypeUtils() {}
 
     public static boolean expressionHasType(
             @NonNls @NotNull String typeName,
@@ -39,10 +37,7 @@ public class TypeUtils {
 
     public static boolean typeEquals(@NonNls @NotNull String typeName,
                                      @Nullable PsiType targetType) {
-        if (targetType == null) {
-            return false;
-        }
-        return targetType.equalsToText(typeName);
+        return targetType != null && targetType.equalsToText(typeName);
     }
 
     public static PsiType getJavaLangObjectType(@NotNull PsiElement context) {
@@ -62,8 +57,7 @@ public class TypeUtils {
 
     public static boolean expressionHasTypeOrSubtype(
             @Nullable PsiExpression expression,
-            @NonNls @NotNull String typeName,
-            @NonNls @NotNull String... typeNames) {
+            @NonNls @NotNull String typeName) {
         if (expression == null) {
             return false;
         }
@@ -82,11 +76,32 @@ public class TypeUtils {
         if (ClassUtils.isSubclass(aClass, typeName)) {
             return true;
         }
-        for (String typeName1 : typeNames) {
-            if (ClassUtils.isSubclass(aClass, typeName1)) {
-                return true;
+        return false;
+    }
+
+    public static String expressionHasTypeOrSubtype(
+            @Nullable PsiExpression expression,
+            @NonNls @NotNull String... typeNames) {
+        if (expression == null) {
+            return null;
+        }
+        final PsiType type = expression.getType();
+        if (type == null) {
+            return null;
+        }
+        if (!(type instanceof PsiClassType)) {
+            return null;
+        }
+        final PsiClassType classType = (PsiClassType) type;
+        final PsiClass aClass = classType.resolve();
+        if (aClass == null) {
+            return null;
+        }
+        for (String typeName : typeNames) {
+            if (ClassUtils.isSubclass(aClass, typeName)) {
+                return typeName;
             }
         }
-        return false;
+        return null;
     }
 }

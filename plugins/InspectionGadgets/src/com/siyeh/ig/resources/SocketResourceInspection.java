@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class SocketResourceInspection extends ResourceInspection {
 
+  @Override
   @NotNull
   public String getID(){
       return "SocketOpenedButNotSafelyClosed";
   }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "socket.opened.not.closed.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final PsiExpression expression = (PsiExpression) infos[0];
@@ -45,6 +48,7 @@ public class SocketResourceInspection extends ResourceInspection {
                 "resource.opened.not.closed.problem.descriptor", text);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new SocketResourceVisitor();
     }
@@ -95,7 +99,7 @@ public class SocketResourceInspection extends ResourceInspection {
             return TypeUtils.expressionHasTypeOrSubtype(expression,
                     "java.net.Socket",
                     "java.net.DatagramSocket",
-                    "java.net.ServerSocket");
+                    "java.net.ServerSocket") != null;
         }
 
         private static boolean isSocketFactoryMethod(
