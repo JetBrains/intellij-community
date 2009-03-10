@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.lang.Language;
@@ -25,9 +26,14 @@ public class SurroundWithAction extends BaseCodeInsightAction{
       return true;
     }
     final PsiFile baseFile = PsiUtilBase.getTemplateLanguageFile(file);
-    if (baseFile != null && baseFile != file) {
-      return !LanguageSurrounders.INSTANCE.allForLanguage(baseFile.getLanguage()).isEmpty();
+    if (baseFile != null && baseFile != file && !LanguageSurrounders.INSTANCE.allForLanguage(baseFile.getLanguage()).isEmpty()) {
+      return true;
     }
+
+    if (!SurroundWithTemplateHandler.getApplicableTemplates(editor, file, true).isEmpty()) {
+      return true;
+    }
+
     return false;
   }
 }

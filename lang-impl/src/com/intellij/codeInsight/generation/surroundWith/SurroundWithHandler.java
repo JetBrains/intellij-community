@@ -19,7 +19,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,8 +65,6 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(l));
     if (l != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
 
-    if (surroundDescriptors.isEmpty()) return;
-
     for (SurroundDescriptor descriptor : surroundDescriptors) {
       final PsiElement[] elements = descriptor.getElementsToSurround(file, startOffset, endOffset);
       if (elements.length > 0) {
@@ -79,12 +76,6 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
         else {
           doSurround(project, editor, surrounder, elements);
           return;
-          /*
-          if (surroundDescriptors.size() == 1) {
-          } else {
-            if (invokeSurroundInTestMode(project, editor, surrounder, descriptor, elements)) break;
-          }
-          */
         }
       }
     }
@@ -93,18 +84,6 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
       PopupActionChooser popupActionChooser = new PopupActionChooser(CHOOSER_TITLE);
       popupActionChooser.invoke(project, editor, file, new Surrounder[0], new PsiElement[0]);
     }
-  }
-
-  @TestOnly
-  private static boolean invokeSurroundInTestMode(final Project project, final Editor editor, final Surrounder surrounder,
-                                                  final SurroundDescriptor descriptor, final PsiElement[] elements) {
-    for (final Surrounder surrounder1 : descriptor.getSurrounders()) {
-      if (surrounder1.getClass().equals(surrounder.getClass())) {
-        doSurround(project, editor, surrounder, elements);
-        return true;
-      }
-    }
-    return false;
   }
 
   static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
