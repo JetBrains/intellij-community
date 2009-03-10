@@ -215,13 +215,20 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         }
 
         private MyParamMatcher(String paramName, XsltCallTemplate call, String[] excludedNames) {
-            this(paramName, call);
+            super(getDocument(call), call.getTemplateName());
+            myCall = call;
+            myParamName = paramName;
             myExcludedNames = excludedNames;
+        }
+
+        private static XmlDocument getDocument(XsltCallTemplate call) {
+            final XsltTemplate template = call.getTemplate();
+            return XsltCodeInsightUtil.getDocument(template != null ? template : call);
         }
 
         @Override
         protected ResolveUtil.Matcher changeDocument(XmlDocument document) {
-            return new MyParamMatcher(myParamName, myCall);
+            return new MyParamMatcher(myParamName, myCall, myExcludedNames);
         }
 
         @Override

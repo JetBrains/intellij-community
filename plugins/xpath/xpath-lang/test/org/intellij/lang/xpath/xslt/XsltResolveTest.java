@@ -4,6 +4,7 @@ import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.psi.XsltParameter;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -19,26 +20,37 @@ import org.jetbrains.annotations.NotNull;
 public class XsltResolveTest extends TestBase {
 
     public void testResolveSingleVariableGlobal() throws Throwable {
-        doResolveTest(true);
+        doVariableResolveTest(true);
     }
 
     public void testResolveSingleVariable() throws Throwable {
-        doResolveTest(false);
+        doVariableResolveTest(false);
     }
 
     public void testResolveShadowedVariable() throws Throwable {
-        doResolveTest(false);
+        doVariableResolveTest(false);
     }
 
     public void testResolveSameName() throws Throwable {
-        final XsltVariable variable = doResolveTest(false);
+        final XsltVariable variable = doVariableResolveTest(false);
 
         final XsltTemplate template = XsltCodeInsightUtil.getTemplate(variable, false);
         assertNotNull(template);
         assertNotNull(template.getName());
     }
 
-    private XsltVariable doResolveTest(boolean global) throws Throwable {
+    public void testResolveIncludedTemplateParam() throws Throwable {
+        final String name = getTestFileName();
+        final PsiReference reference = myFixture.getReferenceAtCaretPositionWithAssertion(name + ".xsl", "included.xsl");
+
+        final PsiElement element = reference.resolve();
+        assertNotNull(element);
+
+        assertTrue(element instanceof XsltParameter);
+        assertEquals("foo", ((XsltParameter)element).getName());
+    }
+
+    private XsltVariable doVariableResolveTest(boolean global) throws Throwable {
         final PsiReference reference = findInjectedReferenceAtCaret();
 
         final PsiElement element = reference.resolve();

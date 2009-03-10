@@ -29,6 +29,10 @@ public class XsltCompletionTest extends TestBase {
         doXsltCompletion();
     }
 
+    public void testIncludedTemplateParam() throws Throwable {
+        doXsltCompletion("included.xsl");
+    }
+
     public void testApplyTemplateParams() throws Throwable {
         doXsltCompletion();
     }
