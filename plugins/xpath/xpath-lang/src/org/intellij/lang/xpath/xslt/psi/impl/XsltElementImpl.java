@@ -120,11 +120,11 @@ abstract class XsltElementImpl extends LightElement implements Iconable, Navigat
         return this;
     }
 
-    @Nullable
+    @NotNull
     @Override
     @SuppressWarnings({ "RawUseOfParameterizedType" })
     public PsiElement getNavigationElement() {
-        if (myNavigationElement == null) {
+        if (myNavigationElement == null && myElement.isValid()) {
             final Class[] allInterfaces = CompletionLists.getAllInterfaces(myElement.getClass());
             myNavigationElement = (PsiElement)Proxy.newProxyInstance(getClass().getClassLoader(), allInterfaces, new InvocationHandler() {
                 @Nullable
@@ -150,7 +150,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, Navigat
                 }
             });
         }
-        return myElement.isValid() ? myNavigationElement : null;
+        return myElement.isValid() ? myNavigationElement : this;
     }
 
     @Nullable

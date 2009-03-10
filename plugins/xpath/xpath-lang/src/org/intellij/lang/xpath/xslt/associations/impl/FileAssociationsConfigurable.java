@@ -30,7 +30,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -52,7 +52,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
         return IconLoader.findIcon("/icons/association_large.png");
     }
 
-    @Nullable
+    @NotNull
     public String getHelpTopic() {
         return "xslt.associations";
     }

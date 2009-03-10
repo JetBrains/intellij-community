@@ -164,7 +164,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return null;
     }
 
-    @Nullable
+    @NotNull
     @Override
     @SuppressWarnings({ "RawUseOfParameterizedType" })
     public PsiElement getNavigationElement() {
@@ -193,7 +193,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
                 }
             });
         }
-        return myAttribute.isValid() ? myNavigationElement : null;
+        return myAttribute.isValid() ? myNavigationElement : this;
     }
 
 

@@ -44,11 +44,9 @@ public class XsltLanguage extends Language {
     public static final String ID = "$XSLT";
     public static final XsltLanguage INSTANCE = new XsltLanguage();
 
-    private final FindUsagesProvider FIND_USAGES_PROVIDER = new MyFindUsagesProvider();
-
     XsltLanguage() {
         super(ID);
-        LanguageFindUsages.INSTANCE.addExplicitExtension(this, FIND_USAGES_PROVIDER);
+        LanguageFindUsages.INSTANCE.addExplicitExtension(this, new MyFindUsagesProvider());
         LanguageRefactoringSupport.INSTANCE.addExplicitExtension(this, new DefaultRefactoringSupportProvider() {
             @Override
             public boolean doInplaceRenameFor(PsiElement element, PsiElement context) {
