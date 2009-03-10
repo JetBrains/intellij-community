@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.threading;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,12 +24,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "synchronized.on.literal.object.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiType type = (PsiType)infos[0];
@@ -39,11 +40,12 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
                 type.getPresentableText());
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new SynchronizeOnLockVisitor();
+        return new SynchronizeOnLiteralVisitor();
     }
 
-    private static class SynchronizeOnLockVisitor
+    private static class SynchronizeOnLiteralVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitSynchronizedStatement(
@@ -71,20 +73,26 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
         }
 
         public static boolean isNumberOrStringType(PsiExpression expression) {
-          final PsiType type = expression.getType();
-          if (type == null) {
-            return false;
-          }
-          final Project project = expression.getProject();
-          final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-          final PsiClass javaUtilLockClass = JavaPsiFacade.getInstance(project).findClass("java.lang.Number", scope);
-          if (javaUtilLockClass == null) {
-            return false;
-          }
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-          final PsiClassType javaLangNumberType = elementFactory.createType(javaUtilLockClass);
-          return type.equalsToText("java.lang.String") || type.equalsToText("java.lang.Boolean") || type.equalsToText("java.lang.Character") ||
-                 javaLangNumberType.isAssignableFrom(type);
+            final PsiType type = expression.getType();
+            if (type == null) {
+                return false;
+            }
+            final Project project = expression.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiClass javaLangNumberClass =
+                    psiFacade.findClass("java.lang.Number",
+                            expression.getResolveScope());
+            if (javaLangNumberClass == null) {
+                return false;
+            }
+            final PsiElementFactory elementFactory =
+                    psiFacade.getElementFactory();
+            final PsiClassType javaLangNumberType =
+                    elementFactory.createType(javaLangNumberClass);
+            return type.equalsToText("java.lang.String") ||
+                    type.equalsToText("java.lang.Boolean") ||
+                    type.equalsToText("java.lang.Character") ||
+                    javaLangNumberType.isAssignableFrom(type);
         }
     }
 }
