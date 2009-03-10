@@ -153,17 +153,17 @@ public class VariableDefinitions implements GroovyElementTypes {
       if (declarator != WRONGWAY) {
         final boolean wasAssingment = parseAssignment(builder);
 
-        if (declarator == TUPLE) {
+        if (declarator == TUPLE || declarator == TUPLE_ERROR) {
           varAssMarker.drop();
           if (!wasAssingment && !hasModifiers) {
             builder.error(GroovyBundle.message("assignment.expected"));
           }
-        } else if (declarator == mIDENT) { //if (isAssignment) { // a = b, c = d
-          if (isInClass) {
-            varAssMarker.done(FIELD);
-          } else {
-            varAssMarker.done(VARIABLE);
-          }
+        }
+        else if (isInClass) { // a = b, c = d
+          varAssMarker.done(FIELD);
+        }
+        else {
+          varAssMarker.done(VARIABLE);
         }
 
         while (ParserUtils.getToken(builder, mCOMMA)) {
@@ -218,8 +218,8 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       final PsiBuilder.Marker firstVarMarker = builder.mark();
       if (!ParserUtils.getToken(builder, mIDENT)) {
-        tupleMarker.drop();
         firstVarMarker.drop();
+        tupleMarker.drop();
         return WRONGWAY;
       } else {
         firstVarMarker.done(VARIABLE);
@@ -241,7 +241,7 @@ public class VariableDefinitions implements GroovyElementTypes {
             varMarker.drop();
           } else {
             varMarker.done(VARIABLE);
-          }                             
+          }
         }
       }
 
