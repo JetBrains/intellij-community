@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,38 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiSynchronizedStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SynchronizeOnLockInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "SynchroniziationOnLockObject";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "synchronize.on.lock.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
+        final String type = (String)infos[0];
         return InspectionGadgetsBundle.message(
-                "synchronize.on.lock.problem.descriptor");
+                "synchronize.on.lock.problem.descriptor", type);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SynchronizeOnLockVisitor();
     }
@@ -56,23 +61,15 @@ public class SynchronizeOnLockInspection extends BaseInspection {
             if (lockExpression == null) {
                 return;
             }
-            final PsiType type = lockExpression.getType();
-            if (type == null) {
-                return;
+            if (TypeUtils.expressionHasTypeOrSubtype(lockExpression,
+                    "java.util.concurrent.locks.Lock")) {
+                registerError(lockExpression,
+                        "java.util.concurrent.locks.Lock");
+            } else if (TypeUtils.expressionHasTypeOrSubtype(lockExpression,
+                    "java.util.concurrent.locks.ReadWriteLock")) {
+                registerError(lockExpression,
+                        "java.util.concurrent.locks.ReadWriteLock");
             }
-            final Project project = lockExpression.getProject();
-            final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-            final PsiClass javaUtilLockClass =
-                JavaPsiFacade.getInstance(project).findClass("java.util.concurrent.locks.Lock", scope);
-            if (javaUtilLockClass == null) {
-                return;
-            }
-            final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-            final PsiClassType javaUtilLockType = elementFactory.createType(javaUtilLockClass);
-            if (!javaUtilLockType.isAssignableFrom(type)) {
-                return;
-            }
-            registerError(lockExpression);
         }
     }
 }

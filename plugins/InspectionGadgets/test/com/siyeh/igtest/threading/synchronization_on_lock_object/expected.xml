@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SynchronizationOnLockObjectInspection.java</file>
+    <line>15</line>
+    <problem_class>Synchronization on a Lock object</problem_class>
+    <description>Synchronization on a 'java.util.concurrent.locks.Lock' object is unlikely to be intentional #loc</description>
+  </problem>
+
+
+  <problem>
+    <file>SynchronizationOnLockObjectInspection.java</file>
+    <line>17</line>
+    <problem_class>Synchronization on a Lock object</problem_class>
+    <description>Synchronization on a 'java.util.concurrent.locks.ReadWriteLock' object is unlikely to be intentional #loc</description>
+  </problem>
+</problems>
