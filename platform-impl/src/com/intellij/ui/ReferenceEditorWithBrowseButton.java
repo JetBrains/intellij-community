@@ -60,7 +60,7 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
     getEditorTextField().setDocument(document);
     for(DocumentListener listener: myDocumentListeners) {
       document.addDocumentListener(listener);
-      listener.documentChanged(new DocumentEventImpl(document, 0, oldText, text, -1));
+      listener.documentChanged(new DocumentEventImpl(document, 0, oldText, text, -1, false));
     }
   }
 

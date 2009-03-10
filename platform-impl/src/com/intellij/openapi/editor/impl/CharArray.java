@@ -28,7 +28,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myBufferSize = bufferSize;
   }
 
-  protected abstract DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString);
+  protected abstract DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced);
   protected abstract void afterChangedUpdate(DocumentEvent event, long newModificationStamp);
 
   public void replaceText(CharSequence chars) {
@@ -39,8 +39,9 @@ abstract class CharArray implements CharSequenceBackedByArray {
     trimToSize();
   }
 
-  public void replace(int startOffset, int endOffset, CharSequence toDelete, CharSequence newString, long newModificationStamp) {
-    final DocumentEvent event = beforeChangedUpdate(startOffset, toDelete, newString);
+  public void replace(int startOffset, int endOffset, CharSequence toDelete, CharSequence newString, long newModificationStamp,
+                      boolean wholeTextReplaced) {
+    final DocumentEvent event = beforeChangedUpdate(startOffset, toDelete, newString, wholeTextReplaced);
     doReplace(startOffset, endOffset, newString);
     afterChangedUpdate(event, newModificationStamp);
   }
@@ -62,7 +63,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   public void remove(int startIndex, int endIndex, CharSequence toDelete) {
-    DocumentEvent event = beforeChangedUpdate(startIndex, toDelete, null);
+    DocumentEvent event = beforeChangedUpdate(startIndex, toDelete, null, false);
     doRemove(startIndex, endIndex);
     afterChangedUpdate(event, LocalTimeCounter.currentTime());
   }
@@ -80,7 +81,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   public void insert(CharSequence s, int startIndex) {
-    DocumentEvent event = beforeChangedUpdate(startIndex, null, s);
+    DocumentEvent event = beforeChangedUpdate(startIndex, null, s, false);
     doInsert(s, startIndex);
 
     afterChangedUpdate(event, LocalTimeCounter.currentTime());
@@ -149,12 +150,21 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   public char[] getChars() {
-    if (myOriginalSequence != null) return CharArrayUtil.fromSequence(myOriginalSequence);
+    if (myOriginalSequence != null) {
+      if (myArray == null) {
+        myArray = CharArrayUtil.fromSequence(myOriginalSequence);
+      }
+    }
     return myArray;
   }
 
   public void getChars(final char[] dst, final int dstOffset) {
-    System.arraycopy(myArray, 0, dst, dstOffset, length());
+    if (myOriginalSequence != null) {
+      CharArrayUtil.getChars(myOriginalSequence,dst, dstOffset);
+    }
+    else {
+      System.arraycopy(myArray, 0, dst, dstOffset, length());
+    }
   }
 
   public CharSequence substring(int start, int end) {

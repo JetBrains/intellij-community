@@ -18,10 +18,9 @@ package com.intellij.util.diff;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.Enumerator;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dyoma
@@ -32,10 +31,8 @@ public class Diff {
   public static <T> Change buildChanges(T[] objects1, T[] objects2) {
     // Old variant of enumerator worked incorrectly with null values.
     // This check is to ensure that the corrected version does not introduce bugs.
-    for( int i = 0; i < objects1.length; i++ )
-      LOG.assertTrue( objects1[i] != null );
-    for( int i = 0; i < objects2.length; i++ )
-      LOG.assertTrue( objects2[i] != null );
+    for (T anObjects1 : objects1) LOG.assertTrue(anObjects1 != null);
+    for (T anObjects2 : objects2) LOG.assertTrue(anObjects2 != null);
 
     Enumerator<T> enumerator = new Enumerator<T>(objects1.length + objects2.length, TObjectHashingStrategy.CANONICAL);
     int[] ints1 = enumerator.enumerate(objects1);
@@ -76,7 +73,7 @@ public class Diff {
       this.line1 = line1;
       this.inserted = inserted;
       this.deleted = deleted;
-      this.link = old;
+      link = old;
       //System.err.println(line0+","+line1+","+inserted+","+deleted);
     }
 

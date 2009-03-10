@@ -42,8 +42,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private final LineSet myLineSet = new LineSet();
   private final CharArray myText = new CharArray(0) {
-    protected DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString) {
-      return DocumentImpl.this.beforeChangedUpdate(offset, oldString, newString);
+    protected DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
+      return DocumentImpl.this.beforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
     }
 
     protected void afterChangedUpdate(DocumentEvent event, long newModificationStamp) {
@@ -86,9 +86,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public DocumentImpl(String text) {
-    this();
-    assertValidSeparators(text);
-    setChars(text);
+    this((CharSequence)text);
     setModificationStamp(LocalTimeCounter.currentTime());
   }
 
@@ -121,7 +119,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private void setChars(CharSequence chars) {
     myText.replaceText(chars);
-    DocumentEvent event = new DocumentEventImpl(this, 0, null, null, -1);
+    DocumentEvent event = new DocumentEventImpl(this, 0, null, null, -1, true);
     myLineSet.documentCreated(event);
   }
 
@@ -281,7 +279,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public void replaceText(CharSequence chars, long newModificationStamp) {
-    replaceString(0, getTextLength(), chars, newModificationStamp); //TODO: optimization!!!
+    replaceString(0, getTextLength(), chars, newModificationStamp, true); //TODO: optimization!!!
     clearLineModificationFlags();
   }
 
@@ -325,10 +323,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public void replaceString(int startOffset, int endOffset, CharSequence s) {
-    replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime());
+    replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), startOffset==0 && endOffset==getTextLength());
   }
 
-  private void replaceString(int startOffset, int endOffset, CharSequence s, final long newModificationStamp) {
+  private void replaceString(int startOffset, int endOffset, CharSequence s, final long newModificationStamp, boolean wholeTextReplaced) {
     assertBounds(startOffset, endOffset);
 
     assertWriteAccess();
@@ -366,7 +364,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(guard, startOffset, sToDelete.toString(), s.toString());
     }
 
-    myText.replace(startOffset, endOffset, sToDelete, s,newModificationStamp);
+    myText.replace(startOffset, endOffset, sToDelete, s,newModificationStamp, wholeTextReplaced);
   }
 
   private void assertBounds(final int startOffset, final int endOffset) {
@@ -397,7 +395,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private void throwGuardedFragment(RangeMarker guard, int offset, String oldString, String newString) {
     if (myCheckGuardedBlocks > 0 && !myGuardsSuppressed) {
-      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp);
+      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false);
       throw new ReadOnlyFragmentModificationException(event, guard);
     }
   }
@@ -418,8 +416,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myLineSet.clearModificationFlags();
   }
 
-  private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString) {
-    DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp);
+  private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
+    DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
 
     DocumentListener[] listeners = getCachedListeners();
     for (int i = listeners.length - 1; i >= 0; i--) {
@@ -667,19 +665,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public void setText(final CharSequence text) {
-    if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
-      CommandProcessor.getInstance().executeCommand(
-        new Runnable() {
-          public void run() {
-            replaceString(0, getTextLength(), text);
-          }
-        },
-        "file text set",
-        this
-      );
+    Runnable runnable = new Runnable() {
+      public void run() {
+        replaceString(0, getTextLength(), text, LocalTimeCounter.currentTime(), true);
+      }
+    };
+    if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
+      runnable.run();
     }
     else {
-      replaceString(0, getTextLength(), text);
+      CommandProcessor.getInstance().executeCommand(runnable, "file text set", this);
     }
 
     clearLineModificationFlags();

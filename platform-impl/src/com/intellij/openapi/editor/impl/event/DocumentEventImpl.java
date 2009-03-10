@@ -30,7 +30,8 @@ public class DocumentEventImpl extends DocumentEvent {
   private int myOptimizedOldLineShift = -1;
   private boolean myOptimizedOldLineShiftCalculated;
 
-  public DocumentEventImpl(Document document, int offset, CharSequence oldString, CharSequence newString, long oldTimeStamp) {
+  public DocumentEventImpl(Document document, int offset, CharSequence oldString, CharSequence newString, long oldTimeStamp,
+                           boolean wholeTextReplaced) {
     super(document);
     myOffset = offset;
 
@@ -48,19 +49,8 @@ public class DocumentEventImpl extends DocumentEvent {
       myIsWholeDocReplaced = false;
     }
     else {
-      myIsWholeDocReplaced = offset == 0 && document.getTextLength() == myOldLength;
+      myIsWholeDocReplaced = wholeTextReplaced;
     }
-  }
-
-  public DocumentEventImpl(final Document document, int offset, int oldLength, int newLength) {
-    super(document);
-    myOffset = offset;
-    myOldLength = oldLength;
-    myNewLength = newLength;
-    myOldString = null;
-    myNewString = null;
-    myOldTimeStamp = 0;
-    myIsWholeDocReplaced = false;
   }
 
   public int getOffset() {
