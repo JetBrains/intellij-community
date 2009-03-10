@@ -2,15 +2,19 @@ package org.intellij.lang.xpath.xslt;
 
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
-import org.intellij.lang.xpath.xslt.psi.XsltVariable;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.intellij.lang.xpath.xslt.psi.XsltParameter;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /*
 * Created by IntelliJ IDEA.
@@ -43,11 +47,28 @@ public class XsltResolveTest extends TestBase {
         final String name = getTestFileName();
         final PsiReference reference = myFixture.getReferenceAtCaretPositionWithAssertion(name + ".xsl", "included.xsl");
 
-        final PsiElement element = reference.resolve();
-        assertNotNull(element);
+        final PsiElement element = resolveXsltReference(reference);
+        assertNotNull("reference did not resolve to XsltElement: " + reference, element);
 
         assertTrue(element instanceof XsltParameter);
         assertEquals("foo", ((XsltParameter)element).getName());
+    }
+
+    @Nullable
+    private static PsiElement resolveXsltReference(PsiReference reference) {
+        final PsiElement element = reference.resolve();
+        if (element != null) {
+            return element;
+        }
+        if (reference instanceof PsiPolyVariantReference) {
+            final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+            for (ResolveResult result : results) {
+                if (result.isValidResult() && result.getElement() instanceof XsltElement) {
+                    return result.getElement();
+                }
+            }
+        }
+        return null;
     }
 
     private XsltVariable doVariableResolveTest(boolean global) throws Throwable {
