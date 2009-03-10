@@ -14,11 +14,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.*;
@@ -136,37 +133,16 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       assert builder != null;
 
-      return builder.buildStubTree(inputData.getFile(), inputData.getContent(), getProject(inputData));
+      return builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
     }
 
     final LanguageFileType filetype = (LanguageFileType)fileType;
     Language l = filetype.getLanguage();
     final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
-    PsiFile psi = inputData.getUserData(FileBasedIndex.PSI_FILE);
-
-    if (psi == null) {
-      psi = PsiFileFactory.getInstance(getProject(inputData)).createFileFromText(
-        inputData.getFileName(),
-        filetype,
-        inputData.getContentAsText(),
-        1,
-        false,
-        false
-      );
-
-      psi.putUserData(FileBasedIndex.VIRTUAL_FILE, inputData.getFile());
-    }
+    PsiFile psi = inputData.getPsiFile();
 
     return ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
-  }
-
-  private static Project getProject(final FileContent inputData) {
-    Project project = inputData.getUserData(FileBasedIndex.PROJECT);
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    return project;
   }
 
   public KeyDescriptor<Integer> getKeyDescriptor() {

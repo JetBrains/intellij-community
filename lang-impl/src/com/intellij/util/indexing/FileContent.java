@@ -3,8 +3,12 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.UnsupportedEncodingException;
@@ -21,6 +25,35 @@ public final class FileContent extends UserDataHolderBase {
   private Charset myCharset;
   private byte[] myContent;
   private CharSequence myContentAsText = null;
+
+  public Project getProject() {
+    Project project = getUserData(FileBasedIndex.PROJECT);
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    return project;
+  }
+
+  /**
+   * @return psiFile associated with the content. If the file was not set on FileContentCreation, it will be created on the spot
+   */
+  public PsiFile getPsiFile() {
+    PsiFile psi = getUserData(FileBasedIndex.PSI_FILE);
+
+    if (psi == null) {
+      psi = PsiFileFactory.getInstance(getProject()).createFileFromText(
+        getFileName(),
+        getFileType(),
+        getContentAsText(),
+        1,
+        false,
+        false
+      );
+
+      psi.putUserData(FileBasedIndex.VIRTUAL_FILE, getFile());
+    }
+    return psi;
+  }
 
   public static class IllegalDataException extends RuntimeException{
     public IllegalDataException(final String message) {
