@@ -17,6 +17,7 @@ public class DummyHolder extends PsiFileImpl {
   private final Boolean myExplicitlyValid;
   private final Language myLanguage;
   private volatile FileElement myFileElement = null;
+  private final Object myTreeElementLock = new String("DummyHolder's tree element lock");
 
   public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
     this(manager, contentElement, context, SharedImplUtil.findCharTableByTree(contentElement));
@@ -85,7 +86,7 @@ public class DummyHolder extends PsiFileImpl {
   public FileElement getTreeElement() {
     if (myFileElement != null) return myFileElement;
 
-    synchronized (PsiLock.LOCK) {
+    synchronized (myTreeElementLock) {
       return getTreeElementNoLock();
     }
   }

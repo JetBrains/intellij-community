@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -45,10 +44,10 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public ASTNode getNode() {
     ASTNode node = myNode;
     if (node == null) {
-      synchronized (PsiLock.LOCK) {
+      PsiFileImpl file = (PsiFileImpl)getContainingFile();
+      synchronized (file.getStubLock()) {
         node = myNode;
         if (node == null) {
-          PsiFileImpl file = (PsiFileImpl)getContainingFile();
           if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
           assert file.getTreeElement() == null;
           file.loadTreeElement();

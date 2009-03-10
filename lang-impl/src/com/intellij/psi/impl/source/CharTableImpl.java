@@ -18,6 +18,7 @@ public class CharTableImpl implements CharTable {
     if (text.length() > INTERN_THRESHOLD) return createSequence(text);
     int idx;
 
+    /*
     synchronized(staticEntries) {
       idx = staticEntries.index(text);
       if (idx >= 0) {
@@ -25,6 +26,7 @@ public class CharTableImpl implements CharTable {
         return staticEntries.get(idx);
       }
     }
+    */
 
     synchronized(this) {
       idx = entries.index(text);
