@@ -44,7 +44,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
   }
 
   public CharSequence subSequence(int start, int end) {
-    return new CharArrayCharSequence(myChars, myStart + start, myStart + end);
+    return start == 0 && end == length() ? this : new CharArrayCharSequence(myChars, myStart + start, myStart + end);
   }
 
   public String toString() {

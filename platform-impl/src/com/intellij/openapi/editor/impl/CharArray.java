@@ -41,9 +41,24 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
   public void replace(int startOffset, int endOffset, CharSequence toDelete, CharSequence newString, long newModificationStamp) {
     final DocumentEvent event = beforeChangedUpdate(startOffset, toDelete, newString);
-    doRemove(startOffset,endOffset);
-    doInsert(newString, startOffset);
+    doReplace(startOffset, endOffset, newString);
     afterChangedUpdate(event, newModificationStamp);
+  }
+
+  private void doReplace(int startOffset, int endOffset, CharSequence newString) {
+    prepareForModification();
+
+    int newLength = newString.length();
+    int oldLength = endOffset - startOffset;
+
+    CharArrayUtil.getChars(newString, myArray, startOffset, Math.min(newLength, oldLength));
+
+    if (newLength > oldLength) {
+      doInsert(newString.subSequence(oldLength, newLength), endOffset);
+    }
+    else if (newLength < oldLength) {
+      doRemove(startOffset + newLength, startOffset + oldLength);
+    }
   }
 
   public void remove(int startIndex, int endIndex, CharSequence toDelete) {
@@ -81,11 +96,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
       System.arraycopy(myArray, startIndex, myArray, startIndex + insertLength, myCount - startIndex);
     }
     
-    if (s instanceof String) {
-      ((String)s).getChars(0,insertLength,myArray,startIndex);
-    } else {
-      CharArrayUtil.getChars(s, myArray,startIndex);
-    }
+    CharArrayUtil.getChars(s, myArray,startIndex);
     myCount += insertLength;
   }
 
