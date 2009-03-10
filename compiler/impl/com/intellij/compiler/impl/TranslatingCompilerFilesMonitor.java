@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -650,7 +651,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       if (file.isDirectory()) {
         if (dbOnly) {
           for (VirtualFile child : ((NewVirtualFile)file).getInDbChildren()) {
-            processRecursively(child, true, processor);
+            if (NullVirtualFile.INSTANCE != child) {
+              processRecursively(child, true, processor);
+            }
           }
         }
         else {
