@@ -27,7 +27,7 @@ public class NamedTemplateMatcher extends TemplateMatcher {
 
     public NamedTemplateMatcher(XmlDocument document, String name) {
         super(document);
-        this.myName = name;
+        myName = name;
     }
 
     protected boolean matches (XmlTag element) {
