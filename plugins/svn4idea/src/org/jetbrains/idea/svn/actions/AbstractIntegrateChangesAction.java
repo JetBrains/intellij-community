@@ -5,31 +5,29 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SelectedCommittedStuffChecker;
 import org.jetbrains.idea.svn.integrate.SvnIntegrateChangesActionPerformer;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-public abstract class AbstractIntegrateChangesAction extends AnAction {
-  protected final SelectedCommittedStuffChecker myChecker;
+public abstract class AbstractIntegrateChangesAction<T extends SelectedCommittedStuffChecker> extends AnAction {
   private final boolean myCheckUseCase;
 
-  protected AbstractIntegrateChangesAction(final SelectedCommittedStuffChecker checker, final boolean checkUseCase) {
-    myChecker = checker;
+  protected AbstractIntegrateChangesAction(final boolean checkUseCase) {
     myCheckUseCase = checkUseCase;
   }
 
-  public List<CommittedChangeList> getSelectedLists() {
-    return myChecker.getSelectedLists();
-  }
+  @NotNull
+  protected abstract MergerFactory createMergerFactory(final T checker);
+  @NotNull
+  protected abstract T createChecker();
 
-  public void update(final AnActionEvent e) {
+  public final void update(final AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     final CommittedChangesBrowserUseCase useCase = (CommittedChangesBrowserUseCase) e.getDataContext().
-        getData(CommittedChangesBrowserUseCase.CONTEXT_NAME);
+      getData(CommittedChangesBrowserUseCase.CONTEXT_NAME);
     final Presentation presentation = e.getPresentation();
 
     if ((project == null) || (myCheckUseCase) && ((useCase == null) || (! CommittedChangesBrowserUseCase.COMMITTED.equals(useCase)))) {
@@ -41,21 +39,27 @@ public abstract class AbstractIntegrateChangesAction extends AnAction {
     presentation.setText(SvnBundle.message("action.Subversion.integrate.changes.actionname"));
     presentation.setDescription(SvnBundle.message("action.Subversion.integrate.changes.description"));
 
-    myChecker.execute(e);
+    final T checker = createChecker();
+    checker.execute(e);
 
     presentation.setVisible(true);
-    presentation.setEnabled(myChecker.isValid());
+    presentation.setEnabled(checker.isValid());
 
     if (presentation.isVisible() && presentation.isEnabled() &&
         ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()) {
       presentation.setEnabled(false);
     }
+
+    updateWithChecker(e, checker);
+  }
+
+  protected void updateWithChecker(final AnActionEvent e, SelectedCommittedStuffChecker checker) {
   }
 
   @Nullable
-  protected abstract String getSelectedBranchUrl();
+  protected abstract String getSelectedBranchUrl(SelectedCommittedStuffChecker checker);
   @Nullable
-  protected abstract String getSelectedBranchLocalPath();
+  protected abstract String getSelectedBranchLocalPath(SelectedCommittedStuffChecker checker);
   @Nullable
   protected abstract String getDialogTitle();
 
@@ -63,23 +67,24 @@ public abstract class AbstractIntegrateChangesAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
-    myChecker.execute(e);
+    final T checker = createChecker();
+    checker.execute(e);
 
-    if (! myChecker.isValid()) {
+    if (! checker.isValid()) {
       Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.no.available.files.text"),
                                SvnBundle.message("action.Subversion.integrate.changes.messages.title"));
       return;
     }
 
     final SvnIntegrateChangesActionPerformer changesActionPerformer =
-      new SvnIntegrateChangesActionPerformer(project, myChecker.getSameBranch(), myChecker.createFactory());
+      new SvnIntegrateChangesActionPerformer(project, checker.getSameBranch(), createMergerFactory(checker));
 
-    final String selectedBranchUrl = getSelectedBranchUrl();
+    final String selectedBranchUrl = getSelectedBranchUrl(checker);
     if (selectedBranchUrl == null) {
-      SelectBranchPopup.showForBranchRoot(project, myChecker.getRoot(), changesActionPerformer,
-                                       SvnBundle.message("action.Subversion.integrate.changes.select.branch.text"));
+      SelectBranchPopup.showForBranchRoot(project, checker.getRoot(), changesActionPerformer,
+                                          SvnBundle.message("action.Subversion.integrate.changes.select.branch.text"));
     } else {
-      changesActionPerformer.onBranchSelected(selectedBranchUrl, getSelectedBranchLocalPath(), getDialogTitle());
+      changesActionPerformer.onBranchSelected(selectedBranchUrl, getSelectedBranchLocalPath(checker), getDialogTitle());
     }
   }
 }

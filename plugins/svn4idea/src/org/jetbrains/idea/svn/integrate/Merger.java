@@ -2,9 +2,10 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -35,11 +36,10 @@ public class Merger {
   protected final SVNURL myCurrentBranchUrl;
   private final StringBuilder myCommitMessage;
   protected final SvnConfiguration mySvnConfig;
-  private final Consumer<List<CommittedChangeList>> myAfterProcessing;
+  private final Project myProject;
 
-  public Merger(final SvnVcs vcs, final List<CommittedChangeList> changeLists, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl,
-                final Consumer<List<CommittedChangeList>> afterProcessing) {
-    myAfterProcessing = afterProcessing;
+  public Merger(final SvnVcs vcs, final List<CommittedChangeList> changeLists, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
+    myProject = vcs.getProject();
     mySvnConfig = SvnConfiguration.getInstanceChecked(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
     myDiffClient = vcs.createDiffClient();
@@ -150,8 +150,13 @@ public class Merger {
   }
 
   protected void afterProcessing() {
-    if (myAfterProcessing != null) {
-      myAfterProcessing.consume(new ArrayList<CommittedChangeList>(myChangeLists.subList(0, myCount))); 
-    }
+    myProject.getMessageBus().syncPublisher(COMMITTED_CHANGES_MERGED_STATE).event(new ArrayList<CommittedChangeList>(myChangeLists.subList(0, myCount)));
+  }
+
+  public static final Topic<CommittedChangesMergedStateChanged> COMMITTED_CHANGES_MERGED_STATE =
+    new Topic<CommittedChangesMergedStateChanged>("COMMITTED_CHANGES_MERGED_STATE", CommittedChangesMergedStateChanged.class);
+
+  public interface CommittedChangesMergedStateChanged {
+    void event(final List<CommittedChangeList> list);
   }
 }

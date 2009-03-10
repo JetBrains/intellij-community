@@ -16,7 +16,6 @@ public interface SelectedCommittedStuffChecker {
 
   VirtualFile getRoot();
 
-  MergerFactory createFactory();
-
   List<CommittedChangeList> getSelectedLists();
+
 }

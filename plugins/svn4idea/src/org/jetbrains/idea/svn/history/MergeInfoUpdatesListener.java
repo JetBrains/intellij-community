@@ -4,12 +4,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 
@@ -61,6 +63,16 @@ public class MergeInfoUpdatesListener {
           doForEachInitialized(new Consumer<RootsAndBranches>() {
             public void consume(final RootsAndBranches rootsAndBranches) {
               rootsAndBranches.fireRepaint();
+            }
+          });
+        }
+      });
+
+      myConnection.subscribe(Merger.COMMITTED_CHANGES_MERGED_STATE, new Merger.CommittedChangesMergedStateChanged() {
+        public void event(final List<CommittedChangeList> list) {
+          doForEachInitialized(new Consumer<RootsAndBranches>() {
+            public void consume(RootsAndBranches rootsAndBranches) {
+              rootsAndBranches.refreshByLists(list);
             }
           });
         }
