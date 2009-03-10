@@ -1,4 +1,4 @@
-package com.siyeh.igtest.confusing;
+package com.siyeh.igtest.numeric.confusing_floating_point_literal;
 
 public class ConfusingFloatingPointLiteralInspection
 {
@@ -15,4 +15,9 @@ public class ConfusingFloatingPointLiteralInspection
     float baz3f = 0.0e6f;
     float foof = 3.0f;
     float barangus2f = .03f;
-    float barangusf = 3.f;}
+    float barangusf = 3.f;
+
+    double good = 0x1.0p10;
+    double plusGood = 0x1.0p10d;
+    float orDrown = 0x.1p1f;
+}
