@@ -68,8 +68,18 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
 
     @NotNull
     @Override
-    public SearchScope getUseScope() {
-        return XsltSupport.isTopLevelElement(getTag()) ? super.getUseScope() : new LocalSearchScope(getTag().getParentTag());
+    public final SearchScope getUseScope() {
+        return XsltSupport.isTopLevelElement(getTag()) ? getDefaultUseScope() : getLocalUseScope();
+    }
+
+    @NotNull
+    protected SearchScope getLocalUseScope() {
+        return new LocalSearchScope(getTag().getParentTag());
+    }
+
+    @NotNull
+    protected SearchScope getDefaultUseScope() {
+        return super.getUseScope();
     }
 
     @Override
