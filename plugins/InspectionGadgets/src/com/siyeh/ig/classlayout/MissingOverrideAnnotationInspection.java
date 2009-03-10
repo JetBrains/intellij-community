@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class MissingOverrideAnnotationInspection extends BaseInspection {
+
+    @Override
     @NotNull
     public String getID() {
         return "override";
@@ -38,6 +40,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
                 "missing.override.annotation.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -105,8 +108,9 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             if(!PsiUtil.isLanguageLevel5OrHigher(method)){
                 return;
             }
-          boolean useJdk6Rules = PsiUtil.isLanguageLevel6OrHigher(method);
-          if(useJdk6Rules){
+            final boolean useJdk6Rules =
+                    PsiUtil.isLanguageLevel6OrHigher(method);
+            if(useJdk6Rules){
                 if(!isJdk6Override(method)){
                     return;
                 }
@@ -139,6 +143,9 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             // overriding a protected method in java.lang.Object
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6501053
             final PsiClass methodClass = method.getContainingClass();
+            if (methodClass == null) {
+                return false;
+            }
             if (!methodClass.isInterface()) {
                 return true;
             }
@@ -153,8 +160,14 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
         private static boolean isJdk5Override(PsiMethod method){
             final PsiMethod[] superMethods = method.findSuperMethods();
             final PsiClass methodClass = method.getContainingClass();
+            if (methodClass == null) {
+                return false;
+            }
             for (PsiMethod superMethod : superMethods) {
                 final PsiClass superClass = superMethod.getContainingClass();
+                if (superClass == null) {
+                    continue;
+                }
                 if (superClass.isInterface()) {
                     continue;
                 }
