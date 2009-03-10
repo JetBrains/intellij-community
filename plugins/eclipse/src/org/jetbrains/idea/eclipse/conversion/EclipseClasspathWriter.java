@@ -20,6 +20,7 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -227,8 +228,8 @@ public class EclipseClasspathWriter {
     }
   }
 
-  private String stripIDEASpecificPrefix(String path, String [] kind) {
-    String stripped = StringUtil.strip(ProjectRootManagerImpl.extractLocalPath(PathMacroManager.getInstance(myModel.getModule()).collapsePath(path)),
+  private static String stripIDEASpecificPrefix(String path, String [] kind) {
+    String stripped = StringUtil.strip(ProjectRootManagerImpl.extractLocalPath(PathMacroManager.getInstance(ApplicationManager.getApplication()).collapsePath(path)),
                                              new CharFilter() {
                                                public boolean accept(final char ch) {
                                                  return ch != '$';
