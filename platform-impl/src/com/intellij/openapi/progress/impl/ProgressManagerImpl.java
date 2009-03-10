@@ -80,6 +80,43 @@ public class ProgressManagerImpl extends ProgressManager {
     }
   }
 
+  private static class NonCancelableIndicator extends EmptyProgressIndicator implements NonCancelableSection {
+    private ProgressIndicator myOld;
+
+    public NonCancelableIndicator(ProgressIndicator old) {
+      myOld = old;
+    }
+
+    public void done() {
+      ProgressIndicator currentIndicator = myThreadIndicator.get();
+      if (currentIndicator != this) {
+        throw new AssertionError("Trying do .done() NonCancelableSection, which is already done");
+      }
+
+      myThreadIndicator.set(myOld);
+    }
+
+    @Override
+    public void checkCanceled() {
+    }
+  }
+
+  public NonCancelableSection startNonCancelableSection() {
+    NonCancelableIndicator nonCancelor = new NonCancelableIndicator(myThreadIndicator.get());
+    myThreadIndicator.set(nonCancelor);
+    return nonCancelor;
+  }
+
+  public void executeNonCancelableSection(Runnable r) {
+    NonCancelableSection nonCancelor = startNonCancelableSection();
+    try {
+      r.run();
+    }
+    finally {
+      nonCancelor.done();
+    }
+  }
+
   public JComponent getProvidedFunComponent(Project project, String processId) {
     for (ProgressFunComponentProvider provider : myFunComponentProviders) {
       JComponent cmp = provider.getProgressFunComponent(project, processId);

@@ -4,6 +4,7 @@
 package com.intellij.extapi.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -48,12 +49,18 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       synchronized (file.getStubLock()) {
         node = myNode;
         if (node == null) {
-          if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
-          assert file.getTreeElement() == null;
-          file.loadTreeElement();
-          node = myNode;
-          assert node != null: "failed to bind stub to AST for element " + getClass() + " in " +
-                          (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath());
+          NonCancelableSection criticalSection = ProgressManager.getInstance().startNonCancelableSection();
+          try {
+            if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
+            assert file.getTreeElement() == null;
+            file.loadTreeElement();
+            node = myNode;
+            assert node != null: "failed to bind stub to AST for element " + getClass() + " in " +
+                            (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath());
+          }
+          finally {
+            criticalSection.done();
+          }
         }
       }
     }

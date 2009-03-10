@@ -44,6 +44,9 @@ public abstract class ProgressManager {
   public abstract void removeFunComponentProvider(ProgressFunComponentProvider provider);
   public abstract JComponent getProvidedFunComponent(Project project, @NonNls String processId);
 
+  public abstract void executeNonCancelableSection(Runnable r);
+  public abstract NonCancelableSection startNonCancelableSection(); 
+
   public abstract void setCancelButtonText(String cancelButtonText);
 
 
