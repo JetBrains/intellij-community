@@ -27,8 +27,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
@@ -178,7 +180,27 @@ public class FileBasedIndex implements ApplicationComponent {
       }
 
       myChangedFilesUpdater = new ChangedFilesUpdater();
-      vfManager.addVirtualFileListener(myChangedFilesUpdater);
+      //vfManager.addVirtualFileListener(myChangedFilesUpdater);
+      connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(myChangedFilesUpdater) {
+        public void before(final List<? extends VFileEvent> events) {
+          if (ApplicationManager.getApplication().isDispatchThread()) {
+            new Task.Modal(null, "Preparing index invalidation...", false) {
+              public void run(@NotNull ProgressIndicator indicator) {
+                indicator.setIndeterminate(true);
+                deliverBeforeEvents(events);
+              }
+            }.queue();
+          }
+          else {
+            deliverBeforeEvents(events);
+          }
+        }
+
+        private void deliverBeforeEvents(List<? extends VFileEvent> events) {
+          super.before(events);
+        }
+      });
+
       vfManager.registerRefreshUpdater(myChangedFilesUpdater);
       myFileContentAttic = new FileContentStorage(new File(PathManager.getIndexRoot(), "updates.tmp"));
     }
@@ -303,7 +325,7 @@ public class FileBasedIndex implements ApplicationComponent {
       index.dispose();
     }
 
-    myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
+    //myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
     myVfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
 
     FileUtil.delete(getMarkerFile());
