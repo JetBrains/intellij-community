@@ -106,7 +106,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   private static boolean shallNotWatch() {
-    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
+    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment() || Boolean.getBoolean("do.not.watch.threads");
   }
 
   private void checkEDTResponsiveness() {
