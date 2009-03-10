@@ -117,17 +117,18 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
 
         final String oldEmlName = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-        if (documentSet.exists(oldEmlName)) {
-          final String root = documentSet.getParent(oldEmlName);
-          final File source = new File(root, oldEmlName);
+
+        final String root = documentSet.getParent(oldEmlName);
+        final File source = new File(root, oldEmlName);
+        if (source.exists()) {
           final File target = new File(root, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
           FileUtil.rename(source, target);
           LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
-          final CachedXmlDocumentSet fileCache = getFileCache(module);
-          fileCache.delete(oldEmlName);
-          fileCache.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
-          fileCache.load(newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
         }
+        final CachedXmlDocumentSet fileCache = getFileCache(module);
+        fileCache.delete(oldEmlName);
+        fileCache.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
+        fileCache.load(newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
       }
       catch (IOException ignore) {
       }

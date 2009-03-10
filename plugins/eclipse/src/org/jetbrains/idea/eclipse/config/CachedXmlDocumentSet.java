@@ -132,7 +132,7 @@ public class CachedXmlDocumentSet implements FileSet {
     modifiedContent.remove(name);
     savedContent.remove(name);
     deletedContent.add(name);
-    nameToDir.remove(name);
+    //nameToDir.remove(name);
   }
 
   public void listFiles(final List<VirtualFile> list) {
