@@ -35,7 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
         file = "$APP_CONFIG$/keymap.xml"
     )}
 )
-public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableComponent {
+public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");
 
@@ -257,4 +257,8 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   public String getComponentName() {
     return "KeymapManager";
   }
+
+  public void initComponent() {}
+
+  public void disposeComponent() {}
 }
