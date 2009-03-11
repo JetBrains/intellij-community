@@ -26,7 +26,7 @@ public final class IdeMouseEventDispatcher{
   private final PresentationFactory myPresentationFactory;
   private final ArrayList<AnAction> myActions;
 
-  private final Map<Container, Point> myRootPane2BlockedPoint = new HashMap<Container, Point>();
+  private final Map<Container, Integer> myRootPane2BlockedId = new HashMap<Container, Integer>();
 
   public IdeMouseEventDispatcher(){
     myPresentationFactory=new PresentationFactory();
@@ -86,6 +86,12 @@ public final class IdeMouseEventDispatcher{
    * to normal event dispatching.
    */
   public boolean dispatchMouseEvent(MouseEvent e){
+    if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
+          e.getID() == MouseEvent.MOUSE_RELEASED ||
+          e.getID() == MouseEvent.MOUSE_CLICKED)) return false;
+
+
+    boolean toIgnore = false;
     if(
       e.isConsumed()||
       e.isPopupTrigger()||
@@ -93,8 +99,9 @@ public final class IdeMouseEventDispatcher{
       e.getClickCount()<1  ||// TODO[vova,anton] is it possible. it seems that yes! but how???
       e.getButton() == MouseEvent.NOBUTTON // See #16995. It did happen
     ){
-      return false;
+      toIgnore = true;
     }
+
 
     Window window = e.getComponent() instanceof Window ? (Window)e.getComponent() : SwingUtilities.getWindowAncestor(e.getComponent());
     JRootPane root = null;
@@ -105,17 +112,18 @@ public final class IdeMouseEventDispatcher{
     }
     
     if (root != null) {
-      final Point toBlock = myRootPane2BlockedPoint.get(root);
-      if (toBlock != null) {
-        final Point currentPoint = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), root);
-        if (currentPoint.equals(toBlock)) {
-          return false;
+      final Integer lastId = myRootPane2BlockedId.get(root);
+      if (lastId != null) {
+        if (e.getID() <= lastId.intValue()) {
+          myRootPane2BlockedId.remove(root);
         } else {
-          myRootPane2BlockedPoint.remove(root);
+          myRootPane2BlockedId.put(root, e.getID());
+          return false;
         }
       }
     }
 
+    if (toIgnore) return false;
 
     Component component=e.getComponent();
     if(component==null){
@@ -164,6 +172,6 @@ public final class IdeMouseEventDispatcher{
     final JRootPane root = c.getRootPane();
     if (root == null) return;
 
-    myRootPane2BlockedPoint.put(root, SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), root));
+    myRootPane2BlockedId.put(root, e.getID());
   }
 }

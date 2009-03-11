@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -273,10 +274,11 @@ final class EditorTabbedContainer implements Disposable {
 
   private class TabMouseListener extends MouseAdapter {
     @Override
-    public void mouseClicked(final MouseEvent e) {
-      if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_CLICKED)) {
+    public void mousePressed(final MouseEvent e) {
+      if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) {
         final TabInfo info = myTabs.findInfo(e);
         if (info != null) {
+          IdeEventQueue.getInstance().blockNextEvents(e);
           myWindow.closeFile((VirtualFile)info.getObject());
           return;
         }
