@@ -137,8 +137,8 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
             PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
     }
 
-    protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
-      final DaemonCodeAnalyzerStatus status = super.getDaemonCodeAnalyzerStatus();
+    protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount) {
+      final DaemonCodeAnalyzerStatus status = super.getDaemonCodeAnalyzerStatus(fillErrorsCount);
       if (status != null && isInspectionCompleted()) {
         status.errorAnalyzingFinished = true;
         for (final DaemonCodeAnalyzerStatus.PassStatus passStatus : status.passStati) {
@@ -148,15 +148,18 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
       return status;
     }
 
-    protected int getErrorsCount(final HighlightSeverity minSeverity) {
-      int sum = 0;
-      for (DomElement element : myDomElements) {
-        final DomElementsProblemsHolder holder = myAnnotationsManager.getCachedProblemHolder(element);
-        sum += (SeverityRegistrar.getInstance(getProject()).compare(minSeverity, HighlightSeverity.WARNING) >= 0
-                ? holder.getProblems(element, true, true)
-                : holder.getProblems(element, true, minSeverity)).size();
+    @Override
+    protected void fillDaemonCodeAnalyzerErrorsSatus(DaemonCodeAnalyzerStatus status, boolean fillErrorsCount) {
+      for (int i = 0; i < status.errorCount.length; i++) {
+        final HighlightSeverity minSeverity = SeverityRegistrar.getInstance(myProject).getSeverityByIndex(i);
+        int sum = 0;
+        for (DomElement element : myDomElements) {
+          final DomElementsProblemsHolder holder = myAnnotationsManager.getCachedProblemHolder(element);
+          sum += (SeverityRegistrar.getInstance(getProject()).compare(minSeverity, HighlightSeverity.WARNING) >= 0 ? holder
+            .getProblems(element, true, true) : holder.getProblems(element, true, minSeverity)).size();
+        }
+        status.errorCount[i] = sum;
       }
-      return sum;
     }
 
     protected boolean isInspectionCompleted() {

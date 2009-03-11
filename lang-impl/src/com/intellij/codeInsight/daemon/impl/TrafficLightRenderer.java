@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer {
@@ -71,7 +71,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   }
 
   @Nullable
-  protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
+  protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount) {
     if (myFile == null || myProject.isDisposed() || !myDaemonCodeAnalyzer.isHighlightingAvailable(myFile)) return null;
 
     ArrayList<String> noInspectionRoots = new ArrayList<String>();
@@ -89,13 +89,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     status.noInspectionRoots = noInspectionRoots.isEmpty() ? null : noInspectionRoots.toArray(new String[noInspectionRoots.size()]);
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : noHighlightingRoots.toArray(new String[noHighlightingRoots.size()]);
 
-    status.errorCount = new int[SeverityRegistrar.getInstance(myProject).getSeveritiesCount()];
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(myProject);
+    status.errorCount = new int[severityRegistrar.getSeveritiesCount()];
     status.rootsNumber = roots.length;
-
-    for (int i = 0; i < status.errorCount.length; i++) {
-      final HighlightSeverity minSeverity = SeverityRegistrar.getInstance(myProject).getSeverityByIndex(i);
-      status.errorCount[i] = getErrorsCount(minSeverity);
-    }
+    fillDaemonCodeAnalyzerErrorsSatus(status, fillErrorsCount);
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myFile);
     ArrayList<DaemonCodeAnalyzerStatus.PassStatus> passStati = new ArrayList<DaemonCodeAnalyzerStatus.PassStatus>();
     for (TextEditorHighlightingPass tepass : passes) {
@@ -113,8 +110,55 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     return status;
   }
 
-  protected int getErrorsCount(final HighlightSeverity minSeverity) {
-    return DaemonCodeAnalyzerImpl.getHighlights(myDocument, minSeverity, myProject).length;
+  protected void fillDaemonCodeAnalyzerErrorsSatus(DaemonCodeAnalyzerStatus status, boolean fillErrorsCount) {
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(myProject);
+    List<HighlightInfo> highlights = DaemonCodeAnalyzerImpl.getHighlights(myDocument, myProject);
+    if (highlights == null) highlights = Arrays.asList(HighlightInfo.EMPTY_ARRAY);
+    if (fillErrorsCount) {
+      highlights = new ArrayList<HighlightInfo>(highlights);
+      Collections.sort(highlights, new Comparator<HighlightInfo>() {
+        public int compare(HighlightInfo o1, HighlightInfo o2) {
+          return o1.getSeverity().myVal - o2.getSeverity().myVal;
+        }
+      });
+
+      int severityIdx = 0;
+      int currentSeverity = severityRegistrar.getSeverityByIndex(0).myVal;
+      int currentSeverityCount = 0;
+      for (HighlightInfo highlight : highlights) {
+        final HighlightSeverity severity = highlight.getSeverity();
+        if (severity.myVal == currentSeverity) {
+          currentSeverityCount++;
+        }
+        else if (severity.myVal > currentSeverity) {
+          status.errorCount[severityIdx] = currentSeverityCount;
+          currentSeverityCount = 1;
+          severityIdx = severityRegistrar.getSeverityIdx(severity);
+          currentSeverity = severityRegistrar.getSeverityByIndex(severityIdx).myVal;
+        }
+      }
+      status.errorCount[severityIdx] = currentSeverityCount;
+    }
+    else {
+      HighlightSeverity severity = null;
+      final int count = severityRegistrar.getSeveritiesCount() - 1;
+      HighlightSeverity maxSeverity = severityRegistrar.getSeverityByIndex(count);
+      for (HighlightInfo info : highlights) {
+        if (info.getSeverity() == maxSeverity) {
+          status.errorCount[count] = 1;
+          return;
+        }
+        if (severity == null || severityRegistrar.compare(severity, info.getSeverity()) <= 0) {
+          severity = info.getSeverity();
+        }
+      }
+      if (severity != null) {
+        final int severityIdx = severityRegistrar.getSeverityIdx(severity);
+        if (severityIdx != -1) {
+          status.errorCount[severityIdx] = 1;
+        }
+      }
+    }
   }
 
   public final Project getProject() {
@@ -129,7 +173,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   }
 
   public String getTooltipMessage() {
-    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus();
+    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(true);
 
     if (status == null) return null;
     @NonNls String text = HTML_HEADER;
@@ -221,7 +265,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
   }
 
   private Icon getIcon() {
-    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus();
+    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(false);
 
     if (status == null) {
       return NO_ICON;

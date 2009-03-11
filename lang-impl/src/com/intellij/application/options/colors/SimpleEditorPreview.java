@@ -54,7 +54,7 @@ public class SimpleEditorPreview implements PreviewPanel{
     myEditor = (EditorEx)createEditor(extractant2.cutDefinedTags(text), 10, 3, -1);
 
     ErrorStripeRenderer renderer = new TrafficLightRenderer(null,null,null,null){
-      protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
+      protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount) {
         DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
         status.errorAnalyzingFinished = true;
         status.passStati = new ArrayList<DaemonCodeAnalyzerStatus.PassStatus>();
