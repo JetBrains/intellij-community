@@ -148,26 +148,26 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       public void actionPerformed(ActionEvent e) {
         shiftFocus(-1);
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), WHEN_FOCUSED);
 
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         shiftFocus(1);
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), WHEN_FOCUSED);
 
 
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         shiftFocus(-myModel.getSelectedIndex());
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), WHEN_FOCUSED);
 
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         shiftFocus(myModel.size() - 1 - myModel.getSelectedIndex());
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), WHEN_FOCUSED);
 
 
     registerKeyboardAction(new ActionListener() {
@@ -176,7 +176,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           ctrlClick(myModel.getSelectedIndex());
         }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), WHEN_FOCUSED);
 
     final ActionListener dblClickAction = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -186,7 +186,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       }
     };
 
-    registerKeyboardAction(dblClickAction, KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), JComponent.WHEN_FOCUSED);
+    registerKeyboardAction(dblClickAction, KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), WHEN_FOCUSED);
 
     registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -198,14 +198,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           doubleClick(myModel.getSelectedIndex());
         }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_FOCUSED);
 
     registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         myModel.setSelectedIndex(-1);
         ToolWindowManager.getInstance(project).activateEditorComponent();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_FOCUSED);
 
     addFocusListener(new FocusListener() {
       public void focusGained(final FocusEvent e) {}
@@ -253,7 +253,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void selectLast() {
     if (myModel.getSelectedIndex() == -1 && !myModel.isEmpty()) {
       myModel.setSelectedIndex(myModel.size() - 1);
-      myList.get(myModel.getSelectedIndex()).requestFocusInWindow();
+      IdeFocusManager.getInstance(myProject).requestFocus(myList.get(myModel.getSelectedIndex()), true);
     }
   }
 
@@ -446,7 +446,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       public void mouseClicked(MouseEvent e) {
         if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2) {
           myModel.setSelectedIndex(index);
-          requestFocusInWindow();
+          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
           doubleClick(index);
           e.consume();
         }
@@ -469,7 +469,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       private void click(final MouseEvent e) {
         if (!e.isConsumed() && e.isPopupTrigger()) {
           myModel.setSelectedIndex(index);
-          requestFocusInWindow();
+          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
           rightClick(index);
           e.consume();
         }
@@ -561,7 +561,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         siblings[i] = objects.get(i);
         icons[i] = NavBarModel.getIcon(siblings[i]);
       }
-      final NavBarPanel.MyCompositeLabel item = getItem(index);
+      final MyCompositeLabel item = getItem(index);
       LOG.assertTrue(item != null);
       final BaseListPopupStep<Object> step = new BaseListPopupStep<Object>("", siblings, icons) {
         public boolean isSpeedSearchEnabled() { return true; }
@@ -578,7 +578,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
               }
             });
           }
-          return PopupStep.FINAL_CHOICE;
+          return FINAL_CHOICE;
         }
         public void canceled() {
           super.canceled();
@@ -606,28 +606,28 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       });
 
       ListenerUtil.addMouseListener(myNodePopup.getComponent(), new MouseAdapter() {
-      public void mouseReleased(final MouseEvent e) {
-        if (SystemInfo.isWindows) {
-          click(e);
+        public void mouseReleased(final MouseEvent e) {
+          if (SystemInfo.isWindows) {
+            click(e);
+          }
         }
-      }
 
-      public void mousePressed(final MouseEvent e) {
-        if (!SystemInfo.isWindows) {
-          click(e);
+        public void mousePressed(final MouseEvent e) {
+          if (!SystemInfo.isWindows) {
+            click(e);
+          }
         }
-      }
 
-      private void click(final MouseEvent e) {
-        if (!e.isConsumed() && e.isPopupTrigger()) {
-          myModel.setSelectedIndex(index);
-          requestFocusInWindow();
-          rightClick(index);
-          e.consume();
+        private void click(final MouseEvent e) {
+          if (!e.isConsumed() && e.isPopupTrigger()) {
+            myModel.setSelectedIndex(index);
+            IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+            rightClick(index);
+            e.consume();
+          }
         }
-      }
-    });
-
+      });
+      validate();
       myNodePopup.showUnderneathOf(item.getColoredComponent());
     }
     repaint();
@@ -816,7 +816,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     super.addNotify();
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     myWeakTimerListener = new WeakTimerListener(actionManager, myTimerListener);
-    actionManager.addTimerListener(500, myWeakTimerListener);
+    actionManager.addTimerListener(10000, myWeakTimerListener);
   }
 
   public void removeNotify() {
@@ -829,7 +829,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     if (show && selectedIndex > -1 && selectedIndex < myModel.size()) {
       final MyCompositeLabel item = getItem(selectedIndex);
       if (item != null) {
-        item.requestFocusInWindow();
+        IdeFocusManager.getInstance(myProject).requestFocus(item, true);
       }
     }
   }
@@ -849,7 +849,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       public void actionPerformed(ActionEvent e) {
         hideHint();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_FOCUSED);
     final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     final Window focusedWindow = focusManager.getFocusedWindow();
     if (editor == null) {
