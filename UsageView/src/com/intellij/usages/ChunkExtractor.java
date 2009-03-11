@@ -35,7 +35,6 @@ import com.intellij.usageView.UsageTreeColorsScheme;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -58,15 +57,7 @@ public class ChunkExtractor {
     for (RangeMarker rangeMarker : rangeMarkers) {
       if (rangeMarker.isValid()) myRangeMarkers.add(rangeMarker);
     }
-    Collections.sort(myRangeMarkers, new Comparator<RangeMarker>() {
-      public int compare(final RangeMarker o1, final RangeMarker o2) {
-        int result = o1.getStartOffset() - o2.getStartOffset();
-        if (result == 0) {
-          result = o1.getEndOffset() - o2.getEndOffset();
-        }
-        return result;
-      }
-    });
+    Collections.sort(myRangeMarkers, RangeMarker.BY_START_OFFSET);
     myColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
 
     int absoluteStartOffset = getStartOffset(myRangeMarkers);

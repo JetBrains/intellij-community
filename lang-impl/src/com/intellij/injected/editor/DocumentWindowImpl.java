@@ -369,11 +369,11 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public void removeRangeMarker(RangeMarkerEx rangeMarker) {
-    myDelegate.removeRangeMarker(rangeMarker); //todo
+    myDelegate.removeRangeMarker(((RangeMarkerWindow)rangeMarker).getDelegate()); 
   }
 
   public void addRangeMarker(RangeMarkerEx rangeMarker) {
-    myDelegate.addRangeMarker(rangeMarker); //todo
+    myDelegate.addRangeMarker(((RangeMarkerWindow)rangeMarker).getDelegate());
   }
 
   public boolean isInBulkUpdate() {

@@ -6,10 +6,14 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author mike
@@ -20,11 +24,7 @@ public class TemplateBuilder {
   private final Map<RangeMarker,String> myVariableExpressions = new HashMap<RangeMarker, String>();
   private final Map<RangeMarker, Boolean> myAlwaysStopAtMap = new HashMap<RangeMarker, Boolean>();
   private final Map<RangeMarker, String> myVariableNamesMap = new HashMap<RangeMarker, String>();
-  private final Set<RangeMarker> myElements = new TreeSet<RangeMarker>(new Comparator<RangeMarker>() {
-    public int compare(final RangeMarker e1, final RangeMarker e2) {
-      return e1.getStartOffset() - e2.getStartOffset();
-    }
-  });
+  private final Set<RangeMarker> myElements = new TreeSet<RangeMarker>(RangeMarker.BY_START_OFFSET);
 
   private RangeMarker myEndElement;
   private RangeMarker mySelection;
@@ -32,7 +32,7 @@ public class TemplateBuilder {
   private final PsiFile myFile;
 
   public TemplateBuilder(@NotNull PsiElement element) {
-    myFile = element.getContainingFile();
+    myFile = InjectedLanguageUtil.getTopLevelFile(element);
     myDocument = myFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);
   }
@@ -145,7 +145,8 @@ public class TemplateBuilder {
         continue;
       }
       else {
-        final boolean alwaysStopAt = myAlwaysStopAtMap.get(element) == null || myAlwaysStopAtMap.get(element);
+        Boolean stop = myAlwaysStopAtMap.get(element);
+        final boolean alwaysStopAt = stop == null || stop.booleanValue();
         final Expression expression = myExpressions.get(element);
         final String variableName = myVariableNamesMap.get(element) == null
                                     ? String.valueOf(expression.hashCode())
@@ -167,7 +168,8 @@ public class TemplateBuilder {
     for (final RangeMarker element : myElements) {
       final String dependantVariable = myVariableExpressions.get(element);
       if (dependantVariable != null) {
-        final boolean alwaysStopAt = myAlwaysStopAtMap.get(element) == null || myAlwaysStopAtMap.get(element);
+        Boolean stop = myAlwaysStopAtMap.get(element);
+        final boolean alwaysStopAt = stop == null || stop.booleanValue();
         final Expression expression = myExpressions.get(element);
         final String variableName = myVariableNamesMap.get(element) == null
                                     ? String.valueOf(expression.hashCode())

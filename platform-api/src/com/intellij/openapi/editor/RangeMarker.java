@@ -18,6 +18,8 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
+
 /**
  * Represents a range of text in a {@link Document} which is automatically adjusted
  * as the document text is modified. Adding or deleting text before the marker
@@ -29,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see Document#createRangeMarker(int, int)
  */
-public interface RangeMarker extends UserDataHolder{
+public interface RangeMarker extends UserDataHolder {
   /**
    * Returns the document to which the marker belongs.
    *
@@ -75,4 +77,12 @@ public interface RangeMarker extends UserDataHolder{
    * @param greedy true if text added at the end is included in the range, false otherwise.
    */
   void setGreedyToRight(boolean greedy);
+
+  Comparator<RangeMarker> BY_START_OFFSET = new Comparator<RangeMarker>() {
+    public int compare(RangeMarker r1, RangeMarker r2) {
+      int result = r1.getStartOffset() - r2.getStartOffset();
+      if (result == 0) result = r1.getEndOffset() - r2.getEndOffset();
+      return result;
+    }
+  };
 }

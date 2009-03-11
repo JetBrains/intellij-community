@@ -63,4 +63,8 @@ public class RangeMarkerWindow implements RangeMarkerEx {
   public long getId() {
     return myHostMarker.getId();
   }
+
+  public RangeMarkerEx getDelegate() {
+    return myHostMarker;
+  }
 }

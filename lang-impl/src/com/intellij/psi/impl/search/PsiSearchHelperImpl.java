@@ -112,22 +112,35 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @NotNull
   public PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope) {
     final ArrayList<PsiElement> results = new ArrayList<PsiElement>();
-    TextOccurenceProcessor processor = new TextOccurenceProcessor() {
+    processCommentsContainingIdentifier(identifier, searchScope, new Processor<PsiElement>() {
+      public boolean process(PsiElement element) {
+        synchronized (results) {
+          results.add(element);
+        }
+        return true;
+      }
+    });
+    synchronized (results) {
+      return results.toArray(new PsiElement[results.size()]);
+    }
+  }
+
+  public boolean processCommentsContainingIdentifier(@NotNull String identifier,
+                                                     @NotNull SearchScope searchScope,
+                                                     @NotNull final Processor<PsiElement> processor) {
+    TextOccurenceProcessor occurenceProcessor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
         if (parserDefinition == null) return true;
 
         if (element.getNode() != null && !parserDefinition.getCommentTokens().contains(element.getNode().getElementType())) return true;
         if (element.findReferenceAt(offsetInElement) == null) {
-          synchronized (results) {
-            results.add(element);
-          }
+          return processor.process(element);
         }
         return true;
       }
     };
-    processElementsWithWord(processor, searchScope, identifier, UsageSearchContext.IN_COMMENTS, true);
-    return results.toArray(new PsiElement[results.size()]);
+    return processElementsWithWord(occurenceProcessor, searchScope, identifier, UsageSearchContext.IN_COMMENTS, true);
   }
 
   public boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,

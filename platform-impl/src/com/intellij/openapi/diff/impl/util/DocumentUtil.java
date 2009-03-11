@@ -3,14 +3,7 @@ package com.intellij.openapi.diff.impl.util;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 
-import java.util.Comparator;
-
 public class DocumentUtil {
-  public static final Comparator<RangeMarker> RANGE_ORDER = new Comparator<RangeMarker>() {
-    public int compare(RangeMarker rangeMarker, RangeMarker rangeMarker1) {
-      return rangeMarker.getStartOffset() - rangeMarker1.getStartOffset();
-    }
-  };
 
   public static String getText(RangeMarker range) {
     return range.getDocument().getText().substring(range.getStartOffset(), range.getEndOffset());

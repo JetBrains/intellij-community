@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -48,6 +47,12 @@ public class TestLookupManager extends LookupManagerImpl{
     myActiveLookup.finishLookup(completion);
   }
 
+  public void clearLookup() {
+    if (myActiveLookup != null) {
+      myActiveLookup.hide();
+      myActiveLookup = null;
+    }
+  }
 
   public LookupElement[] getItems(){
     return myActiveLookup != null ? myActiveLookup.getItems() : null;

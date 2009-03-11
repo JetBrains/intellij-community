@@ -308,6 +308,9 @@ public class InjectedLanguageUtil {
     }
     return containingFile;
   }
+  public static Editor getTopLevelEditor(Editor editor) {
+    return editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+  }
   public static boolean isInInjectedLanguagePrefixSuffix(final PsiElement element) {
     PsiFile injectedFile = element.getContainingFile();
     if (injectedFile == null) return false;

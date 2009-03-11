@@ -6,7 +6,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.diff.impl.util.DocumentUtil;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Document;
@@ -117,7 +116,7 @@ public abstract class Change {
     }
 
     private static int compareSide(Change change, Change change1, FragmentSide side) {
-      return DocumentUtil.RANGE_ORDER.compare(change.getRangeMarker(side), change1.getRangeMarker(side));
+      return RangeMarker.BY_START_OFFSET.compare(change.getRangeMarker(side), change1.getRangeMarker(side));
     }
   }
 

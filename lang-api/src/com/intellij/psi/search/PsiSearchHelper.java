@@ -38,6 +38,16 @@ public interface PsiSearchHelper {
   @NotNull PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
 
   /**
+   * Processes the specified scope and hands comments containing the specified identifier over to the processor.
+   *
+   * @param identifier  the identifier to search.
+   * @param searchScope the scope in which occurrences are searched.
+   * @param processor
+   * @return false if processor returned false, true otherwise
+   */
+  boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<PsiElement> processor);
+
+  /**
    * Returns the list of all files in the project which have to do items.
    *
    * @return the list of files with to do items.

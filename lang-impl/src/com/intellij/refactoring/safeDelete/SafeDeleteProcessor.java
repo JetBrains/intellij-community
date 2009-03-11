@@ -332,11 +332,10 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private void addNonCodeUsages(final PsiElement element, List<UsageInfo> usages, final Condition<PsiElement> insideElements) {
     TextOccurrencesUtil.UsageInfoFactory nonCodeUsageFactory = new TextOccurrencesUtil.UsageInfoFactory() {
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-        if (!insideElements.value(usage)) {
-          return new SafeDeleteReferenceSimpleDeleteUsageInfo(usage, element, startOffset, endOffset, true, false);
-        } else {
+        if (insideElements.value(usage)) {
           return null;
         }
+        return new SafeDeleteReferenceSimpleDeleteUsageInfo(usage, element, startOffset, endOffset, true, false);
       }
     };
     if (mySearchInCommentsAndStrings) {
