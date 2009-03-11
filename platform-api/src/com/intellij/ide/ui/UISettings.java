@@ -252,8 +252,9 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
       Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
       if (map != null) {
         final Object textAA = map.get(RenderingHints.KEY_TEXT_ANTIALIASING);
+        //This WILL become TRUE when Windows RDP is connected
         if (RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT.equals(textAA)) {
-          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
         }
         else {
           g2d.addRenderingHints(map);
