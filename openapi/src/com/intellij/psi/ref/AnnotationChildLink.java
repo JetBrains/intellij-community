@@ -42,4 +42,9 @@ public class AnnotationChildLink extends PsiChildLink<PsiModifierListOwner, PsiA
     assert modifierList != null;
     return modifierList.addAnnotation(myAnnoFqn);
   }
+
+  @Override
+  public String toString() {
+    return "AnnotationChildLink{" + "myAnnoFqn='" + myAnnoFqn + '\'' + '}';
+  }
 }

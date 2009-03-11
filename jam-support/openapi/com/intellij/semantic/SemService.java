@@ -16,13 +16,13 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ConcurrentHashMap;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -35,7 +35,7 @@ public class SemService {
       return new ConcurrentHashMap<Class, SemElement>();
     }
   };
-  private final Map<Class, NullableFunction<PsiElement, ? extends SemElement>> myProducers = new THashMap<Class, NullableFunction<PsiElement, ? extends SemElement>>();
+  private final MultiMap<Class, NullableFunction<PsiElement, ? extends SemElement>> myProducers = new MultiMap<Class, NullableFunction<PsiElement, ? extends SemElement>>();
 
   protected SemService(Project project) {
     project.getMessageBus().connect().subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
@@ -48,7 +48,7 @@ public class SemService {
       public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(Class<T> key,
                                                                                    final ElementPattern<? extends V> place,
                                                                                    final NullableFunction<V, T> provider) {
-        myProducers.put(key, new NullableFunction<PsiElement, SemElement>() {
+        myProducers.putValue(key, new NullableFunction<PsiElement, SemElement>() {
           public SemElement fun(PsiElement element) {
             if (place.accepts(element)) {
               return provider.fun((V)element);
@@ -88,17 +88,19 @@ public class SemService {
       return cached;
     }
 
-    final NullableFunction<PsiElement, ? extends SemElement> function = myProducers.get(c);
-    if (function == null) {
+    final Collection<NullableFunction<PsiElement, ? extends SemElement>> producers = myProducers.get(c);
+    if (producers.isEmpty()) {
       return null;
     }
 
-    final SemElement element = function.fun(psi);
-    if (element == null) {
-      return null;
+    for (final NullableFunction<PsiElement, ? extends SemElement> producer : producers) {
+      final SemElement element = producer.fun(psi);
+      if (element != null) {
+        return (T)ConcurrencyUtil.cacheOrGet(map, c, element);
+      }
     }
 
-    return (T)ConcurrencyUtil.cacheOrGet(map, c, element);
+    return null;
   }
 
 

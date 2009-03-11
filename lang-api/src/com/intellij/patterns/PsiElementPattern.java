@@ -240,6 +240,15 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     });
   }
 
+  public Self compiled() {
+    return with(new PatternCondition<T>("compiled") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        return t instanceof PsiCompiledElement;
+      }
+    });
+  }
+
   public static class Capture<T extends PsiElement> extends PsiElementPattern<T,Capture<T>> {
 
     protected Capture(final Class<T> aClass) {
