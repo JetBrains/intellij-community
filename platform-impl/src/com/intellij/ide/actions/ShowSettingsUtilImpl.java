@@ -58,7 +58,13 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public void showSettingsDialog(@Nullable final Project project, final @NotNull String nameToSelect) {
-    ConfigurableGroup[] group = {new ProjectConfigurablesGroup(project, false), new IdeConfigurablesGroup()};
+    ConfigurableGroup[] group;
+    if (project == null) {
+      group = new ConfigurableGroup[] {new IdeConfigurablesGroup()};
+    } else {
+      group = new ConfigurableGroup[] {new ProjectConfigurablesGroup(project, false), new IdeConfigurablesGroup()};
+    }
+
     Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
 
     group = filterEmptyGroups(group);

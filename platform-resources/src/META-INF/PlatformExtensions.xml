@@ -110,6 +110,9 @@
   <!-- Web Browser -->
   <applicationConfigurable implementation="com.intellij.ide.BrowserSettings"/>
 
+  <!-- Notifications -->
+  <applicationConfigurable implementation="com.intellij.notification.impl.NotificationsConfigurable"/>
+
   <!-- Plugins -->
   <applicationConfigurable implementation="com.intellij.ide.plugins.PluginManagerConfigurable"/>
   <applicationConfigurable implementation="com.intellij.util.net.HttpConfigurable"/>

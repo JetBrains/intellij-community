@@ -108,6 +108,10 @@
       <interface-class>com.intellij.ide.XmlRpcServer</interface-class>
       <implementation-class>com.intellij.ide.XmlRpcServerImpl</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.notification.impl.NotificationsConfiguration</implementation-class>
+    </component>    
   </application-components>
 
   <project-components>

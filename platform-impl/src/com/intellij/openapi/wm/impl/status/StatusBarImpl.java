@@ -5,6 +5,7 @@ import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,12 +16,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBarCustomComponentFactory;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.NotificationPopup;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   private final PositionPanel myPositionPanel = new PositionPanel(this);
   private final ToggleReadOnlyAttributePanel myToggleReadOnlyAttributePanel = new ToggleReadOnlyAttributePanel(this);
   private final EncodingPanel myEncodingPanel = new EncodingPanel(this);
+  private final IdeNotificationArea myNotificationArea = new IdeNotificationArea(this);
   private final MemoryUsagePanel myMemoryUsagePanel = new MemoryUsagePanel();
   private final InsertOverwritePanel myInsertOverwritePanel = new InsertOverwritePanel();
   private final IdeMessagePanel myMessagePanel = new IdeMessagePanel(MessagePool.getInstance());
@@ -60,7 +62,6 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     constructUI();
 
     myUISettingsListener=new MyUISettingsListener();
-
   }
 
   private void constructUI() {
@@ -134,6 +135,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     }, true);
 
     addPatch(myMessagePanel, false);
+    addPatch(myNotificationArea, true);
     addPatch(myMemoryUsagePanel, true);
 
     final GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -202,7 +204,6 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   public void dispose() {
     disposeAppLevelCustomComponents();
-
   }
 
   private void disposeAppLevelCustomComponents() {
