@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * @deprecated {@see com.intellij.codeInsight.completion.CompletionContributor}
+ * @deprecated see {@link com.intellij.codeInsight.completion.CompletionContributor}
  */
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
