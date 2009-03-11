@@ -559,7 +559,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private class MergeDupLines extends RuleAction {
-    public MergeDupLines() {
+    private MergeDupLines() {
       super(UsageViewImpl.this, UsageViewBundle.message("action.merge.same.line"), IconLoader.getIcon("/toolbar/filterdups.png"));
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK)));
     }
@@ -574,7 +574,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private class ReRunAction extends AnAction {
-    public ReRunAction() {
+    private ReRunAction() {
       super(UsageViewBundle.message("action.rerun"), UsageViewBundle.message("action.description.rerun"), IconLoader.getIcon("/actions/refreshUsages.png"));
       registerCustomShortcutSet(CommonShortcuts.getRerun(), myRootPanel);
     }
@@ -905,8 +905,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   @NotNull
   public Set<Usage> getExcludedUsages() {
     Set<Usage> result = new THashSet<Usage>();
-    for (Usage usage : myUsageNodes.keySet()) {
-      final UsageNode node = myUsageNodes.get(usage);
+    for (Map.Entry<Usage, UsageNode> entry : myUsageNodes.entrySet()) {
+      UsageNode node = entry.getValue();
+      Usage usage = entry.getKey();
       if (node == NULL_NODE || node == null) {
         continue;
       }
@@ -1190,7 +1191,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private final class ButtonPanel extends JPanel {
-    public ButtonPanel() {
+    private ButtonPanel() {
       setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
     }
 
@@ -1228,7 +1229,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     private final Usage myUsage;
     private final boolean mySelected;
 
-    public UsageState(final Usage usage, boolean isSelected) {
+    private UsageState(final Usage usage, boolean isSelected) {
       myUsage = usage;
       mySelected = isSelected;
     }
@@ -1254,7 +1255,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     private final Runnable myProcessRunnable;
     private final String myCommandName;
 
-    public MyPerformOperationRunnable(final String cannotMakeString, final Runnable processRunnable, final String commandName) {
+    private MyPerformOperationRunnable(final String cannotMakeString, final Runnable processRunnable, final String commandName) {
       myCannotMakeString = cannotMakeString;
       myProcessRunnable = processRunnable;
       myCommandName = commandName;

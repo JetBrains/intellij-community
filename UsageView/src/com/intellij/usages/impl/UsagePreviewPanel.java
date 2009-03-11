@@ -16,7 +16,9 @@
 
 package com.intellij.usages.impl;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -29,7 +31,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,6 +55,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
   }
 
   private void resetEditor(@NotNull final List<UsageInfo> infos) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     PsiElement psiElement = infos.get(0).getElement();
     if (psiElement == null) return;
     PsiFile psiFile = psiElement.getContainingFile();
@@ -64,9 +67,9 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
       if (psiFile == null) return;
     }
 
-    Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (document == null) return;
-    String title = UsageViewBundle.message("preview.title", psiFile.getName());
+    final String title = UsageViewBundle.message("preview.title", psiFile.getName());
     if (myEditor == null || document != myEditor.getDocument() || !Comparing.strEqual(title, myTitle)) {
       releaseEditor();
       removeAll();
@@ -83,6 +86,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     final Editor editor = myEditor;
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         highlight(infos, editor);
       }
     });
@@ -166,17 +170,22 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     }
   }
 
-  public void updateLayout(List<UsageInfo> infos) {
-    if (infos == null) {
-      releaseEditor();
-      myTitle = null;
-      removeAll();
-      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"));
-      add(titleComp, BorderLayout.CENTER);
-      revalidate();
-    }
-    else {
-      resetEditor(infos);
-    }
+  public void updateLayout(final List<UsageInfo> infos) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) return;
+        if (infos == null) {
+          releaseEditor();
+          myTitle = null;
+          removeAll();
+          JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"));
+          add(titleComp, BorderLayout.CENTER);
+          revalidate();
+        }
+        else {
+          resetEditor(infos);
+        }
+      }
+    });
   }
 }
