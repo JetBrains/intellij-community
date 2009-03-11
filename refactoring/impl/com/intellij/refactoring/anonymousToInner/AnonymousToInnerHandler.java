@@ -517,7 +517,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       }
     }
 
-    class SupersConvertor extends JavaRecursiveElementWalkingVisitor {
+    class SupersConvertor extends JavaRecursiveElementVisitor {
       @Override public void visitThisExpression(PsiThisExpression expression) {
         try {
           final PsiThisExpression qualifiedThis =
