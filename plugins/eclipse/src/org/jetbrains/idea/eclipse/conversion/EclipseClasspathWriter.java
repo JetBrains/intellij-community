@@ -211,9 +211,7 @@ public class EclipseClasspathWriter {
       final String protocol = VirtualFileManager.extractProtocol(javadocPath);
       if (!Comparing.strEqual(protocol, HttpFileSystem.getInstance().getProtocol())) {
         final String path = VfsUtil.urlToPath(javadocPath);
-        if (new File(path).exists()) {
-          javadocPath = EclipseXml.FILE_PROTOCOL + path;
-        } else if (Comparing.strEqual(protocol, JarFileSystem.getInstance().getProtocol())){
+        if (Comparing.strEqual(protocol, JarFileSystem.getInstance().getProtocol())){
           final VirtualFile javadocFile = JarFileSystem.getInstance().getVirtualFileForJar(VirtualFileManager.getInstance().findFileByUrl(javadocPath));
           if (javadocFile != null && VfsUtil.isAncestor(myModel.getProject().getBaseDir(), javadocFile,  false)) {
             javadocPath = EclipseXml.JAR_PREFIX +
@@ -221,6 +219,8 @@ public class EclipseClasspathWriter {
           } else {
             javadocPath = EclipseXml.JAR_PREFIX + EclipseXml.FILE_PROTOCOL + path;
           }
+        } else if (new File(path).exists()) {
+          javadocPath = EclipseXml.FILE_PROTOCOL + path;
         }
       }
 
