@@ -22,7 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
-public class GotoActionModel implements ChooseByNameModel {
+public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
   private final Project myProject;
   private final Component myContextComponent;
 
@@ -204,7 +204,7 @@ public class GotoActionModel implements ChooseByNameModel {
     return ((AnAction)((Map.Entry)element).getKey()).getTemplatePresentation().getText();
   }
 
-  public boolean matches(final String name, final String pattern) {
+  public boolean matches(@NotNull final String name, @NotNull final String pattern) {
     final AnAction anAction = myActionManager.getAction(name);
     if (!(anAction instanceof ActionGroup)) {
       final Presentation presentation = anAction.getTemplatePresentation();

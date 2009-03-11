@@ -1179,8 +1179,8 @@ patterns:
           throw new ProcessCanceledException();
         }
         if (name != null) {
-          if (myModel instanceof GotoActionModel) {
-            if (((GotoActionModel)myModel).matches(name, pattern)) {
+          if (myModel instanceof CustomMatcherModel) {
+            if (((CustomMatcherModel)myModel).matches(name, pattern)) {
               list.add(name);
             }
           }
