@@ -195,7 +195,8 @@ public class EclipseClasspathReader {
         clsPath = null;
       }
       usedVariables.add(clsVar);
-      modifiableModel.addRoot(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(clsVar, clsPath)), OrderRootType.CLASSES);
+      final String url = PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(clsVar, clsPath));
+      modifiableModel.addRoot(getUrl(url), OrderRootType.CLASSES);
 
       final String srcPathAttr = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       if (srcPathAttr != null) {
@@ -213,7 +214,8 @@ public class EclipseClasspathReader {
           srcPath = null;
         }
         usedVariables.add(srcVar);
-        modifiableModel.addRoot(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(srcVar, srcPath)), OrderRootType.SOURCES);
+        final String srcUrl = PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(srcVar, srcPath));
+        modifiableModel.addRoot(getUrl(srcUrl), OrderRootType.SOURCES);
       }
 
       final List<String> docPaths = getClasspathEntryAttribute(element);
@@ -312,7 +314,7 @@ public class EclipseClasspathReader {
   }
 
   private static String getVariableRelatedPath(String var, String path) {
-    return var == null ? null : ("file://$" + var + "$" + (path == null ? "" : ("/" + path)));
+    return var == null ? null : ("$" + var + "$" + (path == null ? "" : ("/" + path)));
   }
 
   private String getUrl(final String path) {
