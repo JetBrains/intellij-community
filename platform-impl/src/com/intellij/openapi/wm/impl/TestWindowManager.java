@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.notification.impl.IdeNotificationArea;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,10 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
 
     public void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor) {
+    }
+
+    public IdeNotificationArea getNotificationArea() {
+      return null;
     }
 
     public final String getInfo() {

@@ -25,7 +25,6 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
 
   public NotificationComponent(@NotNull final IdeNotificationArea area) {
     myModel = area.getModel();
-    myModel.addListener(this);
 
     setFont(UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10));
     setIconTextGap(3);
@@ -45,6 +44,12 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     myModel.removeListener(this); // clean up
 
     super.removeNotify();
+  }
+
+  public void addNotify() {
+    super.addNotify();
+
+    myModel.addListener(this);
   }
 
   private void showList() {
@@ -91,8 +96,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
 
   private void notifyByBaloon(final NotificationImpl notification, final NotificationSettings settings) {
     if (NotificationDisplayType.BALOON.equals(settings.getDisplayType())) {
-      final String html = String.format("%s",
-          notification.getNotificationId());
+      final String html = String.format("%s", notification.getName());
 
       final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(html, NotificationUtil.getIcon(notification),
           NotificationUtil.getColor(notification), null).createBalloon();

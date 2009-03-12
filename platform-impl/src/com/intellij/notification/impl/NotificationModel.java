@@ -1,6 +1,5 @@
 package com.intellij.notification.impl;
 
-import com.intellij.notification.impl.NotificationImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,19 +112,30 @@ public class NotificationModel {
     }
   }
 
-  public List<NotificationImpl> getAll(final String componentName) {
-    if (componentName == null) {
+  public List<NotificationImpl> getAll(@Nullable final String id) {
+    if (id == null) {
       return Collections.unmodifiableList(myNotifications);
     } else {
       final List<NotificationImpl> result = new ArrayList<NotificationImpl>();
 
       for (NotificationImpl notification : myNotifications) {
-        if (componentName.equals(notification.getComponentName())) {
+        if (id.equals(notification.getId())) {
           result.add(notification);
         }
       }
 
       return result;
     }
+  }
+
+  public void invalidateAll(final String id) {
+    if (id != null) {
+      final List<NotificationImpl> all = getAll(id);
+      remove(all.toArray(new NotificationImpl[all.size()]));
+    }
+  }
+
+  public void clearProjectNotifications() {
+    clear();
   }
 }

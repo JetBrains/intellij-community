@@ -1,6 +1,9 @@
 package com.intellij.notification.impl;
 
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -15,9 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,8 +30,6 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
 
   private Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
   private MessageBus myMessageBus;
-
-  private List<String> mySessionIdList = new ArrayList<String>();
 
   public NotificationsConfiguration(@NotNull final MessageBus bus) {
     myMessageBus = bus;
@@ -52,7 +51,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   @Nullable
   public static NotificationSettings getSettings(@NotNull final NotificationImpl notification) {
     final NotificationsConfiguration configuration = getNotificationsConfiguration();
-    return configuration.myIdToSettingsMap.get(notification.getComponentName());
+    return configuration.myIdToSettingsMap.get(notification.getId());
   }
 
   @NotNull
@@ -66,21 +65,23 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
 
   public void disposeComponent() {
     myIdToSettingsMap.clear();
-    mySessionIdList.clear();
   }
 
-  public void register(@NotNull final String componentName, @NotNull final NotificationDisplayType displayType, final boolean canDisable) {
-    if (!myIdToSettingsMap.containsKey(componentName)) {
-      myIdToSettingsMap.put(componentName, new NotificationSettings(componentName, displayType, canDisable));
-      mySessionIdList.add(componentName);
+  public void register(@NotNull final String id, @NotNull final NotificationDisplayType displayType, final boolean canDisable) {
+    if (!myIdToSettingsMap.containsKey(id)) {
+      myIdToSettingsMap.put(id, new NotificationSettings(id, displayType, canDisable));
     }
   }
 
-  public void notify(@NotNull final String componentName, @NotNull final String name, @NotNull final String description, @NotNull final NotificationType type, @NotNull final NotificationListener handler) {
+  public void notify(@NotNull final String id, @NotNull final String name, @NotNull final String description, @NotNull final NotificationType type, @NotNull final NotificationListener handler) {
     // do nothing
   }
 
-  public void notify(@NotNull final String componentName, @NotNull final String name, @NotNull final String description, @NotNull final NotificationType type, @NotNull final NotificationListener handler, @Nullable final Icon icon) {
+  public void notify(@NotNull final String id, @NotNull final String name, @NotNull final String description, @NotNull final NotificationType type, @NotNull final NotificationListener handler, @Nullable final Icon icon) {
+    // do nothing
+  }
+
+  public void invalidateAll(@NotNull final String id) {
     // do nothing
   }
 

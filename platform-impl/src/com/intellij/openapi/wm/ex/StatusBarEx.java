@@ -4,6 +4,7 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.status.StatusBarPatch;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.notification.impl.IdeNotificationArea;
 
 public interface StatusBarEx extends StatusBar{
   String getInfo();
@@ -25,4 +26,6 @@ public interface StatusBarEx extends StatusBar{
   void update(Editor editor);
 
   void dispose();
+
+  IdeNotificationArea getNotificationArea();
 }

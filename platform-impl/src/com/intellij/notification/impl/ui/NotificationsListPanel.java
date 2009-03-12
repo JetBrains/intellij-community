@@ -62,6 +62,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     myScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     myScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+    myScrollPane.setBackground(Color.WHITE);
 
     myLabel = new JLabel("Notifications");
     myLabel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -86,6 +87,13 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     switchLayout();
 
     add(myInnerPanel, BorderLayout.CENTER);
+  }
+
+  @Override
+  public void removeNotify() {
+    myNotificationsModel.removeListener(this);
+    
+    super.removeNotify();
   }
 
   public void notificationsAdded(@NotNull final NotificationImpl... notification) {
@@ -215,7 +223,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
         setBorder(BorderFactory.createCompoundBorder(SEPARATION_BORDER, DEFAULT_BORDER));
       }
 
-      setTitle(notification.getNotificationId());
+      setTitle(notification.getName());
       setTimestamp(DateFormatUtil.formatDate(new Date(), notification.getDate()));
       return this;
     }
@@ -235,7 +243,6 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
   private static class NotificationsListModel extends AbstractListModel {
     private NotificationModel myNotificationsModel;
-    private String myFilter;
     private List<NotificationImpl> myNotifications = new ArrayList<NotificationImpl>();
 
     private NotificationsListModel(@NotNull final NotificationModel notificationsModel) {
@@ -252,14 +259,9 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       return myNotifications.get(index);
     }
 
-    public void setFilter(final String filter) {
-      myFilter = filter;
-      rebuildList();
-    }
-
     private void rebuildList() {
       myNotifications.clear();
-      myNotifications.addAll(myNotificationsModel.getAll(myFilter));
+      myNotifications.addAll(myNotificationsModel.getAll(null));
 
       fireContentsChanged(this, 0, myNotifications.size() - 1);
     }

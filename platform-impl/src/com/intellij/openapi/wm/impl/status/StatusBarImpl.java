@@ -93,6 +93,10 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     recreatePatches();
   }
 
+  public IdeNotificationArea getNotificationArea() {
+    return myNotificationArea;
+  }
+
   private void recreatePatches() {
     myPatchesPanel.removeAll();
     myPatches.clear();

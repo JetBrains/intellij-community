@@ -171,7 +171,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         case NotificationsTable.ENABLED_COLUMN:
           return "Enabled";
         case 1:
-          return "Component";
+          return "ID";
         default:
           return "Display type";
       }
