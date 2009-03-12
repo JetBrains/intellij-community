@@ -763,7 +763,7 @@ public class FileBasedIndex implements ApplicationComponent {
       return;
     }
 
-    PsiFile dominantContentFile = findDominantPsiForDocument(document);
+    final PsiFile dominantContentFile = findDominantPsiForDocument(document);
 
     DocumentContent content;
     if (dominantContentFile != null && dominantContentFile.getModificationStamp() != document.getModificationStamp()) {
@@ -790,6 +790,9 @@ public class FileBasedIndex implements ApplicationComponent {
       CharSequence lastIndexed = myLastIndexedUnsavedContent.get(document, requestedIndexId);
       final FileContent oldFc = new FileContent(vFile, lastIndexed, vFile.getCharset());
       if (getInputFilter(requestedIndexId).acceptInput(vFile)) {
+        final Project project = (dominantContentFile != null)? dominantContentFile.getProject() : ProjectUtil.guessProjectForFile(vFile);
+        oldFc.putUserData(PROJECT, project);
+        newFc.putUserData(PROJECT, project);
         final int inputId = Math.abs(getFileId(vFile));
         getIndex(requestedIndexId).update(inputId, newFc, oldFc);
       }
