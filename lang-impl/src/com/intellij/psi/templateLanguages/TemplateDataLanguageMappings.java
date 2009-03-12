@@ -5,15 +5,16 @@
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.DependentLanguage;
+import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePerFileMappings;
-import com.intellij.lang.InjectableLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
@@ -42,6 +43,19 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
   }
 
   public List<Language> getAvailableValues() {
+    return getTemplateableLanguages();
+  }
+
+  @Override
+  public Language getMapping(VirtualFile file) {
+    final Language mapping = super.getMapping(file);
+    if (mapping != null) {
+      return mapping;
+    }
+    return TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
+  }
+
+  public static List<Language> getTemplateableLanguages() {
     return ContainerUtil.findAll(Language.getRegisteredLanguages(), new Condition<Language>() {
       public boolean value(final Language language) {
         if (language == Language.ANY) return false;

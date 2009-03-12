@@ -5,14 +5,18 @@ import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.ReadFileType;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +41,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   private FileTypePanel myFileTypePanel;
   private HashSet<FileType> myTempFileTypes;
   private final FileTypeManagerImpl myManager;
-  private FileTypeAssocTable myTempPatternsTable;
+  private FileTypeAssocTable<FileType> myTempPatternsTable;
+  private FileTypeAssocTable<Language> myTempTemplateDataLanguages;
   private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<UserFileType, UserFileType>();
 
   public FileTypeConfigurable(FileTypeManager fileTypeManager) {
@@ -102,12 +107,16 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
         }
         myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
+
+        TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
       }
     });
   }
 
   public void reset() {
     myTempPatternsTable = myManager.getExtensionMap().copy();
+    myTempTemplateDataLanguages = TemplateDataLanguagePatterns.getInstance().getAssocTable();
+    
     myTempFileTypes = new HashSet<FileType>(Arrays.asList(getModifiableFileTypes()));
     myOriginalToEditedMap.clear();
 
@@ -121,7 +130,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) return true;
     HashSet types = new HashSet(Arrays.asList(getModifiableFileTypes()));
     return !myTempPatternsTable.equals(myManager.getExtensionMap()) || !myTempFileTypes.equals(types) ||
-           !myOriginalToEditedMap.isEmpty();
+           !myOriginalToEditedMap.isEmpty() || !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
   }
 
   public void disposeUIResources() {
@@ -203,44 +212,96 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
   }
 
-  private void addPattern() {
-    FileType type = myRecognizedFileType.getSelectedFileType();
-    if (type == null) return;
-    String text = Messages.showInputDialog(myPatterns.myAddButton, FileTypesBundle.message("filetype.edit.add.pattern.prompt"),
-                                           FileTypesBundle.message("filetype.edit.add.pattern.title"), Messages.getQuestionIcon());
-    if (text == null || "".equals(text)) return;
+  private void editPattern() {
+    final String item = myPatterns.getSelectedItem();
+    if (item == null) return;
 
-    FileType registeredFileType = addNewPattern(type, text);
-    if(registeredFileType!=null) {
-      if (registeredFileType.isReadOnly()) {
-        Messages.showMessageDialog(myPatterns.myAddButton,
-                                   FileTypesBundle.message("filetype.edit.add.pattern.exists.error", registeredFileType.getDescription()),
-                                   FileTypesBundle.message("filetype.edit.add.pattern.exists.title"), Messages.getErrorIcon());
-      }
-      else {
-        if (0 == Messages.showDialog(myPatterns.myAddButton, FileTypesBundle.message("filetype.edit.add.pattern.exists.message",
-                                                                                     registeredFileType.getDescription()),
-                                                             FileTypesBundle.message("filetype.edit.add.pattern.exists.title"),
-                                                             new String[]{
-                                                               FileTypesBundle.message("filetype.edit.add.pattern.reassign.button"),
-                                                               CommonBundle.getCancelButtonText()}, 0, Messages.getQuestionIcon())) {
-          myTempPatternsTable.removeAssociation(FileTypeManager.parseFromString(text), registeredFileType);
-          addNewPattern(type, text);
+    editPattern(item);
+  }
+
+  private void editPattern(@Nullable final String item) {
+    final FileType type = myRecognizedFileType.getSelectedFileType();
+    if (type == null) return;
+
+    final String title =
+      item == null ? FileTypesBundle.message("filetype.edit.add.pattern.title") : FileTypesBundle.message("filetype.edit.edit.pattern.title");
+
+    final Language oldLanguage = item == null ? null : myTempTemplateDataLanguages.findAssociatedFileType(item);
+    final FileTypePatternDialog dialog = new FileTypePatternDialog(item, type, oldLanguage);
+    final DialogBuilder builder = new DialogBuilder(myPatterns);
+    builder.setPreferedFocusComponent(dialog.getPatternField());
+    builder.setCenterPanel(dialog.getMainPanel());
+    builder.setTitle(title);
+    builder.showModal(true);
+    if (builder.getDialogWrapper().isOK()) {
+      final String pattern = dialog.getPatternField().getText();
+      if (StringUtil.isEmpty(pattern)) return;
+
+      final FileNameMatcher matcher = FileTypeManager.parseFromString(pattern);
+      FileType registeredFileType = findExistingFileType(matcher);
+      if (registeredFileType != null && registeredFileType != type) {
+        if (registeredFileType.isReadOnly()) {
+          Messages.showMessageDialog(myPatterns.myAddButton,
+                                     FileTypesBundle.message("filetype.edit.add.pattern.exists.error", registeredFileType.getDescription()),
+                                     title, Messages.getErrorIcon());
+          return;
+        }
+        else {
+          if (0 == Messages.showDialog(myPatterns.myAddButton, FileTypesBundle.message("filetype.edit.add.pattern.exists.message",
+                                                                                       registeredFileType.getDescription()),
+                                       FileTypesBundle.message("filetype.edit.add.pattern.exists.title"),
+                                       new String[]{
+                                         FileTypesBundle.message("filetype.edit.add.pattern.reassign.button"),
+                                         CommonBundle.getCancelButtonText()}, 0, Messages.getQuestionIcon())) {
+            myTempPatternsTable.removeAssociation(matcher, registeredFileType);
+            myTempTemplateDataLanguages.removeAssociation(matcher, oldLanguage);
+          } else {
+            return;
+          }
         }
       }
+
+      if (item != null) {
+        final FileNameMatcher oldMatcher = FileTypeManager.parseFromString(item);
+        myTempPatternsTable.removeAssociation(oldMatcher, type);
+        myTempTemplateDataLanguages.removeAssociation(oldMatcher, oldLanguage);
+      }
+      myTempPatternsTable.addAssociation(matcher, type);
+      myTempTemplateDataLanguages.addAssociation(matcher, dialog.getTemplateDataLanguage());
+
+      updateExtensionList();
+      final int index = myPatterns.getListModel().indexOf(matcher.getPresentableString());
+      if (index >= 0) {
+        ListScrollingUtil.selectItem(myPatterns.myPatternsList, index);
+      }
+      myPatterns.myPatternsList.requestFocus();
     }
   }
 
-  public FileType addNewPattern(FileType type, String pattern) {
-    FileNameMatcher matcher = FileTypeManager.parseFromString(pattern);
+  private void addPattern() {
+    editPattern(null);
+  }
+
+  @Nullable
+  public FileType findExistingFileType(FileNameMatcher matcher) {
     FileType fileTypeByExtension = myTempPatternsTable.findAssociatedFileType(matcher);
 
     if (fileTypeByExtension != null && fileTypeByExtension != FileTypes.UNKNOWN) {
       return fileTypeByExtension;
     }
-    FileType registeredFileType = FileTypeManager.getInstance().getFileTypeByExtension(pattern);
+    FileType registeredFileType = FileTypeManager.getInstance().getFileTypeByExtension(matcher.getPresentableString());
     if (registeredFileType != FileTypes.UNKNOWN && registeredFileType.isReadOnly()) {
       return registeredFileType;
+    }
+    return null;
+  }
+
+  @Nullable
+  public FileType addNewPattern(FileType type, String pattern) {
+    FileNameMatcher matcher = FileTypeManager.parseFromString(pattern);
+    final FileType existing = findExistingFileType(matcher);
+    if (existing != null) {
+      return existing;
     }
 
     myTempPatternsTable.addAssociation(matcher, type);
@@ -419,6 +480,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     private JButton myAddButton;
     private JButton myRemoveButton;
     private JPanel myWholePanel;
+    private JButton myEditButton;
 
     public PatternsPanel() {
       super(new BorderLayout());
@@ -436,6 +498,11 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       myAddButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           controller.addPattern();
+        }
+      });
+      myEditButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          controller.editPattern();
         }
       });
 
@@ -486,6 +553,10 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
     public String getDefaultExtension() {
       return (String)getListModel().getElementAt(0);
+    }
+
+    public String getSelectedItem() {
+      return (String)myPatternsList.getSelectedValue();
     }
   }
 

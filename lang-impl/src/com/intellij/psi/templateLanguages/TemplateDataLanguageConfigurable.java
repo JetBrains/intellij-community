@@ -9,6 +9,9 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.tree.LanguagePerFileConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -31,6 +34,16 @@ public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurabl
           LangBundle.message("dialog.template.data.language.caption"), LangBundle.message("template.data.language.configurable.tree.table.title"),
           LangBundle.message("template.data.language.override.warning.text"),
           LangBundle.message("template.data.language.override.warning.title"));
+  }
+
+  @Override
+  protected boolean handleDefaultValue(VirtualFile file, ColoredTableCellRenderer renderer) {
+    final Language language = TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
+    if (language != null) {
+      renderer.append(visualize(language), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+      return true;
+    }
+    return false;
   }
 
   @Nls

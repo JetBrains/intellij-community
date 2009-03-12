@@ -172,8 +172,14 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
           else {
             final Object userObject = table.getModel().getValueAt(row, 0);
             final VirtualFile file = userObject instanceof VirtualFile ? (VirtualFile)userObject : null;
-            if (file != null && !isValueEditableForFile(file)) {
-              append("N/A", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            if (file != null) {
+              if (handleDefaultValue(file, this)) {
+                return;
+              }
+
+              if (!isValueEditableForFile(file)) {
+                append("N/A", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+              }
             }
           }
         }
@@ -196,6 +202,9 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
 
   }
 
+  protected boolean handleDefaultValue(VirtualFile file, ColoredTableCellRenderer renderer) {
+    return false;
+  }
 
   private abstract class ChooseSomethingAction extends ComboBoxAction {
     private final VirtualFile myVirtualFile;

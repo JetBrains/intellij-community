@@ -311,6 +311,7 @@
   <usageGroupingRuleProvider implementation="com.intellij.usages.impl.UsageGroupingRuleProviderImpl"/>
 
   <projectService serviceInterface="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings" serviceImplementation="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings"/>
+  <applicationService serviceInterface="com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns" serviceImplementation="com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns"/>
 
   <!-- execution -->
   <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>

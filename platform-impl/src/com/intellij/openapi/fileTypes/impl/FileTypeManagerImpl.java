@@ -44,11 +44,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final ArrayList<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
   private final ArrayList<Pattern> myIgnorePatterns = new ArrayList<Pattern>();
 
-  private FileTypeAssocTable myPatternsTable = new FileTypeAssocTable();
+  private FileTypeAssocTable<FileType> myPatternsTable = new FileTypeAssocTable<FileType>();
   private final Set<String> myIgnoredFileMasksSet = new LinkedHashSet<String>();
   private final Set<String> myNotIgnoredFiles = new ConcurrentHashSet<String>();
   private final Set<String> myIgnoredFiles = new ConcurrentHashSet<String>();
-  private final FileTypeAssocTable myInitialAssociations = new FileTypeAssocTable();
+  private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<FileType>();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();
   private final Map<FileNameMatcher, String> myUnresolvedRemovedMappings = new THashMap<FileNameMatcher, String>();
 
