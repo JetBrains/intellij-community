@@ -140,7 +140,11 @@ public class NavBarModel {
       roots.addAll(Arrays.asList(moduleRootManager.getContentRoots()));
       addElement(module);
     }
-    traverseToRoot(psiElement, roots);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        traverseToRoot(psiElement, roots);
+      }
+    });
     if (oldModelSize == size()) {
       for (int i = 0; i < oldModelSize; i++) {
         if (!Comparing.equal(oldModel.get(i), getElement(i))) return true;
@@ -159,9 +163,13 @@ public class NavBarModel {
         final Module module = (Module)rootElement;
         removeAllElements();
         addElement(myProject);
-        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         addElement(module);
-        traverseToRoot((PsiElement)object, new HashSet<VirtualFile>(Arrays.asList(moduleRootManager.getContentRoots())));
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            traverseToRoot((PsiElement)object, new HashSet<VirtualFile>(Arrays.asList(moduleRootManager.getContentRoots())));
+          }
+        });
       }
       else {
         updateModel((PsiElement)object);
@@ -183,35 +191,17 @@ public class NavBarModel {
     PsiElement resultElement = psiElement;
     if (containingFile != null) {
       for (final NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
-        final PsiElement resultElement1 = resultElement;
-        resultElement = ApplicationManager.getApplication().runReadAction(
-            new Computable<PsiElement>() {
-              public PsiElement compute() {
-                return modelExtension.adjustElement(resultElement1);
-              }
-            }
-        );
+        resultElement = modelExtension.adjustElement(resultElement);
       }
-      final PsiDirectory containingDirectory = ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiDirectory>() {
-            public PsiDirectory compute() {
-              return containingFile.getContainingDirectory();
-            }
-          }
-      );
+      final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
       if (containingDirectory != null) {
         traverseToRoot(containingDirectory, roots);
       }
     }
     else if (psiElement instanceof PsiDirectory) {
       final PsiDirectory psiDirectory = (PsiDirectory)psiElement;
-      final PsiDirectory parentDirectory = ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiDirectory>() {
-            public PsiDirectory compute() {
-              return psiDirectory.getParentDirectory();
-            }
-          }
-      );
+      final PsiDirectory parentDirectory = psiDirectory.getParentDirectory();
+
       if (!roots.contains(psiDirectory.getVirtualFile()) && parentDirectory != null) {
         traverseToRoot(parentDirectory, roots);
       }
@@ -220,26 +210,16 @@ public class NavBarModel {
       final VirtualFile virtualFile = ((PsiFileSystemItem)psiElement).getVirtualFile();
       if (virtualFile == null) return;
       final PsiManager psiManager = PsiManager.getInstance(myProject);
-      resultElement = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-        public PsiElement compute() {
-          if (virtualFile.isDirectory()) {
-            return psiManager.findDirectory(virtualFile);
-          }
-          else {
-            return psiManager.findFile(virtualFile);
-          }
-        }
-      });
+      if (virtualFile.isDirectory()) {
+        resultElement =  psiManager.findDirectory(virtualFile);
+      }
+      else {
+        resultElement =  psiManager.findFile(virtualFile);
+      }
       if (resultElement == null) return;
       final VirtualFile parentVFile = virtualFile.getParent();
       if (parentVFile != null && !roots.contains(parentVFile)) {
-        final PsiDirectory parentDirectory = ApplicationManager.getApplication().runReadAction(
-            new Computable<PsiDirectory>() {
-              public PsiDirectory compute() {
-                return psiManager.findDirectory(parentVFile);
-              }
-            }
-        );
+        final PsiDirectory parentDirectory = psiManager.findDirectory(parentVFile);
         if (parentDirectory != null) {
           traverseToRoot(parentDirectory, roots);
         }
@@ -248,13 +228,7 @@ public class NavBarModel {
     else {
       final PsiElement el = psiElement;
       for (final NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
-        final PsiElement parent = ApplicationManager.getApplication().runReadAction(
-            new Computable<PsiElement>() {
-              public PsiElement compute() {
-                return modelExtension.getParent(el);
-              }
-            }
-        );
+        final PsiElement parent = modelExtension.getParent(el);
         if (parent != null) {
           traverseToRoot(parent, roots);
         }
