@@ -447,7 +447,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
 
               final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
                 public String fun(final PsiParameter psiParameter) {
-                  return psiParameter.getType().getPresentableText() + " " + psiParameter.getName();
+                  return removeGenerics(psiParameter.getType()).getPresentableText() + " " + psiParameter.getName();
                 }
               }, ", ");
               @NonNls final String lambdas = baseClass.getName() + "(" + params + ") {";
@@ -498,6 +498,16 @@ public class JavaFoldingBuilder implements FoldingBuilder {
       }
     }
     return isClosure;
+  }
+
+  private PsiType removeGenerics(PsiType type) {
+    if (type instanceof PsiArrayType) {
+      return removeGenerics(((PsiArrayType)type).getComponentType()).createArrayType();
+    }
+    if (type instanceof PsiClassType) {
+      type = ((PsiClassType)type).rawType();
+    }
+    return type;
   }
 
   private static boolean seemsLikeLambda(@Nullable final PsiClass baseClass) {
