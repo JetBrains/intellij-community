@@ -4,8 +4,8 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -43,6 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -171,10 +172,11 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
   public PsiFile addFileToProject(@NonNls String rootPath, @NonNls final String relativePath, @NonNls final String fileText) throws IOException {
     final VirtualFile[] roots = ModuleRootManager.getInstance(getModule()).getSourceRoots();
+    final VirtualFile suggested = LocalFileSystem.getInstance().findFileByPath(rootPath);
     final VirtualFile root;
-    if (roots.length == 0 || roots[0].getParent() == null) {
+    if (roots.length == 0 || roots[0].getParent() == null || Arrays.asList(roots).contains(suggested)) {
       // no real module in fixture
-      root = LocalFileSystem.getInstance().findFileByPath(rootPath);
+      root = suggested;
     } else {
       root = roots[0];
     }

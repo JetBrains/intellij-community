@@ -420,12 +420,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           return;
         }
         if (c == '\n') {
+          if (LookupManager.getActiveLookup(getEditor()) != null) {
+            performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
+            return;
+          }
+
           performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
           return;
         }
         if (c == '\t') {
           if (LookupManager.getInstance(getProject()).getActiveLookup() != null) {
-            actionManager.getActionHandler(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE).execute(getEditor(), dataContext);
+            performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
             return;
           }
         }
