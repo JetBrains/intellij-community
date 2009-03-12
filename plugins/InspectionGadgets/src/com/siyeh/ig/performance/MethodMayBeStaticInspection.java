@@ -103,13 +103,11 @@ public class MethodMayBeStaticInspection extends BaseInspection {
                 return;
             }
             final ExtensionsArea rootArea = Extensions.getRootArea();
-            final ExtensionPoint extensionPoint = rootArea.getExtensionPoint(
+            final ExtensionPoint<Condition<PsiMember>> extensionPoint = rootArea.getExtensionPoint(
                     "com.intellij.cantBeStatic");
-            final Object[] addins = extensionPoint.getExtensions();
-            for (Object addin : addins) {
-                final Condition<PsiMember> condition =
-                        (Condition<PsiMember>)addin;
-                if (condition.value(method)) {
+            final Condition<PsiMember>[] addins = extensionPoint.getExtensions();
+            for (Condition<PsiMember> addin : addins) {
+              if (addin.value(method)) {
                     return;
                 }
             }
