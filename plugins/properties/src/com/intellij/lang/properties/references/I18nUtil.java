@@ -74,4 +74,20 @@ public class I18nUtil {
     }
     return paths;
   }
+
+  /**
+   * Returns number of different parameters in i18n message. For example, for string
+   * <i>Class {0} info: Class {0} extends class {1} and implements interface {2}</i>
+   * number of parameters is 3.
+   *
+   * @param value i18n literal
+   * @return number of parameters
+   */
+  public static int getPropertyValueParamsCount(final String value) {
+    int count = 0;
+    while (value.contains("{" + count + "}")) {
+      count++;
+    }
+    return count;
+  }
 }

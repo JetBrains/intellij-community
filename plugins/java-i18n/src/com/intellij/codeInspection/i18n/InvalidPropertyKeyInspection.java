@@ -11,6 +11,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.module.Module;
@@ -27,6 +29,7 @@ import java.util.List;
 
 /**
  * @author max
+ * @author Konstantin Bulenkov
  */
 public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
 
@@ -144,8 +147,8 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
                                                                             new JavaCreatePropertyFix(expression, key, propertiesFiles),
                                                                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         myProblems.add(problem);
-      }
-      else if (expression.getParent() instanceof PsiNameValuePair) {
+      } else
+      if (expression.getParent() instanceof PsiNameValuePair) {
         PsiNameValuePair nvp = (PsiNameValuePair) expression.getParent();
         if (Comparing.equal(nvp.getName(), AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER)) {
           PropertiesReferenceManager manager = expression.getProject().getComponent(PropertiesReferenceManager.class);
@@ -162,6 +165,26 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
             }
           }
         }
+      } else
+      if (expression.getParent() instanceof PsiExpressionList && expression.getParent().getParent() instanceof PsiMethodCallExpression) {
+        final String msg = resolvePropertyKey(expression);
+        if (msg == null) return;
+
+        final PsiExpressionList expressions = (PsiExpressionList)expression.getParent();
+        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expressions.getParent();
+        final PsiExpression[] args = expressions.getExpressions();
+        for (int i = 0; i < args.length; i++) {
+          if (args[i] == expression) {
+            final int paramsCount = I18nUtil.getPropertyValueParamsCount(msg);
+            if (i + paramsCount >= args.length) {
+              myProblems.add(myManager.createProblemDescriptor(methodCall,
+                                                               CodeInsightBundle.message("property.has.more.parameters.than.passed", key, paramsCount, args.length - i - 1),
+                                                               new LocalQuickFix[0], 
+                                                               ProblemHighlightType.GENERIC_ERROR));
+            }
+            break;
+          }
+        }
       }
     }
 
@@ -172,6 +195,18 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
 
     public List<ProblemDescriptor> getProblems() {
       return myProblems;
+    }
+
+    @Nullable
+    private static String resolvePropertyKey(PsiLiteralExpression literal) {
+      final PsiReference[] references = literal.getReferences();
+      for (PsiReference reference : references) {
+        final PsiElement element = reference.resolve();
+        if (element instanceof Property) {
+          return ((Property)element).getValue();
+        }
+      }
+      return null;
     }
   }
 }
