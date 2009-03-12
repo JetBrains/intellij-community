@@ -3,8 +3,10 @@ package org.jetbrains.plugins.groovy.structure.itemsPresentations.impl;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.structure.GroovyElementPresentation;
 import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
 
@@ -16,6 +18,13 @@ import javax.swing.*;
  */
 public class GroovyMethodItemPresentation extends GroovyItemPresentation {
   private final boolean isInherit;
+  private final NotNullLazyValue<String> myPresentableText = new NotNullLazyValue<String>() {
+    @NotNull
+    @Override
+    protected String compute() {
+      return GroovyElementPresentation.getMethodPresentableText(((PsiMethod) myElement));
+    }
+  };
 
   public GroovyMethodItemPresentation(PsiMethod myElement, boolean isInherit) {
     super(myElement);
@@ -23,7 +32,7 @@ public class GroovyMethodItemPresentation extends GroovyItemPresentation {
   }
 
   public String getPresentableText() {
-    return GroovyElementPresentation.getMethodPresentableText(((PsiMethod) myElement));
+    return myPresentableText.getValue();
   }
 
   @Nullable
