@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,11 +19,19 @@ public class ProjectNotificationsComponent implements ProjectComponent {
   }
 
   public void projectOpened() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     myStatusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(myProject);
     myStatusBar.getNotificationArea().connect(myProject);
   }
 
   public void projectClosed() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     myStatusBar.getNotificationArea().getModel().clearProjectNotifications();
     myProject = null;
   }
