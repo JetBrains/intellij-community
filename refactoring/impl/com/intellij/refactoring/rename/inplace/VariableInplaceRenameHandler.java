@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableInplaceRenameHandler implements RenameHandler {
+  private static final ThreadLocal<Boolean> ourPreventInlineRenameFlag = new ThreadLocal<Boolean>();
   private static final @NonNls String INVOKING_DEFAULT = "$$$"+VariableInplaceRenameHandler.class.hashCode() + "_inplace_renaming_failed_due_to_noinlocal_usages";
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler");
 
@@ -28,7 +29,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     if (editor == null || file == null) return false;
     
-    if (dataContext.getData(INVOKING_DEFAULT) != null) {
+    if (ourPreventInlineRenameFlag.get() != null || dataContext.getData(INVOKING_DEFAULT) != null) {
       return false;
     }
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
@@ -71,20 +72,29 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     final boolean startedRename = new VariableInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor).performInplaceRename();
 
     if (!startedRename) {
-      final DataContext ourDataContext = new DataContext() {
-        public Object getData(@NonNls final String dataId) {
-          if (INVOKING_DEFAULT.equals(dataId)) {
-            return Boolean.TRUE;
-          }
+      try {
+        DataContext ourDataContext = dataContext;
 
-          return dataContext.getData(dataId);
+        if (false) {
+          ourDataContext = new DataContext() {
+            public Object getData(@NonNls final String dataId) {
+              if (INVOKING_DEFAULT.equals(dataId)) {
+                return Boolean.TRUE;
+              }
+
+              return dataContext.getData(dataId);
+            }
+          };
         }
-      };
-      RenameHandlerRegistry.getInstance().getRenameHandler(ourDataContext).invoke(
-        elementToRename.getProject(),
-        editor,
-        elementToRename.getContainingFile(), ourDataContext
-      );
+        ourPreventInlineRenameFlag.set(Boolean.TRUE);
+        RenameHandlerRegistry.getInstance().getRenameHandler(ourDataContext).invoke(
+          elementToRename.getProject(),
+          editor,
+          elementToRename.getContainingFile(), ourDataContext
+        );
+      } finally {
+        ourPreventInlineRenameFlag.set(null);
+      }
     }
   }
 }
