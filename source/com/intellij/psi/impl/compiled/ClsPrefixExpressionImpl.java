@@ -2,7 +2,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
   private final ClsElementImpl myParent;
   private final PsiExpression myOperand;
 
-  private MySign mySign = null;  //no point guarding, it's immutable
+  private final MySign mySign = new MySign();
 
   public ClsPrefixExpressionImpl(ClsElementImpl parent, PsiExpression operand) {
     myParent = parent;
@@ -26,9 +26,6 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
 
   @NotNull
   public PsiJavaToken getOperationSign() {
-    if (mySign == null){
-      mySign = new MySign();
-    }
     return mySign;
   }
 
@@ -60,7 +57,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
 
   public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    LOG.assertTrue(element.getElementType() == ElementType.PREFIX_EXPRESSION);
+    LOG.assertTrue(element.getElementType() == JavaElementType.PREFIX_EXPRESSION);
     myMirror = element;
   }
 
@@ -77,9 +74,9 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
     return "PsiPrefixExpression:" + getText();
   }
 
-  private class MySign extends ClsElementImpl implements PsiJavaToken, JavaTokenType{
+  private class MySign extends ClsElementImpl implements PsiJavaToken {
     public IElementType getTokenType() {
-      return MINUS;
+      return JavaTokenType.MINUS;
     }
 
     @NotNull
@@ -97,7 +94,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
 
     public void setMirror(@NotNull TreeElement element) {
       LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-      LOG.assertTrue(element.getElementType() == ElementType.MINUS);
+      LOG.assertTrue(element.getElementType() == JavaTokenType.MINUS);
       myMirror = element;
     }
 
