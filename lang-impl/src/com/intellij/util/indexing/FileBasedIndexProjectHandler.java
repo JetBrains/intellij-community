@@ -7,6 +7,8 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -18,7 +20,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
 
-  public FileBasedIndexProjectHandler(FileBasedIndex index, final Project project, final ProjectRootManagerEx rootManager, FileTypeManager ftManager) {
+  public FileBasedIndexProjectHandler(FileBasedIndex index, final Project project, final ProjectRootManagerEx rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;
@@ -32,6 +34,12 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
           startupManager.getFileSystemSynchronizer().registerCacheUpdater(updater);
           rootManager.registerChangeUpdater(updater);
           myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this);
+          projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+            public void projectClosing(Project project) {
+              rootManager.unregisterChangeUpdater(updater);
+              myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
+            }
+          });
         }
       });
     }
@@ -59,6 +67,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   }
 
   public void disposeComponent() {
+    // done mostly for tests. In real life this is noop, becase the set was removed on project closing
     myIndex.removeIndexableSet(this);
   }
 }

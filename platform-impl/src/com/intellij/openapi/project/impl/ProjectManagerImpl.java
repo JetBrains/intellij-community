@@ -784,8 +784,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (!isProjectOpened(project)) return true;
     if (!canClose(project)) return false;
 
-    fireProjectClosing(project);
-
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
@@ -793,6 +791,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();
       }
+      fireProjectClosing(project);
 
       myOpenProjects.remove(project);
       fireProjectClosed(project);
