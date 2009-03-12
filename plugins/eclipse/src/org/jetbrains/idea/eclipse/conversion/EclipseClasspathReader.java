@@ -20,7 +20,6 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -33,9 +32,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -388,14 +388,14 @@ public class EclipseClasspathReader {
   }
 
   static String getJunitClsUrl(final boolean version4) {
-    String jarPath = version4 ? JavaSdkUtil.getJunit4JarPath() : JavaSdkUtil.getJunit3JarPath();
-    return VfsUtil.pathToUrl(makeBundledJarPath(new File(jarPath).getName()));
+    String url = version4 ? JavaSdkUtil.getJunit4JarPath() : JavaSdkUtil.getJunit3JarPath();
+    final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtil.pathToUrl(url));
+    if (localFile != null) {
+      final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
+      url = jarFile != null ? jarFile.getUrl() : localFile.getUrl();
+    }
+    return url;
   }
-
-  public static String makeBundledJarPath(String lib) {
-    return getVariableRelatedPath(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, "lib/" + lib);
-  }
-
 
   public static void readIDEASpecific(final Element root, ModifiableRootModel model) throws InvalidDataException {
     PathMacroManager.getInstance(model.getModule()).expandPaths(root);
