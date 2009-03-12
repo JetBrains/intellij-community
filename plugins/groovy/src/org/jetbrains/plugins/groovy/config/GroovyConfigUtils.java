@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.util.LibrarySDK;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
@@ -251,6 +252,23 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
         }
       }
     }
+  }
+
+  @Override
+  public boolean isSDKHome(VirtualFile file) {
+    if (file != null && file.isDirectory()) {
+      final String path = file.getPath();
+      if (GroovyUtils.getFilesInDirectoryByPattern(path + "/lib", GROOVY_JAR_PATTERN).length > 0) {
+        return true;
+      }
+      if (GroovyUtils.getFilesInDirectoryByPattern(path + "/embeddable", GROOVY_ALL_JAR_PATTERN).length > 0) {
+        return true;
+      }
+      if (file.findFileByRelativePath("bin/" + STARTER_SCRIPT_FILE_NAME) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean tryToSetUpGroovyFacetOntheFly(final Module module) {
