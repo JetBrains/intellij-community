@@ -22,7 +22,6 @@ package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
@@ -35,8 +34,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
@@ -57,9 +58,18 @@ public class EclipseClasspathWriter {
       createClasspathEntry(orderEntry, classpathElement, oldRoot);
     }
 
+    @NonNls String outputPath = "bin";
+    if (myModel.getContentEntries().length == 1) {
+      final VirtualFile contentRoot = myModel.getContentEntries()[0].getFile();
+      final VirtualFile output = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
+      if (contentRoot != null && output != null && VfsUtil.isAncestor(contentRoot, output, false)) {
+        outputPath = getRelativePath(output.getUrl());
+      } else if (output == null) {
+        outputPath = getRelativePath(myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl());
+      }
+    }
     final Element orderEntry =
-      addOrderEntry(EclipseXml.OUTPUT_KIND, getRelativePath(myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl()),
-                    classpathElement, oldRoot);
+      addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement, oldRoot);
     setAttributeIfAbsent(orderEntry, EclipseXml.PATH_ATTR, EclipseXml.BIN_DIR);
   }
 
@@ -94,7 +104,9 @@ public class EclipseClasspathWriter {
             final Element orderEntry = addOrderEntry(kind[0], relativeClassPath, classpathRoot, oldRoot);
 
             final String[] srcFiles = libraryOrderEntry.getUrls(OrderRootType.SOURCES);
-            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, srcFiles.length == 0 ? null : getRelativePath(srcFiles[srcFiles.length - 1], new String[1], Comparing.strEqual(kind[0], EclipseXml.VAR_KIND)));
+            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, srcFiles.length == 0 ? null : getRelativePath(srcFiles[srcFiles.length - 1], new String[1], Comparing.strEqual(kind[0], EclipseXml.VAR_KIND),
+                                                                                                                       myModel.getModule().getProject(),
+                                                                                                                       getContentRoot()));
 
             //clear javadocs before write new
             final List children = new ArrayList(orderEntry.getChildren(EclipseXml.ATTRIBUTES_TAG));
@@ -138,17 +150,16 @@ public class EclipseClasspathWriter {
   }
 
   private String getRelativePath(String srcFile, String [] kind) {
-    return getRelativePath(srcFile, kind, true);
+    return getRelativePath(srcFile, kind, true, myModel.getModule().getProject(), getContentRoot());
   }
 
   private String getRelativePath(String url) {
     return getRelativePath(url, new String[1]);
   }
 
-  private String getRelativePath(final String url, String[] kind, boolean replaceVars) {
-    final Module module = myModel.getModule();
-
-    final VirtualFile projectBaseDir = module.getProject().getBaseDir();  //todo
+  public static  String getRelativePath(final String url, String[] kind, boolean replaceVars, final Project project,
+                                         final VirtualFile contentRoot) {
+    final VirtualFile projectBaseDir = project.getBaseDir();  //todo
     assert projectBaseDir != null;
 
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -157,7 +168,6 @@ public class EclipseClasspathWriter {
         file = JarFileSystem.getInstance().getVirtualFileForJar(file);
       }
       assert file != null;
-      final VirtualFile contentRoot = getContentRoot();
       if (contentRoot != null) {
         if (VfsUtil.isAncestor(contentRoot, file, false)) {
           return VfsUtil.getRelativePath(file, contentRoot, '/');
@@ -170,7 +180,6 @@ public class EclipseClasspathWriter {
         return replaceVars ? stripIDEASpecificPrefix(url, kind) : ProjectRootManagerImpl.extractLocalPath(url);
       }
     } else {
-      final VirtualFile contentRoot = getContentRoot();
       if (contentRoot != null) {
         final String rootUrl = contentRoot.getUrl();
         if (url.startsWith(rootUrl) && url.length() > rootUrl.length()) {

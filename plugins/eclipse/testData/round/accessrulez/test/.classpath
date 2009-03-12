@@ -7,5 +7,5 @@
       <accessrule kind="nonaccessible" pattern="*" />
     </accessrules>
   </classpathentry>
-  <classpathentry kind="output" path="out/production/testProject" />
+  <classpathentry kind="output" path="bin" />
 </classpath>

@@ -7,12 +7,12 @@ import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -50,13 +50,24 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   public void assertCompatible(final ModifiableRootModel model) throws ConfigurationException {
-    final String incompatibleLibrary = hasIncompatibleLibrary(model);
-    if (incompatibleLibrary != null) {
-      throw new ConfigurationException(
-        "Library \'" + incompatibleLibrary + "\' is incompatible with eclipse format: has too many classes roots");
+    for (OrderEntry entry : model.getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
+        final Library library = ((LibraryOrderEntry)entry).getLibrary();
+        if (library == null || entry.getUrls(OrderRootType.CLASSES).length != 1 || library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
+          throw new ConfigurationException(
+            "Library \'" + entry.getPresentableName() + "\' is incompatible with eclipse format which supports only one content root");
+        }
+      }
     }
-    if (!isCompatible(model)) {
+
+    if (model.getContentEntries().length != 1) {
       throw new ConfigurationException(EclipseBundle.message("eclipse.export.too.many.content.roots", model.getModule().getName()));
+    }
+
+    final VirtualFile output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
+    final VirtualFile contentRoot = model.getContentEntries()[0].getFile();
+    if (output == null || contentRoot == null || !VfsUtil.isAncestor(contentRoot, output, false)) {
+      throw new ConfigurationException("Output path is incompatible with eclipse format which supports output under content root only");
     }
   }
 
@@ -66,17 +77,6 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
   public ClasspathConverter createConverter(Module module) {
     return new EclipseClasspathConverter(module);
-  }
-
-  public static boolean isCompatible(final ModuleRootModel model) {
-    if (model.getContentEntries().length == 1) {
-      final ContentEntry[] entries = ModuleRootManager.getInstance(model.getModule()).getContentEntries();
-      if (entries.length != 1) return true;
-      if (Comparing.strEqual(model.getContentEntries()[0].getUrl(),  entries[0].getUrl())) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Nullable

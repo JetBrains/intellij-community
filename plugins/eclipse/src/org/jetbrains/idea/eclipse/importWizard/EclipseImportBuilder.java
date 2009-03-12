@@ -37,6 +37,7 @@ import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
+import org.jetbrains.idea.eclipse.conversion.EclipseUserLibrariesHelper;
 
 import javax.swing.*;
 import java.io.File;
@@ -202,7 +203,13 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       if (model == null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run(){
-                ProjectRootManagerEx.getInstanceEx(project).multiCommit(moduleModel, rootModels);
+              ProjectRootManagerEx.getInstanceEx(project).multiCommit(moduleModel, rootModels);
+              try {
+                EclipseUserLibrariesHelper.readProjectLibrariesContent(new File(getParameters().root), project, unknownLibraries);
+              }
+              catch (Exception e) {
+                LOG.error(e);
+              }
             }
         });
       }

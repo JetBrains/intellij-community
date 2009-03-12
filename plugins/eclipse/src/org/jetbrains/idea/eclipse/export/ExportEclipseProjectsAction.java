@@ -7,13 +7,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -24,6 +28,7 @@ import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.conversion.ConversionException;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
+import org.jetbrains.idea.eclipse.conversion.EclipseUserLibrariesHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,20 +48,31 @@ public class ExportEclipseProjectsAction extends AnAction {
     if ( project == null ) return;
     project.save(); // to flush iml files
 
-    List<Module> modules = new ArrayList<Module>();
+    final List<Module> modules = new ArrayList<Module>();
+    final List<Module> incompatibleModules = new ArrayList<Module>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (!EclipseClasspathStorageProvider.ID.equals(ClasspathStorage.getStorageType(module)) &&
-          EclipseClasspathStorageProvider.isCompatible(ModuleRootManager.getInstance(module)) &&
-          EclipseClasspathStorageProvider.hasIncompatibleLibrary(ModuleRootManager.getInstance(module)) == null) {
-        modules.add(module);
+      if (!EclipseClasspathStorageProvider.ID.equals(ClasspathStorage.getStorageType(module))) {
+        try {
+          ClasspathStorage.getProvider(EclipseClasspathStorageProvider.ID).assertCompatible(ModuleRootManager.getInstance(module).getModifiableModel());
+          modules.add(module);
+        }
+        catch (ConfigurationException e1) {
+          incompatibleModules.add(module);
+        }
       }
     }
 
-    if (modules.isEmpty()){
+    //todo suggest smth with hierarchy modules
+    if (!incompatibleModules.isEmpty()) {
+      if (Messages.showOkCancelDialog(project, "Eclipse incompatible modules found. Would you like to proceed and possibly loose your configurations?", "Eclipse Incompatible Modules Found", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
+        return;
+      }
+    } else if (modules.isEmpty()){
       Messages.showInfoMessage(project, EclipseBundle.message("eclipse.export.nothing.to.do"), EclipseBundle.message("eclipse.export.dialog.title"));
       return;
     }
 
+    modules.addAll(incompatibleModules);
     final ExportEclipseProjectsDialog dialog = new ExportEclipseProjectsDialog(project, modules);
     dialog.show ();
     if(dialog.isOK()){
@@ -70,7 +86,8 @@ public class ExportEclipseProjectsAction extends AnAction {
       else {
         for (Module module : dialog.getSelectedModules()) {
           final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-          final String storageRoot = ClasspathStorage.getStorageRootFromOptions(module);
+          final VirtualFile[] contentRoots = model.getContentRoots();
+          final String storageRoot = contentRoots.length == 1 ? contentRoots[0].getPath() : ClasspathStorage.getStorageRootFromOptions(module);
           try {
             final Element classpathEleemnt = new Element(EclipseXml.CLASSPATH_TAG);
 
@@ -111,6 +128,8 @@ public class ExportEclipseProjectsAction extends AnAction {
             catch (JDOMException e1) {
               LOG.error(e1);
             }
+
+            EclipseUserLibrariesHelper.appendProjectLibraries(project, VfsUtil.virtualToIoFile(project.getBaseDir()));
           }
           catch (ConversionException e1) {
             LOG.error(e1);
