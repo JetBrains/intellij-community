@@ -52,4 +52,13 @@ public class GroovyHighlightingTest extends CodeInsightFixtureTestCase {
                        "}");
   }
 
+  public void testDuplicateFields() throws Throwable {
+    doTest();
+  }
+
+  public void testNoDuplicationThroughClosureBorder() throws Throwable {
+    myFixture.addClass("package groovy.lang; public interface Closure {}");
+    doTest();
+  }
+
 }

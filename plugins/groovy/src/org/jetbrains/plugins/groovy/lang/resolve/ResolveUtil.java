@@ -46,6 +46,8 @@ import java.util.*;
  * @author ven
  */
 public class ResolveUtil {
+  public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
+
   public static boolean treeWalkUp(PsiElement place, PsiScopeProcessor processor) {
     PsiElement lastParent = null;
     PsiElement run = place;
@@ -157,7 +159,7 @@ public class ResolveUtil {
     return resolveExistingElement(place, processor, PsiClass.class);
   }
 
-  private static <T> T resolveExistingElement(GroovyPsiElement place, ResolverProcessor processor, Class<? extends T>... classes) {
+  public static <T> T resolveExistingElement(GroovyPsiElement place, ResolverProcessor processor, Class<? extends T>... classes) {
     treeWalkUp(place, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (GroovyResolveResult candidate : candidates) {

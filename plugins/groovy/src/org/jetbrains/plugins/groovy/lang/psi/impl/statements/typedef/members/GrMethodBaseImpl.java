@@ -124,6 +124,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
       if (!ResolveUtil.processElement(processor, parameter)) return false;
     }
 
+    processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
+
     return true;
   }
 

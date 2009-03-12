@@ -23,8 +23,8 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -33,6 +33,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Function;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
@@ -40,8 +41,8 @@ import org.jetbrains.plugins.grails.util.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamize.DynamizeInvalidCodeFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamize.DynamizeInvalidCodeFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
@@ -75,10 +76,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 
 import java.util.*;
@@ -606,7 +609,9 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private static void checkVariable(AnnotationHolder holder, GrVariable variable) {
-    final GroovyPsiElement duplicate = ResolveUtil.resolveProperty(variable, variable.getName());
+    PropertyResolverProcessor processor = new DuplicateVariablesProcessor(variable);
+    final GroovyPsiElement duplicate = ResolveUtil.resolveExistingElement(variable, processor, GrVariable.class, GrReferenceExpression.class);
+
     if (duplicate instanceof GrVariable) {
       if (duplicate instanceof GrField && !(variable instanceof GrField)) {
         holder.createWarningAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message("field.already.defined", variable.getName()));
@@ -1065,6 +1070,44 @@ public class GroovyAnnotator implements Annotator {
     }
     builder.append(")");
     return builder.toString();
+  }
+
+  private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
+    boolean borderPassed;
+
+    public DuplicateVariablesProcessor(GrVariable variable) {
+      super(variable.getName(), variable);
+      borderPassed = false;
+    }
+
+    @Override
+    public boolean execute(PsiElement element, ResolveState state) {
+      if (borderPassed) {
+        return false;
+      }
+      return super.execute(element, state);
+    }
+
+    @Override
+    public GroovyResolveResult[] getCandidates() {
+      return ContainerUtil.map2Array(super.getCandidates(), GroovyResolveResult.class, new Function<GroovyResolveResult, GroovyResolveResult>() {
+        public GroovyResolveResult fun(GroovyResolveResult result) {
+          final PsiElement element = result.getElement();
+          if (element instanceof GrAccessorMethod) {
+            return new GroovyResolveResultImpl(((GrAccessorMethod)element).getProperty(), result.getCurrentFileResolveContext(), result.getSubstitutor(), result.isAccessible(), result.isStaticsOK());
+          }
+          return result;
+        }
+      });
+    }
+
+    @Override
+    public void handleEvent(Event event, Object associated) {
+      if (event == ResolveUtil.DECLARATION_SCOPE_PASSED) {
+        borderPassed = true;
+      }
+      super.handleEvent(event, associated);
+    }
   }
 }
 
