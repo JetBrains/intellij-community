@@ -66,15 +66,15 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
         if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
-          if (CachesBasedRefSearcher.DEBUG) {
+          if (DEBUG) {
             System.out.println("!!!!!!!!!!!!!! Ref "+ref);
           }
           if (ref.getRangeInElement().contains(offsetInElement)) {
-            if (CachesBasedRefSearcher.DEBUG) {
+            if (DEBUG) {
               System.out.println("!!!!!!!!!!!!!!!!!!!!! Ref "+ref + " contains");
             }
             if (ref.isReferenceTo(refElement)) {
-              if (CachesBasedRefSearcher.DEBUG) {
+              if (DEBUG) {
                 System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   Found ref "+ref);
               }
               return consumer.process(ref);

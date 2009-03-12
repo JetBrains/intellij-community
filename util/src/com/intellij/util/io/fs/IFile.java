@@ -16,6 +16,8 @@
 
 package com.intellij.util.io.fs;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +48,7 @@ public interface IFile {
 
   long length();
 
-  IFile getChild(final String childName);
+  IFile getChild(@NonNls final String childName);
 
   boolean isDirectory();
 
