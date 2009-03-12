@@ -38,7 +38,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
 
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
-    if (containingClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       MyElementProcessor processor = new MyElementProcessor(method);
       ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), false).forEach(new PsiElementProcessorAdapter<PsiClass>(
         processor));
