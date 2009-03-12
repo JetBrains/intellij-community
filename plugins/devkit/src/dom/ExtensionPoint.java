@@ -22,12 +22,12 @@ public interface ExtensionPoint extends DomElement {
   GenericAttributeValue<String> getQualifiedName();
 
   @NotNull
-  @Convert(GlobalScopePsiClassConverter.class)
+  @Convert(PluginPsiClassConverter.class)
   GenericAttributeValue<PsiClass> getInterface();
 
   @NotNull
   @Attribute("beanClass")
-  @Convert(GlobalScopePsiClassConverter.class)
+  @Convert(PluginPsiClassConverter.class)
   GenericAttributeValue<PsiClass> getBeanClass();
 
   @NotNull

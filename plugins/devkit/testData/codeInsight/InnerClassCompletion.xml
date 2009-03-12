@@ -1,0 +1,5 @@
+<idea-plugin>
+    <actions>
+        <action class="Fuba<caret>"/>
+    </actions>
+</idea-plugin>

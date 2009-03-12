@@ -69,6 +69,27 @@ public class PluginXmlFunctionalTest extends CodeInsightFixtureTestCase {
     myFixture.checkHighlighting(false, false, false);
   }
 
+  public void testInnerClassCompletion() throws Throwable {
+    myFixture.addClass("package foo; public class Foo { public static class Fubar {} }");
+    myFixture.configureByFile(getTestName(false) + ".xml");
+    myFixture.completeBasic();
+    myFixture.type('\n');
+    myFixture.checkResultByFile(getTestName(false) + "_after.xml");
+  }
+
+  public void testResolveExtensionsFromDependentDescriptor() throws Throwable {
+    addPluginXml("xxx", "<idea-plugin>\n" +
+                       "    <id>com.intellij.xxx</id>\n" +
+                       "    <extensionPoints>\n" +
+                       "        <extensionPoint name=\"completion.contributor\"/>\n" +
+                       "    </extensionPoints>\n" +
+                       "</idea-plugin>");
+    
+    myFixture.copyFileToProject(getTestName(false) + "_main.xml", "META-INF/plugin.xml");
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + "_dependent.xml", "META-INF/dep.xml"));
+    myFixture.checkHighlighting(false, false, false);
+  }
+
   private void addPluginXml(final String root, final String text) throws IOException {
     myTempDirFixture.createFile(root +
                                 "/META-INF/plugin.xml", text);

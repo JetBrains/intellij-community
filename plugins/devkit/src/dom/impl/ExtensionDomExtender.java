@@ -2,9 +2,11 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
@@ -24,7 +26,7 @@ import java.util.Set;
  * @author mike
  */
 public class ExtensionDomExtender extends DomExtender<Extensions> {
-  private static final PsiClassConverter CLASS_CONVERTER = new GlobalScopePsiClassConverter();
+  private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
 
 
   public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
@@ -148,7 +150,31 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     result.add(PluginManager.CORE_PLUGIN_ID);
 
     for (Dependency dependency : ideaPlugin.getDependencies()) {
-      result.add(dependency.getStringValue());
+      ContainerUtil.addIfNotNull(dependency.getStringValue(), result);
+    }
+
+    if (ideaPlugin.getPluginId() == null) {
+      final VirtualFile file = ideaPlugin.getRoot().getFile().getOriginalFile().getVirtualFile();
+      if (file != null) {
+        final String fileName = file.getName();
+        if (!"plugin.xml".equals(fileName)) {
+          final VirtualFile mainPluginXml = file.findFileByRelativePath("../plugin.xml");
+          if (mainPluginXml != null) {
+            final PsiFile psiFile = PsiManager.getInstance(ideaPlugin.getManager().getProject()).findFile(mainPluginXml);
+            if (psiFile instanceof XmlFile) {
+              final XmlFile xmlFile = (XmlFile)psiFile;
+              final DomFileElement<IdeaPlugin> fileElement = ideaPlugin.getManager().getFileElement(xmlFile, IdeaPlugin.class);
+              if (fileElement != null) {
+                final IdeaPlugin mainPlugin = fileElement.getRootElement();
+                ContainerUtil.addIfNotNull(mainPlugin.getPluginId(), result);
+                for (Dependency dependency : mainPlugin.getDependencies()) {
+                  ContainerUtil.addIfNotNull(dependency.getStringValue(), result);
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
     return result;

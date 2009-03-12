@@ -51,7 +51,7 @@ public interface Action extends DomElement {
 	@Required
         @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
             instantiatable = true, allowNonPublic = true, allowAbstract = false, allowInterface = false)
-        @Convert(GlobalScopePsiClassConverter.class)
+        @Convert(PluginPsiClassConverter.class)
         GenericAttributeValue<PsiClass> getClazz();
 
 

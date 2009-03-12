@@ -16,6 +16,7 @@ public interface Component extends DomElement {
 
   @NotNull
   @Required
+  @Convert(PluginPsiClassConverter.class)
   GenericDomValue<PsiClass> getImplementationClass();
 
 
@@ -32,21 +33,12 @@ public interface Component extends DomElement {
   Option addOption();
 
   interface Application extends Component {
-    @NotNull
-    @Required
-    GenericDomValue<PsiClass> getImplementationClass();
   }
 
   interface Module extends Component {
-    @NotNull
-    @Required
-    GenericDomValue<PsiClass> getImplementationClass();
   }
 
   interface Project extends Component {
-    @NotNull
-    @Required
-    GenericDomValue<PsiClass> getImplementationClass();
 
     @NotNull
     @SubTag(value = "skipForDummyProject", indicator = true)
