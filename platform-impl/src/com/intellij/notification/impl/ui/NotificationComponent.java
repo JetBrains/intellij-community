@@ -1,10 +1,10 @@
 package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.impl.NotificationImpl;
 import com.intellij.notification.impl.*;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
@@ -14,13 +14,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 
 /**
  * @author spleaner
  */
 public class NotificationComponent extends JLabel implements NotificationModelListener {
-  private static final Icon EMPTY_ICON = new ImageIcon(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR));
+  private static final Icon EMPTY_ICON = IconLoader.getIcon("/ide/notifications.png");
   private NotificationModel myModel;
 
   public NotificationComponent(@NotNull final IdeNotificationArea area) {
