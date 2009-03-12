@@ -138,8 +138,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myValuesPanel.setLayout(new CardLayout());
 
     if (!myProject.isOpen()) return;
-    JPanel valuesPanelComponent = new JPanel(new GridBagLayout());
-    myValuesPanel.add(new JScrollPane(valuesPanelComponent), VALUES);
+    JPanel valuesPanelComponent = new MyJPanel(new GridBagLayout());
+    myValuesPanel.add(new JScrollPane(valuesPanelComponent){
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        getViewport().setBackground(UIManager.getColor("Panel.background"));
+      }
+    }, VALUES);
     myValuesPanel.add(myNoPropertySelectedPanel, NO_PROPERTY_SELECTED);
 
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
@@ -166,7 +172,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       gc.anchor = GridBagConstraints.CENTER;
 
       Locale locale = propertiesFile.getLocale();
-      ArrayList<String> names = new ArrayList<String>();
+      List<String> names = new ArrayList<String>();
       if (!Comparing.strEqual(locale.getDisplayLanguage(), null)) {
         names.add(locale.getDisplayLanguage());
       }
@@ -181,31 +187,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       if (!names.isEmpty()) {
         title += " ("+StringUtil.join(names, "/")+")";
       }
-      final Dimension dimension = new Dimension(200, editor.getLineHeight() * 4);
       JComponent comp = new JPanel(new BorderLayout()) {
         @Override
         public Dimension getPreferredSize() {
-          return dimension;
-        }
-
-        @Override
-        public Dimension getMaximumSize() {
-          return dimension;
-        }
-
-        @Override
-        public Dimension getMinimumSize() {
-          return dimension;
-        }
-
-        @Override
-        public Dimension getSize(Dimension rv) {
-          return dimension;
-        }
-
-        @Override
-        public int getHeight() {
-          return (int)dimension.getHeight();
+          Insets insets = getBorder().getBorderInsets(this);
+          return new Dimension(100,editor.getLineHeight()*4+ insets.top + insets.bottom);
         }
       };
       comp.add(editor.getComponent(), BorderLayout.CENTER);
@@ -645,8 +631,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     settings.setWhitespacesShown(false);
     settings.setLineMarkerAreaShown(false);
     settings.setFoldingOutlineShown(false);
-    settings.setAdditionalColumnsCount(10);
-    settings.setAdditionalLinesCount(3);
+    settings.setAdditionalColumnsCount(0);
+    settings.setAdditionalLinesCount(0);
     settings.setRightMarginShown(true);
     settings.setRightMargin(60);
 
@@ -665,4 +651,32 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       return ResourceBundleEditor.this.getData(dataId);
     }
   }
+
+  private class MyJPanel extends JPanel implements Scrollable{
+    private MyJPanel(LayoutManager layout) {
+      super(layout);
+    }
+
+    public Dimension getPreferredScrollableViewportSize() {
+      return getPreferredSize();
+    }
+
+    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+      Editor editor = myEditors.values().iterator().next();
+      return editor.getLineHeight()*4;
+    }
+
+    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+      return visibleRect.height;
+    }
+
+    public boolean getScrollableTracksViewportWidth() {
+      return true;
+    }
+
+    public boolean getScrollableTracksViewportHeight() {
+      return false;
+    }
+  }
+
 }
