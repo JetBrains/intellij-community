@@ -1,26 +1,25 @@
 package com.intellij.lang.properties.references;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.properties.PropertiesFilesManager;
+import com.intellij.lang.properties.PropertiesReferenceManager;
+import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
-import com.intellij.lang.properties.PropertiesReferenceManager;
-import com.intellij.lang.properties.PropertiesFilesManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Collections;
-import java.util.Collection;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class I18nUtil {
   @NotNull
@@ -83,11 +82,23 @@ public class I18nUtil {
    * @param value i18n literal
    * @return number of parameters
    */
-  public static int getPropertyValueParamsCount(final String value) {
-    int count = 0;
-    while (value.contains("{" + count + "}")) {
-      count++;
+  public static int getPropertyValueParamsMaxCount(final PsiLiteralExpression expression) {
+    int maxCount = -1;
+    for (PsiReference reference : expression.getReferences()) {
+      if (reference instanceof PsiPolyVariantReference) {
+        for (ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(false)) {
+          if (result.isValidResult() && result.getElement() instanceof Property) {
+            String value = ((Property)result.getElement()).getValue();
+            try {
+              int count = new MessageFormat(value, null).getFormatsByArgumentIndex().length;
+              maxCount = Math.max(maxCount, count);
+            }
+            catch (IllegalArgumentException ignored) {
+            }
+          }
+        }
+      }
     }
-    return count;
+    return maxCount;
   }
 }

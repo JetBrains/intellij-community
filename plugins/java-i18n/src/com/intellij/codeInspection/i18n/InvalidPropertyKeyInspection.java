@@ -167,18 +167,17 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
         }
       } else
       if (expression.getParent() instanceof PsiExpressionList && expression.getParent().getParent() instanceof PsiMethodCallExpression) {
-        final String msg = resolvePropertyKey(expression);
-        if (msg == null) return;
+        final int paramsCount = I18nUtil.getPropertyValueParamsMaxCount(expression);
+        if (paramsCount == -1) return;
 
         final PsiExpressionList expressions = (PsiExpressionList)expression.getParent();
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expressions.getParent();
         final PsiExpression[] args = expressions.getExpressions();
         for (int i = 0; i < args.length; i++) {
           if (args[i] == expression) {
-            final int paramsCount = I18nUtil.getPropertyValueParamsCount(msg);
             if (i + paramsCount >= args.length) {
               myProblems.add(myManager.createProblemDescriptor(methodCall,
-                                                               CodeInsightBundle.message("property.has.more.parameters.than.passed", key, paramsCount, args.length - i - 1),
+                                                               CodeInsightBundle.message("property.has.more.parameters.than.passed", key, paramsCount, args.length-i-1),
                                                                new LocalQuickFix[0], 
                                                                ProblemHighlightType.GENERIC_ERROR));
             }
