@@ -148,10 +148,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
 
   private List<String> createCurrentSeverities() {
     List<String> list = new ArrayList<String>();
-    list.add(HighlightSeverity.ERROR.toString());
-    list.add(HighlightSeverity.WARNING.toString());
-    list.add(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING.toString());
-    list.add(HighlightSeverity.INFO.toString());
+    list.addAll(STANDART_SEVERITIES.keySet());
     list.addAll(ourMap.keySet());
     Collections.sort(list);
     return list;
