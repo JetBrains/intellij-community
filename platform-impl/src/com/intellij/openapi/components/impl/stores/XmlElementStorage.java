@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -609,11 +610,11 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     private Element mergeElements(final String name, final Element element1, final Element element2) {
-      Object[] mergers = Extensions.getRootArea().getExtensionPoint("com.intellij.componentConfigurationMerger").getExtensions();
-      for (Object merger : mergers) {
-        XmlConfigurationMerger mergerObj = (XmlConfigurationMerger)merger;
-        if (mergerObj.getComponentName().equals(name)) {
-          return mergerObj.merge(element1, element2);
+      ExtensionPoint<XmlConfigurationMerger> point = Extensions.getRootArea().getExtensionPoint("com.intellij.componentConfigurationMerger");
+      XmlConfigurationMerger[] mergers = point.getExtensions();
+      for (XmlConfigurationMerger merger : mergers) {
+        if (merger.getComponentName().equals(name)) {
+          return merger.merge(element1, element2);
         }
       }
       return element1;

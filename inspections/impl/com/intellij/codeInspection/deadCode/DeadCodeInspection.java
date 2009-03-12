@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -83,13 +84,14 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   public DeadCodeInspection() {
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
-    final Object[] deadCodeAddins = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL).getExtensions();
-    Arrays.sort(deadCodeAddins, new Comparator<Object>() {
-      public int compare(final Object o1, final Object o2) {
-        return ((UnusedCodeExtension)o1).getDisplayName().compareToIgnoreCase(((UnusedCodeExtension)o2).getDisplayName());
+    ExtensionPoint<UnusedCodeExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    final UnusedCodeExtension[] deadCodeAddins = point.getExtensions();
+    Arrays.sort(deadCodeAddins, new Comparator<UnusedCodeExtension>() {
+      public int compare(final UnusedCodeExtension o1, final UnusedCodeExtension o2) {
+        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
       }
     });
-    myExtensions = (UnusedCodeExtension[])deadCodeAddins;
+    myExtensions = deadCodeAddins;
   }
 
   public void initialize(@NotNull final GlobalInspectionContextImpl context) {

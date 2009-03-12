@@ -17,6 +17,7 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
@@ -353,9 +354,9 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
       ignoreElement(processor, entryPoint);
     }
 
-    final Object[] addins = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.VISIBLITY_TOOL).getExtensions();
-    for (Object addin : addins) {
-      ((VisibilityExtension)addin).fillIgnoreList(manager, processor);
+    ExtensionPoint<VisibilityExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.VISIBLITY_TOOL);
+    for (VisibilityExtension addin : point.getExtensions()) {
+      addin.fillIgnoreList(manager, processor);
     }
     manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(final RefEntity refEntity) {

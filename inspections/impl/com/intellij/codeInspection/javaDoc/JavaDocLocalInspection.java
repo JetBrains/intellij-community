@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -480,9 +481,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (docComment == null) {
       if (isJavaDocRequired(psiMethod)) {
         if (superMethods.length > 0) return null;
-        final Object[] addins = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JAVADOC_LOCAL).getExtensions();
-        for (Object addin : addins) {
-          if (((Condition<PsiMember>)addin).value(psiMethod)) return null;
+        ExtensionPoint<Condition<PsiMember>> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JAVADOC_LOCAL);
+        final Condition<PsiMember>[] addins = point.getExtensions();
+        for (Condition<PsiMember> addin : addins) {
+          if (addin.value(psiMethod)) return null;
         }
         if (superMethods.length == 0) {
           final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();

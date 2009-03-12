@@ -20,6 +20,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -313,10 +314,10 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void initializeAnnotators() {
-    final Object[] graphAnnotators =
-      Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INSPECTIONS_GRAPH_ANNOTATOR).getExtensions();
-    for (Object annotator : graphAnnotators) {
-      registerGraphAnnotator((RefGraphAnnotator)annotator);
+    ExtensionPoint<RefGraphAnnotator> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INSPECTIONS_GRAPH_ANNOTATOR);
+    final RefGraphAnnotator[] graphAnnotators = point.getExtensions();
+    for (RefGraphAnnotator annotator : graphAnnotators) {
+      registerGraphAnnotator(annotator);
     }
     for (RefGraphAnnotator graphAnnotator : myGraphAnnotators) {
       if (graphAnnotator instanceof RefGraphAnnotatorEx) {

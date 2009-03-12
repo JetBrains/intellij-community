@@ -351,8 +351,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @NotNull
-  public ExtensionPointImpl getExtensionPoint(String extensionPointName) {
-    final ExtensionPointImpl extensionPoint = myExtensionPoints.get(extensionPointName);
+  public <T> ExtensionPointImpl<T> getExtensionPoint(String extensionPointName) {
+    ExtensionPointImpl<T> extensionPoint = myExtensionPoints.get(extensionPointName);
     if (extensionPoint == null) {
       throw new IllegalArgumentException("Missing extension point: " + extensionPointName + " in area " + myAreaInstance);
     }
@@ -361,7 +361,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   @SuppressWarnings({"unchecked"})
   public <T> ExtensionPoint<T> getExtensionPoint(ExtensionPointName<T> extensionPointName) {
-    return (ExtensionPoint<T>)getExtensionPoint(extensionPointName.getName());
+    return getExtensionPoint(extensionPointName.getName());
   }
 
   public ExtensionPoint[] getExtensionPoints() {

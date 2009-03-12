@@ -90,12 +90,12 @@ public class Extensions {
 
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
-    return (T[])getExtensions(extensionPointName.getName(), areaInstance);
+    return Extensions.<T>getExtensions(extensionPointName.getName(), areaInstance);
   }
 
-  public static Object[] getExtensions(String extensionPointName, AreaInstance areaInstance) {
+  public static <T> T[] getExtensions(String extensionPointName, AreaInstance areaInstance) {
     ExtensionsArea area = getArea(areaInstance);
-    ExtensionPoint extensionPoint = area.getExtensionPoint(extensionPointName);
+    ExtensionPoint<T> extensionPoint = area.getExtensionPoint(extensionPointName);
     return extensionPoint.getExtensions();
   }
 

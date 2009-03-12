@@ -15,6 +15,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -313,10 +314,10 @@ public class I18nInspection extends BaseLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final Object[] fileCheckingInspections = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.I18N_INSPECTION_TOOL).getExtensions();
-    for(Object obj: fileCheckingInspections) {
-      FileCheckingInspection inspection = (FileCheckingInspection) obj;
-      ProblemDescriptor[] descriptors = inspection.checkFile(file, manager, isOnTheFly);
+    ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.I18N_INSPECTION_TOOL);
+    final FileCheckingInspection[] fileCheckingInspections = point.getExtensions();
+    for(FileCheckingInspection obj: fileCheckingInspections) {
+      ProblemDescriptor[] descriptors = obj.checkFile(file, manager, isOnTheFly);
       if (descriptors != null) {
         return descriptors;
       }

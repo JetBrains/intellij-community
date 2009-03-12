@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -371,26 +372,27 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private static void loadComponentRoamingTypes() {
-    final Object[] componentRoamingTypes = Extensions.getRootArea().getExtensionPoint("com.intellij.ComponentRoamingType").getExtensions();
+    ExtensionPoint<RoamingTypeExtensionPointBean> point = Extensions.getRootArea().getExtensionPoint("com.intellij.ComponentRoamingType");
+    final RoamingTypeExtensionPointBean[] componentRoamingTypes = point.getExtensions();
 
-    for (Object object : componentRoamingTypes) {
-      final RoamingTypeExtensionPointBean bean = (RoamingTypeExtensionPointBean)object;
+    for (RoamingTypeExtensionPointBean object : componentRoamingTypes) {
 
-      assert bean.componentName != null;
-      assert bean.roamingType != null;
+      assert object.componentName != null;
+      assert object.roamingType != null;
 
-      final RoamingType type = RoamingType.valueOf(bean.roamingType);
+      final RoamingType type = RoamingType.valueOf(object.roamingType);
 
       assert type != null;
 
-      ComponentRoamingManager.getInstance().setRoamingType(bean.componentName, type);
+      ComponentRoamingManager.getInstance().setRoamingType(object.componentName, type);
     }
   }
 
   private void fireBeforeApplicationLoaded() {
-    final Object[] objects = Extensions.getRootArea().getExtensionPoint("com.intellij.ApplicationLoadListener").getExtensions();
-    for (Object object : objects) {
-      ((ApplicationLoadListener)object).beforeApplicationLoaded(this);
+    ExtensionPoint<ApplicationLoadListener> point = Extensions.getRootArea().getExtensionPoint("com.intellij.ApplicationLoadListener");
+    final ApplicationLoadListener[] objects = point.getExtensions();
+    for (ApplicationLoadListener object : objects) {
+      object.beforeApplicationLoaded(this);
     }
   }
 

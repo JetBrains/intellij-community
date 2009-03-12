@@ -7,6 +7,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
@@ -64,7 +65,8 @@ public class CacheUtil {
   }
 
   public static IndexPatternProvider[] getIndexPatternProviders() {
-    return (IndexPatternProvider[]) Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INDEX_PATTERN_PROVIDER).getExtensions();
+    ExtensionPoint<IndexPatternProvider> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INDEX_PATTERN_PROVIDER);
+    return point.getExtensions();
   }
 
   public static int getIndexPatternCount() {

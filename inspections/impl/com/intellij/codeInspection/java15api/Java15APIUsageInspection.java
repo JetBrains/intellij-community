@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -129,10 +130,10 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
 
   @Override @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final Object[] fileCheckingInspections = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JAVA15_INSPECTION_TOOL).getExtensions();
-    for(Object obj: fileCheckingInspections) {
-      FileCheckingInspection inspection = (FileCheckingInspection) obj;
-      ProblemDescriptor[] descriptors = inspection.checkFile(file, manager, isOnTheFly);
+    ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JAVA15_INSPECTION_TOOL);
+    final FileCheckingInspection[] fileCheckingInspections = point.getExtensions();
+    for(FileCheckingInspection obj: fileCheckingInspections) {
+      ProblemDescriptor[] descriptors = obj.checkFile(file, manager, isOnTheFly);
       if (descriptors != null) {
         return descriptors;
       }

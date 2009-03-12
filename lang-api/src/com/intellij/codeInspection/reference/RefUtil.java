@@ -19,6 +19,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -34,10 +35,10 @@ public abstract class RefUtil {
   }
 
   public static boolean isEntryPoint(final RefElement refElement) {
-    final Object[] addins = Extensions.getRootArea()
-      .getExtensionPoint(ExtensionPoints.INSPECTION_ENRTY_POINT).getExtensions();
-    for (Object entryPoint : addins) {
-      if (((EntryPoint)entryPoint).accept(refElement)) {
+    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INSPECTION_ENRTY_POINT);
+    final EntryPoint[] addins = point.getExtensions();
+    for (EntryPoint entryPoint : addins) {
+      if (entryPoint.accept(refElement)) {
         return true;
       }
     }

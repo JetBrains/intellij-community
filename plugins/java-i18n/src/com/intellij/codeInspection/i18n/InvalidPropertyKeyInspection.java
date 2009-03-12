@@ -12,6 +12,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Comparing;
@@ -96,10 +97,10 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
-    final Object[] fileCheckingInspections = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INVALID_PROPERTY_KEY_INSPECTION_TOOL).getExtensions();
-    for(Object obj: fileCheckingInspections) {
-      FileCheckingInspection inspection = (FileCheckingInspection) obj;
-      ProblemDescriptor[] descriptors = inspection.checkFile(file, manager, isOnTheFly);
+    ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INVALID_PROPERTY_KEY_INSPECTION_TOOL);
+    final FileCheckingInspection[] fileCheckingInspections = point.getExtensions();
+    for(FileCheckingInspection obj: fileCheckingInspections) {
+      ProblemDescriptor[] descriptors = obj.checkFile(file, manager, isOnTheFly);
       if (descriptors != null) {
         return descriptors;
       }

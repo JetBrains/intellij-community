@@ -31,7 +31,7 @@ public interface ExtensionsArea  {
 
   boolean hasExtensionPoint(@NonNls String extensionPointName);
   @NotNull
-  ExtensionPoint getExtensionPoint(@NonNls String extensionPointName);
+  <T> ExtensionPoint<T> getExtensionPoint(@NonNls String extensionPointName);
   <T> ExtensionPoint<T> getExtensionPoint(ExtensionPointName<T> extensionPointName);
 
   ExtensionPoint[] getExtensionPoints();
