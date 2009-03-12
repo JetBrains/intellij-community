@@ -35,120 +35,81 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Properties;
 import java.util.Collection;
 
 public class EclipseUserLibrariesHelper {
-  private static final String ORG_ECLIPSE_JDT_CORE_PREFS = "org.eclipse.jdt.core.prefs";
-  private static final String ORG_ECLIPSE_JDT_CORE_USER_LIBRARY = "org.eclipse.jdt.core.userLibrary.";
+  //private static final String ORG_ECLIPSE_JDT_CORE_PREFS = "org.eclipse.jdt.core.prefs";
+  //private static final String ORG_ECLIPSE_JDT_CORE_USER_LIBRARY = "org.eclipse.jdt.core.userLibrary.";
 
   private EclipseUserLibrariesHelper() {
   }
 
-  private static String writeUserLibrary(Library library, Project project) {
-    StringBuffer buf = new StringBuffer();
-    buf.append("<?xml version\\=\"1.0\" encoding\\=\"UTF-8\"?>\\r\\n<userlibrary systemlibrary\\=\"false\" version\\=\"1\">");
-    final String[] urls = library.getUrls(OrderRootType.CLASSES);  //todo remove existing
-
-    for (String url : urls) {
-      buf.append("\\r\\n\\t<archive path\\=\"").append(EclipseClasspathWriter.getRelativePath(url, new String[0], true, project, null))
-        .append("\">");
-      /*  "\\r\\n\\t\\t<attributes>\\r\\n\\t\\t\\t" +
-      "<attribute name\\=\"javadoc_location\" value\\=\"file\\:/C\\:/conf\"/>\\r\\n\\t\\t" +
-      "</attributes>";*/
-      buf.append("\\r\\n\\t</archive>");
+  private static void writeUserLibrary(final Library library, final Element libElement) {
+    final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+    for (VirtualFile file : files) {
+      Element archElement = new Element("archive");
+      if (file.getFileSystem() instanceof JarFileSystem) {
+        final VirtualFile localFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+        if (localFile != null) {
+          file = localFile;
+        }
+      }
+      archElement.setAttribute("path", file.getPath());
+      libElement.addContent(archElement);
     }
-    buf.append("\\r\\n</userlibrary>\\r\\n");
-    return buf.toString();
   }
 
   public static void appendProjectLibraries(final Project project, final File workspaceRoot) throws IOException {
-    final File prefsParent = getPathToUserLibsFile(workspaceRoot);
-    if (!prefsParent.isDirectory()) {
-      if (!prefsParent.mkdirs()) return;
-    }
-    File prefs = new File(prefsParent, ORG_ECLIPSE_JDT_CORE_PREFS);
-    if (!prefs.exists()) {
-      if (!prefs.createNewFile()) return;
-    }
-
-    final Properties properties = new Properties();
-    final FileInputStream inputStream = new FileInputStream(prefs);
-    try {
-      properties.load(inputStream);
-    }
-    catch (IOException e) {
-      inputStream.close();
-    }
-
+    if (!workspaceRoot.isDirectory()) return;
+    Element userLibsElement = new Element("eclipse-userlibraries");
     final Library[] libraries = ProjectLibraryTable.getInstance(project).getLibraries();
     for (Library library : libraries) {
-      properties.setProperty(ORG_ECLIPSE_JDT_CORE_USER_LIBRARY + library.getName(), writeUserLibrary(library, project));
+      Element libElement = new Element("library");
+      libElement.setAttribute("name", library.getName());
+      writeUserLibrary(library, libElement);
+      userLibsElement.addContent(libElement);
     }
-
-    FileOutputStream outputStream = new FileOutputStream(prefs);
-    try {
-      properties.save(outputStream, null);
-    }
-    finally {
-      outputStream.close();
-    }
+    JDOMUtil.writeDocument(new Document(userLibsElement), workspaceRoot + "/" + project.getName() + ".userlibraries", "\n");
   }
 
-  private static File getPathToUserLibsFile(File workspaceRoot) {
-    return new File(new File(new File(new File(workspaceRoot, ".metadata"), ".plugins"), "org.eclipse.core.runtime"), ".settings");
-  }
 
-  public static void readProjectLibrariesContent(File workspace, Project project, Collection<String> unknownLibraries) throws IOException, JDOMException {
-    final File parentPrefs = getPathToUserLibsFile(workspace);
-    final LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
-    if (parentPrefs.isDirectory()) {
-      final File prefs = new File(parentPrefs, ORG_ECLIPSE_JDT_CORE_PREFS);
-      if (prefs.exists()) {
-        final Properties properties = new Properties();
-        FileInputStream inputStream = new FileInputStream(prefs);
-        try {
-          properties.load(inputStream);
+  public static void readProjectLibrariesContent(File workspace, Project project, Collection<String> unknownLibraries)
+    throws IOException, JDOMException {
+    if (!workspace.isDirectory()) return;
+    final File exportedFile = new File(workspace, project.getName() + ".userlibraries");
+    if (exportedFile.exists()) {
+      final LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
+      final Element rootElement = JDOMUtil.loadDocument(exportedFile).getRootElement();
+      for (Object o : rootElement.getChildren("library")) {
+        final Element libElement = (Element)o;
+        final String libName = libElement.getAttributeValue("name");
+        Library libraryByName = libraryTable.getLibraryByName(libName);
+        if (libraryByName == null) {
+          final LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
+          libraryByName = model.createLibrary(libName);
+          model.commit();
         }
-        finally {
-          inputStream.close();
-        }
-        for (Object prop : properties.keySet()) {
-          if (((String)prop).startsWith(ORG_ECLIPSE_JDT_CORE_USER_LIBRARY)) {
-            final String libName = ((String)prop).substring(ORG_ECLIPSE_JDT_CORE_USER_LIBRARY.length());
-            Library libraryByName = libraryTable.getLibraryByName(libName);
-            if (libraryByName == null) {
-              final LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
-              libraryByName = model.createLibrary(libName);
-              model.commit();
+        if (libraryByName != null) {
+          final Library.ModifiableModel model = libraryByName.getModifiableModel();
+          for (Object a : libElement.getChildren("archive")) {
+            String rootPath = ((Element)a).getAttributeValue("path");
+            if (rootPath.startsWith("/")) { //relative to workspace root
+              rootPath = project.getBaseDir().getPath() + rootPath;
             }
-            if (libraryByName != null) {
-              final Library.ModifiableModel model = libraryByName.getModifiableModel();
-              final String libDescriptor = properties.getProperty((String)prop);
-              final Document document = JDOMUtil.loadDocument(libDescriptor);
-              for (Object o : document.getRootElement().getChildren("archive")) {
-                String rootPath = ((Element)o).getAttributeValue("path");
-                if (rootPath.startsWith("/")) { //relative to workspace root
-                  rootPath = project.getBaseDir().getPath() + rootPath;
-                }
-                String url = VfsUtil.pathToUrl(rootPath);
-                final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(url);
-                if (localFile != null) {
-                  final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
-                  if (jarFile != null) {
-                    url = jarFile.getUrl();
-                  }
-                }
-                model.addRoot(url, OrderRootType.CLASSES);
+            String url = VfsUtil.pathToUrl(rootPath);
+            final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(url);
+            if (localFile != null) {
+              final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
+              if (jarFile != null) {
+                url = jarFile.getUrl();
               }
-              model.commit();
             }
-            unknownLibraries.remove(libName);  //ignore finally found libraries
+            model.addRoot(url, OrderRootType.CLASSES);
           }
+          model.commit();
         }
+        unknownLibraries.remove(libName);  //ignore finally found libraries
       }
     }
   }
