@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -231,7 +230,7 @@ public class EclipseClasspathReader {
     }
     else if (kind.equals(EclipseXml.CON_KIND)) {
       if (path.equals(EclipseXml.ECLIPSE_PLATFORM)) {
-        addNamedLibrary(rootModel, unknownLibraries, exported, IdeaXml.ECLIPSE_LIBRARY);
+        addNamedLibrary(rootModel, unknownLibraries, exported, IdeaXml.ECLIPSE_LIBRARY, LibraryTablesRegistrar.APPLICATION_LEVEL);
       }
       else if (path.startsWith(EclipseXml.JRE_CONTAINER)) {
 
@@ -254,7 +253,7 @@ public class EclipseClasspathReader {
         rootModel.rearrangeOrderEntries(ArrayUtil.remove(orderEntries, 0));
       }
       else if (path.startsWith(EclipseXml.USER_LIBRARY)) {
-        addNamedLibrary(rootModel, unknownLibraries, exported, getPresentableName(path));
+        addNamedLibrary(rootModel, unknownLibraries, exported, getPresentableName(path), LibraryTablesRegistrar.PROJECT_LEVEL);
       }
       else if (path.startsWith(EclipseXml.JUNIT_CONTAINER)) {
         final String junitName = IdeaXml.JUNIT + getPresentableName(path);
@@ -282,7 +281,8 @@ public class EclipseClasspathReader {
   private void addNamedLibrary(final ModifiableRootModel rootModel,
                                final Collection<String> unknownLibraries,
                                final boolean exported,
-                               final String name) {
+                               final String name,
+                               final String notFoundLibraryLevel) {
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
     Library lib = tablesRegistrar.getLibraryTable().getLibraryByName(name);
     if (lib == null) {
@@ -293,7 +293,7 @@ public class EclipseClasspathReader {
     }
     else {
       unknownLibraries.add(name);
-      rootModel.addInvalidLibrary(name, LibraryTablesRegistrar.PROJECT_LEVEL).setExported(exported);
+      rootModel.addInvalidLibrary(name, notFoundLibraryLevel).setExported(exported);
     }
   }
 
