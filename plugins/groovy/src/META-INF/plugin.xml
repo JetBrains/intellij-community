@@ -89,6 +89,8 @@
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
     <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyIndentOptionsProvider"/>
 
+    <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GroovyTypeHierarchyProvider"/>
+
 
     <lang.elementManipulator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
                              implementationClass="org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator"/>
