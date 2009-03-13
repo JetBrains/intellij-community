@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,7 +20,7 @@ public class ProjectNotificationsComponent implements ProjectComponent {
   }
 
   public void projectOpened() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isDummyEnvironment()) {
       return;
     }
 
@@ -28,12 +29,17 @@ public class ProjectNotificationsComponent implements ProjectComponent {
   }
 
   public void projectClosed() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isDummyEnvironment()) {
       return;
     }
 
     myStatusBar.getNotificationArea().getModel().clearProjectNotifications();
     myProject = null;
+  }
+
+  private static boolean isDummyEnvironment() {
+    final Application application = ApplicationManager.getApplication();
+    return application.isUnitTestMode() || application.isCommandLine();
   }
 
   @NotNull
