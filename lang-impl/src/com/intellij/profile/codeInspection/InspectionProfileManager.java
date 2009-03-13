@@ -162,9 +162,10 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return mySchemesManager.getAllSchemes();
   }
 
+  public static boolean LOAD_PROFILES = !ApplicationManager.getApplication().isUnitTestMode();
   public void initProfiles() {
     if (!myProfilesAreInitialized.getAndSet(true)) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
+      if (!LOAD_PROFILES) return;
 
       mySchemesManager.loadSchemes();
       final Collection<Profile> profiles = mySchemesManager.getAllSchemes();
@@ -183,8 +184,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   }
 
   public void createDefaultProfile() {
-    final InspectionProfileImpl defaultProfile;
-    defaultProfile = (InspectionProfileImpl)createProfile();
+    final InspectionProfileImpl defaultProfile = (InspectionProfileImpl)createProfile();
     defaultProfile.setBaseProfile(InspectionProfileImpl.getDefaultProfile());
     addProfile(defaultProfile);
   }

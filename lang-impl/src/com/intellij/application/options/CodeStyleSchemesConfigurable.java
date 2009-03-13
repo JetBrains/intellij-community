@@ -270,7 +270,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
         }
 
         public void disposeUIResources() {
-          CodeStyleSchemesConfigurable.this.disposeUIResources();
+          panel.disposeUIResources();
         }
       };
     }
