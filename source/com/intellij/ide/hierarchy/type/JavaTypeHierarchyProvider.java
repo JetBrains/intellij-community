@@ -33,8 +33,8 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
       PsiElement element = file.findElementAt(offset);
       while (element != null) {
         if (element instanceof PsiFile) {
-          if (!(element instanceof PsiJavaFile)) return null;
-          final PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+          if (!(element instanceof PsiClassOwner)) return null;
+          final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
           return classes.length == 1 ? classes[0] : null;
         }
         if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
