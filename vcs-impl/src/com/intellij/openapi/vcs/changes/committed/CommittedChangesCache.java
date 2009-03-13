@@ -9,7 +9,8 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -30,6 +31,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -397,9 +399,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
   }
 
-  /**
-   * For tests only, progress does not matter
-   */
+  @TestOnly
   public void refreshAllCaches() throws IOException, VcsException {
     final Collection<ChangesCacheFile> files = myCachesHolder.getAllCaches();
     for(ChangesCacheFile file: files) {

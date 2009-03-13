@@ -21,14 +21,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -49,6 +50,7 @@ public class Messages {
   protected static final String NO_BUTTON = CommonBundle.getNoButtonText();
   protected static final String CANCEL_BUTTON = CommonBundle.getCancelButtonText();
 
+  @TestOnly
   public static TestDialog setTestDialog(TestDialog newValue) {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
