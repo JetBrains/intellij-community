@@ -159,9 +159,8 @@ public class EclipseClasspathWriter {
 
   public static  String getRelativePath(final String url, String[] kind, boolean replaceVars, final Project project,
                                          final VirtualFile contentRoot) {
-    final VirtualFile projectBaseDir = project.getBaseDir();  //todo
+    final VirtualFile projectBaseDir = contentRoot != null ? contentRoot.getParent() : project.getBaseDir();
     assert projectBaseDir != null;
-
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
     if (file != null) {
       if (file.getFileSystem() instanceof JarFileSystem) {
@@ -220,11 +219,13 @@ public class EclipseClasspathWriter {
       final String protocol = VirtualFileManager.extractProtocol(javadocPath);
       if (!Comparing.strEqual(protocol, HttpFileSystem.getInstance().getProtocol())) {
         final String path = VfsUtil.urlToPath(javadocPath);
+        final VirtualFile contentRoot = getContentRoot();
+        final VirtualFile baseDir = contentRoot != null ? contentRoot.getParent() : myModel.getProject().getBaseDir();
         if (Comparing.strEqual(protocol, JarFileSystem.getInstance().getProtocol())){
           final VirtualFile javadocFile = JarFileSystem.getInstance().getVirtualFileForJar(VirtualFileManager.getInstance().findFileByUrl(javadocPath));
-          if (javadocFile != null && VfsUtil.isAncestor(myModel.getProject().getBaseDir(), javadocFile,  false)) {
+          if (javadocFile != null && VfsUtil.isAncestor(baseDir, javadocFile,  false)) {
             javadocPath = EclipseXml.JAR_PREFIX +
-                          EclipseXml.PLATFORM_PROTOCOL + "resources/" + VfsUtil.getRelativePath(javadocFile, myModel.getProject().getBaseDir(), '/') + javadocPath.substring(javadocFile.getUrl().length()) ;
+                          EclipseXml.PLATFORM_PROTOCOL + "resources/" + VfsUtil.getRelativePath(javadocFile, baseDir, '/') + javadocPath.substring(javadocFile.getUrl().length()) ;
           } else {
             javadocPath = EclipseXml.JAR_PREFIX + EclipseXml.FILE_PROTOCOL + path;
           }
