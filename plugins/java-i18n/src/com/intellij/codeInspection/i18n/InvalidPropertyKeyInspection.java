@@ -11,10 +11,9 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.I18nUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Comparing;
@@ -23,9 +22,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -167,6 +164,10 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
         }
       } else
       if (expression.getParent() instanceof PsiExpressionList && expression.getParent().getParent() instanceof PsiMethodCallExpression) {
+        final Map<String, Object> annotationParams = new HashMap<String, Object>();
+        annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
+        if (! JavaI18nUtil.mustBePropertyKey(expression, annotationParams)) return;
+
         final int paramsCount = I18nUtil.getPropertyValueParamsMaxCount(expression);
         if (paramsCount == -1) return;
 
@@ -194,18 +195,6 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
 
     public List<ProblemDescriptor> getProblems() {
       return myProblems;
-    }
-
-    @Nullable
-    private static String resolvePropertyKey(PsiLiteralExpression literal) {
-      final PsiReference[] references = literal.getReferences();
-      for (PsiReference reference : references) {
-        final PsiElement element = reference.resolve();
-        if (element instanceof Property) {
-          return ((Property)element).getValue();
-        }
-      }
-      return null;
     }
   }
 }
