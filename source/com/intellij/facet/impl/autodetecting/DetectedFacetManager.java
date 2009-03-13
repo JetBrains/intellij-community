@@ -7,65 +7,46 @@ package com.intellij.facet.impl.autodetecting;
 import com.intellij.ProjectTopics;
 import com.intellij.facet.*;
 import com.intellij.facet.autodetecting.FacetDetector;
+import com.intellij.facet.autodetecting.DetectedFacetPresentation;
 import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsDialog;
 import com.intellij.facet.impl.autodetecting.model.DetectedFacetInfo;
 import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
 import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
+import com.intellij.notification.Notifications;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author nik
  */
 public class DetectedFacetManager implements Disposable {
-  public static final Icon FACET_DETECTED_ICON = IconLoader.getIcon("/ide/facetDetected.png");
+  @NonNls private static final String NOTIFICATION_ID = "facets-detected";
   private static final int NOTIFICATION_DELAY = 200;
-  private final JBPopupListener myNotificationPopupListener = new JBPopupAdapter() {
-    public void onClosed(LightweightWindowEvent event) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          myNotificationPopup = null;
-          firePendingNotifications();
-        }
-      });
-    }
-  };
   private final Project myProject;
   private final FacetAutodetectingManagerImpl myAutodetectingManager;
   private final ProjectWideFacetListenersRegistry myProjectWideFacetListenersRegistry;
-  private AttentionComponent myAttentionComponent;
-  private StatusBar myStatusBar;
   private boolean myUIInitialized;
   private final Set<DetectedFacetInfo<Module>> myPendingNewFacets = new HashSet<DetectedFacetInfo<Module>>();
-  private NotificationPopup myNotificationPopup;
   private final Alarm myNotificationAlarm = new Alarm();
   private final ProjectFacetInfoSet myDetectedFacetSet;
 
@@ -98,33 +79,33 @@ public class DetectedFacetManager implements Disposable {
     myProjectWideFacetListenersRegistry.registerListener(type.getId(), new MyProjectWideFacetListener<F, C>(), this);
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   public void onDetectedFacetChanged(@NotNull final Collection<DetectedFacetInfo<Module>> added, @NotNull final Collection<DetectedFacetInfo<Module>> removed) {
     if (!myUIInitialized) return;
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      final boolean stopBlinking = myDetectedFacetSet.getAllDetectedFacets().isEmpty();
+      final boolean clearNotifications = myDetectedFacetSet.getAllDetectedFacets().isEmpty();
 
       Runnable runnable = new Runnable() {
         public void run() {
           if (isDisposed()) return;
 
-          if (!removed.isEmpty() && myNotificationPopup != null) {
-            myNotificationPopup.hide();
-          }
-
           myPendingNewFacets.addAll(added);
+          if (clearNotifications) {
+            getNotifications().invalidateAll(NOTIFICATION_ID);
+          }
           queueNotificationPopup();
-
-          if (stopBlinking) {
-            myAttentionComponent.stopBlinking();
-          }
-          if (!added.isEmpty()) {
-            myAttentionComponent.startBlinking();
-          }
         }
       };
       ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
     }
+  }
+
+  private Notifications getNotifications() {
+    return myProject.getMessageBus().syncPublisher(Notifications.TOPIC);
   }
 
   private void queueNotificationPopup() {
@@ -156,24 +137,47 @@ public class DetectedFacetManager implements Disposable {
       return;
     }
 
-    if (myNotificationPopup == null) {
-      HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> filesMap = getFilesMap(newFacets);
-      myNotificationPopup = ImplicitFacetsComponent.fireNotificationPopup(newFacets, myStatusBar, myNotificationPopupListener, this, filesMap);
+    boolean showNotification = true;//todo[nik] may be we shouldn't show notification if "Facets Detected" dialog is opened
+    HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> filesMap = getFilesMap(newFacets);
+    if (!filesMap.isEmpty() && showNotification) {
+      String name;
+      String description;
+      final Set<DetectedFacetInfo<Module>> detectedFacetInfos = filesMap.keySet();
+      if (filesMap.size() == 1) {
+        final DetectedFacetInfo<Module> facetInfo = detectedFacetInfos.iterator().next();
+        name = ProjectBundle.message("notification.name.0.facet.detected", facetInfo.getFacetType().getPresentableName());
+        final List<VirtualFile> files = filesMap.get(facetInfo);
+        description = getNotificationText(facetInfo, files.toArray(new VirtualFile[files.size()]));
+      }
+      else {
+        name = ProjectBundle.message("notification.name.0.facets.detected", filesMap.size());
+        description = "";
+      }
+      getNotifications().notify(NOTIFICATION_ID, name, description, NotificationType.INFORMATION,
+                                                                           new MyNotificationListener(detectedFacetInfos));
     }
     else {
       myPendingNewFacets.addAll(newFacets);
     }
   }
 
+  private static String getNotificationText(DetectedFacetInfo<Module> detectedFacetInfo, VirtualFile[] files) {
+    DetectedFacetPresentation presentation = FacetDetectorRegistryEx.getDetectedFacetPresentation((FacetType<?,? extends FacetConfiguration>)detectedFacetInfo.getFacetType());
+
+    String text = presentation.getAutodetectionPopupText(detectedFacetInfo.getModule(), detectedFacetInfo.getFacetType(),
+                                                         detectedFacetInfo.getFacetName(), files);
+    if (text == null) {
+      text = DefaultDetectedFacetPresentation.INSTANCE.getAutodetectionPopupText(detectedFacetInfo.getModule(), detectedFacetInfo.getFacetType(),
+                                                         detectedFacetInfo.getFacetName(), files);
+    }
+    return ProjectBundle.message("facet.autodetected.info.text", detectedFacetInfo.getFacetType().getPresentableName(),
+                                 text, detectedFacetInfo.getFacetName());
+  }
+
   public void dispose() {
   }
 
   public void initUI() {
-    myAttentionComponent = new AttentionComponent(this);
-    myStatusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (myStatusBar == null) return;
-
-    myStatusBar.addCustomIndicationComponent(myAttentionComponent);
     myUIInitialized = true;
     onDetectedFacetChanged(myDetectedFacetSet.getAllDetectedFacets(), Collections.<DetectedFacetInfo<Module>>emptyList());
   }
@@ -181,11 +185,7 @@ public class DetectedFacetManager implements Disposable {
   public void disposeUI() {
     if (!myUIInitialized) return;
 
-    myNotificationPopup = null;
     myNotificationAlarm.cancelAllRequests();
-    myStatusBar.removeCustomIndicationComponent(myAttentionComponent);
-    myAttentionComponent.disposeUI();
-    myAttentionComponent = null;
   }
 
   public void disableDetectionInFile(final DetectedFacetInfo<Module> detectedFacet) {
@@ -215,6 +215,10 @@ public class DetectedFacetManager implements Disposable {
     showImplicitFacetsDialog();
   }
 
+  public boolean hasDetectedFacets() {
+    return !myDetectedFacetSet.getAllDetectedFacets().isEmpty();
+  }
+
   public boolean showImplicitFacetsDialog() {
     List<DetectedFacetInfo<Module>> detectedFacets = new ArrayList<DetectedFacetInfo<Module>>(myDetectedFacetSet.getAllDetectedFacets());
     HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> filesMap = getFilesMap(detectedFacets);
@@ -224,7 +228,7 @@ public class DetectedFacetManager implements Disposable {
     }
     DetectedFacetsDialog dialog = new DetectedFacetsDialog(myProject, this, detectedFacets, filesMap);
     dialog.show();
-    return true;
+    return dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE;
   }
 
   private HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> getFilesMap(final List<DetectedFacetInfo<Module>> detectedFacets) {
@@ -342,74 +346,19 @@ public class DetectedFacetManager implements Disposable {
     }
   }
 
-  private static class AttentionComponent extends SimpleColoredComponent {
-    private static final int BLINKING_DELAY = 300;
-    private final Alarm myBlinkingAlarm = new Alarm();
-    private boolean myIconVisible;
-    private boolean myActive;
-    private DetectedFacetManager myManager;
+  private class MyNotificationListener implements NotificationListener {
+    private final Set<DetectedFacetInfo<Module>> myDetectedFacetInfos;
 
-    public AttentionComponent(final DetectedFacetManager manager) {
-      myManager = manager;
-      addMouseListener(new MouseAdapter() {
-        public void mouseClicked(final MouseEvent e) {
-          if (myActive && !e.isPopupTrigger() && myManager != null) {
-            boolean valid = myManager.showImplicitFacetsDialog();
-            if (!valid) {
-              stopBlinking();
-            }
-          }
-        }
-      });
+    public MyNotificationListener(Set<DetectedFacetInfo<Module>> detectedFacetInfos) {
+      myDetectedFacetInfos = detectedFacetInfos;
     }
 
-    public void startBlinking() {
-      if (myActive) return;
-      myBlinkingAlarm.cancelAllRequests();
-      myIconVisible = true;
-      myActive = true;
-      showIcon();
-      myBlinkingAlarm.addRequest(new Runnable() {
-        public void run() {
-          if (!myActive) return;
-
-          if (myIconVisible) {
-            hideIcon();
-          }
-          else {
-            showIcon();
-          }
-          myIconVisible = !myIconVisible;
-          myBlinkingAlarm.addRequest(this, BLINKING_DELAY);
-        }
-      }, BLINKING_DELAY);
-    }
-
-    public void stopBlinking() {
-      if (!myActive) return;
-      myActive = false;
-      myBlinkingAlarm.cancelAllRequests();
-      hideIcon();
-    }
-
-    private void showIcon() {
-      setIcon(FACET_DETECTED_ICON);
-      repaint();
-    }
-
-    private void hideIcon() {
-      clear();
-      repaint();
-    }
-
-    public void disposeUI() {
-      myManager = null;
-      myBlinkingAlarm.cancelAllRequests();
-    }
-
-    public Dimension getPreferredSize() {
-      return new Dimension(18, 18);
+    @NotNull
+    public OnClose perform() {
+      if (showImplicitFacetsDialog()) {
+        return OnClose.REMOVE;
+      }
+      return OnClose.LEAVE;
     }
   }
-
 }
