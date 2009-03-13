@@ -59,7 +59,7 @@ public class IdeNotificationArea implements Notifications, StatusBarPatch {
   public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
     if (!myModel.isEmpty()) {
       final NotificationImpl notification = myModel.getFirst();
-      return notification != null ? notification.getDescription() : null;
+      return notification != null ? notification.getName() : null;
     }
     
     return null;
