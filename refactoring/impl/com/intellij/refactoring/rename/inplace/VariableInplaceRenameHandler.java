@@ -19,8 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableInplaceRenameHandler implements RenameHandler {
-  private static final ThreadLocal<Boolean> ourPreventInlineRenameFlag = new ThreadLocal<Boolean>();
-  private static final @NonNls String INVOKING_DEFAULT = "$$$"+VariableInplaceRenameHandler.class.hashCode() + "_inplace_renaming_failed_due_to_noinlocal_usages";
+  private static final @NonNls String INVOKING_DEFAULT = "$$$"+System.currentTimeMillis() + "_inplace_renaming_failed_due_to_noinlocal_usages";
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler");
 
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
@@ -29,7 +28,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     if (editor == null || file == null) return false;
     
-    if (ourPreventInlineRenameFlag.get() != null || dataContext.getData(INVOKING_DEFAULT) != null) {
+    if (dataContext instanceof MyDataContext || dataContext.getData(INVOKING_DEFAULT) != null) {
       return false;
     }
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
@@ -58,9 +57,9 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     doRename(element, editor, dataContext);
   }
 
-  private void doRename(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
-    if (!isAvailableOnDataContext(dataContext)) {
-      LOG.error("Recursive invokation");
+  private static void doRename(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+    if (dataContext instanceof MyDataContext || dataContext.getData(INVOKING_DEFAULT) != null) {
+      LOG.error("Recursive invokation: " + dataContext);
       RenameHandlerRegistry.getInstance().getRenameHandler(dataContext).invoke(
         elementToRename.getProject(),
         editor,
@@ -72,29 +71,29 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     final boolean startedRename = new VariableInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor).performInplaceRename();
 
     if (!startedRename) {
-      try {
-        DataContext ourDataContext = dataContext;
-
-        if (false) {
-          ourDataContext = new DataContext() {
-            public Object getData(@NonNls final String dataId) {
-              if (INVOKING_DEFAULT.equals(dataId)) {
-                return Boolean.TRUE;
-              }
-
-              return dataContext.getData(dataId);
-            }
-          };
-        }
-        ourPreventInlineRenameFlag.set(Boolean.TRUE);
-        RenameHandlerRegistry.getInstance().getRenameHandler(ourDataContext).invoke(
+      DataContext ourDataContext = new MyDataContext(dataContext);
+      RenameHandlerRegistry.getInstance().getRenameHandler(ourDataContext).invoke(
           elementToRename.getProject(),
           editor,
           elementToRename.getContainingFile(), ourDataContext
-        );
-      } finally {
-        ourPreventInlineRenameFlag.set(null);
+      );
+    }
+  }
+
+  private static class MyDataContext implements DataContext {
+    private final DataContext myDataContext;
+
+    public MyDataContext(DataContext dataContext) {
+      LOG.assertTrue(!(dataContext instanceof MyDataContext));
+      myDataContext = dataContext;
+    }
+
+    public Object getData(@NonNls final String dataId) {
+      if (INVOKING_DEFAULT.equals(dataId)) {
+        return Boolean.TRUE;
       }
+
+      return myDataContext.getData(dataId);
     }
   }
 }
