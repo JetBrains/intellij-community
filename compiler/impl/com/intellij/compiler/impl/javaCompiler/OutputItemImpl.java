@@ -7,6 +7,7 @@ package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 public class OutputItemImpl implements TranslatingCompiler.OutputItem{
 
@@ -19,14 +20,14 @@ public class OutputItemImpl implements TranslatingCompiler.OutputItem{
    * @param outputPath relative to output directory path of the output file ('/' slashes used)
    * @param sourceFile corresponding source file
    */
-  public OutputItemImpl(String outputDir, String outputPath, VirtualFile sourceFile) {
+  public OutputItemImpl(String outputDir, @Nullable String outputPath, VirtualFile sourceFile) {
     myOutputDir = outputDir;
     myOutputPath = outputPath;
     mySourceFile = sourceFile;
   }
 
   public String getOutputPath() {
-    return myOutputPath;
+    return (myOutputPath != null) ? myOutputDir + "/" + myOutputPath : null;
   }
 
   public String getOutputRootDirectory() {

@@ -71,7 +71,7 @@ public class DependencyCache {
     try {
       if (myCache == null) {
         // base number of cached record views of each type
-        myCache = new Cache(myStoreDirectoryPath, 2048);
+        myCache = new Cache(myStoreDirectoryPath, 128);
       }
 
       return myCache;
@@ -84,7 +84,7 @@ public class DependencyCache {
   public Cache getNewClassesCache() throws CacheCorruptedException {
     try {
       if (myNewClassesCache == null) {
-        myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp", 2048);
+        myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp", 128);
       }
       return myNewClassesCache;
     }

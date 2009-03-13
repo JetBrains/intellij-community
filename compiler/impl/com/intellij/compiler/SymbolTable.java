@@ -7,8 +7,7 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.util.containers.IntObjectCache;
-import com.intellij.util.containers.ObjectIntCache;
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,9 +18,32 @@ public class SymbolTable {
   private final PersistentStringEnumerator myTrie;
 
   // both caches should have equal size
-  private static final int STRING_CACHE_SIZE = 0x4000;
-  private final IntObjectCache<String> myIndexStringCache = new IntObjectCache<String>(STRING_CACHE_SIZE);
-  private final ObjectIntCache<String> myStringIndexCache = new ObjectIntCache<String>(STRING_CACHE_SIZE);
+  private static final int STRING_CACHE_SIZE = 1024;
+
+  private final SLRUCache<Integer, String> myIndexStringCache = new SLRUCache<Integer, String>(STRING_CACHE_SIZE * 2, STRING_CACHE_SIZE) {
+    @NotNull
+    public String createValue(Integer key) {
+      try {
+        return myTrie.valueOf(key.intValue());
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  };
+  
+  private final SLRUCache<String, Integer> myStringIndexCache = new SLRUCache<String, Integer>(STRING_CACHE_SIZE * 2, STRING_CACHE_SIZE) {
+    @NotNull
+    public Integer createValue(String key) {
+      try {
+        return myTrie.enumerate(key);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  };
+
 
   public SymbolTable(File file) throws CacheCorruptedException {
     try {
@@ -43,16 +65,14 @@ public class SymbolTable {
     if (symbol.length() == 0) {
       return -1;
     }
-    int result = myStringIndexCache.tryKey(symbol);
-    if (result != Integer.MIN_VALUE) return result;
-
     try {
-      result = myTrie.enumerate(symbol);
-      myStringIndexCache.cacheObject(symbol, result);
-      return result;
+      return myStringIndexCache.get(symbol);
     }
-    catch (IOException e) {
-      throw new CacheCorruptedException(e);
+    catch (RuntimeException e) {
+      if (e.getCause() instanceof IOException) {
+        throw new CacheCorruptedException(e.getCause());
+      }
+      throw e;
     }
   }
 
@@ -60,21 +80,21 @@ public class SymbolTable {
     if (id == -1) {
       return "";
     }
-    String result = myIndexStringCache.tryKey(id);
-    if (result != null) return result;
-
     try {
-      result = myTrie.valueOf(id);
-      myIndexStringCache.cacheObject(id, result);
-      return result;
+      return myIndexStringCache.get(id);
     }
-    catch (IOException e) {
-      throw new CacheCorruptedException(e);
+    catch (RuntimeException e) {
+      if (e.getCause() instanceof IOException) {
+        throw new CacheCorruptedException(e.getCause());
+      }
+      throw e;
     }
   }
 
   public synchronized void dispose() throws CacheCorruptedException {
     try {
+      myIndexStringCache.clear();
+      myStringIndexCache.clear();
       myTrie.close(); // will call "flush()" if needed
     }
     catch (IOException e) {

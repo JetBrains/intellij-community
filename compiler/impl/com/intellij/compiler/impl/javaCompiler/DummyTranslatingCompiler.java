@@ -38,7 +38,8 @@ public class DummyTranslatingCompiler implements TranslatingCompiler, Intermedia
             if (outputDir != null) {
               final File compiledFile = doCompile(outputDir, file);
               filesToRefresh.add(compiledFile);
-              items.add(new OutputItemImpl(outputDir.getPath(), FileUtil.toSystemIndependentName(compiledFile.getPath()), file));
+              String outputDirPath = outputDir.getPath();
+              items.add(new OutputItemImpl(outputDirPath, new String(FileUtil.toSystemIndependentName(compiledFile.getPath()).substring(outputDirPath.length() + 1)), file));
             }
           }
           catch (IOException e) {

@@ -19,8 +19,8 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -744,7 +744,7 @@ public class BackendCompilerWrapper {
           final String outputPath = cc.pathToClass.replace(File.separatorChar, '/');
           final Pair<String, String> realLocation = moveToRealLocation(outputDir, outputPath, srcFile);
           if (realLocation != null) {
-            myOutputItems.add(new OutputItemImpl(realLocation.getFirst(), realLocation.getSecond(), srcFile));
+            myOutputItems.add(new OutputItemImpl(realLocation.getFirst(), new String(realLocation.getSecond().substring(realLocation.first.length() + 1)), srcFile));
             newCache.setPath(cc.qName, realLocation.getSecond());
             if (LOG.isDebugEnabled()) {
               LOG.debug("Added output item: [outputDir; outputPath; sourceFile]  = [" + realLocation.getFirst() + "; " +
