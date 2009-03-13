@@ -176,19 +176,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private static boolean areTypeParametersAgree(CandidateInfo info) {
-    PsiSubstitutor substitutor = info.getSubstitutor();
-    PsiMethod method = ((MethodCandidateInfo)info).getElement();
-
-    Iterator<PsiTypeParameter> li = PsiUtil.typeParametersIterator(method);
-    while (li.hasNext()) {
-      PsiTypeParameter typeParameter = li.next();
-      PsiType type = substitutor.substitute(typeParameter);
-      if (type == null) continue;
-      for (PsiClassType bound : typeParameter.getExtendsListTypes()) {
-        if (!TypeConversionUtil.isAssignable(type, bound)) return false;
-      }
-    }
-    return true;
+    return ((MethodCandidateInfo)info).isApplicable();
   }
 
   private static void checkParametersNumber(final List<CandidateInfo> conflicts, final int argumentsCount) {
