@@ -665,6 +665,10 @@
       <expected>OK</expected>
     </test>
     <test>
+      <pattern>\p{InLATIN_1_SUPPLEMENT}</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
       <pattern>[a-e]?d\\e</pattern>
       <expected>OK</expected>
     </test>
@@ -965,6 +969,13 @@
     </test>
     <test>
       <pattern>\{</pattern>
+      <expected>OK</expected>
+    </test>
+  </bug>
+
+  <bug id="IDEADEV-35269">
+    <test>
+      <pattern><![CDATA[(<=\s)-{3,}(?>\s)]]></pattern>
       <expected>OK</expected>
     </test>
   </bug>

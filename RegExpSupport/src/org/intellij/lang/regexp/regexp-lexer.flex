@@ -151,7 +151,7 @@ HEX_CHAR=[0-9a-fA-F]
 {LBRACE}              { if (yystate() != CLASS2) yypushstate(EMBRACED); return RegExpTT.LBRACE; }
 
 <EMBRACED> {
-  ([:letter:]|_)+     { return RegExpTT.NAME;   }
+  [:letter:]([:letter:]|_|[:digit:])*     { return RegExpTT.NAME;   }
   [:digit:]+          { return RegExpTT.NUMBER; }
   ","                 { return RegExpTT.COMMA;  }
 
@@ -190,7 +190,7 @@ HEX_CHAR=[0-9a-fA-F]
   "$"           { return RegExpTT.DOLLAR; }
   {DOT}         { return RegExpTT.DOT;    }
 
-  "(?:"       { return RegExpTT.NON_CAPT_GROUP;  }
+  "(?:"|"(?>" { return RegExpTT.NON_CAPT_GROUP;  }
   "(?="       { return RegExpTT.POS_LOOKAHEAD;   }
   "(?!"       { return RegExpTT.NEG_LOOKAHEAD;   }
   "(?<="      { return RegExpTT.POS_LOOKBEHIND;  }
