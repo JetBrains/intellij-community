@@ -9,6 +9,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.BalloonLayout;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +34,11 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     setIconTextGap(3);
 
     addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        showList();
+      @Override
+      public void mousePressed(final MouseEvent e) {
+        if (UIUtil.isActionClick(e)) {
+          showList();
+        }
       }
     });
 
