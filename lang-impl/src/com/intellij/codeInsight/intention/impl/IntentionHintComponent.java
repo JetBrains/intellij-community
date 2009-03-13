@@ -721,5 +721,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     public boolean startInWriteAction() {
       return false;
     }
+
+    @Override
+    public String toString() {
+      return getText();
+    }
   }
 }

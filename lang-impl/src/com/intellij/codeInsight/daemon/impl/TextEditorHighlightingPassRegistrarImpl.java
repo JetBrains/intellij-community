@@ -8,7 +8,6 @@ import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -16,6 +15,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,6 +108,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       assert documentFromFile == editor.getDocument() : "Documents are different: " + editor.getDocument() + ";" + documentFromFile;
     }
     final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<TextEditorHighlightingPass>();
+    final TIntArrayList ignoredPasses = new TIntArrayList();
     myRegisteredPassFactories.forEachKey(new TIntProcedure() {
       public boolean execute(int passId) {
         if (ArrayUtil.find(passesToIgnore, passId) != -1) return true;
@@ -116,7 +117,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         final TextEditorHighlightingPass pass = factory.createHighlightingPass(psiFile, editor);
 
         if (pass == null) {
-          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().markFileUpToDate(editor.getDocument(), psiFile, passId);
+          ignoredPasses.add(passId);
         }
         else {
           TIntArrayList ids = new TIntArrayList(passConfig.completionPredecessorIds.length);
@@ -143,6 +144,15 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         return true;
       }
     });
+
+    final FileStatusMap statusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap();
+    ignoredPasses.forEach(new TIntProcedure() {
+      public boolean execute(int passId) {
+        statusMap.markFileUpToDate(editor.getDocument(), psiFile, passId);
+        return true;
+      }
+    });
+
     //sort is mainly for tests which expect passes to be run sequentially and produce correct results
     return topoSort(id2Pass);
   }

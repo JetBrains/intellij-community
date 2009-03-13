@@ -72,4 +72,9 @@ public class IntentionActionWrapper implements IntentionAction {
   public ClassLoader getImplementationClassLoader() {
     return myExtension.getLoaderForClass();
   }
+
+  @Override
+  public String toString() {
+    return "Intention: ("+getDelegate().getClass()+"): '" + getText()+"'";
+  }
 }
