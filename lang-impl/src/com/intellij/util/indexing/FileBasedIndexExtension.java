@@ -7,6 +7,7 @@ import com.intellij.util.io.KeyDescriptor;
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 26, 2007
+ * V class MUST have equals / hashcode properly defined!!!
  */
 public interface FileBasedIndexExtension<K, V> {
   ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileBasedIndex");
