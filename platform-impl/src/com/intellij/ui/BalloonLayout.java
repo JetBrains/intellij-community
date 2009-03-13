@@ -15,7 +15,7 @@ import java.util.List;
 
 public class BalloonLayout {
 
-  private JComponent myParent;
+  private JLayeredPane myParent;
   private Insets myInsets;
 
   private List<Balloon> myBalloons = new ArrayList<Balloon>();
@@ -27,7 +27,7 @@ public class BalloonLayout {
     }
   };
 
-  public BalloonLayout(@NotNull JComponent parent, @NotNull Insets insets) {
+  public BalloonLayout(@NotNull JLayeredPane parent, @NotNull Insets insets) {
     myParent = parent;
     myInsets = insets;
     myParent.addComponentListener(new ComponentAdapter() {
@@ -38,7 +38,7 @@ public class BalloonLayout {
     });
   }
 
-  public void add(JLayeredPane pane, final Balloon balloon) {
+  public void add(final Balloon balloon) {
     myBalloons.add(balloon);
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
@@ -48,7 +48,7 @@ public class BalloonLayout {
     });
 
     relayout();
-    balloon.show(pane);
+    balloon.show(myParent);
   }
 
 

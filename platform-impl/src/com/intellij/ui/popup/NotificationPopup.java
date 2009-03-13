@@ -75,7 +75,7 @@ public class NotificationPopup {
         .setClickHandler(clickHandler, closeOnClick)
         .createBalloon();
 
-      frame.getBalloonLayout().add(frame.getLayeredPane(), balloon);
+      frame.getBalloonLayout().add(balloon);
 
       myImpl = new Impl() {
         public void addListener(JBPopupListener listener) {

@@ -16,15 +16,12 @@ import org.jetbrains.annotations.NotNull;
 public class NotificationTestAction extends AnAction {
   public NotificationTestAction() {
     super("Add Test Notification");
-
-    final MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
-    messageBus.syncPublisher(Notifications.TOPIC).register("IDEA", NotificationDisplayType.BALOON, false);
   }
 
   public void actionPerformed(final AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     final MessageBus messageBus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
-    messageBus.syncPublisher(Notifications.TOPIC).notify("IDEA", "Test Notification", "Test Notification Description", NotificationType.INFORMATION,
+    messageBus.syncPublisher(Notifications.TOPIC).notify("Idea.Test", "Test Notification", "Test Notification Description", NotificationType.INFORMATION,
         new NotificationListener() {
           @NotNull
           public OnClose perform() {

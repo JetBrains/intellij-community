@@ -36,6 +36,11 @@ public class IdeNotificationArea implements Notifications, StatusBarPatch {
   }
 
   public void notify(@NotNull final String id, @NotNull final String name, @NotNull final String description, @NotNull final NotificationType type, @NotNull final NotificationListener handler, @Nullable final Icon icon) {
+    final NotificationsConfiguration configuration = NotificationsConfiguration.getNotificationsConfiguration();
+    if (!configuration.isRegistered(id)) {
+      configuration.register(id, NotificationDisplayType.BALOON, true);
+    }
+
     myModel.add(new NotificationImpl(id, name, description, type, icon, handler));
   }
 

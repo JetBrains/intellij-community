@@ -73,6 +73,10 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     }
   }
 
+  public boolean isRegistered(@NotNull final String id) {
+    return myIdToSettingsMap.containsKey(id);
+  }
+
   public void notify(@NotNull final String id, @NotNull final String name, @NotNull final String description, @NotNull final NotificationType type, @NotNull final NotificationListener handler) {
     // do nothing
   }

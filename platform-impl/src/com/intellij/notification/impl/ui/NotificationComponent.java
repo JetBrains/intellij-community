@@ -1,17 +1,21 @@
 package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.*;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.BalloonLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -98,12 +102,24 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
       final String html = String.format("%s", notification.getName());
 
       final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(html, NotificationUtil.getIcon(notification),
-          NotificationUtil.getColor(notification), null).createBalloon();
+          NotificationUtil.getColor(notification), null)
+          .setCloseButtonEnabled(true).setShowCallout(false).setFadeoutTime(3000).setHideOnClickOutside(false).setHideOnKeyOutside(false).setHideOnFrameResize(false)
+          .setClickHandler(new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+              final NotificationListener.OnClose onClose = notification.getListener().perform();
+              if (onClose == NotificationListener.OnClose.REMOVE) {
+                myModel.remove(notification);
+              }
+            }
+          }, true).createBalloon();
 
       final Runnable show = new Runnable() {
         public void run() {
-          final Point point = new Point(getIcon().getIconWidth() / 2 + getInsets().left, 0);
-          balloon.show(new RelativePoint(NotificationComponent.this, point), Balloon.Position.above);
+          final Window window = SwingUtilities.getWindowAncestor(NotificationComponent.this);
+          if (window instanceof IdeFrameImpl) {
+            final BalloonLayout balloonLayout = ((IdeFrameImpl) window).getBalloonLayout();
+            balloonLayout.add(balloon);
+          }
         }
       };
 
