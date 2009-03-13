@@ -15,10 +15,10 @@
 
 package org.jetbrains.plugins.groovy.compiler;
 
-import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
-import com.intellij.compiler.impl.javaCompiler.OutputItemImpl;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.compiler.impl.javaCompiler.OutputItemImpl;
+import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
@@ -236,7 +236,7 @@ public class GroovyCompiler implements TranslatingCompiler {
         String prefix = vFile.getNameWithoutExtension() + "$_closure";
         for (VirtualFile child : parent.getChildren()) {
           if (child.getName().startsWith(prefix)) {
-            successfullyCompiled.add(new OutputItemImpl(item.getOutputRootDirectory(), child.getPath(), item.getSourceFile()));
+            successfullyCompiled.add(new OutputItemImpl(item.getOutputRootDirectory(), new String(child.getPath().substring(item.getOutputRootDirectory().length() + 1)), item.getSourceFile()));
           }
         }
       }
