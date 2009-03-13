@@ -1,14 +1,9 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.net.HttpConfigurable;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -20,10 +15,7 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -81,36 +73,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
       catch (final SVNException e) {
         // show notification so that user was aware his credentials were not saved
         if (myProject == null) return;
-        try {
-          GuiUtils.runOrInvokeAndWait(new Runnable() {
-            public void run() {
-              final ToolWindowManager manager = ToolWindowManager.getInstance(myProject);
-              final boolean haveWindow = (! myProject.isDefault()) && (manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) != null);
-              final String message = "<b>Problem when storing Subversion credentials:</b>&nbsp;" + e.getMessage();
-              if (haveWindow) {
-                manager.notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, MessageType.ERROR, message);
-              } else {
-                final JFrame frame = WindowManager.getInstance().getFrame(myProject.isDefault() ? null : myProject);
-                if (frame == null) return;
-                final JComponent component = frame.getRootPane();
-                if (component == null) return;
-                final Rectangle rect = component.getVisibleRect();
-                final Point p = new Point(rect.x + 30, rect.y + rect.height - 10);
-                final RelativePoint point = new RelativePoint(component, p);
-
-                JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-                  message, MessageType.ERROR.getDefaultIcon(), MessageType.ERROR.getPopupBackground(), null).createBalloon().show(
-                    point, Balloon.Position.above);
-              }
-            }
-          });
-        }
-        catch (InvocationTargetException e1) {
-          //
-        }
-        catch (InterruptedException e1) {
-          //
-        }
+          ApplicationManager.getApplication().invokeLater(new ChangesViewBalloonProblemNotifier(myProject,
+                "<b>Problem when storing Subversion credentials:</b>&nbsp;" + e.getMessage(), MessageType.ERROR));
       }
     }
   }
