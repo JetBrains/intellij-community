@@ -61,7 +61,7 @@ public class RefreshWorker {
             }
 
             for (String name : newNames) {
-              boolean isDirectory = delegate.isDirectory(new FakeVirtualFile(name, file));
+              boolean isDirectory = delegate.isDirectory(new FakeVirtualFile(file, name));
               scheduleCreation(file, name, isDirectory);
             }
 
@@ -85,7 +85,7 @@ public class RefreshWorker {
             for (String name : names) {
               if (name.length() == 0) continue;
 
-              final VirtualFile fake = new FakeVirtualFile(name, file);
+              final VirtualFile fake = new FakeVirtualFile(file, name);
               if (delegate.exists(fake)) {
                 scheduleCreation(file, name, delegate.isDirectory(fake));
               }

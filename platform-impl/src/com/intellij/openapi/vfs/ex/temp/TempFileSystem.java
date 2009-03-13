@@ -59,7 +59,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     final FSDir fsDir = (FSDir)fsItem;
     fsDir.addChild(new FSDir(fsDir, dir));
 
-    return new FakeVirtualFile(dir, parent);
+    return new FakeVirtualFile(parent, dir);
   }
 
   public VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException {
@@ -69,7 +69,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     final FSDir fsDir = (FSDir)fsItem;
     fsDir.addChild(new FSFile(fsDir, file));
 
-    return new FakeVirtualFile(file, parent);
+    return new FakeVirtualFile(parent, file);
   }
 
   public void deleteFile(final Object requestor, final VirtualFile file) throws IOException {

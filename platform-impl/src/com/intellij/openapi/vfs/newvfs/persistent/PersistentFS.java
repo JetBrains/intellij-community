@@ -143,7 +143,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
       else {
         int childId = FSRecords.createRecord();
-        copyRecordFromDelegateFS(childId, id, new FakeVirtualFile(name, file), delegate);
+        copyRecordFromDelegateFS(childId, id, new FakeVirtualFile(file, name), delegate);
         childrenIds[i] = childId;
       }
     }
@@ -282,7 +282,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       if (namesEqual(delegate, childName, FSRecords.getName(childId))) return childId;
     }
 
-    VirtualFile fake = new FakeVirtualFile(childName, parent);
+    VirtualFile fake = new FakeVirtualFile(parent, childName);
     if (delegate.exists(fake)) {
       int child = FSRecords.createRecord();
       copyRecordFromDelegateFS(child, parentId, fake, delegate);
@@ -614,7 +614,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   //guarded by dirCacheReadLock/dirCacheWriteLock
-  private final TIntObjectHashMap<VirtualFile> myIdToDirCache = new TIntObjectHashMap<VirtualFile>();
+  private final TIntObjectHashMap<NewVirtualFile> myIdToDirCache = new TIntObjectHashMap<NewVirtualFile>();
   private final JBLock dirCacheReadLock;
   private final JBLock dirCacheWriteLock;
   {
@@ -635,10 +635,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   @Nullable
-  public VirtualFile findFileById(final int id) {
+  public NewVirtualFile findFileById(final int id) {
     try {
       dirCacheReadLock.lock();
-      final VirtualFile cached = myIdToDirCache.get(id);
+      final NewVirtualFile cached = myIdToDirCache.get(id);
       if (cached != null) {
         return cached;
       }
@@ -647,7 +647,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       dirCacheReadLock.unlock();
     }
 
-    final VirtualFile result = doFindFile(id);
+    final NewVirtualFile result = doFindFile(id);
 
     if (result != null && result.isDirectory()) {
       try {
@@ -661,7 +661,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return result;
   }
 
-  private VirtualFile doFindFile(final int id) {
+  private NewVirtualFile doFindFile(final int id) {
     final int parentId = getParent(id);
     if (parentId == 0) {
       synchronized (LOCK) {
@@ -672,8 +672,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
     }
     else {
-      VirtualFile parentFile = findFileById(parentId);
-      return parentFile != null ? parentFile.findChild(getName(id)) : null;
+      NewVirtualFile parentFile = findFileById(parentId);
+      return parentFile != null ? parentFile.findChildById(id) : null;
     }
   }
 
@@ -744,7 +744,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private void executeCreateChild(final VirtualFile parent, final String name) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
-    VirtualFile fakeFile = new FakeVirtualFile(name, parent);
+    VirtualFile fakeFile = new FakeVirtualFile(parent, name);
     if (delegate.exists(fakeFile)) {
       final int parentId = getFileId(parent);
       int childId = FSRecords.createRecord();

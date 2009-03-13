@@ -74,5 +74,9 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     return ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp);
-  }  
+  }
+
+  public NewVirtualFile findChildById(int id) {
+    return null;
+  }
 }

@@ -12,7 +12,7 @@ public class FakeVirtualFile extends StubVirtualFile {
   private final VirtualFile myParent;
   private final String myName;
 
-  public FakeVirtualFile(@NotNull final String name, @NotNull final VirtualFile parent) {
+  public FakeVirtualFile(@NotNull final VirtualFile parent, @NotNull final String name) {
     myName = name;
     myParent = parent;
   }

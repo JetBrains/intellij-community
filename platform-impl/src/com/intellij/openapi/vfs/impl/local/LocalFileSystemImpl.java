@@ -646,7 +646,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       throw new IOException("Failed to create directory: " + ioDir.getPath());
     }
 
-    return new FakeVirtualFile(dir, parent);
+    return new FakeVirtualFile(parent, dir);
   }
 
   public VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException {
@@ -656,7 +656,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       throw new IOException("Failed to create child file at " + ioFile.getPath());
     }
 
-    return new FakeVirtualFile(file, parent);
+    return new FakeVirtualFile(parent, file);
   }
 
   public void deleteFile(final Object requestor, final VirtualFile file) throws IOException {
@@ -784,7 +784,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
     }
 
-    return new FakeVirtualFile(copyName, newParent);
+    return new FakeVirtualFile(newParent, copyName);
   }
 
   public void setTimeStamp(final VirtualFile file, final long modstamp) {

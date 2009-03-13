@@ -14,6 +14,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,7 +76,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (file != null) return (NewVirtualFile)file;
 
     final NewVirtualFileSystem delegate = getFileSystem();
-    VirtualFile fake = new FakeVirtualFile(name, this);
+    VirtualFile fake = new FakeVirtualFile(this, name);
     name = delegate.getCanonicallyCasedName(fake);
 
     synchronized (this) {
@@ -111,7 +112,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Nullable
   private NewVirtualFile createAndFindChildWithEventFire(final String name) {
     final NewVirtualFileSystem delegate = getFileSystem();
-    VirtualFile fake = new FakeVirtualFile(name, this);
+    VirtualFile fake = new FakeVirtualFile(this, name);
     if (delegate.exists(fake)) {
       final String realName = delegate.getCanonicallyCasedName(fake);
       VFileCreateEvent event = new VFileCreateEvent(null, this, realName, delegate.isDirectory(fake), true);
@@ -205,6 +206,29 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(name, false);
   }
 
+  public NewVirtualFile findChildById(int id) {
+    final VirtualFile[] a = asArray();
+    if (a != null) {
+      for (VirtualFile file : a) {
+        NewVirtualFile withId = (NewVirtualFile)file;
+        if (withId.getId() == id) return withId;
+      }
+
+      return null;
+    }
+    final Map<String, VirtualFile> map = asMap();
+    if (map != null) {
+      for (Map.Entry<String, VirtualFile> entry : map.entrySet()) {
+        VirtualFile file = entry.getValue();
+        if (file == NullVirtualFile.INSTANCE) continue;
+        NewVirtualFile withId = (NewVirtualFile)file;
+        if (withId.getId() == id) return withId;
+      }
+    }
+    String name = ourPersistence.getName(id);
+    return findChild(name);
+  }
+
   @Nullable
   private synchronized VirtualFile[] asArray() {
     if (myChildren instanceof VirtualFile[]) return (VirtualFile[])myChildren;
@@ -261,9 +285,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (map == null) return Collections.emptyList();
 
     List<String> names = new ArrayList<String>();
-    for (String name : map.keySet()) {
-      if (map.get(name) == NullVirtualFile.INSTANCE) {
-        names.add(name);
+    for (Map.Entry<String, VirtualFile> entry : map.entrySet()) {
+      if (entry.getValue() == NullVirtualFile.INSTANCE) {
+        names.add(entry.getKey());
       }
     }
 
@@ -299,8 +323,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
            : new THashMap<String, VirtualFile>(CaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
+  @TestOnly
   public synchronized void cleanupCachedChildren() {
-    // For tests only!!!
     myChildren = null;
   }
 
@@ -308,6 +332,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     throw new IOException("getInputStream() must not be called against a directory: " + getUrl());
   }
 
+  @NotNull
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, final long newTimeStamp) throws IOException {
     throw new IOException("getOutputStream() must not be called against a directory: " + getUrl());
   }
