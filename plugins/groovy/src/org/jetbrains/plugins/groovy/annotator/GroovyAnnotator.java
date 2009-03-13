@@ -787,9 +787,11 @@ public class GroovyAnnotator implements Annotator {
           registerAddImportFixes(refExpr, annotation);
         }
         registerReferenceFixes(refExpr, annotation);
+        annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
       }
-
-      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
+      else { 
+        annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
+      }
     }
     else if (refExprType instanceof PsiClassType && ((PsiClassType)refExprType).resolve() == null) {
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
@@ -888,7 +890,7 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private static boolean isAssignmentLHS(GrReferenceExpression refExpr) {
+  public static boolean isAssignmentLHS(GrReferenceExpression refExpr) {
     return refExpr.getParent() instanceof GrAssignmentExpression &&
            refExpr.equals(((GrAssignmentExpression)refExpr.getParent()).getLValue());
   }

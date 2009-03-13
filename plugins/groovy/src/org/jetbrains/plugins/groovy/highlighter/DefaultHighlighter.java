@@ -73,6 +73,9 @@ public class DefaultHighlighter {
 
   @NonNls
   static final String UNTYPED_ACCESS_ID = "Untyped member access";
+  @NonNls
+  static final String UNRESOLVED_ACCESS_ID = "Unresolved reference access";
+
 
   public static TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID,
       SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes());
@@ -136,4 +139,13 @@ public class DefaultHighlighter {
     UNTYPED_ACCESS_ATTRIB.setEffectType(EffectType.LINE_UNDERSCORE);
   }
   public static TextAttributesKey UNTYPED_ACCESS = TextAttributesKey.createTextAttributesKey(UNTYPED_ACCESS_ID, UNTYPED_ACCESS_ATTRIB);
+
+
+  public static final TextAttributes UNRESOLVED_ACCESS_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
+  static{
+    UNRESOLVED_ACCESS_ATTRIBUTES.setForegroundColor(Color.BLACK);
+    UNRESOLVED_ACCESS_ATTRIBUTES.setEffectColor(Color.BLACK);
+    UNRESOLVED_ACCESS_ATTRIBUTES.setEffectType(EffectType.WAVE_UNDERSCORE);
+  }
+  public static TextAttributesKey UNRESOLVED_ACCESS = TextAttributesKey.createTextAttributesKey(UNRESOLVED_ACCESS_ID, UNRESOLVED_ACCESS_ATTRIBUTES);
 }

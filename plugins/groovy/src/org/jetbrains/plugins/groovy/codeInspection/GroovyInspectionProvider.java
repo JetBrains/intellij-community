@@ -26,14 +26,16 @@ import org.jetbrains.plugins.groovy.codeInspection.exception.*;
 import org.jetbrains.plugins.groovy.codeInspection.gpath.*;
 import org.jetbrains.plugins.groovy.codeInspection.metrics.*;
 import org.jetbrains.plugins.groovy.codeInspection.naming.*;
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection;
 import org.jetbrains.plugins.groovy.codeInspection.threading.*;
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyDuplicateSwitchBranchInspection;
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyMethodWithInconsistentReturnsInspection;
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyUnreachableStatementInspection;
-import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 
 /**
  * @author ilyas
@@ -149,6 +151,9 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
         GroovyMapPutCanBeKeyedAccessInspection.class,
         GroovyListGetCanBeKeyedAccessInspection.class,
         GroovyListSetCanBeKeyedAccessInspection.class,
+
+        GroovyUntypedAccessInspection.class,
+        GroovyUnresolvedAccessInspection.class
     };
   }
 
