@@ -111,8 +111,7 @@ public class CodeStyleMainPanel extends JPanel {
 
   public boolean isModified() {
     final NewCodeStyleSettingsPanel[] panels = getPanels();
-    for (int i = 0; i < panels.length; i++) {
-      NewCodeStyleSettingsPanel panel = panels[i];
+    for (NewCodeStyleSettingsPanel panel : panels) {
       if (panel.isModified()) return true;
     }
     return false;
@@ -130,8 +129,7 @@ public class CodeStyleMainPanel extends JPanel {
 
   public void apply() {
     final NewCodeStyleSettingsPanel[] panels = getPanels();
-    for (int i = 0; i < panels.length; i++) {
-      NewCodeStyleSettingsPanel panel = panels[i];
+    for (NewCodeStyleSettingsPanel panel : panels) {
       if (panel.isModified()) panel.apply();
     }
   }

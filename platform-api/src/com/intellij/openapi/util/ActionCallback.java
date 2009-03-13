@@ -20,11 +20,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.lang.Runnable;
 
 public class ActionCallback {
-
-  ExecutionCallback myDone;
-  ExecutionCallback myRejected;
+  private final ExecutionCallback myDone;
+  private final ExecutionCallback myRejected;
 
   public ActionCallback() {
     myDone = new ExecutionCallback();
@@ -50,31 +50,31 @@ public class ActionCallback {
     myRejected.setExecuted();
   }
 
-  public final ActionCallback doWhenDone(@NotNull final java.lang.Runnable runnable) {
+  public final ActionCallback doWhenDone(@NotNull final Runnable runnable) {
     myDone.doWhenExecuted(runnable);
     return this;
   }
 
-  public final ActionCallback doWhenRejected(@NotNull final java.lang.Runnable runnable) {
+  public final ActionCallback doWhenRejected(@NotNull final Runnable runnable) {
     myRejected.doWhenExecuted(runnable);
     return this;
   }
 
-  public final ActionCallback doWhenProcessed(@NotNull final java.lang.Runnable runnable) {
+  public final ActionCallback doWhenProcessed(@NotNull final Runnable runnable) {
     doWhenDone(runnable);
     doWhenRejected(runnable);
     return this;
   }
 
   public final ActionCallback notifyWhenDone(final ActionCallback child) {
-    return doWhenDone(new java.lang.Runnable() {
+    return doWhenDone(new Runnable() {
       public void run() {
         child.setDone();
       }
     });
   }
 
-  public final ActionCallback processOnDone(java.lang.Runnable runnable, boolean requiresDone) {
+  public final ActionCallback processOnDone(Runnable runnable, boolean requiresDone) {
     if (requiresDone) {
       return doWhenDone(runnable);
     } else {

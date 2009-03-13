@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.util.Condition;
@@ -28,18 +27,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Project interface class.
  */
-public interface Project extends ComponentManager, AreaInstance, Disposable {
+public interface Project extends ComponentManager, AreaInstance {
   @NonNls String DIRECTORY_STORE_FOLDER = ".idea";
 
   /**
-   * @deprecated Since multiple possible project formats it is not allowed to ask for getProjectFile. Other methods should
+   * @deprecated Because of multiple possible project formats, it is not allowed to call {@link #getProjectFile} anymore. Other methods should
    * be used for project introspections, such as {@link #getPresentableUrl()},  {@link #getBaseDir()}, etc.
    */
   @Nullable
   VirtualFile getProjectFile();
 
   /**
-   * @deprecated Since multiple possible project formats it is not allowed to ask for getProjectFile. Other methods should
+   * @deprecated Because of multiple possible project formats, it is not allowed to call {@link #getWorkspaceFile} anymore. Other methods should
    * be used for project introspections, such as {@link #getPresentableUrl()},  {@link #getBaseDir()}, etc.
    */
   @Nullable
@@ -73,11 +72,8 @@ public interface Project extends ComponentManager, AreaInstance, Disposable {
   @NonNls
   String getLocation();
 
-
   void save();
 
-  boolean isDisposed();
-  
   Condition getDisposed();
 
   boolean isOpen();
