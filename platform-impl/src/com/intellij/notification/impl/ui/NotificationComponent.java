@@ -67,7 +67,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     final JRootPane pane = SwingUtilities.getRootPane(this);
     final Component glassPane = pane.getGlassPane();
     if (glassPane instanceof IdeGlassPaneEx) {
-      ((IdeGlassPaneEx) glassPane).add(new NotificationsListPanelWrapper(this, new NotificationsListPanel(myModel), (Container) glassPane, pane));
+      ((IdeGlassPaneEx) glassPane).add(new NotificationsListPanelWrapper(this, (Container) glassPane, pane));
     }
   }
 
@@ -142,6 +142,10 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
         }
       });
     }
+  }
+
+  public NotificationModel getModel() {
+    return myModel;
   }
 
   private void performNotificationAction(final NotificationImpl notification) {
