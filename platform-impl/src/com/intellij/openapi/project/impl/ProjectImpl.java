@@ -50,15 +50,12 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   private MyProjectManagerListener myProjectManagerListener;
 
-  private final ArrayList<String> myConversionProblemsStorage = new ArrayList<String>();
-
   @NonNls private static final String PROJECT_LAYER = "project-components";
 
   public boolean myOptimiseTestLoadSpeed;
   @NonNls public static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-  @NonNls private static final String DUMMY_PROJECT_NAME = "Dummy (Mock) Project";
   private final boolean myDefault;
-  private static final String DEPRECATED_MESSAGE = "Deprecated method usage: {0}.\n" +
+  @NonNls private static final String DEPRECATED_MESSAGE = "Deprecated method usage: {0}.\n" +
            "This method will cease to exist in IDEA 7.0 final release.\n" +
            "Please contact plugin developers for plugin update.";
 
@@ -67,9 +64,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       return isDisposed();
     }
   };
-  private volatile String myName;
+  private final String myName;
 
-  protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed) {
+  protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed, String projectName) {
     super(ApplicationManager.getApplication());
 
     getPicoContainer().registerComponentInstance(Project.class, this);
@@ -81,6 +78,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
 
     myManager = manager;
+    myName = isDefault ? TEMPLATE_PROJECT_NAME : projectName == null ? getStateStore().getProjectName() : projectName;
   }
 
   protected void boostrapPicoContainer() {
@@ -156,10 +154,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return isOpen() && !isDisposed() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
   }
 
-  public ArrayList<String> getConversionProblemsStorage() {
-    return myConversionProblemsStorage;
-  }
-
   public void loadProjectComponents() {
     loadComponentsConfiguration(PROJECT_LAYER, isDefault());
 
@@ -197,16 +191,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @NotNull
   public String getName() {
-    String name = myName;
-    if (name == null) {
-      synchronized (this) {
-        name = myName;
-        if (name == null) {
-          myName = name = ProjectDetailsComponent.getInstance(this).getProjectName();
-        }
-      }
-    }
-    return name;
+    return myName;
   }
 
   @Nullable
@@ -327,10 +312,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return getStateStore().getProjectName();    
   }
 
-  public void updateName(final String projectName) {
-    myName = projectName;
-  }
-
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectOpened(Project project) {
       LOG.assertTrue(project == ProjectImpl.this);
@@ -349,5 +330,13 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public boolean isDefault() {
     return myDefault;
+  }
+
+  @Override
+   public String toString() {
+    return "Project "
+           + (myDefault ? "(Default) " : "")
+           + (isDisposed() ? "(Disposed) " : "")
+           + "'" + getLocation()+"'";
   }
 }

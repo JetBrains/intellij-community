@@ -647,14 +647,14 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   private final PackageSink mySink = new PackageSink();
 
-  private class PackageSink extends QueryFactory<VirtualFile, VirtualFile[]> {
-    private final Condition<VirtualFile> myValidityCondition = new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile virtualFile) {
-        return virtualFile.isValid();
-      }
-    };
+  private static final Condition<VirtualFile> IS_VALID = new Condition<VirtualFile>() {
+    public boolean value(final VirtualFile virtualFile) {
+      return virtualFile.isValid();
+    }
+  };
 
-    public PackageSink() {
+  private class PackageSink extends QueryFactory<VirtualFile, VirtualFile[]> {
+    private PackageSink() {
       registerExecutor(new QueryExecutor<VirtualFile, VirtualFile[]>() {
         public boolean execute(final VirtualFile[] allDirs, final Processor<VirtualFile> consumer) {
           for (VirtualFile dir : allDirs) {
@@ -672,12 +672,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
     public Query<VirtualFile> search(@NotNull String packageName, boolean includeLibrarySources) {
       VirtualFile[] allDirs = doGetDirectoriesByPackageName(packageName);
-      if (includeLibrarySources) {
-        return new FilteredQuery<VirtualFile>(new ArrayQuery<VirtualFile>(allDirs), myValidityCondition);
-      }
-      else {
-        return new FilteredQuery<VirtualFile>(createQuery(allDirs), myValidityCondition);
-      }
+      return new FilteredQuery<VirtualFile>(includeLibrarySources ? new ArrayQuery<VirtualFile>(allDirs) : createQuery(allDirs), IS_VALID);
     }
   }
 
@@ -776,11 +771,11 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   private void checkAvailability() {
     if (!myInitialized) {
-      LOG.error("Directory index is not initialized yet.");
+      LOG.error("Directory index is not initialized yet for "+myProject);
     }
 
     if (myDisposed) {
-      LOG.error("Directory index is aleady disposed for this project");
+      LOG.error("Directory index is aleady disposed for "+myProject);
     }
   }
 

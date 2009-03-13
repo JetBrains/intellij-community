@@ -21,18 +21,11 @@ public class ProjectDetailsComponent implements PersistentStateComponent<Project
 
   public void setProjectName(final String projectName) {
     myState.projectName = projectName;
-    ((ProjectImpl)myProject).updateName(projectName);
   }
 
   public String getProjectName() {
-    if (myProject.isDefault()) {
-      return ((ProjectImpl)myProject).getDefaultName();
-    }
-    else {
-      return myState.projectName;
-    }
+    return myProject.isDefault() ? ((ProjectImpl)myProject).getDefaultName() : myState.projectName;
   }
-
 
   public static class State {
     public String projectName;

@@ -200,7 +200,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (isDummy) {
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
     }
-    final ProjectImpl project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed);
+    final ProjectImpl project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed, projectName);
 
     if (additionalPicoContainerComponents != null) {
         project.getPicoContainer().registerComponentInstance(additionalPicoContainerComponents.first, additionalPicoContainerComponents.second);
@@ -225,14 +225,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     project.loadProjectComponents();
-    project.updateName(projectName);
     project.init();
     if (projectName != null) {
       ProjectDetailsComponent.getInstance(project).setProjectName(projectName);
     }
-
-
-
 
     return project;
   }
@@ -531,7 +527,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       });
 
       if (!reloadOk[0] && !components.isEmpty()) {
-        String message = "Application components were changed externally and cannot be reaload:\n";
+        String message = "Application components were changed externally and cannot be reloaded:\n";
         for (String component : components) {
           message += component + "\n";
         }
