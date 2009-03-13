@@ -13,6 +13,6 @@ import com.intellij.util.NullableFunction;
  */
 public interface SemRegistrar {
 
-  <T extends SemElement, V extends PsiElement> void registerSemElementProvider(Class<T> key, ElementPattern<? extends V> place, NullableFunction<V, T> provider);
+  <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key, ElementPattern<? extends V> place, NullableFunction<V, T> provider);
 
 }
