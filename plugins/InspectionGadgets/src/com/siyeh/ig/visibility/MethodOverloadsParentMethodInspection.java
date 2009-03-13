@@ -73,6 +73,10 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
             if (method.getNameIdentifier() == null) {
                 return;
             }
+
+            if (method.isConstructor()) {
+                return;
+            }
             final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
                     SuperMethodsSearch.search(method, null, true, false);
             if(superMethodQuery.findFirst() != null){
