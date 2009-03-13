@@ -326,7 +326,8 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     VirtualFile dstVFile = fileSystemItem.getVirtualFile();
     if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
 
-    final PsiFile file = getElement().getContainingFile();
+    PsiFile file = getElement().getContainingFile();
+    if (file.getContext() != null) file = file.getContext().getContainingFile(); // use host file!
     final VirtualFile curVFile = file.getVirtualFile();
     if (curVFile == null) throw new IncorrectOperationException("Cannot bind from non-physical element:" + file);
 
