@@ -131,7 +131,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public int getSeveritiesCount() {
-    return getOrder().size();
+    return createCurrentSeverities().size();
   }
 
   public HighlightSeverity getSeverityByIndex(final int i) {
