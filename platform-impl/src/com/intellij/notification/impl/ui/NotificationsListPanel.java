@@ -1,7 +1,7 @@
 package com.intellij.notification.impl.ui;
 
-import com.intellij.notification.impl.NotificationImpl;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.impl.NotificationImpl;
 import com.intellij.notification.impl.NotificationModel;
 import com.intellij.notification.impl.NotificationModelListener;
 import com.intellij.notification.impl.NotificationUtil;
@@ -42,7 +42,20 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
     notificationsModel.addListener(this);
 
-    myList = new JList(myDataModel);
+    myList = new JList(myDataModel) {
+      @Override
+      public String getToolTipText(final MouseEvent event) {
+        final int i = locationToIndex(event.getPoint());
+        if (i >= 0) {
+          final Object o = getModel().getElementAt(i);
+          if (o instanceof NotificationImpl) {
+            return ((NotificationImpl) o).getDescription();
+          }
+        }
+
+        return null;
+      }
+    };
     myList.setCellRenderer(new NotificationsListRenderer());
     myList.getSelectionModel().setSelectionInterval(0, 0);
     myList.addMouseListener(new MouseAdapter() {
@@ -57,7 +70,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
         }
       }
     });
-
+    
     myScrollPane = new JScrollPane(myList);
     myScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     myScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);

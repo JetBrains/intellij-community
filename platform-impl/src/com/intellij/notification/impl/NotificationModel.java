@@ -92,6 +92,10 @@ public class NotificationModel {
     return myNotifications.size();
   }
 
+  public boolean isEmpty() {
+    return getCount() == 0;
+  }
+
   @Nullable
   public NotificationImpl getFirst() {
     if (myNotifications.size() > 0) {

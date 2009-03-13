@@ -56,6 +56,14 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   }
 
   private void showList() {
+    if (myModel.getCount() == 1) {
+      final NotificationImpl notification = myModel.getFirst();
+      if (notification != null) {
+        performNotificationAction(notification);
+        return;
+      }
+    }
+
     final JRootPane pane = SwingUtilities.getRootPane(this);
     final Component glassPane = pane.getGlassPane();
     if (glassPane instanceof IdeGlassPaneEx) {
@@ -75,7 +83,14 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
       setIcon(EMPTY_ICON);
     }
 
-    setText(size == 0 ? " " : String.format("%d", size));
+    if (size == 0) {
+      setForeground(getBackground());
+      setText("0");
+    } else {
+      setForeground(Color.BLACK);
+      setText(String.format("%d", size));
+    }
+
     repaint();
   }
 
@@ -106,10 +121,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
           .setCloseButtonEnabled(true).setShowCallout(false).setFadeoutTime(3000).setHideOnClickOutside(false).setHideOnKeyOutside(false).setHideOnFrameResize(false)
           .setClickHandler(new ActionListener() {
             public void actionPerformed(final ActionEvent e) {
-              final NotificationListener.OnClose onClose = notification.getListener().perform();
-              if (onClose == NotificationListener.OnClose.REMOVE) {
-                myModel.remove(notification);
-              }
+              performNotificationAction(notification);
             }
           }, true).createBalloon();
 
@@ -129,6 +141,13 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
           show.run();
         }
       });
+    }
+  }
+
+  private void performNotificationAction(final NotificationImpl notification) {
+    final NotificationListener.OnClose onClose = notification.getListener().perform();
+    if (onClose == NotificationListener.OnClose.REMOVE) {
+      myModel.remove(notification);
     }
   }
 }
