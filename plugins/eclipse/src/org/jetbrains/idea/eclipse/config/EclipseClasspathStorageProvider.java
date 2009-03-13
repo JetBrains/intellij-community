@@ -10,9 +10,9 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -64,9 +64,9 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       throw new ConfigurationException(EclipseBundle.message("eclipse.export.too.many.content.roots", model.getModule().getName()));
     }
 
-    final VirtualFile output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
-    final VirtualFile contentRoot = model.getContentEntries()[0].getFile();
-    if (output == null || contentRoot == null || !VfsUtil.isAncestor(contentRoot, output, false)) {
+    final String output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
+    final String contentRoot = model.getContentEntries()[0].getUrl();
+    if (output == null || !StringUtil.startsWith(output, contentRoot)) {
       throw new ConfigurationException("Output path is incompatible with eclipse format which supports output under content root only");
     }
   }
