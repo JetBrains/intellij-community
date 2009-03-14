@@ -121,23 +121,14 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
           return o1.getSeverity().myVal - o2.getSeverity().myVal;
         }
       });
-
-      int severityIdx = 0;
-      int currentSeverity = severityRegistrar.getSeverityByIndex(0).myVal;
-      int currentSeverityCount = 0;
+      Arrays.fill(status.errorCount, 0);
       for (HighlightInfo highlight : highlights) {
         final HighlightSeverity severity = highlight.getSeverity();
-        if (severity.myVal == currentSeverity) {
-          currentSeverityCount++;
-        }
-        else if (severity.myVal > currentSeverity) {
-          status.errorCount[severityIdx] = currentSeverityCount;
-          currentSeverityCount = 1;
-          severityIdx = severityRegistrar.getSeverityIdx(severity);
-          currentSeverity = severityRegistrar.getSeverityByIndex(severityIdx).myVal;
+        final int severityIdx = severityRegistrar.getSeverityIdx(severity);
+        if (severityIdx != -1) {
+          status.errorCount[severityIdx] ++;
         }
       }
-      status.errorCount[severityIdx] = currentSeverityCount;
     }
     else {
       HighlightSeverity severity = null;
@@ -196,26 +187,23 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
       text += "</table>";
     }
 
-    if (status.errorCount[0] == 0) {
+    int currentSeverityErrors = 0;
+    for (int i = status.errorCount.length - 1; i >= 0; i--) {
+      if (status.errorCount[i] > 0) {
+        final HighlightSeverity severity = SeverityRegistrar.getInstance(myProject).getSeverityByIndex(i);
+        text += BR;
+        String name = status.errorCount[i] > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
+        text += status.errorAnalyzingFinished
+                ? DaemonBundle.message("errors.found", status.errorCount[i], name)
+                : DaemonBundle.message("errors.found.so.far", status.errorCount[i], name);
+        currentSeverityErrors += status.errorCount[i];
+      }
+    }
+    if (currentSeverityErrors == 0) {
       text += BR;
       text += status.errorAnalyzingFinished
               ? DaemonBundle.message("no.errors.or.warnings.found")
               : DaemonBundle.message("no.errors.or.warnings.found.so.far");
-    }
-    else {
-      int currentSeverityErrors = 0;
-      for (int i = status.errorCount.length - 1; i >= 0; i--) {
-        final HighlightSeverity severity = SeverityRegistrar.getInstance(myProject).getSeverityByIndex(i);
-        final int count = status.errorCount[i] - currentSeverityErrors;
-        if (count > 0) {
-          text += BR;
-          String name = count > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
-          text += status.errorAnalyzingFinished
-                  ? DaemonBundle.message("errors.found", count, name)
-                  : DaemonBundle.message("errors.found.so.far", count, name);
-          currentSeverityErrors += count;
-        }
-      }
     }
 
     text += getMessageByRoots(status.noHighlightingRoots, status.rootsNumber, "no.syntax.highlighting.performed");

@@ -43,7 +43,6 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     STANDART_SEVERITIES.put(HighlightSeverity.ERROR.toString(), HighlightInfoType.ERROR);
     STANDART_SEVERITIES.put(HighlightSeverity.WARNING.toString(), HighlightInfoType.WARNING);
     STANDART_SEVERITIES.put(HighlightSeverity.INFO.toString(), HighlightInfoType.INFO);
-    STANDART_SEVERITIES.put(HighlightSeverity.INFORMATION.toString(), HighlightInfoType.INFORMATION);
     STANDART_SEVERITIES.put(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING.toString(), HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER);
   }
 
@@ -75,6 +74,10 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     HighlightInfoType infoType = STANDART_SEVERITIES.get(severity.toString());
     if (infoType != null) {
       return (HighlightInfoType.HighlightInfoTypeImpl)infoType;
+    }
+
+    if (severity == HighlightSeverity.INFORMATION){
+      return (HighlightInfoType.HighlightInfoTypeImpl)HighlightInfoType.INFORMATION;
     }
 
     final SeverityBasedTextAttributes type = ourMap.get(severity.toString());
