@@ -141,7 +141,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
       return new GrVariableDeclarationImpl(node);
     if (elem.equals(MULTIPLE_VARIABLE_DEFINITION))
       return new GrMultipleVariableDeclarationImpl(node);
-    if (elem.equals(TUPLE) || elem.equals(TUPLE_ERROR)) return new GrTupleImpl(node);
+    if (elem.equals(TUPLE_DECLARATION) || elem.equals(TUPLE_ERROR)) return new GrTupleDeclarationImpl(node);
+    if (elem.equals(TUPLE_EXPRESSION)) return new GrTupleExpressionImpl(node);
     if (elem.equals(VARIABLE)) return new GrVariableImpl(node);
 
     if (elem.equals(FIELD)) return new GrFieldImpl(node);

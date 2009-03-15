@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTuple;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -39,8 +39,8 @@ public class GrMultipleVariableDeclarationImpl extends GrVariableDeclarationImpl
   }
 
   @NotNull
-  public GrTuple getTuple(){
-    return findChildByClass(GrTuple.class);
+  public GrTupleDeclaration getTuple(){
+    return findChildByClass(GrTupleDeclaration.class);
   }
 
   @Nullable

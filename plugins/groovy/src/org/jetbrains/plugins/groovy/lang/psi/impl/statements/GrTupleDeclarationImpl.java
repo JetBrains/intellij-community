@@ -20,7 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTuple;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -34,8 +34,8 @@ import java.util.Arrays;
  * Time: 17:23:45
  * To change this template use File | Settings | File Templates.
  */
-public class GrTupleImpl extends GroovyPsiElementImpl implements GrTuple {
-  public GrTupleImpl(@NotNull ASTNode node) {
+public class GrTupleDeclarationImpl extends GroovyPsiElementImpl implements GrTupleDeclaration {
+  public GrTupleDeclarationImpl(@NotNull ASTNode node) {
     super(node);
   }
 

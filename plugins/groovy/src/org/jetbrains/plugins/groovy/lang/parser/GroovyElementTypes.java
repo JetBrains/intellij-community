@@ -212,7 +212,10 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
   GroovyElementType VARIABLE_DEFINITION = new GroovyElementType("variable definitions");
   GroovyElementType MULTIPLE_VARIABLE_DEFINITION = new GroovyElementType("multivariable definition");
-  GroovyElementType TUPLE = new GroovyElementType("tuple");
+  GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
+  GroovyElementType TUPLE_EXPRESSION = new GroovyElementType("tuple expression");
+
+
   GroovyElementType TUPLE_ERROR = new GroovyElementType("tuple with error");
 
   GroovyElementType VARIABLE = new GroovyElementType("assigned variable");

@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * Time: 17:26:49
  * To change this template use File | Settings | File Templates.
  */
-public interface GrTuple extends GroovyPsiElement{
+public interface GrTupleDeclaration extends GroovyPsiElement{
   @NotNull
   GrVariable[] getVariables();
 

@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface GrAssignmentExpression extends GrExpression {
 
+  boolean isTupleAssignment();
+
   @NotNull
   public GrExpression getLValue();
 

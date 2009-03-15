@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.AnnotationArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterList;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.TupleParse;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -153,7 +154,7 @@ public class VariableDefinitions implements GroovyElementTypes {
       if (declarator != WRONGWAY) {
         final boolean wasAssingment = parseAssignment(builder);
 
-        if (declarator == TUPLE || declarator == TUPLE_ERROR) {
+        if (declarator == TUPLE_DECLARATION || declarator == TUPLE_ERROR) {
           varAssMarker.drop();
           if (!wasAssingment && !hasModifiers) {
             builder.error(GroovyBundle.message("assignment.expected"));
@@ -174,10 +175,10 @@ public class VariableDefinitions implements GroovyElementTypes {
           }
         }
 
-        if (isInClass && declarator == TUPLE) {
+        if (isInClass && declarator == TUPLE_DECLARATION) {
           builder.error(GroovyBundle.message("tuple.cant.be.placed.in.class"));
         }
-        return declarator == TUPLE ? MULTIPLE_VARIABLE_DEFINITION : VARIABLE_DEFINITION;
+        return declarator == TUPLE_DECLARATION ? MULTIPLE_VARIABLE_DEFINITION : VARIABLE_DEFINITION;
       } else {
         varAssMarker.drop();
         builder.error(GroovyBundle.message("identifier.expected"));
@@ -210,64 +211,15 @@ public class VariableDefinitions implements GroovyElementTypes {
       if (builder.getTokenType() == mIDENT) {
         ParserUtils.getToken(builder, mIDENT);
         return mIDENT;
-      } else {
-        return WRONGWAY;
+      } 
+    } else if (builder.getTokenType() == mLPAREN && isTuple) {
+      if (TupleParse.parseTuple(builder, hasModifiers, TUPLE_DECLARATION, VARIABLE)) {
+        return TUPLE_DECLARATION;
       }
-    } else if (ParserUtils.getToken(builder, mLPAREN)) {
-      PsiBuilder.Marker tupleMarker = builder.mark();
-
-      final PsiBuilder.Marker firstVarMarker = builder.mark();
-      if (!ParserUtils.getToken(builder, mIDENT)) {
-        firstVarMarker.drop();
-        tupleMarker.drop();
-        return WRONGWAY;
-      } else {
-        firstVarMarker.done(VARIABLE);
-      }
-
-      while (!builder.eof() && builder.getTokenType() != mRPAREN && builder.getTokenType() != mASSIGN) {
-        if (!ParserUtils.getToken(builder, mCOMMA)) {
-          builder.error(GroovyBundle.message("comma.expected"));
-
-          if (!hasModifiers) {
-            tupleMarker.drop();
-            return WRONGWAY;
-          }
-          break;
-        } else {
-          PsiBuilder.Marker varMarker = builder.mark();
-          if (!ParserUtils.getToken(builder, mIDENT)) {
-            builder.error(GroovyBundle.message("identifier.expected"));
-            varMarker.drop();
-          } else {
-            varMarker.done(VARIABLE);
-          }
-        }
-      }
-
-      if (ParserUtils.getToken(builder, mRPAREN)) {
-        if (builder.getTokenType() != mASSIGN) {
-          if (!hasModifiers) {
-            tupleMarker.drop();
-            return WRONGWAY;
-          }
-        }
-        tupleMarker.done(TUPLE);
-        return TUPLE;
-      }
-
-      if (builder.getTokenType() == mASSIGN) {
-        builder.error("rparen.expected");
-        tupleMarker.done(TUPLE_ERROR);
-        return TUPLE_ERROR;
-      }
-
-      tupleMarker.drop();
-      return WRONGWAY;
-    } else {
-      return WRONGWAY;
     }
+    return WRONGWAY;
   }
+
 
   private static boolean parseAssignment(PsiBuilder builder) {
     if (ParserUtils.getToken(builder, mASSIGN)) {

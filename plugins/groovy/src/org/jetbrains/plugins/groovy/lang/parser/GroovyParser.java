@@ -31,6 +31,7 @@ public class GroovyParser implements PsiParser {
 
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
+    builder.setDebugMode(true);
     PsiBuilder.Marker rootMarker = builder.mark();
     CompilationUnit.parse(builder);
     rootMarker.done(root);

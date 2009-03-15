@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTuple;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -117,7 +117,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     PsiElement parent = getParent();
-    return parent instanceof GrTuple ? null : ((GrVariableDeclaration)parent).getTypeElementGroovy();
+    return parent instanceof GrTupleDeclaration ? null : ((GrVariableDeclaration)parent).getTypeElementGroovy();
   }
 
   @Nullable
@@ -133,7 +133,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     GrExpression initializer = getInitializerGroovy();
     final PsiElement parent = getParent();
 
-    if (parent instanceof GrTuple && initializer != null){
+    if (parent instanceof GrTupleDeclaration && initializer != null){
       return initializer.getType();
     }
 
@@ -225,8 +225,8 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
   @Nullable
   public GrExpression getInitializerGroovy() {
     final PsiElement parent = getParent();
-    if (parent instanceof GrTuple){
-      final GrTuple tuple = (GrTuple)parent;
+    if (parent instanceof GrTupleDeclaration){
+      final GrTupleDeclaration tuple = (GrTupleDeclaration)parent;
       final GrExpression initializer = tuple.getInitializerGroovy();
 
       if (initializer instanceof GrListOrMap){
@@ -274,7 +274,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     PsiElement parent = getParent();
     if (parent instanceof GrVariableDeclaration) {
       return ((GrVariableDeclaration)parent).getModifierList();
-    } else if (parent instanceof GrTuple) {
+    } else if (parent instanceof GrTupleDeclaration) {
       return ((GrVariableDeclaration)parent.getParent()).getModifierList();
     }
     return null;

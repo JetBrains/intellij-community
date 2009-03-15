@@ -129,7 +129,7 @@ public class Declaration implements GroovyElementTypes {
         return false;
       }
 
-      if (builder.getTokenType() == mLPAREN) {
+      if (modifiersParsed && builder.getTokenType() == mLPAREN) {
         IElementType tupleDef = VariableDefinitions.parse(builder, isInClass, modifiersParsed, true);
         if (tupleDef == WRONGWAY) {
           declMarker.rollbackTo();

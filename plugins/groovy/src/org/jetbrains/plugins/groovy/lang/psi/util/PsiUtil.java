@@ -611,6 +611,7 @@ public class PsiUtil {
       }
       return true;
     }
+    if (expr instanceof GrTupleExpression) return true;
     return expr instanceof GrReferenceExpression || expr instanceof GrIndexProperty || expr instanceof GrPropertySelection;
   }
 
