@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -14,13 +13,11 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jdom.output.EclipseJDOMUtil;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
@@ -29,6 +26,7 @@ import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.conversion.ConversionException;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 import org.jetbrains.idea.eclipse.conversion.EclipseUserLibrariesHelper;
+import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,26 +106,7 @@ public class ExportEclipseProjectsAction extends AnAction {
               EclipseJDOMUtil.output(new Document(ideaSpecific), emlFile, project);
             }
 
-            try {
-              final Document doc;
-              if (module.getModuleType() instanceof JavaModuleType) {
-                doc = JDOMUtil.loadDocument(getClass().getResource("template.project.xml"));
-              } else {
-                doc = JDOMUtil.loadDocument(getClass().getResource("template.empty.project.xml"));
-              }
-
-              final Element nameElement = doc.getRootElement().getChild(EclipseXml.NAME_TAG);
-              nameElement.setText(module.getName());
-
-              final File projectFile = new File(storageRoot, EclipseXml.PROJECT_FILE);
-              if (!projectFile.exists()) {
-                if (!projectFile.createNewFile()) continue;
-              }
-              EclipseJDOMUtil.output(doc, projectFile, project);
-            }
-            catch (JDOMException e1) {
-              LOG.error(e1);
-            }
+            if (DotProjectFileHelper.saveDotProjectFile(module, storageRoot)) continue;
 
             EclipseUserLibrariesHelper.appendProjectLibraries(project, VfsUtil.virtualToIoFile(project.getBaseDir()));
           }
@@ -148,4 +127,5 @@ public class ExportEclipseProjectsAction extends AnAction {
       project.save();
     }
   }
+
 }

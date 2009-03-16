@@ -25,6 +25,7 @@ import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.ConversionException;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
+import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -158,7 +159,10 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final HashSet<String> usedVariables = new HashSet<String>();
         final CachedXmlDocumentSet documentSet = getFileSet();
         final VirtualFile vFile = documentSet.getVFile(EclipseXml.PROJECT_FILE);
-        final String path = vFile.getParent().getPath();
+        assert vFile != null;
+        final VirtualFile parent = vFile.getParent();
+        assert parent != null;
+        final String path = parent.getPath();
 
         final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path,  module.getProject());
         classpathReader.init(model);
@@ -204,6 +208,13 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         if (element != null || model.getSourceRoots().length > 0) {
           classpathWriter.writeClasspath(classpathElement, element);
           fileSet.write(new Document(classpathElement), EclipseXml.CLASSPATH_FILE);
+        }
+
+        try {
+          fileSet.read(EclipseXml.PROJECT_FILE);
+        }
+        catch (Exception e) {
+          DotProjectFileHelper.saveDotProjectFile(module, fileSet.getParent(EclipseXml.PROJECT_FILE));
         }
 
         final Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
