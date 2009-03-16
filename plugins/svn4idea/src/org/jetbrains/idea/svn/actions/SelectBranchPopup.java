@@ -47,12 +47,13 @@ public class SelectBranchPopup {
     if (svnurl == null) {
       return;
     }
-    final RootMixedInfo rootInfo = urlMapping.getWcRootForUrl(svnurl.toString());
-    if (rootInfo == null) {
+    final RootUrlInfo rootUrlInfo = urlMapping.getWcRootForUrl(svnurl.toString());
+    if (rootUrlInfo == null) {
       return;
     }
 
-    showForBranchRoot(project, rootInfo.getFile(), callback, title);
+    // not vcs root but wc root is ok
+    showForBranchRoot(project, rootUrlInfo.getVirtualFile(), callback, title);
   }
 
   public static void showForBranchRoot(Project project, VirtualFile vcsRoot, BranchSelectedCallback callback, final String title) {

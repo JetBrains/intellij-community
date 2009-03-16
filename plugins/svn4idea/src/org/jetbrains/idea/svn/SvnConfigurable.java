@@ -68,6 +68,7 @@ public class SvnConfigurable implements Configurable {
   private JLabel myUseCommonProxyLabel;
   private JLabel myEditProxyLabel;
   private JCheckBox myLockOnDemand;
+  private JCheckBox myDetectNestedWorkingCopiesCheckBox;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -173,6 +174,9 @@ public class SvnConfigurable implements Configurable {
     if (configuration.UPDATE_LOCK_ON_DEMAND != myLockOnDemand.isSelected()) {
       return true;
     }
+    if (configuration.DETECT_NESTED_COPIES != myDetectNestedWorkingCopiesCheckBox.isSelected()) {
+      return true;
+    }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
   }
 
@@ -181,6 +185,7 @@ public class SvnConfigurable implements Configurable {
     configuration.setConfigurationDirectory(myConfigurationDirectoryText.getText());
     configuration.setUseDefaultConfiguation(myUseDefaultCheckBox.isSelected());
     configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
+    configuration.DETECT_NESTED_COPIES = myDetectNestedWorkingCopiesCheckBox.isSelected(); 
     configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
   }
 
@@ -193,6 +198,7 @@ public class SvnConfigurable implements Configurable {
     myConfigurationDirectoryText.setText(path);
     myUseDefaultCheckBox.setSelected(configuration.isUseDefaultConfiguation());
     myUseCommonProxy.setSelected(configuration.isIsUseDefaultProxy());
+    myDetectNestedWorkingCopiesCheckBox.setSelected(configuration.DETECT_NESTED_COPIES);
 
     boolean enabled = !myUseDefaultCheckBox.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);

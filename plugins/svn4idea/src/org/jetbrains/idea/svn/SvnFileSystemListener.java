@@ -324,7 +324,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
    */
   public boolean delete(VirtualFile file) throws IOException {
     SvnVcs vcs = getVCS(file);
-    if (vcs != null && isAdminDirectory(file)) {
+    if (vcs != null && SvnUtil.isAdminDirectory(file)) {
       return true;
     }
     File ioFile = getIOFile(file);
@@ -407,28 +407,6 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
   }
 
-  private static boolean isAdminDirectory(final VirtualFile file) {
-    return isAdminDirectory(file.getParent(), file.getName());
-  }
-
-  private static boolean isAdminDirectory(VirtualFile parent, String name) {
-    // never allow to delete admin directories by themselves (this can happen during LVCS undo,
-    // which deletes created directories from bottom to top)
-    if (name.equals(SVNFileUtil.getAdminDirectoryName())) {
-      return true;
-    }
-    if (parent != null) {
-      if (parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
-        return true;
-      }
-      parent = parent.getParent();
-      if (parent != null && parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private void moveToUndoStorage(final VirtualFile file) {
     if (myStorageForUndo == null) {
       try {
@@ -462,7 +440,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     if (vcs == null) {
       return false;
     }
-    if (isUndo(vcs) && isAdminDirectory(dir, name)) {
+    if (isUndo(vcs) && SvnUtil.isAdminDirectory(dir, name)) {
       return false;      
     }
     File ioDir = getIOFile(dir);

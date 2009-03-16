@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.RootUrlInfo;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -114,7 +115,9 @@ public class LatestExistentSearcher {
   private boolean detectStartRevision() {
     if (! myStartExistsKnown) {
       final SvnFileUrlMapping mapping = myVcs.getSvnFileUrlMapping();
-      final VirtualFile vf = mapping.getVcRootByUrl(myUrl.toString());
+      final RootUrlInfo rootUrlInfo = mapping.getWcRootForUrl(myUrl.toString());
+      if (rootUrlInfo == null) return true;
+      final VirtualFile vf = rootUrlInfo.getVirtualFile();
       if (vf == null) {
         return true;
       }

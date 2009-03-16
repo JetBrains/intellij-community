@@ -220,12 +220,12 @@ public class CompareWithBranchAction extends AnAction {
       }
 
       final String fileUrlString = fileUrl.toString();
-      final RootMixedInfo rootMixed = urlMapping.getWcRootForUrl(fileUrlString);
+      final RootUrlInfo rootMixed = urlMapping.getWcRootForUrl(fileUrlString);
       if (rootMixed == null) {
         return null;
       }
 
-      final SVNURL thisBranchForUrl = SvnUtil.getBranchForUrl(vcs, rootMixed.getFile(), fileUrlString);
+      final SVNURL thisBranchForUrl = SvnUtil.getBranchForUrl(vcs, rootMixed.getVirtualFile(), fileUrlString);
       if (thisBranchForUrl == null) {
         return null;
       }

@@ -20,8 +20,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
@@ -159,15 +157,11 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   @Nullable
   private SVNURL getBranchForUrl(final String url) {
     final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
-    final Pair<String, RootUrlInfo> stringRootUrlInfoPair = urlMapping.getWcRootForFilePath(myRoot.getIOFile());
-    if (stringRootUrlInfoPair == null) {
+    final RootUrlInfo rootForFilePath = urlMapping.getWcRootForFilePath(myRoot.getIOFile());
+    if (rootForFilePath == null) {
       return null;
     }
-    final VirtualFile vfRoot = SvnUtil.getVirtualFile(stringRootUrlInfoPair.getFirst());
-    if (vfRoot == null) {
-      return null;
-    }
-    return SvnUtil.getBranchForUrl(myVcs, vfRoot, url);
+    return SvnUtil.getBranchForUrl(myVcs, rootForFilePath.getVirtualFile(), url);
   }
 
   public void reset(final SvnConfiguration configuration) {

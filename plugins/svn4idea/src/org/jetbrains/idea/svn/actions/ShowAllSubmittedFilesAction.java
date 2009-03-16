@@ -107,7 +107,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
       final SVNURL repositoryUrl;
       if ((file != null) && file.isInLocalFileSystem()) {
         final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
-        final RootUrlInfo wcRoot = urlMapping.getWcRootForFilePath(new File(file.getPath())).getSecond();
+        final RootUrlInfo wcRoot = urlMapping.getWcRootForFilePath(new File(file.getPath()));
         if (wcRoot == null) {
           return null;
         }

@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,13 +55,12 @@ public class WcInfoLoader {
     }
     final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
     final File file = new File(info.getPath());
-    final Pair<String, RootUrlInfo> infoPair = urlMapping.getWcRootForFilePath(file);
-    if (infoPair == null) {
+    final RootUrlInfo rootInfo = urlMapping.getWcRootForFilePath(file);
+    if (rootInfo == null) {
       return null;
     }
-    final RootUrlInfo rootInfo = infoPair.getSecond();
-    final WCInfo wcInfo = new WCInfo(infoPair.getFirst(), rootInfo.getAbsoluteUrlAsUrl(), SvnFormatSelector.getWorkingCopyFormat(file),
-                                     rootInfo.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file));
+    final WCInfo wcInfo = new WCInfo(rootInfo.getIoFile().getAbsolutePath(), rootInfo.getAbsoluteUrlAsUrl(),
+                             SvnFormatSelector.getWorkingCopyFormat(file), rootInfo.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file));
     return createInfo(wcInfo, vcs, urlMapping);
   }
 
@@ -82,12 +80,12 @@ public class WcInfoLoader {
     }
 
     // check of WC version
-    final RootMixedInfo rootForUrl = urlMapping.getWcRootForUrl(url);
+    final RootUrlInfo rootForUrl = urlMapping.getWcRootForUrl(url);
     if (rootForUrl == null) {
       return null;
     }
-    final VirtualFile root = rootForUrl.getParentVcsRoot();
-    final VirtualFile wcRoot = rootForUrl.getFile();
+    final VirtualFile root = rootForUrl.getRoot();
+    final VirtualFile wcRoot = rootForUrl.getVirtualFile();
     if (wcRoot == null) {
       return null;
     }

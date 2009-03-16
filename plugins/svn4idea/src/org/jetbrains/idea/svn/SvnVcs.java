@@ -61,6 +61,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -847,16 +848,19 @@ public class SvnVcs extends AbstractVcs {
     return myRootsInfo;
   }
 
+  /**
+   * Returns real working copies roots - if there is <Project Root> -> Subversion setting,
+   * and there is one working copy, will return one root
+   */
   public List<WCInfo> getAllWcInfos() {
     final SvnFileUrlMapping urlMapping = getSvnFileUrlMapping();
 
-    final Map<String, RootUrlInfo> wcInfos = urlMapping.getAllWcInfos();
+    final List<RootUrlInfo> infoList = urlMapping.getAllWcInfos();
     final List<WCInfo> infos = new ArrayList<WCInfo>();
-    for (Map.Entry<String, RootUrlInfo> entry : wcInfos.entrySet()) {
-      final RootUrlInfo value = entry.getValue();
-      final File file = new File(entry.getKey());
-      infos.add(new WCInfo(entry.getKey(), value.getAbsoluteUrlAsUrl(),
-                           SvnFormatSelector.getWorkingCopyFormat(file), value.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file)));
+    for (RootUrlInfo info : infoList) {
+      final File file = info.getIoFile();
+      infos.add(new WCInfo(file.getAbsolutePath(), info.getAbsoluteUrlAsUrl(),
+                           SvnFormatSelector.getWorkingCopyFormat(file), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file)));
     }
     return infos;
   }
@@ -912,5 +916,32 @@ public class SvnVcs extends AbstractVcs {
 
   private String keyForVf(final VirtualFile vf) {
     return vf.getUrl();
+  }
+
+  @Override
+  public boolean allowsNestedRoots() {
+    return SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES;
+  }
+
+  @Override
+  public List<VirtualFile> filterUniqueRoots(final List<VirtualFile> in) {
+    final List<RootUrlInfo> infos = new ArrayList<RootUrlInfo>(in.size());
+    for (VirtualFile vf : in) {
+      final File ioFile = new File(vf.getPath());
+      final RootUrlInfo info = myRootsInfo.getWcRootForFilePath(ioFile);
+      if ((info == null) || (! ioFile.getAbsolutePath().equals(info.getIoFile().getAbsolutePath()))) {
+        // we get one of roots there, there shouldn't be other paths
+        continue;
+      }
+      infos.add(info);
+    }
+    final List<RootUrlInfo> filtered = new ArrayList<RootUrlInfo>(infos.size());
+    ForNestedRootChecker.filterOutSuperfluousChildren(this, infos, filtered);
+
+    return ObjectsConvertor.convert(filtered, new Convertor<RootUrlInfo, VirtualFile>() {
+      public VirtualFile convert(RootUrlInfo o) {
+        return o.getVirtualFile();
+      }
+    });
   }
 }

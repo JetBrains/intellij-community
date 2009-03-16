@@ -37,6 +37,7 @@ import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
@@ -518,5 +519,27 @@ public class SvnUtil {
     catch (SVNException e) {
       return null;
     }
+  }
+
+  public static boolean isAdminDirectory(final VirtualFile file) {
+    return isAdminDirectory(file.getParent(), file.getName());
+  }
+
+  public static boolean isAdminDirectory(VirtualFile parent, String name) {
+    // never allow to delete admin directories by themselves (this can happen during LVCS undo,
+    // which deletes created directories from bottom to top)
+    if (name.equals(SVNFileUtil.getAdminDirectoryName())) {
+      return true;
+    }
+    if (parent != null) {
+      if (parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+        return true;
+      }
+      parent = parent.getParent();
+      if (parent != null && parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -72,7 +72,7 @@ public class SvnChangeList implements CommittedChangeList {
 
   // key: added path, value: copied-from
   private final Map<String, String> myCopiedAddedPaths = new HashMap<String, String>();
-  private RootMixedInfo myWcRoot;
+  private RootUrlInfo myWcRoot;
   private final CommonPathSearcher myCommonPathSearcher;
 
   public SvnChangeList(@NotNull final List<CommittedChangeList> lists, @NotNull final SvnRepositoryLocation location) {
@@ -549,7 +549,7 @@ public class SvnChangeList implements CommittedChangeList {
     if (!myCachedInfoLoaded) {
       updateCachedInfo();
     }
-    return (myWcRoot == null) ? null : myWcRoot.getParentVcsRoot();
+    return (myWcRoot == null) ? null : myWcRoot.getRoot();
   }
 
   @Nullable
@@ -557,10 +557,10 @@ public class SvnChangeList implements CommittedChangeList {
     if (!myCachedInfoLoaded) {
       updateCachedInfo();
     }
-    return (myWcRoot == null) ? null : myWcRoot.getFile();
+    return (myWcRoot == null) ? null : myWcRoot.getVirtualFile();
   }
 
-  public RootMixedInfo getWcRootInfo() {
+  public RootUrlInfo getWcRootInfo() {
     if (!myCachedInfoLoaded) {
       updateCachedInfo();
     }
@@ -600,7 +600,7 @@ public class SvnChangeList implements CommittedChangeList {
       final String absoluteUrl = SVNPathUtil.append(myRepositoryRoot, commonPath);
       myWcRoot = urlMapping.getWcRootForUrl(absoluteUrl);
       if (myWcRoot != null) {
-        myBranchUrl = SvnUtil.getBranchForUrl(myVcs, myWcRoot.getFile(), absoluteUrl);
+        myBranchUrl = SvnUtil.getBranchForUrl(myVcs, myWcRoot.getVirtualFile(), absoluteUrl);
       }
     }
   }
@@ -628,11 +628,11 @@ public class SvnChangeList implements CommittedChangeList {
 
   @Nullable
   public String getWcPath() {
-    final RootMixedInfo rootInfo = getWcRootInfo();
+    final RootUrlInfo rootInfo = getWcRootInfo();
     if (rootInfo == null) {
       return null;
     }
-    return new File(rootInfo.getFile().getPath()).getAbsolutePath();
+    return rootInfo.getIoFile().getAbsolutePath();
   }
 
   public boolean allPathsUnder(final String path) {

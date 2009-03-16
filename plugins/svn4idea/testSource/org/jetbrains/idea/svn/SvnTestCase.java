@@ -63,13 +63,8 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
 
     myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
 
-    SvnVcs.getInstance(myProject).invokeRefreshSvnRoots(true);
-    try {
-      Thread.sleep(300);
-    }
-    catch (InterruptedException e) {
-      //
-    }
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh();
   }
 
   @After

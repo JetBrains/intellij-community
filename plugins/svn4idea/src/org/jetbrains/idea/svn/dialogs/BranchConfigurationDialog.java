@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -155,12 +154,11 @@ public class BranchConfigurationDialog extends DialogWrapper {
     if (directory == null) {
       return;
     }
-    Pair<String, RootUrlInfo> rootUrlInfoPair =
-        SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(new File(directory.getPath()));
-    if (rootUrlInfoPair == null) {
+    final RootUrlInfo wcRoot = SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(new File(directory.getPath()));
+    if (wcRoot == null) {
       return;
     }
-    final String rootUrl = rootUrlInfoPair.getSecond().getRepositoryUrl();
+    final String rootUrl = wcRoot.getRepositoryUrl();
     if (rootUrl == null) {
       Messages.showErrorDialog(project, SvnBundle.message("configure.branches.error.no.connection.title"),
                                SvnBundle.message("configure.branches.title"));

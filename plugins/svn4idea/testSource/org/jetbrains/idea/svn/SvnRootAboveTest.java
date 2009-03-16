@@ -1,124 +1,81 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
 import com.intellij.openapi.vcs.changes.pending.DuringChangeListManagerUpdateTestScheme;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Assert;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SvnLocalChangesAndRootsTest extends SvnTestCase {
-  private File myAlienRoot;
+public class SvnRootAboveTest extends SvnTestCase {
   private ProjectLevelVcsManagerImpl myProjectLevelVcsManager;
   private ChangeListManager myClManager;
 
+  private File myLocalWcRoot;
+  private File myProjectRoot;
+  private File myModuleRoot;
+
   @Override
   public void setUp() throws Exception {
-    super.setUp();
+    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+    myTempDirFixture = fixtureFactory.createTempDirTestFixture();
+    myTempDirFixture.setUp();
 
-    myAlienRoot = new File(myTempDirFixture.getTempDirPath(), "alien");
-    myAlienRoot.mkdir();
+    final File svnRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
+    svnRoot.mkdir();
 
-    myProjectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
-    myProjectLevelVcsManager.setDirectoryMapping(myAlienRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
-    myProjectLevelVcsManager.updateActiveVcss();
-
-    myClManager = ChangeListManager.getInstance(myProject);
-  }
-
-  // a subtree just marked under VCS root but not content root
-  private class AlienTree {
-    private final File myDir;
-    private final File myFile;
-    private final File myUnversioned;
-    private final File myIgnored;
-
-    public AlienTree(final String base) throws IOException {
-      final String name = "alien";
-      myDir = new File(base, name);
-      myDir.mkdir();
-      sleep100();
-
-      myFile = new File(myDir, "file.txt");
-      myFile.createNewFile();
-      sleep100();
-
-      verify(runSvn("import", "-m", "test", myDir.getAbsolutePath(), myRepoUrl + "/" + name));
-      FileUtil.delete(myDir);
-      verify(runSvn("co", myRepoUrl + "/" + name, myDir.getAbsolutePath()));
-
-      myUnversioned = new File(myDir, "unversioned.txt");
-      myFile.createNewFile();
-      sleep100();
-      myIgnored = new File(myDir, "ignored.txt");
-      myFile.createNewFile();
-      sleep100();
-
-      // ignore
-      myClManager.setFilesToIgnore(IgnoredBeanFactory.withMask("ignored*"));
+    File pluginRoot = new File(PathManager.getHomePath(), "svnPlugins/svn4idea");
+    if (!pluginRoot.isDirectory()) {
+      // try standalone mode
+      Class aClass = SvnTestCase.class;
+      String rootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+      pluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
     }
+    myClientBinaryPath = new File(pluginRoot, "testData/svn/bin");
 
-    private void sleep100() {
-      try {
-        Thread.sleep(100);
-      }
-      catch (InterruptedException e) {
-        //
-      }
-    }
-  }
+    verify(runSvnAdmin("create", svnRoot.getPath()));
 
-  @Override
-  public void tearDown() throws Exception {
-    super.tearDown();
-  }
+    // real WC root
+    myLocalWcRoot = new File(myTempDirFixture.getTempDirPath(), "wcroot");
+    myLocalWcRoot.mkdir();
 
-  @Test
-  public void testAlienRoot() throws Throwable {
-    final AlienTree alienTree = new AlienTree(myAlienRoot.getAbsolutePath());
+    myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(svnRoot.getPath());
+    verify(runSvn("co", myRepoUrl, myLocalWcRoot.getAbsolutePath()));
 
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-
-    final VirtualFile tmpVf = LocalFileSystem.getInstance().findFileByIoFile(new File(myTempDirFixture.getTempDirPath()));
-    Assert.assertNotNull(tmpVf);
-
+    // one level below - project root dir
+    sleep100();
+    myProjectRoot = new File(myLocalWcRoot, "projectRoot");
+    myProjectRoot.mkdir();
+    // one more level below - content root
+    sleep100();
+    myModuleRoot = new File(myProjectRoot, "moduleRoot");
+    myModuleRoot.mkdir();
     sleep100();
 
-    tmpVf.refresh(false, true);
-    
+    // set current directory
+    verify(runArbitrary("cd", new String[] {myProjectRoot.getAbsolutePath()}));
+    initProject(myModuleRoot);
+    verify(runArbitrary("cd", new String[] {myTempDirFixture.getTempDirPath()}));
+
+    myProjectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
+    myProjectLevelVcsManager.setDirectoryMapping(myLocalWcRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
+    myProjectLevelVcsManager.updateActiveVcss();
+
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh();
 
-    Assert.assertEquals(2, vcs.getSvnFileUrlMapping().getAllWcInfos().size());
-
-    final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(alienTree.myFile);
-    editFileInCommand(myProject, vf, "78");
-
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myClManager.ensureUpToDate(false);
-
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {vf},
-      myClManager.getDefaultListName(), myClManager);
-
-    final VirtualFile vfUnv = LocalFileSystem.getInstance().findFileByIoFile(alienTree.myUnversioned);
-    myClManager.isUnversioned(vfUnv);
-
-    final VirtualFile vfIgn = LocalFileSystem.getInstance().findFileByIoFile(alienTree.myIgnored);
-    myClManager.isUnversioned(vfIgn);
+    myClManager = ChangeListManager.getInstance(myProject);
   }
 
   private class SubTree {
@@ -160,7 +117,7 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
       myNonVersionedUpper = createFileInCommand(myMappingTarget, "nonVersioned.txt", "135");
     }
   }
-
+  
   @Test
   public void testSvnVcsRootAbove() throws Throwable {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
