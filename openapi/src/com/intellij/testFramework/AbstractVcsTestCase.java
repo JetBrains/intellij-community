@@ -107,6 +107,39 @@ public class AbstractVcsTestCase {
     return result;
   }
 
+  protected RunResult runArbitrary(final String command, final String[] args) throws IOException {
+    final List<String> arguments = new ArrayList<String>();
+    arguments.add(command);
+    Collections.addAll(arguments, args);
+    final ProcessBuilder builder = new ProcessBuilder().command(arguments);
+    Process clientProcess = builder.start();
+
+    final RunResult result = new RunResult();
+
+    OSProcessHandler handler = new OSProcessHandler(clientProcess, "") {
+      public Charset getCharset() {
+        return CharsetToolkit.getDefaultSystemCharset();
+      }
+    };
+    handler.addProcessListener(new ProcessAdapter() {
+      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+        if (outputType == ProcessOutputTypes.STDOUT) {
+          result.stdOut += event.getText();
+        }
+        else if (outputType == ProcessOutputTypes.STDERR) {
+          result.stdErr += event.getText();
+        }
+      }
+    });
+    handler.startNotify();
+    if (!handler.waitFor(60*1000)) {
+      clientProcess.destroy();
+      throw new RuntimeException("Timeout waiting for VCS client to finish execution");
+    }
+    result.exitCode = clientProcess.exitValue();
+    return result;
+  }
+
   protected void initProject(final File clientRoot) throws Exception {
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
     myProjectFixture = testFixtureBuilder.getFixture();

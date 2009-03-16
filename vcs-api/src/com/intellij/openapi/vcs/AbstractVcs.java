@@ -369,5 +369,14 @@ public abstract class AbstractVcs {
   public ChangeListEditHandler getEditHandler() {
     return null;
   }
+
+  public boolean allowsNestedRoots() {
+    return false;
+  }
+
+  public List<VirtualFile> filterUniqueRoots(final List<VirtualFile> in) {
+    FilterDescendantVirtualFiles.filter(in);
+    return in;
+  }
 }
 

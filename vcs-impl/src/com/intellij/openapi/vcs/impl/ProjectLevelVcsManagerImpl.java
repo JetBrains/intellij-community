@@ -581,43 +581,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator) {
-    Set<VirtualFile> filesToExclude = null;
-    VcsDirectoryMapping mapping = myDirectoryMappingList.getMappingFor(root);
-    if (mapping != null) {
-      for(VcsDirectoryMapping otherMapping: myDirectoryMappingList.getDirectoryMappings()) {
-        if (otherMapping != mapping && otherMapping.getDirectory().startsWith(mapping.getDirectory())) {
-          if (filesToExclude == null) {
-            filesToExclude = new HashSet<VirtualFile>();
-          }
-          filesToExclude.add(LocalFileSystem.getInstance().findFileByPath(otherMapping.getDirectory()));
-        }
-      }
-    }
-
-    iterateChildren(root, iterator, filesToExclude);
-  }
-
-  private boolean iterateChildren(final VirtualFile root, final Processor<FilePath> iterator, final Collection<VirtualFile> filesToExclude) {
-    if (!iterator.process(new FilePathImpl(root))) {
-      return false;
-    }
-    if (root.isDirectory()) {
-      final VirtualFile[] files = root.getChildren();
-      for(VirtualFile child: files) {
-        if (child.isDirectory()) {
-          if (filesToExclude != null && filesToExclude.contains(child)) {
-            continue;
-          }
-          if (myExcludedIdx.isExcludedFile(child)) {
-            continue;
-          }
-        }
-        if (!iterateChildren(child, iterator, filesToExclude)) {
-          return false;
-        }
-      }
-    }
-    return true;
+    VcsRootIterator.iterateVcsRoot(myProject, root, iterator);
   }
 
   private VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {

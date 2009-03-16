@@ -65,7 +65,7 @@ public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> {
           AbstractVcs firstVcs = manager.getVcsFor(first);
           AbstractVcs secondVcs = manager.getVcsFor(second);
 
-          if (firstVcs == secondVcs && VfsUtil.isAncestor(first.getIOFile(), second.getIOFile(), false)) {
+          if ((firstVcs == secondVcs) && (firstVcs != null) && (! firstVcs.allowsNestedRoots()) && VfsUtil.isAncestor(first.getIOFile(), second.getIOFile(), false)) {
             result.remove(second);
           }
         }

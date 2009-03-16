@@ -179,33 +179,28 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   }
 
   private Map<AbstractVcs,Collection<FilePath>> createVcsToFilesMap(FilePath[] roots, Project project) {
-    HashMap<AbstractVcs, Collection<FilePath>> result = new HashMap<AbstractVcs, Collection<FilePath>>();
+    HashMap<AbstractVcs, Collection<FilePath>> resultPrep = new HashMap<AbstractVcs, Collection<FilePath>>();
 
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs != null) {
         UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
         if (updateEnvironment != null) {
-          if (!result.containsKey(vcs)) result.put(vcs, new HashSet<FilePath>());
-          result.get(vcs).add(file);
+          if (!resultPrep.containsKey(vcs)) resultPrep.put(vcs, new HashSet<FilePath>());
+          resultPrep.get(vcs).add(file);
         }
       }
     }
 
-    for (final Collection<FilePath> filePaths : result.values()) {
-      filterSubDirectories(filePaths);
+    final Map<AbstractVcs, Collection<FilePath>> result = new HashMap<AbstractVcs, Collection<FilePath>>();
+    for (Map.Entry<AbstractVcs, Collection<FilePath>> entry : resultPrep.entrySet()) {
+      final AbstractVcs vcs = entry.getKey();
+      final List<FilePath> paths = new ArrayList<FilePath>(entry.getValue());
+      final List<VirtualFile> files = ObjectsConvertor.fp2vf(paths);
+      result.put(vcs, ObjectsConvertor.vf2fp(vcs.filterUniqueRoots(files)));
     }
 
     return result;
-  }
-
-  private static void filterSubDirectories(Collection<FilePath> virtualFiles) {
-    FilePath[] array = virtualFiles.toArray(new FilePath[virtualFiles.size()]);
-    for (FilePath file : array) {
-      if (containsParent(array, file)) {
-        virtualFiles.remove(file);
-      }
-    }
   }
 
   private static boolean containsParent(FilePath[] array, FilePath file) {
