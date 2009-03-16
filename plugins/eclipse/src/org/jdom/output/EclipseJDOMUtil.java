@@ -1,6 +1,8 @@
 package org.jdom.output;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 
@@ -13,36 +15,34 @@ public class EclipseJDOMUtil {
 
   @NonNls private static final String ENCODING = CharsetToolkit.UTF8;
 
-  private static final String lineSeparator = "\n";
 
   private EclipseJDOMUtil() {
   }
 
 
-  private static EclipseXMLOutputter createOutputter() {
-    EclipseXMLOutputter xmlOutputter = new EclipseXMLOutputter();
+  private static EclipseXMLOutputter createOutputter(String lineSeparator) {
+    EclipseXMLOutputter xmlOutputter = new EclipseXMLOutputter(lineSeparator);
     Format format = Format.getCompactFormat().
       setIndent("\t").
       setTextMode(Format.TextMode.NORMALIZE).
       setEncoding(ENCODING).
       setOmitEncoding(false).
-      setOmitDeclaration(false).
-      setLineSeparator(lineSeparator);
+      setOmitDeclaration(false);
     xmlOutputter.setFormat(format);
     return xmlOutputter;
   }
 
-  public static void output(final Document doc, final File file) throws IOException {
+  public static void output(final Document doc, final File file, final Project project) throws IOException {
     FileOutputStream out = new FileOutputStream(file);
     try {
-      createOutputter().output(doc, out);
+      createOutputter(CodeStyleSettingsManager.getSettings(project).getLineSeparator()).output(doc, out);
     }
     finally {
       out.close();
     }
   }
 
-  public static void output(final Document document, final Writer writer) throws IOException {
-    createOutputter().output(document, writer);
+  public static void output(final Document document, final Writer writer, Project project) throws IOException {
+    createOutputter(CodeStyleSettingsManager.getSettings(project).getLineSeparator()).output(document, writer);
   }
 }

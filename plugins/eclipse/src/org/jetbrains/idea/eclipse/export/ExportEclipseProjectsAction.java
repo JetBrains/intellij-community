@@ -97,7 +97,7 @@ public class ExportEclipseProjectsAction extends AnAction {
             if (!classpathFile.exists()) {
               if (!classpathFile.createNewFile()) continue;
             }
-            EclipseJDOMUtil.output(new Document(classpathEleemnt), classpathFile);
+            EclipseJDOMUtil.output(new Document(classpathEleemnt), classpathFile, project);
 
             final Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
             if (classpathWriter.writeIDEASpecificClasspath(ideaSpecific)) {
@@ -105,7 +105,7 @@ public class ExportEclipseProjectsAction extends AnAction {
               if (!emlFile.exists()) {
                 if (!emlFile.createNewFile()) continue;
               }
-              EclipseJDOMUtil.output(new Document(ideaSpecific), emlFile);
+              EclipseJDOMUtil.output(new Document(ideaSpecific), emlFile, project);
             }
 
             try {
@@ -123,7 +123,7 @@ public class ExportEclipseProjectsAction extends AnAction {
               if (!projectFile.exists()) {
                 if (!projectFile.createNewFile()) continue;
               }
-              EclipseJDOMUtil.output(doc, projectFile);
+              EclipseJDOMUtil.output(doc, projectFile, project);
             }
             catch (JDOMException e1) {
               LOG.error(e1);

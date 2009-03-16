@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.JDOMException;
@@ -25,6 +26,11 @@ public class CachedXmlDocumentSet implements FileSet {
   protected final Map<String, Document> savedContent = new HashMap<String, Document>();
   protected final Map<String, Document> modifiedContent = new HashMap<String, Document>();
   protected final Set<String> deletedContent = new HashSet<String>();
+  private final Project project;
+
+  public CachedXmlDocumentSet(Project project) {
+    this.project = project;
+  }
 
   public Document read (final String name) throws IOException, JDOMException {
     return (Document)load(name).clone();
@@ -178,27 +184,16 @@ public class CachedXmlDocumentSet implements FileSet {
   public void commit() throws IOException {
     for (String key : modifiedContent.keySet()) {
       if (hasChanged(key)) {
-        final Document logical = modifiedContent.get(key);
-        if (logical != null) {
-          final Document physical = logical;
-          OutputStream os = null;
+        final Document content = modifiedContent.get(key);
+        if (content != null) {
+          final Writer writer = new OutputStreamWriter(getOrCreateVFile(key).getOutputStream(this), "UTF-8");
           try {
-            os = getOrCreateVFile(key).getOutputStream(this);
-            Writer writer = new OutputStreamWriter(os, "UTF-8");
-            try {
-              EclipseJDOMUtil.output(physical, writer);
-            }
-            finally {
-              writer.close();
-            }
+            EclipseJDOMUtil.output(content, writer, project);
           }
           finally {
-            if (os != null) {
-              os.close();
-            }
+            writer.close();
           }
-
-          savedContent.put(key, physical);
+          savedContent.put(key, content);
         }
       }
     }

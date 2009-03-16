@@ -129,39 +129,19 @@ public class EclipseXMLOutputter implements Cloneable {
     /** Whether output escaping is enabled for the being processed
       * Element - default is <code>true</code> */
     private boolean escapeOutput = true;
+    private String lineSeparator;
 
-    // * * * * * * * * * * Constructors * * * * * * * * * *
+  // * * * * * * * * * * Constructors * * * * * * * * * *
     // * * * * * * * * * * Constructors * * * * * * * * * *
 
     /**
      * This will create an <code>XMLOutputter</code> with the default
      * {@link Format} matching {@link Format#getRawFormat}.
      */
-    public EclipseXMLOutputter() {
+    public EclipseXMLOutputter(String lineSeparator) {
+      this.lineSeparator = lineSeparator;
     }
 
-    /**
-     * This will create an <code>XMLOutputter</code> with the specified
-     * format characteristics.  Note the format object is cloned internally
-     * before use.
-     */
-    public EclipseXMLOutputter(Format format) {
-        userFormat = (Format) format;
-        currentFormat = userFormat;
-    }
-
-    /**
-     * This will create an <code>XMLOutputter</code> with all the
-     * options as set in the given <code>XMLOutputter</code>.  Note
-     * that <code>XMLOutputter two = (XMLOutputter)one.clone();</code>
-     * would work equally well.
-     *
-     * @param that the XMLOutputter to clone
-     */
-    public EclipseXMLOutputter(EclipseXMLOutputter that) {
-        this.userFormat = (Format) that.userFormat;
-        currentFormat = userFormat;
-    }
 
   // * * * * * * * * * * Set parameters methods * * * * * * * * * *
     // * * * * * * * * * * Set parameters methods * * * * * * * * * *
@@ -385,7 +365,7 @@ public class EclipseXMLOutputter implements Cloneable {
                 printDocType(out, doc.getDocType());
                 // Always print line separator after declaration, helps the
                 // output look better and is semantically inconsequential
-                out.write("\n");
+                out.write(lineSeparator);
             }
             else {
                 // XXX if we get here then we have a illegal content, for
@@ -683,7 +663,7 @@ public class EclipseXMLOutputter implements Cloneable {
         // Print new line after decl always, even if no other new lines
         // Helps the output look better and is semantically
         // inconsequential
-        out.write("\n");
+        out.write(lineSeparator);
     }
 
     /**
@@ -718,7 +698,7 @@ public class EclipseXMLOutputter implements Cloneable {
         }
         if ((internalSubset != null) && (!internalSubset.equals(""))) {
             out.write(" [");
-            out.write("\n");
+            out.write(lineSeparator);
             out.write(docType.getInternalSubset());
             out.write("]");
         }
@@ -1188,7 +1168,7 @@ public class EclipseXMLOutputter implements Cloneable {
      */
     private void newline(Writer out) throws IOException {
         //if (currentFormat.indent != null) {
-            out.write("\n");
+            out.write(lineSeparator);
         //}
     }
 
@@ -1448,7 +1428,7 @@ public class EclipseXMLOutputter implements Cloneable {
                     entity = "&#xD;";
                     break;
                 case '\n' :
-                    entity = "\n";
+                    entity = lineSeparator;
                     break;
                 default :
                     //if (strategy.shouldEscape(ch)) {

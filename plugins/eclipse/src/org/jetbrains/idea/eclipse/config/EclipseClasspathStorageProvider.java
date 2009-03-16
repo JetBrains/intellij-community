@@ -102,7 +102,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   static CachedXmlDocumentSet getFileCache(final Module module) {
     CachedXmlDocumentSet fileCache = EclipseModuleManager.getInstance(module).getDocumentSet();
     if (fileCache == null) {
-      fileCache = new CachedXmlDocumentSet();
+      fileCache = new CachedXmlDocumentSet(module.getProject());
       EclipseModuleManager.getInstance(module).setDocumentSet(fileCache);
       registerFiles(fileCache, module, ClasspathStorage.getModuleDir(module), ClasspathStorage.getStorageRootFromOptions(module));
       fileCache.preload();
