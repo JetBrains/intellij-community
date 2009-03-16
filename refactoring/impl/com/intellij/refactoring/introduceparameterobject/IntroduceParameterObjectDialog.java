@@ -72,10 +72,6 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       parameterInfo[i].passAsParameter = true;
     }
 
-    final PsiFile file = sourceMethod.getContainingFile();
-    if (file instanceof PsiJavaFile) {
-      packageTextField.setText(((PsiJavaFile)file).getPackageName());
-    }
     final PsiClass containingClass = sourceMethod.getContainingClass();
     sourceMethodTextField.setText(containingClass.getName() + '.' + sourceMethod.getName());
     final ButtonGroup buttonGroup = new ButtonGroup();
@@ -84,6 +80,10 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     buttonGroup.add(myCreateInnerClassRadioButton);
     createNewClassButton.setSelected(true);
     init();
+    final PsiFile file = sourceMethod.getContainingFile();
+    if (file instanceof PsiJavaFile) {
+      packageTextField.setText(((PsiJavaFile)file).getPackageName());
+    }
     final ActionListener listener = new ActionListener() {
 
       public void actionPerformed(ActionEvent actionEvent) {
