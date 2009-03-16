@@ -352,7 +352,11 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
     }
 
-    if (delegationRequired || MethodInheritanceUtils.hasSiblingMethods(method)) {
+    if (!delegationRequired && MethodInheritanceUtils.hasSiblingMethods(method)) {
+      delegationRequired = true;
+    }
+
+    if (delegationRequired) {
       usages.add(new MakeMethodDelegate(method, delegateFieldName));
     }
     else {

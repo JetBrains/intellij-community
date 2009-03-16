@@ -63,6 +63,10 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestFieldAndMethod();
   }
 
+  public void testInheritanceDelegation() throws Exception {
+    doTestMethod();
+  }
+
   private void doTestFieldAndMethod() throws Exception {
     doTestFieldAndMethod("bar");
   }
