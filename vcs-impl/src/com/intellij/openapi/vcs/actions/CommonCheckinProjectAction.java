@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.actionSystem.Presentation;
 
 import java.util.ArrayList;
 
@@ -22,6 +23,27 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
       }
     }
     return virtualFiles.toArray(new FilePath[virtualFiles.size()]);
+  }
+
+  protected void update(VcsContext vcsContext, Presentation presentation) {
+    Project project = vcsContext.getProject();
+    if (project == null) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+      return;
+    }
+    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (plVcsManager.getAllActiveVcss().length == 0) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+      return;
+    }
+
+    String actionName = getActionName(vcsContext) + "...";
+    presentation.setText(actionName);
+
+    presentation.setEnabled(! plVcsManager.isBackgroundVcsOperationRunning());
+    presentation.setVisible(true);
   }
 
   protected String getActionName(VcsContext dataContext) {
