@@ -90,6 +90,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
 
   public abstract int getId();
 
+  @Nullable
   public abstract NewVirtualFile findChildById(int id);
 
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {

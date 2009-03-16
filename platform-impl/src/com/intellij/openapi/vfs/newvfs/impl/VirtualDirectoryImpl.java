@@ -206,6 +206,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(name, false);
   }
 
+  @Nullable
   public NewVirtualFile findChildById(int id) {
     final VirtualFile[] a = asArray();
     if (a != null) {

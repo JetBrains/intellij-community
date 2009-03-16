@@ -661,6 +661,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return result;
   }
 
+  @Nullable
   private NewVirtualFile doFindFile(final int id) {
     final int parentId = getParent(id);
     if (parentId == 0) {
