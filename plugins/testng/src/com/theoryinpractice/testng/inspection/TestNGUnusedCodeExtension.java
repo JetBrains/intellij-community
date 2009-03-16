@@ -31,10 +31,14 @@ public class TestNGUnusedCodeExtension extends UnusedCodeExtension {
   }
 
   public boolean isEntryPoint(RefElement refElement) {
+    return isEntryPoint(refElement.getElement());
+  }
+
+  @Override
+  public boolean isEntryPoint(PsiElement psiElement) {
     if (ADD_TESTNG_TO_ENTRIES) {
-      final PsiElement element = refElement.getElement();
-      if (element instanceof PsiModifierListOwner) {
-        return TestNGUtil.hasTest((PsiModifierListOwner)element, false);
+      if (psiElement instanceof PsiModifierListOwner) {
+        return TestNGUtil.hasTest((PsiModifierListOwner)psiElement, false);
       }
     }
     return false;
