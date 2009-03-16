@@ -75,23 +75,15 @@ public class InjectLanguageAction implements IntentionAction {
     if (host == null) {
       return false;
     }
-    else {
-      final List<Pair<PsiElement, TextRange>> injectedPsi = host.getInjectedPsi();
-      if (host instanceof XmlText) {
-        final XmlTag tag = ((XmlText)host).getParentTag();
-        if (tag == null || tag.getValue().getTextElements().length > 1 || tag.getSubTags().length > 0) {
-          return false;
-        }
-      }
-      if (injectedPsi == null || injectedPsi.size() == 0) {
-        return true;
-      }
+    final List<Pair<PsiElement, TextRange>> injectedPsi = host.getInjectedPsi();
+    if (injectedPsi == null || injectedPsi.isEmpty()) {
+      return true;
     }
     return false;
   }
 
   @Nullable
-  private static PsiLanguageInjectionHost findInjectionHost(Editor editor, PsiFile file) {
+  protected static PsiLanguageInjectionHost findInjectionHost(Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiLanguageInjectionHost host =
         PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false, true);
@@ -111,6 +103,12 @@ public class InjectLanguageAction implements IntentionAction {
         if (s.equals("xmlns") || s.startsWith("xmlns:")) {
           return null;
         }
+      }
+    }
+    else if (host instanceof XmlText) {
+      final XmlTag tag = ((XmlText)host).getParentTag();
+      if (tag == null || tag.getValue().getTextElements().length > 1 || tag.getSubTags().length > 0) {
+        return null;
       }
     }
     return host;
