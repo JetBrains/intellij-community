@@ -187,15 +187,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     // register all sub ranges
-    for (PsiElement element : mySubRanges.keySet()) {
-      ControlFlowSubRange subRange = mySubRanges.get(element);
+    for (Map.Entry<PsiElement, ControlFlowSubRange> entry : mySubRanges.entrySet()) {
+      ControlFlowSubRange subRange = entry.getValue();
+      PsiElement element = entry.getKey();
       myControlFlowFactory.registerSubRange(element, subRange, myEvaluateConstantIfConfition, myPolicy);
     }
   }
 
   private void startElement(PsiElement element) {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiErrorElement && !(Comparing.strEqual(((PsiErrorElement)child).getErrorDescription(), JavaErrorMessages.message("expected.semicolon")))) {
+      if (child instanceof PsiErrorElement && !Comparing.strEqual(((PsiErrorElement)child).getErrorDescription(), JavaErrorMessages.message("expected.semicolon"))) {
         // do not perform control flow analysis for incomplete code
         throw new AnalysisCanceledSoftException(element);
       }
