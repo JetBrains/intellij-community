@@ -68,6 +68,7 @@ public interface IdeActions {
   @NonNls String GROUP_MAIN_MENU = "MainMenu";
   @NonNls String GROUP_MAIN_TOOLBAR = "MainToolBar";
   @NonNls String GROUP_EDITOR_POPUP = "EditorPopupMenu";
+  @NonNls String GROUP_CUT_COPY_PASTE = "CutCopyPasteGroup";
   @NonNls String GROUP_EDITOR_TAB_POPUP = "EditorTabPopupMenu";
 
   @NonNls String ACTION_CVS_ADD = "Cvs.Add";

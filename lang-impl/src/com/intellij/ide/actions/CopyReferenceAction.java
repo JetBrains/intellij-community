@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -20,8 +21,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +82,9 @@ public class CopyReferenceAction extends AnAction {
 
     if (element == null) {
       element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    }
+    if (element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical()) {
+      return null;
     }
 
     for(QualifiedNameProvider provider: Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {

@@ -2,46 +2,64 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 public class CopyPathsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    final VirtualFile[] vfa = getFiles(e);
-    if (vfa == null || vfa.length <= 0) {
+    final Collection<VirtualFile> files = getFiles(e);
+    if (files.isEmpty()) {
       return;
     }
-    CopyPasteManager.getInstance().setContents(new StringSelection(getPaths(vfa)));
+    CopyPasteManager.getInstance().setContents(new StringSelection(getPaths(files)));
   }
 
-  private static String getPaths(VirtualFile[] vfa) {
-    final StringBuffer buf = new StringBuffer(vfa.length * 64);
-    for (int idx = 0; idx < vfa.length; idx++) {
-      if (idx > 0) {
-        buf.append("\n");
-      }
-      buf.append(vfa[idx].getPresentableUrl());
+  private static String getPaths(Collection<VirtualFile> files) {
+    final StringBuilder buf = new StringBuilder(files.size() * 64);
+    boolean first = true;
+    for (VirtualFile file : files) {
+      if (first) first = false;
+      else buf.append("\n");
+      buf.append(file.getPresentableUrl());
     }
     return buf.toString();
   }
 
   public void update(AnActionEvent event){
-    final VirtualFile[] files = getFiles(event);
+    final Collection<VirtualFile> files = getFiles(event);
     final Presentation presentation = event.getPresentation();
-    presentation.setEnabled(files != null && files.length > 0);
-    presentation.setText((files != null && files.length == 1)
+    final boolean enabled = !files.isEmpty();
+    presentation.setEnabled(enabled);
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      presentation.setVisible(enabled);
+    }
+    else {
+      presentation.setVisible(true);
+    }
+    presentation.setText((files.size() == 1)
                          ? IdeBundle.message("action.copy.path")
                          : IdeBundle.message("action.copy.paths"));
   }
 
-  private static VirtualFile[] getFiles(AnActionEvent e) {
-    return PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+  @NotNull
+  private static Collection<VirtualFile> getFiles(AnActionEvent e) {
+    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+    if (files == null || files.length == 0) return Collections.emptyList();
+    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(files.length);
+    for (VirtualFile file : files) {
+      if (!(file instanceof LightVirtualFile)) {
+        result.add(file);
+      }
+    }
+    return result;
   }
 
 }

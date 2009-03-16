@@ -9,12 +9,18 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.util.EditorPopupHandler;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 public class EditorActionUtil {
   protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
@@ -443,5 +449,22 @@ public class EditorActionUtil {
     VisualPosition pos = new VisualPosition(lineNumber, editor.getCaretModel().getVisualPosition().column);
     editor.getCaretModel().moveToVisualPosition(pos);
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
+  }
+
+  public static EditorPopupHandler createEditorPopupHandler(final String groupId) {
+    return new EditorPopupHandler() {
+      public void invokePopup(final EditorMouseEvent event) {
+        if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
+          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
+          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
+          MouseEvent e = event.getMouseEvent();
+          final Component c = e.getComponent();
+          if (c != null && c.isShowing()) {
+            popupMenu.getComponent().show(c, e.getX(), e.getY());
+          }
+          e.consume();
+        }
+      }
+    };
   }
 }
