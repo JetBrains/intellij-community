@@ -13,6 +13,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
@@ -26,12 +27,13 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -50,8 +52,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -390,6 +392,47 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       if (extension.isEntryPoint(owner)) {
         return true;
       }
+    }
+    return false;
+  }
+
+  public boolean isEntryPoint(@NotNull PsiElement element) {
+    final Project project = element.getProject();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    if (element instanceof PsiMethod && isAddMainsEnabled()) {
+      if (PsiClassImplUtil.isMethodEquivalentTo((PsiMethod)element, psiFacade.getElementFactory().createMethodFromText("void main(String[] args);", null))) return true;
+      if (PsiClassImplUtil.isMethodEquivalentTo((PsiMethod)element, psiFacade.getElementFactory().createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null))) return true;
+    }
+    if (element instanceof PsiClass) {
+      if (((PsiClass)element).isAnnotationType()) {
+        return true;
+      }
+
+      if (((PsiClass)element).isEnum()) {
+        return true;
+      }
+      final PsiClass applet = psiFacade.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
+      if (isAddAppletEnabled() && applet != null && ((PsiClass)element).isInheritor(applet, true)) {
+        return true;
+      }
+
+      final PsiClass servlet = psiFacade.findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
+      if (isAddServletEnabled() && servlet != null && ((PsiClass)element).isInheritor(servlet, true)) {
+        return true;
+      }
+    }
+    if (element instanceof PsiModifierListOwner
+        && AnnotationUtil.isAnnotated((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
+      return true;
+    }
+    for (UnusedCodeExtension extension : myExtensions) {
+      if (extension.isEntryPoint(element)) {
+        return true;
+      }
+    }
+    final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+    for (ImplicitUsageProvider provider : implicitUsageProviders) {
+      if (provider.isImplicitUsage(element)) return true;
     }
     return false;
   }
