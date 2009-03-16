@@ -381,17 +381,16 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
     final ReferenceType refType = event.referenceType();
 
-    if (refType instanceof ClassType) {
-      ClassType classType = (ClassType)refType;
+    if (refType instanceof ClassType || refType instanceof InterfaceType) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("signature = " + classType.signature());
+        LOG.debug("signature = " + refType.signature());
       }
       ClassPrepareRequestor requestor = (ClassPrepareRequestor)event.request().getProperty(REQUESTOR);
       if (requestor != null) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("requestor found " + classType.signature());
+          LOG.debug("requestor found " + refType.signature());
         }
-        requestor .processClassPrepare(myDebugProcess, classType);
+        requestor.processClassPrepare(myDebugProcess, refType);
       }
     }
   }
