@@ -1167,7 +1167,7 @@ public class FileBasedIndex implements ApplicationComponent {
         size = myFutureInvalidations.size();
         if (size == 0) return;
 
-        doProgressThing = size > 1 && ApplicationManager.getApplication().isDispatchThread();
+        doProgressThing = size > 1 && ApplicationManager.getApplication().isDispatchThread() && !Thread.holdsLock(PsiLock.LOCK);
       }
 
       final Task.Modal task = new Task.Modal(null, "Invalidating Index Entries", false) {
