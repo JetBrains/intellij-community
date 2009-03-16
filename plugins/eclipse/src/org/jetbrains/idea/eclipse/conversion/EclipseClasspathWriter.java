@@ -224,8 +224,11 @@ public class EclipseClasspathWriter {
         if (Comparing.strEqual(protocol, JarFileSystem.getInstance().getProtocol())){
           final VirtualFile javadocFile = JarFileSystem.getInstance().getVirtualFileForJar(VirtualFileManager.getInstance().findFileByUrl(javadocPath));
           if (javadocFile != null && VfsUtil.isAncestor(baseDir, javadocFile,  false)) {
+            if (javadocPath.indexOf(JarFileSystem.JAR_SEPARATOR) == -1) {
+              javadocPath = StringUtil.trimEnd(javadocPath, "/") + JarFileSystem.JAR_SEPARATOR;
+            }
             javadocPath = EclipseXml.JAR_PREFIX +
-                          EclipseXml.PLATFORM_PROTOCOL + "resources/" + VfsUtil.getRelativePath(javadocFile, baseDir, '/') + javadocPath.substring(javadocFile.getUrl().length()) ;
+                          EclipseXml.PLATFORM_PROTOCOL + "resource/" + VfsUtil.getRelativePath(javadocFile, baseDir, '/') + javadocPath.substring(javadocFile.getUrl().length() - 1) ;
           } else {
             javadocPath = EclipseXml.JAR_PREFIX + EclipseXml.FILE_PROTOCOL + path;
           }
