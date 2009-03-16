@@ -356,6 +356,8 @@ public class JavaDocInfoGenerator {
     buffer.append("</PRE>");
     //buffer.append("<br>");
 
+    ColorUtil.appendColorPreview(field, buffer);
+
     PsiDocComment comment = getDocComment(field);
     if (comment != null) {
       generateDescription(buffer, comment);
@@ -385,6 +387,8 @@ public class JavaDocInfoGenerator {
     buffer.append("</b>");
     buffer.append("</PRE>");
     //buffer.append("<br>");
+
+    ColorUtil.appendColorPreview(variable, buffer);
 
     generateEpilogue(buffer);
   }
