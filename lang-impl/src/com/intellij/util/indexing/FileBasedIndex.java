@@ -67,7 +67,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new HashMap<ID<?,?>, Semaphore>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
-  private final Set<ID<?, ?>> myNeedContentLoading = new HashSet<ID<?, ?>>();
+  private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<ID<?, ?>>();
 
   private final PerIndexDocumentMap<Long> myLastIndexedDocStamps = new PerIndexDocumentMap<Long>() {
     @Override
@@ -186,7 +186,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
     finally {
       workInProgressFile.createNewFile();
-      saveRegisteredInices(myIndices.keySet());
+      saveRegisteredIndices(myIndices.keySet());
     }
   }
 
@@ -206,8 +206,8 @@ public class FileBasedIndex implements ApplicationComponent {
   private <K, V> void registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
-    if (extension.dependsOnFileContent()) {
-      myNeedContentLoading.add(name);
+    if (!extension.dependsOnFileContent()) {
+      myNotRequiringContentIndices.add(name);
     }
     myIndexIdToVersionMap.put(name, version);
     final File versionFile = IndexInfrastructure.getVersionFile(name);
@@ -233,7 +233,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private static void saveRegisteredInices(Collection<ID<?, ?>> ids) {
+  private static void saveRegisteredIndices(Collection<ID<?, ?>> ids) {
     final File file = getRegisteredIndicesFile();
     try {
       file.getParentFile().mkdirs();
@@ -938,6 +938,10 @@ public class FileBasedIndex implements ApplicationComponent {
     return LoadTextUtil.loadText(file, true);
   }
 
+  private boolean needsFileContentLoading(ID<?, ?> indexId) {
+    return !myNotRequiringContentIndices.contains(indexId);
+  }
+
   private abstract static class InvalidationTask implements Runnable {
     private final VirtualFile mySubj;
 
@@ -1009,7 +1013,7 @@ public class FileBasedIndex implements ApplicationComponent {
           final boolean isTooLarge = SingleRootFileViewProvider.isTooLarge(file);
           for (ID<?, ?> indexId : myIndices.keySet()) {
             if (getInputFilter(indexId).acceptInput(file)) {
-              if (myNeedContentLoading.contains(indexId)) {
+              if (needsFileContentLoading(indexId)) {
                 if (!isTooLarge) {
                   myFilesToUpdate.add(file);
                 }
@@ -1045,52 +1049,46 @@ public class FileBasedIndex implements ApplicationComponent {
       }
       else {
         cleanProcessedFlag(file);
-
-        final boolean isTooLarge = SingleRootFileViewProvider.isTooLarge(file);
-        final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
         FileContent fileContent = null;
 
-        //final int fileId = getFileId(file);
-        //LOG.assertTrue(fileId >= 0);
-        //synchronized (myInvalidationInProgress) {
-        //  myInvalidationInProgress.add(fileId);
-        //}
-
-        for (ID<?, ?> indexId : myIndices.keySet()) {
+        for (ID<?, ?> indexId : myNotRequiringContentIndices) {
           if (shouldUpdateIndex(file, indexId)) {
-            if (myNeedContentLoading.contains(indexId)) {
-              if (!isTooLarge) {
-                affectedIndices.add(indexId);
+            // invalidate it synchronously
+            try {
+              if (fileContent == null) {
+                fileContent = new FileContent(file);
               }
+              updateSingleIndex(indexId, file, null, fileContent);
             }
-            else {
-              // invalidate it synchronously
-              try {
-                if (fileContent == null) {
-                  fileContent = new FileContent(file);
-                }
-                updateSingleIndex(indexId, file, null, fileContent);
-              }
-              catch (StorageException e) {
-                LOG.info(e);
-                requestRebuild(indexId);
-              }
+            catch (StorageException e) {
+              LOG.info(e);
+              requestRebuild(indexId);
             }
           }
         }
-        IndexingStamp.flushCache();
 
-        if (!affectedIndices.isEmpty()) {
-          if (saveContent) {
-            myFileContentAttic.offer(file);
-            iterateIndexableFiles(file, new Processor<VirtualFile>() {
-              public boolean process(final VirtualFile file) {
-                myFilesToUpdate.add(file);
-                return true;
+        if (!SingleRootFileViewProvider.isTooLarge(file)) {
+          final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
+
+          for (ID<?, ?> indexId : myIndices.keySet()) {
+            if (needsFileContentLoading(indexId) && shouldUpdateIndex(file, indexId)) {
+              if (saveContent) {
+                myFileContentAttic.offer(file);
+                iterateIndexableFiles(file, new Processor<VirtualFile>() {
+                  public boolean process(final VirtualFile file) {
+                    myFilesToUpdate.add(file);
+                    return true;
+                  }
+                });
+                break;
               }
-            });
+              else {
+                affectedIndices.add(indexId);
+              }
+            }
           }
-          else {
+
+          if (!affectedIndices.isEmpty()) {
             // first check if there is an unprocessed content from previous events
             byte[] content = myFileContentAttic.remove(file);
             try {
@@ -1135,6 +1133,8 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
         }
+        
+        IndexingStamp.flushCache();
       }
     }
 
@@ -1249,21 +1249,9 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private class UnindexedFilesFinder implements CollectingContentIterator {
     private final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
-    private final Collection<ID<?, ?>> myIndexIds;
-    private final Collection<ID<?, ?>> mySkipContentLoading;
     private final ProgressIndicator myProgressIndicator;
 
-    private UnindexedFilesFinder(final Collection<ID<?, ?>> indexIds) {
-      myIndexIds = new ArrayList<ID<?, ?>>();
-      mySkipContentLoading = new ArrayList<ID<?, ?>>();
-      for (ID<?, ?> indexId : indexIds) {
-        if (myNeedContentLoading.contains(indexId))  {
-          myIndexIds.add(indexId);
-        }
-        else {
-          mySkipContentLoading.add(indexId);
-        }
-      }
+    private UnindexedFilesFinder() {
       myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     }
 
@@ -1280,7 +1268,7 @@ public class FileBasedIndex implements ApplicationComponent {
         if (file instanceof VirtualFileWithId) {
           boolean oldStuff = true;
           if (!SingleRootFileViewProvider.isTooLarge(file)) {
-            for (ID<?, ?> indexId : myIndexIds) {
+            for (ID<?, ?> indexId : myIndices.keySet()) {
               try {
                 if (myFileContentAttic.containsContent(file) ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
                   myFiles.add(file);
@@ -1301,7 +1289,7 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
           FileContent fileContent = null;
-          for (ID<?, ?> indexId : mySkipContentLoading) {
+          for (ID<?, ?> indexId : myNotRequiringContentIndices) {
             if (shouldIndexFile(file, indexId)) {
               oldStuff = false;
               try {
@@ -1348,7 +1336,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public CollectingContentIterator createContentIterator() {
-    return new UnindexedFilesFinder(myIndices.keySet());
+    return new UnindexedFilesFinder();
   }
 
   public void registerIndexableSet(IndexableFileSet set) {
