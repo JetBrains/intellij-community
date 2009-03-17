@@ -10,6 +10,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
@@ -136,7 +137,14 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     if (addClearListItem) {
       AnAction clearListAction = new AnAction(IdeBundle.message("action.clear.list")) {
         public void actionPerformed(AnActionEvent e) {
-          myState.recentPaths.clear();
+          final int rc = Messages.showOkCancelDialog(e.getData(PlatformDataKeys.PROJECT),
+                                                     "Would you like to clear the list of recent projects?",
+                                                     "Clear Recent Projects List",
+                                                     Messages.getQuestionIcon());
+
+          if (rc == 0) {
+            myState.recentPaths.clear();
+          }
         }
       };
       list.add(Separator.getInstance());
