@@ -90,7 +90,7 @@ public class I18nUtil {
           if (result.isValidResult() && result.getElement() instanceof Property) {
             String value = ((Property)result.getElement()).getValue();
             try {
-              int count = new MessageFormat(value, null).getFormatsByArgumentIndex().length;
+              int count = new MessageFormat(value).getFormatsByArgumentIndex().length;
               maxCount = Math.max(maxCount, count);
             }
             catch (IllegalArgumentException ignored) {
