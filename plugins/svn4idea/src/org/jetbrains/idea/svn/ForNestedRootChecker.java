@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -83,7 +84,7 @@ public class ForNestedRootChecker {
     }
 
     public String getForChild(final String parentUrl, final String childName) {
-      return parentUrl == null ? null : SVNPathUtil.append(parentUrl, childName);
+      return parentUrl == null ? null : SVNPathUtil.append(parentUrl, SVNEncodingUtil.uriEncode(childName));
     }
   }
 
