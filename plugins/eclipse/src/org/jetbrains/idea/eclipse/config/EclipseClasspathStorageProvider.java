@@ -54,7 +54,9 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
         final Library library = ((LibraryOrderEntry)entry).getLibrary();
-        if (library == null || entry.getUrls(OrderRootType.CLASSES).length != 1 || library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
+        if (library == null ||
+            entry.getUrls(OrderRootType.CLASSES).length != 1 ||
+            library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
           throw new ConfigurationException(
             "Library \'" + entry.getPresentableName() + "\' is incompatible with eclipse format which supports only one content root");
         }
@@ -85,7 +87,9 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
         final Library library = ((LibraryOrderEntry)entry).getLibrary();
-        if (library == null || entry.getUrls(OrderRootType.CLASSES).length != 1 || library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
+        if (library == null ||
+            entry.getUrls(OrderRootType.CLASSES).length != 1 ||
+            library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
           return entry.getPresentableName();
         }
       }
@@ -140,7 +144,6 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
 
-
   public static class EclipseClasspathConverter implements ClasspathConverter {
 
     private final Module module;
@@ -164,16 +167,16 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         assert parent != null;
         final String path = parent.getPath();
 
-        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path,  module.getProject());
+        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject());
         classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
+
+          classpathReader.readClasspath(model, new ArrayList<String>(), new ArrayList<String>(), usedVariables, new HashSet<String>(), null,
+                                        documentSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
           final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
           if (documentSet.exists(eml)) {
             EclipseClasspathReader.readIDEASpecific(documentSet.read(eml).getRootElement(), model);
           }
-
-          classpathReader.readClasspath(model, new ArrayList<String>(), new ArrayList<String>(), usedVariables, new HashSet<String>(), null,
-                                        documentSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
 
         }
 
@@ -204,7 +207,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         catch (Exception e) {
           element = null;
         }
-        
+
         if (element != null || model.getSourceRoots().length > 0) {
           classpathWriter.writeClasspath(classpathElement, element);
           fileSet.write(new Document(classpathElement), EclipseXml.CLASSPATH_FILE);
@@ -221,7 +224,8 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final String emlFilename = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
         if (classpathWriter.writeIDEASpecificClasspath(ideaSpecific)) {
           fileSet.write(new Document(ideaSpecific), emlFilename);
-        } else {
+        }
+        else {
           fileSet.delete(emlFilename);
         }
       }

@@ -96,7 +96,10 @@ public class EclipseClasspathReader {
   }
 
   public void readClasspath(ModifiableRootModel model,
-                            final Collection<String> unknownLibraries, Collection<String> unknownJdks, final Set<String> usedVariables, Set<String> refsToModules,
+                            final Collection<String> unknownLibraries,
+                            Collection<String> unknownJdks,
+                            final Set<String> usedVariables,
+                            Set<String> refsToModules,
                             final String testPattern,
                             Element classpathElement) throws IOException, ConversionException {
     for (OrderEntry orderEntry : model.getOrderEntries()) {
@@ -115,10 +118,12 @@ public class EclipseClasspathReader {
   }
 
   private void readClasspathEntry(ModifiableRootModel rootModel,
-                                  final Collection<String> unknownLibraries, Collection<String> unknownJdks, final Set<String> usedVariables,
-                                  Set<String> refsToModules, final String testPattern,
-                                  Element element)
-    throws ConversionException {
+                                  final Collection<String> unknownLibraries,
+                                  Collection<String> unknownJdks,
+                                  final Set<String> usedVariables,
+                                  Set<String> refsToModules,
+                                  final String testPattern,
+                                  Element element) throws ConversionException {
     String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
     if (kind == null) {
       throw new ConversionException("Missing classpathentry/@kind");
@@ -270,8 +275,9 @@ public class EclipseClasspathReader {
 
   private static void setLibraryEntryExported(ModifiableRootModel rootModel, boolean exported, Library library) {
     for (OrderEntry orderEntry : rootModel.getOrderEntries()) {
-      if (orderEntry instanceof LibraryOrderEntry && ((LibraryOrderEntry)orderEntry).isModuleLevel()
-          && Comparing.equal(((LibraryOrderEntry)orderEntry).getLibrary(), library)) {
+      if (orderEntry instanceof LibraryOrderEntry &&
+          ((LibraryOrderEntry)orderEntry).isModuleLevel() &&
+          Comparing.equal(((LibraryOrderEntry)orderEntry).getLibrary(), library)) {
         ((LibraryOrderEntry)orderEntry).setExported(exported);
         break;
       }
@@ -330,7 +336,8 @@ public class EclipseClasspathReader {
       final String absPath = myRootPath + "/" + path;
       if (new File(absPath).exists()) {
         url = VfsUtil.pathToUrl(absPath);
-      } else {
+      }
+      else {
         url = VfsUtil.pathToUrl(path);
       }
     }
@@ -400,8 +407,23 @@ public class EclipseClasspathReader {
   public static void readIDEASpecific(final Element root, ModifiableRootModel model) throws InvalidDataException {
     PathMacroManager.getInstance(model.getModule()).expandPaths(root);
 
-    model.getModuleExtension(CompilerModuleExtension.class).readExternal(root);
     model.getModuleExtension(LanguageLevelModuleExtension.class).readExternal(root);
+
+    final CompilerModuleExtension compilerModuleExtension = model.getModuleExtension(CompilerModuleExtension.class);
+    final Element testOutputElement = root.getChild(IdeaXml.OUTPUT_TEST_TAG);
+    if (testOutputElement != null) {
+      compilerModuleExtension.setCompilerOutputPathForTests(testOutputElement.getAttributeValue(IdeaXml.URL_ATTR));
+    }
+
+    final String inheritedOutput = root.getAttributeValue(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR);
+    if (inheritedOutput != null && Boolean.valueOf(inheritedOutput).booleanValue()) {
+      compilerModuleExtension.inheritCompilerOutputPath(true);
+    }
+
+    final Element excludeOutput = root.getChild(IdeaXml.ECLIPSE_LIBRARY);
+    if (excludeOutput != null) {
+      compilerModuleExtension.setExcludeOutput(true);
+    }
 
     final ContentEntry[] entries = model.getContentEntries();
     if (entries.length > 0) {
