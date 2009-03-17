@@ -15,7 +15,7 @@ public class ProperTextRange extends TextRange {
     this(range.getStartOffset(), range.getEndOffset());
   }
 
-  public static void assertProperRange(@NotNull TextRange range) {
+  public static void assertProperRange(@NotNull TextRange range) throws AssertionError {
     assert range.getStartOffset() <= range.getEndOffset() : "Invalid range specified: " + range;
     assert range.getStartOffset() >= 0 : "Negative start offset: " + range;
   }

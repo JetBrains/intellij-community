@@ -245,7 +245,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     private final HighlightInfo myHighlightInfo;
     private final boolean myHasErrorElement;
 
-    public HaveGotErrorException(HighlightInfo info, final boolean hasErrorElement) {
+    private HaveGotErrorException(HighlightInfo info, final boolean hasErrorElement) {
       myHighlightInfo = info;
       myHasErrorElement = hasErrorElement;
     }
@@ -454,7 +454,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public Problem convertToProblem(final VirtualFile virtualFile, final HighlightSeverity severity,
                                   final TextRange textRange, final String messageText) {
-    if (virtualFile == null) return null;
+    if (virtualFile == null || textRange.getStartOffset() < 0 || textRange.getLength() < 0 ) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
       public HighlightInfo compute() {
         return HighlightInfo.createHighlightInfo(HighlightInfo.convertSeverity(severity), textRange, messageText);
