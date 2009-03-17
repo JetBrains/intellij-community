@@ -1,6 +1,7 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -505,7 +506,9 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     }
 
     private void createShadow() {
-      shadow = ShadowBorderPainter.createShadow(this, getWidth(), getHeight());
+      if (!UISettings.isRemoteDesktopConnected()) {
+        shadow = ShadowBorderPainter.createShadow(this, getWidth(), getHeight());
+      }
     }
 
     public void dispose() {

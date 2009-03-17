@@ -270,6 +270,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   /**
    * @return true when Remote Desktop (i.e. Windows RDP) is connected
    */
+  // TODO[neuro]: move to UIUtil
   public static boolean isRemoteDesktopConnected() {
     if(System.getProperty("os.name").contains("Windows")) {
       final Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
