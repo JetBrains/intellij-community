@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class SvnEntriesFileListener extends VirtualFileAdapter {
   private final Project myProject;
@@ -100,11 +102,11 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
   }
 
   private void fireFileStatusesChanged(VirtualFile parent) {
-    VcsDirtyScopeManager.getInstance(myProject).fileDirty(parent);
     final VirtualFile[] children = parent.getChildren();
-    for(int i = 0; i < children.length; i++) {
-      VcsDirtyScopeManager.getInstance(myProject).fileDirty(children[i]);    
-    }
+    final List<VirtualFile> files = new ArrayList<VirtualFile>(children.length + 1);
+    files.add(parent);
+    Collections.addAll(files, children);
+    VcsDirtyScopeManager.getInstance(myProject).filesDirty(files, null);
     /*
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     final VirtualFile[] children = parent.getChildren();
