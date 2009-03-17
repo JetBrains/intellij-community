@@ -33,7 +33,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -471,23 +470,27 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       };
       if (!visitor.analyze(action, myUpdateAll, myFile)) {
-        progress.cancel();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            try {
-              Thread.sleep(new Random().nextInt(100));
-            }
-            catch (InterruptedException e) {
-              LOG.error(e);
-            }
-            DaemonCodeAnalyzer.getInstance(myProject).restart();
-          }
-        }, myProject.getDisposed());
-        throw new ProcessCanceledException();
+        cancelAndRestartDaemonLater(progress, myProject);
       }
     }
 
     return gotHighlights;
+  }
+
+  static Void cancelAndRestartDaemonLater(ProgressIndicator progress, final Project project) {
+    progress.cancel();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        try {
+          Thread.sleep(new Random().nextInt(100));
+        }
+        catch (InterruptedException e) {
+          LOG.error(e);
+        }
+        DaemonCodeAnalyzer.getInstance(project).restart();
+      }
+    }, project.getDisposed());
+    throw new ProcessCanceledException();
   }
 
   private boolean forceHighlightParents() {

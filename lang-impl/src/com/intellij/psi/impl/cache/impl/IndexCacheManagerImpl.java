@@ -13,16 +13,17 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -64,7 +65,7 @@ public class IndexCacheManagerImpl implements CacheManager{
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
 
-    Processor<VirtualFile> virtualFileProcessor = new Processor<VirtualFile>() {
+    final Processor<VirtualFile> virtualFileProcessor = new Processor<VirtualFile>() {
       public boolean process(final VirtualFile virtualFile) {
         LOG.assertTrue(virtualFile.isValid());
         return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -81,28 +82,13 @@ public class IndexCacheManagerImpl implements CacheManager{
       }
     };
 
-    final Set<VirtualFile> vFiles = new HashSet<VirtualFile>();
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-          public boolean process(final VirtualFile file, final Integer value) {
-            final int mask = value.intValue();
-            if ((mask & occurrenceMask) != 0) {
-              vFiles.add(file);
-            }
-            return true;
-          }
-        }, VirtualFileFilter.ALL);
+    final Set<VirtualFile> vFiles = new THashSet<VirtualFile>();
+    return FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
+      public boolean process(final VirtualFile file, final Integer value) {
+        final int mask = value.intValue();
+        return (mask & occurrenceMask) == 0 || !vFiles.add(file) || virtualFileProcessor.process(file);
       }
-    });
-
-    for (VirtualFile vFile : vFiles) {
-      if (!virtualFileProcessor.process(vFile)) {
-        return false;
-      }
-    }
-    return true;
+    }, VirtualFileFilter.ALL);
   }
 
   @NotNull
@@ -146,7 +132,7 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   private static int fetchCount(final FileBasedIndex fileBasedIndex, final VirtualFile file, final IndexPattern indexPattern) {
-    final int[] count = new int[] {0};
+    final int[] count = {0};
     fileBasedIndex.processValues(
       TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,
       new FileBasedIndex.ValueProcessor<Integer>() {

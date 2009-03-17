@@ -38,8 +38,12 @@ import java.util.List;
  */
 public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
   private static final Collection<String> STANDARD_INJECTION_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList(
-    "javax.annotation.Resource", "javax.ejb.EJB", "javax.xml.ws.WebServiceRef", "javax.persistence.PersistenceContext",
-    "javax.persistence.PersistenceUnit", "javax.persistence.GeneratedValue")));
+    "javax.annotation.Resource",
+    "javax.ejb.EJB",
+    "javax.xml.ws.WebServiceRef",
+    "javax.persistence.PersistenceContext",
+    "javax.persistence.PersistenceUnit",
+    "javax.persistence.GeneratedValue")));
 
   private static List<String> ANNOTATIONS = null;
 
@@ -69,7 +73,6 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   public String getShortName() {
     return SHORT_NAME;
   }
-
 
   @NotNull
   @NonNls

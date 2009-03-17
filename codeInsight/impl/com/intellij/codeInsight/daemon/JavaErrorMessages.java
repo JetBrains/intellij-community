@@ -14,7 +14,7 @@ import java.util.ResourceBundle;
  */
 public class JavaErrorMessages {
 
-  @NonNls private static final String BUNDLE = "messages.JavaErrorMessages";
+  @NonNls public static final String BUNDLE = "messages.JavaErrorMessages";
 
   private JavaErrorMessages() {
   }

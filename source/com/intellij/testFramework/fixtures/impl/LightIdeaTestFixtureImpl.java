@@ -19,8 +19,6 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-
 /**
  * @author mike
  */
@@ -29,7 +27,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFix
     super.setUp();
 
     LightIdeaTestCase.initApplication(new MyDataProvider());
-    LightIdeaTestCase.doSetup(JavaSdkImpl.getMockJdk("java 1.4"), new LocalInspectionTool[0], new HashMap<String, LocalInspectionTool>(), null);
+    LightIdeaTestCase.doSetup(JavaSdkImpl.getMockJdk("java 1.4"), new LocalInspectionTool[0], null);
     storeSettings();
   }
 
