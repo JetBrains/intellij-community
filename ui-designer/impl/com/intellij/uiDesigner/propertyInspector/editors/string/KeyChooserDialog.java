@@ -23,6 +23,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -45,6 +46,8 @@ public final class KeyChooserDialog extends DialogWrapper{
   @NonNls private static final String NULL = "null";
   private final MyTableModel myModel;
   private final GuiEditor myEditor;
+
+  private static final String OK_ACTION = "OkAction";
 
   /**
    * @param bundle resource bundle to be shown.
@@ -77,6 +80,13 @@ public final class KeyChooserDialog extends DialogWrapper{
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     new MySpeedSearch(myTable);
     myCenterPanel = ScrollPaneFactory.createScrollPane(myTable);
+
+    myTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0), OK_ACTION);
+    myTable.getActionMap().put(OK_ACTION, new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        getOKAction().actionPerformed(e);
+      }
+    });
 
     // Calculate width for "Key" columns
     final FontMetrics metrics = myTable.getFontMetrics(myTable.getFont());
