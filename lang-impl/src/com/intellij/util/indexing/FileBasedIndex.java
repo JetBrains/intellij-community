@@ -1050,6 +1050,7 @@ public class FileBasedIndex implements ApplicationComponent {
       else {
         cleanProcessedFlag(file);
         FileContent fileContent = null;
+        IndexingStamp.flushCache();
 
         for (ID<?, ?> indexId : myNotRequiringContentIndices) {
           if (shouldUpdateIndex(file, indexId)) {
@@ -1080,7 +1081,7 @@ public class FileBasedIndex implements ApplicationComponent {
                     return true;
                   }
                 });
-                break;
+                break;  // no need to iterate further
               }
               else {
                 affectedIndices.add(indexId);
@@ -1133,8 +1134,6 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
         }
-        
-        IndexingStamp.flushCache();
       }
     }
 
