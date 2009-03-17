@@ -188,7 +188,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myLastBackgroundWidth;
   private static final boolean ourIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   private JPanel myHeaderPanel;
-  private JLayeredPane myLayeredPane;
 
   private MouseEvent myInitialMouseEvent;
   private boolean myIgnoreMouseEventsConsequitiveToInitial;
@@ -427,23 +426,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
 //    myStatusBar = new EditorStatusBarImpl();
 
-    myLayeredPane = new JLayeredPane() {
-      @Override
-      public void doLayout() {
-        final Component[] components = getComponents();
-        final Rectangle r = getBounds();
-        for (Component c : components) {
-          if (c instanceof JScrollPane) {
-            c.setBounds(0, 0, r.width, r.height);
-          } else {
-            final Dimension d = c.getPreferredSize();
-            final MyScrollBar scrollBar = getVerticalScrollBar();
-            c.setBounds(r.width - d.width - scrollBar.getWidth() - 30, 20, d.width, d.height);
-          }
-        }
-      }
-    };
-
     myScrollPane = new JScrollPane2() {
       protected void processMouseWheelEvent(MouseWheelEvent e) {
         if (mySettings.isWheelFontChangeEnabled()) {
@@ -513,12 +495,34 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 /*  Default mode till 1.4.0
  *   myScrollPane.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
  */
-    myLayeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
-    myPanel.add(myLayeredPane);
 
-    if (ContextMenuImpl.mayShowToolbar(myDocument)) {
+    if (mayShowToolbar()) {
+      JLayeredPane layeredPane = new JLayeredPane() {
+        @Override
+        public void doLayout() {
+          final Component[] components = getComponents();
+          final Rectangle r = getBounds();
+          for (Component c : components) {
+            if (c instanceof JScrollPane) {
+              c.setBounds(0, 0, r.width, r.height);
+            }
+            else {
+              final Dimension d = c.getPreferredSize();
+              final MyScrollBar scrollBar = getVerticalScrollBar();
+              c.setBounds(r.width - d.width - scrollBar.getWidth() - 30, 20, d.width, d.height);
+            }
+          }
+        }
+      };
+
+      layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
+      myPanel.add(layeredPane);
+
       final JComponent contextMenu = new ContextMenuImpl(myScrollPane, this);
-      myLayeredPane.add(contextMenu, JLayeredPane.POPUP_LAYER);
+      layeredPane.add(contextMenu, JLayeredPane.POPUP_LAYER);
+    }
+    else {
+      myPanel.add(myScrollPane);
     }
 
     //myPanel.add(myScrollPane);
@@ -585,6 +589,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMarkupModel.repaint();
       }
     });
+  }
+
+  private boolean mayShowToolbar() {
+    return !isEmbeddedIntoDialogWrapper() && !isOneLineMode() && ContextMenuImpl.mayShowToolbar(myDocument);
   }
 
   public void setFontSize(final int fontSize) {
