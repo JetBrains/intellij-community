@@ -23,6 +23,7 @@ package org.jetbrains.idea.eclipse.conversion;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
@@ -48,7 +49,7 @@ import java.util.List;
 
 public class EclipseClasspathWriter {
   private ModifiableRootModel myModel;
- 
+
   public EclipseClasspathWriter(final ModifiableRootModel model) {
     myModel = model;
   }
@@ -64,12 +65,12 @@ public class EclipseClasspathWriter {
       final VirtualFile output = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
       if (contentRoot != null && output != null && VfsUtil.isAncestor(contentRoot, output, false)) {
         outputPath = getRelativePath(output.getUrl());
-      } else if (output == null) {
+      }
+      else if (output == null) {
         outputPath = getRelativePath(myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl());
       }
     }
-    final Element orderEntry =
-      addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement, oldRoot);
+    final Element orderEntry = addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement, oldRoot);
     setAttributeIfAbsent(orderEntry, EclipseXml.PATH_ATTR, EclipseXml.BIN_DIR);
   }
 
@@ -93,10 +94,12 @@ public class EclipseClasspathWriter {
       final String libraryName = libraryOrderEntry.getLibraryName();
       if (libraryOrderEntry.isModuleLevel()) {
         if (libraryName != null && libraryName.contains(IdeaXml.JUNIT)) {
-          final Element orderEntry = addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JUNIT_CONTAINER + "/" + libraryName.substring(IdeaXml.JUNIT.length()), classpathRoot,
-                                                   oldRoot);
+          final Element orderEntry =
+            addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JUNIT_CONTAINER + "/" + libraryName.substring(IdeaXml.JUNIT.length()),
+                          classpathRoot, oldRoot);
           setExported(orderEntry, libraryOrderEntry);
-        } else {
+        }
+        else {
           final String[] files = libraryOrderEntry.getUrls(OrderRootType.CLASSES);
           if (files.length > 0) {
             final String[] kind = new String[]{EclipseXml.LIB_KIND};
@@ -104,9 +107,12 @@ public class EclipseClasspathWriter {
             final Element orderEntry = addOrderEntry(kind[0], relativeClassPath, classpathRoot, oldRoot);
 
             final String[] srcFiles = libraryOrderEntry.getUrls(OrderRootType.SOURCES);
-            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, srcFiles.length == 0 ? null : getRelativePath(srcFiles[srcFiles.length - 1], new String[1], Comparing.strEqual(kind[0], EclipseXml.VAR_KIND),
-                                                                                                                       myModel.getModule().getProject(),
-                                                                                                                       getContentRoot()));
+            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, srcFiles.length == 0
+                                                                         ? null
+                                                                         : getRelativePath(srcFiles[srcFiles.length - 1], new String[1],
+                                                                                           Comparing.strEqual(kind[0], EclipseXml.VAR_KIND),
+                                                                                           myModel.getModule().getProject(),
+                                                                                           getContentRoot()));
 
             //clear javadocs before write new
             final List children = new ArrayList(orderEntry.getChildren(EclipseXml.ATTRIBUTES_TAG));
@@ -140,8 +146,18 @@ public class EclipseClasspathWriter {
       }
       else {
         final Sdk jdk = ((JdkOrderEntry)entry).getJdk();
-        addOrderEntry(EclipseXml.CON_KIND, jdk == null ? EclipseXml.JRE_CONTAINER : EclipseXml.JRE_CONTAINER + "/" + jdk.getName(), classpathRoot,
-                      oldRoot);
+        String jdkLink;
+        if (jdk == null) {
+          jdkLink = EclipseXml.JRE_CONTAINER;
+        }
+        else {
+          jdkLink = EclipseXml.JRE_CONTAINER;
+          if (jdk.getSdkType() instanceof JavaSdkType) {
+            jdkLink += EclipseXml.JAVA_SDK_TYPE;
+          }
+          jdkLink += "/" + jdk.getName();
+        }
+        addOrderEntry(EclipseXml.CON_KIND, jdkLink, classpathRoot, oldRoot);
       }
     }
     else {
@@ -149,7 +165,7 @@ public class EclipseClasspathWriter {
     }
   }
 
-  private String getRelativePath(String srcFile, String [] kind) {
+  private String getRelativePath(String srcFile, String[] kind) {
     return getRelativePath(srcFile, kind, true, myModel.getModule().getProject(), getContentRoot());
   }
 
@@ -157,8 +173,11 @@ public class EclipseClasspathWriter {
     return getRelativePath(url, new String[1]);
   }
 
-  public static  String getRelativePath(final String url, String[] kind, boolean replaceVars, final Project project,
-                                         final VirtualFile contentRoot) {
+  public static String getRelativePath(final String url,
+                                       String[] kind,
+                                       boolean replaceVars,
+                                       final Project project,
+                                       final VirtualFile contentRoot) {
     final VirtualFile projectBaseDir = contentRoot != null ? contentRoot.getParent() : project.getBaseDir();
     assert projectBaseDir != null;
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -178,7 +197,8 @@ public class EclipseClasspathWriter {
       else {
         return replaceVars ? stripIDEASpecificPrefix(url, kind) : ProjectRootManagerImpl.extractLocalPath(url);
       }
-    } else {
+    }
+    else {
       if (contentRoot != null) {
         final String rootUrl = contentRoot.getUrl();
         if (url.startsWith(rootUrl) && url.length() > rootUrl.length()) {
@@ -190,7 +210,7 @@ public class EclipseClasspathWriter {
         return url.substring(projectUrl.length()); //leading /
       }
 
-      return replaceVars ? stripIDEASpecificPrefix(url, kind) :ProjectRootManagerImpl.extractLocalPath(url);
+      return replaceVars ? stripIDEASpecificPrefix(url, kind) : ProjectRootManagerImpl.extractLocalPath(url);
     }
   }
 
@@ -205,7 +225,7 @@ public class EclipseClasspathWriter {
 
   private void setJavadocPath(final Element element, String javadocPath) {
     if (javadocPath != null) {
-      Element child =  new Element(EclipseXml.ATTRIBUTES_TAG);
+      Element child = new Element(EclipseXml.ATTRIBUTES_TAG);
       element.addContent(child);
 
       Element attrElement = child.getChild(EclipseXml.ATTRIBUTE_TAG);
@@ -221,33 +241,40 @@ public class EclipseClasspathWriter {
         final String path = VfsUtil.urlToPath(javadocPath);
         final VirtualFile contentRoot = getContentRoot();
         final VirtualFile baseDir = contentRoot != null ? contentRoot.getParent() : myModel.getProject().getBaseDir();
-        if (Comparing.strEqual(protocol, JarFileSystem.getInstance().getProtocol())){
-          final VirtualFile javadocFile = JarFileSystem.getInstance().getVirtualFileForJar(VirtualFileManager.getInstance().findFileByUrl(javadocPath));
-          if (javadocFile != null && VfsUtil.isAncestor(baseDir, javadocFile,  false)) {
+        if (Comparing.strEqual(protocol, JarFileSystem.getInstance().getProtocol())) {
+          final VirtualFile javadocFile =
+            JarFileSystem.getInstance().getVirtualFileForJar(VirtualFileManager.getInstance().findFileByUrl(javadocPath));
+          if (javadocFile != null && VfsUtil.isAncestor(baseDir, javadocFile, false)) {
             if (javadocPath.indexOf(JarFileSystem.JAR_SEPARATOR) == -1) {
               javadocPath = StringUtil.trimEnd(javadocPath, "/") + JarFileSystem.JAR_SEPARATOR;
             }
             javadocPath = EclipseXml.JAR_PREFIX +
-                          EclipseXml.PLATFORM_PROTOCOL + "resource/" + VfsUtil.getRelativePath(javadocFile, baseDir, '/') + javadocPath.substring(javadocFile.getUrl().length() - 1) ;
-          } else {
+                          EclipseXml.PLATFORM_PROTOCOL +
+                          "resource/" +
+                          VfsUtil.getRelativePath(javadocFile, baseDir, '/') +
+                          javadocPath.substring(javadocFile.getUrl().length() - 1);
+          }
+          else {
             javadocPath = EclipseXml.JAR_PREFIX + EclipseXml.FILE_PROTOCOL + path;
           }
-        } else if (new File(path).exists()) {
+        }
+        else if (new File(path).exists()) {
           javadocPath = EclipseXml.FILE_PROTOCOL + path;
         }
       }
 
-      attrElement.setAttribute("value", javadocPath);      
+      attrElement.setAttribute("value", javadocPath);
     }
   }
 
-  private static String stripIDEASpecificPrefix(String path, String [] kind) {
-    String stripped = StringUtil.strip(ProjectRootManagerImpl.extractLocalPath(PathMacroManager.getInstance(ApplicationManager.getApplication()).collapsePath(path)),
-                                             new CharFilter() {
-                                               public boolean accept(final char ch) {
-                                                 return ch != '$';
-                                               }
-                                             });
+  private static String stripIDEASpecificPrefix(String path, String[] kind) {
+    String stripped = StringUtil
+      .strip(ProjectRootManagerImpl.extractLocalPath(PathMacroManager.getInstance(ApplicationManager.getApplication()).collapsePath(path)),
+             new CharFilter() {
+               public boolean accept(final char ch) {
+                 return ch != '$';
+               }
+             });
     boolean leaveLeadingSlash = false;
     if (!Comparing.strEqual(stripped, ProjectRootManagerImpl.extractLocalPath(path))) {
       leaveLeadingSlash = kind[0] == null;
@@ -312,7 +339,7 @@ public class EclipseClasspathWriter {
         if (urls.length > 1) {
           final Element element = new Element("lib");
           element.setAttribute("name", entry.getPresentableName());
-          for(int i = 0; i < urls.length - 1; i++) {
+          for (int i = 0; i < urls.length - 1; i++) {
             Element srcElement = new Element("srcroot");
             srcElement.setAttribute("url", urls[i]);
             element.addContent(srcElement);
