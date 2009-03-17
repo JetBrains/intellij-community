@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements SettingsSavingComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.SchemesManagerFactoryImpl");
@@ -35,10 +37,12 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
     }
     else {
       return new AbstractSchemesManager<T,E>(){
+        @NotNull
         public Collection<E> loadSchemes() {
           return Collections.emptyList();
         }
 
+        @NotNull
         public Collection<SharedScheme<E>> loadSharedSchemes(final Collection<T> currentSchemeList) {
           return Collections.emptyList();
         }

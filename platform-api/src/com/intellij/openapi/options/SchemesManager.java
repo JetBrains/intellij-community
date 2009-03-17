@@ -1,25 +1,28 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.WriteExternalException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.io.File;
-import java.io.IOException;
 
 public interface SchemesManager <T extends Scheme, E extends ExternalizableScheme>{
   SchemesManager EMPTY = new SchemesManager(){
+    @NotNull
     public Collection loadSchemes() {
       return Collections.emptySet();
     }
 
+    @NotNull
     public Collection loadSharedSchemes() {
       return Collections.emptySet();
     }
 
-    public void exportScheme(final ExternalizableScheme scheme, final String name, final String description) throws WriteExternalException {
+    public void exportScheme(final ExternalizableScheme scheme, final String name, final String description) {
     }
 
     public boolean isImportAvailable() {
@@ -41,6 +44,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     public void clearAllSchemes() {
     }
 
+    @NotNull
     public List getAllSchemes() {
       return Collections.emptyList();
     }
@@ -64,10 +68,12 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
 
     }
 
+    @NotNull
     public Collection getAllSchemeNames() {
       return Collections.emptySet();
     }
 
+    @NotNull
     public Collection loadSharedSchemes(final Collection currentSchemeList) {
       return loadSharedSchemes();
     }
@@ -77,10 +83,10 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     }
   };
 
-  Collection<E> loadSchemes();
+  @NotNull Collection<E> loadSchemes();
 
-  Collection<SharedScheme<E>> loadSharedSchemes();
-  Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList);
+  @NotNull Collection<SharedScheme<E>> loadSharedSchemes();
+  @NotNull Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList);
 
   void exportScheme(final E scheme, final String name, final String description) throws WriteExternalException, IOException;
 
@@ -94,6 +100,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
 
   void clearAllSchemes();
 
+  @NotNull
   List<T> getAllSchemes();
 
   @Nullable
@@ -108,7 +115,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
 
   void removeScheme(final T scheme);
 
-  Collection<String> getAllSchemeNames();
+  @NotNull Collection<String> getAllSchemeNames();
 
   File getRootDirectory();
 }

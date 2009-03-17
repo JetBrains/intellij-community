@@ -27,7 +27,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
@@ -60,46 +59,32 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * User: anna
  * Date: 29-Nov-2005
  */
-public class InspectionProfileManager extends ApplicationProfileManager implements SeverityProvider,
-                                                                                          ExportableApplicationComponent, JDOMExternalizable {
+public class InspectionProfileManager extends ApplicationProfileManager implements SeverityProvider, ExportableApplicationComponent, JDOMExternalizable {
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
 
   private final InspectionToolRegistrar myRegistrar;
   private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
   private final SeverityRegistrar mySeverityRegistrar;
-  private static final String INSPECTION = "inspection";
-  private static final String FILE_SPEC = "$ROOT_CONFIG$/" + INSPECTION;
-  private final SchemeProcessor<InspectionProfileImpl> myProcessor;
-
+  @NonNls private static final String INSPECTION_DIR = "inspection";
+  @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/" + INSPECTION_DIR;
 
   private final List<ProfileChangeAdapter> myProfileChangeAdapters = new ArrayList<ProfileChangeAdapter>();
 
   private final String myProfileType;
-  private final Computable<Profile> mySampleProfile;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
-
-
-
 
   public static InspectionProfileManager getInstance() {
     return ApplicationManager.getApplication().getComponent(InspectionProfileManager.class);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  public InspectionProfileManager(InspectionToolRegistrar registrar, EditorColorsManager manager, SchemesManagerFactory schemesManagerFactory) {
-
+  public InspectionProfileManager(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
     myProfileType = Profile.INSPECTION;
-    mySampleProfile = new Computable<Profile>() {
-            public Profile compute() {
-              return new InspectionProfileImpl("Default");
-            }
-          };
 
     myRegistrar = registrar;
     mySeverityRegistrar = new SeverityRegistrar();
-    myProcessor = new SchemeProcessor<InspectionProfileImpl>(){
-      public InspectionProfileImpl readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
+    SchemeProcessor<InspectionProfileImpl> processor = new SchemeProcessor<InspectionProfileImpl>() {
+      public InspectionProfileImpl readScheme(final Document document) {
         InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(document), myRegistrar, InspectionProfileManager.this);
         profile.load(document.getRootElement());
         return profile;
@@ -115,7 +100,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
       }
 
       public void initScheme(final InspectionProfileImpl scheme) {
-        
+
       }
 
       public void onSchemeAdded(final InspectionProfileImpl scheme) {
@@ -131,14 +116,18 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
       public void onCurrentSchemeChanged(final Scheme oldCurrentScheme) {
         Profile current = mySchemesManager.getCurrentScheme();
         if (current != null) {
-          fireProfileChanged((Profile)oldCurrentScheme, current,null);
+          fireProfileChanged((Profile)oldCurrentScheme, current, null);
         }
         onProfilesChanged();
       }
     };
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, myProcessor, RoamingType.PER_USER);
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
 
+  }
+
+  private static InspectionProfileImpl createSampleProfile() {
+    return new InspectionProfileImpl("Default");
   }
 
   public void initComponent() {
@@ -162,23 +151,22 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return mySchemesManager.getAllSchemes();
   }
 
-  public static boolean LOAD_PROFILES = !ApplicationManager.getApplication().isUnitTestMode();
+  public static volatile boolean LOAD_PROFILES = !ApplicationManager.getApplication().isUnitTestMode();
   public void initProfiles() {
-    if (!myProfilesAreInitialized.getAndSet(true)) {
-      if (!LOAD_PROFILES) return;
+    if (myProfilesAreInitialized.getAndSet(true)) {
+      return;
+    }
+    if (!LOAD_PROFILES) return;
 
-      mySchemesManager.loadSchemes();
-      final Collection<Profile> profiles = mySchemesManager.getAllSchemes();
+    mySchemesManager.loadSchemes();
+    final Collection<Profile> profiles = mySchemesManager.getAllSchemes();
 
-
-      if (profiles.isEmpty()) {
-        createDefaultProfile();
-      }
-      else {
-        for (Profile profile : profiles) {
-          addProfile(profile);
-        }
-
+    if (profiles.isEmpty()) {
+      createDefaultProfile();
+    }
+    else {
+      for (Profile profile : profiles) {
+        addProfile(profile);
       }
     }
   }
@@ -200,27 +188,25 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return getProfile(path);
   }
 
-  private static String getProfileName(Document document) throws JDOMException, IOException {
+  private static String getProfileName(Document document) {
     String name = getRootElementAttribute(document, PROFILE_NAME_TAG);
     if (name != null) return name;
     return "unnamed";
   }
 
-  private static String getProfileName(File file) throws JDOMException, IOException {
+  private static String getProfileName(File file) {
     String name = getRootElementAttribute(file, PROFILE_NAME_TAG);
     if (name != null) return name;
     return FileUtil.getNameWithoutExtension(file);
   }
 
-  private static String getRootElementAttribute(final Document document, @NonNls String name) throws JDOMException, IOException {
+  private static String getRootElementAttribute(final Document document, @NonNls String name) {
     Element root = document.getRootElement();
-    String profileName = root.getAttributeValue(name);
-    if (profileName != null) return profileName;
-    else return null;
+    return root.getAttributeValue(name);
   }
 
   @Nullable
-  private static String getRootElementAttribute(final File file, @NonNls String name) throws JDOMException, IOException {
+  private static String getRootElementAttribute(final File file, @NonNls String name) {
     try {
       Document doc = JDOMUtil.loadDocument(file);
       return getRootElementAttribute(doc, name);
@@ -250,7 +236,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     updateProfileImpl(profile);
   }
 
-  private void updateProfileImpl(final Profile profile) {
+  private static void updateProfileImpl(final Profile profile) {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       InspectionProjectProfileManager.getInstance(project).initProfileWrapper(profile);
@@ -278,7 +264,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   }
 
   public Profile createProfile() {
-    return mySampleProfile.compute();
+    return createSampleProfile();
   }
 
   public String getProfileType() {
@@ -334,7 +320,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     Profile current = mySchemesManager.getCurrentScheme();
     if (current != null) return current;
     Collection<Profile> profiles = getProfiles();
-    if (profiles.isEmpty()) return mySampleProfile.compute();
+    if (profiles.isEmpty()) return createSampleProfile();
     return profiles.iterator().next();
   }
 
@@ -350,7 +336,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   }
 
   public static File getProfileDirectory() {
-    String directoryPath = PathManager.getConfigPath() + File.separator + INSPECTION;
+    String directoryPath = PathManager.getConfigPath() + File.separator + INSPECTION_DIR;
     File directory = new File(directoryPath);
     if (!directory.exists()) {
       if (!directory.mkdir()) {

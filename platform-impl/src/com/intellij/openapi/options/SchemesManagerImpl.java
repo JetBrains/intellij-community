@@ -26,6 +26,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,6 +81,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
   }
 
+  @NotNull
   public Collection<E> loadSchemes() {
     if (myVFSBaseDir != null) {
       return doLoad();
@@ -563,6 +565,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     E scheme;
   }
 
+  @NotNull
   public Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList) {
     Collection<String> names = new HashSet<String>(getAllSchemeNames(currentSchemeList));
 

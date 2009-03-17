@@ -7,6 +7,7 @@ import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -70,6 +71,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     }
   }
 
+  @NotNull
   public List<T> getAllSchemes() {
     return Collections.unmodifiableList(new ArrayList<T>(mySchemes));
   }
@@ -136,6 +138,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   }
 
 
+  @NotNull
   public Collection<String> getAllSchemeNames() {
     return getAllSchemeNames(mySchemes);
   }
@@ -157,6 +160,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     }
   }
 
+  @NotNull
   public Collection<SharedScheme<E>> loadSharedSchemes() {
     return loadSharedSchemes(getAllSchemes());
   }

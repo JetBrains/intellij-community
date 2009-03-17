@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
  */
 public class UIUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
-  public static final @NonNls String HTML_MIME = "text/html";
+  @NonNls public static final String HTML_MIME = "text/html";
   public static final char MNEMONIC = 0x1B;
   @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
   @NonNls public static final String ARIAL_FONT_NAME = "Arial";
@@ -60,7 +60,7 @@ public class UIUtil {
   private static final Color SEPARATOR_COLOR = INACTIVE_COLOR.brighter();
   public static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
-  public static final String FOCUS_PROXY_KEY = "isFocusProxy";
+  @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
 
   private UIUtil() {
   }
@@ -81,7 +81,7 @@ public class UIUtil {
     component.setEnabled(enabled);
     if (recursively) {
       if (component instanceof Container) {
-        final Container container = ((Container)component);
+        final Container container = (Container)component;
         final int subComponentCount = container.getComponentCount();
         for (int i = 0; i < subComponentCount; i++) {
           setEnabled(container.getComponent(i), enabled, recursively);
@@ -96,7 +96,7 @@ public class UIUtil {
   }
 
   public static void setActionNameAndMnemonic(String text, Action action) {
-    int mnemoPos = text.indexOf("&");
+    int mnemoPos = text.indexOf('&');
     if (mnemoPos >= 0 && mnemoPos < text.length() - 2) {
       String mnemoChar = text.substring(mnemoPos + 1, mnemoPos + 2).trim();
       if (mnemoChar.length() == 1) {
@@ -130,8 +130,8 @@ public class UIUtil {
 
   public static String replaceMnemonicAmpersand(final String value) {
     if (value.indexOf('&') >= 0) {
-      boolean useMacMnemonic = value.indexOf("&&") >= 0;
-      StringBuffer realValue = new StringBuffer();
+      boolean useMacMnemonic = value.contains("&&");
+      StringBuilder realValue = new StringBuilder();
       int i = 0;
       while (i < value.length()) {
         char c = value.charAt(i);
@@ -252,11 +252,11 @@ public class UIUtil {
     return UIManager.get("Tree.leftChildIndent");
   }
 
-  static public Color getToolTipBackground() {
+  public static Color getToolTipBackground() {
     return UIManager.getColor("ToolTip.background");
   }
 
-  static public Color getToolTipForeground() {
+  public static Color getToolTipForeground() {
     return UIManager.getColor("ToolTip.foreground");
   }
 
@@ -466,17 +466,17 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderQuaquaLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().indexOf("Quaqua") >= 0;
+    return UIManager.getLookAndFeel().getName().contains("Quaqua");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderNimbusLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().indexOf("Nimbus") >= 0;
+    return UIManager.getLookAndFeel().getName().contains("Nimbus");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAquaLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().indexOf("Mac OS X") >= 0;
+    return UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
 
   public static boolean isFullRowSelectionLAF() {
@@ -601,7 +601,7 @@ public class UIUtil {
   public static void applyRenderingHints(final Graphics g) {
     Toolkit tk = Toolkit.getDefaultToolkit();
     //noinspection HardCodedStringLiteral
-    Map map = (Map)(tk.getDesktopProperty("awt.font.desktophints"));
+    Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
     if (map != null) {
       ((Graphics2D)g).addRenderingHints(map);
     }
@@ -626,9 +626,10 @@ public class UIUtil {
     }
   }
 
+  @TestOnly
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();
-    final BlockingQueue queue = new LinkedBlockingQueue();
+    final BlockingQueue<Object> queue = new LinkedBlockingQueue<Object>();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         queue.offer(queue);
@@ -699,7 +700,7 @@ public class UIUtil {
 
   public static boolean isCloseClick(MouseEvent e, int effectiveType) {
     if (e.isPopupTrigger() || e.getID() != effectiveType) return false;
-    return e.getButton() == MouseEvent.BUTTON2 || (e.getButton() == MouseEvent.BUTTON1 && e.isShiftDown());
+    return e.getButton() == MouseEvent.BUTTON2 || e.getButton() == MouseEvent.BUTTON1 && e.isShiftDown();
   }
 
   public static boolean isActionClick(MouseEvent e) {
@@ -707,15 +708,15 @@ public class UIUtil {
     return e.getButton() == MouseEvent.BUTTON1;
   }
 
-  public static
   @NotNull
+  public static
   Color getBgFillColor(@NotNull JComponent c) {
     final Component parent = findNearestOpaque(c);
     return parent == null ? c.getBackground() : parent.getBackground();
   }
 
-  public static
   @Nullable
+  public static
   Component findNearestOpaque(JComponent c) {
     Component eachParent = c;
     while (eachParent != null) {
@@ -740,7 +741,7 @@ public class UIUtil {
   }
 
   public static Color getFocusedFillColor() {
-    return toAlpha(UIUtil.getListSelectionBackground(), 100);
+    return toAlpha(getListSelectionBackground(), 100);
   }
 
   public static Color getFocusedBoundsColor() {
@@ -825,7 +826,8 @@ public class UIUtil {
     }
   }
 
-  public static @Nullable Component findUltimateParent(Component c) {
+  @Nullable
+  public static Component findUltimateParent(Component c) {
     if (c == null) return null;
 
     Component eachParent = c;
@@ -927,10 +929,11 @@ public class UIUtil {
     return toHtml(html, 0);
   }
 
+  @NonNls
   public static String toHtml(String html, final int hPadding) {
     html = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = UIManager.getFont("Label.font");
-    String family = font != null ? font.getFamily() : "Tahoma";
+    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
     return "<html><style>body { font-family: "
            + family + "; font-size: "
@@ -971,11 +974,7 @@ public class UIUtil {
   }
 
   public static boolean isFocusProxy(@Nullable Component c) {
-    if (c instanceof JComponent) {
-      return Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
-    }
-
-    return false;
+    return c instanceof JComponent && Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
   }
 
   public static void setFocusProxy(JComponent c, boolean isProxy) {
