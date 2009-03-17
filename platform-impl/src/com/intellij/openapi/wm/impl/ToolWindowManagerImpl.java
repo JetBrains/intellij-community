@@ -8,8 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -26,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -159,6 +162,41 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       activateEditorComponentImpl(commandsList, true);
     }
     execute(commandsList);
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        registerToolWindowsFromBeans();
+      }
+    });
+  }
+
+  private void registerToolWindowsFromBeans() {
+    ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
+    for (final ToolWindowEP bean : beans) {
+      ToolWindowAnchor toolWindowAnchor;
+      try {
+        toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        continue;
+      }
+      JLabel label = new JLabel("Initializing toolwindow...");
+      final ToolWindow toolWindow = registerToolWindow(bean.id, label, toolWindowAnchor, myProject);
+      if (bean.icon != null) {
+        toolWindow.setIcon(IconLoader.getIcon(bean.icon));
+      }
+      UiNotifyConnector.doWhenFirstShown(label, new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              ToolWindowFactory factory = bean.getToolWindowFactory();
+              toolWindow.getContentManager().removeAllContents(false);
+              factory.createToolWindowContent(myProject, toolWindow);
+            }
+          });
+        }
+      });
+    }
   }
 
   public void projectClosed() {

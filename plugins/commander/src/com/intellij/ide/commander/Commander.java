@@ -14,18 +14,17 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
@@ -47,7 +46,15 @@ import java.util.ArrayList;
 /**
  * @author Eugene Belyaev
  */
-public class Commander extends JPanel implements JDOMExternalizable, DataProvider, ProjectComponent, BookmarkContainer, TwoPaneIdeView {
+@State(
+  name="Commander",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class Commander extends JPanel implements PersistentStateComponent<Element>, DataProvider, BookmarkContainer, TwoPaneIdeView, Disposable {
   private Project myProject;
   private CommanderPanel myLeftPanel;
   private CommanderPanel myRightPanel;
@@ -60,7 +67,6 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   private CommanderHistory myHistory;
   private boolean myAutoScrollMode = false;
   private final ToolWindowManager myToolWindowManager;
-  private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
   @NonNls private static final String ACTION_BACKCOMMAND = "backCommand";
   @NonNls private static final String ACTION_FORWARDCOMMAND = "forwardCommand";
   @NonNls private static final String ELEMENT_LEFTPANEL = "leftPanel";
@@ -118,17 +124,16 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     }
 
     myHistory = new CommanderHistory(this);
+
+    setupImpl();
   }
 
   public static Commander getInstance(final Project project) {
-    return project.getComponent(Commander.class);
+    return ServiceManager.getService(project, Commander.class);
   }
 
   public CommanderHistory getCommandHistory() {
     return myHistory;
-  }
-
-  public void initComponent() {
   }
 
   private void processConfigurationElement() {
@@ -192,18 +197,6 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     return strokes.toArray(new KeyStroke[strokes.size()]);
   }
 
-  public void projectClosed() {
-    myToolWindowManager.unregisterToolWindow(ToolWindowId.COMMANDER);
-  }
-
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        setupImpl();
-      }
-    });
-  }
-
   public void setupImpl() {
     mySelectionListener = new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
@@ -264,12 +257,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       add(toolbar.getComponent(), BorderLayout.NORTH);
     }
 
-    processConfigurationElement();
-    myElement = null;
-
     myFocusWatcher.install(this);
-
-    setupToolWindow();
   }
 
   private DefaultActionGroup createToolbarActions() {
@@ -308,12 +296,6 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     return group;
   }
 
-  protected void setupToolWindow() {
-    final ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.COMMANDER, this, ToolWindowAnchor.RIGHT);
-    toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowCommander.png"));
-  }
-
-
   private CommanderPanel createPanel() {
     final CommanderPanel panel = new CommanderPanel(myProject, true);
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
@@ -330,7 +312,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     list.getSelectionModel().addListSelectionListener(mySelectionListener);
     list.getModel().addListDataListener(myListDataListener);
 
-    myDisposables.add(new Disposable() {
+    Disposer.register(this, new Disposable() {
       public void dispose() {
         list.removeFocusListener(focusListener);
         list.getSelectionModel().removeListSelectionListener(mySelectionListener);
@@ -481,9 +463,10 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     }
   }
 
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("commander");
     if (myLeftPanel == null || myRightPanel == null) {
-      return;
+      return element;
     }
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     Element e = new Element(ELEMENT_LEFTPANEL);
@@ -501,6 +484,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       //noinspection HardCodedStringLiteral
       e.setAttribute(ATTRIBUTE_MOVE_FOCUS, "false");
     }
+    return element;
   }
 
   private static void writePanel(final CommanderPanel panel, final Element element) {
@@ -527,8 +511,10 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     }
   }
 
-  public void readExternal(final Element element) throws InvalidDataException {
-    myElement = element;
+  public void loadState(Element state) {
+    myElement = state;
+    processConfigurationElement();
+    myElement = null;
   }
 
   private PsiElement readParentElement(final Element element) {
@@ -543,11 +529,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     return null;
   }
 
-  public void disposeComponent() {
-    for (Disposable disposable : myDisposables) {
-      disposable.dispose();
-    }
-    myDisposables.clear();
+  public void dispose() {
     if (myLeftPanel == null) {
       // not opened project (default?)
       return;
@@ -556,10 +538,6 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     myRightPanel.dispose();
     myHistory.clearHistory();
     myProject = null;
-  }
-
-  public String getComponentName() {
-    return "Commander";
   }
 
   public CommanderPanel getRightPanel() {

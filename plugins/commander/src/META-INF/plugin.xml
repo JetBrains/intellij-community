@@ -6,18 +6,13 @@
   <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains</vendor>
   <resource-bundle>com.intellij.ide.commander.CommanderBundle</resource-bundle>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.ide.commander.Commander</implementation-class>
-      <interface-class>com.intellij.ide.commander.Commander</interface-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-  </project-components>
-
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <selectInTarget implementation="com.intellij.ide.commander.CommanderSelectInTarget"/>
+    <toolWindow id="Commander" anchor="right" icon="/general/toolWindowCommander.png"
+                factoryClass="com.intellij.ide.commander.CommanderToolWindowFactory"/>
+    <projectService serviceInterface="com.intellij.ide.commander.Commander"
+                    serviceImplementation="com.intellij.ide.commander.Commander"/>
   </extensions>
 
   <actions>

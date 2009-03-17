@@ -54,4 +54,10 @@ public final class ToolWindowAnchor {
     throw new IllegalArgumentException("Unknown anchor constant: " + swingOrientationConstant);
   }
 
+  public static ToolWindowAnchor fromText(String anchor) {
+    for (ToolWindowAnchor a : new ToolWindowAnchor[]{TOP, LEFT, BOTTOM, RIGHT}) {
+      if (a.myText.equals(anchor)) return a;
+    }
+    throw new IllegalArgumentException("Unknown anchor constant: " + anchor);
+  }
 }
