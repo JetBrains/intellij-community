@@ -217,13 +217,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       return null;
     }
-    final Map<String, VirtualFile> map = asMap();
-    if (map != null) {
-      for (Map.Entry<String, VirtualFile> entry : map.entrySet()) {
-        VirtualFile file = entry.getValue();
-        if (file == NullVirtualFile.INSTANCE) continue;
-        NewVirtualFile withId = (NewVirtualFile)file;
-        if (withId.getId() == id) return withId;
+    synchronized (this) {
+      final Map<String, VirtualFile> map = asMap();
+      if (map != null) {
+        for (Map.Entry<String, VirtualFile> entry : map.entrySet()) {
+          VirtualFile file = entry.getValue();
+          if (file == NullVirtualFile.INSTANCE) continue;
+          NewVirtualFile withId = (NewVirtualFile)file;
+          if (withId.getId() == id) return withId;
+        }
       }
     }
     String name = ourPersistence.getName(id);
@@ -246,13 +248,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @NotNull
   @SuppressWarnings({"unchecked"})
   private synchronized Map<String, VirtualFile> ensureAsMap() {
-    assert !(myChildren instanceof VirtualFile[]);
-
+    Map<String, VirtualFile> map;
     if (myChildren == null) {
-      myChildren = createMap();
+      map = createMap();
+      myChildren = map;
+    }
+    else {
+      map = (Map<String, VirtualFile>)myChildren;
     }
 
-    return (Map<String, VirtualFile>)myChildren;
+    return map;
   }
 
   public synchronized void addChild(VirtualFile file) {
