@@ -1,16 +1,10 @@
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven.compiler;
 
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 public class ResourceFilteringTest extends MavenImportingTestCase {
   public void testBasic() throws Exception {
@@ -28,7 +22,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "    </resource>" +
                   "  </resources>" +
                   "</build>");
-    assertSources("project", "resources");
     compileModules("project");
 
     assertResult("target/classes/file.properties", "value=1");
@@ -49,7 +42,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "    </resource>" +
                   "  </resources>" +
                   "</build>");
-    assertSources("project", "resources");
     compileModules("project");
 
     assertResult("target/classes/file.properties", "value=project");
@@ -81,7 +73,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                     "</build>");
     importProject();
 
-    assertSources("m1", "resources");
     compileModules("project", "m1");
 
     assertResult("m1/target/classes/file.properties", "value=2");
@@ -102,7 +93,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "    </testResource>" +
                   "  </testResources>" +
                   "</build>");
-    assertTestSources("project", "resources");
     compileModules("project");
 
     assertResult("target/test-classes/file.properties", "value=1");
@@ -128,7 +118,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "    </resource>" +
                   "  </resources>" +
                   "</build>");
-    assertSources("project", "resources1", "resources2");
     compileModules("project");
 
     assertResult("target/classes/file1.properties", "value=1");
@@ -168,8 +157,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                                      "</build>");
 
     importSeveralProjects(m1, m2);
-    assertSources("module1", "resources");
-    assertSources("module2", "resources");
     compileModules("module1", "module2");
 
     assertResult(m1, "target/classes/file1.properties", "value=1");
@@ -196,7 +183,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "    </resource>" +
                   "  </resources>" +
                   "</build>");
-    assertSources("project", "resources1", "resources2");
     compileModules("project");
 
     assertResult("target/classes/file1.properties", "value=1");
@@ -218,7 +204,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "    </resource>" +
                   "  </resources>" +
                   "</build>");
-    assertSources("project", "resources");
     compileModules("project");
 
     assertResult("target/classes/file.properties", "value=${foo.bar}");
@@ -258,6 +243,33 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     compileModules("project");
 
     assertResult("target/classes/file.properties", "value=${project.version}");
+  }
+
+  public void testUpdatingWhenPropertiesAreChanged() throws Exception {
+    VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
+    createProjectSubFile("resources/file.properties", "value=${xxx}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <filters>" +
+                  "    <filter>filters/filter.properties</filter>" +
+                  "  </filters>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value=1");
+
+    VfsUtil.saveText(filter, "xxx=2");
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value=2");
   }
 
   public void testSameFileInSourcesAndTestSources() throws Exception {
@@ -319,7 +331,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "    </resource>" +
                   "  </resources>" +
                   "</build>");
-    assertSources("project", "resources");
     compileModules("project");
 
     assertResult("target/classes/file.properties", "value1=value\n" +
@@ -350,7 +361,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "    </resource>" +
                   "  </resources>" +
                   "</build>");
-    assertSources("project", "resources");
     compileModules("project");
 
     assertResult("target/classes/file.properties", "value=value");
@@ -363,48 +373,46 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                          "value1=${xxx}\n" +
                          "value2=${yyy}\n");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<profiles>" +
-                  "  <profile>" +
-                  "    <id>one</id>" +
-                  "    <build>" +
-                  "      <filters>" +
-                  "        <filter>filters/filter1.properties</filter>" +
-                  "      </filters>" +
-                  "    </build>" +
-                  "  </profile>" +
-                  "  <profile>" +
-                  "    <id>two</id>" +
-                  "    <activation>" +
-                  "      <activeByDefault>true</activeByDefault>" +
-                  "    </activation>" +
-                  "    <build>" +
-                  "      <filters>" +
-                  "        <filter>filters/filter2.properties</filter>" +
-                  "      </filters>" +
-                  "    </build>" +
-                  "  </profile>" +
-                  "</profiles>" +
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <build>" +
+                     "      <filters>" +
+                     "        <filter>filters/filter1.properties</filter>" +
+                     "      </filters>" +
+                     "    </build>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <build>" +
+                     "      <filters>" +
+                     "        <filter>filters/filter2.properties</filter>" +
+                     "      </filters>" +
+                     "    </build>" +
+                     "  </profile>" +
+                     "</profiles>" +
 
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>resources</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
-    assertSources("project", "resources");
-    compileModules("project");
-    assertResult("target/classes/file.properties", "value1=${xxx}\n" +
-                                                   "value2=value2\n");
+                     "<build>" +
+                     "  <resources>" +
+                     "    <resource>" +
+                     "      <directory>resources</directory>" +
+                     "      <filtering>true</filtering>" +
+                     "    </resource>" +
+                     "  </resources>" +
+                     "</build>");
 
     importProjectWithProfiles("one");
     compileModules("project");
     assertResult("target/classes/file.properties", "value1=value1\n" +
+                                                   "value2=${yyy}\n");
+
+    importProjectWithProfiles("two");
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value1=${xxx}\n" +
                                                    "value2=value2\n");
   }
 
@@ -443,7 +451,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    assertSources("project", "webdir");
     compileModules("project");
     assertResult("target/classes/file1.properties", "value=value");
     assertResult("target/classes/file2.properties", "value=${xxx}");
@@ -455,24 +462,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
 
   private void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
     VirtualFile file = pomFile.getParent().findFileByRelativePath(relativePath);
-    assertNotNull(file);
+    assertNotNull("file not found: " + relativePath, file);
     assertEquals(content, VfsUtil.loadText(file));
-  }
-
-  private void compileModules(String... modules) {
-    for (String each : modules) {
-      setupJdkForModule(each);
-    }
-
-    List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentSourceRoots());
-    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size(), true);
-
-    CompilerManager.getInstance(myProject).make(new CompileStatusNotification() {
-      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-        assertFalse(aborted);
-        assertEquals(0, errors);
-        assertEquals(0, warnings);
-      }
-    });
   }
 }

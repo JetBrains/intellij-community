@@ -4,24 +4,27 @@
 
 package org.jetbrains.idea.maven;
 
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
-import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorSettings;
+import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.runner.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
@@ -58,8 +61,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected MavenProjectsStructure.RootNode createMavenTree() {
     MavenProjectsStructure s = new MavenProjectsStructure(myProject,
-                                              myMavenProjectsManager,
-                                              myProject.getComponent(MavenEventsManager.class)) {
+                                                          myMavenProjectsManager,
+                                                          myProject.getComponent(MavenEventsManager.class)) {
       {
         for (MavenProjectModel each : myMavenProjectsManager.getProjects()) {
           this.myRoot.addUnder(new MavenProjectsStructure.PomNode(each));
@@ -392,10 +395,39 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     finally {
       if (oldValue == null) {
         System.clearProperty("idea.testingFramework.mockJDK");
-      } else {
+      }
+      else {
         System.setProperty("idea.testingFramework.mockJDK", oldValue);
       }
     }
     return sdk;
+  }
+
+  protected void compileModules(String... modules) {
+    for (String each : modules) {
+      setupJdkForModule(each);
+    }
+
+    CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
+
+    List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentRoots());
+    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size(), true);
+
+    CompilerManager.getInstance(myProject).make(new CompileStatusNotification() {
+      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        assertFalse(aborted);
+        assertEquals(collectMessages(compileContext, CompilerMessageCategory.ERROR), 0, errors);
+        assertEquals(collectMessages(compileContext, CompilerMessageCategory.WARNING), 0, warnings);
+      }
+    });
+  }
+
+  private String collectMessages(CompileContext compileContext, CompilerMessageCategory messageType) {
+    String result = "";
+    for (CompilerMessage each : compileContext.getMessages(messageType)) {
+      VirtualFile file = each.getVirtualFile();
+      result += each.getMessage()  + " FILE: " + (file == null ? "null" : file.getPath()) + "\n";
+    }
+    return result;
   }
 }

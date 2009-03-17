@@ -42,7 +42,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     Module m = getModule("project");
 
     ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
-    model.setModuleGroupPath(m, new String[] {"group"});
+    model.setModuleGroupPath(m, new String[]{"group"});
     model.commit();
 
     importProject();
@@ -128,7 +128,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertEquals(0, questionsCount);
     assertModules("project", "m1", "m2", "userModule");
   }
-  
+
   public void testRemovingAndCreatingModulesForAggregativeProjects() throws Exception {
     assertModules("project", "m1", "m2");
 
@@ -178,6 +178,34 @@ public class ReimportingTest extends MavenImportingTestCase {
 
     importProjectWithProfiles("profile2");
     assertModules("project", "m2");
+  }
+
+  public void testReimportingWhenModuleHaveRootOfThePraent() throws Exception {
+    createProjectSubDir("m1/res");
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    updateModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<build>" +
+                    "  <resources>" +
+                    "    <resource><directory>../m1</directory></resource>" +
+                    "  </resources>" +
+                    "</build>");
+
+    importProject(); // shouldn't throw Dialog.show exception
+    resolveProject();
+    assertEquals(0, questionsCount);
   }
 
   private void configMessagesForYesAnswer() {

@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -13,6 +14,10 @@ import com.intellij.util.xml.DomManager;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class MavenUtil {
   public static void invokeLater(final Project p, final Runnable r) {
@@ -58,5 +63,30 @@ public class MavenUtil {
     PsiFile psiFile = PsiManager.getInstance(p).findFile(f);
     DomFileElement<MavenModel> root = DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenModel.class);
     return root.getRootElement();
+  }
+
+  public static <T extends Collection<Pattern>> T collectPattern(String text, T result) {
+    String antPattern = FileUtil.convertAntToRegexp(text.trim());
+    try {
+      result.add(Pattern.compile(antPattern));
+    }
+    catch (PatternSyntaxException ignore) {
+    }
+    return result;
+  }
+
+  public static boolean isIncluded(String relativeName, List<Pattern> includes, List<Pattern> excludes) {
+    boolean result = false;
+    for (Pattern each : includes) {
+      if (each.matcher(relativeName).matches()) {
+        result = true;
+        break;
+      }
+    }
+    if (!result) return false;
+    for (Pattern each : excludes) {
+      if (each.matcher(relativeName).matches()) return false;
+    }
+    return true;
   }
 }

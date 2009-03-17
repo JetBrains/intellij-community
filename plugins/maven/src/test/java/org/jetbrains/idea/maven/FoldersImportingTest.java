@@ -5,9 +5,9 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.utils.Path;
-import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 
 import java.io.File;
 
@@ -22,8 +22,8 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertModules("project");
     assertContentRoots("project", getProjectPath());
 
-    assertSources("project", "src/main/java", "src/main/resources");
-    assertTestSources("project", "src/test/java", "src/test/resources");
+    assertSources("project", "src/main/java");
+    assertTestSources("project", "src/test/java");
   }
 
   public void testInvalidProjectHasContentRoot() throws Exception {
@@ -53,8 +53,8 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertSources("project", "src/main/java", "src/main/resources");
-    assertTestSources("project", "src/test/java", "src/test/resources");
+    assertSources("project", "src/main/java");
+    assertTestSources("project", "src/test/java");
   }
 
   public void testDoesNotResetUserFolders() throws Exception {
@@ -108,8 +108,8 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertModules("project");
     assertContentRoots("project", getProjectPath());
 
-    assertSources("project", "src", "res1", "res2");
-    assertTestSources("project", "test", "testRes1", "testRes2");
+    assertSources("project", "src");
+    assertTestSources("project", "test");
   }
 
   public void testCustomSourceFoldersWithRelativePaths() throws Exception {
@@ -148,9 +148,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertContentRoots("m",
                        getProjectPath() + "/m",
                        getProjectPath() + "/src",
-                       getProjectPath() + "/test",
-                       getProjectPath() + "/res",
-                       getProjectPath() + "/testRes");
+                       getProjectPath() + "/test");
   }
 
   public void testPluginSources() throws Exception {
@@ -187,7 +185,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     generateSources();
     assertModules("project");
 
-    assertSources("project", "src/main/java", "src/main/resources", "src1", "src2");
+    assertSources("project", "src/main/java", "src1", "src2");
   }
 
   public void testPluginSourceDuringGenerateResourcesPhase() throws Exception {
@@ -223,7 +221,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     generateSources();
     assertModules("project");
 
-    assertSources("project", "extraResources", "src/main/java", "src/main/resources");
+    assertSources("project", "extraResources", "src/main/java");
   }
 
   public void testPluginTestSourcesDuringGenerateTestResourcesPhase() throws Exception {
@@ -259,7 +257,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     generateSources();
     assertModules("project");
 
-    assertTestSources("project", "extraTestResources", "src/test/java", "src/test/resources");
+    assertTestSources("project", "extraTestResources", "src/test/java");
   }
 
   public void testPluginSourcesWithRelativePath() throws Exception {
@@ -295,7 +293,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     generateSources();
     assertModules("project");
 
-    assertSources("project", "src/main/java", "src/main/resources", "relativePath");
+    assertSources("project", "src/main/java", "relativePath");
   }
 
   public void testPluginSourcesWithVariables() throws Exception {
@@ -331,7 +329,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     generateSources();
     assertModules("project");
 
-    assertSources("project", "src/main/java", "src/main/resources", "target/src");
+    assertSources("project", "src/main/java", "target/src");
   }
 
   public void testDoNotUpdatePluginSourcesWithInvalidDependency() throws Exception {
@@ -375,7 +373,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     generateSources();
     assertModules("project");
 
-    assertSources("project", "src/main/java", "src/main/resources");
+    assertSources("project", "src/main/java");
   }
 
   public void testPluginSourcesWithIntermoduleDependency() throws Exception {
@@ -436,7 +434,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2");
 
     generateSources();
-    assertSources("m1", "src/main/java", "src/main/resources", "src/foo");
+    assertSources("m1", "src/main/java", "src/foo");
   }
 
   public void testDownloadingNecessaryPlugins() throws Exception {
@@ -491,7 +489,6 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/src1",
                   "target/generated-sources/src2");
   }
@@ -511,7 +508,6 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "targetCustom/generated-sources/src1",
                   "targetCustom/generated-sources/src2");
   }
@@ -550,7 +546,6 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/main/src");
   }
 
@@ -562,7 +557,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertSources("project", "src/main/java", "src/main/resources");
+    assertSources("project", "src/main/java");
   }
 
   public void testExcludingOutputDirectories() throws Exception {
@@ -676,7 +671,6 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/baz");
   }
 
@@ -735,8 +729,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertExcludes("project", "target/foo");
 
     assertSources("project",
-                  "target/src/main",
-                  "src/main/resources");
+                  "target/src/main");
   }
 
   public void testUnexcludeNewSources() throws Exception {

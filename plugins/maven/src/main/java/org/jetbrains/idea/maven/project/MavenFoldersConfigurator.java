@@ -6,7 +6,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
-import org.apache.maven.model.Resource;
 import org.jetbrains.idea.maven.facets.FacetImporter;
 
 import java.io.File;
@@ -73,13 +72,6 @@ public class MavenFoldersConfigurator {
 
     sourceFolders.addAll(myMavenProject.getSources());
     testFolders.addAll(myMavenProject.getTestSources());
-
-    for (Resource each : myMavenProject.getResources()) {
-      sourceFolders.add(each.getDirectory());
-    }
-    for (Resource each : myMavenProject.getTestResources()) {
-      testFolders.add(each.getDirectory());
-    }
 
     for (FacetImporter each : FacetImporter.getSuitableFacetImporters(myMavenProject)) {
       sourceFolders.addAll(each.getSourceFolders(myMavenProject));

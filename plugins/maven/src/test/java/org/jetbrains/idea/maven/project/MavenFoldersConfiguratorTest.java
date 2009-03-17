@@ -74,13 +74,13 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertSources("project", "src/main/java", "src/main/resources");
-    assertTestSources("project", "src/test/java", "src/test/resources");
+    assertSources("project", "src/main/java");
+    assertTestSources("project", "src/test/java");
 
     updateFolders();
 
-    assertSources("project", "src/main/java", "src/main/resources");
-    assertTestSources("project", "src/test/java", "src/test/resources");
+    assertSources("project", "src/main/java");
+    assertTestSources("project", "src/test/java");
   }
 
   public void testDoesNotExcludeRegisteredSources() throws Exception {

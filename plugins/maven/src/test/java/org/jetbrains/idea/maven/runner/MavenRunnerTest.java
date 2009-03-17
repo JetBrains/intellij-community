@@ -25,7 +25,6 @@ public class MavenRunnerTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/foo");
 
     assertExcludes("project",
