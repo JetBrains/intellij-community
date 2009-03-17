@@ -312,7 +312,9 @@ public class StructureConfigurableContext implements Disposable {
        }
      }
 
-     final OrderEntry[] entries = myModulesConfigurator.getRootModel(module).getOrderEntries();
+     final ModuleRootModel rootModel = myModulesConfigurator.getRootModel(module);
+     if (rootModel == null) return; //already disposed
+     final OrderEntry[] entries = rootModel.getOrderEntries();
      for (OrderEntry entry : entries) {
        if (myDisposed) return;
        if (!entry.isValid()){

@@ -138,7 +138,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     if (editor != null) {
       rootModel = editor.getModifiableRootModel();
     }
-    if (rootModel == null) {
+    if (rootModel == null && getModule(module.getName()) != null) {
       createModuleEditor(module);
       rootModel = getModuleEditor(module).getModifiableRootModel();
     }

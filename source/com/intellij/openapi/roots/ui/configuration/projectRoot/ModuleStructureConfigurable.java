@@ -150,7 +150,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (configurable instanceof ModuleConfigurable){
       final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
-      editor.init(selectedTab, myHistory);
+      if (editor != null) { //already deleted
+        editor.init(selectedTab, myHistory);
+      }
     }
     if (configurable instanceof FacetConfigurable) {
       ((FacetConfigurable)configurable).getEditor().onFacetSelected();
