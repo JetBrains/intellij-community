@@ -251,9 +251,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
       //noinspection HardCodedStringLiteral
       Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
       if (map != null) {
-        final Object textAA = map.get(RenderingHints.KEY_TEXT_ANTIALIASING);
-        //This WILL become TRUE when Windows RDP is connected
-        if (RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT.equals(textAA)) {
+        if (isRemoteDesktopConnected()) {
           g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
         }
         else {
@@ -267,6 +265,17 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     else {
       g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
+  }
+
+  /**
+   * @return true when Remote Desktop (i.e. Windows RDP) is connected
+   */
+  public static boolean isRemoteDesktopConnected() {
+    if(System.getProperty("os.name").contains("Windows")) {
+      final Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
+      return map!= null ? RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT.equals(map.get(RenderingHints.KEY_TEXT_ANTIALIASING)) : false;
+    }
+    return false;
   }
 
   @NotNull
