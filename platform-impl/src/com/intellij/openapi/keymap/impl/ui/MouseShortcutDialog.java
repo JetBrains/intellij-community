@@ -97,8 +97,9 @@ class MouseShortcutDialog extends DialogWrapper{
     }
   }
 
-  protected Action[] createActions(){
-    return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
+  @Override
+  protected String getHelpId() {
+    return "preferences.mouse.shortcut";
   }
 
   protected JComponent createCenterPanel(){
