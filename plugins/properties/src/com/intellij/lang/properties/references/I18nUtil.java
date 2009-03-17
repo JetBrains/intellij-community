@@ -79,7 +79,7 @@ public class I18nUtil {
    * <i>Class {0} info: Class {0} extends class {1} and implements interface {2}</i>
    * number of parameters is 3.
    *
-   * @param value i18n literal
+   * @param expression i18n literal
    * @return number of parameters
    */
   public static int getPropertyValueParamsMaxCount(final PsiLiteralExpression expression) {
