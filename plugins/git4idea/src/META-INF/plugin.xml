@@ -4,7 +4,7 @@
   <description>Provides integration with Git version control system</description>
   <version>8.1</version>
   <category>VCS Integration</category>
-  <vendor url="http://github.com/markscott/git4idea/tree/master" email="mscott@mqsoftware.com">MQSoftware</vendor>
+  <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/" logo="/general/ijLogo.png">JetBrains</vendor>
   <idea-version since-build="8800"/>
 
   <depends>com.intellij.modules.vcs</depends>
