@@ -4,8 +4,6 @@ import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
-import com.intellij.lang.folding.LanguageFolding;
-import com.intellij.lang.xml.XmlFoldingBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
@@ -20,7 +18,6 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -260,14 +257,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
     if (element instanceof PsiDocComment) {
       return element.getTextRange();
     }
-    if (element instanceof XmlTag) {
-      final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(element.getLanguage());
-
-      if (foldingBuilder instanceof XmlFoldingBuilder) {
-        return ((XmlFoldingBuilder)foldingBuilder).getRangeToFold(element);
-      }
-    }
-    else if (element instanceof PsiAnnotation) {
+    if (element instanceof PsiAnnotation) {
       int startOffset = element.getTextRange().getStartOffset();
       PsiElement last = element;
       while (element instanceof PsiAnnotation) {
@@ -277,8 +267,6 @@ public class JavaFoldingBuilder implements FoldingBuilder {
 
       return new TextRange(startOffset, last.getTextRange().getEndOffset());
     }
-
-
     return null;
   }
 
