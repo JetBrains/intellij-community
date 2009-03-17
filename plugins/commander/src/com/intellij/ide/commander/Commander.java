@@ -14,7 +14,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diff.actions.CompareFiles;
+import com.intellij.openapi.diff.ex.PsiDiffContentFactory;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -27,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import org.jdom.Element;
@@ -451,9 +457,16 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       final Object element = parentElement.getValue();
       return (element instanceof PsiElement) && ((PsiElement)element).isValid()? element : null;
     }
-    else if (DataConstantsEx.SECONDARY_PSI_ELEMENT.equals(dataId)) {
-      final PsiElement selectedElement = getInactivePanel().getSelectedElement();
-      return selectedElement != null && selectedElement.isValid() ? selectedElement : null;
+    else if (CompareFiles.DIFF_REQUEST.getName().equals(dataId)) {
+      PsiElement primary = getActivePanel().getSelectedElement();
+      PsiElement secondary = getInactivePanel().getSelectedElement();
+      if (primary != null && secondary != null &&
+          primary.isValid() && secondary.isValid() &&
+          !PsiTreeUtil.isAncestor(primary, secondary, false) &&
+          !PsiTreeUtil.isAncestor(secondary, primary, false)) {
+        return PsiDiffContentFactory.comparePsiElements(primary, secondary);
+      }
+      return null;
     }
     else if (BookmarkContainer.KEY.getName().equals(dataId)) {
       return this;

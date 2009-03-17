@@ -53,11 +53,6 @@ public interface DataConstantsEx extends DataConstants {
   @NonNls String RUNTIME_CONFIGURATION = "runtimeConfiguration";
 
   /**
-   * Returns {@link com.intellij.psi.PsiElement}
-   * */
-  @NonNls String SECONDARY_PSI_ELEMENT = "secondaryPsiElement";
-
-  /**
    * Returns project file directory as {@link com.intellij.openapi.vfs.VirtualFile}
    */
   @NonNls String PROJECT_FILE_DIRECTORY = "context.ProjectFileDirectory";

@@ -11,15 +11,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 public class CompareFiles extends BaseDiffAction {
+  public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("CompareFiles.DiffRequest");
+
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-    if (virtualFiles == null || virtualFiles.length != 2) {
-      presentation.setVisible(false);
-      return;
+    DiffRequest diffRequest = e.getData(DIFF_REQUEST);
+    if (diffRequest == null) {
+      final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+      if (virtualFiles == null || virtualFiles.length != 2) {
+        presentation.setVisible(false);
+        return;
+      }
+      diffRequest = getDiffRequest(project, virtualFiles);
     }
-    DiffRequest diffRequest = getDiffRequest(project, virtualFiles);
     if (diffRequest == null) {
       presentation.setVisible(false);
       return;
@@ -36,6 +41,10 @@ public class CompareFiles extends BaseDiffAction {
 
   protected DiffRequest getDiffData(DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final DiffRequest diffRequest = DIFF_REQUEST.getData(dataContext);
+    if (diffRequest != null) {
+      return diffRequest;
+    }
     final VirtualFile[] data = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (data == null || data.length != 2) {
       return null;
