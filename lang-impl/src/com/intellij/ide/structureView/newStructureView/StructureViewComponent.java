@@ -495,7 +495,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
 
-    if (!structureViewFactory.AUTOSCROLL_FROM_SOURCE) {
+    if (!structureViewFactory.getState().AUTOSCROLL_FROM_SOURCE) {
       return;
     }
 
@@ -584,11 +584,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
 
     protected boolean isAutoScrollMode() {
-      return myShouldAutoScroll && ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).AUTOSCROLL_MODE;
+      return myShouldAutoScroll && ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).getState().AUTOSCROLL_MODE;
     }
 
     protected void setAutoScrollMode(boolean state) {
-      ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).AUTOSCROLL_MODE = state;
+      ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).getState().AUTOSCROLL_MODE = state;
     }
 
     protected void scrollToSource(Component tree) {
@@ -628,12 +628,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     protected boolean isAutoScrollMode() {
       StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
-      return structureViewFactory.AUTOSCROLL_FROM_SOURCE;
+      return structureViewFactory.getState().AUTOSCROLL_FROM_SOURCE;
     }
 
     protected void setAutoScrollMode(boolean state) {
       StructureViewFactoryImpl structureViewFactory = (StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject);
-      structureViewFactory.AUTOSCROLL_FROM_SOURCE = state;
+      structureViewFactory.getState().AUTOSCROLL_FROM_SOURCE = state;
       final FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
       if (selectedEditors.length > 0 && state) {
         scrollToSelectedElement();

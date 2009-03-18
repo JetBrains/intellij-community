@@ -220,13 +220,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.ide.structureView.StructureViewFactory</interface-class>
-      <implementation-class>com.intellij.ide.structureView.impl.StructureViewFactoryImpl</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</interface-class>
       <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>
       <skipForDefaultProject/>

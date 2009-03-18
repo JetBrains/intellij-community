@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.structureView;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 
@@ -49,6 +50,6 @@ public abstract class StructureViewFactory {
                                     boolean showRootNode);
 
   public static StructureViewFactory getInstance(Project project) {
-    return project.getComponent(StructureViewFactory.class);
+    return ServiceManager.getService(project, StructureViewFactory.class);
   }
 }

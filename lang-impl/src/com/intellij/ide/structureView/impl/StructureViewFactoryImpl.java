@@ -3,20 +3,20 @@ package com.intellij.ide.structureView.impl;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ReflectionCache;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,13 +26,25 @@ import java.util.HashSet;
 /**
  * @author Eugene Belyaev
  */
-public final class StructureViewFactoryImpl extends StructureViewFactoryEx implements JDOMExternalizable, ProjectComponent {
-  @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_MODE = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_FROM_SOURCE = false;
-  @SuppressWarnings({"WeakerAccess"}) public String ACTIVE_ACTIONS = "";
+
+@State(
+  name="StructureViewFactory",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public final class StructureViewFactoryImpl extends StructureViewFactoryEx implements PersistentStateComponent<StructureViewFactoryImpl.State> {
+  public static class State {
+    @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_MODE = true;
+    @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_FROM_SOURCE = false;
+    @SuppressWarnings({"WeakerAccess"}) public String ACTIVE_ACTIONS = "";
+  }
 
   private final Project myProject;
   private StructureViewWrapperImpl myStructureViewWrapperImpl;
+  private State myState = new State();
 
   private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
   private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myImplExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
@@ -45,41 +57,24 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     return myStructureViewWrapperImpl;
   }
 
-  public void disposeComponent() {
+  public State getState() {
+    return myState;
   }
 
-  public void initComponent() { }
+  public void loadState(State state) {
+    myState = state;
+  }
 
-  public void projectOpened() {
+  public void initToolWindow(ToolWindow toolWindow) {
     myStructureViewWrapperImpl = new StructureViewWrapperImpl(myProject);
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run(){
-        ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(myProject);
-        ToolWindow toolWindow=toolWindowManager.registerToolWindow(ToolWindowId.STRUCTURE_VIEW,myStructureViewWrapperImpl.getComponent(),ToolWindowAnchor.LEFT);
-        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowStructure.png"));
-      }
-    });
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(myStructureViewWrapperImpl.getComponent(), "", false);
+    Disposer.register(content, myStructureViewWrapperImpl);
+    toolWindow.getContentManager().addContent(content);
+    final FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+    if (fileEditors.length > 0) {
+      myStructureViewWrapperImpl.setFileEditor(fileEditors [0]);
+    }
   }
-
-  public void projectClosed() {
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.STRUCTURE_VIEW);
-    myStructureViewWrapperImpl.dispose();
-    myStructureViewWrapperImpl=null;
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "StructureViewFactory";
-  }
-
 
   public void registerExtension(Class<? extends PsiElement> type, StructureViewExtension extension) {
     myExtensions.put(type, extension);
@@ -118,7 +113,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
       activeActions.remove(name);
     }
 
-    ACTIVE_ACTIONS = toString(activeActions);
+    myState.ACTIVE_ACTIONS = toString(activeActions);
   }
 
   private static String toString(final Collection<String> activeActions) {
@@ -126,7 +121,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   private Collection<String> collectActiveActions() {
-    final String[] strings = ACTIVE_ACTIONS.split(",");
+    final String[] strings = myState.ACTIVE_ACTIONS.split(",");
     return new HashSet<String>(Arrays.asList(strings));
   }
 
