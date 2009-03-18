@@ -144,7 +144,7 @@ public class EclipseClasspathReader {
         rootModel.addInvalidModuleEntry(moduleName).setExported(exported);
       }
       else {
-        getContentEntry().addSourceFolder(VfsUtil.pathToUrl(myRootPath + "/" + path), testPattern != null && path.matches(testPattern));
+        getContentEntry().addSourceFolder(VfsUtil.pathToUrl(myRootPath + "/" + path), testPattern != null && testPattern.length() > 0 && path.matches(testPattern));
       }
     }
 
