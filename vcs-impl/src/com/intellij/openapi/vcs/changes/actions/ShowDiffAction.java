@@ -195,9 +195,15 @@ public class ShowDiffAction extends AnAction {
     ArrayList<Change> changesList = new ArrayList<Change>();
     Collections.addAll(changesList, changes);
     for(int i=changesList.size()-1; i >= 0; i--) {
-      final FilePath path = ChangesUtil.getFilePath(changesList.get(i));
+      final Change change = changesList.get(i);
+      if ((change.getBeforeRevision() instanceof BinaryContentRevision) || (change.getAfterRevision() instanceof BinaryContentRevision)) {
+        changesList.remove(i);
+        continue;
+      }
+      final FilePath path = ChangesUtil.getFilePath(change);
       if (path.isDirectory()) {
         changesList.remove(i);
+        continue;
       }
       final FileType type = path.getFileType();
       if ((! FileTypes.UNKNOWN.equals(type)) && (type.isBinary())) {
