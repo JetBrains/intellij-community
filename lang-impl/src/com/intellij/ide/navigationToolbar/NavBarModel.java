@@ -245,7 +245,7 @@ public class NavBarModel {
   }
 
   @SuppressWarnings({"SimplifiableIfStatement"})
-  private static boolean checkValid(final Object object) {
+  static boolean checkValid(final Object object) {
     if (object instanceof Project) {
       return !((Project)object).isDisposed();
     }
@@ -376,6 +376,7 @@ public class NavBarModel {
   }
 
   List<Object> calcElementChildren(final Object object) {
+    if (!checkValid(object)) return new ArrayList<Object>();
     final List<Object> result = new ArrayList<Object>();
     final Object rootElement = size() > 1 ? getElement(1) : null;
     if (!(object instanceof Project) && rootElement instanceof Module && ((Module)rootElement).isDisposed()) return result;
