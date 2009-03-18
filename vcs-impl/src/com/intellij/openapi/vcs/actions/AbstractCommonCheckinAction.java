@@ -51,10 +51,6 @@ import java.util.Collections;
 
 
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
-  private static final int MIXED = 0;
-  protected static final int DIRECTORIES = 1;
-  private static final int FILES = 2;
-
   public void actionPerformed(final VcsContext context) {
     final Project project = context.getProject();
 
@@ -130,23 +126,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return firstVcs;
   }
 
-  protected static int getCheckinType(FilePath[] roots) {
-    if (roots.length == 0) return MIXED;
-    FilePath file = roots[0];
-    int firstType = getCheckinType(file);
-
-    for (FilePath root : roots) {
-      int checkinType = getCheckinType(root);
-      if (checkinType != firstType) return MIXED;
-    }
-
-    return firstType;
-  }
-
-  private static int getCheckinType(FilePath file) {
-    return file.isDirectory() ? DIRECTORIES : FILES;
-  }
-
   protected abstract String getActionName(VcsContext dataContext);
 
   protected abstract FilePath[] getRoots(VcsContext dataContext);
@@ -171,20 +150,9 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       return;
     }
 
-    int checkinType = getCheckinType(roots);
-    if (checkinType == DIRECTORIES) {
-      if (roots.length == 0) {
-        presentation.setEnabled(false);
-        return;
-      }
-    }
-    else {
-      AbstractVcs commonVcsFor = getCommonVcsFor(roots, project);
-      if (commonVcsFor == null) {
-        presentation.setEnabled(false);
-        presentation.setVisible(false);
-        return;
-      }
+    if (roots.length == 0) {
+      presentation.setEnabled(false);
+      return;
     }
 
     String actionName = getActionName(vcsContext) + "...";
