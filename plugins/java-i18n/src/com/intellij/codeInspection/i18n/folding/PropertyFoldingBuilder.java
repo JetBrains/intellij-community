@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -127,7 +128,7 @@ public class PropertyFoldingBuilder implements FoldingBuilder {
   }
 
   public boolean isCollapsedByDefault(ASTNode node) {
-    return true;
+    return JavaCodeFoldingSettings.getInstance().isCollapseI18nMessages();
   }
 
 
