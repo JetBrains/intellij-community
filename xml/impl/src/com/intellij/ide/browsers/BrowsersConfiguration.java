@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlBundle;
 import org.jdom.Element;
@@ -120,6 +121,7 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
     myBrowserToPathMap.put(family, stringBooleanPair);
   }
 
+  @NotNull
   public Pair<String, Boolean> suggestBrowserPath(@NotNull final BrowserFamily browserFamily) {
     Pair<String, Boolean> result = myBrowserToPathMap.get(browserFamily);
     if (result == null) {
@@ -151,56 +153,50 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
     getInstance()._launchBrowser(family, url);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void _launchBrowser(final BrowserFamily family, @NotNull final String url) {
     final Pair<String, Boolean> pair = suggestBrowserPath(family);
-    if (pair != null) {
-      final String path = pair.first;
-      if (path != null && path.length() > 0) {
-        String[] command = null;
-        if (SystemInfo.isMac) {
-          command = new String[]{"open", "-a", path, url};
-        }
-        if (SystemInfo.isWindows9x) {
-          if (path.indexOf(File.separatorChar) != -1) {
-            command = new String[]{path, url};
-          }
-          else {
-            command = new String[]{"command.com", "/c", "start", path, url};
-          }
-        }
-        else if (SystemInfo.isWindows) {
-          if (path.indexOf(File.separatorChar) != -1) {
-            command = new String[]{path, url};
-          }
-          else {
-            command = new String[]{"cmd.exe", "/c", "start", path, url};
-          }
-        }
-        else if (SystemInfo.isLinux) {
-          command = new String[]{path, url};
-        }
-
-        if (command != null) {
-          try {
-            Runtime.getRuntime().exec(command);
-          }
-          catch (IOException e) {
-            Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
-          }
-        }
-        else {
-          LOG.assertTrue(false);
-        }
+    final String path = pair.first;
+    if (path != null && path.length() > 0) {
+      try {
+        launchBrowser(path, url);
       }
-      else {
-        Messages.showErrorDialog(XmlBundle.message("browser.path.not.specified", family.getName()),
-                                 XmlBundle.message("browser.path.not.specified.title"));
+      catch (IOException e) {
+        Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
       }
     }
     else {
-      LOG.assertTrue(false);
+      Messages.showErrorDialog(XmlBundle.message("browser.path.not.specified", family.getName()),
+                               XmlBundle.message("browser.path.not.specified.title"));
     }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static void launchBrowser(@NonNls @NotNull String path, @NonNls String... parameters) throws IOException {
+    String[] command;
+    if (SystemInfo.isMac) {
+      command = new String[]{"open", "-a", path};
+    }
+    else if (SystemInfo.isWindows9x) {
+      if (path.indexOf(File.separatorChar) != -1) {
+        command = new String[]{path};
+      }
+      else {
+        command = new String[]{"command.com", "/c", "start", path};
+      }
+    }
+    else if (SystemInfo.isWindows) {
+      if (path.indexOf(File.separatorChar) != -1) {
+        command = new String[]{path};
+      }
+      else {
+        command = new String[]{"cmd.exe", "/c", "start", path};
+      }
+    }
+    else {
+      command = new String[]{path};
+    }
+
+    Runtime.getRuntime().exec(ArrayUtil.mergeArrays(command, parameters, String.class));
   }
 
   private static void installBrowserActions() {

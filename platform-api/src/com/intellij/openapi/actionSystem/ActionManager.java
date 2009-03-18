@@ -98,7 +98,7 @@ public abstract class ActionManager implements ApplicationComponent {
    * @param actionId Id to associate with the action
    * @param action Action to register
    */
-  public abstract void registerAction(@NotNull String actionId, @NotNull AnAction action);
+  public abstract void registerAction(@NonNls @NotNull String actionId, @NotNull AnAction action);
 
   /**
    * Registers the specified action with the specified id.
