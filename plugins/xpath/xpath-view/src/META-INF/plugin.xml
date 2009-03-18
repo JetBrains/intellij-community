@@ -53,8 +53,6 @@
 
     <configurationType implementation="org.intellij.lang.xpath.xslt.run.XsltRunConfigType" />
 
-    <iconProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>
-
     <applicationService
         serviceInterface="org.intellij.plugins.xpathView.support.XPathSupport"
         serviceImplementation="org.intellij.plugins.xpathView.support.jaxen.XPathSupportImpl" />
@@ -130,6 +128,9 @@
     </component>
     <component>
       <implementation-class>org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupport</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.lang.xpath.xslt.impl.XsltIconProvider</implementation-class>
     </component>
   </application-components>
 
