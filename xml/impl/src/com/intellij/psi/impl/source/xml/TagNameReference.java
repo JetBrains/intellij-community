@@ -22,10 +22,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementDescriptorAwareAboutChildren;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -309,10 +309,10 @@ public class TagNameReference implements PsiReference {
   private static boolean isAcceptableNs(final XmlTag element, final XmlElementDescriptor elementDescriptor,
                                         final String elementNamespace,
                                         final String namespace) {
-    return !(elementDescriptor instanceof XmlElementDescriptorImpl) ||
+    return !(elementDescriptor instanceof XmlElementDescriptorAwareAboutChildren) ||
         elementNamespace == null ||
         elementNamespace.equals(namespace) ||
-         ((XmlElementDescriptorImpl)elementDescriptor).allowElementsFromNamespace(namespace, element.getParentTag());
+         ((XmlElementDescriptorAwareAboutChildren)elementDescriptor).allowElementsFromNamespace(namespace, element.getParentTag());
   }
 
   public boolean isSoft() {

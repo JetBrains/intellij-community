@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementDescriptorAwareAboutChildren;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -19,7 +20,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData, Validator<XmlTag> {
+public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData, Validator<XmlTag>,
+                                                 XmlElementDescriptorAwareAboutChildren {
   protected XmlTag myDescriptorTag;
   protected volatile XmlNSDescriptor NSDescriptor;
   private volatile @Nullable Validator<XmlTag> myValidator;
