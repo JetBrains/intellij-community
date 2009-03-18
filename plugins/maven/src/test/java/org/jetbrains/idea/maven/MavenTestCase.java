@@ -205,7 +205,7 @@ public abstract class MavenTestCase extends TestCase {
     setPomContent(myProjectRoot.findFileByRelativePath(relativePath + "/pom.xml"), xml);
   }
 
-  private VirtualFile createPomFile(VirtualFile dir, String xml) throws IOException {
+  protected VirtualFile createPomFile(VirtualFile dir, String xml) throws IOException {
     VirtualFile f = dir.createChildData(null, "pom.xml");
     myAllPoms.add(f);
     return setPomContent(f, xml);

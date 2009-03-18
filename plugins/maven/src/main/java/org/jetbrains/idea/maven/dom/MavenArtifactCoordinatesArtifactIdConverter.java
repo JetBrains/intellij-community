@@ -15,8 +15,7 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
   }
 
   @Override
-  protected Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager
-  ) {
+  protected Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager) {
     return manager.getArtifactIds(id.groupId);
   }
 }

@@ -123,7 +123,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
-      return doIsValid(id, manager, context);
+      return doIsValid(id, manager, context) || resolveBySpecifiedPath() != null;
     }
 
     public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager) {
@@ -213,11 +213,6 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Override
     public String getContextName() {
       return "Dependency";
-    }
-
-    public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
-      if ("system".equals(myDependency.getScope().getStringValue())) return true;
-      return super.isValid(id, manager, context);
     }
 
     @Override

@@ -153,6 +153,55 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertEquals(getPsiFile(parent), ref.resolve());
   }
 
+  public void testResolvingByRelativePathWhenOutsideOfTheProject() throws Throwable {
+    VirtualFile parent = createPomFile(myProjectRoot.getParent(),
+                                       "<groupId>test</groupId>" +
+                                       "<artifactId>project</artifactId>" +
+                                       "<version>1</version>");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId><caret>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>../pom.xml</relativePath>" +
+                     "</parent>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+    assertEquals(getPsiFile(parent), ref.resolve());
+  }
+
+  public void testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() throws Throwable {
+    createPomFile(myProjectRoot.getParent(),
+                  "<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>../pom.xml</relativePath>" +
+                     "</parent>");
+    checkHighlighting(myProjectPom);
+  }
+
   public void testRelativePathCompletion() throws Throwable {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
