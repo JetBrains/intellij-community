@@ -255,11 +255,11 @@ public class EclipseClasspathWriter {
                           javadocPath.substring(javadocFile.getUrl().length() - 1);
           }
           else {
-            javadocPath = EclipseXml.JAR_PREFIX + EclipseXml.FILE_PROTOCOL + path;
+            javadocPath = EclipseXml.JAR_PREFIX + EclipseXml.FILE_PROTOCOL + StringUtil.trimStart(path, "/");
           }
         }
         else if (new File(path).exists()) {
-          javadocPath = EclipseXml.FILE_PROTOCOL + path;
+          javadocPath = EclipseXml.FILE_PROTOCOL + StringUtil.trimStart(path, "/");
         }
       }
 

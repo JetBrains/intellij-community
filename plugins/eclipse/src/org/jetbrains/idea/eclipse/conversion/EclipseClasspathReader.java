@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -361,8 +362,10 @@ public class EclipseClasspathReader {
     for (Object o : attributes.getChildren("attribute")) {
       if (Comparing.strEqual(((Element)o).getAttributeValue("name"), "javadoc_location")) {
         Element attribute = (Element)o;
-        final String javadocPath = attribute.getAttributeValue("value");
-
+        String javadocPath = attribute.getAttributeValue("value");
+        if (!SystemInfo.isWindows) {
+          javadocPath = javadocPath.replaceFirst(EclipseXml.FILE_PROTOCOL, EclipseXml.FILE_PROTOCOL + "/");
+        }
         if (javadocPath.startsWith(EclipseXml.FILE_PROTOCOL) &&
             new File(javadocPath.substring(EclipseXml.FILE_PROTOCOL.length())).exists()) {
           result.add(VfsUtil.pathToUrl(javadocPath.substring(EclipseXml.FILE_PROTOCOL.length())));
