@@ -145,6 +145,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesView.addToolbarAction(ActionManager.getInstance().getAction("Vcs.ShowTabbedFileHistory"));
 
     myHelpId = ourHelpId;
+
+    myChangesView.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangesTree);
   }
 
   private TreeModel buildTreeModel() {

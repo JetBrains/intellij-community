@@ -7,6 +7,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ChangeListColumn;
@@ -125,6 +126,8 @@ public class CommittedChangesBrowser extends JPanel {
     add(splitter, BorderLayout.CENTER);
 
     selectFirstIfAny();
+
+    myChangesView.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangeListsView);
   }
 
   private void selectFirstIfAny() {

@@ -39,6 +39,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   private String myToggleActionTitle = VcsBundle.message("commit.dialog.include.action.name");
 
   public static DataKey<ChangesBrowser> DATA_KEY = DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowser");
+  private ShowDiffAction myDiffAction;
 
   public void setChangesToDisplay(final List<Change> changes) {
     myChangesToDisplay = changes;
@@ -249,14 +250,13 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
-    final ShowDiffAction diffAction = new ShowDiffAction() {
+    myDiffAction = new ShowDiffAction() {
       public void actionPerformed(AnActionEvent e) {
         showDiff();
       }
     };
-
-    diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myViewer);
-    toolBarGroup.add(diffAction);
+    myDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myViewer);
+    toolBarGroup.add(myDiffAction);
   }
 
   public List<Change> getCurrentDisplayedChanges() {
@@ -316,4 +316,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return ChangesUtil.getFilesFromChanges(changes);
   }
 
+  public ShowDiffAction getDiffAction() {
+    return myDiffAction;
+  }
 }
