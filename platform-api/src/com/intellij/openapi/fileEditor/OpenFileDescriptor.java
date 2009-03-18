@@ -60,7 +60,7 @@ public class OpenFileDescriptor implements Navigatable {
     this(project, file, -1, -1, -1);
   }
 
-  private OpenFileDescriptor(Project project, @NotNull VirtualFile file, int line, int col, int offset) {
+  private OpenFileDescriptor(final Project project, @NotNull final VirtualFile file, int line, int col, int offset) {
     myProject = project;
 
     myFile = file;
@@ -68,14 +68,15 @@ public class OpenFileDescriptor implements Navigatable {
     myColumn = col;
     myOffset = offset;
     if (offset >= 0) {
-      final Document document = FileDocumentManager.getInstance().getDocument(file);
-      myRangeMarker = document != null && offset <= document.getTextLength() ? document.createRangeMarker(offset, offset) : null;
+      myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, offset);
+    }
+    else if (line >= 0 ){
+      myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, line, Math.max(0, col));
     }
     else {
       myRangeMarker = null;
     }
   }
-
 
   @NotNull
   public VirtualFile getFile() {

@@ -42,5 +42,9 @@
       <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.editor.LazyRangeMarkerFactory</implementation-class>
+    </component>
+
   </project-components>
 </components>

@@ -4,23 +4,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.Nullable;
 
 public final class CompilerMessageImpl implements CompilerMessage {
 
   private final Project myProject;
   private final CompilerMessageCategory myCategory;
-  @Nullable private final Navigatable myNavigatable;
+  @Nullable private Navigatable myNavigatable;
   private final String myMessage;
   private VirtualFile myFile;
   private final int myRow;
@@ -61,22 +56,8 @@ public final class CompilerMessageImpl implements CompilerMessage {
     final VirtualFile virtualFile = getVirtualFile();
     if (virtualFile != null && virtualFile.isValid()) {
       final int line = getLine() - 1; // editor lines are zero-based
-      final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-      if (document != null && line >= 0 && line < document.getLineCount()) {
-        final int offset;
-        if (getColumn() > 0) {
-          final int lineStart = document.getLineStartOffset(line);
-          final int lineEnd = document.getLineEndOffset(line);
-          final CharSequence chText = document.getCharsSequence().subSequence(lineStart, lineEnd);
-          final int tabSize = CodeStyleSettingsManager.getSettings(myProject).getTabSize(FileTypeManager.getInstance().getFileTypeByFile(virtualFile));
-          offset = lineStart + EditorUtil.calcOffset(null, chText, 0, chText.length(), getColumn(), tabSize);
-        }
-        else {
-          offset = document.getLineStartOffset(line);
-        }
-        if (offset >= 0 && offset < document.getTextLength()) {
-          return new OpenFileDescriptor(myProject, virtualFile, offset);
-        }
+      if (line >= 0) {
+        return myNavigatable = new OpenFileDescriptor(myProject, virtualFile, line, Math.max(0, getColumn()));
       }
     }
     return null;
