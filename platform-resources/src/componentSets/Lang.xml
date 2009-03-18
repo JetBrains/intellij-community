@@ -216,12 +216,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.ide.todo.TodoView</interface-class>
-      <implementation-class>com.intellij.ide.todo.TodoView</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexProjectHandler</implementation-class>
     </component>
 

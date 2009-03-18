@@ -2,34 +2,28 @@ package com.intellij.ide.todo;
 
 import com.intellij.AppTopics;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -39,7 +33,15 @@ import java.beans.PropertyChangeListener;
 /**
  * @author Vladimir Kondratyev
  */
-public class TodoView implements ProjectComponent,JDOMExternalizable{
+@State(
+  name="TodoView",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class TodoView implements PersistentStateComponent<Element>, Disposable {
   private final Project myProject;
   private final ProjectLevelVcsManager myVCSManager;
   private MyPropertyChangeListener myPropertyChangeListener;
@@ -72,9 +74,16 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     myCurrentPanelSettings=new TodoPanelSettings();
     myAllPanelSettings=new TodoPanelSettings();
     myChangeListTodosPanelSettings = new TodoPanelSettings();
+
+    myVCSManager.addVcsListener(myVcsListener);
+    myPropertyChangeListener=new MyPropertyChangeListener();
+    TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener);
+
+    myConnection = myProject.getMessageBus().connect();
+    myConnection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
   }
 
-  public void readExternal(Element element) throws InvalidDataException{
+  public void loadState(Element element) {
     mySelectedIndex=0;
     try{
       mySelectedIndex=Integer.parseInt(element.getAttributeValue(ATTRIBUTE_SELECTED_INDEX));
@@ -102,7 +111,8 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException{
+  public Element getState() {
+    Element element = new Element("TodoView");
     if(myContentManager!=null){ // all panel were constructed
       Content content=myContentManager.getSelectedContent();
       element.setAttribute(ATTRIBUTE_SELECTED_INDEX,Integer.toString(myContentManager.getIndexOfContent(content)));
@@ -122,18 +132,10 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     changeListElement.setAttribute(ATTRIBUTE_ID, VALUE_DEFAULT_CHANGELIST);
     myChangeListTodosPanelSettings.writeExternal(changeListElement);
     element.addContent(changeListElement);
+    return element;
   }
 
-  public void disposeComponent(){}
-
-  @NotNull
-  public String getComponentName(){
-    return "TodoView";
-  }
-
-  public void initComponent(){}
-
-  public void projectClosed(){
+  public void dispose() {
     myVCSManager.removeVcsListener(myVcsListener);
     TodoConfiguration.getInstance().removePropertyChangeListener(myPropertyChangeListener);
     myConnection.disconnect();
@@ -142,83 +144,58 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
       myCurrentFileTodos.dispose();
       myAllTodos.dispose();
       myChangeListTodos.dispose();
-      ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(myProject);
-      toolWindowManager.unregisterToolWindow(ToolWindowId.TODO_VIEW);
     }
   }
 
-  public void projectOpened(){
-    myVCSManager.addVcsListener(myVcsListener);
-    myPropertyChangeListener=new MyPropertyChangeListener();
-    TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener);
+  public void initToolWindow(ToolWindow toolWindow) {
+    // Create panels
 
-    myConnection = myProject.getMessageBus().connect();
-    myConnection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
-
-    StartupManager startupManager=StartupManager.getInstance(myProject);
-    // it causes building caches for TODOs
-    startupManager.registerPostStartupActivity(
-      new Runnable(){
-        public void run(){
-          // Create panels
-
-          Content allTodosContent= ContentFactory.SERVICE.getInstance().createContent(null, IdeBundle.message("title.project"),false);
-          myAllTodos=new TodoPanel(myProject,myAllPanelSettings,false,allTodosContent){
-            protected TodoTreeBuilder createTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
-              AllTodosTreeBuilder builder=new AllTodosTreeBuilder(tree,treeModel,project);
-              builder.init();
-              return builder;
-            }
-          };
-          allTodosContent.setComponent(myAllTodos);
-
-          Content currentFileTodosContent=
-            ContentFactory.SERVICE.getInstance().createContent(null,IdeBundle.message("title.todo.current.file"),false);
-          myCurrentFileTodos=new CurrentFileTodosPanel(myProject,myCurrentPanelSettings,currentFileTodosContent){
-            protected TodoTreeBuilder createTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
-              CurrentFileTodosTreeBuilder builder=new CurrentFileTodosTreeBuilder(tree,treeModel,project);
-              builder.init();
-              return builder;
-            }
-          };
-          currentFileTodosContent.setComponent(myCurrentFileTodos);
-
-          myChangeListTodosContent = ContentFactory.SERVICE.getInstance()
-            .createContent(null, IdeBundle.message("changelist.todo.title",
-                                                   ChangeListManager.getInstance(myProject).getDefaultChangeList().getName()),
-                                 false);
-          myChangeListTodos = new ChangeListTodosPanel(myProject, myCurrentPanelSettings, myChangeListTodosContent) {
-            protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-              ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, treeModel, project);
-              builder.init();
-              return builder;
-            }
-          };
-          myChangeListTodosContent.setComponent(myChangeListTodos);
-
-          // Register tool window
-
-          ToolWindow toolWindow=ToolWindowManager.getInstance(myProject).registerToolWindow(
-            ToolWindowId.TODO_VIEW,
-            false,
-            ToolWindowAnchor.BOTTOM
-          );
-          toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowTodo.png"));
-          myContentManager=toolWindow.getContentManager();
-
-          myContentManager.addContent(allTodosContent);
-          myContentManager.addContent(currentFileTodosContent);
-          if (myVCSManager.getAllActiveVcss().length > 0) {
-            myVcsListener.myIsVisible = true;
-            myContentManager.addContent(myChangeListTodosContent);
-          }
-
-          Content content=myContentManager.getContent(mySelectedIndex);
-          content = content == null ? allTodosContent : content;
-          myContentManager.setSelectedContent(content);
-        }
+    Content allTodosContent= ContentFactory.SERVICE.getInstance().createContent(null, IdeBundle.message("title.project"),false);
+    myAllTodos=new TodoPanel(myProject,myAllPanelSettings,false,allTodosContent){
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project){
+        AllTodosTreeBuilder builder=new AllTodosTreeBuilder(tree,treeModel,project);
+        builder.init();
+        return builder;
       }
-    );
+    };
+    allTodosContent.setComponent(myAllTodos);
+
+    Content currentFileTodosContent=
+      ContentFactory.SERVICE.getInstance().createContent(null,IdeBundle.message("title.todo.current.file"),false);
+    myCurrentFileTodos=new CurrentFileTodosPanel(myProject,myCurrentPanelSettings,currentFileTodosContent){
+      protected TodoTreeBuilder createTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
+        CurrentFileTodosTreeBuilder builder=new CurrentFileTodosTreeBuilder(tree,treeModel,project);
+        builder.init();
+        return builder;
+      }
+    };
+    currentFileTodosContent.setComponent(myCurrentFileTodos);
+
+    myChangeListTodosContent = ContentFactory.SERVICE.getInstance()
+      .createContent(null, IdeBundle.message("changelist.todo.title",
+                                             ChangeListManager.getInstance(myProject).getDefaultChangeList().getName()),
+                           false);
+    myChangeListTodos = new ChangeListTodosPanel(myProject, myCurrentPanelSettings, myChangeListTodosContent) {
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
+        ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, treeModel, project);
+        builder.init();
+        return builder;
+      }
+    };
+    myChangeListTodosContent.setComponent(myChangeListTodos);
+
+    myContentManager=toolWindow.getContentManager();
+
+    myContentManager.addContent(allTodosContent);
+    myContentManager.addContent(currentFileTodosContent);
+    if (myVCSManager.getAllActiveVcss().length > 0) {
+      myVcsListener.myIsVisible = true;
+      myContentManager.addContent(myChangeListTodosContent);
+    }
+
+    Content content=myContentManager.getContent(mySelectedIndex);
+    content = content == null ? allTodosContent : content;
+    myContentManager.setSelectedContent(content);
   }
 
   private final class MyVcsListener implements VcsListener {
