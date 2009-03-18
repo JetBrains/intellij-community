@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.Abstract implements ProjectComponent {
+public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.Abstract {
   private final Project project;
   private ProjectSettingsPanel optionsPanel = null;
 
@@ -40,21 +40,6 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
   public CopyrightProjectConfigurable(Project project) {
     this.project = project;
     myProfilesPanel = new CopyrightProfilesPanel(project);
-  }
-
-  public void projectOpened() {}
-
-  public void projectClosed() {}
-
-  @NotNull
-  public String getComponentName() {
-    return "copyright";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public String getDisplayName() {

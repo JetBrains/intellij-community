@@ -96,7 +96,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
     @Nullable
     @NonNls
     public String getHelpTopic() {
-        return null;
+        return "copyright.profiles ";
     }
 
     public void apply() throws ConfigurationException {
