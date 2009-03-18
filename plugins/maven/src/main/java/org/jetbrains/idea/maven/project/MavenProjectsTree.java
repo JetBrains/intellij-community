@@ -434,17 +434,18 @@ public class MavenProjectsTree {
     }
   }
 
-  public void generateSources(MavenGeneralSettings coreSettings,
+  public void generateSources(MavenGeneralSettings generalSettings,
+                              MavenImportingSettings importingSettings,
                               MavenConsole console,
                               MavenProcess process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, console, process, this, true);
+    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForResolve(generalSettings, console, process, this, true);
 
     try {
       for (MavenProjectModel each : getProjects()) {
         process.checkCanceled();
         process.setText(ProjectBundle.message("maven.generating.sources.pom", FileUtil.toSystemDependentName(each.getPath())));
         process.setText2("");
-        each.generateSources(embedder, console, process);
+        each.generateSources(embedder, importingSettings, console, process);
       }
     }
     finally {

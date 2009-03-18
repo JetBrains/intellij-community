@@ -49,7 +49,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertTrue(ModuleRootManager.getInstance(getModule("module")).isSdkInherited());
   }
 
-  public void testCreatingFromArtifact() throws Exception {
+  public void testCreatingFromArchetype() throws Exception {
     setArchetype(new MavenId("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0"));
     MavenId id = new MavenId("org.foo", "module", "1.0");
     createNewModule(id);

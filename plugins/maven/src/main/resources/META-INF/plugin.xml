@@ -142,9 +142,9 @@
               icon="/images/mavenSettings.png">
       </action>
 
-      <action id="Maven.ShowDefaultSettings"
-              class="org.jetbrains.idea.maven.project.action.EditDefaultSettingsAction" text="Default Maven settings"
-              description="Edit default Maven integration settings"
+      <action id="Maven.ShowTemplateSettings"
+              class="org.jetbrains.idea.maven.project.action.EditTemplateSettingsAction" text="Template Maven settings"
+              description="Edit template Maven integration settings"
               icon="/general/applicationSettings.png">
       </action>
     </group>
@@ -216,7 +216,7 @@
       <reference id="Maven.RunGoal"/>
       <separator/>
       <reference id="Maven.ShowSettings"/>
-      <reference id="Maven.ShowDefaultSettings"/>
+      <reference id="Maven.ShowTemplateSettings"/>
       <reference id="Maven.ToggleOffline"/>
       <reference id="Maven.ToggleSkipTests"/>
       <separator/>

@@ -228,6 +228,8 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     createStdProjectFolders();
     createProjectSubDirs("extraTestResources");
 
+    getMavenImporterSettings().setUpdateFoldersOnImportPhase("generate-test-resources");
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -330,50 +332,6 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     assertSources("project", "src/main/java", "target/src");
-  }
-
-  public void testDoNotUpdatePluginSourcesWithInvalidDependency() throws Exception {
-    createStdProjectFolders();
-    createProjectSubDirs("src/foo");
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>invalid</groupId>" +
-                  "    <artifactId>dependency</artifactId>" +
-                  "    <version>123</version>" +
-                  "  </dependency>" +
-                  "</dependencies>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.mojo</groupId>" +
-                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>someId</id>" +
-                  "          <phase>generate-sources</phase>" +
-                  "          <goals>" +
-                  "            <goal>add-source</goal>" +
-                  "          </goals>" +
-                  "          <configuration>" +
-                  "            <sources>" +
-                  "              <source>src/foo</source>" +
-                  "            </sources>" +
-                  "          </configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-    generateSources();
-    assertModules("project");
-
-    assertSources("project", "src/main/java");
   }
 
   public void testPluginSourcesWithIntermoduleDependency() throws Exception {
