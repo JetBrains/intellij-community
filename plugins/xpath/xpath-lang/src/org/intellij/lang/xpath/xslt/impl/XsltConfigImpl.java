@@ -22,16 +22,12 @@ import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
 import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupport;
 import org.intellij.lang.xpath.xslt.validation.XsltAnnotator;
 
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.*;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -39,9 +35,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameInputValidator;
@@ -58,23 +51,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 
 class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, ApplicationComponent {
     private static final Logger LOG = Logger.getInstance(XsltConfigImpl.class.getName());
 
     private static final String XSLT_SCHEMA_LOCATION = "resources/xslt-schema.xsd";
-    private static final String XSLT_TEMPLATE_NAME = "XSLT Stylesheet";
-    private static final String XSLT_TEMPLATE_LOCATION = "resources/" + XSLT_TEMPLATE_NAME + ".xsl";
 
     public boolean ENABLED = true;
     public boolean REGISTER_SCHEMA = true;
-    public boolean REGISTER_TEMPLATE = true;
     public boolean SHOW_LINKED_FILES = true;
-
-    private boolean myExtensionConflict;
 
     public void readExternal(Element element) throws InvalidDataException {
         DefaultJDOMExternalizer.readExternal(this, element);
@@ -86,20 +72,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
 
     @SuppressWarnings({ "StringEquality" })
     public void initComponent() {
-        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance();
-        final FileTemplate template = fileTemplateManager.getTemplate(XSLT_TEMPLATE_NAME);
-        final VirtualFile file = VfsUtil.findFileByURL(XsltConfig.class.getResource(XSLT_TEMPLATE_LOCATION));
-        String templateText = null;
-        try {
-            if (file != null) {
-                templateText = new String(FileUtil.adaptiveLoadText(new InputStreamReader(file.getInputStream(), "UTF-8")));
-            } else {
-                templateText = null;
-            }
-        } catch (IOException e) {
-            LOG.error("Error loading bundled XSLT template text", e);
-        }
-
         if (ENABLED) {
             ChooseByNameRegistry.getInstance().contributeToSymbols(new XsltChooseByNameContributor());
 
@@ -139,30 +111,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
                     erm.addStdResource(XsltSupport.XSLT_NS, XSLT_SCHEMA_LOCATION, clazz);
                 }
             }
-
-            if (REGISTER_TEMPLATE) {
-                final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-                final FileType type = fileTypeManager.getFileTypeByExtension("xsl");
-                if (type == StdFileTypes.UNKNOWN) {
-                    LOG.info("Registered extension 'xsl' with XML File Type");
-                    fileTypeManager.associateExtension(StdFileTypes.XML, "xsl");
-                } else if (type != StdFileTypes.XML) {
-                    LOG.info("Conflicting FileType registered for extension 'xsl': " + type.getDescription());
-                    myExtensionConflict = true;
-                }
-                if (templateText != null) {
-                    if (!myExtensionConflict && template == null) {
-                        final FileTemplate fileTemplate = fileTemplateManager.addTemplate(XSLT_TEMPLATE_NAME, "xsl");
-                        fileTemplate.setText(templateText);
-                        fileTemplate.setAdjust(true);
-                    } else if (template != null && template.getText().equals(templateText)) {
-                        fileTemplateManager.removeTemplate(template, true);
-                    }
-                }
-            }
-        } else if (template != null && template.getText().equals(templateText)) {
-            // remove the template we have provided if the plugin is toggled off and the template has not been modified
-            fileTemplateManager.removeTemplate(template, true);
         }
     }
 
@@ -183,10 +131,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
         return REGISTER_SCHEMA;
     }
 
-    public boolean isRegisterTemplate() {
-        return REGISTER_TEMPLATE && !myExtensionConflict;
-    }
-
     public boolean isShowLinkedFiles() {
         return SHOW_LINKED_FILES;
     }
@@ -198,7 +142,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
     public static class UIImpl extends JPanel implements UI {
         private final JCheckBox myXsltSupport;
         private final JCheckBox myRegisterSchema;
-        private final JCheckBox myRegisterTemplate;
         private final JCheckBox myShowLinkedFiles;
 
         private final XsltConfigImpl myConfig;
@@ -215,7 +158,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
                 public void itemStateChanged(ItemEvent e) {
                     final boolean enabled = myXsltSupport.isSelected();
                     myRegisterSchema.setEnabled(enabled);
-                    myRegisterTemplate.setEnabled(enabled && !myConfig.myExtensionConflict);
                     myShowLinkedFiles.setEnabled(enabled);
                 }
             });
@@ -225,33 +167,14 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
             myRegisterSchema.setSelected(myConfig.REGISTER_SCHEMA);
             myRegisterSchema.setEnabled(myConfig.ENABLED);
 
-            myRegisterTemplate = new JCheckBox("Register XSLT File Template");
-            myRegisterTemplate.setMnemonic('F');
-            myRegisterTemplate.setSelected(myConfig.REGISTER_TEMPLATE);
-
-            final String infoLine;
-            if (myConfig.myExtensionConflict) {
-                infoLine = "To enable this option, please register the extension 'xsl' with the XML File Type.";
-                myRegisterTemplate.setEnabled(false);
-            } else {
-                infoLine = "The template can be modified by Settings | IDE Settings | File Types.";
-                myRegisterTemplate.setEnabled(myConfig.ENABLED);
-            }
-            myRegisterTemplate.setToolTipText("<html>" +
-                    "Registers simple file template as New -> XSLT Stylesheet." +
-                    "<br>" +
-                    infoLine +
-                    "</html>");
-
             myShowLinkedFiles = new JCheckBox("Show Associated Files in Project View");
             myShowLinkedFiles.setMnemonic('A');
             myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
             myRegisterSchema.setEnabled(myConfig.ENABLED);
 
-            this.add(myXsltSupport);
-            this.add(myRegisterSchema);
-            this.add(myRegisterTemplate);
-            this.add(myShowLinkedFiles);
+            add(myXsltSupport);
+            add(myRegisterSchema);
+            add(myShowLinkedFiles);
 
             final JPanel jPanel = new JPanel(new BorderLayout());
             jPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
@@ -259,7 +182,7 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
             final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
             jPanel.add(panel, BorderLayout.SOUTH);
             jPanel.setAlignmentX(0);
-            this.add(jPanel);
+            add(jPanel);
         }
 
         @Nls
@@ -288,7 +211,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
         public boolean isModified() {
             return myConfig.ENABLED != myXsltSupport.isSelected() ||
                     myConfig.REGISTER_SCHEMA != myRegisterSchema.isSelected() ||
-                    myConfig.REGISTER_TEMPLATE != myRegisterTemplate.isSelected() ||
                     myConfig.SHOW_LINKED_FILES != myShowLinkedFiles.isSelected();
         }
 
@@ -297,7 +219,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
 
             myConfig.ENABLED = myXsltSupport.isSelected();
             myConfig.REGISTER_SCHEMA = myRegisterSchema.isSelected();
-            myConfig.REGISTER_TEMPLATE = myRegisterTemplate.isSelected();
             myConfig.SHOW_LINKED_FILES = myShowLinkedFiles.isSelected();
 
             // TODO: make this a ConfigListener
@@ -314,7 +235,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
         public void reset() {
             myXsltSupport.setSelected(myConfig.ENABLED);
             myRegisterSchema.setSelected(myConfig.REGISTER_SCHEMA);
-            myRegisterTemplate.setSelected(myConfig.REGISTER_TEMPLATE);
             myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
         }
     }

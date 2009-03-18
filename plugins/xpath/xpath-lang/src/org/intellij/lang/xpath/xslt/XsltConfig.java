@@ -27,8 +27,6 @@ public abstract class XsltConfig {
 
     public abstract boolean isRegisterSchema();
 
-    public abstract boolean isRegisterTemplate();
-
     public abstract UI createConfigUI();
 
     public abstract boolean isShowLinkedFiles();
