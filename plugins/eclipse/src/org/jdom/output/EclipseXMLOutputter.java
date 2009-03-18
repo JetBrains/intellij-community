@@ -62,6 +62,9 @@ import org.jdom.*;
 import javax.xml.transform.Result;
 import java.io.*;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * Outputs a JDOM document as a stream of bytes. The outputter can manage many
@@ -1110,8 +1113,17 @@ public class EclipseXMLOutputter implements Cloneable {
         // this is illegal; but as yet we don't throw an exception
         // if someone tries to do this
         // Set prefixes = new HashSet();
-        for (int i = 0; i < attributes.size(); i++) {
-            Attribute attribute = (Attribute) attributes.get(i);
+        List<Attribute> atts = new ArrayList<Attribute>();
+        for (Object attribute : attributes) {
+          atts.add((Attribute)((Attribute)attribute).clone());
+        }
+        Collections.sort(atts, new Comparator<Attribute>() {
+          public int compare(Attribute o1, Attribute o2) {
+            return o1.getName().compareTo(o2.getName());
+          }
+        });
+        for (int i = 0; i < atts.size(); i++) {
+            Attribute attribute = (Attribute) atts.get(i);
             Namespace ns = attribute.getNamespace();
             if ((ns != Namespace.NO_NAMESPACE) &&
                 (ns != Namespace.XML_NAMESPACE)) {
