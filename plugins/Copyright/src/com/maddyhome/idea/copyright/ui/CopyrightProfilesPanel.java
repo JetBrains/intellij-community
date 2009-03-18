@@ -270,6 +270,11 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
         super.reset();
     }
 
+  @Override
+  protected String getEmptySelectionString() {
+    return "Select a profile to view or edit its details here";
+  }
+
   public void addItemsChangeListener(final Runnable runnable) {
     addItemsChangeListener(new ItemsChangeListener() {
       public void itemChanged(@Nullable Object deletedItem) {
