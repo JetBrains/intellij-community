@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -31,7 +30,6 @@ public class PlatformDataKeys {
   public static final DataKey<String> FILE_TEXT = DataKey.create(DataConstants.FILE_TEXT);
   public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create(DataConstants.IS_MODAL_CONTEXT);
   public static final DataKey<DiffViewer> DIFF_VIEWER = DataKey.create(DataConstants.DIFF_VIEWER);
-  public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("diffRequest");
   public static final DataKey<String> HELP_ID = DataKey.create(DataConstants.HELP_ID);
   public static final DataKey<Project> PROJECT_CONTEXT = DataKey.create(DataConstants.PROJECT_CONTEXT);
   public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create(DataConstants.CONTEXT_COMPONENT);

@@ -1,27 +1,24 @@
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.DiffManager;
+import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.DiffViewer;
+import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,18 +173,21 @@ public class ShowDiffAction extends AnAction {
     }
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
 
-    final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, actionsFactory);
-    if (diffReq != null) {
+    final ChangeDiffRequest request = new ChangeDiffRequest(project, changes, actionsFactory);
+    final SimpleDiffRequest simpleRequest = request.moveForward();
+    if (simpleRequest != null) {
+      simpleRequest.passForDataContext(VcsDataKeys.DIFF_REQUEST_CHAIN, request);
+
       if (showFrame) {
-        diffReq.addHint(DiffTool.HINT_SHOW_FRAME);
+        simpleRequest.addHint(DiffTool.HINT_SHOW_FRAME);
       }
       else {
-        diffReq.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
+        simpleRequest.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
       }
       if (changes.length > 1) {
-        diffReq.addHint(DiffTool.HINT_ALLOW_NO_DIFFERENCES);
+        simpleRequest.addHint(DiffTool.HINT_ALLOW_NO_DIFFERENCES);
       }
-      tool.show(diffReq);
+      tool.show(simpleRequest);
     }
   }
 
@@ -196,155 +196,22 @@ public class ShowDiffAction extends AnAction {
     Collections.addAll(changesList, changes);
     for(int i=changesList.size()-1; i >= 0; i--) {
       final FilePath path = ChangesUtil.getFilePath(changesList.get(i));
-      if (path.isDirectory() || path.getFileType().isBinary()) {
+      if (path.isDirectory()) {
+        changesList.remove(i);
+      }
+      final FileType type = path.getFileType();
+      if ((! FileTypes.UNKNOWN.equals(type)) && (type.isBinary())) {
         changesList.remove(i);
       }
     }
     return changesList.toArray(new Change[changesList.size()]);
   }
 
-  static void showDiffForChange(AnActionEvent e,
-                                        final Change[] changes,
-                                        final int index,
-                                        final Project project,
-                                        DiffExtendUIFactory actionsFactory) {
-    DiffViewer diffViewer = e.getData(PlatformDataKeys.DIFF_VIEWER);
+  static void showNextPrevDiffForChange(@NotNull final AnActionEvent e, @NotNull final SimpleDiffRequest request) {
+    final DiffViewer diffViewer = e.getData(PlatformDataKeys.DIFF_VIEWER);
     if (diffViewer != null) {
-      final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, actionsFactory);
-      if (diffReq != null) {
-        diffViewer.setDiffRequest(diffReq);
-      }
+      diffViewer.setDiffRequest(request);
     }
-  }
-
-  @Nullable
-  private static SimpleDiffRequest createDiffRequest(final Change[] changes,
-                                                     final int index,
-                                                     final Project project,
-                                                     final DiffExtendUIFactory actionsFactory) {
-    final Change change = changes[index];
-
-    final ContentRevision bRev = change.getBeforeRevision();
-    final ContentRevision aRev = change.getAfterRevision();
-
-    if ((bRev != null && (bRev.getFile().getFileType().isBinary() || bRev.getFile().isDirectory())) ||
-        (aRev != null && (aRev.getFile().getFileType().isBinary() || aRev.getFile().isDirectory()))) {
-      if (bRev != null && bRev.getFile().getFileType() == FileTypes.UNKNOWN && !bRev.getFile().isDirectory()) {
-        if (!checkAssociate(project, bRev.getFile())) return null;
-      }
-      else if (aRev != null && aRev.getFile().getFileType() == FileTypes.UNKNOWN && !aRev.getFile().isDirectory()) {
-        if (!checkAssociate(project, aRev.getFile())) return null;
-      }
-      else {
-        return null;
-      }
-    }
-
-    String beforePath = bRev != null ? bRev.getFile().getPath() : null;
-    String afterPath = aRev != null ? aRev.getFile().getPath() : null;
-    String title;
-    if (beforePath != null && afterPath != null && !beforePath.equals(afterPath)) {
-      title = beforePath + " -> " + afterPath;
-    }
-    else if (beforePath != null) {
-      title = beforePath;
-    }
-    else if (afterPath != null) {
-      title = afterPath;
-    }
-    else {
-      title = VcsBundle.message("diff.unknown.path.title");
-    }
-    final ChangeDiffRequest diffReq = new ChangeDiffRequest(project, title, changes, index, actionsFactory);
-
-    if (changes.length > 1 || actionsFactory != null) {
-      diffReq.setToolbarAddons(new DiffRequest.ToolbarAddons() {
-        public void customize(DiffToolbar toolbar) {
-          if (changes.length > 1) {
-            toolbar.addSeparator();
-            toolbar.addAction(ActionManager.getInstance().getAction("Diff.PrevChange"));
-            toolbar.addAction(ActionManager.getInstance().getAction("Diff.NextChange"));
-          }
-          if (actionsFactory != null) {
-            toolbar.addSeparator();
-            for (AnAction action : actionsFactory.createActions(change)) {
-              toolbar.addAction(action);
-            }
-          }
-        }
-      });
-    }
-
-    if (actionsFactory != null) {
-      diffReq.setBottomComponentFactory(new NullableFactory<JComponent>() {
-        public JComponent create() {
-          return actionsFactory.createBottomComponent();
-        }
-      });
-    }
-
-    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        diffReq.setContents(createContent(project, (ContentRevision) bRev), createContent(project, (ContentRevision) aRev));
-      }
-    }, VcsBundle.message("progress.loading.diff.revisions"), true, project);
-    if (!result) return null;
-
-    String beforeRevisionTitle = (bRev != null) ? bRev.getRevisionNumber().asString() : "";
-    String afterRevisionTitle = (aRev != null) ? aRev.getRevisionNumber().asString() : "";
-    if (beforeRevisionTitle.length() == 0) {
-      beforeRevisionTitle = "Base version";
-    }
-    if (afterRevisionTitle.length() == 0) {
-      afterRevisionTitle = "Your version";
-    }
-    diffReq.setContentTitles(beforeRevisionTitle, afterRevisionTitle);
-    return diffReq;
-  }
-
-  private static boolean checkAssociate(final Project project, final FilePath file) {
-    int rc = Messages.showDialog(project,
-                                 VcsBundle.message("diff.unknown.file.type.prompt", file.getName()),
-                                 VcsBundle.message("diff.unknown.file.type.title"),
-                                 new String[] {
-                                   VcsBundle.message("diff.unknown.file.type.associate"),
-                                   CommonBundle.getCancelButtonText()
-                                 }, 0, Messages.getQuestionIcon());
-    if (rc == 0) {
-      FileType fileType = FileTypeChooser.associateFileType(file.getName());
-      return fileType != null && !fileType.isBinary();
-    }
-    return false;
-  }
-
-  @NotNull
-  private static DiffContent createContent(Project project, ContentRevision revision) {
-    ProgressManager.getInstance().checkCanceled();
-    if (revision == null) return new SimpleContent("");
-    if (revision instanceof CurrentContentRevision) {
-      final CurrentContentRevision current = (CurrentContentRevision)revision;
-      final VirtualFile vFile = current.getVirtualFile();
-      return vFile != null ? new FileContent(project, vFile) : new SimpleContent("");
-    }
-
-    String revisionContent;
-    try {
-      revisionContent = revision.getContent();
-    }
-    catch(VcsException ex) {
-      // TODO: correct exception handling
-      revisionContent = null;           
-    }
-    SimpleContent content = revisionContent == null
-                            ? new SimpleContent("")
-                            : new SimpleContent(revisionContent, revision.getFile().getFileType());
-    VirtualFile vFile = revision.getFile().getVirtualFile();
-    if (vFile != null) {
-      content.setCharset(vFile.getCharset());
-      content.setBOM(vFile.getBOM());
-    }
-    content.setReadOnly(true);
-    return content;
   }
 
   private static boolean checkNotifyBinaryDiff(final Change selectedChange) {

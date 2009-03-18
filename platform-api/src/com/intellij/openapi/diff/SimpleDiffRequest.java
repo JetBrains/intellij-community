@@ -15,14 +15,13 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * Two contents for general diff
@@ -33,10 +32,12 @@ public class SimpleDiffRequest extends DiffRequest {
   private final String[] myContentTitles = new String[2];
   private String myWindowTitle;
   private final HashSet myHints = new HashSet();
+  private final Map<String, Object> myGenericData;
 
   public SimpleDiffRequest(Project project, String windowtitle) {
     super(project);
     myWindowTitle = windowtitle;
+    myGenericData = new HashMap<String, Object>(2);
   }
 
   public DiffContent[] getContents() { return myContents; }
@@ -45,6 +46,14 @@ public class SimpleDiffRequest extends DiffRequest {
 
   public Collection getHints() {
     return Collections.unmodifiableCollection(myHints);
+  }
+
+  public void passForDataContext(final DataKey key, final Object value) {
+    myGenericData.put(key.getName(), value);
+  }
+
+  public Map<String, Object> getGenericData() {
+    return myGenericData;
   }
 
   /**
