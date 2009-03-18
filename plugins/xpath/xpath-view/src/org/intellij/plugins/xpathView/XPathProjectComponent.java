@@ -15,20 +15,19 @@
  */
 package org.intellij.plugins.xpathView;
 
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.intellij.plugins.xpathView.util.Variable;
-
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-
-import org.jetbrains.annotations.NotNull;
-
 import org.jdom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * Project component.<br>
@@ -36,7 +35,15 @@ import java.util.*;
  * It is configured to write its settings into the .iws file rather
  * than the .ipr file. (see plugin.xml)
  */
-public class XPathProjectComponent implements ProjectComponent, JDOMExternalizable {
+@State(
+  name="XPathView.XPathProjectComponent",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class XPathProjectComponent implements PersistentStateComponent<Element> {
     protected static final String HISTORY_ELEMENT = "element";
     protected static final String HISTORY = "history";
     protected static final String FIND_HISTORY = "find-history";
@@ -53,27 +60,10 @@ public class XPathProjectComponent implements ProjectComponent, JDOMExternalizab
 
 //    private Set<Namespace> namespaces = new HashSet();
 
-    public void projectOpened() {
-    }
-
-    public void projectClosed() {
-    }
-
-    @NotNull
-    public String getComponentName() {
-        return "XPathView.XPathProjectComponent";
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
-    }
-
-    public void readExternal(Element element) throws InvalidDataException {
-        readHistory(element, HISTORY, history);
-        readHistory(element, FIND_HISTORY, findHistory);
-    }
+  public void loadState(Element state) {
+    readHistory(state, HISTORY, history);
+    readHistory(state, FIND_HISTORY, findHistory);
+  }
 
     @SuppressWarnings({"unchecked"})
     private static void readHistory(Element element, String s, LinkedHashMap<String, HistoryElement> hst) {
@@ -100,10 +90,12 @@ public class XPathProjectComponent implements ProjectComponent, JDOMExternalizab
         }
     }
 
-    public void writeExternal(Element element) throws WriteExternalException {
-        writeHistory(element, HISTORY, history);
-        writeHistory(element, FIND_HISTORY, findHistory);
-    }
+  public Element getState() {
+    Element element = new Element("xpathview");
+    writeHistory(element, HISTORY, history);
+    writeHistory(element, FIND_HISTORY, findHistory);
+    return element;
+  }
 
     private static void writeHistory(Element element, String s, LinkedHashMap<String, HistoryElement> hst) {
         final Element historyElement = new Element(s);
@@ -163,6 +155,6 @@ public class XPathProjectComponent implements ProjectComponent, JDOMExternalizab
     }
 
     public static XPathProjectComponent getInstance(Project project) {
-        return project.getComponent(XPathProjectComponent.class);
+        return ServiceManager.getService(project, XPathProjectComponent.class);
     }
 }

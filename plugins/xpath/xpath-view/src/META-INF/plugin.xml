@@ -67,6 +67,10 @@
         serviceInterface="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState"
         serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState" />
 
+    <projectService
+      serviceInterface="org.intellij.plugins.xpathView.XPathProjectComponent"
+      serviceImplementation="org.intellij.plugins.xpathView.XPathProjectComponent"/>
+
     <annotator language="XPath" implementationClass="org.intellij.lang.xpath.validation.XPathAnnotator" />
     <lang.parserDefinition language="XPath" implementationClass="org.intellij.lang.xpath.XPathParserDefinition" />
     <lang.braceMatcher language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathPairedBraceMatcher" />
@@ -136,13 +140,6 @@
 
   <!-- Plugin's project components -->
   <project-components>
-    <component>
-      <implementation-class>org.intellij.plugins.xpathView.XPathProjectComponent</implementation-class>
-
-      <!-- save in workspace rather than project file -->
-      <option name="workspace" value="true" />
-    </component>
-
     <!-- XSLT integration -->
     <component>
       <interface-class>org.intellij.lang.xpath.xslt.associations.FileAssociationsManager</interface-class>
