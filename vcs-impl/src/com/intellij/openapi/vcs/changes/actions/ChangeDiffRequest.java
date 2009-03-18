@@ -45,11 +45,18 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     myChanges = new ArrayList<Change>(changes.length);
     Collections.addAll(myChanges, changes);
 
-    myIndex = -1;
+    myIndex = 0;
     myActionsFactory = actionsFactory;
 
     myPrevChangeAction = ActionManager.getInstance().getAction("Diff.PrevChange");
     myNextChangeAction = ActionManager.getInstance().getAction("Diff.NextChange");
+  }
+
+  @Nullable
+  public SimpleDiffRequest init(final int idx) {
+    if (idx < 0 || idx > (myChanges.size() - 1)) return null;
+    myIndex = idx - 1;
+    return moveForward();
   }
 
   public boolean canMoveForward() {

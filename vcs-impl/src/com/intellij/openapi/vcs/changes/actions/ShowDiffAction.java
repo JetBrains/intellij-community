@@ -174,7 +174,7 @@ public class ShowDiffAction extends AnAction {
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
 
     final ChangeDiffRequest request = new ChangeDiffRequest(project, changes, actionsFactory);
-    final SimpleDiffRequest simpleRequest = request.moveForward();
+    final SimpleDiffRequest simpleRequest = request.init(index);
     if (simpleRequest != null) {
       simpleRequest.passForDataContext(VcsDataKeys.DIFF_REQUEST_CHAIN, request);
 
@@ -196,10 +196,11 @@ public class ShowDiffAction extends AnAction {
     Collections.addAll(changesList, changes);
     for(int i=changesList.size()-1; i >= 0; i--) {
       final Change change = changesList.get(i);
-      if ((change.getBeforeRevision() instanceof BinaryContentRevision) || (change.getAfterRevision() instanceof BinaryContentRevision)) {
+      // todo instead for repository tab, filter directories (? ask remotely ? non leaf nodes)
+      /*if ((change.getBeforeRevision() instanceof BinaryContentRevision) || (change.getAfterRevision() instanceof BinaryContentRevision)) {
         changesList.remove(i);
         continue;
-      }
+      }*/
       final FilePath path = ChangesUtil.getFilePath(change);
       if (path.isDirectory()) {
         changesList.remove(i);
