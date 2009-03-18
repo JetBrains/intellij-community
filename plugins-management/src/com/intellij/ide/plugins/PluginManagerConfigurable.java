@@ -2,13 +2,14 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
       myUISettings.getSplitterProportionsData().saveSplitterProportions(myPluginManagerMain.getMainPanel());
       myUISettings.getAvailableTableProportions().saveProportion(myPluginManagerMain.getAvailablePluginsTable());
       myUISettings.getInstalledTableProportions().saveProportion(myPluginManagerMain.getInstalledPluginTable());
+      Disposer.dispose(myPluginManagerMain);
       myPluginManagerMain = null;
     }
   }

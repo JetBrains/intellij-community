@@ -3,6 +3,7 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,6 +13,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -59,6 +61,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
   private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
+  private Disposable myUIDisposable;
 
   @NonNls private static final String CURRENT_TAB = "FileTemplates.CurrentTab";
   @NonNls private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
@@ -139,6 +142,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   }
 
   public JComponent createComponent() {
+    myUIDisposable = new Disposable() {
+      public void dispose() {
+      }
+    };
     myTemplatesList = new FileTemplateTabAsList(TEMPLATES_TITLE) {
       public void onTemplateSelected() {
         onListSelectionChanged();
@@ -191,7 +198,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       allTabs.add(myJ2eeTemplatesList);
     }
     myTabs = allTabs.toArray(new FileTemplateTab[allTabs.size()]);
-    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane = new TabbedPaneWrapper(myUIDisposable);
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     for (FileTemplateTab tab : myTabs) {
       myTabbedPane.addTab(tab.getTitle(), new JScrollPane(tab.getComponent()));
@@ -686,6 +693,11 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       myEditorComponent = null;
     }
     myMainPanel = null;
+    if (myUIDisposable != null) {
+      Disposer.dispose(myUIDisposable);
+      myUIDisposable = null;
+    }
+    myTabbedPane = null;
   }
 
   public void createNewTemplate(String preferredName, String extension, String text) {

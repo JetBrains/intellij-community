@@ -33,6 +33,7 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -78,7 +79,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 
-public abstract class CodeStyleAbstractPanel {
+public abstract class CodeStyleAbstractPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
   private final Editor myEditor;
   private final CodeStyleSettings mySettings;

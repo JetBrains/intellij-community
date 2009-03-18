@@ -40,6 +40,10 @@ public class TabbedPaneWrapper  {
     this(SwingConstants.TOP);
   }
 
+  public TabbedPaneWrapper(Disposable parentDisposable) {
+    this(SwingConstants.TOP, DEFAULT_SHORTCUTS, parentDisposable);
+  }
+
   /**
    * Creates tabbed pane wrapper with specified tab placement
    *
@@ -53,9 +57,13 @@ public class TabbedPaneWrapper  {
 
 
   public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
+    this(tabPlacement, installKeyboardNavigation, null);
+  }
+
+  public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, final Disposable parentDisposable) {
     final TabFactory factory;
     if (SwingConstants.BOTTOM == tabPlacement || SwingConstants.TOP == tabPlacement) {
-      factory = new JBTabsFactory(this, null, null);
+      factory = new JBTabsFactory(this, null, parentDisposable);
     } else {
       factory = new JTabbedPaneFactory(this);
     }

@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -46,7 +47,7 @@ import java.util.List;
  * Time: 9:47:59 PM
  * To change this template use Options | File Templates.
  */
-public class PluginManagerMain {
+public class PluginManagerMain implements Disposable {
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
   @NonNls private static final String TEXT_PREFIX = "<html><body style=\"font-family: Arial; font-size: 12pt;\">";
@@ -143,7 +144,7 @@ public class PluginManagerMain {
       }
     });
 
-    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane = new TabbedPaneWrapper(this);
     myTablePanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
     myTablePanel.setMinimumSize(new Dimension(400, -1));
     myTabbedPane.addTab(IdeBundle.message("plugin.status.installed"), installedScrollPane);
@@ -167,6 +168,9 @@ public class PluginManagerMain {
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
     myToolbarPanel.add(myActionToolbar.getComponent(), BorderLayout.WEST);
     myToolbarPanel.add(myFilter, BorderLayout.EAST);
+  }
+
+  public void dispose() {
   }
 
   public void filter(String filter) {

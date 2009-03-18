@@ -1,5 +1,6 @@
 package com.intellij.application.options;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -108,7 +109,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myCbUseSameIndents = new JCheckBox(ApplicationBundle.message("checkbox.indent.use.same.settings.for.all.file.types"));
     optionGroup.add(myCbUseSameIndents);
 
-    myIndentOptionsTabs = new TabbedPaneWrapper(JTabbedPane.TOP);
+    myIndentOptionsTabs = new TabbedPaneWrapper(this);
 
     for(Map.Entry<FileType, IndentOptionsEditor> entry: myAdditionalIndentOptions.entrySet()) {
       FileType ft = entry.getKey();

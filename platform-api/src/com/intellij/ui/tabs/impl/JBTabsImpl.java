@@ -2272,6 +2272,7 @@ public class JBTabsImpl extends JComponent
       myActionManager = mgr;
       myTabs = tabs;
       myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs);
+      Disposer.register(tabs, myShadow);
       setEnabledInModalContext(true);
     }
 

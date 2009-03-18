@@ -31,10 +31,11 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 
 import javax.swing.*;
 
@@ -92,7 +93,7 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
 
   public void disposeUIResources() {
     if (myPanel != null) {
-      myPanel.dispose();
+      Disposer.dispose(myPanel);
       myPanel = null;
     }
   }
