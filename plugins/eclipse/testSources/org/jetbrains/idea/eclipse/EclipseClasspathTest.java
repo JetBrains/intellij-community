@@ -58,7 +58,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
   }
 
   private void doTest() throws Exception {
-    final String path =  getProject().getBaseDir().getPath()  + "/test";
+    final String path = getProject().getBaseDir().getPath() + "/test";
 
     final Element classpathElement = JDOMUtil.loadDocument(new File(path, EclipseXml.DOT_CLASSPATH_EXT)).getRootElement();
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
@@ -70,14 +70,17 @@ public class EclipseClasspathTest extends IdeaTestCase {
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, getProject());
     classpathReader.init(rootModel);
-    classpathReader.readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null, classpathElement);
+    classpathReader
+      .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null,
+                     classpathElement);
     rootModel.commit();
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     final Element resultClasspathElement = new Element(EclipseXml.CLASSPATH_TAG);
     new EclipseClasspathWriter(model).writeClasspath(resultClasspathElement, classpathElement);
     model.dispose();
 
-    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(resultClasspathElement), "\n")), JDOMUtil.areElementsEqual(classpathElement, resultClasspathElement));
+    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(resultClasspathElement), "\n")),
+                      JDOMUtil.areElementsEqual(classpathElement, resultClasspathElement));
   }
 
 
@@ -118,6 +121,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
   }
 
   public void testEmptySrc() throws Exception {
+    doTest();
+  }
+
+  public void testHttpJavadoc() throws Exception {
     doTest();
   }
 
