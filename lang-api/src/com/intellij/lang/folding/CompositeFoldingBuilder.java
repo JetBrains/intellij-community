@@ -17,9 +17,11 @@
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -39,35 +41,30 @@ import java.util.*;
 class CompositeFoldingBuilder implements FoldingBuilder {
   private final List<FoldingBuilder> myBuilders;
   private final Map<VirtualFile, Map<ASTNode, FoldingBuilder>> foldings = new HashMap<VirtualFile, Map<ASTNode, FoldingBuilder>>();
+  private final FileEditorManagerListener myListener;
+  private final List<Integer> myProjectsCache = new ArrayList<Integer>();
 
   CompositeFoldingBuilder(List<FoldingBuilder> builders) {
     myBuilders = builders;
-    //MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    //connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-    //  @Override
-    //  public void fileClosed(FileEditorManager source, VirtualFile file) {
-    //    synchronized (foldings) {
-    //      foldings.remove(file);
-    //    }
-    //  }
-    //});
+    myListener = new FileEditorManagerAdapter() {
+      @Override
+      public void fileClosed(FileEditorManager source, VirtualFile file) {
+        foldings.remove(file);
+      }
+    };
   }
 
   public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
     final PsiElement psi = node.getPsi();
     if (psi == null) return FoldingDescriptor.EMPTY;
-
+    checkSubscription(psi.getProject());
     final PsiFile file = PsiDocumentManager.getInstance(psi.getProject()).getPsiFile(document);
     final VirtualFile vf;
     if (file == null || (vf = file.getVirtualFile()) == null) return FoldingDescriptor.EMPTY;
 
     final List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
-    Map<ASTNode, FoldingBuilder> builders;
-    builders = foldings.get(vf);
-    if (builders == null) {
-      builders = new HashMap<ASTNode, FoldingBuilder>();
-      foldings.put(vf, builders);
-    }
+    final Map<ASTNode, FoldingBuilder> builders = new HashMap<ASTNode, FoldingBuilder>();
+    foldings.put(vf, builders);
 
     for (FoldingBuilder builder : myBuilders) {
       final FoldingDescriptor[] foldingDescriptors = builder.buildFoldRegions(node, document);
@@ -78,20 +75,16 @@ class CompositeFoldingBuilder implements FoldingBuilder {
         }
       }
     }
-    final FileEditorManager editorManager = FileEditorManager.getInstance(psi.getProject());
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (VirtualFile virtualFile : new HashSet<VirtualFile>(foldings.keySet())) {
-          if (!editorManager.isFileOpen(virtualFile)) {
-            foldings.remove(virtualFile);
-          }
-        }
-      }
-    });
-
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
+
+  private void checkSubscription(Project project) {
+    if (! myProjectsCache.contains(project.hashCode())) {
+      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myListener);
+      myProjectsCache.add(project.hashCode());
+    }
+  }
+
 
   public String getPlaceholderText(ASTNode node) {
     final FoldingBuilder builder = findBuilderByASTNode(node);
