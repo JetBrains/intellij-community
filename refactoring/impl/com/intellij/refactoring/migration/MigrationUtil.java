@@ -1,4 +1,3 @@
-
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,18 +19,14 @@ import java.util.ArrayList;
 public class MigrationUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationUtil");
 
-  public static UsageInfo[] findPackageUsages(PsiManager manager,
-                                              PsiMigration migration,
-                                              String qName) {
+  public static UsageInfo[] findPackageUsages(PsiManager manager, PsiMigration migration, String qName) {
     PsiPackage aPackage = findOrCreatePackage(manager, migration, qName);
 
     return findRefs(manager, aPackage);
   }
 
-  public static void doPackageMigration(PsiManager manager,
-                                        PsiMigration migration, String newQName,
-                                        UsageInfo[] usages) {
-    try{
+  public static void doPackageMigration(PsiManager manager, PsiMigration migration, String newQName, UsageInfo[] usages) {
+    try {
       PsiPackage aPackage = findOrCreatePackage(manager, migration, newQName);
 
       // rename all references
@@ -40,12 +35,13 @@ public class MigrationUtil {
         if (element == null || !element.isValid()) continue;
         if (element instanceof PsiJavaCodeReferenceElement) {
           ((PsiJavaCodeReferenceElement)element).bindToElement(aPackage);
-        } else {
+        }
+        else {
           bindNonJavaReference(aPackage, element, usage);
         }
       }
     }
-    catch(IncorrectOperationException e){
+    catch (IncorrectOperationException e) {
       // should not happen!
       LOG.error(e);
     }
@@ -64,9 +60,7 @@ public class MigrationUtil {
     }
   }
 
-  public static UsageInfo[] findClassUsages(PsiManager manager,
-                                            PsiMigration migration,
-                                            String qName) {
+  public static UsageInfo[] findClassUsages(PsiManager manager, PsiMigration migration, String qName) {
     PsiClass aClass = findOrCreateClass(manager, migration, qName);
 
     return findRefs(manager, aClass);
@@ -82,11 +76,8 @@ public class MigrationUtil {
     return results.toArray(new UsageInfo[results.size()]);
   }
 
-  public static void doClassMigration(PsiManager manager,
-                                      PsiMigration migration,
-                                      String newQName,
-                                      UsageInfo[] usages) {
-    try{
+  public static void doClassMigration(PsiManager manager, PsiMigration migration, String newQName, UsageInfo[] usages) {
+    try {
       PsiClass aClass = findOrCreateClass(manager, migration, newQName);
 
       // rename all references
@@ -96,12 +87,13 @@ public class MigrationUtil {
         if (element instanceof PsiJavaCodeReferenceElement) {
           final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
           referenceElement.bindToElement(aClass);
-        } else {
+        }
+        else {
           bindNonJavaReference(aClass, element, usage);
         }
       }
     }
-    catch(IncorrectOperationException e){
+    catch (IncorrectOperationException e) {
       // should not happen!
       LOG.error(e);
     }
@@ -109,30 +101,26 @@ public class MigrationUtil {
 
   static PsiPackage findOrCreatePackage(PsiManager manager, final PsiMigration migration, final String qName) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(qName);
-    if (aPackage != null){
+    if (aPackage != null) {
       return aPackage;
     }
     else {
-      return ApplicationManager.getApplication().runWriteAction(
-          new Computable<PsiPackage>() {
-            public PsiPackage compute() {
-              return migration.createPackage(qName);
-            }
-          }
-      );
+      return ApplicationManager.getApplication().runWriteAction(new Computable<PsiPackage>() {
+        public PsiPackage compute() {
+          return migration.createPackage(qName);
+        }
+      });
     }
   }
 
   static PsiClass findOrCreateClass(PsiManager manager, final PsiMigration migration, final String qName) {
     PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName);
-    if (aClass == null){
-      aClass = ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiClass>() {
-            public PsiClass compute() {
-              return migration.createClass(qName);
-            }
-          }
-      );
+    if (aClass == null) {
+      aClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
+        public PsiClass compute() {
+          return migration.createClass(qName);
+        }
+      });
     }
     return aClass;
   }
