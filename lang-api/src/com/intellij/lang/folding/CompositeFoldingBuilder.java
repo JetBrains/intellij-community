@@ -17,7 +17,10 @@
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,21 +38,35 @@ import java.util.*;
  */
 class CompositeFoldingBuilder implements FoldingBuilder {
   private final List<FoldingBuilder> myBuilders;
-  private final Map<Document, Map<ASTNode, FoldingBuilder>> foldings = new HashMap<Document, Map<ASTNode, FoldingBuilder>>();
-  //private final DocumentListener updater = new Updater();
-  //TODO: think about old links
+  private final Map<VirtualFile, Map<ASTNode, FoldingBuilder>> foldings = new HashMap<VirtualFile, Map<ASTNode, FoldingBuilder>>();
 
   CompositeFoldingBuilder(List<FoldingBuilder> builders) {
     myBuilders = builders;
+    //MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    //connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    //  @Override
+    //  public void fileClosed(FileEditorManager source, VirtualFile file) {
+    //    synchronized (foldings) {
+    //      foldings.remove(file);
+    //    }
+    //  }
+    //});
   }
 
   public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
-    //document.addDocumentListener(updater);
-    List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
-    Map<ASTNode, FoldingBuilder> builders = foldings.get(document);
+    final PsiElement psi = node.getPsi();
+    if (psi == null) return FoldingDescriptor.EMPTY;
+
+    final PsiFile file = PsiDocumentManager.getInstance(psi.getProject()).getPsiFile(document);
+    final VirtualFile vf;
+    if (file == null || (vf = file.getVirtualFile()) == null) return FoldingDescriptor.EMPTY;
+
+    final List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
+    Map<ASTNode, FoldingBuilder> builders;
+    builders = foldings.get(vf);
     if (builders == null) {
       builders = new HashMap<ASTNode, FoldingBuilder>();
-      foldings.put(document, builders);
+      foldings.put(vf, builders);
     }
 
     for (FoldingBuilder builder : myBuilders) {
@@ -61,6 +78,18 @@ class CompositeFoldingBuilder implements FoldingBuilder {
         }
       }
     }
+    final FileEditorManager editorManager = FileEditorManager.getInstance(psi.getProject());
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        for (VirtualFile virtualFile : new HashSet<VirtualFile>(foldings.keySet())) {
+          if (!editorManager.isFileOpen(virtualFile)) {
+            foldings.remove(virtualFile);
+          }
+        }
+      }
+    });
+
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
@@ -75,10 +104,10 @@ class CompositeFoldingBuilder implements FoldingBuilder {
     if (psi == null) return null;
 
     final PsiFile file = psi.getContainingFile();
-    final Document document = file == null ? null : PsiDocumentManager.getInstance(psi.getProject()).getDocument(file);
+    final VirtualFile vf = file == null ? null : file.getVirtualFile();
     final Map<ASTNode, FoldingBuilder> builders;
 
-    if (document == null || (builders = foldings.get(document)) == null) return null;
+    if (vf == null || (builders = foldings.get(vf)) == null) return null;
 
     return builders.get(node);
   }
@@ -87,13 +116,4 @@ class CompositeFoldingBuilder implements FoldingBuilder {
     final FoldingBuilder builder = findBuilderByASTNode(node);
     return builder == null ? false : builder.isCollapsedByDefault(node);
   }
-
-  //class Updater implements DocumentListener {
-  //  public void beforeDocumentChange(DocumentEvent event) {
-  //    foldings.remove(event.getDocument());
-  //  }
-  //
-  //  public void documentChanged(DocumentEvent event) {
-  //  }
-  //}
 }
