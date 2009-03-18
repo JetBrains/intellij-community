@@ -28,4 +28,9 @@ public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
       }
     };
   }
+
+  @Override
+  public String getConfigurableDisplayName() {
+    return ApplicationBundle.message("title.html");
+  }
 }

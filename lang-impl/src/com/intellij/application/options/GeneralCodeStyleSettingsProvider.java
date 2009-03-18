@@ -4,7 +4,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,25 +12,26 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
+public class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @NotNull
-  public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
-    return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.xml")){
+  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.general")) {
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
-        return new CodeStyleXmlPanel(settings);
+        return new GeneralCodeStylePanel(settings);
       }
+
       public Icon getIcon() {
-        return StdFileTypes.XML.getIcon();
+        return FileTypes.PLAIN_TEXT.getIcon();
       }
 
       public String getHelpTopic() {
-        return "reference.settingsdialog.IDE.globalcodestyle.xml";
+        return "reference.settingsdialog.IDE.globalcodestyle.general";
       }
     };
   }
 
   @Override
   public String getConfigurableDisplayName() {
-    return ApplicationBundle.message("title.xml");
+    return ApplicationBundle.message("title.general");
   }
 }

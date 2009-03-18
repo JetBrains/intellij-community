@@ -33,4 +33,15 @@ public abstract class CodeStyleSettingsProvider {
 
   @NotNull
   public abstract Configurable createSettingsPage(CodeStyleSettings settings, final CodeStyleSettings originalSettings);
+
+  /**
+   * Returns the name of the configurable page without creating a Configurable instance.
+   *
+   * @return the display name of the configurable page.
+   * @since 9.0
+   */
+  @Nullable
+  public String getConfigurableDisplayName() {
+    return null;
+  }
 }

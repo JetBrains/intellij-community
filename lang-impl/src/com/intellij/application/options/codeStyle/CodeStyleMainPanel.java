@@ -144,7 +144,6 @@ public class CodeStyleMainPanel extends JPanel {
   }
 
   private NewCodeStyleSettingsPanel ensureCurrentPanel() {
-
     return ensurePanel(myModel.getSelectedScheme());
   }
 

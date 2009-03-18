@@ -415,4 +415,6 @@
   <testSrcLocator implementation="com.intellij.execution.testframework.sm.FileUrlProvider"/>
 
   <dynamicContextProvider implementation="com.intellij.openapi.paths.GenericDynamicContextProvider"/>
+
+  <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider" order="first"/>
 </extensions>
