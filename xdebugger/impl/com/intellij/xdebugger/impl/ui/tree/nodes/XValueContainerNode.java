@@ -45,7 +45,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     return MessageTreeNode.createLoadingMessage(myTree, this);
   }
 
-  public void addChildren(final List<XValue> children, final boolean last) {
+  public void addChildren(final List<? extends XValue> children, final boolean last) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
         if (myValueChildren == null) {

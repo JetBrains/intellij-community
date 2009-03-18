@@ -49,7 +49,7 @@ public abstract class XExecutionStack {
    */
   public abstract void computeStackFrames(int firstFrameIndex, XStackFrameContainer container);
 
-  public static interface XStackFrameContainer extends Obsolescent {
+  public interface XStackFrameContainer extends Obsolescent {
     /**
      * Add stack frames to the list
      * @param stackFrames stack frames to add
