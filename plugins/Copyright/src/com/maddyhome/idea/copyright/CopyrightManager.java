@@ -100,7 +100,9 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
                 if (file != null) {
                   ApplicationManager.getApplication().invokeLater(new Runnable(){
                     public void run() {
-                      new UpdateCopyrightProcessor(myProject, module, file).run();
+                      if (file.isValid()) {
+                        new UpdateCopyrightProcessor(myProject, module, file).run();
+                      }
                     }
                   });
                 }
