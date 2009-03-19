@@ -29,16 +29,16 @@ import java.util.Map;
  * Represents primitive types of Java language.
  */
 public class PsiPrimitiveType extends PsiType {
-  protected static final PsiPrimitiveType VOID = new PsiPrimitiveType("void");
-  protected static final PsiPrimitiveType BYTE = new PsiPrimitiveType("byte");
-  protected static final PsiPrimitiveType CHAR = new PsiPrimitiveType("char");
-  protected static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType("double");
-  protected static final PsiPrimitiveType FLOAT = new PsiPrimitiveType("float");
-  protected static final PsiPrimitiveType LONG = new PsiPrimitiveType("long");
-  protected static final PsiPrimitiveType INT = new PsiPrimitiveType("int");
-  protected static final PsiPrimitiveType SHORT = new PsiPrimitiveType("short");
-  protected static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType("boolean");
-  protected static final PsiPrimitiveType NULL = new PsiPrimitiveType("null");
+  static final PsiPrimitiveType VOID = new PsiPrimitiveType("void");
+  static final PsiPrimitiveType BYTE = new PsiPrimitiveType("byte");
+  static final PsiPrimitiveType CHAR = new PsiPrimitiveType("char");
+  static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType("double");
+  static final PsiPrimitiveType FLOAT = new PsiPrimitiveType("float");
+  static final PsiPrimitiveType LONG = new PsiPrimitiveType("long");
+  static final PsiPrimitiveType INT = new PsiPrimitiveType("int");
+  static final PsiPrimitiveType SHORT = new PsiPrimitiveType("short");
+  static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType("boolean");
+  static final PsiPrimitiveType NULL = new PsiPrimitiveType("null");
 
   private final String myName;
 

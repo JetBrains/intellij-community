@@ -225,8 +225,9 @@ public class GenericsUtil {
     return true;
   }
 
-  public static boolean isFromExternalTypeLanguage (PsiType type) {
-    return type.getInternalCanonicalText().equals(type.getCanonicalText());
+  public static boolean isFromExternalTypeLanguage(@NotNull PsiType type) {
+    String internalCanonicalText = type.getInternalCanonicalText();
+    return internalCanonicalText != null && internalCanonicalText.equals(type.getCanonicalText());
   }
 
   public static PsiType getVariableTypeByExpressionType(PsiType type) {
@@ -271,16 +272,19 @@ public class GenericsUtil {
           for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
             PsiType typeArgument = resolveResult.getSubstitutor().substitute(typeParameter);
             if (typeArgument instanceof PsiCapturedWildcardType) toExtend = true;
-            if (typeArgument instanceof PsiWildcardType &&
-                ((PsiWildcardType) typeArgument).getBound() instanceof PsiIntersectionType) toExtend = true;
+            if (typeArgument instanceof PsiWildcardType && ((PsiWildcardType)typeArgument).getBound() instanceof PsiIntersectionType) {
+              toExtend = true;
+            }
             PsiType toPut;
             if (typeArgument == null) {
               toPut = null;
-            } else {
+            }
+            else {
               final PsiType accepted = typeArgument.accept(this);
               if (typeArgument instanceof PsiIntersectionType) {
                 toPut = PsiWildcardType.createExtends(typeParameter.getManager(), accepted);
-              } else {
+              }
+              else {
                 toPut = accepted;
               }
             }
