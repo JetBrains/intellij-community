@@ -67,6 +67,117 @@
 
     </filetype>
 
+    <filetype name = "JavaFX" description = "JavaFX files"
+      extensions="fx"
+      default_extension="fx"
+      binary="false"
+      icon = "/fileTypes/custom.png">
+
+      <highlighting>
+
+        <options>
+          <option name="LINE_COMMENT" value="//" />
+          <option name="COMMENT_START" value="/*" />
+          <option name="COMMENT_END" value="*/" />
+          <option name="HEX_PREFIX" value="0x" />
+          <option name="NUM_POSTFIXES" value="smh" />
+          <option name="HAS_BRACES" value="true" />
+          <option name="HAS_BRACKETS" value="true" />
+          <option name="HAS_PARENS" value="true" />
+          <option name="HAS_STRING_ESCAPES" value="true" />
+        </options>
+
+        <keywords ignore_case="false">
+          <keyword name="abstract" />
+          <keyword name="after" />
+          <keyword name="and" />
+          <keyword name="as" />
+          <keyword name="assert" />
+          <keyword name="at" />
+          <keyword name="attribute" />
+          <keyword name="before" />
+          <keyword name="bind" />
+          <keyword name="bound" />
+          <keyword name="break" />
+          <keyword name="catch" />
+          <keyword name="class" />
+          <keyword name="continue" />
+          <keyword name="def" />
+          <keyword name="delete" />
+          <keyword name="else" />
+          <keyword name="exclusive" />
+          <keyword name="extends" />
+          <keyword name="false" />
+          <keyword name="finally" />
+          <keyword name="first" />
+          <keyword name="for" />
+          <keyword name="from" />
+          <keyword name="function" />
+          <keyword name="if" />
+          <keyword name="import" />
+          <keyword name="indexof" />
+          <keyword name="in" />
+          <keyword name="init" />
+          <keyword name="insert" />
+          <keyword name="instanceof" />
+          <keyword name="into" />
+          <keyword name="inverse" />
+          <keyword name="last" />
+          <keyword name="lazy" />
+          <keyword name="mixin" />
+          <keyword name="mod" />
+          <keyword name="new" />
+          <keyword name="not" />
+          <keyword name="null" />
+          <keyword name="on" />
+          <keyword name="or" />
+          <keyword name="override" />
+          <keyword name="package" />
+          <keyword name="postinit" />
+          <keyword name="private" />
+          <keyword name="protected" />
+          <keyword name="public-init" />
+          <keyword name="public" />
+          <keyword name="public-read" />
+          <keyword name="replace" />
+          <keyword name="return" />
+          <keyword name="reverse" />
+          <keyword name="sizeof" />
+          <keyword name="static" />
+          <keyword name="step" />
+          <keyword name="super" />
+          <keyword name="then" />
+          <keyword name="this" />
+          <keyword name="throw" />
+          <keyword name="trigger" />
+          <keyword name="true" />
+          <keyword name="try" />
+          <keyword name="tween" />
+          <keyword name="typeof" />
+          <keyword name="var" />
+          <keyword name="where" />
+          <keyword name="while" />
+          <keyword name="with" />
+          <keyword name="@charset" />
+        </keywords>
+        <keywords2>
+          <keyword name="Number" />
+          <keyword name="Timeline" />
+          <keyword name="Boolean" />
+          <keyword name="String" />
+          <keyword name="Integer" />
+          <keyword name="Void" />
+          <keyword name="Duration" />
+        </keywords2>
+        <keywords3>
+          <keyword name="isInitialized" />
+          <keyword name="__PROFILE__" />
+          <keyword name="__FILE__" />
+          <keyword name="__DIR__" />
+        </keywords3>
+      </highlighting>
+    </filetype>
+
     <filetype binary="false" default_extension="cpp" extensions="c;cpp;h;hpp" description="C/C++ files" name="C++" icon="/fileTypes/custom.png">
       <highlighting>
         <options>
