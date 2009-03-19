@@ -145,7 +145,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     myScheme.doTest(new Runnable() {
       public void run() {
-        changeListManager.removeChangeList(list);
+        changeListManager.removeChangeList(list.getName());
         assert changeListManager.findChangeList(list.getName()) == null;
         checkFilesAreInList(new VirtualFile[] {file, fileB}, myDefaulListName, changeListManager);
       }
@@ -279,7 +279,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
         checkFilesAreInList(new VirtualFile[] {file, fileB}, targetName, changeListManager);
         changeListManager.editName(targetName, finalName);
         checkFilesAreInList(new VirtualFile[] {file, fileB}, finalName, changeListManager);
-        changeListManager.removeChangeList(toBeDeletedList);
+        changeListManager.removeChangeList(toBeDeletedList.getName());
         checkFilesAreInList(new VirtualFile[] {fileC, fileD}, myDefaulListName, changeListManager);
         changeListManager.moveChangesTo(LocalChangeList.createEmptyChangeList(myProject, finalName),
                                         new Change[] {changeListManager.getChange(fileC)});
