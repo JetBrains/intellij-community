@@ -65,15 +65,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -85,8 +77,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private final CodeStyleSettings mySettings;
   private boolean myShouldUpdatePreview;
   protected static final int[] ourWrappings =
-    new int[]{CodeStyleSettings.DO_NOT_WRAP, CodeStyleSettings.WRAP_AS_NEEDED, CodeStyleSettings.WRAP_ON_EVERY_ITEM,
-      CodeStyleSettings.WRAP_ALWAYS};
+    {CodeStyleSettings.DO_NOT_WRAP, CodeStyleSettings.WRAP_AS_NEEDED, CodeStyleSettings.WRAP_ON_EVERY_ITEM, CodeStyleSettings.WRAP_ALWAYS};
   private long myLastDocumentModificationStamp;
   private String myTextToReformat = null;
   private final UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
@@ -95,64 +86,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private CodeStyleSchemesModel myModel;
   private boolean mySomethingChanged = false;
-  private final PropertyChangeListener myPropListener = new PropertyChangeListener() {
-      public void propertyChange(final PropertyChangeEvent evt) {
-        processEvent();
-      }
-    };
-  private final ComponentAdapter myComponentListener = new ComponentAdapter(){
-    @Override
-    public void componentShown(final ComponentEvent e) {
-      processEvent();
-    }
-  };
-  private final AncestorListener myAncestorListener = new AncestorListener(){
-    public void ancestorAdded(final AncestorEvent event) {
-      Container container = event.getAncestor();
-      container.addComponentListener(myComponentListener);
-      container.addPropertyChangeListener(myPropListener);
-
-      if (container instanceof JComponent) {
-        ((JComponent)container).addAncestorListener(myAncestorListener);
-      }
-
-      processEvent();
-
-    }
-
-    public void ancestorRemoved(final AncestorEvent event) {
-      Container container = event.getAncestor();
-      if (container != null) {
-        container.removeComponentListener(myComponentListener);
-        container.removePropertyChangeListener(myPropListener);
-
-        if (container instanceof JComponent) {
-          ((JComponent)container).removeAncestorListener(myAncestorListener);
-        }
-      }
-
-      processEvent();
-    }
-
-    public void ancestorMoved(final AncestorEvent event) {
-    }
-  };
-
-  private void processEvent() {
-    if (myEditor.getComponent().isShowing() && isSomethingChanged()) {
-      myUpdateAlarm.addComponentRequest(new Runnable() {
-        public void run() {
-          try {
-            myUpdateAlarm.cancelAllRequests();
-            updatePreview();
-          }
-          finally {
-            setSomethingChanged(false);
-          }
-        }
-      }, 300);
-    }
-  }
 
   private synchronized void setSomethingChanged(final boolean b) {
     mySomethingChanged = b;
@@ -166,27 +99,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     mySettings = settings;
     myEditor = createEditor();
 
-    //addListeners();
-
     myUpdateAlarm.setActivationComponent(myEditor.getComponent());
     myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
       public void stateChanged() {
         somethingChanged();
-      }
-    });
-  }
-
-  private void addListeners() {
-    JComponent component = myEditor.getComponent();
-    component.addPropertyChangeListener(myPropListener);
-
-    component.addComponentListener(myComponentListener);
-
-    component.addAncestorListener(myAncestorListener);
-
-    component.addHierarchyListener(new HierarchyListener(){
-      public void hierarchyChanged(final HierarchyEvent e) {
-        processEvent();
       }
     });
   }
@@ -285,7 +201,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
           prepareForReformat(psiFile);
           apply(mySettings);
-          CodeStyleSettings clone = (CodeStyleSettings)mySettings.clone();
+          CodeStyleSettings clone = mySettings.clone();
           if (getRightMargin() > 0) {
             clone.RIGHT_MARGIN = getRightMargin();
           }
@@ -383,8 +299,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     previewPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 
-  protected
   @NonNls
+  protected
   String getFileTypeExtension(FileType fileType) {
     return fileType.getDefaultExtension();
   }

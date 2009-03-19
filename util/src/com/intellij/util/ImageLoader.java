@@ -32,7 +32,7 @@ import java.net.URL;
 
 @Deprecated
 public class ImageLoader implements Serializable {
-  private final static Component ourComponent = new Component() {};
+  private static final Component ourComponent = new Component() {};
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
 

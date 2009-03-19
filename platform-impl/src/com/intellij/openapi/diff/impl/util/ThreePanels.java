@@ -14,8 +14,7 @@ public class ThreePanels extends JPanel {
   }
 
   private void addAll(JComponent[] components) {
-    for (int i = 0; i < components.length; i++) {
-      JComponent component = components[i];
+    for (JComponent component : components) {
       add(component, -1);
     }
   }
@@ -24,8 +23,7 @@ public class ThreePanels extends JPanel {
     int width = getWidth();
     int height = getHeight();
     int dividersTotalWidth = 0;
-    for (int i = 0; i < myDividers.length; i++) {
-      JComponent divider = myDividers[i];
+    for (JComponent divider : myDividers) {
       dividersTotalWidth += divider.getPreferredSize().width;
     }
     int panelWidth = (width - dividersTotalWidth) / 3;

@@ -189,7 +189,7 @@ public class SchemesPanel extends JPanel {
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
     if (modified && (ColorAndFontOptions.isReadOnly(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
-      ColorAndFontPanel.showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
+      FontOptions.showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
       return false;
     }
 

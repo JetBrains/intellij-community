@@ -50,8 +50,7 @@ public class ChangeList {
         }
       }
     }
-    for (Iterator<Change> iterator = changes.iterator(); iterator.hasNext();) {
-      Change change = iterator.next();
+    for (Change change : changes) {
       LOG.assertTrue(change.isValid());
     }
     myChanges = new ArrayList<Change>(changes);
@@ -72,16 +71,14 @@ public class ChangeList {
   }
 
   public void setMarkup(final Editor base, final Editor version) {
-    Editor[] editors = new Editor[]{base, version};
-    for (Iterator<Change> iterator = myChanges.iterator(); iterator.hasNext();) {
-      Change change = iterator.next();
+    Editor[] editors = {base, version};
+    for (Change change : myChanges) {
       change.addMarkup(editors);
     }
   }
 
   public void updateMarkup() {
-    for (Iterator<Change> iterator = myChanges.iterator(); iterator.hasNext();) {
-      Change change = iterator.next();
+    for (Change change : myChanges) {
       change.updateMarkup();
     }
   }
@@ -97,7 +94,7 @@ public class ChangeList {
     String[] versionLines = DiffUtil.convertToLines(version.getText());
     DiffFragment[] fragments = ComparisonPolicy.DEFAULT.buildDiffFragmentsFromLines(baseLines, versionLines);
     final ArrayList<Change> result = new ArrayList<Change>();
-    new DiffFragmemntsEnumerator(fragments, base, version) {
+    new DiffFragmemntsEnumerator(fragments) {
       protected void process(DiffFragment fragment) {
         if (fragment.isEqual()) return;
         Context context = getContext();
@@ -113,18 +110,17 @@ public class ChangeList {
     return myChanges.get(index);
   }
 
-  private static abstract class DiffFragmemntsEnumerator {
+  private abstract static class DiffFragmemntsEnumerator {
     private final DiffFragment[] myFragments;
     private final Context myContext;
 
-    public DiffFragmemntsEnumerator(DiffFragment[] fragments, Document document1, Document document2) {
-      myContext = new Context(document1, document2);
+    private DiffFragmemntsEnumerator(DiffFragment[] fragments) {
+      myContext = new Context();
       myFragments = fragments;
     }
 
     public void execute() {
-      for (int i = 0; i < myFragments.length; i++) {
-        DiffFragment fragment = myFragments[i];
+      for (DiffFragment fragment : myFragments) {
         myContext.myFragment = fragment;
         process(fragment);
         String text1 = fragment.getText1();
@@ -136,7 +132,7 @@ public class ChangeList {
       }
     }
 
-    private int countLines(String text) {
+    private static int countLines(String text) {
       if (text == null) return 0;
       return StringUtil.countNewLines(text);
     }
@@ -149,15 +145,9 @@ public class ChangeList {
   }
 
   public static class Context {
-    private final Document[] myDocuments = new Document[2];
     private DiffFragment myFragment;
-    private final int[] myStarts = new int[]{0, 0};
-    private final int[] myLines = new int[]{0, 0};
-
-    public Context(Document document1, Document document2) {
-      myDocuments[0] = document1;
-      myDocuments[1] = document2;
-    }
+    private final int[] myStarts = {0, 0};
+    private final int[] myLines = {0, 0};
 
     public DiffFragment getFragment() {
       return myFragment;
@@ -192,8 +182,7 @@ public class ChangeList {
 
   private void fireOnChangeRemoved() {
     Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      Listener listener = listeners[i];
+    for (Listener listener : listeners) {
       listener.onChangeRemoved(this);
     }
   }

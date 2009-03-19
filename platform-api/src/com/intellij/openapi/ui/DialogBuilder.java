@@ -20,12 +20,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class DialogBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
@@ -91,9 +93,7 @@ public class DialogBuilder {
 
   public void setActionDescriptors(ActionDescriptor[] descriptors) {
     removeAllActions();
-    for (ActionDescriptor descriptor : descriptors) {
-      myActions.add(descriptor);
-    }
+    myActions.addAll(Arrays.asList(descriptors));
   }
 
   public void removeAllActions() {
@@ -161,7 +161,7 @@ public class DialogBuilder {
 
   private static CustomizableAction get(final ArrayList<ActionDescriptor> actionDescriptors, final Class aClass) {
     for (ActionDescriptor actionDescriptor : actionDescriptors) {
-      if (actionDescriptor.getClass().isAssignableFrom(aClass)) return ((CustomizableAction)actionDescriptor);
+      if (actionDescriptor.getClass().isAssignableFrom(aClass)) return (CustomizableAction)actionDescriptor;
     }
     return null;
   }
@@ -178,14 +178,14 @@ public class DialogBuilder {
     Action getAction(DialogWrapper dialogWrapper);
   }
 
-  public static abstract class DialogActionDescriptor implements ActionDescriptor {
+  public abstract static class DialogActionDescriptor implements ActionDescriptor {
     private final String myName;
     private final Object myMnemonicChar;
     private boolean myIsDeafult = false;
 
     protected DialogActionDescriptor(String name, int mnemonicChar) {
       myName = name;
-      myMnemonicChar = mnemonicChar != -1 ? new Integer(mnemonicChar) : null;
+      myMnemonicChar = mnemonicChar == -1 ? null : Integer.valueOf(mnemonicChar);
     }
 
     public Action getAction(DialogWrapper dialogWrapper) {
@@ -242,7 +242,7 @@ public class DialogBuilder {
     }
   }
 
-  private static abstract class BuiltinAction implements ActionDescriptor, CustomizableAction {
+  private abstract static class BuiltinAction implements ActionDescriptor, CustomizableAction {
     protected String myText = null;
 
     public void setText(String text) {
@@ -272,11 +272,11 @@ public class DialogBuilder {
 
   private class MyDialogWrapper extends DialogWrapper {
     private String myHelpId = null;
-    public MyDialogWrapper(Project project, boolean canBeParent) {
+    private MyDialogWrapper(Project project, boolean canBeParent) {
       super(project, canBeParent);
     }
 
-    public MyDialogWrapper(Component parent, boolean canBeParent) {
+    private MyDialogWrapper(Component parent, boolean canBeParent) {
       super(parent, canBeParent);
     }
 
@@ -293,7 +293,7 @@ public class DialogBuilder {
     public void dispose() {
       myPreferedFocusComponent = null;
       for (Disposable disposable : myDisposables) {
-        disposable.dispose();
+        Disposer.dispose(disposable);
       }
       super.dispose();
     }

@@ -415,7 +415,7 @@ public class TabbedPaneWrapper  {
 
     private final TabbedPaneWrapper myWrapper;
 
-    public TabbedPaneHolder(TabbedPaneWrapper wrapper) {
+    protected TabbedPaneHolder(TabbedPaneWrapper wrapper) {
       super(new BorderLayout());
       myWrapper = wrapper;
     }
@@ -484,7 +484,7 @@ public class TabbedPaneWrapper  {
     private final Disposable myParent;
     private final TabbedPaneWrapper myWrapper;
 
-    public JBTabsFactory(TabbedPaneWrapper wrapper, Project project, Disposable parent) {
+    private JBTabsFactory(TabbedPaneWrapper wrapper, Project project, Disposable parent) {
       myWrapper = wrapper;
       myProject = project;
       myParent = parent;

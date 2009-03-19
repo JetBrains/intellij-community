@@ -21,6 +21,7 @@ import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.SequenceIterator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -47,7 +48,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     String baseText = base.getText();
     String rightText = right.getText();
     // todo do not copy
-    @NonNls final Object[] data = new Object[]{
+    @NonNls final Object[] data = {
       "Left\n" + leftText,
       "\nBase\n" + baseText,
       "\nRight\n" + rightText
@@ -64,7 +65,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
       logger.assertTrue(ranges[1] != null);
       if (ranges[0] == null) {
         if (ranges[2] == null) {
-          if ((i == (fragmentsListSize - 1)) && (ranges[1].getEndOffset() == baseText.length())) {
+          if (i == fragmentsListSize - 1 && ranges[1].getEndOffset() == baseText.length()) {
             // the very end, both local and remote revisions does not contain latest base fragment
             final int rightTextLength = rightText.length();
             final int leftTextLength = leftText.length();
@@ -100,8 +101,8 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
                                                               ContextLogger logger) {
     DiffFragment[] leftFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, leftText);
     DiffFragment[] rightFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, rightText);
-    int[] leftOffsets = new int[]{0, 0};
-    int[] rightOffsets = new int[]{0, 0};
+    int[] leftOffsets = {0, 0};
+    int[] rightOffsets = {0, 0};
     int leftIndex = 0;
     int rightIndex = 0;
     MergeBuilder builder = new MergeBuilder(logger);
@@ -120,9 +121,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
       if (equalRanges[0] != null && equalRanges[1] != null) builder.add(equalRanges[0], equalRanges[1], side);
       else logger.assertTrue(equalRanges[0] == null && equalRanges[1] == null);
     }
-    List<MergeBuilder.MergeFragment> fragmentList = builder.finish(leftText.length(), baseText.length(),
-                                                                   rightText.length());
-    return fragmentList;
+    return builder.finish(leftText.length(), baseText.length(), rightText.length());
   }
 
   private static void getEqualRanges(DiffFragment fragment, int[] leftOffsets, TextRange[] equalRanges) {
@@ -231,11 +230,11 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     return myProject;
   }
 
-  public <T> T getUserData(Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     return myDataHolder.getUserData(key);
   }
 
-  public <T> void putUserData(Key<T> key, T value) {
+  public <T> void putUserData(@NotNull Key<T> key, T value) {
     myDataHolder.putUserData(key, value);
   }
 

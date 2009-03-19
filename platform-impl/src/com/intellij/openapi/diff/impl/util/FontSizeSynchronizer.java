@@ -10,7 +10,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class FontSizeSynchronizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.FontSizeSynchronizer");
@@ -33,8 +32,7 @@ public class FontSizeSynchronizer {
 
   public static void attachTo(ArrayList<EditorPlace> editorPlaces) {
     final FontSizeSynchronizer synchronizer = new FontSizeSynchronizer();
-    for (Iterator<EditorPlace> iterator = editorPlaces.iterator(); iterator.hasNext();) {
-      EditorPlace editorPlace = iterator.next();
+    for (EditorPlace editorPlace : editorPlaces) {
       editorPlace.addListener(new EditorPlace.EditorListener() {
         public void onEditorCreated(EditorPlace place) {
           synchronizer.synchronize((EditorEx)place.getEditor());
@@ -57,8 +55,7 @@ public class FontSizeSynchronizer {
       if (!EditorEx.PROP_FONT_SIZE.equals(evt.getPropertyName())) return;
       if (evt.getOldValue().equals(evt.getNewValue())) return;
       myLastFontSize = ((Integer)evt.getNewValue()).intValue();
-      for (Iterator<Editor> iterator = myEditors.iterator(); iterator.hasNext();) {
-        Editor editor = iterator.next();
+      for (Editor editor : myEditors) {
         if (editor == null || editor == evt.getSource()) continue;
         updateEditor((EditorEx)editor);
       }

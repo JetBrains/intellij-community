@@ -32,7 +32,6 @@ public class DiffOptionsPanel implements OptionsPanel {
   private JPanel myWholePanel;
   private LabeledComponent<ColorPanel> myStripeMarkColorComponent;
 
-
   public DiffOptionsPanel(ColorAndFontOptions options) {
 
     myOptions = options;
@@ -199,7 +198,7 @@ public class DiffOptionsPanel implements OptionsPanel {
   private boolean checkModifiableScheme() {
     boolean isReadOnly = myOptions.currentSchemeIsReadOnly();
     if (isReadOnly) {
-      ColorAndFontPanel.showReadOnlyMessage(myWholePanel, myOptions.currentSchemeIsShared());
+      FontOptions.showReadOnlyMessage(myWholePanel, myOptions.currentSchemeIsShared());
     }
     return !isReadOnly;
   }

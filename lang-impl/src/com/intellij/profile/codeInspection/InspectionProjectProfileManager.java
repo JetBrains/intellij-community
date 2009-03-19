@@ -21,7 +21,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
@@ -60,15 +59,12 @@ import java.util.Set;
 )
 public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements SeverityProvider, ProjectComponent, PersistentStateComponent<Element> {
   private final Map<String, InspectionProfileWrapper>  myName2Profile = new HashMap<String, InspectionProfileWrapper>();
-  private final Project myProject;
   private final SeverityRegistrar mySeverityRegistrar;
   private StatusBarEx myStatusBar;
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  public InspectionProjectProfileManager(final Project project, EditorColorsManager manager, DependencyValidationManager holder) {
+  public InspectionProjectProfileManager(final Project project, DependencyValidationManager holder) {
     super(project, Profile.INSPECTION, holder);
-    myProject = project;
     mySeverityRegistrar = new SeverityRegistrar();
   }
 

@@ -90,10 +90,6 @@ public class NewColorAndFontPanel extends JPanel {
     return myOptionsPanel.showOption(option);
   }
 
-  public boolean areSchemesLoaded() {
-    return mySchemesPanel.areSchemesLoaded();
-  }
-
   @NotNull
   public Set<String> processListOptions() {
     if (myOptionList == null) {
@@ -119,6 +115,7 @@ public class NewColorAndFontPanel extends JPanel {
 
   public void disposeUIResources() {
     myPreviewPanel.disposeUIResources();
+    mySchemesPanel.disposeUIResources();
   }
 
   public void addSchemesListener(final ColorAndFontSettingsListener schemeListener) {

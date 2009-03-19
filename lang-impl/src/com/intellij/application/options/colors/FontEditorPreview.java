@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.Nls;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -21,12 +22,16 @@ public class FontEditorPreview implements PreviewPanel{
   public FontEditorPreview(final ColorAndFontOptions options) {
     myOptions = options;
 
-    String text = "IntelliJ IDEA is a full-featured Java IDE\n" +
-                  "with a high level of usability and outstanding\n" +
-                  "advanced code editing and refactoring support.";
+    @Nls String text = "IntelliJ IDEA is a full-featured Java IDE\n" +
+                       "with a high level of usability and outstanding\n" +
+                       "advanced code editing and refactoring support.";
 
-    myEditor = (EditorEx)createEditor(text, 10, 3, -1);
+    myEditor = (EditorEx)createPreviewEditor(text, 10, 3, -1, myOptions);
 
+    installTrafficLights(myEditor);
+  }
+
+  static void installTrafficLights(EditorEx editor) {
     ErrorStripeRenderer renderer = new TrafficLightRenderer(null,null,null,null){
       protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount) {
         DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
@@ -36,16 +41,15 @@ public class FontEditorPreview implements PreviewPanel{
         return status;
       }
     };
-    ((EditorMarkupModel)myEditor.getMarkupModel()).setErrorStripeRenderer(renderer);
-    ((EditorMarkupModel)myEditor.getMarkupModel()).setErrorStripeVisible(true);
-
+    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
+    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
   }
 
-  private Editor createEditor(String text, int column, int line, int selectedLine) {
+  static Editor createPreviewEditor(String text, int column, int line, int selectedLine, ColorAndFontOptions options) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(text);
     EditorEx editor = (EditorEx)editorFactory.createViewer(editorDocument);
-    editor.setColorsScheme(myOptions.getSelectedScheme());
+    editor.setColorsScheme(options.getSelectedScheme());
     EditorSettings settings = editor.getSettings();
     settings.setLineNumbersShown(true);
     settings.setWhitespacesShown(true);

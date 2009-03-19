@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.EventDispatcher;
@@ -17,9 +18,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 public class FontOptions extends JPanel implements OptionsPanel{
   private final ColorAndFontOptions myOptions;
@@ -33,7 +33,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private static HashMap<String, Boolean> myFontNameToIsMonospaced;
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
   private boolean myIsInSchemeChange = false;
-
 
   public FontOptions(ColorAndFontOptions options) {
     super(new BorderLayout());
@@ -136,7 +135,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
       public void actionPerformed(ActionEvent e) {
         EditorColorsScheme current = getCurrentScheme();
         if (ColorAndFontOptions.isReadOnly(current) || ColorSettingsUtil.isSharedScheme(current)) {
-          ColorAndFontPanel.showReadOnlyMessage(FontOptions.this, ColorSettingsUtil.isSharedScheme(current));
+          showReadOnlyMessage(FontOptions.this, ColorSettingsUtil.isSharedScheme(current));
           return;
         }
 
@@ -191,7 +190,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private void selectFont() {
     initFontTables();
 
-    java.util.List<String> fontNamesVector = (java.util.List<String>)myFontNamesVector.clone();
+    List<String> fontNamesVector = (List<String>)myFontNamesVector.clone();
     HashMap fontNameToIsMonospaced = (HashMap)myFontNameToIsMonospaced.clone();
     String initialFontName = myFontNameField.getText();
     if (!fontNamesVector.contains(EditorSettingsExternalizable.DEFAULT_FONT_NAME)) {
@@ -219,8 +218,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
       myFontNamesVector = new ArrayList<String>();
       myFontNameToIsMonospaced = new HashMap<String, Boolean>();
 
-      ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(new InitFontsRunnable(), ApplicationBundle.message("progress.analyzing.fonts"), false, null);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new InitFontsRunnable(), ApplicationBundle.message("progress.analyzing.fonts"), false, null);
     }
   }
 
@@ -228,13 +226,32 @@ public class FontOptions extends JPanel implements OptionsPanel{
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
     if (modified && (ColorAndFontOptions.isReadOnly(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
-      ColorAndFontPanel.showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
+      showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
       return false;
     }
 
     myDispatcher.getMulticaster().fontChanged();
 
     return true;
+  }
+
+  public static void showReadOnlyMessage(JComponent parent, final boolean sharedScheme) {
+    if (!sharedScheme) {
+      Messages.showMessageDialog(
+          parent,
+          ApplicationBundle.message("error.readonly.scheme.cannot.be.modified"),
+          ApplicationBundle.message("title.cannot.modify.readonly.scheme"),
+          Messages.getInformationIcon()
+      );
+    }
+    else {
+      Messages.showMessageDialog(
+          parent,
+          ApplicationBundle.message("error.shared.scheme.cannot.be.modified"),
+          ApplicationBundle.message("title.cannot.modify.readonly.scheme"),
+          Messages.getInformationIcon()
+      );
+    }
   }
 
   private class InitFontsRunnable implements Runnable {
@@ -276,12 +293,12 @@ public class FontOptions extends JPanel implements OptionsPanel{
   }
 
   private static class MyTextField extends JTextField {
-    public MyTextField(int size) {
+    private MyTextField(int size) {
       super(size);
     }
 
     public Dimension getMinimumSize() {
-      return super.getPreferredSize();
+      return getPreferredSize();
     }
   }
 

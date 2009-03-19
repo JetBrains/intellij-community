@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NonNls;
@@ -31,7 +30,6 @@ import java.util.Collections;
  * A request for a diff or merge operation.
  */
 public abstract class DiffRequest {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.DiffData");
   private String myGroupKey = COMMON_DIFF_GROUP_KEY;
   private final Project myProject;
   private ToolbarAddons myToolbarAddons = ToolbarAddons.NOTHING;

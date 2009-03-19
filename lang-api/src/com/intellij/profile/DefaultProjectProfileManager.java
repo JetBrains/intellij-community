@@ -46,7 +46,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   @NonNls private static final String PROFILE = "profile";
   @NonNls private static final String NAME = "name";
 
-  protected Project myProject;
+  protected final Project myProject;
   private final LinkedHashMap<NamedScope, String> myScopeToProfileMap = new LinkedHashMap<NamedScope, String>();
   private final String myProfileType;
 

@@ -1,10 +1,9 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -24,7 +23,6 @@ import java.awt.event.*;
 import java.util.Map;
 
 public class FrameWrapper implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.FrameWrapper");
   private String myDimensionKey = null;
   private JComponent myComponent = null;
   private JComponent myPreferedFocus = null;
@@ -32,7 +30,7 @@ public class FrameWrapper implements Disposable {
   private Image myImage = ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getIconUrl());
   private boolean myCloseOnEsc = false;
   private JFrame myFrame;
-  private final Map myDatas = new HashMap();
+  private final Map<String, Object> myDatas = new HashMap<String, Object>();
   private Project myProject;
   private final ProjectManagerListener myProjectListener = new MyProjectManagerListener();
   private FocusTrackback myFocusTrackback;
@@ -57,7 +55,7 @@ public class FrameWrapper implements Disposable {
 
     myFocusTrackback = new FocusTrackback(this, null, true);
 
-    frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     WindowAdapter focusListener = new WindowAdapter() {
       public void windowOpened(WindowEvent e) {
         if (myPreferedFocus != null) {
@@ -117,7 +115,7 @@ public class FrameWrapper implements Disposable {
 
   public void setImage(Image image) { myImage = image; }
 
-  private void loadFrameState(String dimensionKey, JFrame frame) {
+  private static void loadFrameState(String dimensionKey, JFrame frame) {
     final Point location;
     final Dimension size;
     final int extendedState;
@@ -145,12 +143,12 @@ public class FrameWrapper implements Disposable {
       frame.setBounds(10, 10, width, height);
     }
 
-    if (extendedState == JFrame.ICONIFIED || extendedState == JFrame.MAXIMIZED_BOTH) {
+    if (extendedState == Frame.ICONIFIED || extendedState == Frame.MAXIMIZED_BOTH) {
       frame.setExtendedState(extendedState);
     }
   }
 
-  private void saveFrameState(String dimensionKey, JFrame frame) {
+  private static void saveFrameState(String dimensionKey, JFrame frame) {
     DimensionService dimensionService = DimensionService.getInstance();
     if (dimensionKey == null || dimensionService == null) return;
     dimensionService.setLocation(dimensionKey, frame.getLocation());
@@ -167,7 +165,7 @@ public class FrameWrapper implements Disposable {
   private class MyJFrame extends JFrame implements DataProvider {
     private boolean myDisposing;
 
-    public MyJFrame() throws HeadlessException {}
+    private MyJFrame() throws HeadlessException {}
 
     public void dispose() {
       if (myDisposing) return;

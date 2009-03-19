@@ -266,7 +266,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   private static final class MyLafComboBoxRenderer extends DefaultListCellRenderer {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       UIManager.LookAndFeelInfo laf = (UIManager.LookAndFeelInfo)value;
-      return super.getListCellRendererComponent(list, laf.getName(), index, isSelected, cellHasFocus);
+      return super.getListCellRendererComponent(list, laf == null ? null : laf.getName(), index, isSelected, cellHasFocus);
     }
   }
 

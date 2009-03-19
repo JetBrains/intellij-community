@@ -17,7 +17,7 @@ import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 
 public class DiffUtil {
-  public static FrameWrapper initDiffFrame(FrameWrapper frameWrapper, final DiffPanelImpl diffPanel) {
+  public static void initDiffFrame(FrameWrapper frameWrapper, final DiffPanelImpl diffPanel) {
     Project project = diffPanel.getProject();
     frameWrapper.setComponent(diffPanel.getComponent());
     frameWrapper.setProject(project);
@@ -25,7 +25,6 @@ public class DiffUtil {
     frameWrapper.setPreferredFocusedComponent(diffPanel.getPreferredFocusedComponent());
     frameWrapper.closeOnEsc();
     frameWrapper.addDisposable(diffPanel);
-    return frameWrapper;
   }
 
   public static FocusDiffSide getFocusDiffSide(DataContext dataContext) {
@@ -38,8 +37,8 @@ public class DiffUtil {
 
   public static FileType[] chooseContentTypes(DiffContent[] contents) {
     FileType commonType = FileTypes.PLAIN_TEXT;
-    for (int i = 0; i < contents.length; i++) {
-      FileType contentType = contents[i].getContentType();
+    for (DiffContent content : contents) {
+      FileType contentType = content.getContentType();
       if (DiffContentUtil.isTextType(contentType)) commonType = contentType;
     }
     FileType[] result = new FileType[contents.length];
@@ -66,9 +65,7 @@ public class DiffUtil {
 
   public static EditorEx createEditor(Document document, Project project, boolean isViewer) {
     EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx)(isViewer
-                                 ? factory.createViewer(document, project)
-                                 : factory.createEditor(document, project));
+    EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
     editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
     editor.getGutterComponentEx().revalidateMarkup();
     return editor;

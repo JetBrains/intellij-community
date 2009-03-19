@@ -48,7 +48,7 @@ import javax.swing.*;
 import java.util.Map;
 
 public class GeneralColorsPage implements ColorSettingsPage {
-  private static final AttributesDescriptor[] ATT_DESCRIPTORS = new AttributesDescriptor[] {
+  private static final AttributesDescriptor[] ATT_DESCRIPTORS = {
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.default.text"), HighlighterColors.TEXT),
 
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.folded.text"), EditorColors.FOLDED_TEXT_ATTRIBUTES),
@@ -62,7 +62,7 @@ public class GeneralColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.injected.language.fragment"), EditorColors.INJECTED_LANGUAGE_FRAGMENT),
   };
 
-  private static final ColorDescriptor[] COLOR_DESCRIPTORS = new ColorDescriptor[] {
+  private static final ColorDescriptor[] COLOR_DESCRIPTORS = {
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.background.in.readonly.files"), EditorColors.READONLY_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.deneral.color.descriptor.readonly.fragment.background"), EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.gutter.background"), EditorColors.LEFT_GUTTER_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
