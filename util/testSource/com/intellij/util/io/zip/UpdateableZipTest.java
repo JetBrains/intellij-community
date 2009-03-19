@@ -1,0 +1,140 @@
+/*
+ * @author max
+ */
+package com.intellij.util.io.zip;
+
+import com.intellij.openapi.util.io.FileUtil;
+import junit.framework.TestCase;
+
+import java.io.*;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
+
+public class UpdateableZipTest extends TestCase {
+  private File zipFile;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    zipFile = createTestUtilZip();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    FileUtil.delete(zipFile);
+    super.tearDown();
+  }
+
+  public void testRead() throws Exception {
+
+    JBZipFile jbZip = new JBZipFile(zipFile);
+
+    assertEntryWithContentExists(jbZip, "/first", "first");
+    assertEntryWithContentExists(jbZip, "/second", "second");
+  }
+
+  public void testAppendEntry() throws Exception {
+    File zipFile = createTestUtilZip();
+
+    JBZipFile jbZip = new JBZipFile(zipFile);
+
+    assertEntryWithContentExists(jbZip, "/first", "first");
+    assertEntryWithContentExists(jbZip, "/second", "second");
+
+    JBZipEntry newEntry = jbZip.getOrCreateEntry("/third");
+    newEntry.setData("third".getBytes());
+    jbZip.close();
+
+    ZipFile utilZip = new ZipFile(zipFile);
+    ZipEntry thirdEntry = utilZip.getEntry("/third");
+    assertNotNull(thirdEntry);
+    String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(thirdEntry)));
+    assertEquals("third", thirdText);
+    utilZip.close();
+  }
+
+  public void testReplaceEntryContent() throws Exception {
+    File zipFile = createTestUtilZip();
+
+    JBZipFile jbZip = new JBZipFile(zipFile);
+
+    assertEntryWithContentExists(jbZip, "/first", "first");
+    assertEntryWithContentExists(jbZip, "/second", "second");
+
+    JBZipEntry newEntry = jbZip.getOrCreateEntry("/second");
+    newEntry.setData("Content Replaced".getBytes());
+    jbZip.close();
+
+    ZipFile utilZip = new ZipFile(zipFile);
+    ZipEntry updatedEntry = utilZip.getEntry("/second");
+    assertNotNull(updatedEntry);
+    String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(updatedEntry)));
+    assertEquals("Content Replaced", thirdText);
+    utilZip.close();
+  }
+
+  public void testRemoveEntry() throws Exception {
+    File zipFile = createTestUtilZip();
+
+    JBZipFile jbZip = new JBZipFile(zipFile);
+
+    assertEntryWithContentExists(jbZip, "/first", "first");
+    assertEntryWithContentExists(jbZip, "/second", "second");
+
+    jbZip.getEntry("/second").erase();
+    jbZip.close();
+
+    ZipFile utilZip = new ZipFile(zipFile);
+    ZipEntry removedEntry = utilZip.getEntry("/second");
+    assertNull(removedEntry);
+    utilZip.close();
+  }
+  
+  /*
+  public void testAppendToIdeaJar() throws Exception {
+    long tm = System.currentTimeMillis();
+    JBZipFile jbZip = new JBZipFile(new File("/Users/max/idea.jar"));
+    long tm2 = System.currentTimeMillis();
+
+    System.out.println("Loaded in: " + (tm2 - tm) + " msec");
+
+    jbZip.getOrCreateEntry("/somenewtext.txt").setData("New text".getBytes());
+    jbZip.close();
+
+    long tm3 = System.currentTimeMillis();
+    System.out.println("Updated in: " + (tm3 - tm2) + " msec");
+  }
+  */
+
+
+  private File createTestUtilZip() throws Exception {
+    File zipFile = File.createTempFile("test", ".zip");
+    ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
+
+    appendEntry(zos, "/first", "first".getBytes());
+    appendEntry(zos, "/second", "second".getBytes());
+    zos.close();
+    return zipFile;
+  }
+
+  private static void assertEntryWithContentExists(JBZipFile jbZip, String entryName, String content) throws IOException {
+    JBZipEntry entry = jbZip.getEntry(entryName);
+    assertNotNull(entry);
+    String text = new BufferedReader(new InputStreamReader(entry.getInputStream())).readLine();
+    assertEquals(content, text);
+  }
+
+  private void appendEntry(ZipOutputStream zos, String name, byte[] content) throws Exception{
+    ZipEntry e = new ZipEntry(name);
+    e.setMethod(ZipEntry.STORED);
+    e.setSize(content.length);
+    CRC32 crc = new CRC32();
+    crc.update(content);
+    e.setCrc(crc.getValue());
+    zos.putNextEntry(e);
+    zos.write(content, 0, content.length);
+    zos.closeEntry();
+  }
+}
