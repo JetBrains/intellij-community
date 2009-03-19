@@ -81,4 +81,12 @@ public abstract class AbstractBlock implements ASTBlock {
   public boolean isIncomplete() {
     return FormatterUtil.isIncompleted(getNode());
   }
+
+  @Override
+  public String toString() {
+    if (myNode == null) {
+      return super.toString();
+    }
+    return myNode.getText() + " " + getTextRange();
+  }
 }
