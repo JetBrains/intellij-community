@@ -12,6 +12,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 
 import java.io.File;
+import java.util.Properties;
 
 public class PropertyResolverTest extends MavenImportingTestCase {
   public void testResolvingProjectAttributes() throws Exception {
@@ -227,6 +228,21 @@ public class PropertyResolverTest extends MavenImportingTestCase {
                          "</properties>"));
 
     assertEquals("value", resolve("${uncomitted}", myProjectPom));
+  }
+
+  public void testEscaping() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertEquals("foo ^project bar",
+                 PropertyResolver.resolve(getModule("project"), "foo ^${project.artifactId} bar", new Properties(), "/"));
+    assertEquals("foo ${project.artifactId} bar",
+                 PropertyResolver.resolve(getModule("project"), "foo ^^${project.artifactId} bar", new Properties(), "^^"));
+    assertEquals("project ${project.artifactId} project ${project.artifactId}",
+                 PropertyResolver.resolve(getModule("project"),
+                                          "${project.artifactId} ^${project.artifactId} ${project.artifactId} ^${project.artifactId}",
+                                          new Properties(), "^"));
   }
 
   private String resolve(String text, VirtualFile f) {

@@ -456,6 +456,71 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult("target/classes/file2.properties", "value=${xxx}");
   }
 
+  public void testEscapingFiltering() throws Exception {
+    createProjectSubFile("filters/filter.properties", "xxx=value");
+    createProjectSubFile("resources/file.properties",
+                         "value1=\\${xxx}\n" +
+                         "value2=${xxx}\n");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <filters>" +
+                  "    <filter>filters/filter.properties</filter>" +
+                  "  </filters>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+    assertResult("target/classes/file.properties",
+                 "value1=${xxx}\n" +
+                 "value2=value\n");
+  }
+
+  public void testCustomEscapingFiltering() throws Exception {
+    createProjectSubFile("filters/filter.properties", "xxx=value");
+    createProjectSubFile("resources/file.properties",
+                         "value1=^${xxx}\n" +
+                         "value2=\\${xxx}\n");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <filters>" +
+                  "    <filter>filters/filter.properties</filter>" +
+                  "  </filters>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <escapeString>^</escapeString>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    compileModules("project");
+    assertResult("target/classes/file.properties",
+                 "value1=${xxx}\n" +
+                 "value2=\\value\n");
+  }
+
   private void assertResult(String relativePath, String content) throws IOException {
     assertResult(myProjectPom, relativePath, content);
   }

@@ -23,11 +23,11 @@ import java.util.regex.Pattern;
 public class PropertyResolver {
   private static final Pattern PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
 
-  public static String resolve(Module module, String text, Properties additionalProperties) {
+  public static String resolve(Module module, String text, Properties additionalProperties, String escapeString) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
     MavenProjectModel mavenProject = manager.findProject(module);
     if (mavenProject == null) return text;
-    return doResolve(text, mavenProject, additionalProperties, new Stack<String>());
+    return doResolve(text, mavenProject, additionalProperties, escapeString, new Stack<String>());
   }
 
   public static String resolve(GenericDomValue<String> value) {
@@ -44,7 +44,7 @@ public class PropertyResolver {
     MavenProjectModel mavenProject = manager.findProject(file);
     if (mavenProject == null) return text;
 
-    return doResolve(text, mavenProject, collectPropertiesFromDOM(mavenProject, dom), new Stack<String>());
+    return doResolve(text, mavenProject, collectPropertiesFromDOM(mavenProject, dom), null, new Stack<String>());
   }
 
   private static Properties collectPropertiesFromDOM(MavenProjectModel project, DomFileElement<MavenModel> dom) {
@@ -71,18 +71,38 @@ public class PropertyResolver {
     }
   }
 
-  private static String doResolve(String text, MavenProjectModel project, Properties additionalProperties, Stack<String> resolutionStack) {
+  private static String doResolve(String text,
+                                  MavenProjectModel project,
+                                  Properties additionalProperties,
+                                  String escapeString,
+                                  Stack<String> resolutionStack) {
     Matcher matcher = PATTERN.matcher(text);
 
     StringBuffer buff = new StringBuffer();
+    StringBuffer dummy = new StringBuffer();
+    int last = 0;
     while (matcher.find()) {
       String propText = matcher.group();
       String propName = matcher.group(1);
+
+      int tempLast = last;
+      last = matcher.start() + propText.length();
+
+      if (escapeString != null) {
+        int pos = matcher.start();
+        if (pos > escapeString.length() && text.substring(pos - escapeString.length(), pos).equals(escapeString)) {
+          buff.append(text.substring(tempLast, pos - escapeString.length()));
+          buff.append(propText);
+          matcher.appendReplacement(dummy, "");
+          continue;
+        }
+      }
+
       String resolved = doResolveProperty(propName, project, additionalProperties);
       if (resolved == null) resolved = propText;
       if (!resolved.equals(propText) && !resolutionStack.contains(propName)) {
         resolutionStack.push(propName);
-        resolved = doResolve(resolved, project, additionalProperties, resolutionStack);
+        resolved = doResolve(resolved, project, additionalProperties, escapeString, resolutionStack);
         resolutionStack.pop();
       }
       matcher.appendReplacement(buff, Matcher.quoteReplacement(resolved));
