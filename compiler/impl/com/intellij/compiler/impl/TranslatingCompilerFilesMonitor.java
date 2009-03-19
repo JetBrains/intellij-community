@@ -4,6 +4,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.make.MakeUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -66,7 +68,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private final TIntObjectHashMap<Map<String, SourceUrlClassNamePair>> myOutputsToDelete = new TIntObjectHashMap<Map<String, SourceUrlClassNamePair>>(); // Map: projectId -> Map{output path -> [sourceUrl; classname]}
   private final SLRUCache<Project, File> myGeneratedDataPaths = new SLRUCache<Project, File>(8, 8) {
     @NotNull
-    public File createValue(Project project) {
+    public File createValue(final Project project) {
+      Disposer.register(project, new Disposable() {
+        public void dispose() {
+          myGeneratedDataPaths.remove(project);
+        }
+      });
       return CompilerPaths.getGeneratedDataDirectory(project);
     }
   };
@@ -811,7 +818,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     public void projectClosed(final Project project) {
-      myGeneratedDataPaths.clear();
       myConnections.remove(project).disconnect();
       synchronized (mySourcesToRecompile) {
         mySourcesToRecompile.remove(getProjectId(project));
