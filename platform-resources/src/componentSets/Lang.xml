@@ -95,12 +95,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.usageView.UsageViewManager</interface-class>
-      <implementation-class>com.intellij.usageView.impl.UsageViewManagerImpl</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.codeInsight.highlighting.BraceHighlighter</interface-class>
       <implementation-class>com.intellij.codeInsight.highlighting.BraceHighlighter</implementation-class>
       <skipForDefaultProject/>

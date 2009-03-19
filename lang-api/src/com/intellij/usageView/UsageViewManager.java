@@ -15,6 +15,7 @@
  */
 package com.intellij.usageView;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ import javax.swing.*;
 
 public abstract class UsageViewManager {
   public static UsageViewManager getInstance(Project project) {
-    return project.getComponent(UsageViewManager.class);
+    return ServiceManager.getService(project, UsageViewManager.class);
   }
 
   public abstract Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable);

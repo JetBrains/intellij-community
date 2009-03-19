@@ -1,7 +1,7 @@
 package com.intellij.usageView.impl;
 
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
@@ -15,25 +15,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class UsageViewManagerImpl extends UsageViewManager implements ProjectComponent {
+public class UsageViewManagerImpl extends UsageViewManager {
   private final Key<Boolean> REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.REUSABLE_CONTENT_KEY");
   private final Key<Boolean> NOT_REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.NOT_REUSABLE_CONTENT_KEY");        //todo[myakovlev] dont use it
   private final Key<UsageView> NEW_USAGE_VIEW_KEY = Key.create("NEW_USAGE_VIEW_KEY");
   private final ToolWindowManager myToolWindowManager;
   private ContentManager myFindContentManager;
 
-  public UsageViewManagerImpl(final ToolWindowManager toolWindowManager) {
+  public UsageViewManagerImpl(final Project project, final ToolWindowManager toolWindowManager) {
     myToolWindowManager = toolWindowManager;
-  }
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
-  public void projectOpened() {
-    ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.FIND, true, ToolWindowAnchor.BOTTOM);
+    ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.FIND, true, ToolWindowAnchor.BOTTOM, project);
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFind.png"));
     myFindContentManager = toolWindow.getContentManager();
@@ -43,11 +35,6 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
       }
     });
     new ContentManagerWatcher(toolWindow, myFindContentManager);
-  }
-
-  public void projectClosed() {
-    myToolWindowManager.unregisterToolWindow(ToolWindowId.FIND);
-    myFindContentManager = null;
   }
 
   public Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable) {
@@ -116,10 +103,5 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   public void closeContent(@NotNull Content content) {
     myFindContentManager.removeContent(content, true);
     content.release();
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "UsageViewManager";
   }
 }
