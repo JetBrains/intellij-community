@@ -1,11 +1,10 @@
 package com.intellij.openapi.projectRoots.ui;
 
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
 import java.net.MalformedURLException;
@@ -26,7 +25,7 @@ public class Util{
       }
       public boolean canClose(String inputString) {
         try {
-          new URL(StringUtil.endsWithChar(inputString, '/') ? inputString : (inputString + "/"));
+          new URL(inputString);
           return true;
         }
         catch (MalformedURLException e1) {
@@ -38,7 +37,7 @@ public class Util{
     if (url == null) {
       return null;
     }
-    return VirtualFileManager.getInstance().findFileByUrl(StringUtil.endsWithChar(url, '/') ? url : (url + "/"));
+    return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
 
