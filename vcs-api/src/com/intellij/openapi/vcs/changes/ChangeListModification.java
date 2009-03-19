@@ -7,7 +7,7 @@ public interface ChangeListModification {
   LocalChangeList addChangeList(@NotNull String name, final String comment);
   void setDefaultChangeList(@NotNull LocalChangeList list);
 
-  void removeChangeList(final LocalChangeList list);
+  void removeChangeList(final String name);
 
   void moveChangesTo(final LocalChangeList list, final Change[] changes);
 

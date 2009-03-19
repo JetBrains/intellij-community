@@ -90,7 +90,7 @@ public class ShelveChangesCommitExecutor implements CommitExecutor {
         if (changeList instanceof LocalChangeList) {
           LocalChangeList localChangeList = (LocalChangeList) changeList;
           if (localChangeList.getChanges().size() == changes.size() && !localChangeList.isDefault()) {
-            ChangeListManager.getInstance(myProject).removeChangeList(localChangeList);
+            ChangeListManager.getInstance(myProject).removeChangeList(localChangeList.getName());
           }
         }
       }

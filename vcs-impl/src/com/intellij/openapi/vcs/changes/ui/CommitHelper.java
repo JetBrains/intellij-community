@@ -340,7 +340,7 @@ public class CommitHelper {
                   // do delete/ move of change list if needed
                   if (ChangeListsModificationAfterCommit.DELETE_LIST.equals(myAfterVcsRefreshModification)) {
                     if (! myKeepChangeListAfterCommit) {
-                      clManager.removeChangeList((LocalChangeList) myChangeList);
+                      clManager.removeChangeList(myChangeList.getName());
                     }
                   } else if (ChangeListsModificationAfterCommit.MOVE_OTHERS.equals(myAfterVcsRefreshModification)) {
                     ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);

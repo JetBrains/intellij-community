@@ -82,7 +82,7 @@ public class RemoveChangeListAction extends AnAction {
 
     if (rc == DialogWrapper.OK_EXIT_CODE) {
       for(ChangeList list: lists) {
-        ChangeListManager.getInstance(project).removeChangeList((LocalChangeList) list);
+        ChangeListManager.getInstance(project).removeChangeList(list.getName());
       }
     }
   }
@@ -103,7 +103,7 @@ public class RemoveChangeListAction extends AnAction {
     for(ChangeList list: lists) {
       final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
       // we can't use findRealByCopy() because isDefault will differ between our copy and the real list
-      changeListManager.removeChangeList(changeListManager.findChangeList(list.getName()));
+      changeListManager.removeChangeList(list.getName());
     }
   }
 }

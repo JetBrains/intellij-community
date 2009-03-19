@@ -433,9 +433,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  public void removeChangeList(LocalChangeList list) {
+  public void removeChangeList(final String name) {
     synchronized (myDataLock) {
-      myModifier.removeChangeList(list.getName());
+      myModifier.removeChangeList(name);
       myChangesViewManager.scheduleRefresh();
     }
   }
