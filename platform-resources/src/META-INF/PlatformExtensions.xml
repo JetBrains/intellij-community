@@ -79,6 +79,8 @@
                       serviceImplementation="com.intellij.history.LocalHistoryConfiguration"/>
   <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateSettings"
                       serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
+  <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"
+                      serviceImplementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl"/>
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
@@ -141,4 +143,5 @@
   <ComponentRoamingType component="RestoreUpdateTree" type="DISABLED"/>
   <ComponentRoamingType component="PropertiesComponent" type="DISABLED"/>
 
+  <progressFunComponentProvider implementation="com.intellij.featureStatistics.ProgressFunProvider"/>
 </extensions>

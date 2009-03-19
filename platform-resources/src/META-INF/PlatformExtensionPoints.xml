@@ -82,4 +82,6 @@
   <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider"/>
 
   <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP"/>
+
+  <extensionPoint name="progressFunComponentProvider" interface="com.intellij.openapi.progress.ProgressFunComponentProvider"/>
 </extensionPoints>

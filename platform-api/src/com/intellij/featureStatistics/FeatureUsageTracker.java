@@ -15,7 +15,7 @@
  */
 package com.intellij.featureStatistics;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
@@ -28,7 +28,7 @@ public abstract class FeatureUsageTracker {
   public boolean SHOW_IN_OTHER_PROGRESS = true;
 
   public static FeatureUsageTracker getInstance() {
-    return ApplicationManager.getApplication().getComponent(FeatureUsageTracker.class);
+    return ServiceManager.getService(FeatureUsageTracker.class);
   }
 
   public abstract void triggerFeatureUsed(@NonNls String featureId);

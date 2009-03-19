@@ -40,7 +40,9 @@ public abstract class ProgressManager {
 
   public abstract void checkCanceled() throws ProcessCanceledException;
 
+  @Deprecated
   public abstract void registerFunComponentProvider(ProgressFunComponentProvider provider);
+  @Deprecated
   public abstract void removeFunComponentProvider(ProgressFunComponentProvider provider);
   public abstract JComponent getProvidedFunComponent(Project project, @NonNls String processId);
 

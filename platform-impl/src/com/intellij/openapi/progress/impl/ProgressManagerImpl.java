@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.SystemNotifications;
 import org.jetbrains.annotations.Nls;
@@ -118,6 +119,11 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   public JComponent getProvidedFunComponent(Project project, String processId) {
+    for(ProgressFunComponentProvider provider: Extensions.getExtensions(ProgressFunComponentProvider.EP_NAME)) {
+      JComponent cmp = provider.getProgressFunComponent(project, processId);
+      if (cmp != null) return cmp;
+    }
+    
     for (ProgressFunComponentProvider provider : myFunComponentProviders) {
       JComponent cmp = provider.getProgressFunComponent(project, processId);
       if (cmp != null) return cmp;

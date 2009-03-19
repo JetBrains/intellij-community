@@ -16,12 +16,15 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public interface ProgressFunComponentProvider {
+  ExtensionPointName<ProgressFunComponentProvider> EP_NAME = ExtensionPointName.create("com.intellij.progressFunComponentProvider"); 
+
   @NonNls String COMPILATION_ID = "compilation";
 
   @Nullable

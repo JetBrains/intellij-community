@@ -80,10 +80,6 @@
       <implementation-class>com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.featureStatistics.FeatureUsageTracker</interface-class>
-      <implementation-class>com.intellij.featureStatistics.FeatureUsageTrackerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.TipOfTheDayManager</implementation-class>
     </component>
     <component>

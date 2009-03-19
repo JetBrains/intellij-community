@@ -3,22 +3,14 @@
  */
 package com.intellij.featureStatistics;
 
-import com.intellij.featureStatistics.ui.ProgressTipPanel;
-import com.intellij.ide.TipOfTheDayManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.progress.ProgressFunComponentProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -29,10 +21,10 @@ import java.util.Set;
     storages = {@Storage(
         id = "other",
         file = "$APP_CONFIG$/feature.usage.statistics.xml")})
-public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements ApplicationComponent, PersistentStateComponent<Element> {
+public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final long DAY = 1000 * 60 * 60 * 24;
   private long FIRST_RUN_TIME = 0;
-  private boolean HAVE_BEEN_SHOWN = false;
+  boolean HAVE_BEEN_SHOWN = false;
 
   private final ProductivityFeaturesRegistry myRegistry;
 
@@ -43,19 +35,11 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
   @NonNls private static final String ATT_FIRST_RUN = "first-run";
   @NonNls private static final String ATT_HAVE_BEEN_SHOWN = "have-been-shown";
 
-  public FeatureUsageTrackerImpl(ProgressManager progressManager, ProductivityFeaturesRegistry productivityFeaturesRegistry) {
+  public FeatureUsageTrackerImpl(ProductivityFeaturesRegistry productivityFeaturesRegistry) {
     myRegistry = productivityFeaturesRegistry;
-    progressManager.registerFunComponentProvider(new ProgressFunProvider());
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "FeatureUsageStatistics";
-  }
-
-  public void initComponent() { }
-
-  private String[] getFeaturesToShow(Project project) {
+  String[] getFeaturesToShow(Project project) {
     List<String> result = new ArrayList<String>();
     for (String id : ProductivityFeaturesRegistry.getInstance().getFeatureIds()) {
       if (isToBeShown(id, project)) {
@@ -98,9 +82,6 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
       FIRST_RUN_TIME = System.currentTimeMillis();
     }
     return FIRST_RUN_TIME;
-  }
-
-  public void disposeComponent() {
   }
 
   public void loadState(final Element element) {
@@ -164,29 +145,4 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
     }
   }
 
-  private final class ProgressFunProvider implements ProgressFunComponentProvider {
-    @Nullable
-    public JComponent getProgressFunComponent(Project project, String processId) {
-      if (ProgressFunComponentProvider.COMPILATION_ID.equals(processId)) {
-        if (!SHOW_IN_COMPILATION_PROGRESS) return null;
-      }
-      else {
-        if (!SHOW_IN_OTHER_PROGRESS) return null;
-      }
-
-      String[] features = getFeaturesToShow(project);
-      if (features.length > 0) {
-        if (!HAVE_BEEN_SHOWN) {
-          HAVE_BEEN_SHOWN = true;
-          String[] newFeatures = new String[features.length + 1];
-          newFeatures[0] = ProductivityFeaturesRegistryImpl.WELCOME;
-          System.arraycopy(features, 0, newFeatures, 1, features.length);
-          features = newFeatures;
-        }
-        TipOfTheDayManager.getInstance().doNotShowThisTime();
-        return new ProgressTipPanel(features, project).getComponent();
-      }
-      return null;
-    }
-  }
 }

@@ -180,12 +180,14 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       return;
     }
 
-    final JComponent cmp = ProgressManager.getInstance().getProvidedFunComponent(myProject, getProcessId());
-    if (cmp != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       Runnable installer = new Runnable() {
         public void run() {
           if (isRunning() && !isCanceled() && getFraction() < 0.15 && myDialog!=null) {
-            setFunComponent(cmp);
+            final JComponent cmp = ProgressManager.getInstance().getProvidedFunComponent(myProject, getProcessId());
+            if (cmp != null) {
+              setFunComponent(cmp);
+            }
           }
         }
       };
