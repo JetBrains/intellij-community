@@ -2,6 +2,7 @@ package com.intellij.slicer;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -38,7 +39,7 @@ import java.util.Map;
 /**
  * @author cdr
  */
-public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider{
+public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider, Disposable {
   private final SliceTreeBuilder myBuilder;
   private final JTree myTree;
 
@@ -71,6 +72,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider{
         });
 
     myBuilder = new SliceTreeBuilder(myTree, project);
+    Disposer.register(this, myBuilder);
     SliceNode rootNode = new SliceNode(project, root, targetEqualUsages, myBuilder);
     myBuilder.setRoot(rootNode);
 
@@ -83,11 +85,15 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider{
   }
 
   private void layoutPanel() {
+    if (myUsagePreviewPanel != null) {
+      Disposer.dispose(myUsagePreviewPanel);
+    }
     removeAll();
     if (isPreview()) {
       Splitter splitter = new Splitter(false, UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
       splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
       myUsagePreviewPanel = new UsagePreviewPanel(myProject);
+      Disposer.register(this, myUsagePreviewPanel);
       splitter.setSecondComponent(myUsagePreviewPanel);
       add(splitter, BorderLayout.CENTER);
     }
@@ -103,10 +109,8 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider{
   public void dispose() {
     if (myUsagePreviewPanel != null) {
       UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = ((Splitter)myUsagePreviewPanel.getParent()).getProportion();
-      myUsagePreviewPanel.dispose();
       myUsagePreviewPanel = null;
     }
-    Disposer.dispose(myBuilder);
     
     isDisposed = true;
     ToolTipManager.sharedInstance().unregisterComponent(myTree);

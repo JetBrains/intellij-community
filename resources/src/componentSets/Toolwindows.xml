@@ -4,10 +4,5 @@
       <implementation-class>com.intellij.ide.palette.impl.PaletteManager</implementation-class>
       <skipForDummyProject/>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.slicer.SliceManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
   </project-components>
 </components>
