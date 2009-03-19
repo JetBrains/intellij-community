@@ -295,6 +295,12 @@ public class ModuleEditor implements Place.Navigator {
 
   public ModifiableRootModel applyAndDispose() throws ConfigurationException {
     for (ModuleConfigurationEditor editor : myEditors) {
+      if (editor instanceof ModuleElementsEditor) {
+        ((ModuleElementsEditor)editor).canApply();
+      }
+    }
+
+    for (ModuleConfigurationEditor editor : myEditors) {
       editor.saveData();
       editor.apply();
     }

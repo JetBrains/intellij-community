@@ -38,6 +38,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
     return myModel != null && myModel.isChanged();
   }
 
+  public void canApply() throws ConfigurationException {}
   public void apply() throws ConfigurationException {}
   public void reset() {}
   public void moduleStateChanged() {}

@@ -78,6 +78,15 @@ public class ClasspathEditor extends ModuleElementsEditor {
     }
   }
 
+  @Override
+  public void canApply() throws ConfigurationException {
+    super.canApply();
+    if (myClasspathFormatPanel != null) {
+      final String storageID = myClasspathFormatPanel.getSelectedClasspathFormat();
+      ClasspathStorage.getProvider(storageID).assertCompatible(myModel);
+    }
+  }
+
   public JComponent createComponentImpl() {
     myPanel = new ClasspathPanel(myProject, myModel, myModulesProvider);
 
