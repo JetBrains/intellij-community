@@ -581,7 +581,7 @@ public class JBZipOutputStream extends OutputStream {
     written += SHORT;
 
     // extra field length
-    byte[] extra = ze.getCentralDirectoryExtra();
+    byte[] extra = ze.getExtra();
     writeOut(ZipShort.getBytes(extra.length));
     written += SHORT;
 

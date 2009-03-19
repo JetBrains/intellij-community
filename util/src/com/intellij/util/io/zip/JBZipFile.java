@@ -38,8 +38,8 @@ import java.util.zip.ZipException;
  */
 public class JBZipFile {
   private static final int HASH_SIZE = 509;
-  private static final int SHORT = 2;
-  private static final int WORD = 4;
+  static final int SHORT = 2;
+  static final int WORD = 4;
   private static final int NIBLET_MASK = 0x0f;
   private static final int BYTE_SHIFT = 8;
   private static final int POS_0 = 0;
@@ -122,7 +122,6 @@ public class JBZipFile {
     archive = new RandomAccessFile(f, "rw");
     try {
       populateFromCentralDirectory();
-      resolveLocalFileHeaderData();
     }
     catch (IOException e) {
       try {
@@ -298,7 +297,11 @@ public class JBZipFile {
       nameMap.put(ze.getName(), ze);
       entries.add(ze);
 
-      archive.skipBytes(extraLen);
+      if (extraLen > 0) {
+        byte[] extra = new byte[extraLen];
+        archive.readFully(extra);
+        ze.setExtra(extra);
+      }
 
       byte[] comment = new byte[commentLen];
       archive.readFully(comment);
@@ -379,7 +382,7 @@ public class JBZipFile {
    * Number of bytes in local file header up to the &quot;length of
    * filename&quot; entry.
    */
-  private static final long LFH_OFFSET_FOR_FILENAME_LENGTH =
+  static final long LFH_OFFSET_FOR_FILENAME_LENGTH =
     /* local file header signature     */ WORD
                                           /* version needed to extract       */ + SHORT
                                           /* general purpose bit flag        */ + SHORT
@@ -389,45 +392,6 @@ public class JBZipFile {
                                           /* crc-32                          */ + WORD
                                           /* compressed size                 */ + WORD
                                           /* uncompressed size               */ + WORD;
-
-  /**
-   * Walks through all recorded entries and adds the data available
-   * from the local file header.
-   * <p/>
-   * <p>Also records the offsets for the data to read from the
-   * entries.</p>
-   */
-  private void resolveLocalFileHeaderData() throws IOException {
-    for (JBZipEntry ze : getEntries()) {
-      long offset = ze.getHeaderOffset();
-      archive.seek(offset + LFH_OFFSET_FOR_FILENAME_LENGTH);
-      byte[] b = new byte[SHORT];
-      archive.readFully(b);
-      int fileNameLen = ZipShort.getValue(b);
-      archive.readFully(b);
-      int extraFieldLen = ZipShort.getValue(b);
-      archive.skipBytes(fileNameLen);
-      byte[] localExtraData = new byte[extraFieldLen];
-      archive.readFully(localExtraData);
-      ze.setExtra(localExtraData);
-      /*dataOffsets.put(ze,
-                      new Long(offset + LFH_OFFSET_FOR_FILENAME_LENGTH
-                               + SHORT + SHORT + fileNameLen + extraFieldLen));
-      */
-      ze.setDataOffset(offset + LFH_OFFSET_FOR_FILENAME_LENGTH + SHORT + SHORT + fileNameLen + extraFieldLen);
-    }
-  }
-
-  /**
-   * Convert a DOS date/time field to a Date object.
-   *
-   * @param zipDosTime contains the stored DOS time.
-   * @return a Date instance corresponding to the given time.
-   */
-  protected static Date fromDosTime(ZipLong zipDosTime) {
-    long dosTime = zipDosTime.getValue();
-    return new Date(dosToJavaTime(dosTime));
-  }
 
   /*
   * Converts DOS time to Java time (number of milliseconds since epoch).

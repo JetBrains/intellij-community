@@ -3,33 +3,46 @@
  */
 package com.intellij.util.io.zip;
 
+import com.intellij.util.ArrayUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Date;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
 /**
  * Extension that adds better handling of extra fields and provides
  * access to the internal and external file attributes.
  */
-public class JBZipEntry extends ZipEntry implements Cloneable {
-
+public class JBZipEntry implements Cloneable {
   private static final int PLATFORM_UNIX = 3;
   private static final int PLATFORM_FAT = 0;
   private static final int SHORT_MASK = 0xFFFF;
   private static final int SHORT_SHIFT = 16;
+  /**
+   * Compression method for uncompressed entries.
+   */
+  public static final int STORED = 0;
+
+  /**
+   * Compression method for compressed (deflated) entries.
+   */
+  public static final int DEFLATED = 8;
+
+  private long time = -1;     // modification time (in DOS time)
+  private long crc = -1;      // crc-32 of entry data
+  private long size = -1;     // uncompressed size of entry data
+  private long csize = -1;    // compressed size of entry data
+  private int method = -1;    // compression method
+  private byte[] extra = ArrayUtil.EMPTY_BYTE_ARRAY;   // optional extra field data for entry
+  private String comment;     // optional comment string for entry
 
   private int internalAttributes = 0;
   private int platform = PLATFORM_FAT;
   private long externalAttributes = 0;
-  private List<ZipExtraField> extraFields = null;
   private String name = null;
 
   private long headerOffset = -1;
@@ -45,69 +58,17 @@ public class JBZipEntry extends ZipEntry implements Cloneable {
    * @since 1.1
    */
   public JBZipEntry(String name, JBZipFile file) {
-    super(name);
+    this.name = name;
     myFile = file;
   }
 
   /**
-   * Creates a new zip entry with fields taken from the specified zip entry.
-   *
-   * @param entry the entry to get fields from
    * @param file
-   * @throws ZipException on error
-   * @since 1.1
-   */
-  public JBZipEntry(ZipEntry entry, JBZipFile file) throws ZipException {
-    super(entry);
-    myFile = file;
-    byte[] extra = entry.getExtra();
-    if (extra != null) {
-      setExtraFields(ExtraFieldUtils.parse(extra));
-    }
-    else {
-      // initializes extra data to an empty byte array
-      setExtra();
-    }
-  }
-
-  /**
-   * Creates a new zip entry with fields taken from the specified zip entry.
-   *
-   * @param entry the entry to get fields from
-   * @param file
-   * @throws ZipException on error
-   * @since 1.1
-   */
-  public JBZipEntry(JBZipEntry entry, JBZipFile file) throws ZipException {
-    this((ZipEntry)entry, file);
-    setInternalAttributes(entry.getInternalAttributes());
-    setExternalAttributes(entry.getExternalAttributes());
-    setExtraFields(entry.getExtraFields());
-  }
-
-  /**
    * @since 1.9
-   * @param file
    */
   protected JBZipEntry(JBZipFile file) {
-    super("");
+    name = "";
     myFile = file;
-  }
-
-  /**
-   * Overwrite clone.
-   *
-   * @return a cloned copy of this ZipEntry
-   * @since 1.1
-   */
-  public Object clone() {
-    JBZipEntry e = (JBZipEntry)super.clone();
-
-    e.extraFields = extraFields != null ? new ArrayList<ZipExtraField>(extraFields) : null;
-    e.setInternalAttributes(getInternalAttributes());
-    e.setExternalAttributes(getExternalAttributes());
-    e.setExtraFields(getExtraFields());
-    return e;
   }
 
   /**
@@ -156,14 +117,6 @@ public class JBZipEntry extends ZipEntry implements Cloneable {
 
   public void setHeaderOffset(long headerOffset) {
     this.headerOffset = headerOffset;
-  }
-
-  public long getDataOffset() {
-    return dataOffset;
-  }
-
-  public void setDataOffset(long dataOffset) {
-    this.dataOffset = dataOffset;
   }
 
   /**
@@ -217,105 +170,17 @@ public class JBZipEntry extends ZipEntry implements Cloneable {
   }
 
   /**
-   * Replaces all currently attached extra fields with the new array.
-   *
-   * @param fields an array of extra fields
-   * @since 1.1
+   * Sets the optional extra field data for the entry.
+   * @param extra the extra field data bytes
+   * @exception IllegalArgumentException if the length of the specified
+   *		  extra field data is greater than 0xFFFF bytes
+   * @see #getExtra()
    */
-  public void setExtraFields(ZipExtraField[] fields) {
-    extraFields = new ArrayList<ZipExtraField>(Arrays.asList(fields));
-    setExtra();
-  }
-
-  /**
-   * Retrieves extra fields.
-   *
-   * @return an array of the extra fields
-   * @since 1.1
-   */
-  public ZipExtraField[] getExtraFields() {
-    if (extraFields == null) {
-      return new ZipExtraField[0];
-    }
-
-    return extraFields.toArray(new ZipExtraField[extraFields.size()]);
-  }
-
-  /**
-   * Adds an extra fields - replacing an already present extra field
-   * of the same type.
-   *
-   * @param ze an extra field
-   * @since 1.1
-   */
-  public void addExtraField(ZipExtraField ze) {
-    if (extraFields == null) {
-      extraFields = new ArrayList<ZipExtraField>();
-    }
-    ZipShort type = ze.getHeaderId();
-    boolean done = false;
-    for (int i = 0, fieldsSize = extraFields.size(); !done && i < fieldsSize; i++) {
-      if (extraFields.get(i).getHeaderId().equals(type)) {
-        extraFields.set(i, ze);
-        done = true;
+  public void setExtra(byte[] extra) {
+      if (extra != null && extra.length > 0xFFFF) {
+          throw new IllegalArgumentException("invalid extra field length");
       }
-    }
-    if (!done) {
-      extraFields.add(ze);
-    }
-    setExtra();
-  }
-
-  /**
-   * Remove an extra fields.
-   *
-   * @param type the type of extra field to remove
-   * @since 1.1
-   */
-  public void removeExtraField(ZipShort type) {
-    if (extraFields == null) {
-      extraFields = new ArrayList<ZipExtraField>();
-    }
-    boolean done = false;
-    for (int i = 0, fieldsSize = extraFields.size(); !done && i < fieldsSize; i++) {
-      if (extraFields.get(i).getHeaderId().equals(type)) {
-        extraFields.remove(i);
-        done = true;
-      }
-    }
-    if (!done) {
-      throw new NoSuchElementException();
-    }
-    setExtra();
-  }
-
-  /**
-   * Throws an Exception if extra data cannot be parsed into extra fields.
-   *
-   * @param extra an array of bytes to be parsed into extra fields
-   * @throws RuntimeException if the bytes cannot be parsed
-   * @throws RuntimeException on error
-   * @since 1.1
-   */
-  public void setExtra(byte[] extra) throws RuntimeException {
-    try {
-      setExtraFields(ExtraFieldUtils.parse(extra));
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e.getMessage());
-    }
-  }
-
-  /**
-   * Unfortunately {@link java.util.zip.ZipOutputStream
-   * java.util.zip.ZipOutputStream} seems to access the extra data
-   * directly, so overriding getExtra doesn't help - we need to
-   * modify super's data directly.
-   *
-   * @since 1.1
-   */
-  protected void setExtra() {
-    super.setExtra(ExtraFieldUtils.mergeLocalFileDataData(getExtraFields()));
+      this.extra = extra;
   }
 
   /**
@@ -325,33 +190,80 @@ public class JBZipEntry extends ZipEntry implements Cloneable {
    * @since 1.1
    */
   public byte[] getLocalFileDataExtra() {
-    byte[] extra = getExtra();
-    return extra != null ? extra : new byte[0];
+    byte[] e = getExtra();
+    return e != null ? e : new byte[0];
   }
 
   /**
-   * Retrieves the extra data for the central directory.
+   * Sets the modification time of the entry.
    *
-   * @return the central directory extra data
-   * @since 1.1
+   * @param time the entry modification time in number of milliseconds
+   *             since the epoch
+   * @see #getTime()
    */
-  public byte[] getCentralDirectoryExtra() {
-    return ExtraFieldUtils.mergeCentralDirectoryData(getExtraFields());
+  public void setTime(long time) {
+    this.time = javaToDosTime(time);
   }
 
   /**
-   * Make this class work in JDK 1.1 like a 1.2 class.
-   * <p/>
-   * <p>This either stores the size for later usage or invokes
-   * setCompressedSize via reflection.</p>
+   * Returns the modification time of the entry, or -1 if not specified.
    *
-   * @param size the size to use
-   * @since 1.2
-   * @deprecated since 1.7.
-   *             Use setCompressedSize directly.
+   * @return the modification time of the entry, or -1 if not specified
+   * @see #setTime(long)
    */
-  public void setComprSize(long size) {
-    setCompressedSize(size);
+  public long getTime() {
+    return time != -1 ? dosToJavaTime(time) : -1;
+  }
+
+  /*
+   * Converts DOS time to Java time (number of milliseconds since epoch).
+   */
+  private static long dosToJavaTime(long dtime) {
+    Date d = new Date((int)(((dtime >> 25) & 0x7f) + 80), (int)(((dtime >> 21) & 0x0f) - 1), (int)((dtime >> 16) & 0x1f),
+                      (int)((dtime >> 11) & 0x1f), (int)((dtime >> 5) & 0x3f), (int)((dtime << 1) & 0x3e));
+    return d.getTime();
+  }
+
+  /*
+   * Converts Java time to DOS time.
+   */
+  private static long javaToDosTime(long time) {
+    Date d = new Date(time);
+    int year = d.getYear() + 1900;
+    if (year < 1980) {
+      return (1 << 21) | (1 << 16);
+    }
+    return (year - 1980) << 25 |
+           (d.getMonth() + 1) << 21 |
+           d.getDate() << 16 |
+           d.getHours() << 11 |
+           d.getMinutes() << 5 |
+           d.getSeconds() >> 1;
+  }
+
+  /**
+   * Sets the uncompressed size of the entry data.
+   *
+   * @param size the uncompressed size in bytes
+   * @throws IllegalArgumentException if the specified size is less
+   *                                  than 0 or greater than 0xFFFFFFFF bytes
+   * @see #getSize()
+   */
+  public void setSize(long size) {
+    if (size < 0 || size > 0xFFFFFFFFL) {
+      throw new IllegalArgumentException("invalid entry size");
+    }
+    this.size = size;
+  }
+
+  /**
+   * Returns the uncompressed size of the entry data, or -1 if not known.
+   *
+   * @return the uncompressed size of the entry data, or -1 if not known
+   * @see #setSize(long)
+   */
+  public long getSize() {
+    return size;
   }
 
   /**
@@ -361,7 +273,81 @@ public class JBZipEntry extends ZipEntry implements Cloneable {
    * @since 1.9
    */
   public String getName() {
-    return name == null ? super.getName() : name;
+    return name;
+  }
+
+  /**
+   * Returns the size of the compressed entry data, or -1 if not known.
+   * In the case of a stored entry, the compressed size will be the same
+   * as the uncompressed size of the entry.
+   *
+   * @return the size of the compressed entry data, or -1 if not known
+   * @see #setCompressedSize(long)
+   */
+  public long getCompressedSize() {
+    return csize;
+  }
+
+  /**
+   * Sets the size of the compressed entry data.
+   *
+   * @param csize the compressed size to set to
+   * @see #getCompressedSize()
+   */
+  public void setCompressedSize(long csize) {
+    this.csize = csize;
+  }
+
+  /**
+   * Sets the CRC-32 checksum of the uncompressed entry data.
+   *
+   * @param crc the CRC-32 value
+   * @throws IllegalArgumentException if the specified CRC-32 value is
+   *                                  less than 0 or greater than 0xFFFFFFFF
+   * @see #getCrc()
+   */
+  public void setCrc(long crc) {
+    if (crc < 0 || crc > 0xFFFFFFFFL) {
+      throw new IllegalArgumentException("invalid entry crc-32");
+    }
+    this.crc = crc;
+  }
+
+  /**
+   * Returns the CRC-32 checksum of the uncompressed entry data, or -1 if
+   * not known.
+   *
+   * @return the CRC-32 checksum of the uncompressed entry data, or -1 if
+   *         not known
+   * @see #setCrc(long)
+   */
+  public long getCrc() {
+    return crc;
+  }
+
+  /**
+   * Sets the compression method for the entry.
+   *
+   * @param method the compression method, either STORED or DEFLATED
+   * @throws IllegalArgumentException if the specified compression
+   *                                  method is invalid
+   * @see #getMethod()
+   */
+  public void setMethod(int method) {
+    if (method != STORED && method != DEFLATED) {
+      throw new IllegalArgumentException("invalid compression method");
+    }
+    this.method = method;
+  }
+
+  /**
+   * Returns the compression method of the entry, or -1 if not specified.
+   *
+   * @return the compression method of the entry, or -1 if not specified
+   * @see #setMethod(int)
+   */
+  public int getMethod() {
+    return method;
   }
 
   /**
@@ -406,12 +392,11 @@ public class JBZipEntry extends ZipEntry implements Cloneable {
    * Returns an InputStream for reading the contents of the given entry.
    *
    * @return a stream to read the entry from.
-   * @throws java.io.IOException  if unable to create an input stream from the zipenty
+   * @throws java.io.IOException        if unable to create an input stream from the zipenty
    * @throws java.util.zip.ZipException if the zipentry has an unsupported compression method
    */
   public InputStream getInputStream() throws IOException {
-    long start = getDataOffset();
-    if (start == -1) return null;
+    long start = calcDataOffset();
 
     BoundedInputStream bis = new BoundedInputStream(start, getCompressedSize());
     switch (getMethod()) {
@@ -425,11 +410,83 @@ public class JBZipEntry extends ZipEntry implements Cloneable {
     }
   }
 
+  /**
+   * Returns the extra field data for the entry, or null if none.
+   *
+   * @return the extra field data for the entry, or null if none
+   * @see #setExtra(byte[])
+   */
+  public byte[] getExtra() {
+    return extra;
+  }
+
+  /**
+   * Sets the optional comment string for the entry.
+   *
+   * @param comment the comment string
+   * @throws IllegalArgumentException if the length of the specified
+   *                                  comment string is greater than 0xFFFF bytes
+   * @see #getComment()
+   */
+  public void setComment(String comment) {
+    if (comment != null && comment.length() > 0xffff / 3 && getUTF8Length(comment) > 0xffff) {
+      throw new IllegalArgumentException("invalid entry comment length");
+    }
+    this.comment = comment;
+  }
+
+  /*
+  * Returns the length of String's UTF8 encoding.
+  */
+  private static int getUTF8Length(String s) {
+    int count = 0;
+    for (int i = 0; i < s.length(); i++) {
+      char ch = s.charAt(i);
+      if (ch <= 0x7f) {
+        count++;
+      }
+      else if (ch <= 0x7ff) {
+        count += 2;
+      }
+      else {
+        count += 3;
+      }
+    }
+    return count;
+  }
+
+
+  /**
+   * Returns the comment string for the entry, or null if none.
+   *
+   * @return the comment string for the entry, or null if none
+   * @see #setComment(String)
+   */
+  public String getComment() {
+    return comment;
+  }
+
+
   public void setData(byte[] bytes) throws IOException {
     JBZipOutputStream stream = myFile.getOutputStream();
     stream.putNextEntry(this);
     stream.write(bytes);
     stream.closeEntry();
+  }
+
+  private long calcDataOffset() {
+    try {
+      long offset = getHeaderOffset();
+      myFile.archive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
+      byte[] b = new byte[JBZipFile.WORD];
+      myFile.archive.readFully(b);
+      int fileNameLen = ZipShort.getValue(b, 0);
+      int extraFieldLen = ZipShort.getValue(b, JBZipFile.SHORT);
+      return offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD + fileNameLen + extraFieldLen;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -445,22 +502,6 @@ public class JBZipEntry extends ZipEntry implements Cloneable {
     BoundedInputStream(long start, long remaining) {
       this.remaining = remaining;
       loc = start;
-    }
-
-    public int read() throws IOException {
-      if (remaining-- <= 0) {
-        if (addDummyByte) {
-          addDummyByte = false;
-          return 0;
-        }
-        return -1;
-      }
-
-      RandomAccessFile archive = myFile.archive;
-      synchronized (archive) {
-        archive.seek(loc++);
-        return archive.read();
-      }
     }
 
     public int read(byte[] b, int off, int len) throws IOException {
@@ -483,16 +524,28 @@ public class JBZipEntry extends ZipEntry implements Cloneable {
 
       final int ret;
       RandomAccessFile archive = myFile.archive;
-      synchronized (archive) {
-        archive.seek(loc);
-        ret = archive.read(b, off, len);
-      }
+      archive.seek(loc);
+      ret = archive.read(b, off, len);
 
       if (ret > 0) {
         loc += ret;
         remaining -= ret;
       }
       return ret;
+    }
+
+    public int read() throws IOException {
+      if (remaining-- <= 0) {
+        if (addDummyByte) {
+          addDummyByte = false;
+          return 0;
+        }
+        return -1;
+      }
+
+      RandomAccessFile archive = myFile.archive;
+      archive.seek(loc++);
+      return archive.read();
     }
 
     /**
