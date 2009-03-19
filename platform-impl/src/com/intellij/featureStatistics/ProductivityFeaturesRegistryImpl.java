@@ -2,6 +2,7 @@ package com.intellij.featureStatistics;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -44,9 +45,13 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void lazyLoadFromPluginsFeaturesProviders() {
-    final ProductivityFeaturesProvider[] providers = ApplicationManager.getApplication().getComponents(ProductivityFeaturesProvider.class);
-    for (int i = 0; providers != null && i < providers.length; i++) {
-      ProductivityFeaturesProvider provider = providers[i];
+    loadFeaturesFromProviders(ApplicationManager.getApplication().getComponents(ProductivityFeaturesProvider.class));
+    loadFeaturesFromProviders(Extensions.getExtensions(ProductivityFeaturesProvider.EP_NAME));
+    myLoadAdditionFeatures = true;
+  }
+
+  private void loadFeaturesFromProviders(ProductivityFeaturesProvider[] providers) {
+    for (ProductivityFeaturesProvider provider : providers) {
       final GroupDescriptor[] groupDescriptors = provider.getGroupDescriptors();
       for (int j = 0; groupDescriptors != null && j < groupDescriptors.length; j++) {
         GroupDescriptor groupDescriptor = groupDescriptors[j];
@@ -54,9 +59,9 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
       }
       final FeatureDescriptor[] featureDescriptors = provider.getFeatureDescriptors();
       for (int j = 0; featureDescriptors != null && j < featureDescriptors.length; j++) {
-        FeatureDescriptor featureDescriptor = (FeatureDescriptor)featureDescriptors[j];
+        FeatureDescriptor featureDescriptor = featureDescriptors[j];
         final FeatureDescriptor featureLoadedStatistics = myFeatures.get(featureDescriptor.getId());
-        if (featureLoadedStatistics != null){
+        if (featureLoadedStatistics != null) {
           featureDescriptor.copyStatistics(featureLoadedStatistics);
         }
         myFeatures.put(featureDescriptor.getId(), featureDescriptor);
@@ -67,7 +72,6 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
         myApplicabilityFilters.add(new Pair<String, ApplicabilityFilter>(applicabilityFilter.getPrefix(), applicabilityFilter));
       }
     }
-    myLoadAdditionFeatures = true;
   }
 
   private void readFilters(Element element) {

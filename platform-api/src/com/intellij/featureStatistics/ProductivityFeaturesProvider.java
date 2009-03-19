@@ -15,13 +15,14 @@
  */
 package com.intellij.featureStatistics;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
  * User: anna
  * Date: Jan 30, 2005
  */
-public abstract class ProductivityFeaturesProvider implements ApplicationComponent{
+public abstract class ProductivityFeaturesProvider {
+  public static ExtensionPointName<ProductivityFeaturesProvider> EP_NAME = ExtensionPointName.create("com.intellij.productivityFeaturesProvider"); 
   
   public abstract FeatureDescriptor[] getFeatureDescriptors();
 

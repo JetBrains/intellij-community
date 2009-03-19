@@ -253,13 +253,8 @@
     <lang.implementationTextSelectioner language="XML" implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
     <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.XmlBasicWordSelectionFilter"/>
     <defaultLiveTemplatesProvider implementation="com.intellij.codeInsight.template.XmlDefaultLiveTemplatesProvider"/>
+    <productivityFeaturesProvider implementation="com.intellij.featureStatistics.XmlProductivityFeatureProvider"/>
   </extensions>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.featureStatistics.XmlProductivityFeatureProvider</implementation-class>
-
-    </component>
-  </application-components>
 
   <actions>
 
