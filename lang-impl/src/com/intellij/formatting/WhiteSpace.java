@@ -93,14 +93,17 @@ class WhiteSpace {
 
   private boolean coveredByBlock(final FormattingDocumentModel model) {
     if (myInitial == null) return true;
-    final String s = myInitial.toString().trim();
+    String s = myInitial.toString().trim();
     if (s.length() == 0) return true;
     if (!(model instanceof FormattingDocumentModelImpl)) return false;
     PsiFile psiFile = ((FormattingDocumentModelImpl)model).getFile();
     if (psiFile == null) return false;
     PsiElement start = psiFile.findElementAt(myStart);
     PsiElement end = psiFile.findElementAt(myEnd-1);
-    if (CDATA_START.equals(s) || CDATA_END.equals(s)) return true;
+    if (s.startsWith(CDATA_START)) s = s.substring(CDATA_START.length());
+    if (s.endsWith(CDATA_END)) s = s.substring(0, s.length() - CDATA_END.length());
+    s = s.trim();
+    if (s.length() == 0) return true;
     return start == end && start instanceof PsiWhiteSpace; // there maybe non-white text inside CDATA-encoded injected elements
   }
 
