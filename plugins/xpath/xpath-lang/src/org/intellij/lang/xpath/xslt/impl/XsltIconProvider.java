@@ -33,7 +33,7 @@ public class XsltIconProvider implements ApplicationComponent, FileIconPatcher {
     }
 
     public Icon patchIcon(Icon baseIcon, VirtualFile file, int flags, Project project) {
-        if (!myConfig.isEnabled()) return baseIcon;
+        if (!myConfig.isEnabled() || project == null) return baseIcon;
 
         final TIntObjectHashMap<Icon> icons = file.getUserData(ICON_KEY);
         if (icons != null) {
