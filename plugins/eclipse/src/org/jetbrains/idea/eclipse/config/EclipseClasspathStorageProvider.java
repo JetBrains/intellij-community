@@ -18,14 +18,13 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.ConversionException;
+import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
-import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +55,8 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final Library library = ((LibraryOrderEntry)entry).getLibrary();
         if (library == null ||
             entry.getUrls(OrderRootType.CLASSES).length != 1 ||
+            entry.getUrls(OrderRootType.SOURCES).length > 1 ||
+            entry.getUrls(JavadocOrderRootType.getInstance()).length > 1 ||
             library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
           throw new ConfigurationException(
             "Library \'" + entry.getPresentableName() + "\' is incompatible with eclipse format which supports only one content root");
@@ -80,21 +81,6 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
   public ClasspathConverter createConverter(Module module) {
     return new EclipseClasspathConverter(module);
-  }
-
-  @Nullable
-  public static String hasIncompatibleLibrary(ModuleRootModel model) {
-    for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
-        final Library library = ((LibraryOrderEntry)entry).getLibrary();
-        if (library == null ||
-            entry.getUrls(OrderRootType.CLASSES).length != 1 ||
-            library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
-          return entry.getPresentableName();
-        }
-      }
-    }
-    return null;
   }
 
   static void registerFiles(final CachedXmlDocumentSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
