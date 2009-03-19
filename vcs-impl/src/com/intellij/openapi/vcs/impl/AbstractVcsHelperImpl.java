@@ -72,7 +72,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, new Runnable() {
       public void run() {
-        final MessageView messageView = myProject.getComponent(MessageView.class);
+        final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
         messageView.runWhenInitialized(new Runnable() {
           public void run() {
             final Content content =
@@ -222,7 +222,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   protected void removeContents(Content notToRemove, final String tabDisplayName) {
-    MessageView messageView = myProject.getComponent(MessageView.class);
+    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
     Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
       LOG.assertTrue(content != null);

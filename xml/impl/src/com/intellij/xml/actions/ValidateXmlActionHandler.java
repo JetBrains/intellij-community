@@ -222,7 +222,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       commandProcessor.executeCommand(
           myProject, new Runnable() {
             public void run() {
-              MessageView messageView = myProject.getComponent(MessageView.class);
+              MessageView messageView = MessageView.SERVICE.getInstance(myProject);
               final Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), CONTENT_NAME, true);
               content.putUserData(KEY, myErrorsView);
               messageView.getContentManager().addContent(content);
@@ -237,7 +237,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       );
     }
     private void removeCompileContents(Content notToRemove) {
-      MessageView messageView = myProject.getComponent(MessageView.class);
+      MessageView messageView = MessageView.SERVICE.getInstance(myProject);
 
       for (Content content : messageView.getContentManager().getContents()) {
         if (content.isPinned()) continue;

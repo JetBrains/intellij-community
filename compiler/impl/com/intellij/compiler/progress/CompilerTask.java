@@ -385,7 +385,7 @@ public class CompilerTask extends Task.Backgroundable {
       component = myErrorTreeView.getComponent();
     }
     
-    final MessageView messageView = myProject.getComponent(MessageView.class);
+    final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
     final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, myContentName, true);
     content.putUserData(CONTENT_ID_KEY, myContentId);
     messageView.getContentManager().addContent(content);
@@ -398,7 +398,7 @@ public class CompilerTask extends Task.Backgroundable {
   public void showCompilerContent() {
     synchronized (myMessageViewLock) {
       if (myErrorTreeView != null) {
-        final MessageView messageView = myProject.getComponent(MessageView.class);
+        final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
         Content[] contents = messageView.getContentManager().getContents();
         for (Content content : contents) {
           if (content.getUserData(CONTENT_ID_KEY) != null) {
@@ -411,7 +411,7 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   public static void removeAllContents(Project project, Content notRemove) {
-    MessageView messageView = project.getComponent(MessageView.class);
+    MessageView messageView = MessageView.SERVICE.getInstance(project);
     Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.isPinned()) continue;
