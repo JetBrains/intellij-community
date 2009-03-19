@@ -81,6 +81,8 @@
                       serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
   <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"
                       serviceImplementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl"/>
+  <applicationService serviceInterface="com.intellij.featureStatistics.ProductivityFeaturesRegistry"
+                      serviceImplementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl"/>
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>

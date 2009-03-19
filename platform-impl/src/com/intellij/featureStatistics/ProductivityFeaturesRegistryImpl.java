@@ -3,13 +3,16 @@ package com.intellij.featureStatistics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
+import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import java.net.URL;
 import java.util.*;
 
-public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry implements NamedJDOMExternalizable, RoamingTypeDisabled {
+public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.ProductivityFeaturesRegistry");
   private final Map<String, FeatureDescriptor> myFeatures = new HashMap<String, FeatureDescriptor>();
   private final Map<String, GroupDescriptor> myGroups = new HashMap<String, GroupDescriptor>();
@@ -26,22 +29,16 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   @NonNls private static final String CLASS_ATTR = "class";
   @NonNls private static final String PREFIX_ATTR = "prefix";
 
-  public String getComponentName() {
-    return "ProductivityFeaturesRegistry";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  public String getExternalFileName() {
-    return "ProductivityFeaturesRegistry";
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    readGroups(element);
-    readFilters(element);
+  public ProductivityFeaturesRegistryImpl() {
+    try {
+      final Document document = JDOMUtil.loadResourceDocument(new URL("file:///ProductivityFeaturesRegistry.xml"));
+      final Element root = document.getRootElement();
+      readGroups(root);
+      readFilters(root);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   private void lazyLoadFromPluginsFeaturesProviders() {
@@ -165,10 +162,6 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
       }
     }
     return filters.toArray(new ApplicabilityFilter[filters.size()]);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    throw new WriteExternalException();
   }
 
   public void addFeatureStatistics(final FeatureDescriptor descriptor) {
