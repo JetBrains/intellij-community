@@ -73,7 +73,7 @@ public abstract class FindUsagesHandler {
     return options;
   }
 
-  public void processElementUsages(final PsiElement element, final Processor<UsageInfo> processor, final FindUsagesOptions options) {
+  public void processElementUsages(@NotNull final PsiElement element, @NotNull final Processor<UsageInfo> processor, @NotNull FindUsagesOptions options) {
     if (options.isUsages) {
       ReferencesSearch.search(element, options.searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
         public boolean processInReadAction(final PsiReference ref) {

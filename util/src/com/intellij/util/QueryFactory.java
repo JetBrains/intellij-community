@@ -27,18 +27,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class QueryFactory<Result, Parameters> {
   private final List<QueryExecutor<Result, Parameters>> myExecutors = new CopyOnWriteArrayList<QueryExecutor<Result,Parameters>>();
 
-  public void registerExecutor(QueryExecutor<Result, Parameters> executor) {
+  public void registerExecutor(@NotNull QueryExecutor<Result, Parameters> executor) {
     myExecutors.add(executor);
   }
 
-  public void unregisterExecutor(QueryExecutor<Result, Parameters> executor) {
+  public void unregisterExecutor(@NotNull QueryExecutor<Result, Parameters> executor) {
     myExecutors.remove(executor);
   }
 
   /**
    * @return query to perform the search. @param parameters of the search
    */
-  public final Query<Result> createQuery(Parameters parameters) {
+  public final Query<Result> createQuery(@NotNull Parameters parameters) {
     return new ExecutorsQuery<Result, Parameters>(parameters, getExecutors());
   }
 
@@ -49,14 +49,14 @@ public class QueryFactory<Result, Parameters> {
   }
 
   public boolean hasAnyExecutors() {
-    return getExecutors().size() > 0;
+    return !getExecutors().isEmpty();
   }
 
   /**
    * @return query to perform the search. Obtained results are automatically filtered wrt. equals() relation.
    * @param parameters of the search
    */
-  public final Query<Result> createUniqueResultsQuery(Parameters parameters) {
+  public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters) {
     return new UniqueResultsQuery<Result>(createQuery(parameters));
   }
 
@@ -65,7 +65,7 @@ public class QueryFactory<Result, Parameters> {
    * @param parameters of the search
    * @param hashingStrategy strategy to factor results
    */
-  public final Query<Result> createUniqueResultsQuery(Parameters parameters, TObjectHashingStrategy<Result> hashingStrategy) {
+  public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters, TObjectHashingStrategy<Result> hashingStrategy) {
     return new UniqueResultsQuery<Result>(createQuery(parameters), hashingStrategy);
   }
 }

@@ -16,12 +16,13 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -41,8 +42,8 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       if (o1 == null || o2 == null) return false;
       final PsiElement e1 = o1.getElement();
       final PsiElement e2 = o2.getElement();
-      if (!e1.getManager().areElementsEquivalent(e1.getContainingFile(), e2.getContainingFile())) return false;
-      return e1.getTextOffset() + o1.getRangeInElement().getStartOffset() == e2.getTextOffset() + o2.getRangeInElement().getStartOffset();
+      return e1.getManager().areElementsEquivalent(e1.getContainingFile(), e2.getContainingFile()) &&
+             e1.getTextOffset() + o1.getRangeInElement().getStartOffset() == e2.getTextOffset() + o2.getRangeInElement().getStartOffset();
     }
   };
 
@@ -83,19 +84,19 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     }
   }
 
-  public static Query<PsiReference> search(PsiElement element) {
+  public static Query<PsiReference> search(@NotNull PsiElement element) {
     return search(element, GlobalSearchScope.projectScope(element.getProject()), false);
   }
 
-  public static Query<PsiReference> search(PsiElement element, SearchScope searchScope) {
+  public static Query<PsiReference> search(@NotNull PsiElement element, @NotNull SearchScope searchScope) {
     return search(element, searchScope, false);
   }
 
-  public static Query<PsiReference> search(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope) {
+  public static Query<PsiReference> search(@NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope) {
     return search(new SearchParameters(element, searchScope, ignoreAccessScope));
   }
 
-  public static Query<PsiReference> search(final SearchParameters parameters) {
+  public static Query<PsiReference> search(@NotNull SearchParameters parameters) {
     return INSTANCE.createUniqueResultsQuery(parameters, HASHING_STRATEGY);
   }
 }

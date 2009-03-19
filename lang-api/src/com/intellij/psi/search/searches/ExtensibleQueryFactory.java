@@ -70,11 +70,11 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
     });
   }
 
-  public void registerExecutor(final QueryExecutor<Result, Parameters> queryExecutor) {
+  public void registerExecutor(@NotNull final QueryExecutor<Result, Parameters> queryExecutor) {
     myPoint.getValue().addExplicitExtension(queryExecutor);
   }
 
-  public void unregisterExecutor(final QueryExecutor<Result, Parameters> queryExecutor) {
+  public void unregisterExecutor(@NotNull final QueryExecutor<Result, Parameters> queryExecutor) {
     myPoint.getValue().removeExplicitExtension(queryExecutor);
   }
 

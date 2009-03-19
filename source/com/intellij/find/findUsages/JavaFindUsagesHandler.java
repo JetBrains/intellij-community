@@ -242,7 +242,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @Override
-  public void processElementUsages(final PsiElement element, final Processor<UsageInfo> processor, final FindUsagesOptions options) {
+  public void processElementUsages(@NotNull final PsiElement element, @NotNull final Processor<UsageInfo> processor, @NotNull final FindUsagesOptions options) {
     if (element instanceof PsiVariable){
       if (options.isReadAccess || options.isWriteAccess){
         if (options.isReadAccess && options.isWriteAccess){
