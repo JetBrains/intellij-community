@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffTool;
-import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -19,7 +18,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -212,13 +210,6 @@ public class ShowDiffAction extends AnAction {
       }
     }
     return changesList.toArray(new Change[changesList.size()]);
-  }
-
-  static void showNextPrevDiffForChange(@NotNull final AnActionEvent e, @NotNull final SimpleDiffRequest request) {
-    final DiffViewer diffViewer = e.getData(PlatformDataKeys.DIFF_VIEWER);
-    if (diffViewer != null) {
-      diffViewer.setDiffRequest(request);
-    }
   }
 
   private static boolean checkNotifyBinaryDiff(final Change selectedChange) {
