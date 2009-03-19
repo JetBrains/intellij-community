@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.impl.MessageListenerList;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
@@ -96,6 +97,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
     myVirtualFileListener = new MyVirtualFileListener();
     myUISettingsListener = new MyUISettingsListener();
+    myListenerList = new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
   }
 
   //-------------------------------------------------------------------------------
@@ -894,33 +896,18 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
   }
 
-  private final Map<FileEditorManagerListener, MessageBusConnection> myListenerToConnectionMap = new HashMap<FileEditorManagerListener, MessageBusConnection>();
+  private final MessageListenerList<FileEditorManagerListener> myListenerList;
 
   public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
-/*    assertDispatchThread();*/
-    final MessageBusConnection connection = getProject().getMessageBus().connect();
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
-    myListenerToConnectionMap.put(listener, connection);
+    myListenerList.add(listener);
   }
 
   public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener, final Disposable parentDisposable) {
-    /*assertDispatchThread();*/
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        myListenerToConnectionMap.remove(listener);
-      }
-    });
-    final MessageBusConnection connection = getProject().getMessageBus().connect(parentDisposable);
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
-    myListenerToConnectionMap.put(listener, connection);
+    myListenerList.add(listener, parentDisposable);
   }
 
   public void removeFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
-    /*assertDispatchThread();*/
-    final MessageBusConnection connection = myListenerToConnectionMap.remove(listener);
-    if (connection != null) {
-      connection.disconnect();
-    }
+    myListenerList.remove(listener);
   }
 
 // ProjectComponent methods
