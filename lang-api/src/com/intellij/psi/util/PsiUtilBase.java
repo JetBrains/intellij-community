@@ -557,6 +557,7 @@ public class PsiUtilBase {
 
   public static int findInjectedElementOffsetInRealDocument(final PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) return -1;
     Document document = PsiDocumentManager.getInstance(containingFile.getProject()).getDocument(containingFile);
     if (document instanceof DocumentWindow && !((DocumentWindow)document).isValid()) {
       return -1;
