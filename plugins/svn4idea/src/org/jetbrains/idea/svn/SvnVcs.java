@@ -929,10 +929,11 @@ public class SvnVcs extends AbstractVcs {
     for (VirtualFile vf : in) {
       final File ioFile = new File(vf.getPath());
       final RootUrlInfo info = myRootsInfo.getWcRootForFilePath(ioFile);
-      if ((info == null) || (! ioFile.getAbsolutePath().equals(info.getIoFile().getAbsolutePath()))) {
+      if (info == null) continue;
+      /*if ((info == null) || (! ioFile.getAbsolutePath().equals(info.getIoFile().getAbsolutePath()))) {
         // we get one of roots there, there shouldn't be other paths
         continue;
-      }
+      }*/
       infos.add(info);
     }
     final List<RootUrlInfo> filtered = new ArrayList<RootUrlInfo>(infos.size());
