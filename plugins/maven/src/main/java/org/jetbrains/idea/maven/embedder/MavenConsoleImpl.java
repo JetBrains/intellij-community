@@ -50,19 +50,17 @@ public class MavenConsoleImpl extends MavenConsole {
   }
 
   private ConsoleView createConsoleView() {
-    TextConsoleBuilderFactory factory = TextConsoleBuilderFactory.getInstance();
-
-    TextConsoleBuilder builder = factory.createBuilder(myProject);
-
-    for (Filter filter : getFilters(myProject)) {
-      builder.addFilter(filter);
-    }
-
-    return builder.getConsole();
+    return createConsoleBuilder(myProject).getConsole();
   }
 
-  private static Filter[] getFilters(final Project project) {
-    return new Filter[]{new ExceptionFilter(project), new RegexpFilter(project, CONSOLE_FILTER_REGEXP)};
+  public static TextConsoleBuilder createConsoleBuilder(Project project) {
+    TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+
+    Filter[] filters = { new ExceptionFilter(project), new RegexpFilter(project, CONSOLE_FILTER_REGEXP)};
+    for (Filter filter : filters) {
+      builder.addFilter(filter);
+    }
+    return builder;
   }
 
   public boolean canPause() {

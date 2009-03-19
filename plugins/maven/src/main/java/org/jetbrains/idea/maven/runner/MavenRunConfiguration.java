@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.runner;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.module.Module;
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.embedder.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenConstants;
@@ -56,7 +56,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
           .createJavaParameters(mySettings.myRunnerParameters, mySettings.myCoreSettings, mySettings.myRunnerSettings);
       }
     };
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
+    state.setConsoleBuilder(MavenConsoleImpl.createConsoleBuilder(getProject()));
     return state;
   }
 
