@@ -8,23 +8,22 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
-import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
-import org.jdom.Element;
+import com.intellij.ide.impl.ContentManagerWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class InspectionManagerEx extends InspectionManager implements JDOMExternalizable, ProjectComponent {
+public class InspectionManagerEx extends InspectionManager {
   private GlobalInspectionContextImpl myGlobalInspectionContext = null;
   private final Project myProject;
   @NonNls private String myCurrentProfileName;
@@ -47,39 +46,6 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void projectOpened() {
-    myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, myProject);
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) { //headless environment
-      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      ToolWindow toolWindow =
-        toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
-      toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
-      new ContentManagerWatcher(toolWindow, myContentManager);
-    }
-  }
-
-
-  public void projectClosed() {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.INSPECTION);
-  }
-
-
-  public void readExternal(@NonNls Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
   @NotNull
@@ -137,13 +103,20 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction);
   }
 
-
-  @NotNull
-  public String getComponentName() {
-    return "InspectionManager";
-  }
-
   public GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
+    if (myContentManager == null) {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+        ToolWindow toolWindow =
+          toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, myProject);
+        myContentManager = toolWindow.getContentManager();
+        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
+        new ContentManagerWatcher(toolWindow, myContentManager);
+      }
+      else {
+        myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, myProject);
+      }
+    }
     if (reuse) {
       if (myGlobalInspectionContext == null) {
         myGlobalInspectionContext = new GlobalInspectionContextImpl(myProject, myContentManager);

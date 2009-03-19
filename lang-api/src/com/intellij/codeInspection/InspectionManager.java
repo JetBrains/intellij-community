@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class InspectionManager {
   public static InspectionManager getInstance(Project project) {
-    return project.getComponent(InspectionManager.class);
+    return ServiceManager.getService(project, InspectionManager.class);
   }
 
   @NotNull public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull String descriptionTemplate, QuickFix... fixes);

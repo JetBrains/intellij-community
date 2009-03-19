@@ -422,6 +422,8 @@
                   serviceImplementation="com.intellij.ide.todo.TodoView"/>
   <projectService serviceInterface="com.intellij.ide.structureView.StructureViewFactory"
                   serviceImplementation="com.intellij.ide.structureView.impl.StructureViewFactoryImpl"/>
+  <projectService serviceInterface="com.intellij.codeInspection.InspectionManager"
+                  serviceImplementation="com.intellij.codeInspection.ex.InspectionManagerEx"/>
 
   <toolWindow id="TODO" anchor="bottom" icon="/general/toolWindowTodo.png"
               factoryClass="com.intellij.ide.todo.TodoToolWindowFactory"/>
