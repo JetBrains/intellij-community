@@ -20,7 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -42,6 +44,9 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
   @Attribute("factoryClass")
   public String factoryClass;
 
+  @Attribute("conditionClass")
+  public String conditionClass;
+
   private ToolWindowFactory myFactory;
 
   public ToolWindowFactory getToolWindowFactory() {
@@ -55,5 +60,18 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
       }
     }
     return myFactory;
+  }
+
+  @Nullable
+  public Condition getCondition() {
+    if (conditionClass != null) {
+      try {
+        return instantiate(conditionClass, ApplicationManager.getApplication().getPicoContainer());
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+    return null;
   }
 }

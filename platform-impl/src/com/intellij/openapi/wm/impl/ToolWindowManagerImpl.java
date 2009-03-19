@@ -172,6 +172,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void registerToolWindowsFromBeans() {
     ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
     for (final ToolWindowEP bean : beans) {
+      final Condition condition = bean.getCondition();
+      if (condition != null && !condition.value(myProject)) {
+        continue;
+      }
       ToolWindowAnchor toolWindowAnchor;
       try {
         toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor);
