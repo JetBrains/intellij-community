@@ -151,8 +151,8 @@ public class PsiImplUtil {
     return true;
   }
 
-  public static boolean hasTypeParameters(PsiTypeParameterListOwner psiMethod) {
-    final PsiTypeParameterList typeParameterList = psiMethod.getTypeParameterList();
+  public static boolean hasTypeParameters(PsiTypeParameterListOwner owner) {
+    final PsiTypeParameterList typeParameterList = owner.getTypeParameterList();
     return typeParameterList != null && typeParameterList.getTypeParameters().length != 0;
   }
 

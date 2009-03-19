@@ -51,7 +51,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
 
-    boolean hadTypeParameters = myClass.getTypeParameters().length > 0;
+    boolean hadTypeParameters = myClass.hasTypeParameters();
     for (final PsiReference reference : ReferencesSearch.search(myClass, projectScope, false)) {
       if (reference.getElement() instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)reference.getElement();

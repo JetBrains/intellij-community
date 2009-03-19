@@ -36,22 +36,18 @@ import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiClass, PsiQualifiedNamedElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
-  private volatile Map<String, PsiField> myCachedFieldsMap = null;
-  private volatile Map<String, PsiMethod[]> myCachedMethodsMap = null;
-  private volatile Map<String, PsiClass> myCachedInnersMap = null;
-
-  private volatile PsiMethod[] myCachedConstructors = null;
+  private final ClassInnerStuffCache innersCache = new ClassInnerStuffCache(this);
 
   private PsiMethod myValuesMethod = null;
   private PsiMethod myValueOfMethod = null;
@@ -80,12 +76,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   private void dropCaches() {
-    myCachedConstructors = null;
-
-    myCachedFieldsMap = null;
-    myCachedMethodsMap = null;
-    myCachedInnersMap = null;
-
+    innersCache.dropCaches();
     myCachedForLongName = null;
   }
 
@@ -300,10 +291,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @NotNull
   public PsiMethod[] getConstructors() {
-    if (myCachedConstructors == null) {
-      myCachedConstructors = PsiImplUtil.getConstructors(this);
-    }
-    return myCachedConstructors;
+    return innersCache.getConstructors();
   }
 
   @NotNull
@@ -337,24 +325,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   public PsiField findFieldByName(String name, boolean checkBases) {
-    if(!checkBases){
-      Map<String, PsiField> cachedFields = myCachedFieldsMap;
-      if(cachedFields == null){
-        final PsiField[] fields = getFields();
-        if (fields.length > 0) {
-          cachedFields = new THashMap<String, PsiField>();
-          for (final PsiField field : fields) {
-            cachedFields.put(field.getName(), field);
-          }
-          myCachedFieldsMap = cachedFields;
-        } else {
-          myCachedFieldsMap = Collections.emptyMap();
-          return null;
-        }
-      }
-      return cachedFields.get(name);
-    }
-    return PsiClassImplUtil.findFieldByName(this, name, checkBases);
+    return innersCache.findFieldByName(name, checkBases);
   }
 
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
@@ -368,33 +339,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
-    if(!checkBases){
-      Map<String, PsiMethod[]> cachedMethods = myCachedMethodsMap;
-      if(cachedMethods == null){
-        cachedMethods = new THashMap<String,PsiMethod[]>();
-
-        Map<String, List<PsiMethod>> cachedMethodsMap = new THashMap<String,List<PsiMethod>>();
-        final PsiMethod[] methods = getMethods();
-        for (final PsiMethod method : methods) {
-          List<PsiMethod> list = cachedMethodsMap.get(method.getName());
-          if (list == null) {
-            list = new ArrayList<PsiMethod>(1);
-            cachedMethodsMap.put(method.getName(), list);
-          }
-          list.add(method);
-        }
-        for (final String methodName : cachedMethodsMap.keySet()) {
-          List<PsiMethod> cached = cachedMethodsMap.get(methodName);
-          cachedMethods.put(methodName, cached.toArray(new PsiMethod[cached.size()]));
-        }
-        myCachedMethodsMap = cachedMethods;
-      }
-
-      final PsiMethod[] psiMethods = cachedMethods.get(name);
-      return psiMethods != null ? psiMethods : PsiMethod.EMPTY_ARRAY;
-    }
-
-    return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
+    return innersCache.findMethodsByName(name, checkBases);
   }
 
   @NotNull
@@ -408,24 +353,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   public PsiClass findInnerClassByName(String name, boolean checkBases) {
-    if(!checkBases){
-      Map<String, PsiClass> inners = myCachedInnersMap;
-      if(inners == null){
-        final PsiClass[] classes = getInnerClasses();
-        if (classes.length > 0) {
-          inners = new THashMap<String,PsiClass>();
-          for (final PsiClass psiClass : classes) {
-            inners.put(psiClass.getName(), psiClass);
-          }
-          myCachedInnersMap = inners;
-        } else {
-          myCachedInnersMap = Collections.emptyMap();
-          return null;
-        }
-      }
-      return inners.get(name);
-    }
-    return PsiClassImplUtil.findInnerByName(this, name, checkBases);
+    return innersCache.findInnerClassByName(name, checkBases);
   }
 
   public PsiTypeParameterList getTypeParameterList() {
@@ -433,8 +361,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   public boolean hasTypeParameters() {
-    final PsiTypeParameterList typeParameterList = getTypeParameterList();
-    return typeParameterList != null && typeParameterList.getTypeParameters().length != 0;
+    return PsiImplUtil.hasTypeParameters(this);
   }
 
   public boolean isDeprecated() {

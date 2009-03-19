@@ -10,6 +10,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -22,14 +23,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> implements PsiClass, PsiQualifiedNamedElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsClassImpl");
 
-  private volatile Map<String, PsiField> myCachedFieldsMap = null;
-  private volatile Map<String, PsiMethod[]> myCachedMethodsMap = null;
-  private volatile Map<String, PsiClass> myCachedInnersMap = null;
+  private final ClassInnerStuffCache innersCache = new ClassInnerStuffCache(this);
   private PsiIdentifier myNameIdentifier; //guarded by LOCK
   private PsiDocComment myDocComment;     //guarded by LOCK
 
@@ -222,19 +222,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   }
 
   public PsiField findFieldByName(String name, boolean checkBases) {
-    if (!checkBases) {
-      Map<String, PsiField> cachedFieldsMap = myCachedFieldsMap;
-      if (cachedFieldsMap == null) {
-        cachedFieldsMap = new HashMap<String, PsiField>();
-        final PsiField[] fields = getFields();
-        for (final PsiField field : fields) {
-          cachedFieldsMap.put(field.getName(), field);
-        }
-        myCachedFieldsMap = cachedFieldsMap;
-      }
-      return cachedFieldsMap.get(name);
-    }
-    return PsiClassImplUtil.findFieldByName(this, name, checkBases);
+    return innersCache.findFieldByName(name, checkBases);
   }
 
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
@@ -248,31 +236,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
 
   @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
-    if (!checkBases) {
-      Map<String, PsiMethod[]> methodsMap = myCachedMethodsMap;
-      if (methodsMap == null) {
-        methodsMap = new HashMap<String, PsiMethod[]>();
-        Map<String, List<PsiMethod>> cachedMethodsMap = new HashMap<String, List<PsiMethod>>();
-        final PsiMethod[] methods = getMethods();
-        for (final PsiMethod method : methods) {
-          List<PsiMethod> list = cachedMethodsMap.get(method.getName());
-          if (list == null) {
-            list = new ArrayList<PsiMethod>(1);
-            cachedMethodsMap.put(method.getName(), list);
-          }
-          list.add(method);
-        }
-        for (final String methodName : cachedMethodsMap.keySet()) {
-          List<PsiMethod> methodList = cachedMethodsMap.get(methodName);
-          methodsMap.put(methodName, methodList.toArray(new PsiMethod[methodList.size()]));
-        }
-        myCachedMethodsMap = methodsMap;
-      }
-      final PsiMethod[] psiMethods = methodsMap.get(name);
-      return psiMethods != null ? psiMethods : PsiMethod.EMPTY_ARRAY;
-    }
-
-    return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
+    return innersCache.findMethodsByName(name, checkBases);
   }
 
   @NotNull
@@ -286,19 +250,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   }
 
   public PsiClass findInnerClassByName(String name, boolean checkBases) {
-    if (!checkBases) {
-      Map<String, PsiClass> cachedInnersMap = myCachedInnersMap;
-      if (cachedInnersMap == null) {
-        cachedInnersMap = new HashMap<String, PsiClass>();
-        final PsiClass[] classes = getInnerClasses();
-        for (final PsiClass psiClass : classes) {
-          cachedInnersMap.put(psiClass.getName(), psiClass);
-        }
-        myCachedInnersMap = cachedInnersMap;
-      }
-      return cachedInnersMap.get(name);
-    }
-    return PsiClassImplUtil.findInnerByName(this, name, checkBases);
+    return innersCache.findInnerClassByName(name, checkBases);
   }
 
   public boolean isDeprecated() {

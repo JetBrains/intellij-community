@@ -313,17 +313,15 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   public  PsiExpression processMethodDeclaration( PsiExpressionList expressionList) throws IncorrectOperationException {
     if (isCreateInnerClass()) {
-      final String typeArguments = getMethod().getTypeParameters().length > 0 ? "<" +
-                                                                             StringUtil.join(Arrays.asList(getMethod().getTypeParameters()),
-                                                                                             new Function<PsiTypeParameter, String>() {
-                                                                                               public String fun(final PsiTypeParameter typeParameter) {
-                                                                                                 final String typeParameterName =
-                                                                                                     typeParameter.getName();
-                                                                                                 LOG.assertTrue(typeParameterName != null);
-                                                                                                 return typeParameterName;
-                                                                                               }
-                                                                                             }, ", ") +
-                                                                                                      ">" : "";
+      final String typeArguments = getMethod().hasTypeParameters() ? "<" + StringUtil.join(Arrays.asList(getMethod().getTypeParameters()),
+                                                                                           new Function<PsiTypeParameter, String>() {
+                                                                                             public String fun(final PsiTypeParameter typeParameter) {
+                                                                                               final String typeParameterName =
+                                                                                                 typeParameter.getName();
+                                                                                               LOG.assertTrue(typeParameterName != null);
+                                                                                               return typeParameterName;
+                                                                                             }
+                                                                                           }, ", ") + ">" : "";
       final PsiMethodCallExpression methodCallExpression =
           (PsiMethodCallExpression)myElementFactory.createExpressionFromText("invoke" + expressionList.getText(), null);
       return replaceMethodCallExpression(typeArguments, methodCallExpression);

@@ -113,7 +113,7 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
             PsiClass targetClass;
             try {
               targetClass = JavaDirectoryService.getInstance().createClass(targetDirectory, className);
-              if (oldTypeParameterList != null && oldTypeParameterList.getTypeParameters().length > 0) {
+              if (psiClass.hasTypeParameters()) {
                 final PsiTypeParameterList typeParameterList = targetClass.getTypeParameterList();
                 assert typeParameterList != null;
                 typeParameterList.replace(oldTypeParameterList);
