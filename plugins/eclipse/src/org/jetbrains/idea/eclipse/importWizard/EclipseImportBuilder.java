@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
@@ -204,12 +205,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run(){
               ProjectRootManagerEx.getInstanceEx(project).multiCommit(moduleModel, rootModels);
-              try {
-                EclipseUserLibrariesHelper.readProjectLibrariesContent(new File(getParameters().root), project, unknownLibraries);
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
+
             }
         });
       }
@@ -221,10 +217,19 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     createEclipseLibrary(project, unknownLibraries, IdeaXml.ECLIPSE_LIBRARY);
 
     StringBuffer message = new StringBuffer();
-    if (!unknownLibraries.isEmpty()) {
-      message.append(EclipseBundle.message("eclipse.import.warning.undefinded.libraries"));
-      for (String name : unknownLibraries) {
-        message.append("\n").append(name);
+    refsToModules.removeAll(getParameters().existingModuleNames);
+    for (String path : getParameters().projectsToConvert) {
+      final String projectName = EclipseClasspathReader.getLastPathComponent(FileUtil.toSystemIndependentName(path));
+      if (projectName != null) {
+        refsToModules.remove(projectName);
+        getParameters().existingModuleNames.add(projectName);
+      }
+    }
+    if (!refsToModules.isEmpty()) {
+
+      message.append("Unknown modules detected");
+      for (String module : refsToModules) {
+        message.append("\n").append(module);
       }
     }
     if (!unknownJdks.isEmpty()) {
@@ -237,21 +242,40 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         message.append("\n").append(unknownJdk);
       }
     }
-
-
-    refsToModules.removeAll(getParameters().existingModuleNames);
-    for (String path : getParameters().projectsToConvert) {
-      final String projectName = EclipseClasspathReader.getLastPathComponent(FileUtil.toSystemIndependentName(path));
-      if (projectName != null) {
-        refsToModules.remove(projectName);
-        getParameters().existingModuleNames.add(projectName);
-      }
-    }
-    if (!refsToModules.isEmpty()) {
+    if (!unknownLibraries.isEmpty()) {
       if (message.length() > 0) message.append("\n");
-      message.append("Unknown modules detected");
-      for (String module : refsToModules) {
-        message.append("\n").append(module);
+      message.append(EclipseBundle.message("eclipse.import.warning.undefinded.libraries"));
+      for (String name : unknownLibraries) {
+        message.append("\n").append(name);
+      }
+      if (model == null) {
+        message.append("\nPlease export Eclipse user libraries and import them now from");
+        final String pathToUserLibraries = Messages.showInputDialog(project, message.toString(), getTitle(), Messages.getErrorIcon(),
+                                                                    project.getBaseDir().getPath() +
+                                                                    "/" +
+                                                                    project.getName() +
+                                                                    ".userlibraries", new InputValidator() {
+            public boolean checkInput(String inputString) {
+              return new File(inputString).exists();
+            }
+
+            public boolean canClose(String inputString) {
+              return checkInput(inputString);
+            }
+          });
+        if (pathToUserLibraries != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              try {
+                EclipseUserLibrariesHelper.readProjectLibrariesContent(new File(pathToUserLibraries), project, unknownLibraries);
+              }
+              catch (Exception e) {
+                LOG.error(e);
+              }
+            }
+          });
+        }
+        return result;
       }
     }
 

@@ -60,9 +60,11 @@ public class EclipseUserLibrariesHelper {
     }
   }
 
-  public static void appendProjectLibraries(final Project project, final File workspaceRoot) throws IOException {
-    if (!workspaceRoot.isDirectory()) return;
-    Element userLibsElement = new Element("eclipse-userlibraries");
+  public static void appendProjectLibraries(final Project project, final File userLibrariesFile) throws IOException {
+    if (!userLibrariesFile.getParentFile().isDirectory()) {
+      if (!userLibrariesFile.getParentFile().mkdir()) return;
+    }
+    final Element userLibsElement = new Element("eclipse-userlibraries");
     final Library[] libraries = ProjectLibraryTable.getInstance(project).getLibraries();
     for (Library library : libraries) {
       Element libElement = new Element("library");
@@ -70,14 +72,12 @@ public class EclipseUserLibrariesHelper {
       writeUserLibrary(library, libElement);
       userLibsElement.addContent(libElement);
     }
-    JDOMUtil.writeDocument(new Document(userLibsElement), workspaceRoot + "/" + project.getName() + ".userlibraries", "\n");
+    JDOMUtil.writeDocument(new Document(userLibsElement), userLibrariesFile, "\n");
   }
 
 
-  public static void readProjectLibrariesContent(File workspace, Project project, Collection<String> unknownLibraries)
+  public static void readProjectLibrariesContent(File exportedFile, Project project, Collection<String> unknownLibraries)
     throws IOException, JDOMException {
-    if (!workspace.isDirectory()) return;
-    final File exportedFile = new File(workspace, project.getName() + ".userlibraries");
     if (exportedFile.exists()) {
       final LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
       final Element rootElement = JDOMUtil.loadDocument(exportedFile).getRootElement();

@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -24,9 +23,9 @@ import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.conversion.ConversionException;
+import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 import org.jetbrains.idea.eclipse.conversion.EclipseUserLibrariesHelper;
-import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -107,8 +106,6 @@ public class ExportEclipseProjectsAction extends AnAction {
             }
 
             if (DotProjectFileHelper.saveDotProjectFile(module, storageRoot)) continue;
-
-            EclipseUserLibrariesHelper.appendProjectLibraries(project, VfsUtil.virtualToIoFile(project.getBaseDir()));
           }
           catch (ConversionException e1) {
             LOG.error(e1);
@@ -122,6 +119,12 @@ public class ExportEclipseProjectsAction extends AnAction {
           finally {
             model.dispose();
           }
+        }
+        try {
+          EclipseUserLibrariesHelper.appendProjectLibraries(project, dialog.getUserLibrariesFile());
+        }
+        catch (IOException e1) {
+          LOG.error(e1);
         }
       }
       project.save();
