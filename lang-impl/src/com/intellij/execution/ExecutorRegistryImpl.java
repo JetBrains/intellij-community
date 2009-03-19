@@ -194,7 +194,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         configuration = getConfiguration(project);
         assert configuration != null;
         runner = getRunner(myExecutor.getId(), configuration);
-        assert runner != null;
+        LOG.assertTrue(runner != null, String.format("Unable to find erunner for executor_id: %s", myExecutor.getId()));
       }
 
       try {
