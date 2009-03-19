@@ -29,11 +29,11 @@ public class MessageListenerList<T> {
   }
 
   public void add(final T listener, Disposable parentDisposable) {
-    Disposer.register(new Disposable() {
+    Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
         myListenerToConnectionMap.remove(listener);
       }
-    }, parentDisposable);
+    });
     final MessageBusConnection connection = myMessageBus.connect(parentDisposable);
     connection.subscribe(myTopic, listener);
     myListenerToConnectionMap.put(listener, connection);
