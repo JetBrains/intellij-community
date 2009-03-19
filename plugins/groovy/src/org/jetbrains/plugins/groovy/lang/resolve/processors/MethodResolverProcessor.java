@@ -95,7 +95,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return substitutor;
     }
 
-    if (argumentsSupplied() && method.getTypeParameters().length > 0) {
+    if (argumentsSupplied() && method.hasTypeParameters()) {
       PsiType[] argTypes = myArgumentTypes;
       if (method instanceof GrGdkMethod) {
         assert argTypes != null;

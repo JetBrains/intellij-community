@@ -270,8 +270,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 return null;
             }
             PsiClass subClass = null;
-            while (listClass != null &&
-                   listClass.getTypeParameters().length == 0) {
+            while (listClass != null && !listClass.hasTypeParameters()) {
                 subClass = listClass;
                 listClass = listClass.getSuperClass();
             }
