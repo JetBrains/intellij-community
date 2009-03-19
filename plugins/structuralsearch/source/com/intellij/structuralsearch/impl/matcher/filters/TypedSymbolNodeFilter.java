@@ -12,11 +12,11 @@ public class TypedSymbolNodeFilter extends JavaElementVisitor implements NodeFil
   }
 
   @Override public void visitMethod(PsiMethod psiMethod) {
-    result = psiMethod.getTypeParameters().length > 0;
+    result = psiMethod.hasTypeParameters();
   }
 
   @Override public void visitClass(PsiClass psiClass) {
-    result = psiClass.getTypeParameters().length > 0;
+    result = psiClass.hasTypeParameters();
   }
 
   @Override public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
