@@ -44,6 +44,7 @@ import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
@@ -53,6 +54,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -397,7 +399,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
            myUnusedSymbolInspection.REPORT_PARAMETER_FOR_PUBLIC_METHODS &&
            !isOverriddenOrOverrides(method)) &&
           !method.hasModifierProperty(PsiModifier.NATIVE) &&
-          !HighlightMethodUtil.isSerializationRelatedMethod(method) &&
+          !HighlightMethodUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
           !isMainMethod(method)) {
         HighlightInfo highlightInfo = checkUnusedParameter(parameter);
         if (highlightInfo != null) {
@@ -432,20 +434,24 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private HighlightInfo processMethod(final PsiMethod method) {
     if (myRefCountHolder.isReferenced(method)) return null;
     boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
-
-    if (!isPrivate) {
-      //class maybe used in some weird way, e.g. from XML, therefore the only constructor is used too
-      PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && method.isConstructor() && containingClass.getConstructors().length == 1 && !isClassUnused(containingClass)) return null;
-      
-      if (!method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty() || !weAreSureThereAreNoUsages(method)) {
+    PsiClass containingClass = method.getContainingClass();
+    if (isPrivate) {
+      if (HighlightMethodUtil.isSerializationRelatedMethod(method, containingClass) ||
+          isIntentionalPrivateConstructor(method, containingClass)) {
+        return null;
+      }
+      if (isImplicitUsage(method)) {
         return null;
       }
     }
-    if (HighlightMethodUtil.isSerializationRelatedMethod(method) ||
-        isIntentionalPrivateConstructor(method) ||
-        isImplicitUsage(method)) {
-      return null;
+    else {
+      //class maybe used in some weird way, e.g. from XML, therefore the only constructor is used too
+      if (containingClass != null && method.isConstructor() && containingClass.getConstructors().length == 1 && !isClassUnused(containingClass)) return null;
+      if (isImplicitUsage(method)) return null;
+
+      if (!method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty() || !weAreSureThereAreNoUsages(method)) {
+        return null;
+      }
     }
     String key = isPrivate
                  ? method.isConstructor() ? "private.constructor.is.not.used" : "private.method.is.not.used"
@@ -490,7 +496,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     //search usages if it cheap
     //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
-    return count[0] == 0 || ReferencesSearch.search(member, scope, true).findFirst() == null;
+    if (count[0] == 0) return true;
+
+    Query<PsiReference> query = member instanceof PsiMethod
+                                ? MethodReferencesSearch.search((PsiMethod)member, scope, false)
+                                : ReferencesSearch.search(member, scope, true);
+    return query.findFirst() == null;
   }
 
   @Nullable
@@ -502,15 +513,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                        : "private.inner.class.is.not.used";
       return formatUnusedSymbolHighlightInfo(pattern, aClass);
     }
-    else if (aClass.getParent() instanceof PsiDeclarationStatement) { // local class
+    if (aClass.getParent() instanceof PsiDeclarationStatement) { // local class
       return formatUnusedSymbolHighlightInfo("local.class.is.not.used", aClass);
     }
-    else if (aClass instanceof PsiTypeParameter) {
+    if (aClass instanceof PsiTypeParameter) {
       return formatUnusedSymbolHighlightInfo("type.parameter.is.not.used", aClass);
     }
-    else {
-      return formatUnusedSymbolHighlightInfo("class.is.not.used", aClass);
-    }
+    return formatUnusedSymbolHighlightInfo("class.is.not.used", aClass);
   }
 
   private final Map<PsiClass, Boolean> unusedClassCache = new THashMap<PsiClass, Boolean>();
@@ -618,11 +627,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  private static boolean isIntentionalPrivateConstructor(PsiMethod method) {
-    if (!method.isConstructor()) return false;
-    if (!method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-    if (method.getParameterList().getParametersCount() > 0) return false;
-    PsiClass aClass = method.getContainingClass();
-    return aClass != null && aClass.getConstructors().length == 1;
+  private static boolean isIntentionalPrivateConstructor(PsiMethod method, PsiClass containingClass) {
+    return method.isConstructor() &&
+           method.getParameterList().getParametersCount() == 0 &&
+           containingClass != null &&
+           containingClass.getConstructors().length == 1;
   }
 }

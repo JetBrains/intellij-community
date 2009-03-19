@@ -75,8 +75,8 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
     if (!(referenceList.getParent() instanceof PsiMethod)) return null;
     PsiMethod method = (PsiMethod)referenceList.getParent();
     if (referenceList != method.getThrowsList()) return null;
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return null;
 
     PsiManager manager = referenceElement.getManager();
     PsiClassType exceptionType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(referenceElement);
@@ -86,13 +86,12 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
     if (body == null) return null;
 
     PsiModifierList modifierList = method.getModifierList();
-    PsiClass containingClass = method.getContainingClass();
     if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)
         && !modifierList.hasModifierProperty(PsiModifier.STATIC)
         && !modifierList.hasModifierProperty(PsiModifier.FINAL)
         && !method.isConstructor()
         && !(containingClass instanceof PsiAnonymousClass)
-        && !(containingClass != null && containingClass.hasModifierProperty(PsiModifier.FINAL))) {
+        && !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
       return null;
     }
 
@@ -101,7 +100,7 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
     if (method.isConstructor()) {
       // there may be field initializer throwing exception
       // that exception must be caught in the constructor
-      PsiField[] fields = aClass.getFields();
+      PsiField[] fields = containingClass.getFields();
       for (final PsiField field : fields) {
         if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
         PsiExpression initializer = field.getInitializer();
@@ -117,7 +116,7 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
       }
     }
 
-    if (HighlightMethodUtil.isSerializationRelatedMethod(method)) return null;
+    if (HighlightMethodUtil.isSerializationRelatedMethod(method, containingClass)) return null;
 
     String description = JavaErrorMessages.message("exception.is.never.thrown", HighlightUtil.formatType(exceptionType));
 

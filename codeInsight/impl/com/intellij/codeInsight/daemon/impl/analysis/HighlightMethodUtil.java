@@ -64,7 +64,7 @@ public class HighlightMethodUtil {
                                         final boolean includeRealPositionInfo) {
     int superAccessLevel = PsiUtil.getAccessLevel(superMethod.getModifierList());
     if (accessLevel < superAccessLevel) {
-      String message = MessageFormat.format(JavaErrorMessages.message("weaker.privileges"),
+      String message = JavaErrorMessages.message("weaker.privileges",
                                             createClashMethodMessage(method, superMethod, true),
                                             accessModifier,
                                             PsiUtil.getAccessModifier(superAccessLevel));
@@ -333,7 +333,7 @@ public class HighlightMethodUtil {
         else {
           PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
           PsiReferenceParameterList typeArgumentList = methodCall.getTypeArgumentList();
-          if (typeArgumentList.getTypeArguments().length == 0 && resolvedMethod.getTypeParameters().length > 0) {
+          if (typeArgumentList.getTypeArguments().length == 0 && resolvedMethod.hasTypeParameters()) {
             highlightInfo = GenericsHighlightUtil.checkInferredTypeArguments(resolvedMethod, methodCall, resolveResult.getSubstitutor());
           }
           else {
@@ -1175,40 +1175,39 @@ public class HighlightMethodUtil {
     }
   }
 
-  public static boolean isSerializationRelatedMethod(PsiMethod method) {
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null || method.isConstructor()) return false;
+  public static boolean isSerializationRelatedMethod(PsiMethod method, PsiClass containingClass) {
+    if (containingClass == null || method.isConstructor()) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     @NonNls String name = method.getName();
     PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType returnType = method.getReturnType();
     if ("readObjectNoData".equals(name)) {
-      return parameters.length == 0 && TypeConversionUtil.isVoidType(returnType) && HighlightUtil.isSerializable(aClass);
+      return parameters.length == 0 && TypeConversionUtil.isVoidType(returnType) && HighlightUtil.isSerializable(containingClass);
     }
     if ("readObject".equals(name)) {
       return parameters.length == 1
              && parameters[0].getType().equalsToText("java.io.ObjectInputStream")
              && TypeConversionUtil.isVoidType(returnType) && method.hasModifierProperty(PsiModifier.PRIVATE)
-             && HighlightUtil.isSerializable(aClass);
+             && HighlightUtil.isSerializable(containingClass);
     }
     if ("readResolve".equals(name)) {
       return parameters.length == 0
              && returnType != null
              && returnType.equalsToText("java.lang.Object")
-             && HighlightUtil.isSerializable(aClass);
+             && HighlightUtil.isSerializable(containingClass);
     }
     if ("writeReplace".equals(name)) {
       return parameters.length == 0
              && returnType != null
              && returnType.equalsToText("java.lang.Object")
-             && HighlightUtil.isSerializable(aClass);
+             && HighlightUtil.isSerializable(containingClass);
     }
     if ("writeObject".equals(name)) {
       return parameters.length == 1
              && TypeConversionUtil.isVoidType(returnType)
              && parameters[0].getType().equalsToText("java.io.ObjectOutputStream")
              && method.hasModifierProperty(PsiModifier.PRIVATE)
-             && HighlightUtil.isSerializable(aClass);
+             && HighlightUtil.isSerializable(containingClass);
     }
     return false;
   }
