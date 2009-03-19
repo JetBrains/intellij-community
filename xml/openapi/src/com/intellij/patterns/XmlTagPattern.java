@@ -2,6 +2,7 @@ package com.intellij.patterns;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,14 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
           }
         }
         return false;
+      }
+    });
+  }
+
+  public Self withDescriptor(@NotNull final ElementPattern<? extends PsiMetaData> metaDataPattern) {
+    return with(new PatternCondition<XmlTag>("withDescriptor") {
+      public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
+        return metaDataPattern.accepts(xmlTag.getDescriptor());
       }
     });
   }
