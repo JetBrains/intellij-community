@@ -176,8 +176,9 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
           final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
           if (documentSet.exists(eml)) {
             EclipseClasspathReader.readIDEASpecific(documentSet.read(eml).getRootElement(), model);
+          } else {
+            model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
           }
-
         }
 
         ((RootModelImpl)model).writeExternal(element);
