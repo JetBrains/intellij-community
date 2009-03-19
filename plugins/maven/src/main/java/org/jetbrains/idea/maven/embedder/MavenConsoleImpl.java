@@ -12,13 +12,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -112,9 +112,9 @@ public class MavenConsoleImpl extends MavenConsole {
 
     MavenUtil.invokeLater(myProject, new Runnable() {
       public void run() {
-        MessageView messageView = myProject.getComponent(MessageView.class);
+        MessageView messageView = MessageView.SERVICE.getInstance(myProject);
 
-        Content content = PeerFactory.getInstance().getContentFactory().createContent(
+        Content content = ContentFactory.SERVICE.getInstance().createContent(
           myConsoleView.getComponent(), myTitle, true);
         content.putUserData(CONSOLE_KEY, MavenConsoleImpl.this);
         messageView.getContentManager().addContent(content);
@@ -144,7 +144,7 @@ public class MavenConsoleImpl extends MavenConsole {
   }
 
   public void close() {
-    MessageView messageView = myProject.getComponent(MessageView.class);
+    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
     for (Content each : messageView.getContentManager().getContents()) {
       MavenConsoleImpl console = each.getUserData(CONSOLE_KEY);
       if (console != null) {
