@@ -21,6 +21,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +47,16 @@ public class XmlTagRenameHandler implements RenameHandler {
 
   private static boolean isDeclarationOutOfProjectOrAbsent(@NotNull final Project project, final DataContext context) {
     final PsiElement[] elements = BaseRefactoringAction.getPsiElementArray(context);
-    return elements.length == 0 || elements.length == 1 && !PsiManager.getInstance(project).isInProject(elements[0]);
+    return elements.length == 0 || elements.length == 1 && shoulBeRenamedInplace(project, elements);
+  }
+
+  private static boolean shoulBeRenamedInplace(Project project, PsiElement[] elements) {
+    boolean inProject = PsiManager.getInstance(project).isInProject(elements[0]);
+    if (inProject && elements[0] instanceof XmlTag) {
+      XmlElementDescriptor descriptor = ((XmlTag)elements[0]).getDescriptor();
+      return descriptor instanceof AnyXmlElementDescriptor;
+    }
+    return !inProject;
   }
 
   @Nullable
