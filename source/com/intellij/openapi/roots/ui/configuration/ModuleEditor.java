@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.extensions.Extensions;
@@ -16,6 +17,7 @@ import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -61,6 +63,10 @@ public class ModuleEditor implements Place.Navigator {
   private History myHistory;
 
   private final ProjectFacetsConfigurator myFacetsConfigurator;
+  private final Disposable myDisposable = new Disposable() {
+    public void dispose() {
+    }
+  };
 
   public ModuleEditor(Project project, ModulesProvider modulesProvider, ProjectFacetsConfigurator facetsConfigurator,
                       @NotNull Module module) {
@@ -85,7 +91,7 @@ public class ModuleEditor implements Place.Navigator {
   }
 
 
-  public static interface ChangeListener extends EventListener {
+  public interface ChangeListener extends EventListener {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
   }
 
@@ -185,7 +191,7 @@ public class ModuleEditor implements Place.Navigator {
 
     myGenericSettingsPanel.add(northPanel, BorderLayout.NORTH);
 
-    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane = new TabbedPaneWrapper(myDisposable);
 
     for (ModuleConfigurationEditor editor : myEditors) {
       myTabbedPane.addTab(editor.getDisplayName(), editor.getIcon(), editor.createComponent(), null);
@@ -264,6 +270,7 @@ public class ModuleEditor implements Place.Navigator {
 
   public ModifiableRootModel dispose() {
     try {
+      Disposer.dispose(myDisposable);
       for (final ModuleConfigurationEditor myEditor : myEditors) {
         myEditor.disposeUIResources();
       }
@@ -468,7 +475,7 @@ public class ModuleEditor implements Place.Navigator {
     }
   }
 
-  public static interface ProxyDelegateAccessor {
+  public interface ProxyDelegateAccessor {
     Object getDelegate();
   }
 

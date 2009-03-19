@@ -10,7 +10,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 public class CodeStyleMainPanel extends JPanel {
@@ -18,7 +17,6 @@ public class CodeStyleMainPanel extends JPanel {
   private final JPanel mySettingsPanel = new JPanel(myLayout);
 
   private final Map<String, NewCodeStyleSettingsPanel> mySettingsPanels = new HashMap<String, NewCodeStyleSettingsPanel>();
-  private final Collection<NewCodeStyleSettingsPanel> myResetPanels = new HashSet<NewCodeStyleSettingsPanel>();
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final CodeStyleSchemesModel myModel;
@@ -123,8 +121,10 @@ public class CodeStyleMainPanel extends JPanel {
   }
 
   private void clearPanels() {
+    for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
+      panel.dispose();
+    }
     mySettingsPanels.clear();
-    myResetPanels.clear();
   }
 
   public void apply() {
@@ -166,9 +166,6 @@ public class CodeStyleMainPanel extends JPanel {
 
   public void disposeUIResources() {
     myAlarm.cancelAllRequests();
-    for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
-      panel.dispose();
-    }
     clearPanels();
   }
 

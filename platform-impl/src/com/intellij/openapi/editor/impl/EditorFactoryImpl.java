@@ -65,7 +65,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   public void validateEditorsAreReleased(Project project) {
     for (Editor editor : myEditors) {
-      if (editor.getProject() == project/* || editor.getProject() == null*/) {
+      if (editor.getProject() == project || editor.getProject() == null) {
         fireEditorNotReleasedError(editor);
       }
     }

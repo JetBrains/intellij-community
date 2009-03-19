@@ -1,5 +1,6 @@
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -10,7 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class EditorPlace extends JComponent {
+public class EditorPlace extends JComponent implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.ui.EditorPlace");
   private final ComponentState myState;
   private final ArrayList<EditorListener> myListeners = new ArrayList<EditorListener>();
@@ -45,16 +46,14 @@ public class EditorPlace extends JComponent {
 
   private void fireEditorCreated() {
     EditorListener[] listeners = getListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      EditorListener listener = listeners[i];
+    for (EditorListener listener : listeners) {
       listener.onEditorCreated(this);
     }
   }
 
   private void fireEditorReleased(Editor releasedEditor) {
     EditorListener[] listeners = getListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      EditorListener listener = listeners[i];
+    for (EditorListener listener : listeners) {
       listener.onEditorReleased(releasedEditor);
     }
   }
@@ -99,7 +98,7 @@ public class EditorPlace extends JComponent {
     return myState;
   }
 
-  public static abstract class ComponentState {
+  public abstract static class ComponentState {
     private Document myDocument;
     public abstract Editor createEditor();
 
@@ -127,7 +126,7 @@ public class EditorPlace extends JComponent {
     return myEditor == null ? null : myEditor.getContentComponent();
   }
 
-  public static abstract class ViewProperty<T> {
+  public abstract static class ViewProperty<T> {
     private final T myDefault;
 
     protected ViewProperty(T aDefault) {
@@ -142,5 +141,9 @@ public class EditorPlace extends JComponent {
     }
 
     protected abstract void doUpdateEditor(EditorEx editorEx, T value, ComponentState state);
+  }
+
+  public void dispose() {
+    removeEditor();
   }
 }

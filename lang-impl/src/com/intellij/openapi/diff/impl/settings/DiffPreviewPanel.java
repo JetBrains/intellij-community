@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 
@@ -24,12 +25,14 @@ import javax.swing.*;
 import java.awt.*;
 
 public class DiffPreviewPanel implements PreviewPanel {
-  private MergePanel2.AsComponent myMergePanelComponent;
-  private JComponent myWholePanel;
+  private final MergePanel2.AsComponent myMergePanelComponent;
+  private final JPanel myPanel = new JPanel(new BorderLayout());
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public DiffPreviewPanel() {
+  public DiffPreviewPanel(Disposable parent) {
+    myMergePanelComponent = new MergePanel2.AsComponent(parent);
+    myPanel.add(myMergePanelComponent, BorderLayout.CENTER);
     myMergePanelComponent.setToolbarEnabled(false);
     MergePanel2 mergePanel = getMergePanel();
     mergePanel.setEditorProperty(MergePanel2.LINE_NUMBERS, Boolean.FALSE);
@@ -63,7 +66,7 @@ public class DiffPreviewPanel implements PreviewPanel {
   }
 
   public Component getPanel() {
-    return myWholePanel;
+    return myPanel;
   }
 
   public void updateView() {
@@ -89,7 +92,7 @@ public class DiffPreviewPanel implements PreviewPanel {
   private class EditorMouseListener extends EditorMouseMotionAdapter {
     private final int myIndex;
 
-    public EditorMouseListener(int index) {
+    private EditorMouseListener(int index) {
       myIndex = index;
     }
 
@@ -100,7 +103,7 @@ public class DiffPreviewPanel implements PreviewPanel {
     }
   }
 
-  private static class SampleMerge extends DiffRequest {
+  public static class SampleMerge extends DiffRequest {
     public SampleMerge(Project project) {
       super(project);
     }
@@ -151,7 +154,7 @@ public class DiffPreviewPanel implements PreviewPanel {
   private class EditorClickListener extends EditorMouseAdapter implements CaretListener {
     private final int myIndex;
 
-    public EditorClickListener(int i) {
+    private EditorClickListener(int i) {
       myIndex = i;
     }
 

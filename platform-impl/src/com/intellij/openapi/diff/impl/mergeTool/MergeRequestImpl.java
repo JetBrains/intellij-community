@@ -107,7 +107,7 @@ public class MergeRequestImpl extends MergeRequest {
       }, "", null);
   }
 
-  public void setActions(final DialogBuilder builder, MergePanel2 mergePanel, boolean initial) {
+  public void setActions(final DialogBuilder builder, MergePanel2 mergePanel) {
     if (builder.getOkAction() == null && myActionButtonPresentation != null) {
       builder.addOkAction();
     }
@@ -116,12 +116,12 @@ public class MergeRequestImpl extends MergeRequest {
     }
 
     if (myActionButtonPresentation != null) {
-      (builder.getOkAction()).setText(myActionButtonPresentation.getName());
+      builder.getOkAction().setText(myActionButtonPresentation.getName());
 
       builder.setOkActionEnabled(myActionButtonPresentation.isEnabled());
       final Action action = ((DialogBuilder.ActionDescriptor)builder.getOkAction()).getAction(builder.getDialogWrapper());
       String actionName = myActionButtonPresentation.getName();
-      final int index = actionName.indexOf("&");
+      final int index = actionName.indexOf('&');
       final char mnemonic;
       if (index >= 0 && index < actionName.length() - 1) {
         mnemonic = actionName.charAt(index + 1);
@@ -131,7 +131,7 @@ public class MergeRequestImpl extends MergeRequest {
       }
       action.putValue(Action.NAME, actionName);
       if (mnemonic > 0) {
-        action.putValue(Action.MNEMONIC_KEY, new Integer(mnemonic));
+        action.putValue(Action.MNEMONIC_KEY, Integer.valueOf(mnemonic));
       }
       builder.setOkOperation(new Runnable() {
         public void run() {
@@ -169,7 +169,7 @@ public class MergeRequestImpl extends MergeRequest {
     private final MergeVersion myTarget;
     private final Document myWorkingDocument;
 
-    public MergeContent(MergeVersion target) {
+    private MergeContent(MergeVersion target) {
       myTarget = target;
       myWorkingDocument = myTarget.createWorkingDocument(getProject());
       LOG.assertTrue(myWorkingDocument.isWritable());
@@ -209,7 +209,7 @@ public class MergeRequestImpl extends MergeRequest {
     private final DialogWrapper myDialogWrapper;
     private boolean myWasInvoked = false;
 
-    public AllResolvedListener(MergePanel2 mergePanel, DialogWrapper dialogWrapper) {
+    private AllResolvedListener(MergePanel2 mergePanel, DialogWrapper dialogWrapper) {
       myMergePanel = mergePanel;
       myDialogWrapper = dialogWrapper;
       final ChangeCounter changeCounter = ChangeCounter.getOrCreate(myMergePanel.getMergeList());

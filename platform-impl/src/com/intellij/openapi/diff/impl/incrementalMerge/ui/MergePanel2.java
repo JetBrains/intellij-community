@@ -1,5 +1,6 @@
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
@@ -28,6 +29,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -39,25 +41,70 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class MergePanel2 implements DiffViewer {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2");
-  private static final EditorPlace.ViewProperty<EditorColorsScheme> EDITOR_SCHEME = new EditorPlace.ViewProperty<EditorColorsScheme>(
-    null) {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2");
+  private final DiffPanelOutterComponent myPanel;
+  private DiffRequest myData;
+  private MergeList myMergeList;
+  private boolean myDuringCreation = false;
+  private final SyncScrollSupport myScrollSupport = new SyncScrollSupport();
+  private final DiffDivider[] myDividers = {new DiffDivider(FragmentSide.SIDE2), new DiffDivider(FragmentSide.SIDE1)};
+  private boolean myScrollToFirstDiff = true;
+
+  private final LabeledComponent[] myEditorsPanels = new LabeledComponent[EDITORS_COUNT];
+  public static final int EDITORS_COUNT = 3;
+  private final DividersRepainter myDividersRepainter = new DividersRepainter();
+  private StatusUpdater myStatusUpdater;
+  private final DialogBuilder myBuilder;
+
+  public MergePanel2(DialogBuilder builder, Disposable parent) {
+    ArrayList<EditorPlace> editorPlaces = new ArrayList<EditorPlace>();
+    EditorPlace.EditorListener placeListener = new EditorPlace.EditorListener() {
+      public void onEditorCreated(EditorPlace place) {
+        if (myDuringCreation) return;
+        disposeMergeList();
+        myDuringCreation = true;
+        try {
+          tryInitView();
+        }
+        finally {
+          myDuringCreation = false;
+        }
+      }
+
+      public void onEditorReleased(Editor releasedEditor) {
+        LOG.assertTrue(!myDuringCreation);
+        disposeMergeList();
+      }
+    };
+    for (int i = 0; i < EDITORS_COUNT; i++) {
+      EditorPlace editorPlace = new EditorPlace(new DiffEditorState(i));
+      Disposer.register(parent, editorPlace);
+      editorPlaces.add(editorPlace);
+      editorPlace.addListener(placeListener);
+      myEditorsPanels[i] = new LabeledComponent();
+      myEditorsPanels[i].setLabelLocation(BorderLayout.NORTH);
+      myEditorsPanels[i].setComponent(editorPlace);
+    }
+    FontSizeSynchronizer.attachTo(editorPlaces);
+    myPanel = new DiffPanelOutterComponent(TextDiffType.MERGE_TYPES, TOOLBAR);
+    myPanel.insertDiffComponent(new ThreePanels(myEditorsPanels, myDividers), new MyScrollingPanel());
+    myPanel.setDataProvider(new MyDataProvider());
+    myBuilder = builder;
+  }
+
+  private static final EditorPlace.ViewProperty<EditorColorsScheme> EDITOR_SCHEME = new EditorPlace.ViewProperty<EditorColorsScheme>(null) {
     public void doUpdateEditor(EditorEx editorEx, EditorColorsScheme scheme, EditorPlace.ComponentState state) {
       if (scheme != null) editorEx.setColorsScheme(scheme);
     }
   };
-  public static final EditorPlace.ViewProperty<Boolean> LINE_NUMBERS = new EditorPlace.ViewProperty<Boolean>(
-    Boolean.TRUE) {
+  public static final EditorPlace.ViewProperty<Boolean> LINE_NUMBERS = new EditorPlace.ViewProperty<Boolean>(Boolean.TRUE) {
     public void doUpdateEditor(EditorEx editorEx, Boolean aBoolean, EditorPlace.ComponentState state) {
       editorEx.getSettings().setLineNumbersShown(aBoolean.booleanValue());
     }
   };
-  public static final EditorPlace.ViewProperty<Boolean> LINE_MARKERS_AREA = new EditorPlace.ViewProperty<Boolean>(
-    Boolean.TRUE) {
+  public static final EditorPlace.ViewProperty<Boolean> LINE_MARKERS_AREA = new EditorPlace.ViewProperty<Boolean>(Boolean.TRUE) {
     public void doUpdateEditor(EditorEx editorEx, Boolean aBoolean, EditorPlace.ComponentState state) {
       editorEx.getSettings().setLineMarkerAreaShown(aBoolean.booleanValue());
     }
@@ -67,54 +114,23 @@ public class MergePanel2 implements DiffViewer {
       if (integer != null) editorEx.getSettings().setAdditionalLinesCount(integer.intValue());
     }
   };
-  public static final EditorPlace.ViewProperty<Integer> ADDITIONAL_COLUMNS = new EditorPlace.ViewProperty<Integer>(
-    null) {
+  public static final EditorPlace.ViewProperty<Integer> ADDITIONAL_COLUMNS = new EditorPlace.ViewProperty<Integer>(null) {
     public void doUpdateEditor(EditorEx editorEx, Integer integer, EditorPlace.ComponentState state) {
       if (integer != null) editorEx.getSettings().setAdditionalColumnsCount(integer.intValue());
     }
   };
-  public static final EditorPlace.ViewProperty<EditorColorsScheme> HIGHLIGHTER_SETTINGS = new EditorPlace.ViewProperty<EditorColorsScheme>(
-    null) {
-    public void doUpdateEditor(EditorEx editorEx, EditorColorsScheme settings, EditorPlace.ComponentState state) {
-      if (settings == null) settings = EditorColorsManager.getInstance().getGlobalScheme();
-      DiffEditorState editorState = (DiffEditorState)state;
-      editorEx.setHighlighter(
-        EditorHighlighterFactory.getInstance().createEditorHighlighter(editorState.getFileType(), settings, editorState.getProject()));
-    }
-  };
-  private static final Collection<EditorPlace.ViewProperty> ALL_PROPERTIES = Arrays.asList(new EditorPlace.ViewProperty[]{
-    ADDITIONAL_COLUMNS, ADDITIONAL_LINES, EDITOR_SCHEME, HIGHLIGHTER_SETTINGS,
-    LINE_MARKERS_AREA, LINE_NUMBERS});
-
-  private final DiffPanelOutterComponent myPanel;
-  private DiffRequest myData;
-  private MergeList myMergeList;
-  private boolean myDuringCreation = false;
-  private final SyncScrollSupport myScrollSupport = new SyncScrollSupport();
-  private final DiffDivider[] myDividers = new DiffDivider[]{new DiffDivider(FragmentSide.SIDE2),
-                                                             new DiffDivider(FragmentSide.SIDE1)};
-  private boolean myScrollToFirstDiff = true;
-
-  private final LabeledComponent[] myEditorsPanels = new LabeledComponent[EDITORS_COUNT];
-  private final EditorPlace.EditorListener myPlaceListener = new EditorPlace.EditorListener() {
-    public void onEditorCreated(EditorPlace place) {
-      if (myDuringCreation) return;
-      disposeMergeList();
-      myDuringCreation = true;
-      try {
-        tryInitView();
+  public static final EditorPlace.ViewProperty<EditorColorsScheme> HIGHLIGHTER_SETTINGS =
+    new EditorPlace.ViewProperty<EditorColorsScheme>(null) {
+      public void doUpdateEditor(EditorEx editorEx, EditorColorsScheme settings, EditorPlace.ComponentState state) {
+        if (settings == null) settings = EditorColorsManager.getInstance().getGlobalScheme();
+        DiffEditorState editorState = (DiffEditorState)state;
+        editorEx.setHighlighter(
+          EditorHighlighterFactory.getInstance().createEditorHighlighter(editorState.getFileType(), settings, editorState.getProject()));
       }
-      finally {
-        myDuringCreation = false;
-      }
-    }
+    };
+  private static final Collection<EditorPlace.ViewProperty> ALL_PROPERTIES = Arrays.<EditorPlace.ViewProperty>asList
+    (ADDITIONAL_COLUMNS, ADDITIONAL_LINES, EDITOR_SCHEME, HIGHLIGHTER_SETTINGS, LINE_MARKERS_AREA, LINE_NUMBERS);
 
-    public void onEditorReleased(Editor releasedEditor) {
-      LOG.assertTrue(!myDuringCreation);
-      disposeMergeList();
-    }
-  };
-  public static final int EDITORS_COUNT = 3;
   private static final DiffRequest.ToolbarAddons TOOLBAR = new DiffRequest.ToolbarAddons() {
     public void customize(DiffToolbar toolbar) {
       ActionManager actionManager = ActionManager.getInstance();
@@ -130,26 +146,6 @@ public class MergePanel2 implements DiffViewer {
       toolbar.addAction(new ApplyNonConflicts());
     }
   };
-  private final DividersRepainter myDividersRepainter = new DividersRepainter();
-  private StatusUpdater myStatusUpdater;
-  private final DialogBuilder myBuilder;
-
-  public MergePanel2(DialogBuilder builder) {
-    ArrayList<EditorPlace> editorPlaces = new ArrayList<EditorPlace>();
-    for (int i = 0; i < EDITORS_COUNT; i++) {
-      EditorPlace editorPlace = new EditorPlace(new DiffEditorState(i));
-      editorPlaces.add(editorPlace);
-      editorPlace.addListener(myPlaceListener);
-      myEditorsPanels[i] = new LabeledComponent();
-      myEditorsPanels[i].setLabelLocation(BorderLayout.NORTH);
-      myEditorsPanels[i].setComponent(editorPlace);
-    }
-    FontSizeSynchronizer.attachTo(editorPlaces);
-    myPanel = new DiffPanelOutterComponent(TextDiffType.MERGE_TYPES, TOOLBAR);
-    myPanel.insertDiffComponent(new ThreePanels(myEditorsPanels, myDividers), new MyScrollingPanel());
-    myPanel.setDataProvider(new MyDataProvider());
-    myBuilder = builder;
-  }
 
   public void setScrollToFirstDiff(final boolean scrollToFirstDiff) {
     myScrollToFirstDiff = scrollToFirstDiff;
@@ -190,8 +186,7 @@ public class MergePanel2 implements DiffViewer {
     Editor base = getEditor(1);
     Editor right = getEditor(2);
     myMergeList.setMarkups(left, base, right);
-    EditingSides[] sides = new EditingSides[]{new MyEditingSides(FragmentSide.SIDE1),
-                                              new MyEditingSides(FragmentSide.SIDE2)};
+    EditingSides[] sides = {new MyEditingSides(FragmentSide.SIDE1), new MyEditingSides(FragmentSide.SIDE2)};
     myScrollSupport.install(sides);
     for (int i = 0; i < myDividers.length; i++) {
       myDividers[i].listenEditors(sides[i]);
@@ -210,8 +205,8 @@ public class MergePanel2 implements DiffViewer {
     myMergeList.removeListener(myDividersRepainter);
 
     myMergeList = null;
-    for (int i = 0; i < myDividers.length; i++) {
-      myDividers[i].stopListenEditors();
+    for (DiffDivider myDivider : myDividers) {
+      myDivider.stopListenEditors();
     }
   }
 
@@ -234,7 +229,7 @@ public class MergePanel2 implements DiffViewer {
       data.customizeToolbar(myPanel.resetToolbar());
       myPanel.registerToolbarActions();
       if ( data instanceof MergeRequestImpl && myBuilder != null){
-        ((MergeRequestImpl)data).setActions(myBuilder, this, false);
+        ((MergeRequestImpl)data).setActions(myBuilder, this);
       }
     }
     finally {
@@ -283,7 +278,7 @@ public class MergePanel2 implements DiffViewer {
   private class MyEditingSides implements EditingSides {
     private final FragmentSide mySide;
 
-    public MyEditingSides(FragmentSide side) {
+    private MyEditingSides(FragmentSide side) {
       mySide = side;
     }
 
@@ -332,7 +327,7 @@ public class MergePanel2 implements DiffViewer {
     private final HashMap<EditorPlace.ViewProperty, Object> myProperties = new HashMap<EditorPlace.ViewProperty, Object>();
     private final int myIndex;
 
-    public DiffEditorState(int index) {
+    private DiffEditorState(int index) {
       myIndex = index;
     }
 
@@ -340,8 +335,7 @@ public class MergePanel2 implements DiffViewer {
       Document document = getDocument();
       if (document == null) return null;
       Project project = myData.getProject();
-      EditorEx editor;
-      editor = DiffUtil.createEditor(document, project, myIndex != 1);
+      EditorEx editor = DiffUtil.createEditor(document, project, myIndex != 1);
 
       if (editor == null) return editor;
       //FileType type = getFileType();
@@ -351,13 +345,11 @@ public class MergePanel2 implements DiffViewer {
       editor.getSettings().setFoldingOutlineShown(false);
       ((FoldingModelEx)editor.getFoldingModel()).setFoldingEnabled(false);
       HashSet<EditorPlace.ViewProperty> notProcessedDefaults = new HashSet<EditorPlace.ViewProperty>(ALL_PROPERTIES);
-      for (Iterator<EditorPlace.ViewProperty> iterator = myProperties.keySet().iterator(); iterator.hasNext();) {
-        EditorPlace.ViewProperty viewProperty = iterator.next();
+      for (EditorPlace.ViewProperty viewProperty : myProperties.keySet()) {
         notProcessedDefaults.remove(viewProperty);
         viewProperty.updateEditor(editor, myProperties.get(viewProperty), this);
       }
-      for (Iterator<EditorPlace.ViewProperty> iterator = notProcessedDefaults.iterator(); iterator.hasNext();) {
-        EditorPlace.ViewProperty viewProperty = iterator.next();
+      for (EditorPlace.ViewProperty viewProperty : notProcessedDefaults) {
         viewProperty.updateEditor(editor, null, this);
       }
       return editor;
@@ -414,7 +406,7 @@ public class MergePanel2 implements DiffViewer {
   private class BranchFocusedSide implements FocusDiffSide {
     private final FragmentSide mySide;
 
-    public BranchFocusedSide(FragmentSide side) {
+    private BranchFocusedSide(FragmentSide side) {
       mySide = side;
     }
 
@@ -461,7 +453,7 @@ public class MergePanel2 implements DiffViewer {
   }
 
   public void setColorScheme(EditorColorsScheme scheme) {
-    setEditorProperty(MergePanel2.EDITOR_SCHEME, scheme);
+    setEditorProperty(EDITOR_SCHEME, scheme);
     myPanel.setColorScheme(scheme);
   }
 
@@ -505,11 +497,12 @@ public class MergePanel2 implements DiffViewer {
     }
   }
 
-  public static class AsComponent extends JPanel {
-    private final MergePanel2 myMergePanel = new MergePanel2(null);
+  public static class AsComponent extends JPanel{
+    private final MergePanel2 myMergePanel;
 
-    public AsComponent() {
+    public AsComponent(Disposable parent) {
       super(new BorderLayout());
+      myMergePanel = new MergePanel2(null, parent);
       add(myMergePanel.getComponent(), BorderLayout.CENTER);
     }
 
@@ -517,6 +510,7 @@ public class MergePanel2 implements DiffViewer {
       return myMergePanel;
     }
 
+    @SuppressWarnings({"UnusedDeclaration"})
     public boolean isToolbarEnabled() {
       return myMergePanel.myPanel.isToolbarEnabled();
     }
