@@ -151,7 +151,7 @@ public class HectorComponent extends JPanel {
   }
 
   public void showComponent(RelativePoint point) {
-    final JBPopup hector = JBPopupFactory.getInstance().createComponentPopupBuilder(this, null)
+    final JBPopup hector = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)
       .setRequestFocus(true)
       .setMovable(true)
       .setCancelCallback(new Computable<Boolean>() {
