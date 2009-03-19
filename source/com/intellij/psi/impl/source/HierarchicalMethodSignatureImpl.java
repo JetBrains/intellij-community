@@ -14,11 +14,11 @@ import java.util.List;
 public class HierarchicalMethodSignatureImpl extends HierarchicalMethodSignature {
   private List<HierarchicalMethodSignature> mySupers;
 
-  public HierarchicalMethodSignatureImpl(final MethodSignatureBackedByPsiMethod signature) {
+  public HierarchicalMethodSignatureImpl(@NotNull MethodSignatureBackedByPsiMethod signature) {
     super(signature);
   }
 
-  public void addSuperSignature(HierarchicalMethodSignature superSignatureHierarchical) {
+  public void addSuperSignature(@NotNull HierarchicalMethodSignature superSignatureHierarchical) {
     if (mySupers == null) mySupers = new SmartList<HierarchicalMethodSignature>();
     mySupers.add(superSignatureHierarchical);
   }

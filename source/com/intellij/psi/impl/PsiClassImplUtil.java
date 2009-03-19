@@ -195,7 +195,9 @@ public class PsiClassImplUtil {
 
     final List<T> ret = new ArrayList<T>(pairs.size());
     for (final Pair<T, PsiSubstitutor> pair : pairs) {
-      ret.add(pair.getFirst());
+      T t = pair.getFirst();
+      LOG.assertTrue(t != null, aClass);
+      ret.add(t);
     }
     return ret;
   }
@@ -312,7 +314,7 @@ public class PsiClassImplUtil {
   private static class ByNameCachedValueProvider implements CachedValueProvider<Map> {
     private final PsiClass myClass;
 
-    public ByNameCachedValueProvider(final PsiClass aClass) {
+    private ByNameCachedValueProvider(final PsiClass aClass) {
       myClass = aClass;
     }
 
@@ -673,14 +675,11 @@ public class PsiClassImplUtil {
     }
     else {
       final PsiTypeParameter[] typeParameters = enumClass.getTypeParameters();
-      if (typeParameters.length != 1) {
-        superType = new PsiImmediateClassType(enumClass, PsiSubstitutor.EMPTY);
+      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      if (typeParameters.length == 1) {
+        substitutor = substitutor.put(typeParameters[0], factory.createType(psiClass));
       }
-      else {
-        superType = new PsiImmediateClassType(enumClass, PsiSubstitutor.EMPTY.put(
-          typeParameters[0], factory.createType(psiClass)
-        ));
-      }
+      superType = new PsiImmediateClassType(enumClass, substitutor);
     }
     return superType;
   }

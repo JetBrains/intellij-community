@@ -143,9 +143,10 @@ public class PsiSuperMethodImplUtil {
       Map<MethodSignature, HierarchicalMethodSignature> superResult = buildMethodHierarchy(superClass, finalSubstitutor, false, visited, isInRawContextSuper);
       visited.remove(superClass);
 
-      for (MethodSignature superSignature : superResult.keySet()) {
-        HierarchicalMethodSignature hierarchicalMethodSignature = superResult.get(superSignature);
+      for (Map.Entry<MethodSignature, HierarchicalMethodSignature> entry : superResult.entrySet()) {
+        HierarchicalMethodSignature hierarchicalMethodSignature = entry.getValue();
         if (!PsiUtil.isAccessible(hierarchicalMethodSignature.getMethod(), aClass, aClass)) continue;
+        MethodSignature superSignature = entry.getKey();
         HierarchicalMethodSignatureImpl existing = map.get(superSignature);
         if (existing == null) {
           map.put(superSignature, copy(hierarchicalMethodSignature));
@@ -166,8 +167,9 @@ public class PsiSuperMethodImplUtil {
     }
 
 
-    for (MethodSignature methodSignature : map.keySet()) {
-      HierarchicalMethodSignatureImpl hierarchicalMethodSignature = map.get(methodSignature);
+    for (Map.Entry<MethodSignature, HierarchicalMethodSignatureImpl> entry : map.entrySet()) {
+      HierarchicalMethodSignatureImpl hierarchicalMethodSignature = entry.getValue();
+      MethodSignature methodSignature = entry.getKey();
       if (result.get(methodSignature) == null && PsiUtil.isAccessible(hierarchicalMethodSignature.getMethod(), aClass, aClass)) {
         result.put(methodSignature, hierarchicalMethodSignature);
       }
@@ -277,7 +279,7 @@ public class PsiSuperMethodImplUtil {
   private static class BySignaturesCachedValueProvider implements CachedValueProvider<Map<MethodSignature, HierarchicalMethodSignature>> {
     private final PsiClass myClass;
 
-    public BySignaturesCachedValueProvider(final PsiClass aClass) {
+    private BySignaturesCachedValueProvider(final PsiClass aClass) {
       myClass = aClass;
     }
 

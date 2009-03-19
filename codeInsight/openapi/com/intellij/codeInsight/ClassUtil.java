@@ -21,6 +21,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -114,7 +115,7 @@ public class ClassUtil {
     return suspects.isEmpty() ? null : suspects.iterator().next();
   }
 
-  private static void removeSupers(HierarchicalMethodSignature hierarchicalMethodSignature, Set<PsiMethod> allMethods, Set<PsiMethod> suspects) {
+  private static void removeSupers(@NotNull HierarchicalMethodSignature hierarchicalMethodSignature, Set<PsiMethod> allMethods, Set<PsiMethod> suspects) {
     for (HierarchicalMethodSignature superS : hierarchicalMethodSignature.getSuperSignatures()) {
       PsiMethod superMethod = superS.getMethod();
       allMethods.remove(superMethod);
