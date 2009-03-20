@@ -440,6 +440,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  public void removeChangeList(LocalChangeList list) {
+    removeChangeList(list.getName());
+  }
+
   /**
    * does no modification to change lists, only notification is sent
    */
