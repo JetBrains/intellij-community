@@ -198,7 +198,10 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final Component sourceComponent = mouseEvent.getComponent();
     final Point originalPoint = mouseEvent.getPoint();
 
-    final Lookup activeLookup = LookupManager.getInstance(getEditor().getProject()).getActiveLookup();
+    final Editor editor = getEditor();
+    if (editor == null) return;
+    
+    final Lookup activeLookup = LookupManager.getInstance(editor.getProject()).getActiveLookup();
     if (activeLookup != null){
       final JLayeredPane layeredPane = getTree().getRootPane().getLayeredPane();
       final Point layeredPoint = SwingUtilities.convertPoint(sourceComponent, originalPoint, layeredPane);
