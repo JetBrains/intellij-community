@@ -18,17 +18,10 @@ package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.Key;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Used by LanguageFolding class if more than one FoldingBuilder were specified
@@ -39,74 +32,33 @@ import java.util.*;
  * @since 9.0
  */
 class CompositeFoldingBuilder implements FoldingBuilder {
+  private static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<FoldingBuilder>("FOLDING_BUILDER");
   private final List<FoldingBuilder> myBuilders;
-  private final Map<VirtualFile, Map<ASTNode, FoldingBuilder>> foldings = new HashMap<VirtualFile, Map<ASTNode, FoldingBuilder>>();
-  private final FileEditorManagerListener myListener;
-  private final List<Integer> myProjectsCache = new ArrayList<Integer>();
 
-  CompositeFoldingBuilder(List<FoldingBuilder> builders) {
+  CompositeFoldingBuilder(List<FoldingBuilder> builders) {    
     myBuilders = builders;
-    myListener = new FileEditorManagerAdapter() {
-      @Override
-      public void fileClosed(FileEditorManager source, VirtualFile file) {
-        foldings.remove(file);
-      }
-    };
   }
 
   public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
-    final PsiElement psi = node.getPsi();
-    if (psi == null) return FoldingDescriptor.EMPTY;
-    checkSubscription(psi.getProject());
-    final PsiFile file = PsiDocumentManager.getInstance(psi.getProject()).getPsiFile(document);
-    final VirtualFile vf;
-    if (file == null || (vf = file.getVirtualFile()) == null) return FoldingDescriptor.EMPTY;
-
     final List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
-    final Map<ASTNode, FoldingBuilder> builders = new HashMap<ASTNode, FoldingBuilder>();
-    foldings.put(vf, builders);
 
     for (FoldingBuilder builder : myBuilders) {
-      final FoldingDescriptor[] foldingDescriptors = builder.buildFoldRegions(node, document);
-      if (foldingDescriptors.length > 0) {
-        descriptors.addAll(Arrays.asList(foldingDescriptors));
-        for (FoldingDescriptor descriptor : foldingDescriptors) {
-          builders.put(descriptor.getElement(), builder);
-        }
+      for (FoldingDescriptor descriptor : builder.buildFoldRegions(node, document)) {
+        descriptor.getElement().putUserData(FOLDING_BUILDER, builder);
+        descriptors.add(descriptor);
       }
     }
+
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
-  private void checkSubscription(Project project) {
-    if (! myProjectsCache.contains(project.hashCode())) {
-      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myListener);
-      myProjectsCache.add(project.hashCode());
-    }
-  }
-
-
   public String getPlaceholderText(ASTNode node) {
-    final FoldingBuilder builder = findBuilderByASTNode(node);
+    final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
     return builder == null ? node.getText() : builder.getPlaceholderText(node);
   }
 
-  @Nullable
-  private FoldingBuilder findBuilderByASTNode(ASTNode node) {
-    final PsiElement psi = node.getPsi();
-    if (psi == null) return null;
-
-    final PsiFile file = psi.getContainingFile();
-    final VirtualFile vf = file == null ? null : file.getVirtualFile();
-    final Map<ASTNode, FoldingBuilder> builders;
-
-    if (vf == null || (builders = foldings.get(vf)) == null) return null;
-
-    return builders.get(node);
-  }
-
   public boolean isCollapsedByDefault(ASTNode node) {
-    final FoldingBuilder builder = findBuilderByASTNode(node);
+    final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
     return builder == null ? false : builder.isCollapsedByDefault(node);
   }
 }
