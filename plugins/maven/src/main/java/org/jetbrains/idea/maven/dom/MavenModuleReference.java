@@ -86,7 +86,15 @@ public class MavenModuleReference extends MavenPsiReference implements LocalQuic
 
   public static String calcRelativeModulePath(VirtualFile parentPom, VirtualFile modulePom) {
     String result = MavenDomUtil.calcRelativePath(parentPom.getParent(), modulePom);
-    return result.substring(0, result.length() - ("/" + MavenConstants.POM_XML).length());
+    int to = result.length() - ("/" + MavenConstants.POM_XML).length();
+    if (to < 0) {
+      // todo IDEADEV-35440
+      throw new RuntimeException("Filed to calculate relative path for:" +
+                                 "\nparentPom: " + parentPom + "(valid: " + parentPom.isValid() + ")" +
+                                 "\nmodulePom: " + modulePom + "(valid: " + modulePom.isValid() + ")" +
+                                 "\nequals:" + parentPom.equals(modulePom));
+    }
+    return result.substring(0, to);
   }
 
   private PsiFile getPsiFile(VirtualFile file) {
