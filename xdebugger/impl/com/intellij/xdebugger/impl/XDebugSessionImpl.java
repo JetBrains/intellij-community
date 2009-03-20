@@ -355,6 +355,11 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @NotNull final XSuspendContext suspendContext) {
+    return breakpointReached(breakpoint, null, suspendContext);
+  }
+
+  public boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
+                                   @NotNull XSuspendContext suspendContext) {
     XDebuggerEvaluator evaluator = XDebuggerUtilImpl.getEvaluator(suspendContext);
     String condition = breakpoint.getCondition();
     if (condition != null && evaluator != null) {
@@ -370,10 +375,19 @@ public class XDebugSessionImpl implements XDebugSession {
       String text = StringUtil.decapitalize(XBreakpointUtil.getDisplayText(breakpoint));
       printMessage(XDebuggerBundle.message("xbreakpoint.reached.at.0", text));
     }
-    String expression = breakpoint.getLogExpression();
-    if (expression != null && evaluator != null) {
-      LOG.debug("evaluating log expression: " + expression);
-      printMessage(evaluator.evaluateMessage(expression));
+
+    if (evaluatedLogExpression != null) {
+      printMessage(evaluatedLogExpression);
+    }
+    else {
+      String expression = breakpoint.getLogExpression();
+      if (expression != null && evaluator != null) {
+        LOG.debug("evaluating log expression: " + expression);
+        final String message = evaluator.evaluateMessage(expression);
+        if (message != null) {
+          printMessage(message);
+        }
+      }
     }
 
     processDependencies(breakpoint);

@@ -3,7 +3,9 @@ package com.intellij.xdebugger.evaluation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.frame.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,15 +18,31 @@ public abstract class XDebuggerEvaluator {
    * Evaluate <code>expression</code> to boolean
    * @param expression expression to evaluate
    * @return result
+   *
+   * @deprecated This method is used to evaluate breakpoints' conditions only. Instead of implementing it you should evaluate breakpoint's condition
+   * in your code and call {@link XDebugSession#breakpointReached(XBreakpoint, XSuspendContext)}
+   * only if the condition evaluates to <code>true</code>.
+   *
+   * @see XBreakpoint#getCondition()
    */
-  public abstract boolean evaluateCondition(@NotNull String expression);
+  @Deprecated
+  public boolean evaluateCondition(@NotNull String expression) {
+    return true;
+  }
 
   /**
    * Evaluate <code>expression</code> to string
    * @param expression expression to evaluate
    * @return result
+   *
+   * @deprecated This method is used to evaluate breakpoints' log messages only. Instead of implementing it you should evaluate breakpoint's
+   * log message in your code and pass it to {@link XDebugSession#breakpointReached(XBreakpoint, String, XSuspendContext)}.
    */
-  public abstract String evaluateMessage(@NotNull String expression);
+  @Deprecated
+  @Nullable
+  public String evaluateMessage(@NotNull String expression) {
+    return null;
+  }
 
   /**
    * Start evaluating expression.
