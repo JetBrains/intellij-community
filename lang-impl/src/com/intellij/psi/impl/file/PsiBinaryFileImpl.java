@@ -211,6 +211,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return !isCopy();
   }
 
+  @NotNull
   public PsiFile getOriginalFile() {
     return this;
   }

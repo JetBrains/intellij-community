@@ -302,6 +302,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return "PsiFile:" + getName();
   }
 
+  @NotNull
   public PsiFile getOriginalFile() {
     return this;
   }

@@ -142,6 +142,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     CheckUtil.checkWritable(this);
   }
 
+  @NotNull
   public PsiFile getOriginalFile() {
     return myOriginalFile == null ? this : myOriginalFile;
   }
