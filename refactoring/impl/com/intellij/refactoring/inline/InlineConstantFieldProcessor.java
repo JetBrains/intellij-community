@@ -42,6 +42,21 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     return new InlineViewDescriptor(myField);
   }
 
+  @Override
+  protected boolean isPreviewUsages(UsageInfo[] usages) {
+    if (super.isPreviewUsages(usages)) return true;
+    for (UsageInfo info : usages) {
+      if (info instanceof UsageFromJavaDoc) return true;
+    }
+    return false;
+  }
+
+  private static class UsageFromJavaDoc extends UsageInfo {
+    private UsageFromJavaDoc(@NotNull PsiElement element) {
+      super(element, true);
+    }
+  }
+
   @NotNull
   protected UsageInfo[] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myRefExpr)};
@@ -49,7 +64,14 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     PsiReference[] refs = ReferencesSearch.search(myField, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
     UsageInfo[] infos = new UsageInfo[refs.length];
     for (int i = 0; i < refs.length; i++) {
-      infos[i] = new UsageInfo(refs[i].getElement());
+      PsiElement element = refs[i].getElement();
+      UsageInfo info = new UsageInfo(element);
+
+      if (!(element instanceof PsiExpression) && PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class) == null) {
+        info = new UsageFromJavaDoc(element);
+      }
+
+      infos[i] = info;
     }
     return infos;
   }
@@ -65,8 +87,9 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
 
     PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(myField.getProject()).getConstantEvaluationHelper();
     initializer = normalize ((PsiExpression)initializer.copy());
-    for (UsageInfo usage : usages) {
-      final PsiElement element = usage.getElement();
+    for (UsageInfo info : usages) {
+      if (info instanceof UsageFromJavaDoc) continue;
+      final PsiElement element = info.getElement();
       try {
         if (element instanceof PsiExpression) {
           inlineExpressionUsage((PsiExpression)element, evalHelper, initializer);

@@ -28,8 +28,7 @@ public class InlineFieldDialog extends InlineOptionsDialog {
   }
 
   protected String getNameLabelText() {
-    String fieldText = PsiFormatUtil.formatVariable(myField,
-                                                    PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE ,PsiSubstitutor.EMPTY);
+    String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,PsiSubstitutor.EMPTY);
     return RefactoringBundle.message("inline.field.field.name.label", fieldText);
   }
 
