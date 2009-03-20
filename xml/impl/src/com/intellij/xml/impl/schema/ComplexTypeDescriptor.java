@@ -239,18 +239,13 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       String base = tag.getAttributeValue(BASE_ATTR_NAME);
 
       if (base != null) {
-        TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
-          myDocumentDescriptor.getTag(),
-          base);
+        TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(base);
         if (descriptor == this) {
           // TODO: similar code with SchemaReferencesProvider implementation
           final XmlNSDescriptorImpl nsDescriptor = SchemaReferencesProvider.findRedefinedDescriptor(tag, base);
 
           if (nsDescriptor != null) {
-            descriptor = nsDescriptor.findTypeDescriptor(
-              nsDescriptor.getTag(),
-              base
-            );
+            descriptor = nsDescriptor.findTypeDescriptor(base);
           }
         }
 
@@ -384,9 +379,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
             }
           }
         } else {
-          TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
-            myDocumentDescriptor.getTag(),
-            base);
+          TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(base);
 
           if (descriptor instanceof ComplexTypeDescriptor) {
             ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
@@ -454,9 +447,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       String base = tag.getAttributeValue(BASE_ATTR_NAME);
 
       if (base != null) {
-        TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
-          myDocumentDescriptor.getTag(),
-          base);
+        TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(base);
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
@@ -541,9 +532,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
       if (base != null && !visited.contains(base)) {
         visited.add(base);
-        TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
-          myDocumentDescriptor.getTag(),
-          base);
+        TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(base);
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
