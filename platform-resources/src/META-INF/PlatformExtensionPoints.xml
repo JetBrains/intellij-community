@@ -85,4 +85,6 @@
 
   <extensionPoint name="progressFunComponentProvider" interface="com.intellij.openapi.progress.ProgressFunComponentProvider"/>
   <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
+
+  <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher"/>
 </extensionPoints>

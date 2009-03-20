@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -135,7 +136,7 @@ public class IconUtil {
   }
 
   private static class FileIconPatcherHolder {
-    private static final FileIconPatcher[] ourPatchers = ApplicationManager.getApplication().getComponents(FileIconPatcher.class);
+    private static final FileIconPatcher[] ourPatchers = Extensions.getExtensions(FileIconPatcher.EP_NAME);
   }
 
   private static FileIconPatcher[] getPatchers() {

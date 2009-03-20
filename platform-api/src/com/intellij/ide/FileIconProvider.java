@@ -11,5 +11,5 @@ import javax.swing.*;
 
 public interface FileIconProvider {
   @Nullable
-  Icon getIcon(VirtualFile file, int flags, Project project);
+  Icon getIcon(VirtualFile file, int flags, @Nullable Project project);
 }
