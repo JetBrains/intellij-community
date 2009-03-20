@@ -230,19 +230,31 @@ public class PropertyResolverTest extends MavenImportingTestCase {
     assertEquals("value", resolve("${uncomitted}", myProjectPom));
   }
 
-  public void testEscaping() throws Exception {
+  public void testEscapingProperties() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
     assertEquals("foo ^project bar",
-                 PropertyResolver.resolve(getModule("project"), "foo ^${project.artifactId} bar", new Properties(), "/"));
+                 PropertyResolver.resolve(getModule("project"), "foo ^${project.artifactId} bar", new Properties(), "/", null));
     assertEquals("foo ${project.artifactId} bar",
-                 PropertyResolver.resolve(getModule("project"), "foo ^^${project.artifactId} bar", new Properties(), "^^"));
+                 PropertyResolver.resolve(getModule("project"), "foo ^^${project.artifactId} bar", new Properties(), "^^", null));
     assertEquals("project ${project.artifactId} project ${project.artifactId}",
                  PropertyResolver.resolve(getModule("project"),
                                           "${project.artifactId} ^${project.artifactId} ${project.artifactId} ^${project.artifactId}",
-                                          new Properties(), "^"));
+                                          new Properties(), "^", null));
+  }
+
+  public void testEscapingCharacters() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+                  "<properties>" +
+                  "  <foo>abc:def\\ghi</foo>" +
+                  "</properties>");
+
+    assertEquals("abc\\:def\\\\ghi", PropertyResolver.resolve(getModule("project"), "${foo}", new Properties(), null, ":\\"));
   }
 
   private String resolve(String text, VirtualFile f) {

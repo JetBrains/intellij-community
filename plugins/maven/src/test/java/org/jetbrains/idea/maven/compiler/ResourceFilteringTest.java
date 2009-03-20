@@ -151,6 +151,32 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult("target/test-classes/file.properties", "value=1");
   }
 
+  public void testEscapingSpecialCharsInProperties() throws Exception {
+    createProjectSubFile("resources/file.txt", "value=${foo}");
+    createProjectSubFile("resources/file.properties", "value=${foo}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <foo>c:\\projects\\foo/bar</foo>" +
+                  "</properties>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+
+    assertResult("target/classes/file.txt", "value=c:\\projects\\foo/bar");
+    assertResult("target/classes/file.properties", "value=c\\:\\\\projects\\\\foo/bar");
+  }
+
   public void testFilterWithSeveralResourceFolders() throws Exception {
     createProjectSubFile("resources1/file1.properties", "value=${project.version}");
     createProjectSubFile("resources2/file2.properties", "value=${project.version}");

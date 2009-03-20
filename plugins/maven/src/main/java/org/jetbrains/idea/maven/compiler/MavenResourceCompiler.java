@@ -370,16 +370,15 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         if (eachItem.isFiltered()) {
           String charset = getCharsetName(sourceVirtualFile);
           String text = new String(FileUtil.loadFileBytes(sourceFile), charset);
-
-          text = PropertyResolver.resolve(eachItem.getModule(), text, eachItem.getProperties(), eachItem.getEscapeString());
+          String escapedCharacters = "properties".equals(sourceVirtualFile.getExtension()) ? ":\\" : null;
+          text = PropertyResolver.resolve(eachItem.getModule(),
+                                          text,
+                                          eachItem.getProperties(),
+                                          eachItem.getEscapeString(),
+                                          escapedCharacters);
           FileUtil.writeToFile(outputFile, text.getBytes(charset));
         }
         else {
-          // TODO
-          //boolean wasFiltered = outputFile.getTimeStamp() != sourceFile.getTimeStamp();
-          //if (wasFiltered) {
-          //  FileUtil.copy(new File(sourceFile.getPath()), new File(outputFile.getPath()));
-          //}
           FileUtil.copy(sourceFile, outputFile);
         }
 

@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileElement;
@@ -23,11 +24,15 @@ import java.util.regex.Pattern;
 public class PropertyResolver {
   private static final Pattern PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
 
-  public static String resolve(Module module, String text, Properties additionalProperties, String escapeString) {
+  public static String resolve(Module module,
+                               String text,
+                               Properties additionalProperties,
+                               String propertyEscapeString,
+                               String escapedCharacters) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
     MavenProjectModel mavenProject = manager.findProject(module);
     if (mavenProject == null) return text;
-    return doResolve(text, mavenProject, additionalProperties, escapeString, new Stack<String>());
+    return doResolve(text, mavenProject, additionalProperties, propertyEscapeString, escapedCharacters, new Stack<String>());
   }
 
   public static String resolve(GenericDomValue<String> value) {
@@ -44,7 +49,7 @@ public class PropertyResolver {
     MavenProjectModel mavenProject = manager.findProject(file);
     if (mavenProject == null) return text;
 
-    return doResolve(text, mavenProject, collectPropertiesFromDOM(mavenProject, dom), null, new Stack<String>());
+    return doResolve(text, mavenProject, collectPropertiesFromDOM(mavenProject, dom), null, null, new Stack<String>());
   }
 
   private static Properties collectPropertiesFromDOM(MavenProjectModel project, DomFileElement<MavenModel> dom) {
@@ -75,6 +80,7 @@ public class PropertyResolver {
                                   MavenProjectModel project,
                                   Properties additionalProperties,
                                   String escapeString,
+                                  String escapedCharacters,
                                   Stack<String> resolutionStack) {
     Matcher matcher = PATTERN.matcher(text);
 
@@ -102,14 +108,28 @@ public class PropertyResolver {
       if (resolved == null) resolved = propText;
       if (!resolved.equals(propText) && !resolutionStack.contains(propName)) {
         resolutionStack.push(propName);
-        resolved = doResolve(resolved, project, additionalProperties, escapeString, resolutionStack);
+        resolved = doResolve(resolved, project, additionalProperties, escapeString, escapedCharacters, resolutionStack);
         resolutionStack.pop();
       }
-      matcher.appendReplacement(buff, Matcher.quoteReplacement(resolved));
+      matcher.appendReplacement(buff, Matcher.quoteReplacement(escapeCharacters(resolved, escapedCharacters)));
     }
     matcher.appendTail(buff);
 
     return buff.toString();
+  }
+
+  private static String escapeCharacters(String text, String escapedCharacters) {
+    if (StringUtil.isEmpty(escapedCharacters)) return text;
+
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      if (escapedCharacters.indexOf(ch) != -1) {
+        builder.append('\\');
+      }
+      builder.append(ch);
+    }
+    return builder.toString();
   }
 
   private static String doResolveProperty(String propName, MavenProjectModel project, Properties additionalProperties) {
