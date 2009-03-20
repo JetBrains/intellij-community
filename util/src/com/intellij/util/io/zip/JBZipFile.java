@@ -155,7 +155,7 @@ public class JBZipFile {
    */
   public void close() throws IOException {
     if (myOutputStream != null) {
-      myOutputStream.close();
+      myOutputStream.finish();
       archive.setLength(myOutputStream.written);
     }
     archive.close();
@@ -412,13 +412,13 @@ public class JBZipFile {
     }
   }
 
-  void eraseEntry(JBZipEntry entry) {
+  void eraseEntry(JBZipEntry entry) throws IOException {
     getOutputStream(); // Ensure OutputStream created, so we'll print out central directory at the end;
     entries.remove(entry);
     nameMap.remove(entry.getName());
   }
 
-  JBZipOutputStream getOutputStream() {
+  JBZipOutputStream getOutputStream() throws IOException {
     if (myOutputStream == null) {
       myOutputStream = new JBZipOutputStream(this, currentcfdfoffset);
     }

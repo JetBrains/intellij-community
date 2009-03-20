@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
 /**
@@ -23,15 +24,6 @@ public class JBZipEntry implements Cloneable {
   private static final int PLATFORM_FAT = 0;
   private static final int SHORT_MASK = 0xFFFF;
   private static final int SHORT_SHIFT = 16;
-  /**
-   * Compression method for uncompressed entries.
-   */
-  public static final int STORED = 0;
-
-  /**
-   * Compression method for compressed (deflated) entries.
-   */
-  public static final int DEFLATED = 8;
 
   private long time = -1;     // modification time (in DOS time)
   private long crc = -1;      // crc-32 of entry data
@@ -306,7 +298,7 @@ public class JBZipEntry implements Cloneable {
    * @see #getMethod()
    */
   public void setMethod(int method) {
-    if (method != STORED && method != DEFLATED) {
+    if (method != ZipEntry.STORED && method != ZipEntry.DEFLATED) {
       throw new IllegalArgumentException("invalid compression method");
     }
     this.method = method;
@@ -356,18 +348,18 @@ public class JBZipEntry implements Cloneable {
     return getName().hashCode();
   }
 
-  public void erase() {
+  public void erase() throws IOException {
     myFile.eraseEntry(this);
   }
 
-  protected InputStream getInputStream() throws IOException {
+  private InputStream getInputStream() throws IOException {
     long start = calcDataOffset();
 
     BoundedInputStream bis = new BoundedInputStream(start, getCompressedSize());
     switch (getMethod()) {
-      case STORED:
+      case ZipEntry.STORED:
         return bis;
-      case DEFLATED:
+      case ZipEntry.DEFLATED:
         bis.addDummy();
         return new InflaterInputStream(bis, new Inflater(true));
       default:
@@ -434,9 +426,7 @@ public class JBZipEntry implements Cloneable {
   public void setData(byte[] bytes, long timestamp) throws IOException {
     time = timestamp;
     JBZipOutputStream stream = myFile.getOutputStream();
-    stream.putNextEntry(this);
-    stream.write(bytes);
-    stream.closeEntry();
+    stream.putNextEntryBytes(this, bytes);
   }
 
   public void setData(byte[] bytes) throws IOException {

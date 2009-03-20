@@ -94,17 +94,21 @@ public class UpdateableZipTest extends TestCase {
   
   /*
   public void testAppendToIdeaJar() throws Exception {
-    long tm = System.currentTimeMillis();
-    JBZipFile jbZip = new JBZipFile(new File("/Users/max/idea.jar"));
-    long tm2 = System.currentTimeMillis();
+    //ProfilingUtil.startCPUProfiling();
+    for (int i = 0; i < 20; i++) {
+      long tm = System.currentTimeMillis();
+      JBZipFile jbZip = new JBZipFile(new File("/Users/max/idea.jar"));
+      long tm2 = System.currentTimeMillis();
 
-    System.out.println("Loaded in: " + (tm2 - tm) + " msec");
+      System.out.print("Loaded in: " + (tm2 - tm) + " msec ");
 
-    jbZip.getOrCreateEntry("/somenewtext.txt").setData("New text".getBytes());
-    jbZip.close();
+      jbZip.getOrCreateEntry("/somenewtext.txt").setData("New text".getBytes());
+      jbZip.close();
 
-    long tm3 = System.currentTimeMillis();
-    System.out.println("Updated in: " + (tm3 - tm2) + " msec");
+      long tm3 = System.currentTimeMillis();
+      System.out.println("Updated in: " + (tm3 - tm2) + " msec");
+    }
+    //ProfilingUtil.captureCPUSnapshot();
   }
   */
 
@@ -122,7 +126,7 @@ public class UpdateableZipTest extends TestCase {
   private static void assertEntryWithContentExists(JBZipFile jbZip, String entryName, String content) throws IOException {
     JBZipEntry entry = jbZip.getEntry(entryName);
     assertNotNull(entry);
-    String text = new BufferedReader(new InputStreamReader(entry.getInputStream())).readLine();
+    String text = new String(entry.getData());
     assertEquals(content, text);
   }
 
