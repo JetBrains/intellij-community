@@ -1000,7 +1000,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ThrowablePrintStackTraceInspection.class);
         m_inspectionClasses.add(TodoCommentInspection.class);
         m_inspectionClasses.add(ThreadDumpStackInspection.class);
-        m_inspectionClasses.add(ClassWithoutToStringInspection.class);
+        //m_inspectionClasses.add(ClassWithoutToStringInspection.class);
+        //   - the same inspection is provided by "Generate toString()" plugin, and the other version has a quickfix
         m_inspectionClasses.add(ObsoleteCollectionInspection.class);
     }
 
