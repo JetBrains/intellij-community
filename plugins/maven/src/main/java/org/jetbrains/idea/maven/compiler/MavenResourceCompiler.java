@@ -265,9 +265,15 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         if (!MavenUtil.isIncluded(relPath, includes, excludes)) continue;
 
         String outputPath = outputDir + "/" + relPath;
+        long outputFileTimestamp = -1;
+        File outputFile = new File(outputPath);
+        if (outputFile.exists()) {
+          outputFileTimestamp = outputFile.lastModified();
+        }
         result.add(new MyProcessingItem(module,
                                         eachSourceFile,
                                         outputPath,
+                                        outputFileTimestamp,
                                         isSourceRootFiltered,
                                         properties,
                                         propertiesHashCode,
@@ -345,6 +351,8 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           //}
           FileUtil.copy(sourceFile, outputFile);
         }
+
+        ((MyValididtyState)each.getValidityState()).setOutputFileTimestamp(outputFile.lastModified());
         result.add(each);
         filesToRefresh.add(outputFile);
       }
@@ -398,12 +406,13 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     private final String myOutputPath;
     private final boolean myFiltered;
     private final Properties myProperties;
-    private String myEscapeString;
+    private final String myEscapeString;
     private final MyValididtyState myState;
 
     public MyProcessingItem(Module module,
                             VirtualFile sourceFile,
                             String outputPath,
+                            long outputFileTimestamp,
                             boolean isFiltered,
                             Properties properties,
                             long propertiesHashCode,
@@ -414,7 +423,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       myFiltered = isFiltered;
       myProperties = properties;
       myEscapeString = escapeString;
-      myState = new MyValididtyState(sourceFile, isFiltered, propertiesHashCode, escapeString);
+      myState = new MyValididtyState(sourceFile.getTimeStamp(), outputFileTimestamp, isFiltered, propertiesHashCode, escapeString);
     }
 
     @NotNull
@@ -465,21 +474,27 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private static class MyValididtyState implements ValidityState {
-    TimestampValidityState myTimestampState;
-    private boolean myFiltered;
-    private long myPropertiesHashCode;
-    private String myEscapeString;
+    private final TimestampValidityState myTimestampState;
+    private volatile long myOutputFileTimestamp;
+    private final boolean myFiltered;
+    private final long myPropertiesHashCode;
+    private final String myEscapeString;
 
     public static MyValididtyState load(DataInput in) throws IOException {
-      return new MyValididtyState(TimestampValidityState.load(in), in.readBoolean(), in.readLong(), in.readUTF());
+      return new MyValididtyState(TimestampValidityState.load(in), in.readLong(), in.readBoolean(), in.readLong(), in.readUTF());
     }
 
-    public MyValididtyState(VirtualFile file, boolean isFiltered, long propertiesHashCode, String escapeString) {
-      this(new TimestampValidityState(file.getTimeStamp()), isFiltered, propertiesHashCode, escapeString);
+    public MyValididtyState(long sourceFileTimestamp, long outputFileTimestamp, boolean isFiltered, long propertiesHashCode, String escapeString) {
+      this(new TimestampValidityState(sourceFileTimestamp), outputFileTimestamp, isFiltered, propertiesHashCode, escapeString);
     }
 
-    private MyValididtyState(TimestampValidityState timestampState, boolean isFiltered, long propertiesHashCode, String escapeString) {
+    public void setOutputFileTimestamp(long outputFileTimestamp) {
+      myOutputFileTimestamp = outputFileTimestamp;
+    }
+
+    private MyValididtyState(TimestampValidityState timestampState, long outputFileTimestamp, boolean isFiltered, long propertiesHashCode, String escapeString) {
       myTimestampState = timestampState;
+      myOutputFileTimestamp = outputFileTimestamp;
       myFiltered = isFiltered;
       myPropertiesHashCode = propertiesHashCode;
       myEscapeString = escapeString;
@@ -489,6 +504,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       if (!(otherState instanceof MyValididtyState)) return false;
       MyValididtyState state = (MyValididtyState)otherState;
       return myTimestampState.equalsTo(state.myTimestampState)
+             && myOutputFileTimestamp == state.myOutputFileTimestamp
              && myFiltered == state.myFiltered
              && myPropertiesHashCode == state.myPropertiesHashCode
              && Comparing.strEqual(myEscapeString, state.myEscapeString);
@@ -496,6 +512,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
     public void save(DataOutput out) throws IOException {
       myTimestampState.save(out);
+      out.writeLong(myOutputFileTimestamp);
       out.writeBoolean(myFiltered);
       out.writeLong(myPropertiesHashCode);
       out.writeUTF(myEscapeString);

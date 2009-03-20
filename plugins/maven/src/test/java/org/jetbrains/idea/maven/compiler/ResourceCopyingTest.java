@@ -136,6 +136,29 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
     assertNotCopied("target/classes/file.properties");
   }
 
+  public void testCopyManuallyDeletedFiles() throws Exception {
+    createProjectSubFile("res/file.properties");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+    assertCopied("target/classes/file.properties");
+    myProjectPom.getParent().findFileByRelativePath("target").delete(this);
+
+    compileModules("project");
+    assertCopied("target/classes/file.properties");
+  }
+
   public void testWebResources() throws Exception {
     if (ignore()) return;
 
