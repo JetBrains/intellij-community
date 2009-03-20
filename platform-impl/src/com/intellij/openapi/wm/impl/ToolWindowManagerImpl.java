@@ -4,7 +4,9 @@ import com.intellij.Patches;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -98,11 +100,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private ActiveRunnable myRequestFocusCmd;
   private WeakReference<FocusCommand> myLastForcedRequest = new WeakReference<FocusCommand>(null);
+  private Application myApp;
+  private AppListener myAppListener;
+
+  private FocusCommand myFocusCommandOnAppActivation;
+  private ActionCallback myCallbackOnActivation;
 
   /**
    * invoked by reflection
    */
-  public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx) {
+  public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx, Application app) {
     myProject = project;
     myWindowManager = windowManagerEx;
     myListenerList = new EventListenerList();
@@ -124,9 +131,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myActiveStack = new ActiveStack();
     mySideStack = new SideStack();
 
-    myFocusedComponentAlaram = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);  
+    myFocusedComponentAlaram = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myForcedFocusRequestsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myIdleAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+
+    myApp = app;
+    myAppListener = new AppListener();
+    myApp.addApplicationListener(myAppListener);
   }
 
   public Project getProject() {
@@ -137,6 +148,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void disposeComponent() {
+    myApp.removeApplicationListener(myAppListener);
   }
 
   public void projectOpened() {
@@ -250,7 +262,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void activateEditorComponent() {
-    activateEditorComponent(true);    
+    activateEditorComponent(true);
   }
 
   private void activateEditorComponent(boolean forced) {
@@ -293,7 +305,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
               if (reactivateLastActive) {
                 activateToolWindow(active, false, true);
-              } else {
+              }
+              else {
                 if (active != null) {
                   myActiveStack.remove(active, false);
                 }
@@ -334,7 +347,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    *                  It means that UI isn't validated and repainted just after each add/remove operation.
    * @see ToolWindowManagerImpl#prepareForActivation
    */
-  private void showAndActivate(final String id, final boolean dirtyMode, final ArrayList<FinalizableCommand> commandsList, boolean autoFocusContents) {
+  private void showAndActivate(final String id,
+                               final boolean dirtyMode,
+                               final ArrayList<FinalizableCommand> commandsList,
+                               boolean autoFocusContents) {
     if (!getToolWindow(id).isAvailable()) {
       return;
     }
@@ -370,7 +386,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandList);
   }
 
-  private void activateToolWindowImpl(final String id, final ArrayList<FinalizableCommand> commandList, boolean forced, boolean autoFocusContents) {
+  private void activateToolWindowImpl(final String id,
+                                      final ArrayList<FinalizableCommand> commandList,
+                                      boolean forced,
+                                      boolean autoFocusContents) {
     if (!isUnforcedRequestAllowed() && !forced) return;
 
     if (LOG.isDebugEnabled()) {
@@ -538,7 +557,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
 
       activateEditorComponentImpl(commandList, true);
-    } else {
+    }
+    else {
 
       // first of all we have to find tool window that was located at the same side and
       // was hidden.
@@ -550,7 +570,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         LOG.assertTrue(currentInfo != null);
         // SideStack contains copies of real WindowInfos. It means that
         // these stored infos can be invalid. The following loop removes invalid WindowInfos.
-        if (storedInfo.getAnchor() == currentInfo.getAnchor() && storedInfo.getType() == currentInfo.getType() &&
+        if (storedInfo.getAnchor() == currentInfo.getAnchor() &&
+            storedInfo.getType() == currentInfo.getType() &&
             storedInfo.isAutoHide() == currentInfo.isAutoHide()) {
           info2 = storedInfo;
           break;
@@ -611,7 +632,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (id.equals(info.getId())) {
           continue;
         }
-        if (info.isVisible() && info.getType() == toBeShownInfo.getType() && info.getAnchor() == toBeShownInfo.getAnchor() && info.isSplit() == toBeShownInfo.isSplit()) {
+        if (info.isVisible() &&
+            info.getType() == toBeShownInfo.getType() &&
+            info.getAnchor() == toBeShownInfo.getAnchor() &&
+            info.isSplit() == toBeShownInfo.isSplit()) {
           // hide and deactivate tool window
           info.setVisible(false);
           appendRemoveDecoratorCmd(info.getId(), false, commandsList);
@@ -641,30 +665,30 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return registerToolWindow(id, component, anchor, false, false);
   }
 
-  public ToolWindow registerToolWindow(@NotNull final String id,
-                                       final boolean canCloseContent,
-                                       @NotNull final ToolWindowAnchor anchor) {
+  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
     return registerToolWindow(id, null, anchor, false, canCloseContent);
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id,
-                                       final boolean canCloseContent, 
+                                       final boolean canCloseContent,
                                        @NotNull final ToolWindowAnchor anchor,
                                        final boolean sideTool) {
     return registerToolWindow(id, null, anchor, sideTool, canCloseContent);
   }
 
 
-
-
-  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
+  public ToolWindow registerToolWindow(@NotNull final String id,
+                                       final boolean canCloseContent,
+                                       @NotNull final ToolWindowAnchor anchor,
                                        final Disposable parentDisposable) {
     return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, false, canCloseContent));
   }
 
   private ToolWindow registerToolWindow(@NotNull final String id,
-                                       @Nullable final JComponent component,
-                                       @NotNull final ToolWindowAnchor anchor, boolean sideTool, boolean canCloseContent) {
+                                        @Nullable final JComponent component,
+                                        @NotNull final ToolWindowAnchor anchor,
+                                        boolean sideTool,
+                                        boolean canCloseContent) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -741,7 +765,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (!myLayout.isToolWindowRegistered(id)) {
       return;
     }
-    
+
     final WindowInfoImpl info = getInfo(id);
     final ToolWindowEx toolWindow = (ToolWindowEx)getToolWindow(id);
     // Save recent appearance of tool window
@@ -867,7 +891,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     notifyByBalloon(toolWindowId, type, htmlBody, null, null);
   }
 
-  public void notifyByBalloon(@NotNull final String toolWindowId, final MessageType type, @NotNull final String text, @Nullable final Icon icon,
+  public void notifyByBalloon(@NotNull final String toolWindowId,
+                              final MessageType type,
+                              @NotNull final String text,
+                              @Nullable final Icon icon,
                               @Nullable HyperlinkListener listener) {
     checkId(toolWindowId);
 
@@ -884,17 +911,22 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final Ref<Balloon.Position> position = Ref.create(Balloon.Position.below);
     if (ToolWindowAnchor.TOP == anchor) {
       position.set(Balloon.Position.below);
-    } else if (ToolWindowAnchor.BOTTOM == anchor) {
+    }
+    else if (ToolWindowAnchor.BOTTOM == anchor) {
       position.set(Balloon.Position.above);
-    } else if (ToolWindowAnchor.LEFT == anchor) {
+    }
+    else if (ToolWindowAnchor.LEFT == anchor) {
       position.set(Balloon.Position.atRight);
-    } else if (ToolWindowAnchor.RIGHT == anchor) {
+    }
+    else if (ToolWindowAnchor.RIGHT == anchor) {
       position.set(Balloon.Position.atLeft);
     }
 
     Icon actualIcon = icon != null ? icon : type.getDefaultIcon();
 
-    final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener).createBalloon();
+    final Balloon balloon =
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener)
+        .createBalloon();
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
         window.setPlaceholderMode(false);
@@ -910,18 +942,22 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final Runnable show = new Runnable() {
       public void run() {
         if (button.isShowing()) {
-          final Point point = new Point(button.getBounds().width/2, button.getHeight()/2 - 2);
+          final Point point = new Point(button.getBounds().width / 2, button.getHeight() / 2 - 2);
           balloon.show(new RelativePoint(button, point), position.get());
-        } else {
+        }
+        else {
           final Rectangle bounds = myToolWindowsPane.getBounds();
           final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
           if (ToolWindowAnchor.TOP == anchor) {
             target.y = 0;
-          } else if (ToolWindowAnchor.BOTTOM == anchor) {
+          }
+          else if (ToolWindowAnchor.BOTTOM == anchor) {
             target.y = bounds.height;
-          } else if (ToolWindowAnchor.LEFT == anchor) {
+          }
+          else if (ToolWindowAnchor.LEFT == anchor) {
             target.x = 0;
-          } else if (ToolWindowAnchor.RIGHT == anchor) {
+          }
+          else if (ToolWindowAnchor.RIGHT == anchor) {
             target.x = bounds.width;
           }
 
@@ -936,7 +972,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           show.run();
         }
       });
-    } else {
+    }
+    else {
       show.run();
     }
 
@@ -1333,7 +1370,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myLayout.writeExternal(layoutElement);
   }
 
-  public void setDefaultState(@NotNull final ToolWindowImpl toolWindow, @Nullable final ToolWindowAnchor anchor, @Nullable final ToolWindowType type,
+  public void setDefaultState(@NotNull final ToolWindowImpl toolWindow,
+                              @Nullable final ToolWindowAnchor anchor,
+                              @Nullable final ToolWindowType type,
                               @Nullable final Rectangle floatingBounds) {
 
     final WindowInfoImpl info = getInfo(toolWindow.getId());
@@ -1388,7 +1427,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myFloatingDecorator = new FloatingDecorator(myFrame, info.copy(), decorator);
       myId2FloatingDecorator.put(info.getId(), myFloatingDecorator);
       final Rectangle bounds = info.getFloatingBounds();
-      if (bounds != null && bounds.width > 0 && bounds.height > 0 &&
+      if (bounds != null &&
+          bounds.width > 0 &&
+          bounds.height > 0 &&
           myWindowManager.isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
         myFloatingDecorator.setBounds(bounds);
       }
@@ -1439,7 +1480,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     @Nullable
-  public Condition getExpireCondition() {
+    public Condition getExpireCondition() {
       return Condition.FALSE;
     }
   }
@@ -1636,7 +1677,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           _requestFocus(command, forced, result);
         }
       });
-    } else {
+    }
+    else {
       _requestFocus(command, forced, result);
     }
 
@@ -1672,7 +1714,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
               }
             }, 250);
           }
-        } else {
+        }
+        else {
           result.setRejected();
         }
       }
@@ -1690,7 +1733,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (!forced && !isUnforcedRequestAllowed()) {
       if (cmd.equals(lastRequest)) {
         result.setDone();
-      } else {
+      }
+      else {
         result.setRejected();
       }
       return true;
@@ -1702,7 +1746,22 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return true;
     }
 
+    if (!myApp.isActive() && !canExecuteOnInactiveApplication(cmd)) {
+      if (myCallbackOnActivation != null) {
+        myCallbackOnActivation.setRejected();
+      }
+
+      myFocusCommandOnAppActivation = cmd;
+      myCallbackOnActivation = result;
+
+      return true;
+    }
+
     return false;
+  }
+
+  private boolean canExecuteOnInactiveApplication(FocusCommand cmd) {
+    return !SystemInfo.isLinux || cmd.canExecuteOnInactiveApp();
   }
 
   private void setLastEffectiveForcedRequest(FocusCommand command) {
@@ -1721,4 +1780,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
 
+  private class AppListener extends ApplicationAdapter {
+    @Override
+    public void applicationActivated() {
+      final FocusCommand cmd = myFocusCommandOnAppActivation;
+      ActionCallback callback = myCallbackOnActivation;
+      myFocusCommandOnAppActivation = null;
+      myCallbackOnActivation = null;
+      if (cmd != null) {
+        requestFocus(cmd, true).notifyWhenDone(callback);
+      }
+    }
+  }
 }

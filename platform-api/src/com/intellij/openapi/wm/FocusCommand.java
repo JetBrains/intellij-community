@@ -42,6 +42,10 @@ public abstract class FocusCommand extends ActiveRunnable {
     return false;
   }
 
+  public boolean canExecuteOnInactiveApp() {
+    return false;
+  }
+
   @Nullable
   public final Component getDominationComponent() {
     return myDominationComponent;

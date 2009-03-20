@@ -31,4 +31,10 @@ public abstract class ApplicationAdapter implements ApplicationListener {
 
   public void writeActionFinished(Object action) {
   }
+
+  public void applicationActivated() {
+  }
+
+  public void applicationDeactivated() {
+  }
 }

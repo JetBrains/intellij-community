@@ -51,6 +51,9 @@ public class MockApplication extends MockComponentManager implements Application
     return true;
   }
 
+  public boolean isActive() {
+    return true;
+  }
 
   public void exit(boolean force) {
   }

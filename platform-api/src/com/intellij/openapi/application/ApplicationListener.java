@@ -46,4 +46,14 @@ public interface ApplicationListener extends EventListener {
    *  Is called on action finish.
    */
   void writeActionFinished(Object action);
+
+  /**
+   * Is called when app is activated by transferring focus to it
+   */
+  void applicationActivated();
+
+  /**
+   * Is called when app is de-activated by transferring focus from it
+   */
+  void applicationDeactivated();
 }

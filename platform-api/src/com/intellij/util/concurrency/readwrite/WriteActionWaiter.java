@@ -49,4 +49,10 @@ public class WriteActionWaiter extends AbstractWaiter implements ApplicationList
 
   public void writeActionStarted(Object action) {
   }
+
+  public void applicationActivated() {
+  }
+
+  public void applicationDeactivated() {
+  }
 }

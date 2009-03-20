@@ -21,10 +21,10 @@ import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -119,6 +119,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myIsFiringLoadingEvent = false;
   @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
+  private boolean myActive;
 
   protected void boostrapPicoContainer() {
     super.boostrapPicoContainer();
@@ -135,6 +136,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, String appName) {
     super(null);
 
+    setActive(true);
     getPicoContainer().registerComponentInstance(Application.class, this);
 
     CommonBundle.assertKeyIsFound = isUnitTestMode;
@@ -862,6 +864,24 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         assertIsDispatchThread();
       } 
     }
+  }
+
+  public void setActive(boolean active) {
+    if (myActive != active) {
+      myActive = active;
+      System.setProperty("idea.active", Boolean.valueOf(myActive).toString());
+      for (ApplicationListener each : myListeners) {
+        if (active) {
+          each.applicationActivated();
+        } else {
+          each.applicationDeactivated();
+        }
+      }
+    }
+  }
+
+  public boolean isActive() {
+    return myActive;
   }
 
   public void assertWriteAccessAllowed() {

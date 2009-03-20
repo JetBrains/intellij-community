@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
@@ -385,6 +386,10 @@ public class IdeEventQueue extends EventQueue {
 
 
     myEventCount++;
+
+
+    if (processAppActivationEvents(e)) return;
+
     if (!myPopupManager.isPopupActive()) {
 
       // Enter to suspend mode if necessary. Suspend will cancel processing of actions mapped to the keyboard shortcuts.
@@ -466,6 +471,31 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
+  private boolean processAppActivationEvents(AWTEvent e) {
+    final Application app = ApplicationManager.getApplication();
+    if (!(app instanceof ApplicationImpl)) return false;
+
+    ApplicationImpl appImpl = (ApplicationImpl)app;
+
+    if (e instanceof WindowEvent) {
+      WindowEvent we = (WindowEvent)e;
+      if (we.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
+        if (we.getOppositeWindow() == null && !appImpl.isActive()) {
+          appImpl.setActive(true);
+          return true;
+        }
+      } else if (we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
+        if (we.getOppositeWindow() == null && appImpl.isActive()) {
+          appImpl.setActive(false);
+          return true;
+        }
+      }
+    }
+
+
+    return false;
+  }
+
 
   private void defaultDispatchEvent(final AWTEvent e) {
     try {
@@ -511,6 +541,7 @@ public class IdeEventQueue extends EventQueue {
             }
           }
         }
+
         if (eventOk) {
           dispatchEvent(event);
         }

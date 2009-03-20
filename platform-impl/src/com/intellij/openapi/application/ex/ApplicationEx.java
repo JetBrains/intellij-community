@@ -78,4 +78,5 @@ public interface ApplicationEx extends Application {
   <T> List<Future<T>> invokeAllUnderReadAction(@NotNull Collection<Callable<T>> tasks, ExecutorService executorService) throws Throwable;
   
   void assertIsDispatchThread(@Nullable JComponent component);
+
 }

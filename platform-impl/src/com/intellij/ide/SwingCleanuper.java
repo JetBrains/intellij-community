@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
@@ -56,7 +58,10 @@ public final class SwingCleanuper implements ApplicationComponent{
                   frame=(IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class,window);
                 }
                 if(frame!=null){
-                  ((JComponent)frame.getStatusBar()).requestFocus();
+                  final Application app = ApplicationManager.getApplication();
+                  if (app != null && app.isActive()) {
+                    ((JComponent)frame.getStatusBar()).requestFocus();
+                  }
                 }
 
                 SwingUtilities.invokeLater(

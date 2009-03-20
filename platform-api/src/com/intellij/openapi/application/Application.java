@@ -295,4 +295,12 @@ public interface Application extends ComponentManager {
    * @since 8.1
    */
   void restart();
+
+  /**
+   * Checks if the application is active
+   * @return true if one of application windows is focused, false -- otherwise
+   * @since 9.0
+   */
+  boolean isActive();
+
 }

@@ -15,6 +15,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.PassThroughtIdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.PopupBorder;
@@ -531,7 +533,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
               }
             }
 
-            myCancelButton.requestFocus();
+            getFocusManager().requestFocus(myCancelButton, true);
           }
         }
       });
@@ -646,6 +648,10 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     } else {
       myDialog.myPopup.validate();
     }
+  }
+
+  private IdeFocusManager getFocusManager() {
+    return myProject != null ? IdeFocusManager.getInstance(myProject) : PassThroughtIdeFocusManager.getInstance();
   }
 
   public void dispose() {
