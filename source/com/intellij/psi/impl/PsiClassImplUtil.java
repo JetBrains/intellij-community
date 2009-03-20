@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
+import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -309,6 +310,21 @@ public class PsiClassImplUtil {
 
       return new LocalSearchScope(file);
     }
+  }
+
+  public static boolean isMainMethod(PsiMethod method) {
+    if (!PsiType.VOID.equals(method.getReturnType())) return false;
+    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    try {
+      PsiMethod appMain = factory.createMethodFromText("void main(String[] args);", null);
+      if (MethodSignatureUtil.areSignaturesEqual(method, appMain)) return true;
+      PsiMethod appPremain = factory.createMethodFromText("void premain(String args, java.lang.instrument.Instrumentation i);", null);
+      if (MethodSignatureUtil.areSignaturesEqual(method, appPremain)) return true;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return false;
   }
 
   private static class ByNameCachedValueProvider implements CachedValueProvider<Map> {

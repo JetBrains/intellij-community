@@ -399,9 +399,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public boolean isEntryPoint(@NotNull PsiElement element) {
     final Project project = element.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    if (element instanceof PsiMethod && isAddMainsEnabled()) {
-      if (PsiClassImplUtil.isMethodEquivalentTo((PsiMethod)element, psiFacade.getElementFactory().createMethodFromText("void main(String[] args);", null))) return true;
-      if (PsiClassImplUtil.isMethodEquivalentTo((PsiMethod)element, psiFacade.getElementFactory().createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null))) return true;
+    if (element instanceof PsiMethod && isAddMainsEnabled() && PsiClassImplUtil.isMainMethod((PsiMethod)element)) {
+      return true;
     }
     if (element instanceof PsiClass) {
       if (((PsiClass)element).isAnnotationType()) {

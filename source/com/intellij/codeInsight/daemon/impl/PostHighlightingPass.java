@@ -37,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
@@ -48,11 +49,9 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import gnu.trove.THashMap;
@@ -400,7 +399,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
            !isOverriddenOrOverrides(method)) &&
           !method.hasModifierProperty(PsiModifier.NATIVE) &&
           !HighlightMethodUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
-          !isMainMethod(method)) {
+          !PsiClassImplUtil.isMainMethod(method)) {
         HighlightInfo highlightInfo = checkUnusedParameter(parameter);
         if (highlightInfo != null) {
           QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter), myUnusedSymbolKey);
@@ -610,21 +609,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
 
     return errors.length == 0 && codeAnalyzer.canChangeFileSilently(myFile);
-  }
-
-  private static boolean isMainMethod(PsiMethod method) {
-    if (!PsiType.VOID.equals(method.getReturnType())) return false;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
-    try {
-      PsiMethod appMain = factory.createMethodFromText("void main(String[] args);", null);
-      if (MethodSignatureUtil.areSignaturesEqual(method, appMain)) return true;
-      PsiMethod appPremain = factory.createMethodFromText("void premain(String args, java.lang.instrument.Instrumentation i);", null);
-      if (MethodSignatureUtil.areSignaturesEqual(method, appPremain)) return true;
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    return false;
   }
 
   private static boolean isIntentionalPrivateConstructor(PsiMethod method, PsiClass containingClass) {
