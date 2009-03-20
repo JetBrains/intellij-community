@@ -360,7 +360,7 @@ public class JBZipEntry implements Cloneable {
     myFile.eraseEntry(this);
   }
 
-  private InputStream getInputStream() throws IOException {
+  protected InputStream getInputStream() throws IOException {
     long start = calcDataOffset();
 
     BoundedInputStream bis = new BoundedInputStream(start, getCompressedSize());
