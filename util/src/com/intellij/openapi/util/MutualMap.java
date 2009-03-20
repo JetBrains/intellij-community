@@ -79,4 +79,19 @@ public class MutualMap<Key, Value> {
     myKey2Value.clear();
     myValue2Key.clear();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    MutualMap mutualMap = (MutualMap)o;
+    return myKey2Value.equals(mutualMap.myKey2Value) && myValue2Key.equals(mutualMap.myValue2Key);
+
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * myKey2Value.hashCode() + myValue2Key.hashCode();
+  }
 }
