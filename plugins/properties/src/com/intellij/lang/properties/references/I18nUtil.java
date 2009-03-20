@@ -30,10 +30,7 @@ public class I18nUtil {
     
     VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) {
-      final PsiFile originalFile = containingFile.getOriginalFile();
-      if (originalFile != null) {
-        virtualFile = originalFile.getVirtualFile();
-      }
+      virtualFile = containingFile.getOriginalFile().getVirtualFile();
     }
     if (virtualFile != null) {
       final Module module = ProjectRootManager.getInstance(context.getProject()).getFileIndex().getModuleForFile(virtualFile);
@@ -89,8 +86,15 @@ public class I18nUtil {
         for (ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(false)) {
           if (result.isValidResult() && result.getElement() instanceof Property) {
             String value = ((Property)result.getElement()).getValue();
+            MessageFormat format;
             try {
-              int count = new MessageFormat(value).getFormatsByArgumentIndex().length;
+              format = new MessageFormat(value);
+            }
+            catch (Exception e) {
+              continue; // ignore syntax error
+            }
+            try {
+              int count = format.getFormatsByArgumentIndex().length;
               maxCount = Math.max(maxCount, count);
             }
             catch (IllegalArgumentException ignored) {
