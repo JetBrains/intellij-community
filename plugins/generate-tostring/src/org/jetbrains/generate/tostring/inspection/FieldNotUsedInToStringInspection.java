@@ -133,7 +133,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
             // use regexp to match if field is used in code
             if (!body.matches(pattern)) {
                 if (log.isDebugEnabled()) log.debug("Field is not used in toString() method (out-of-sync): " + field);
-                holder.registerProblem(field, "Field '" + field.getName() + "' is not used in toString() method", ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
+                holder.registerProblem(field, "Field '" + field.getName() + "' is not used in toString() method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
             }
         }
 
@@ -207,7 +207,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
             if (!body.matches(pattern)) {
                 // method is not in toString
                 if (log.isDebugEnabled()) log.debug("Getter method is not used in toString() method (out-of-sync): " + method);
-                holder.registerProblem(method, "Method '" + method.getName() + "' is not used in toString() method", ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
+                holder.registerProblem(method, "Method '" + method.getName() + "' is not used in toString() method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
             }
         }
 
