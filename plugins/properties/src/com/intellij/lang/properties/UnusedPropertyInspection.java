@@ -60,11 +60,10 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
     final ProgressIndicator progress = original == null ? null : new ProgressWrapper(original);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-
         JobUtil.invokeConcurrentlyForAll(properties, new Processor<Property>() {
           public boolean process(final Property property) {
             if (original != null) {
-              original.checkCanceled();
+              if (original.isCanceled()) return false;
               original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
             }
 
