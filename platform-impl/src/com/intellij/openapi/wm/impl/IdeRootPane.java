@@ -2,11 +2,13 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
@@ -32,6 +34,8 @@ import java.util.List;
 
 // Made public and non-final for Fabrique
 public class IdeRootPane extends JRootPane{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeRootPane");
+
   /**
    * Toolbar and status bar.
    */
@@ -75,6 +79,7 @@ public class IdeRootPane extends JRootPane{
     final Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
     final AppLifecycleListener lifecyclePublisher = application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
     lifecyclePublisher.appFrameCreated(commandLineArgs, willOpenProject);
+    LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
     if (!willOpenProject.get()) {
       myWelcomePane = WelcomeScreen.createWelcomePanel();
       myContentPane.add(myWelcomePane);

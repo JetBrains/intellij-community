@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +23,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FileStatus;
@@ -47,7 +49,9 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -934,6 +938,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
               public void run() {
                 setTabsMode(UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
                 getSplitters().openFiles();
+                LaterInvocator.invokeLater(new Runnable() {
+                  public void run() {
+                    long currentTime = System.nanoTime();
+                    Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
+                    if (startTime != null) {
+                      LOG.info("Project opening took " + (currentTime - startTime.longValue()) / 1000000 + " ms");
+                    }
+                  }
+                });
 // group 1
               }
             }, "", null);

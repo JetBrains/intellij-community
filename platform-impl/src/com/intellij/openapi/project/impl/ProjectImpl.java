@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,8 +67,11 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   };
   private final String myName;
 
+  public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
+
   protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed, String projectName) {
     super(ApplicationManager.getApplication());
+    putUserData(CREATION_TIME, System.nanoTime());
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 

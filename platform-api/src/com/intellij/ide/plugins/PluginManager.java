@@ -63,6 +63,8 @@ public class PluginManager {
   @NonNls private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
   private static final List<String> ourAvailableModules = new ArrayList<String>();
 
+  public static long startupStart;
+
   public static class Facade extends PluginsFacade {
     public IdeaPluginDescriptor getPlugin(PluginId id) {
       return PluginManager.getPlugin(id);
@@ -97,6 +99,7 @@ public class PluginManager {
    */
   @SuppressWarnings({"UnusedDeclaration"})
   protected static void start(final String mainClass, final String methodName, final String[] args) {
+    startupStart = System.nanoTime();
     try {
       //noinspection HardCodedStringLiteral
       ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
