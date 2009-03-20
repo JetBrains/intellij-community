@@ -240,7 +240,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @NotNull
   public PsiElement getNavigationElement() {
     String packageName = getPackageName();
-    String sourceFileName = ((ClsClassImpl)getClasses()[0]).getSourceFileName();
+    PsiClass[] classes = getClasses();
+    if (classes.length == 0) return this;
+    String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
     String relativeFilePath = packageName.length() == 0 ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
 
     final VirtualFile vFile = getContainingFile().getVirtualFile();
