@@ -31,7 +31,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private final PsiReferenceExpression myRefExpr;
   private final boolean myInlineThisOnly;
 
-  public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
+  InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
     super(project);
     myField = field;
     myRefExpr = ref;
@@ -69,11 +69,11 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       final PsiElement element = usage.getElement();
       try {
         if (element instanceof PsiExpression) {
-          inlineExpressionUsage(((PsiExpression)element), evalHelper, initializer);
+          inlineExpressionUsage((PsiExpression)element, evalHelper, initializer);
         }
         else {
           PsiImportStaticStatement importStaticStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
-          LOG.assertTrue(importStaticStatement != null);
+          LOG.assertTrue(importStaticStatement != null, element.getText());
           importStaticStatement.delete();
         }
       }
@@ -96,7 +96,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
                                      final PsiConstantEvaluationHelper evalHelper,
                                      PsiExpression initializer1) throws IncorrectOperationException {
     while (expr.getParent() instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression arrayAccess = ((PsiArrayAccessExpression)expr.getParent());
+      PsiArrayAccessExpression arrayAccess = (PsiArrayAccessExpression)expr.getParent();
       Object value = evalHelper.computeConstantExpression(arrayAccess.getIndexExpression());
       if (value instanceof Integer) {
         int intValue = ((Integer)value).intValue();
