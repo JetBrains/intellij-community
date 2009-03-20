@@ -2,26 +2,28 @@ package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
+import com.intellij.idea.LoggerFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.cacheBuilder.*;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.impl.cache.impl.todo.TodoOccurrenceConsumer;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
@@ -33,7 +35,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.IdDataConsumer;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.idea.LoggerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,19 +108,22 @@ public class IdTableBuilding {
   private static final HashMap<FileType,FileTypeIdIndexer> ourIdIndexers = new HashMap<FileType, FileTypeIdIndexer>();
   private static final HashMap<FileType,DataIndexer<TodoIndexEntry, Integer, FileContent>> ourTodoIndexers = new HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>>();
 
+  @Deprecated
   public static void registerIdIndexer(FileType fileType,FileTypeIdIndexer indexer) {
     ourIdIndexers.put(fileType, indexer);
   }
+
+  @Deprecated
   public static void registerTodoIndexer(FileType fileType, DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
     ourTodoIndexers.put(fileType, indexer);
   }
 
   public static boolean isIdIndexerRegistered(FileType fileType) {
-    return ourIdIndexers.containsKey(fileType);
+    return ourIdIndexers.containsKey(fileType) || IdIndexers.INSTANCE.forFileType(fileType) != null;
   }
 
   public static boolean isTodoIndexerRegistered(FileType fileType) {
-    return ourIdIndexers.containsKey(fileType);
+    return ourIdIndexers.containsKey(fileType) || TodoIndexers.INSTANCE.forFileType(fileType) != null;
   }
   
   static {
@@ -141,6 +145,11 @@ public class IdTableBuilding {
 
     if (idIndexer != null) {
       return idIndexer;
+    }
+
+    final FileTypeIdIndexer extIndexer = IdIndexers.INSTANCE.forFileType(fileType);
+    if (extIndexer != null) {
+      return extIndexer;
     }
 
     final WordsScanner customWordsScanner = CacheBuilderRegistry.getInstance().getCacheBuilder(fileType);
@@ -181,6 +190,11 @@ public class IdTableBuilding {
 
     if (indexer != null) {
       return indexer;
+    }
+
+    final DataIndexer<TodoIndexEntry, Integer, FileContent> extIndexer = TodoIndexers.INSTANCE.forFileType(fileType);
+    if (extIndexer != null) {
+      return extIndexer;
     }
 
     if (fileType instanceof LanguageFileType) {

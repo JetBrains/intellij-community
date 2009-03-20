@@ -1,9 +1,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.AppTopics;
-import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
-import com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer;
-import com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -112,8 +109,6 @@ public class PropertiesFilesManager implements ApplicationComponent {
 
   public void initComponent() {
     myVirtualFileManager.addVirtualFileListener(myVirtualFileListener);
-    IdTableBuilding.registerIdIndexer(PropertiesFileType.FILE_TYPE, new PropertiesIdIndexer());
-    IdTableBuilding.registerTodoIndexer(PropertiesFileType.FILE_TYPE, new PropertiesTodoIndexer());
   }
 
   private void fileChanged(final VirtualFile file, final VirtualFilePropertyEvent event) {

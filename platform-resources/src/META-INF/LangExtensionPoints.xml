@@ -360,4 +360,7 @@
   <extensionPoint name="statementUpDownMover" interface="com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover"/>
 
   <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>
+
+  <extensionPoint name="idIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
+  <extensionPoint name="todoIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
 </extensionPoints>
