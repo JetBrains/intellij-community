@@ -3,11 +3,16 @@
  */
 package com.intellij.util.io.zip;
 
+import com.intellij.util.ArrayUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipException;
 
 /**
@@ -65,7 +70,7 @@ public class JBZipFile {
    * href="http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html">http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html</a>.
    * Defaults to the platform's default character encoding.</p>
    */
-  private String encoding = null;
+  private final String encoding;
 
   /**
    * The actual data source.
@@ -83,7 +88,7 @@ public class JBZipFile {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(File f) throws IOException {
-    this(f, null);
+    this(f, "UTF-8");
   }
 
   /**
@@ -94,7 +99,7 @@ public class JBZipFile {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(String name) throws IOException {
-    this(new File(name), null);
+    this(new File(name), "UTF-8");
   }
 
   /**
@@ -154,23 +159,6 @@ public class JBZipFile {
       archive.setLength(myOutputStream.written);
     }
     archive.close();
-  }
-
-  /**
-   * close a zipfile quietly; throw no io fault, do nothing
-   * on a null parameter
-   *
-   * @param zipfile file to close, can be null
-   */
-  public static void closeQuietly(JBZipFile zipfile) {
-    if (zipfile != null) {
-      try {
-        zipfile.close();
-      }
-      catch (IOException e) {
-        //ignore
-      }
-    }
   }
 
   /**
@@ -242,31 +230,26 @@ public class JBZipFile {
     while (sig == cfhSig) {
       archive.readFully(cfh);
       int off = 0;
-      JBZipEntry ze = new JBZipEntry(this);
 
       int versionMadeBy = ZipShort.getValue(cfh, off);
       off += SHORT;
-      ze.setPlatform((versionMadeBy >> BYTE_SHIFT) & NIBLET_MASK);
+      final int platform = (versionMadeBy >> BYTE_SHIFT) & NIBLET_MASK;
 
       off += WORD; // skip version info and general purpose byte
 
-      ze.setMethod(ZipShort.getValue(cfh, off));
+      final int method = ZipShort.getValue(cfh, off);
       off += SHORT;
 
-      // FIXME this is actually not very cpu cycles friendly as we are converting from
-      // dos to java while the underlying Sun implementation will convert
-      // from java to dos time for internal storage...
-      long time = dosToJavaTime(ZipLong.getValue(cfh, off));
-      ze.setTime(time);
+      long time = DosTime.dosToJavaTime(ZipLong.getValue(cfh, off));
       off += WORD;
 
-      ze.setCrc(ZipLong.getValue(cfh, off));
+      final long crc = ZipLong.getValue(cfh, off);
       off += WORD;
 
-      ze.setCompressedSize(ZipLong.getValue(cfh, off));
+      final long compressedSize = ZipLong.getValue(cfh, off);
       off += WORD;
 
-      ze.setSize(ZipLong.getValue(cfh, off));
+      final long uncompressedSize = ZipLong.getValue(cfh, off);
       off += WORD;
 
       int fileNameLen = ZipShort.getValue(cfh, off);
@@ -280,35 +263,48 @@ public class JBZipFile {
 
       off += SHORT; // disk number
 
-      ze.setInternalAttributes(ZipShort.getValue(cfh, off));
+      final int internalAttributes = ZipShort.getValue(cfh, off);
       off += SHORT;
 
-      ze.setExternalAttributes(ZipLong.getValue(cfh, off));
+      final long externalAttributes = ZipLong.getValue(cfh, off);
       off += WORD;
 
-      byte[] fileName = new byte[fileNameLen];
-      archive.readFully(fileName);
-      ze.setName(getString(fileName));
+      long localHeaderOffset = ZipLong.getValue(cfh, off);
 
-      // LFH offset,
-      // data offset will be filled later
-      ze.setHeaderOffset(ZipLong.getValue(cfh, off));
+      String name = getString(readBytes(fileNameLen));
+      byte[] extra = readBytes(extraLen);
+      String comment = getString(readBytes(commentLen));
+
+      JBZipEntry ze = new JBZipEntry(this);
+      ze.setName(name);
+      ze.setHeaderOffset(localHeaderOffset);
+      ze.setPlatform(platform);
+      ze.setMethod(method);
+      ze.setTime(time);
+      ze.setCrc(crc);
+      ze.setCompressedSize(compressedSize);
+      ze.setSize(uncompressedSize);
+      ze.setInternalAttributes(internalAttributes);
+      ze.setExternalAttributes(externalAttributes);
+      ze.setExtra(extra);
+      ze.setComment(comment);
 
       nameMap.put(ze.getName(), ze);
       entries.add(ze);
 
-      if (extraLen > 0) {
-        byte[] extra = new byte[extraLen];
-        archive.readFully(extra);
-        ze.setExtra(extra);
-      }
-
-      byte[] comment = new byte[commentLen];
-      archive.readFully(comment);
-      ze.setComment(getString(comment));
-
       archive.readFully(signatureBytes);
       sig = ZipLong.getValue(signatureBytes);
+    }
+  }
+
+  private byte[] readBytes(int count) throws IOException {
+    if (count > 0) {
+      byte[] bytes = new byte[count];
+      archive.readFully(bytes);
+      return bytes;
+    }
+    else {
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   }
 
@@ -393,22 +389,6 @@ public class JBZipFile {
                                           /* compressed size                 */ + WORD
                                           /* uncompressed size               */ + WORD;
 
-  /*
-  * Converts DOS time to Java time (number of milliseconds since epoch).
-  */
-  private static long dosToJavaTime(long dosTime) {
-    Calendar cal = Calendar.getInstance();
-    // CheckStyle:MagicNumberCheck OFF - no point
-    cal.set(Calendar.YEAR, (int)((dosTime >> 25) & 0x7f) + 1980);
-    cal.set(Calendar.MONTH, (int)((dosTime >> 21) & 0x0f) - 1);
-    cal.set(Calendar.DATE, (int)(dosTime >> 16) & 0x1f);
-    cal.set(Calendar.HOUR_OF_DAY, (int)(dosTime >> 11) & 0x1f);
-    cal.set(Calendar.MINUTE, (int)(dosTime >> 5) & 0x3f);
-    cal.set(Calendar.SECOND, (int)(dosTime << 1) & 0x3e);
-    // CheckStyle:MagicNumberCheck ON
-    return cal.getTime().getTime();
-  }
-
 
   /**
    * Retrieve a String from the given bytes using the encoding set
@@ -418,7 +398,7 @@ public class JBZipFile {
    * @return String obtained by using the given encoding
    * @throws ZipException if the encoding cannot be recognized.
    */
-  protected String getString(byte[] bytes) throws ZipException {
+  String getString(byte[] bytes) throws ZipException {
     if (encoding == null) {
       return new String(bytes);
     }
@@ -432,13 +412,13 @@ public class JBZipFile {
     }
   }
 
-  public void eraseEntry(JBZipEntry entry) {
+  void eraseEntry(JBZipEntry entry) {
     getOutputStream(); // Ensure OutputStream created, so we'll print out central directory at the end;
     entries.remove(entry);
     nameMap.remove(entry.getName());
   }
 
-  public JBZipOutputStream getOutputStream() {
+  JBZipOutputStream getOutputStream() {
     if (myOutputStream == null) {
       myOutputStream = new JBZipOutputStream(this, currentcfdfoffset);
     }

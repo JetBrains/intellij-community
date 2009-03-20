@@ -3,12 +3,12 @@
  */
 package com.intellij.util.io.zip;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.util.Date;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 import java.util.zip.ZipException;
@@ -17,6 +17,7 @@ import java.util.zip.ZipException;
  * Extension that adds better handling of extra fields and provides
  * access to the internal and external file attributes.
  */
+@SuppressWarnings({"OctalInteger"})
 public class JBZipEntry implements Cloneable {
   private static final int PLATFORM_UNIX = 3;
   private static final int PLATFORM_FAT = 0;
@@ -46,7 +47,6 @@ public class JBZipEntry implements Cloneable {
   private String name = null;
 
   private long headerOffset = -1;
-  private long dataOffset = -1;
   private final JBZipFile myFile;
 
 
@@ -57,7 +57,7 @@ public class JBZipEntry implements Cloneable {
    * @param file
    * @since 1.1
    */
-  public JBZipEntry(String name, JBZipFile file) {
+  protected JBZipEntry(String name, JBZipFile file) {
     this.name = name;
     myFile = file;
   }
@@ -127,13 +127,11 @@ public class JBZipEntry implements Cloneable {
    * @since Ant 1.5.2
    */
   public void setUnixMode(int mode) {
-    // CheckStyle:MagicNumberCheck OFF - no point
     setExternalAttributes((mode << 16)
                           // MS-DOS read-only attribute
                           | ((mode & 0200) == 0 ? 1 : 0)
                           // MS-DOS directory flag
                           | (isDirectory() ? 0x10 : 0));
-    // CheckStyle:MagicNumberCheck ON
     platform = PLATFORM_UNIX;
   }
 
@@ -202,7 +200,7 @@ public class JBZipEntry implements Cloneable {
    * @see #getTime()
    */
   public void setTime(long time) {
-    this.time = javaToDosTime(time);
+    this.time = time;
   }
 
   /**
@@ -212,33 +210,7 @@ public class JBZipEntry implements Cloneable {
    * @see #setTime(long)
    */
   public long getTime() {
-    return time != -1 ? dosToJavaTime(time) : -1;
-  }
-
-  /*
-   * Converts DOS time to Java time (number of milliseconds since epoch).
-   */
-  private static long dosToJavaTime(long dtime) {
-    Date d = new Date((int)(((dtime >> 25) & 0x7f) + 80), (int)(((dtime >> 21) & 0x0f) - 1), (int)((dtime >> 16) & 0x1f),
-                      (int)((dtime >> 11) & 0x1f), (int)((dtime >> 5) & 0x3f), (int)((dtime << 1) & 0x3e));
-    return d.getTime();
-  }
-
-  /*
-   * Converts Java time to DOS time.
-   */
-  private static long javaToDosTime(long time) {
-    Date d = new Date(time);
-    int year = d.getYear() + 1900;
-    if (year < 1980) {
-      return (1 << 21) | (1 << 16);
-    }
-    return (year - 1980) << 25 |
-           (d.getMonth() + 1) << 21 |
-           d.getDate() << 16 |
-           d.getHours() << 11 |
-           d.getMinutes() << 5 |
-           d.getSeconds() >> 1;
+    return time;
   }
 
   /**
@@ -388,14 +360,7 @@ public class JBZipEntry implements Cloneable {
     myFile.eraseEntry(this);
   }
 
-  /**
-   * Returns an InputStream for reading the contents of the given entry.
-   *
-   * @return a stream to read the entry from.
-   * @throws java.io.IOException        if unable to create an input stream from the zipenty
-   * @throws java.util.zip.ZipException if the zipentry has an unsupported compression method
-   */
-  public InputStream getInputStream() throws IOException {
+  private InputStream getInputStream() throws IOException {
     long start = calcDataOffset();
 
     BoundedInputStream bis = new BoundedInputStream(start, getCompressedSize());
@@ -466,27 +431,38 @@ public class JBZipEntry implements Cloneable {
     return comment;
   }
 
-
-  public void setData(byte[] bytes) throws IOException {
+  public void setData(byte[] bytes, long timestamp) throws IOException {
+    time = timestamp;
     JBZipOutputStream stream = myFile.getOutputStream();
     stream.putNextEntry(this);
     stream.write(bytes);
     stream.closeEntry();
   }
 
-  private long calcDataOffset() {
+  public void setData(byte[] bytes) throws IOException {
+    setData(bytes, time);
+  }
+
+  public byte[] getData() throws IOException {
+    if (size == -1) throw new IOException("no data");
+
+    final InputStream stream = getInputStream();
     try {
-      long offset = getHeaderOffset();
-      myFile.archive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
-      byte[] b = new byte[JBZipFile.WORD];
-      myFile.archive.readFully(b);
-      int fileNameLen = ZipShort.getValue(b, 0);
-      int extraFieldLen = ZipShort.getValue(b, JBZipFile.SHORT);
-      return offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD + fileNameLen + extraFieldLen;
+      return FileUtil.loadBytes(stream, (int)size);
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    finally {
+      stream.close();
     }
+  }
+
+  private long calcDataOffset() throws IOException {
+    long offset = getHeaderOffset();
+    myFile.archive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
+    byte[] b = new byte[JBZipFile.WORD];
+    myFile.archive.readFully(b);
+    int fileNameLen = ZipShort.getValue(b, 0);
+    int extraFieldLen = ZipShort.getValue(b, JBZipFile.SHORT);
+    return offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD + fileNameLen + extraFieldLen;
   }
 
   /**
@@ -494,7 +470,7 @@ public class JBZipEntry implements Cloneable {
    * RandomAccessFile, making sure that only bytes from a certain
    * range can be read.
    */
-  public class BoundedInputStream extends InputStream {
+  private class BoundedInputStream extends InputStream {
     private long remaining;
     private long loc;
     private boolean addDummyByte = false;

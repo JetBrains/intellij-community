@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
-import java.util.Date;
 import java.util.List;
 import java.util.zip.CRC32;
 import java.util.zip.Deflater;
@@ -34,7 +33,7 @@ import java.util.zip.ZipException;
  * uncompressed size information is required before {@link
  * #putNextEntry putNextEntry} can be called.</p>
  */
-public class JBZipOutputStream extends OutputStream {
+class JBZipOutputStream extends OutputStream {
 
   private static final int BYTE_MASK = 0xFF;
   private static final int SHORT = 2;
@@ -96,7 +95,7 @@ public class JBZipOutputStream extends OutputStream {
    *
    * @since 1.1
    */
-  private int method = ZipEntry.DEFLATED;
+  private int method = ZipEntry.STORED;
 
   /**
    * CRC instance to avoid parsing DEFLATED data twice.
@@ -274,7 +273,7 @@ public class JBZipOutputStream extends OutputStream {
     long realCrc = crc.getValue();
     crc.reset();
 
-    if (entry.getMethod() == DEFLATED) {
+    if (entry.getMethod() == ZipEntry.DEFLATED) {
       def.finish();
       while (!def.finished()) {
         deflate();
@@ -329,7 +328,7 @@ public class JBZipOutputStream extends OutputStream {
       entry.setTime(System.currentTimeMillis());
     }
 
-    if (entry.getMethod() == DEFLATED && hasCompressionLevelChanged) {
+    if (entry.getMethod() == ZipEntry.DEFLATED && hasCompressionLevelChanged) {
       def.setLevel(level);
       hasCompressionLevelChanged = false;
     }
@@ -384,7 +383,7 @@ public class JBZipOutputStream extends OutputStream {
    * @throws IOException on error
    */
   public void write(byte[] b, int offset, int length) throws IOException {
-    if (entry.getMethod() == DEFLATED) {
+    if (entry.getMethod() == ZipEntry.DEFLATED) {
       if (length > 0) {
         if (!def.finished()) {
           def.setInput(b, offset, length);
@@ -498,7 +497,7 @@ public class JBZipOutputStream extends OutputStream {
     written += SHORT;
 
     // last mod. time and date
-    writeOut(toDosTime(ze.getTime()));
+    writeOut(ZipLong.getBytes(DosTime.javaToDosTime(ze.getTime())));
     written += WORD;
 
     // CRC
@@ -562,7 +561,7 @@ public class JBZipOutputStream extends OutputStream {
     written += SHORT;
 
     // last mod. time and date
-    writeOut(toDosTime(ze.getTime()));
+    writeOut(ZipLong.getBytes(DosTime.javaToDosTime(ze.getTime())));
     written += WORD;
 
     // CRC
@@ -666,45 +665,6 @@ public class JBZipOutputStream extends OutputStream {
    * @since 1.1
    */
   private static final byte[] DOS_TIME_MIN = ZipLong.getBytes(0x00002100L);
-
-  /**
-   * Convert a Date object to a DOS date/time field.
-   *
-   * @param time the <code>Date</code> to convert
-   * @return the date as a <code>ZipLong</code>
-   * @since 1.1
-   */
-  protected static ZipLong toDosTime(Date time) {
-    return new ZipLong(toDosTime(time.getTime()));
-  }
-
-  /**
-   * Convert a Date object to a DOS date/time field.
-   * <p/>
-   * <p>Stolen from InfoZip's <code>fileio.c</code></p>
-   *
-   * @param t number of milliseconds since the epoch
-   * @return the date as a byte array
-   * @since 1.26
-   */
-  protected static byte[] toDosTime(long t) {
-    Date time = new Date(t);
-    // CheckStyle:MagicNumberCheck OFF - I do not think that using constants
-    //                                   here will improve the readablity
-    int year = time.getYear() + 1900;
-    if (year < 1980) {
-      return DOS_TIME_MIN;
-    }
-    int month = time.getMonth() + 1;
-    long value = ((year - 1980) << 25) |
-                 (month << 21) |
-                 (time.getDate() << 16) |
-                 (time.getHours() << 11) |
-                 (time.getMinutes() << 5) |
-                 (time.getSeconds() >> 1);
-    return ZipLong.getBytes(value);
-    // CheckStyle:MagicNumberCheck ON
-  }
 
   /**
    * Retrieve the bytes for the given String in the encoding set for
