@@ -46,7 +46,6 @@ import java.util.Map;
 public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   Places result;
   private Language myLanguage;
-  private List<PsiLanguageInjectionHost> injectionHosts;
   private List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers;
   private List<PsiLanguageInjectionHost.Shred> shreds;
   private StringBuilder outChars;
@@ -58,7 +57,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   private VirtualFile myHostVirtualFile;
   private final PsiElement myContextElement;
   private final PsiFile myHostPsiFile;
-  private static final TreeElementVisitor CLEAR_CACHES_VISITOR = new RecursiveTreeElementWalkingVisitor(){  /*Walking*/
+  private static final TreeElementVisitor CLEAR_CACHES_VISITOR = new RecursiveTreeElementWalkingVisitor(){
     protected boolean visitNode(TreeElement element) {
       element.clearCaches();
       return true;
@@ -75,7 +74,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
 
   @NotNull
   public MultiHostRegistrar startInjecting(@NotNull Language language) {
-    injectionHosts = new SmartList<PsiLanguageInjectionHost>();
     escapers = new SmartList<LiteralTextEscaper<? extends PsiLanguageInjectionHost>>();
     shreds = new SmartList<PsiLanguageInjectionHost.Shred>();
     outChars = new StringBuilder();
@@ -98,7 +96,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   }
 
   private void clear() {
-    injectionHosts.clear();
     escapers.clear();
     shreds.clear();
     outChars.setLength(0);
@@ -116,7 +113,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     ProperTextRange.assertProperRange(rangeInsideHost);
 
     PsiFile containingFile = PsiUtilBase.getTemplateLanguageFile(host);
-    assert containingFile == myHostPsiFile : "Trying to inject into foreign file: "+containingFile+" while processing injections for "+myHostPsiFile;
+    assert containingFile == myHostPsiFile : exceptionContext("Trying to inject into foreign file: "+containingFile);
     TextRange hostTextRange = host.getTextRange();
     if (!hostTextRange.contains(rangeInsideHost.shiftRight(hostTextRange.getStartOffset()))) {
       clear();
@@ -131,7 +128,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     if (prefix == null) prefix = "";
     if (suffix == null) suffix = "";
     cleared = false;
-    injectionHosts.add(host);
     int startOffset = outChars.length();
     outChars.append(prefix);
     LiteralTextEscaper<? extends PsiLanguageInjectionHost> textEscaper = host.createLiteralTextEscaper();
@@ -194,7 +190,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       PsiFile psiFile = parserDefinition.createFile(viewProvider);
       place.setInjectedPsi(psiFile);
 
-      SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(injectionHosts.get(0));
+      SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(shreds.get(0).host);
       psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
 
       synchronized (PsiLock.LOCK) {
@@ -204,7 +200,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         assert parsedNode instanceof FileElement : parsedNode;
 
         String documentText = documentWindow.getText();
-        assert outChars.toString().equals(parsedNode.getText()) : "Before patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars;
+        assert outChars.toString().equals(parsedNode.getText()) : exceptionContext("Before patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars);
         try {
           patchLeafs(parsedNode, escapers, place);
         }
@@ -212,9 +208,9 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
           throw e;
         }
         catch (RuntimeException e) {
-          throw new RuntimeException("Patch error, lang="+myLanguage+";\n "+myHostVirtualFile+"; places:"+injectionHosts+";\n ranges:"+shreds, e);
+          throw new RuntimeException(exceptionContext("Patch error"), e);
         }
-        assert parsedNode.getText().equals(documentText) : "After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars+"\n"+myLanguage+";\n "+myHostVirtualFile;
+        assert parsedNode.getText().equals(documentText) : exceptionContext("After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars);
 
         ((FileElement)parsedNode).setManager((PsiManagerEx)myPsiManager);
 
@@ -248,7 +244,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         throw e;
       }
       catch (RuntimeException e) {
-        throw new RuntimeException("Patch error, lang="+myLanguage+";\n "+myHostVirtualFile+"; places:"+injectionHosts+";\n ranges:"+shreds, e);
+        throw new RuntimeException(exceptionContext("Obtaining tokens error"), e);
       }
 
       addToResults(place);
@@ -258,6 +254,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     finally {
       clear();
     }
+  }
+
+  private String exceptionContext(String msg) {
+    return msg + ".\n" +
+           "Language: " +myLanguage+";\n "+
+           "Host file: "+myHostPsiFile+" in '" + myHostVirtualFile.getPresentableUrl() + "'\n" +
+           "Context element "+myContextElement.getTextRange() + ": " + myContextElement +
+           "Ranges: "+shreds;
   }
 
   private static final Key<ASTNode> TREE_HARD_REF = Key.create("TREE_HARD_REF");
@@ -276,7 +280,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       PsiLanguageInjectionHost host = shred.host;
       isAncestor |= PsiTreeUtil.isAncestor(myContextElement, host, false);
     }
-    assert isAncestor : myContextElement + " must be the parent of at least one of injection hosts: " + shreds;
+    assert isAncestor : exceptionContext(myContextElement + " must be the parent of at least one of injection hosts");
 
     InjectedFileViewProvider injectedFileViewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
     assert injectedFileViewProvider.isValid();

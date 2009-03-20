@@ -91,9 +91,9 @@ public interface PsiLanguageInjectionHost extends PsiElement {
 
     @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
-      return "Shred: "+ host+
-             (relevantRangeInHost.isValid() ? "" : "!") + "(" + relevantRangeInHost.getStartOffset()+","+relevantRangeInHost.getEndOffset()+");" +
-             " PSI range:"+range;
+      return "Shred "+ host.getTextRange() + ": "+ host+
+             " Inhost range: "+(relevantRangeInHost.isValid() ? "" : "!") + "(" + relevantRangeInHost.getStartOffset()+","+relevantRangeInHost.getEndOffset()+");" +
+             " PSI range: "+range;
     }
 
     public boolean isValid() {
