@@ -78,6 +78,59 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult("m1/target/classes/file.properties", "value=2");
   }
 
+  public void testDoNotFilterSomeFileByDefault() throws Exception {
+    createProjectSubFile("resources/file.bmp", "value=${project.version}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+
+    assertResult("target/classes/file.bmp", "value=${project.version}");
+  }
+  
+  public void testCustomNonFilteredExtensions() throws Exception {
+    createProjectSubFile("resources/file.bmp", "value=${project.version}");
+    createProjectSubFile("resources/file.xxx", "value=${project.version}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <nonFilteredFileExtensions>" +
+                  "          <nonFilteredFileExtension>xxx</nonFilteredFileExtension>" +
+                  "        </nonFilteredFileExtensions>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    compileModules("project");
+
+    assertResult("target/classes/file.bmp", "value=${project.version}");
+    assertResult("target/classes/file.xxx", "value=${project.version}");
+  }
+
   public void testFilteringTestResources() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${project.version}");
 

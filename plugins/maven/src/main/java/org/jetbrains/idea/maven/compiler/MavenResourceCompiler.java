@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +24,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashSet;
 import org.apache.maven.model.Resource;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.PropertyResolver;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
@@ -133,6 +135,8 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           if (mavenProject == null) continue;
 
           Properties properties = loadFilters(context, mavenProject);
+
+          List<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
           String escapeString = mavenProject.findPluginConfigurationValue("org.apache.maven.plugins",
                                                                           "maven-resources-plugin",
                                                                           "escapeString");
@@ -140,8 +144,10 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
           long propertiesHashCode = calculateHashCode(properties);
 
-          collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode, escapeString, false, itemsToProcess);
-          collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode, escapeString, true, itemsToProcess);
+          collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
+                                 nonFilteredExtensions, escapeString, false, itemsToProcess);
+          collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
+                                 nonFilteredExtensions, escapeString, true, itemsToProcess);
           collectItemsToDelete(eachModule, itemsToProcess, filesToDelete);
         }
         if (!filesToDelete.isEmpty()) {
@@ -152,6 +158,23 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         removeObsoleteModulesFromCache();
       }
     }.execute().getResultObject();
+  }
+
+  private List<String> collectNonFilteredExtensions(MavenProjectModel mavenProject) {
+    List<String> result = new ArrayList<String>(Arrays.asList("jpg", "jpeg", "gif", "bmp", "png"));
+    Element extensionsElement = mavenProject.findPluginConfigurationElement("org.apache.maven.plugins",
+                                                                            "maven-resources-plugin",
+                                                                            "nonFilteredFileExtensions");
+    if (extensionsElement != null) {
+      for (Element each : (Iterable<? extends Element>)extensionsElement.getChildren("nonFilteredFileExtension")) {
+        String value = each.getValue();
+        if (!StringUtil.isEmptyOrSpaces(value)) {
+          result.add(value);
+        }
+      }
+    }
+
+    return result;
   }
 
   private long calculateHashCode(Properties properties) {
@@ -187,6 +210,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                       CompileContext context,
                                       Properties properties,
                                       long propertiesHashCode,
+                                      List<String> nonFilteredExtensions,
                                       String escapeString,
                                       boolean tests,
                                       List<ProcessingItem> result) {
@@ -197,22 +221,26 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
 
     List<Resource> resources = tests ? mavenProject.getTestResources() : mavenProject.getResources();
+
     for (Resource each : resources) {
       VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(each.getDirectory());
       if (dir == null) continue;
 
       List<Pattern> includes = collectPatterns(each.getIncludes(), "**/*");
       List<Pattern> excludes = collectPatterns(each.getExcludes(), null);
+      String targetPath = each.getTargetPath();
+      String resourceOutputDir = StringUtil.isEmptyOrSpaces(targetPath) ? outputDir : (outputDir + "/" + targetPath);
 
       collectProcessingItems(module,
                              dir,
                              dir,
-                             outputDir,
+                             resourceOutputDir,
                              includes,
                              excludes,
                              each.isFiltering(),
                              properties,
                              propertiesHashCode,
+                             nonFilteredExtensions,
                              escapeString,
                              result,
                              context.getProgressIndicator());
@@ -240,6 +268,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                       boolean isSourceRootFiltered,
                                       Properties properties,
                                       long propertiesHashCode,
+                                      List<String> nonFilteredExtensions,
                                       String escapeString,
                                       List<ProcessingItem> result,
                                       ProgressIndicator indicator) {
@@ -256,6 +285,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                isSourceRootFiltered,
                                properties,
                                propertiesHashCode,
+                               nonFilteredExtensions,
                                escapeString,
                                result,
                                indicator);
@@ -270,11 +300,12 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         if (outputFile.exists()) {
           outputFileTimestamp = outputFile.lastModified();
         }
+        boolean isFileterd = isSourceRootFiltered && !nonFilteredExtensions.contains(eachSourceFile.getExtension());
         result.add(new MyProcessingItem(module,
                                         eachSourceFile,
                                         outputPath,
                                         outputFileTimestamp,
-                                        isSourceRootFiltered,
+                                        isFileterd,
                                         properties,
                                         propertiesHashCode,
                                         escapeString));
@@ -484,7 +515,11 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       return new MyValididtyState(TimestampValidityState.load(in), in.readLong(), in.readBoolean(), in.readLong(), in.readUTF());
     }
 
-    public MyValididtyState(long sourceFileTimestamp, long outputFileTimestamp, boolean isFiltered, long propertiesHashCode, String escapeString) {
+    public MyValididtyState(long sourceFileTimestamp,
+                            long outputFileTimestamp,
+                            boolean isFiltered,
+                            long propertiesHashCode,
+                            String escapeString) {
       this(new TimestampValidityState(sourceFileTimestamp), outputFileTimestamp, isFiltered, propertiesHashCode, escapeString);
     }
 
@@ -492,7 +527,11 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       myOutputFileTimestamp = outputFileTimestamp;
     }
 
-    private MyValididtyState(TimestampValidityState timestampState, long outputFileTimestamp, boolean isFiltered, long propertiesHashCode, String escapeString) {
+    private MyValididtyState(TimestampValidityState timestampState,
+                             long outputFileTimestamp,
+                             boolean isFiltered,
+                             long propertiesHashCode,
+                             String escapeString) {
       myTimestampState = timestampState;
       myOutputFileTimestamp = outputFileTimestamp;
       myFiltered = isFiltered;

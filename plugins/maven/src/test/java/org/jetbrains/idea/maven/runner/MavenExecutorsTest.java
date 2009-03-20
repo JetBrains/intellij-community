@@ -75,7 +75,7 @@ public class MavenExecutorsTest extends MavenTestCase {
   private void doTestReportingEmbedderErrors(String goal, String containingString) {
     MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList(goal), null);
 
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     MavenConsole console = new NullMavenConsole() {
       @Override
       protected void doPrint(String text, OutputType type) {

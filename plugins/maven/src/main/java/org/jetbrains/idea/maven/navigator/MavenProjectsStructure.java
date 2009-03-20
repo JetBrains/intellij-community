@@ -620,7 +620,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private String makeDescription() {
-      StringBuffer desc = new StringBuffer();
+      StringBuilder desc = new StringBuilder();
       desc.append("<html>");
       desc.append("<table>");
       desc.append("<tr>");
@@ -660,7 +660,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       return result;
     }
 
-    private void appendProblems(StringBuffer desc, boolean critical) {
+    private void appendProblems(StringBuilder desc, boolean critical) {
       List<MavenProjectModelProblem> problems = collectProblems(critical);
       if (problems.isEmpty()) return;
 

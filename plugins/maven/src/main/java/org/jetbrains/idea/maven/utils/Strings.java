@@ -22,14 +22,14 @@ public class Strings {
   }
 
   public static String detokenize(final Collection<String> list, final char delim) {
-    final StringBuffer stringBuffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     for ( String goal : list) {
-      if(stringBuffer.length()!=0){
-        stringBuffer.append(delim);
+      if(buffer.length()!=0){
+        buffer.append(delim);
       }
-      stringBuffer.append(goal);
+      buffer.append(goal);
     }
-    return stringBuffer.toString();
+    return buffer.toString();
   }
 
   public static String translateMasks(final Collection<String> masks) {
