@@ -352,7 +352,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
             return getData(DataConstants.PSI_ELEMENT);
         } else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
             VirtualFile file = editor.getFile();
-            return file != null ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
+            return file != null && file.isValid() ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
         } else if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
             return new PsiElement[]{(PsiElement) getData(DataConstants.PSI_ELEMENT)};
         } else if (DataConstants.COPY_PROVIDER.equals(dataId)) {
