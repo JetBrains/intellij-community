@@ -36,10 +36,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -63,7 +60,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
@@ -76,7 +75,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, JDOMExternalizable {
@@ -452,18 +450,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       editorSettings.setFoldingOutlineShown(false);
 
       myEditorAdapter = new EditorAdapter(editor, myProject);
-      final JComponent panel = editor.getComponent();
-      content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
+      content = ContentFactory.SERVICE.getInstance().createContent(new DisposableEditorPanel(editor), displayName, true);
       contentManager.addContent(content);
-
-      contentManager.addContentManagerListener(new ContentManagerAdapter() {
-        public void contentRemoved(ContentManagerEvent event) {
-          if (event.getContent().getComponent() == panel) {
-            editorFactory.releaseEditor(editor);
-            contentManager.removeContentManagerListener(this);
-          }
-        }
-      });
     }
     return content;
   }
