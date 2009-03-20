@@ -4,26 +4,22 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
-import org.intellij.lang.xpath.xslt.XsltConfig;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-
 import com.intellij.ide.FileIconPatcher;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.NotNull;
-
 import gnu.trove.TIntObjectHashMap;
+import org.intellij.lang.xpath.xslt.XsltConfig;
+import org.intellij.lang.xpath.xslt.XsltSupport;
 
 import javax.swing.*;
 
 /**
  * @author peter
  */
-public class XsltIconProvider implements ApplicationComponent, FileIconPatcher {
+public class XsltIconProvider implements FileIconPatcher {
 
     private static final Key<TIntObjectHashMap<Icon>> ICON_KEY = Key.create("XSLT_ICON");
     private final XsltConfig myConfig;
@@ -58,16 +54,5 @@ public class XsltIconProvider implements ApplicationComponent, FileIconPatcher {
         }
         icons.put(flags, icon);
         return icon;
-    }
-
-    @NotNull
-    public String getComponentName() {
-        return "XSLT Icon Provider";
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
     }
 }
