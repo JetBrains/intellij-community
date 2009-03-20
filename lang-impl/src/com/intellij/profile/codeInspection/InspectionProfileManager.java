@@ -47,6 +47,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -151,7 +152,13 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return mySchemesManager.getAllSchemes();
   }
 
-  public static volatile boolean LOAD_PROFILES = !ApplicationManager.getApplication().isUnitTestMode();
+  private volatile boolean LOAD_PROFILES = !ApplicationManager.getApplication().isUnitTestMode();
+  @TestOnly
+  public void forceInitProfiles(boolean flag) {
+    LOAD_PROFILES = flag;
+    myProfilesAreInitialized.set(false);
+  }
+
   public void initProfiles() {
     if (myProfilesAreInitialized.getAndSet(true)) {
       return;
