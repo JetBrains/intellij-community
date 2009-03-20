@@ -37,7 +37,7 @@ public class StructureViewComposite implements StructureView {
       Disposer.register(this, descriptor.structureView);
     }
     mySelectedViewDescriptor = views[0];
-    myTabbedPaneWrapper = new TabbedPaneWrapper();
+    myTabbedPaneWrapper = new TabbedPaneWrapper(this);
     for (StructureViewDescriptor descriptor : views) {
       myTabbedPaneWrapper.addTab(descriptor.title, descriptor.icon, descriptor.structureView.getComponent(), null);
     }
