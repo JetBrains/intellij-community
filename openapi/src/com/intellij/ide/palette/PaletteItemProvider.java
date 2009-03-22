@@ -16,6 +16,7 @@
 
 package com.intellij.ide.palette;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.beans.PropertyChangeListener;
@@ -24,6 +25,8 @@ import java.beans.PropertyChangeListener;
  * @author yole
  */
 public interface PaletteItemProvider {
+  ExtensionPointName<PaletteItemProvider> EP_NAME = ExtensionPointName.create("com.intellij.paletteItemProvider");
+
   PaletteGroup[] getActiveGroups(VirtualFile virtualFile);
 
   void addListener(PropertyChangeListener listener);

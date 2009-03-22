@@ -6,7 +6,6 @@ package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItemProvider;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -17,7 +16,7 @@ import java.beans.PropertyChangeSupport;
 /**
  * @author yole
  */
-public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectComponent {
+public class UIDesignerPaletteProvider implements PaletteItemProvider {
   private final Palette myPalette;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   @NonNls private static final String PROPERTY_GROUPS = "groups";
@@ -50,21 +49,4 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
   public void removeListener(PropertyChangeListener listener) {
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NonNls public String getComponentName() {
-    return "UIDesignerPaletteProvider";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
 }
