@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -22,15 +21,14 @@ import java.util.EventListener;
  * Date: Oct 8, 2003
  * Time: 3:48:13 PM
  */
-public final class ContentEntryEditor implements ContentRootPanel.ActionCallback {
+public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallback {
 
-  private final ContentEntry myContentEntry;
-  private final ModifiableRootModel myRootModel;
+  protected final ContentEntry myContentEntry;
+  protected final ModifiableRootModel myRootModel;
   private boolean myIsSelected;
   private ContentRootPanel myContentRootPanel;
-  private final JPanel myMainPanel;
-  private final EventDispatcher<ContentEntryEditorListener> myEventDispatcher;
-  private final CompilerModuleExtension myCompilerExtension;
+  private JPanel myMainPanel;
+  protected EventDispatcher<ContentEntryEditorListener> myEventDispatcher;
 
   public static interface ContentEntryEditorListener extends EventListener{
     void editingStarted(ContentEntryEditor editor);
@@ -46,7 +44,9 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
   public ContentEntryEditor(ContentEntry contentEntry, ModifiableRootModel rootModel) {
     myContentEntry = contentEntry;
     myRootModel = rootModel;
-    myCompilerExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+  }
+
+  public void initUI() {
     myMainPanel = new JPanel(new BorderLayout());
     myMainPanel.setOpaque(false);
     myMainPanel.addMouseListener(new MouseAdapter() {
@@ -106,11 +106,11 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
     myEventDispatcher.getMulticaster().packagePrefixSet(this, folder);
   }
 
-  void addContentEntryEditorListener(ContentEntryEditorListener listener) {
+  public void addContentEntryEditorListener(ContentEntryEditorListener listener) {
     myEventDispatcher.addListener(listener);
   }
 
-  void removeContentEntryEditorListener(ContentEntryEditorListener listener) {
+  public void removeContentEntryEditorListener(ContentEntryEditorListener listener) {
     myEventDispatcher.removeListener(listener);
   }
 
@@ -139,13 +139,14 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
     if (myContentRootPanel != null) {
       myMainPanel.remove(myContentRootPanel);
     }
-    myContentRootPanel = new JavaContentRootPanel(myContentEntry, this);
+    myContentRootPanel = createContentRootPane();
     myContentRootPanel.initUI();
     myContentRootPanel.setSelected(myIsSelected);
     myMainPanel.add(myContentRootPanel, BorderLayout.CENTER);
     myMainPanel.revalidate();
   }
 
+  protected abstract ContentRootPanel createContentRootPane();
 
   public SourceFolder addSourceFolder(VirtualFile file, boolean isTestSource) {
     final SourceFolder sourceFolder = myContentEntry.addSourceFolder(file, isTestSource);
@@ -162,7 +163,7 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
     final VirtualFile file = sourceFolder.getFile();
     final boolean isTestSource = sourceFolder.isTestSource();
     try {
-      myContentEntry.removeSourceFolder(sourceFolder);
+      doRemoveSourceFolder(sourceFolder);
     }
     finally {
       myEventDispatcher.getMulticaster().sourceFolderRemoved(this, file, isTestSource);
@@ -170,23 +171,13 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
     }
   }
 
+  protected void doRemoveSourceFolder(SourceFolder sourceFolder) {
+    myContentEntry.removeSourceFolder(sourceFolder);
+  }
+
   public ExcludeFolder addExcludeFolder(VirtualFile file) {
     try {
-      final boolean isCompilerOutput = isCompilerOutput(file);
-      boolean isExplodedDirectory = isExplodedDirectory(file);
-      if (isCompilerOutput || isExplodedDirectory) {
-        if (isCompilerOutput) {
-          myCompilerExtension.setExcludeOutput(true);
-        }
-        if (isExplodedDirectory) {
-          myRootModel.setExcludeExplodedDirectory(true);
-        }
-        return null;
-      }
-      else {
-        final ExcludeFolder excludeFolder = myContentEntry.addExcludeFolder(file);
-        return excludeFolder;
-      }
+      return doAddExcludeFolder(file);
     }
     finally {
       myEventDispatcher.getMulticaster().folderExcluded(this, file);
@@ -194,18 +185,15 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
     }
   }
 
+  @Nullable
+  protected ExcludeFolder doAddExcludeFolder(VirtualFile file) {
+    return myContentEntry.addExcludeFolder(file);
+  }
+
   public void removeExcludeFolder(ExcludeFolder excludeFolder) {
     final VirtualFile file = excludeFolder.getFile();
     try {
-      if (isCompilerOutput(file)) {
-        myCompilerExtension.setExcludeOutput(false);
-      }
-      if (isExplodedDirectory(file)) {
-        myRootModel.setExcludeExplodedDirectory(false);
-      }
-      if (!excludeFolder.isSynthetic()) {
-        myContentEntry.removeExcludeFolder(excludeFolder);
-      }
+      doRemoveExcludeFolder(excludeFolder, file);
     }
     finally {
       myEventDispatcher.getMulticaster().folderIncluded(this, file);
@@ -213,39 +201,10 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
     }
   }
 
-  private boolean isCompilerOutput(@Nullable VirtualFile file) {
-    final VirtualFile compilerOutputPath = myCompilerExtension.getCompilerOutputPath();
-    if (compilerOutputPath != null) {
-      if (compilerOutputPath.equals(file)) {
-        return true;
-      }
+  protected void doRemoveExcludeFolder(ExcludeFolder excludeFolder, VirtualFile file) {
+    if (!excludeFolder.isSynthetic()) {
+      myContentEntry.removeExcludeFolder(excludeFolder);
     }
-
-    final VirtualFile compilerOutputPathForTests = myCompilerExtension.getCompilerOutputPathForTests();
-    if (compilerOutputPathForTests != null) {
-      if (compilerOutputPathForTests.equals(file)) {
-        return true;
-      }
-    }
-
-    if (myCompilerExtension.isCompilerOutputPathInherited()) {
-      final String compilerOutput = ProjectStructureConfigurable.getInstance(myRootModel.getModule().getProject()).getProjectConfig().getCompilerOutputUrl();
-      if (file != null && Comparing.equal(compilerOutput, file.getUrl())) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private boolean isExplodedDirectory(VirtualFile file) {
-    final VirtualFile explodedDir = myRootModel.getExplodedDirectory();
-    if (explodedDir != null) {
-      if (explodedDir.equals(file)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public boolean isSource(VirtualFile file) {

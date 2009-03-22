@@ -202,7 +202,8 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   private void addContentEntryPanel(final ContentEntry contentEntry) {
-    final ContentEntryEditor contentEntryEditor = new ContentEntryEditor(contentEntry, myModel);
+    final ContentEntryEditor contentEntryEditor = new JavaContentEntryEditor(contentEntry, myModel);
+    contentEntryEditor.initUI();
     contentEntryEditor.addContentEntryEditorListener(myContentEntryEditorListener);
     registerDisposable(new Disposable() {
       public void dispose() {
