@@ -8,7 +8,6 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
@@ -37,7 +36,6 @@ import java.io.File;
 public class ConfigurationsTest {
   private TempDirTestFixture myFixture;
   private IdeaProjectTestFixture myProjectFixture;
-  private RunConfigurationRefactoringElementListenerProvider myListenerProvider;
 
 
   @BeforeMethod
@@ -56,13 +54,10 @@ public class ConfigurationsTest {
     javaModuleFixtureBuilder.addLibrary("testng", PathUtil.getJarPathForClass(AfterMethod.class));
     myProjectFixture.setUp();
 
-    myListenerProvider = new RunConfigurationRefactoringElementListenerProvider(myProjectFixture.getProject());
-    myListenerProvider.projectOpened();
   }
 
   @AfterMethod
   public void tearDown() throws Exception {
-    myListenerProvider.projectClosed();
     myProjectFixture.tearDown();
     myProjectFixture = null;
     myFixture.tearDown();
