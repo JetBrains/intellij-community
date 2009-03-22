@@ -29,17 +29,15 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.ide.highlighter;
+package com.intellij.uiDesigner;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -77,9 +75,4 @@ public class GuiFormFileType implements FileType {
   public String getCharset(@NotNull VirtualFile file, final byte[] content) {
     return CharsetToolkit.UTF8;
   }
-
-  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
-    return null;
-  }
-
 }

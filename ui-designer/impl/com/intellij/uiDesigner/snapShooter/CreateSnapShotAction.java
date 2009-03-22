@@ -15,7 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.ide.IdeView;
-import com.intellij.ide.highlighter.GuiFormFileType;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;

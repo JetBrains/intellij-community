@@ -17,7 +17,6 @@ public class DefaultFileTypeFactory extends FileTypeFactory {
 
     consumer.consume(new JavaFileType(), "java");
 
-    consumer.consume(new GuiFormFileType(), GuiFormFileType.DEFAULT_EXTENSION);
     consumer.consume(new WorkspaceFileType(), WorkspaceFileType.DEFAULT_EXTENSION);
     consumer.consume(new ModuleFileType(), ModuleFileType.DEFAULT_EXTENSION);
     consumer.consume(new ProjectFileType(), ProjectFileType.DEFAULT_EXTENSION);

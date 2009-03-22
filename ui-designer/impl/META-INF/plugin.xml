@@ -26,6 +26,8 @@
   <extensions defaultExtensionNs="com.intellij">
      <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
+    <fileTypeFactory implementation="com.intellij.uiDesigner.FormFileTypeFactory"/>
+
     <invalidPropertyKeyInspectionTool implementation="com.intellij.uiDesigner.i18n.InvalidPropertyKeyFormInspection"/>
     <i18nInspectionTool implementation="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
     <java15InspectionTool implementation="com.intellij.uiDesigner.inspections.Java15FormInspection"/>

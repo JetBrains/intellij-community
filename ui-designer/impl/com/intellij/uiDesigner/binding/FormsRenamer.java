@@ -5,7 +5,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
-import com.intellij.ide.highlighter.GuiFormFileType;
+import com.intellij.uiDesigner.GuiFormFileType;
 
 import java.util.List;
 
