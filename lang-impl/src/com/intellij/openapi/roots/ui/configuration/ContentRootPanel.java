@@ -1,31 +1,30 @@
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.HoverHyperlinkLabel;
+import com.intellij.ui.roots.FilePathClipper;
 import com.intellij.ui.roots.IconActionComponent;
 import com.intellij.ui.roots.ResizingWrapper;
-import com.intellij.ui.roots.FilePathClipper;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,10 +32,9 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  *         Date: Jan 19, 2004
  */
-public class ContentRootPanel extends JPanel {
-  private static final Color SOURCES_COLOR = new Color(0x0A50A1);
-  private static final Color TESTS_COLOR = new Color(0x008C2E);
-  private static final Color EXCLUDED_COLOR = new Color(0x992E00);
+public abstract class ContentRootPanel extends JPanel {
+  protected static final Color TESTS_COLOR = new Color(0x008C2E);
+  protected static final Color EXCLUDED_COLOR = new Color(0x992E00);
   private static final Color SELECTED_HEADER_COLOR = new Color(0xDEF2FF);
   private static final Color HEADER_COLOR = new Color(0xF5F5F5);
   private static final Color SELECTED_CONTENT_COLOR = new Color(0xF0F9FF);
@@ -47,13 +45,11 @@ public class ContentRootPanel extends JPanel {
   private static final Icon DELETE_ROOT_ROLLOVER_ICON = IconLoader.getIcon("/modules/deleteContentRootRollover.png");
   private static final Icon DELETE_FOLDER_ICON = IconLoader.getIcon("/modules/deleteContentFolder.png");
   private static final Icon DELETE_FOLDER_ROLLOVER_ICON = IconLoader.getIcon("/modules/deleteContentFolderRollover.png");
-  private static final Icon ADD_PREFIX_ICON = IconLoader.getIcon("/modules/setPackagePrefix.png");
-  private static final Icon ADD_PREFIX_ROLLOVER_ICON = IconLoader.getIcon("/modules/setPackagePrefixRollover.png");
 
-  private final ContentEntry myContentEntry;
-  private final ActionCallback myCallback;
-  private final JComponent myHeader;
-  private final JComponent myBottom;
+  protected final ContentEntry myContentEntry;
+  protected final ActionCallback myCallback;
+  private JComponent myHeader;
+  private JComponent myBottom;
   private final Map<JComponent, Color> myComponentToForegroundMap = new HashMap<JComponent, Color>();
 
   public static interface ActionCallback {
@@ -67,49 +63,13 @@ public class ContentRootPanel extends JPanel {
     super(new GridBagLayout());
     myContentEntry = contentEntry;
     myCallback = callback;
+  }
 
+  public void initUI() {
     myHeader = createHeader();
     this.add(myHeader, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 8, 0), 0, 0));
 
-    final java.util.List<ContentFolder> sources = new ArrayList<ContentFolder>();
-    final java.util.List<ContentFolder> testSources = new ArrayList<ContentFolder>();
-    final java.util.List<ContentFolder> excluded = new ArrayList<ContentFolder>();
-    final SourceFolder[] sourceFolders = myContentEntry.getSourceFolders();
-    for (SourceFolder folder : sourceFolders) {
-      if (folder.isSynthetic()) {
-        continue;
-      }
-      final VirtualFile folderFile = folder.getFile();
-      if (folderFile != null && (isExcluded(folderFile) || isUnderExcludedDirectory(folderFile))) {
-        continue;
-      }
-      if (folder.isTestSource()) {
-        testSources.add(folder);
-      }
-      else {
-        sources.add(folder);
-      }
-    }
-
-    final ExcludeFolder[] excludeFolders = myContentEntry.getExcludeFolders();
-    for (final ExcludeFolder excludeFolder : excludeFolders) {
-      if (!excludeFolder.isSynthetic()) {
-        excluded.add(excludeFolder);
-      }
-    }
-
-    if (sources.size() > 0) {
-      final JComponent sourcesComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.sources.group"), sources.toArray(new ContentFolder[sources.size()]), SOURCES_COLOR);
-      this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
-    }
-    if (testSources.size() > 0) {
-      final JComponent testSourcesComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.test.sources.group"), testSources.toArray(new ContentFolder[testSources.size()]), TESTS_COLOR);
-      this.add(testSourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
-    }
-    if (excluded.size() > 0) {
-      final JComponent excludedComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.excluded.group"), excluded.toArray(new ContentFolder[excluded.size()]), EXCLUDED_COLOR);
-      this.add(excludedComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
-    }
+    addFolderGroupComponents();
 
     myBottom = new JPanel(new BorderLayout());
     myBottom.add(Box.createVerticalStrut(3), BorderLayout.NORTH);
@@ -117,6 +77,8 @@ public class ContentRootPanel extends JPanel {
 
     setSelected(false);
   }
+
+  protected abstract void addFolderGroupComponents();
 
   private JComponent createHeader() {
     final JPanel panel = new JPanel(new GridBagLayout());
@@ -139,7 +101,7 @@ public class ContentRootPanel extends JPanel {
     return panel;
   }
 
-  private JComponent createFolderGroupComponent(String title, ContentFolder[] folders, Color foregroundColor) {
+  protected JComponent createFolderGroupComponent(String title, ContentFolder[] folders, Color foregroundColor) {
     final JPanel panel = new JPanel(new GridLayoutManager(folders.length, 3, new Insets(1, 17, 0, 2), 0, 1));
     panel.setOpaque(false);
 
@@ -149,9 +111,11 @@ public class ContentRootPanel extends JPanel {
       panel.add(createFolderComponent(folder, foregroundColor), new GridConstraints(idx, 0, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK, verticalPolicy, null, null, null));
       int column = 1;
       int colspan = 2;
-      if (folder instanceof SourceFolder) {
-        panel.add(createAddPrefixComponent((SourceFolder)folder), new GridConstraints(idx, column++, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, verticalPolicy, null, null, null));
-        colspan = 1;
+
+      JComponent additionalComponent = createAdditionalComponent(folder);
+      if (additionalComponent != null) {
+        panel.add(additionalComponent, new GridConstraints(idx, column++, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, verticalPolicy, null, null, null));
+        colspan = 1;                              
       }
       panel.add(createFolderDeleteComponent(folder), new GridConstraints(idx, column, 1, colspan, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, verticalPolicy, null, null, null));
     }
@@ -169,6 +133,11 @@ public class ContentRootPanel extends JPanel {
     groupPanel.add(panel, BorderLayout.CENTER);
 
     return groupPanel;
+  }
+
+  @Nullable
+  protected JComponent createAdditionalComponent(ContentFolder folder) {
+    return null;
   }
 
   private void registerTextComponent(final JComponent component, final Color foreground) {
@@ -233,26 +202,6 @@ public class ContentRootPanel extends JPanel {
     });
   }
 
-  private JComponent createAddPrefixComponent(final SourceFolder folder) {
-    final IconActionComponent iconComponent = new IconActionComponent(ADD_PREFIX_ICON, ADD_PREFIX_ROLLOVER_ICON,
-                                                                      ProjectBundle.message("module.paths.package.prefix.tooltip"), new Runnable() {
-      public void run() {
-        final String message = ProjectBundle.message("module.paths.package.prefix.prompt",
-                                                     toRelativeDisplayPath(folder.getUrl(), myContentEntry.getUrl() + ":"));
-        final String prefix = Messages.showInputDialog(ContentRootPanel.this, message,
-                                                       ProjectBundle.message("module.paths.package.prefix.title"), Messages.getQuestionIcon(), folder.getPackagePrefix(), null);
-        if (prefix != null) {
-          myCallback.setPackagePrefix(folder, prefix);
-        }
-      }
-    });
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.setOpaque(false);
-    panel.add(iconComponent, BorderLayout.CENTER);
-    panel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
-    return panel;
-  }
-
   public boolean isExcluded(VirtualFile file) {
     return getExcludeFolder(file) != null;
   }
@@ -291,7 +240,7 @@ public class ContentRootPanel extends JPanel {
     return null;
   }
 
-  private static String toRelativeDisplayPath(String url, String ancestorUrl) {
+  protected static String toRelativeDisplayPath(String url, String ancestorUrl) {
     if (!StringUtil.endsWithChar(ancestorUrl, '/')) {
       ancestorUrl = ancestorUrl + "/";
     }

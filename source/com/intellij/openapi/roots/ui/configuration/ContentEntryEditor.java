@@ -139,7 +139,8 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
     if (myContentRootPanel != null) {
       myMainPanel.remove(myContentRootPanel);
     }
-    myContentRootPanel = new ContentRootPanel(myContentEntry, this);
+    myContentRootPanel = new JavaContentRootPanel(myContentEntry, this);
+    myContentRootPanel.initUI();
     myContentRootPanel.setSelected(myIsSelected);
     myMainPanel.add(myContentRootPanel, BorderLayout.CENTER);
     myMainPanel.revalidate();
