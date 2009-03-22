@@ -1,11 +1,9 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -19,8 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
-import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAction;
-import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Comparator;
 
@@ -55,9 +51,6 @@ public class ContentEntryTreeEditor {
   private ContentEntryEditor myContentEntryEditor;
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
   private final FileChooserDescriptor myDescriptor;
-  private final ToggleExcludedStateAction myToggleExcludedAction;
-  private final ToggleSourcesStateAction myMarkSourcesAction;
-  private final ToggleSourcesStateAction myMarkTestsAction;
 
   public ContentEntryTreeEditor(Project project) {
     myProject = project;
@@ -66,15 +59,6 @@ public class ContentEntryTreeEditor {
     myTree.setShowsRootHandles(true);
 
     myEditingActionsGroup = new DefaultActionGroup();
-
-    myMarkSourcesAction = new ToggleSourcesStateAction(myTree, this, false);
-    myMarkSourcesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.ALT_MASK)), myTree);
-
-    myToggleExcludedAction = new ToggleExcludedStateAction(myTree, this);
-    myToggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.ALT_MASK)), myTree);
-
-    myMarkTestsAction = new ToggleSourcesStateAction(myTree, this, true);
-    myMarkTestsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.ALT_MASK)), myTree);
 
     TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
@@ -90,9 +74,6 @@ public class ContentEntryTreeEditor {
   }
 
   protected void createEditingActions() {
-    myEditingActionsGroup.add(myToggleExcludedAction);
-    myEditingActionsGroup.add(myMarkSourcesAction);
-    myEditingActionsGroup.add(myMarkTestsAction);
   }
 
   protected TreeCellRenderer getContentEntryCellRenderer() {

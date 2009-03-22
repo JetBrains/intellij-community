@@ -15,7 +15,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
-  private final ContentEntryTreeEditor myTreeEditor;
+  protected final ContentEntryTreeEditor myTreeEditor;
 
   public ContentEntryTreeCellRenderer(ContentEntryTreeEditor treeEditor) {
     myTreeEditor = treeEditor;
@@ -58,7 +58,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     return "";
   }
 
-  private Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon, final boolean expanded) {
+  protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon, final boolean expanded) {
     final ExcludeFolder[] excludeFolders = entry.getExcludeFolders();
     for (ExcludeFolder excludeFolder : excludeFolders) {
       final VirtualFile f = excludeFolder.getFile();
