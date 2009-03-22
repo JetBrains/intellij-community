@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
@@ -56,7 +55,6 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
   private ContentEntry mySelectedEntry;
 
   private VirtualFile myLastSelectedDir = null;
-  private JRadioButton myRbRelativePaths;
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
 
@@ -106,14 +104,6 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     super.disposeUIResources();
   }
 
-  public boolean isModified() {
-    if (super.isModified()) {
-      return true;
-    }
-    final Module selfModule = getModule();
-    return selfModule != null && myRbRelativePaths != null && selfModule.isSavePathsRelative() != myRbRelativePaths.isSelected();
-  }
-
   public JPanel createComponentImpl() {
     final Module module = getModule();
     final Project project = module.getProject();
@@ -148,30 +138,10 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     final JComponent treeEditorComponent = myRootTreeEditor.createComponent();
     splitter.setSecondComponent(treeEditorComponent);
 
-    final JPanel innerPanel = new JPanel(new GridBagLayout());
-    innerPanel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 6));
-    myRbRelativePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
-    final JRadioButton rbAbsolutePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.absolute.radio"));
-    ButtonGroup buttonGroup = new ButtonGroup();
-    buttonGroup.add(myRbRelativePaths);
-    buttonGroup.add(rbAbsolutePaths);
-    innerPanel.add(new JLabel(ProjectBundle.message("module.paths.outside.module.dir.label")),
-                   new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
-                                          0, 0));
-    innerPanel.add(rbAbsolutePaths,
-                   new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
-                                          0, 0));
-    innerPanel.add(myRbRelativePaths,
-                   new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
-                                          0, 0));
-    if (module.isSavePathsRelative()) {
-      myRbRelativePaths.setSelected(true);
+    final JPanel innerPanel = createBottomControl(module);
+    if (innerPanel != null) {
+      mainPanel.add(innerPanel, BorderLayout.SOUTH);
     }
-    else {
-      rbAbsolutePaths.setSelected(true);
-    }
-
-    mainPanel.add(innerPanel, BorderLayout.SOUTH);
 
     final ContentEntry[] contentEntries = myModel.getContentEntries();
     if (contentEntries.length > 0) {
@@ -184,12 +154,17 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     return mainPanel;
   }
 
+  @Nullable
+  protected JPanel createBottomControl(Module module) {
+    return null;
+  }
+
   protected abstract ContentEntryTreeEditor createContentEntryTreeEditor(Project project);
 
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
   }
 
-  private Module getModule() {
+  protected Module getModule() {
     return myModulesProvider.getModule(myModuleName);
   }
 
@@ -299,12 +274,6 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   public void saveData() {
   }
-
-  public void apply() throws ConfigurationException {
-    final Module module = getModule();
-    module.setSavePathsRelative(myRbRelativePaths.isSelected());
-  }
-
 
   private final class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {
     public void editingStarted(ContentEntryEditor editor) {
