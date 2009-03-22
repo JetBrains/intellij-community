@@ -41,7 +41,7 @@ import java.util.Comparator;
  * Date: Oct 9, 2003
  * Time: 1:19:47 PM
  */
-public class ContentEntryTreeEditor {
+public abstract class ContentEntryTreeEditor {
   private final Project myProject;
   protected Tree myTree;
   private FileSystemTreeImpl myFileSystemTree;

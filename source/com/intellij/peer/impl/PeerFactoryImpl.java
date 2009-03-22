@@ -23,7 +23,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
+import com.intellij.openapi.roots.ui.configuration.JavaContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.ui.PackageChooser;
@@ -243,7 +243,7 @@ public class PeerFactoryImpl extends PeerFactory {
 
   public ModuleConfigurationEditor createModuleConfigurationEditor(final Project project, final String moduleName, final ModifiableRootModel model,
                                                                    final ModulesProvider modulesProvider) {
-    return new CommonContentEntriesEditor(project, moduleName, model, modulesProvider);
+    return new JavaContentEntriesEditor(project, moduleName, model, modulesProvider);
   }
 
 }

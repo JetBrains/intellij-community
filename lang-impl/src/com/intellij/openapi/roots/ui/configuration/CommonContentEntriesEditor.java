@@ -1,7 +1,5 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.Patches;
-import com.intellij.ide.util.JavaUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -11,10 +9,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
@@ -25,8 +19,6 @@ import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -34,14 +26,12 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.roots.ToolbarPanel;
-import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,7 +42,7 @@ import java.util.Map;
  *         Date: Oct 4, 2003
  *         Time: 6:54:57 PM
  */
-public class CommonContentEntriesEditor extends ModuleElementsEditor {
+public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor");
   public static final String NAME = ProjectBundle.message("module.paths.title");
   public static final Icon ICON = IconLoader.getIcon("/modules/sources.png");
@@ -61,7 +51,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   private ContentEntryTreeEditor myRootTreeEditor;
   private MyContentEntryEditorListener myContentEntryEditorListener;
-  private JPanel myEditorsPanel;
+  protected JPanel myEditorsPanel;
   private final Map<ContentEntry, ContentEntryEditor> myEntryToEditorMap = new HashMap<ContentEntry, ContentEntryEditor>();
   private ContentEntry mySelectedEntry;
 
@@ -154,7 +144,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     editorsPanel.add(entriesPanel,
                      new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
-    myRootTreeEditor = new ContentEntryTreeEditor(project);
+    myRootTreeEditor = createContentEntryTreeEditor(project);
     final JComponent treeEditorComponent = myRootTreeEditor.createComponent();
     splitter.setSecondComponent(treeEditorComponent);
 
@@ -194,6 +184,8 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     return mainPanel;
   }
 
+  protected abstract ContentEntryTreeEditor createContentEntryTreeEditor(Project project);
+
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
   }
 
@@ -201,8 +193,8 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     return myModulesProvider.getModule(myModuleName);
   }
 
-  private void addContentEntryPanel(final ContentEntry contentEntry) {
-    final ContentEntryEditor contentEntryEditor = new JavaContentEntryEditor(contentEntry, myModel);
+  protected void addContentEntryPanel(final ContentEntry contentEntry) {
+    final ContentEntryEditor contentEntryEditor = createContentEntryEditor(contentEntry);
     contentEntryEditor.initUI();
     contentEntryEditor.addContentEntryEditorListener(myContentEntryEditorListener);
     registerDisposable(new Disposable() {
@@ -221,7 +213,9 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     myEditorsPanel.add(component);
   }
 
-  private void selectContentEntry(ContentEntry contentEntry) {
+  protected abstract ContentEntryEditor createContentEntryEditor(ContentEntry contentEntry);
+
+  void selectContentEntry(ContentEntry contentEntry) {
     if (mySelectedEntry != null && mySelectedEntry.equals(contentEntry)) {
       return;
     }
@@ -281,7 +275,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     return null;
   }
 
-  private void addContentEntries(final VirtualFile[] files) {
+  protected List<ContentEntry> addContentEntries(final VirtualFile[] files) {
     List<ContentEntry> contentEntries = new ArrayList<ContentEntry>();
     for (final VirtualFile file : files) {
       if (isAlreadyAdded(file)) {
@@ -290,20 +284,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
       final ContentEntry contentEntry = myModel.addContentEntry(file);
       contentEntries.add(contentEntry);
     }
-
-    if (contentEntries.size() > 0) {
-      final ContentEntry[] contentEntriesArray = contentEntries.toArray(new ContentEntry[contentEntries.size()]);
-      addSourceRoots(myProject, contentEntriesArray, new Runnable() {
-        public void run() {
-          for (ContentEntry contentEntry : contentEntriesArray) {
-            addContentEntryPanel(contentEntry);
-          }
-          myEditorsPanel.revalidate();
-          myEditorsPanel.repaint();
-          selectContentEntry(contentEntriesArray[contentEntriesArray.length - 1]);
-        }
-      });
-    }
+    return contentEntries;
   }
 
   private boolean isAlreadyAdded(VirtualFile file) {
@@ -324,70 +305,6 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     module.setSavePathsRelative(myRbRelativePaths.isSelected());
   }
 
-
-  private static void addSourceRoots(final Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
-    final HashMap<ContentEntry, List<Pair<File, String>>> entryToRootMap = new HashMap<ContentEntry, List<Pair<File, String>>>();
-    final Map<File, ContentEntry> fileToEntryMap = new HashMap<File, ContentEntry>();
-    for (final ContentEntry contentEntry : contentEntries) {
-      final VirtualFile file = contentEntry.getFile();
-      if (file != null) {
-        entryToRootMap.put(contentEntry, null);
-        fileToEntryMap.put(VfsUtil.virtualToIoFile(file), contentEntry);
-      }
-    }
-
-    final ProgressWindow progressWindow = new ProgressWindow(true, project);
-    final ProgressIndicator progressIndicator = Patches.MAC_HIDE_QUIT_HACK
-                                                ? progressWindow
-                                                : new SmoothProgressAdapter(progressWindow, project);
-
-    final Runnable searchRunnable = new Runnable() {
-      public void run() {
-        final Runnable process = new Runnable() {
-          public void run() {
-            for (final File file : fileToEntryMap.keySet()) {
-              progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
-              final List<Pair<File, String>> roots = JavaUtil.suggestRoots(file);
-              entryToRootMap.put(fileToEntryMap.get(file), roots);
-            }
-          }
-        };
-        progressWindow.setTitle(ProjectBundle.message("module.paths.searching.source.roots.title"));
-        ProgressManager.getInstance().runProcess(process, progressIndicator);
-      }
-    };
-
-    final Runnable addSourcesRunnable = new Runnable() {
-      public void run() {
-        for (final ContentEntry contentEntry : contentEntries) {
-          final List<Pair<File, String>> suggestedRoots = entryToRootMap.get(contentEntry);
-          if (suggestedRoots != null) {
-            for (final Pair<File, String> suggestedRoot : suggestedRoots) {
-              final VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByIoFile(suggestedRoot.first);
-              final VirtualFile fileContent = contentEntry.getFile();
-              if (sourceRoot != null && fileContent != null && VfsUtil.isAncestor(fileContent, sourceRoot, false)) {
-                contentEntry.addSourceFolder(sourceRoot, false, suggestedRoot.getSecond());
-              }
-            }
-          }
-        }
-        if (finishRunnable != null) {
-          finishRunnable.run();
-        }
-      }
-    };
-
-    new SwingWorker() {
-      public Object construct() {
-        searchRunnable.run();
-        return null;
-      }
-
-      public void finished() {
-        addSourcesRunnable.run();
-      }
-    }.start();
-  }
 
   private final class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {
     public void editingStarted(ContentEntryEditor editor) {
