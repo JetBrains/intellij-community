@@ -1,18 +1,24 @@
 package com.intellij.refactoring.listeners.impl;
 
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.impl.RefactoringTransactionImpl;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author dsl
  */
 public class RefactoringListenerManagerImpl extends RefactoringListenerManager {
   private final ArrayList<RefactoringElementListenerProvider> myListenerProviders;
+  private final Project myProject;
 
-  public RefactoringListenerManagerImpl() {
+  public RefactoringListenerManagerImpl(Project project) {
+    myProject = project;
     myListenerProviders = new ArrayList<RefactoringElementListenerProvider>();
   }
 
@@ -25,6 +31,8 @@ public class RefactoringListenerManagerImpl extends RefactoringListenerManager {
   }
 
   public RefactoringTransaction startTransaction() {
-    return new RefactoringTransactionImpl(myListenerProviders);
+    List<RefactoringElementListenerProvider> providers = new ArrayList<RefactoringElementListenerProvider>(myListenerProviders);
+    Collections.addAll(providers, Extensions.getExtensions(RefactoringElementListenerProvider.EP_NAME, myProject));
+    return new RefactoringTransactionImpl(providers);
   }
 }

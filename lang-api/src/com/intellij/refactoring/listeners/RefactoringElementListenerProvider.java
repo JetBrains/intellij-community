@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.listeners;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
  * @author dsl
  */
 public interface RefactoringElementListenerProvider {
+  ExtensionPointName<RefactoringElementListenerProvider> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.elementListenerProvider");
+
   /**
    *
    * Should return a listener for particular element. Invoked in read action.

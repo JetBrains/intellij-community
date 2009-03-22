@@ -8,16 +8,8 @@ import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItemProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
-import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -26,14 +18,11 @@ import java.beans.PropertyChangeSupport;
  * @author yole
  */
 public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectComponent {
-  private final Project myProject;
   private final Palette myPalette;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-  private final MyRefactoringListenerProvider myRefactoringListenerProvider = new MyRefactoringListenerProvider();
   @NonNls private static final String PROPERTY_GROUPS = "groups";
 
-  public UIDesignerPaletteProvider(Project project, final Palette palette) {
-    myProject = project;
+  public UIDesignerPaletteProvider(final Palette palette) {
     myPalette = palette;
     myPalette.addListener(new Palette.Listener() {
       public void groupsChanged(Palette palette) {
@@ -43,7 +32,7 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
 
   }
 
-  private void fireGroupsChanged() {
+  void fireGroupsChanged() {
     myPropertyChangeSupport.firePropertyChange(PROPERTY_GROUPS, null, null);
   }
 
@@ -63,11 +52,9 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
   }
 
   public void projectOpened() {
-    RefactoringListenerManager.getInstance(myProject).addListenerProvider(myRefactoringListenerProvider);
   }
 
   public void projectClosed() {
-    RefactoringListenerManager.getInstance(myProject).removeListenerProvider(myRefactoringListenerProvider);
   }
 
   @NonNls public String getComponentName() {
@@ -80,40 +67,4 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
   public void disposeComponent() {
   }
 
-  private class MyRefactoringListenerProvider implements RefactoringElementListenerProvider {
-    public RefactoringElementListener getListener(PsiElement element) {
-      if (element instanceof PsiClass) {
-        PsiClass psiClass = (PsiClass) element;
-        final String oldName = ClassUtil.getJVMClassName(psiClass);
-        if (oldName != null) {
-          final ComponentItem item = myPalette.getItem(oldName);
-          if (item != null) {
-            return new MyRefactoringElementListener(item);
-          }
-        }
-      }
-      return null;
-    }
-
-    private class MyRefactoringElementListener implements RefactoringElementListener {
-      private final ComponentItem myItem;
-
-      public MyRefactoringElementListener(final ComponentItem item) {
-        myItem = item;
-      }
-
-      public void elementMoved(@NotNull PsiElement newElement) {
-        elementRenamed(newElement);
-      }
-
-      public void elementRenamed(@NotNull PsiElement newElement) {
-        PsiClass psiClass = (PsiClass) newElement;
-        final String qName = ClassUtil.getJVMClassName(psiClass);
-        if (qName != null) {
-          myItem.setClassName(qName);
-          fireGroupsChanged();
-        }
-      }
-    }
-  }
 }

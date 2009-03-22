@@ -105,6 +105,8 @@
     <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
 
     <psi.referenceContributor implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
+
+    <refactoring.elementListenerProvider implementation="com.intellij.uiDesigner.palette.PaletteRefactoringListenerProvider"/>
   </extensions>
 
   <project-components>

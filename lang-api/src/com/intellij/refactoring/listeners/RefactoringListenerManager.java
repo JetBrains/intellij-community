@@ -37,11 +37,13 @@ public abstract class RefactoringListenerManager {
   /**
    * Registers a provider of listeners.
    */
+  @Deprecated
   public abstract void addListenerProvider(RefactoringElementListenerProvider provider);
 
   /**
    * Unregisters previously registered provider of listeners.   
    */
+  @Deprecated
   public abstract void removeListenerProvider(RefactoringElementListenerProvider provider);
 
   public static RefactoringListenerManager getInstance(Project project) {

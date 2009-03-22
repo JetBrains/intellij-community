@@ -363,4 +363,7 @@
 
   <extensionPoint name="idIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
   <extensionPoint name="todoIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
+
+  <extensionPoint name="refactoring.elementListenerProvider" interface="com.intellij.refactoring.listeners.RefactoringElementListenerProvider"
+                  area="IDEA_PROJECT"/>
 </extensionPoints>
