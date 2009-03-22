@@ -1,13 +1,14 @@
 package com.intellij.jar;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
@@ -29,13 +30,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
-import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
-import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.CommonBundle;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -61,7 +55,7 @@ import java.util.jar.Manifest;
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class BuildJarProjectSettings implements PersistentStateComponent<Element>, ProjectComponent, RefactoringElementListenerProvider {
+public class BuildJarProjectSettings implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.jar.BuildJarProjectSettings");
 
   public boolean BUILD_JARS_ON_MAKE = false;
@@ -107,38 +101,14 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
       CompilerManager compilerManager = CompilerManager.getInstance(myProject);
       compilerManager.addCompiler(JarCompiler.getInstance());
     }
-    RefactoringListenerManager.getInstance(myProject).addListenerProvider(this);
   }
 
   public void projectClosed() {
-    RefactoringListenerManager.getInstance(myProject).removeListenerProvider(this);
   }
 
   @NonNls @NotNull
   public String getComponentName() {
     return "BuildJarProjectSettings";
-  }
-
-  public RefactoringElementListener getListener(PsiElement element) {
-    if (element instanceof PsiClass) {
-      String className = ((PsiClass)element).getQualifiedName();
-      if (className == null) return null;
-
-      final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-      RefactoringElementListenerComposite listener = null;
-      for (Module module : modules) {
-        final BuildJarSettings settings = BuildJarSettings.getInstance(module);
-        final String mainClass = settings.getMainClass();
-        if (className.equals(mainClass)) {
-          if (listener == null) {
-            listener = new RefactoringElementListenerComposite();
-          }
-          listener.addListener(new MainClassRefactoringListener(settings));
-        }
-      }
-      return listener;
-    }
-    return null;
   }
 
   public void initComponent() {
@@ -295,21 +265,5 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
     ModuleLink[] modules = packagingConfiguration.getContainingModules();
     DeploymentUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null, IdeBundle.message("jar.build.module.presentable.name", module.getName()));
     return buildRecipe;
-  }
-
-  private static class MainClassRefactoringListener implements RefactoringElementListener {
-    private final BuildJarSettings mySettings;
-
-    public MainClassRefactoringListener(final BuildJarSettings settings) {
-      mySettings = settings;
-    }
-
-    public void elementMoved(@NotNull PsiElement newElement) {
-      mySettings.setMainClass(((PsiClass)newElement).getQualifiedName());
-    }
-
-    public void elementRenamed(@NotNull PsiElement newElement) {
-      mySettings.setMainClass(((PsiClass)newElement).getQualifiedName());
-    }
   }
 }
