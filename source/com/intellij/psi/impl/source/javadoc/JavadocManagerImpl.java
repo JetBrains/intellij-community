@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -9,10 +11,11 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.JavadocFormatterUtilHlper;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.javadoc.JavadocTagInfo;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,7 +28,7 @@ public class JavadocManagerImpl implements JavadocManager {
     FormatterUtil.addHelper(new JavadocFormatterUtilHlper());
   }
 
-  public JavadocManagerImpl() {
+  public JavadocManagerImpl(Project project) {
     myInfos = new ArrayList<JavadocTagInfo>();
 
     myInfos.add(new SimpleDocTagInfo("author", PsiClass.class, false, LanguageLevel.JDK_1_3));
@@ -52,8 +55,10 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new ExceptionTagInfo("exception"));
     myInfos.add(new ExceptionTagInfo("throws"));
     myInfos.add(new ValueDocTagInfo());
+    Collections.addAll(myInfos, Extensions.getExtensions(JavadocTagInfo.EP_NAME, project));
   }
 
+  @Deprecated
   public void registerTagInfo(@NotNull JavadocTagInfo info) {
     myInfos.add(info);
   }

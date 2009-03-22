@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.javadoc;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
@@ -24,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
  * @author mike
  */
 public interface JavadocTagInfo {
+  ExtensionPointName<JavadocTagInfo> EP_NAME = ExtensionPointName.create("com.intellij.javadocTagInfo");
+
   @NonNls String getName();
   boolean isInline();
   boolean isValidInContext(PsiElement element);

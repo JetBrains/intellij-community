@@ -70,7 +70,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   ) {
     myProject = project;
     myResolveHelper = new PsiResolveHelperImpl(PsiManager.getInstance(project));
-    myJavadocManager = new JavadocManagerImpl();
+    myJavadocManager = new JavadocManagerImpl(project);
     myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
     myElementFactory = new PsiElementFactoryImpl(psiManager);
