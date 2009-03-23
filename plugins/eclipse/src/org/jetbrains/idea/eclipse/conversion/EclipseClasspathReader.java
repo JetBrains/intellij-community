@@ -423,10 +423,7 @@ public class EclipseClasspathReader {
       compilerModuleExtension.inheritCompilerOutputPath(true);
     }
 
-    final Element excludeOutput = root.getChild(IdeaXml.ECLIPSE_LIBRARY);
-    if (excludeOutput != null) {
-      compilerModuleExtension.setExcludeOutput(true);
-    }
+    compilerModuleExtension.setExcludeOutput(root.getChild(IdeaXml.EXCLUDE_OUTPUT_TAG) != null);
 
     final ContentEntry[] entries = model.getContentEntries();
     if (entries.length > 0) {
