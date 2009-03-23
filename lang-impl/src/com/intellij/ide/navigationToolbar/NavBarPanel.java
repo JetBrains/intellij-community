@@ -315,7 +315,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
   }
 
-  private void immediateUpdateList(boolean update) {
+  private synchronized void immediateUpdateList(boolean update) {
     if (update) {
       myFirstIndex = 0;
       final int selectedIndex1 = -1;
