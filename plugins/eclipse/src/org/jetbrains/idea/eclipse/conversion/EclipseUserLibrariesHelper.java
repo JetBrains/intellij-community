@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +61,8 @@ public class EclipseUserLibrariesHelper {
     }
   }
 
-  public static void appendProjectLibraries(final Project project, final File userLibrariesFile) throws IOException {
+  public static void appendProjectLibraries(final Project project, @Nullable final File userLibrariesFile) throws IOException {
+    if (userLibrariesFile == null) return;
     if (userLibrariesFile.exists() && !userLibrariesFile.isFile()) return;
     final File parentFile = userLibrariesFile.getParentFile();
     if (parentFile == null) return;
