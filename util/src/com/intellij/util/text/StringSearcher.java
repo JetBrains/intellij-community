@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -23,45 +24,32 @@ import java.util.Arrays;
  *
  */
 public class StringSearcher {
-  private String myPattern = null;
-  private char[] myPatternArray = null;
-  private int myPatternLength;
+  private final String myPattern;
+  private final char[] myPatternArray;
+  private final int myPatternLength;
   private final int[] mySearchTable = new int[128];
-  private boolean myCaseSensitive = true;
-  private boolean myForwardDirection = true;
-  private boolean myJavaIdentifier;
-
-  public StringSearcher() {
-  }
+  private final boolean myCaseSensitive;
+  private final boolean myForwardDirection;
+  private final boolean myJavaIdentifier;
 
   public int getPatternLength() {
     return myPatternLength;
   }
 
-  public StringSearcher(String pattern) {
-    setPattern(pattern);
+  public StringSearcher(@NotNull String pattern, boolean caseSensitive, boolean forwardDirection) {
+    myPattern = pattern;
+    myCaseSensitive = caseSensitive;
+    myForwardDirection = forwardDirection;
+    myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase().toCharArray();
+    myPatternLength = myPatternArray.length;
+    Arrays.fill(mySearchTable, -1);
+    myJavaIdentifier = pattern.length() == 0 ||
+                       Character.isJavaIdentifierPart(pattern.charAt(0)) &&
+                       Character.isJavaIdentifierPart(pattern.charAt(pattern.length() - 1));
   }
 
   public String getPattern(){
     return myPattern;
-  }
-
-  public void setPattern(String pattern){
-    myPattern = pattern;
-    myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase().toCharArray();
-    myPatternLength = myPatternArray.length;
-    Arrays.fill(mySearchTable, -1);
-    myJavaIdentifier = true;
-    if (pattern.length() > 0) {
-      myJavaIdentifier = Character.isJavaIdentifierPart(pattern.charAt(0)) &&
-                         Character.isJavaIdentifierPart(pattern.charAt(pattern.length() - 1));
-    }
-  }
-  
-  public void setCaseSensitive(boolean value){
-    myCaseSensitive = value;
-    myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase().toCharArray();
-    Arrays.fill(mySearchTable, -1);
   }
 
   public boolean isCaseSensitive() {
@@ -70,11 +58,6 @@ public class StringSearcher {
 
   public boolean isJavaIdentifier() {
     return myJavaIdentifier;
-  }
-
-  public void setForwardDirection(boolean value) {
-    myForwardDirection = value;
-    Arrays.fill(mySearchTable, -1);
   }
 
   public boolean isForwardDirection() {
@@ -109,13 +92,7 @@ public class StringSearcher {
           if (i < 0) return start;
         }
 
-        int step;
-        if (0 <= lastChar && lastChar < 128){
-          step = mySearchTable[((int)lastChar) & 0x7F];
-        }
-        else{
-          step = 1;
-        }
+        int step = 0 <= lastChar && lastChar < 128 ? mySearchTable[lastChar] : 1;
 
         if (step <= 0){
           int index;
@@ -123,14 +100,14 @@ public class StringSearcher {
             if (myPatternArray[index] == lastChar) break;
           }
           step = myPatternLength - index - 1;
-          mySearchTable[((int)lastChar) & 0x7F] = step;
+          mySearchTable[lastChar] = step;
         }
 
         start += step;
       }
       return -1;
     }
-    else{
+    else {
       int start = 1;
       int end = text.length() - myPatternLength + 1;
       while(start <= end){
@@ -152,13 +129,7 @@ public class StringSearcher {
           if (i < 0) return text.length() - start - myPatternLength + 1;
         }
 
-        int step;
-        if (0 <= lastChar && lastChar < 128){
-          step = mySearchTable[((int)lastChar) & 0x7F];
-        }
-        else{
-          step = 1;
-        }
+        int step = 0 <= lastChar && lastChar < 128 ? mySearchTable[lastChar] : 1;
 
         if (step <= 0){
           int index;
@@ -166,7 +137,7 @@ public class StringSearcher {
             if (myPatternArray[myPatternLength - 1 - index] == lastChar) break;
           }
           step = myPatternLength - index - 1;
-          mySearchTable[((int)lastChar) & 0x7F] = step;
+          mySearchTable[lastChar] = step;
         }
 
         start += step;

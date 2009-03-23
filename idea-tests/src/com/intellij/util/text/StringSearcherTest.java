@@ -10,7 +10,7 @@ public class StringSearcherTest extends TestCase {
     final String pattern = "bc";
     final String text = "aabc";
 
-    StringSearcher searcher = new StringSearcher(pattern);
+    StringSearcher searcher = new StringSearcher(pattern, true, true);
     final int index = searcher.scan(text);
 
     assertEquals(text.indexOf("bc"), index);

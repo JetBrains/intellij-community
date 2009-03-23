@@ -260,9 +260,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       return findStringByRegularExpression(text, offset, model);
     }
 
-    StringSearcher searcher = new StringSearcher(toFind);
-    searcher.setCaseSensitive(model.isCaseSensitive());
-    searcher.setForwardDirection(model.isForward());
+    StringSearcher searcher = new StringSearcher(toFind, model.isCaseSensitive(), model.isForward());
     int index;
     if (model.isForward()){
       final int res = searcher.scan(text.subSequence(offset, text.length()));

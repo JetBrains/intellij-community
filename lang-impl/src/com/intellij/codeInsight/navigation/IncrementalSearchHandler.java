@@ -270,9 +270,7 @@ public class IncrementalSearchHandler {
           index = -1; // let the user to make the garbage pattern
         }
       } else {
-        StringSearcher searcher = new StringSearcher(prefix);
-        searcher.setCaseSensitive(caseSensitive);
-        searcher.setForwardDirection(!searchBack);
+        StringSearcher searcher = new StringSearcher(prefix, caseSensitive, !searchBack);
 
         if (searchBack) {
           index = searcher.scan(text.subSequence(0, data.searchStart));
