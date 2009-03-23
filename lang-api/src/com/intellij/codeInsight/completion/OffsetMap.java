@@ -66,4 +66,13 @@ public class OffsetMap {
   public Set<OffsetKey> keySet() {
     return myMap.keySet();
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder builder = new StringBuilder("OffsetMap:");
+    for (final OffsetKey key : myMap.keySet()) {
+      builder.append(key).append("->").append(myMap.get(key)).append(";");
+    }
+    return builder.toString();
+  }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.filters.ElementFilter;
@@ -30,6 +31,7 @@ import java.util.Set;
  * To change this template use Options | File Templates.
  */
 public class AllClassesGetter {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.AllClassesGetter");
   private final ElementFilter myFilter;
   private static final InsertHandler<JavaPsiClassReferenceElement> INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
 
@@ -55,7 +57,12 @@ public class AllClassesGetter {
           final OffsetKey key = OffsetKey.create("endOffset", false);
           context.getOffsetMap().addOffset(key, endOffset);
           JavaPsiClassReferenceElement.JAVA_CLASS_INSERT_HANDLER.handleInsert(context, item);
-          endOffset = context.getOffsetMap().getOffset(key);
+          final int newOffset = context.getOffsetMap().getOffset(key);
+          if (newOffset >= 0) {
+            endOffset = newOffset;
+          } else {
+            LOG.error(endOffset + " became invalid: " + context.getOffsetMap());
+          }
         }
       }
 
