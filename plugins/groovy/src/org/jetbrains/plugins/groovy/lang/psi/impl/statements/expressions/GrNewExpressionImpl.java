@@ -97,9 +97,10 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return findChildByClass(GrCodeReferenceElement.class);
   }
 
+  @NotNull
   public GroovyResolveResult[] multiResolveConstructor() {
     GrCodeReferenceElement ref = getReferenceElement();
-    if (ref == null) return null;
+    if (ref == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     final GroovyResolveResult[] classResults = ref.multiResolve(false);
     if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;

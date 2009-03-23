@@ -316,13 +316,13 @@ public class PsiImplUtil {
     return original != null ? original : clazz;
   }
 
-  public static PsiMethod extractUniqueElement(GroovyResolveResult[] results) {
+  public static PsiMethod extractUniqueElement(@NotNull GroovyResolveResult[] results) {
     if (results.length != 1) return null;
     final PsiElement element = results[0].getElement();
     return element instanceof PsiMethod ? (PsiMethod) element : null;
   }
 
-  public static GroovyResolveResult extractUniqueResult(GroovyResolveResult[] results) {
+  public static GroovyResolveResult extractUniqueResult(@NotNull GroovyResolveResult[] results) {
     if (results.length != 1) return GroovyResolveResult.EMPTY_RESULT;
     return results[0];
   }
