@@ -15,13 +15,15 @@
 
 package org.jetbrains.groovy.compiler.rt;
 
+import com.yourkit.api.Controller;
+import com.yourkit.api.ProfilingModes;
 import groovy.lang.GroovyClassLoader;
 import org.codehaus.groovy.control.CompilationUnit;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.messages.WarningMessage;
 
 import java.io.*;
-import java.net.*;
+import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -54,10 +56,35 @@ public class GroovycRunner {
   public static final String MESSAGES_END = "/%m";
   public static final String SEPARATOR = "#";
 
+  public static final Controller ourController = initController();
+
   private GroovycRunner() {
   }
 
+  private static Controller initController() {
+    if (!"true".equals(System.getProperty("profile.groovy.compiler"))) {
+      return null;
+    }
+
+    try {
+      return new Controller();
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
+    }
+  }
+
+
   public static void main(String[] args) {
+    if (ourController != null) {
+      try {
+        ourController.startCPUProfiling(ProfilingModes.CPU_SAMPLING, null);
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
     try {
       String moduleClasspath = null;
       String moduleOutputPath = null;
@@ -91,7 +118,9 @@ public class GroovycRunner {
         String line;
 
         while ((line = reader.readLine()) != null && !line.equals(CLASSPATH)) {
-          if (TEST_FILE.equals(line)) testFiles.add(new File(reader.readLine()));
+          if (TEST_FILE.equals(line)) {
+            testFiles.add(new File(reader.readLine()));
+          }
           else if (SRC_FILE.equals(line)) {
             final File file = new File(reader.readLine());
             srcFiles.add(file);
@@ -127,16 +156,21 @@ public class GroovycRunner {
           line = reader.readLine();
         }
 
-      } catch (FileNotFoundException e) {
+      }
+      catch (FileNotFoundException e) {
         e.printStackTrace();
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         e.printStackTrace();
-      } finally {
+      }
+      finally {
         try {
           reader.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
           e.printStackTrace();
-        } finally {
+        }
+        finally {
           argsFile.delete();
         }
       }
@@ -145,8 +179,9 @@ public class GroovycRunner {
       MyGroovyCompiler groovyCompiler = new MyGroovyCompiler();
       if (srcFiles.isEmpty() && testFiles.isEmpty()) return;
 
-      MyCompilationUnits myCompilationUnits = createCompilationUnits(srcFiles, testFiles, class2File, moduleClasspath, moduleTestOutputPath, moduleOutputPath, isGrails,
-                                                                     encoding);
+      MyCompilationUnits myCompilationUnits =
+        createCompilationUnits(srcFiles, testFiles, class2File, moduleClasspath, moduleTestOutputPath, moduleOutputPath, isGrails,
+                               encoding);
 
       MessageCollector messageCollector = new MessageCollector();
       MyGroovyCompiler.MyExitStatus exitStatus = groovyCompiler.compile(messageCollector, myCompilationUnits);
@@ -157,7 +192,8 @@ public class GroovycRunner {
       allCompiling.addAll(srcFiles);
       allCompiling.addAll(testFiles);
 
-      File[] toRecompilesFiles = successfullyCompiled.length > 0 ? new File[0] : (File[])allCompiling.toArray(new File[allCompiling.size()]);
+      File[] toRecompilesFiles =
+        successfullyCompiled.length > 0 ? new File[0] : (File[])allCompiling.toArray(new File[allCompiling.size()]);
 
       CompilerMessage[] compilerMessages = messageCollector.getAllMessage();
 
@@ -187,7 +223,8 @@ public class GroovycRunner {
 
         try {
           System.out.print(toRecompileFile.getCanonicalPath());
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
           toRecompileFile.getPath();
         }
 
@@ -216,6 +253,17 @@ public class GroovycRunner {
     }
     catch (Throwable e) {
       e.printStackTrace();
+    }
+    finally {
+      if (ourController != null) {
+        try {
+          ourController.captureSnapshot(ProfilingModes.SNAPSHOT_WITHOUT_HEAP);
+          ourController.stopCPUProfiling();
+        }
+        catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
     }
   }
 

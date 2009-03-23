@@ -22,6 +22,7 @@ import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
@@ -72,7 +73,7 @@ import java.util.*;
  */
 
 public class GroovyCompiler implements TranslatingCompiler {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.groovy.compiler.GroovyCompiler");
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovyCompiler");
 
   private static final String XMX_COMPILER_PROPERTY = "-Xmx300m";
 
@@ -120,8 +121,6 @@ public class GroovyCompiler implements TranslatingCompiler {
 //      commandLine.addParameter("-Xdebug");
 //      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=127.0.0.1:5557");
 
-    commandLine.addParameter("-cp");
-
     String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
     final StringBuilder classPathBuilder = new StringBuilder();
     classPathBuilder.append(rtJarPath);
@@ -146,6 +145,14 @@ public class GroovyCompiler implements TranslatingCompiler {
     }
 
     classPathBuilder.append(getModuleSpecificClassPath(module));
+    if ("true".equals(System.getProperty("profile.groovy.compiler"))) {
+      commandLine.addParameter("-Djava.library.path=" + PathManager.getBinPath());
+      commandLine.addParameter("-Dprofile.groovy.compiler=true");
+      commandLine.addParameter("-agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=GroovyCompiler");
+      classPathBuilder.append(PathManager.getLibPath()).append("/yjp-controller-api-redist.jar").append(File.pathSeparator);
+    }
+
+    commandLine.addParameter("-cp");
     commandLine.addParameter(classPathBuilder.toString());
     commandLine.addParameter(XMX_COMPILER_PROPERTY);
     //commandLine.addParameter("-Xdebug");
