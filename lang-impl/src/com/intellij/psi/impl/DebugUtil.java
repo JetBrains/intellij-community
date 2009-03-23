@@ -27,7 +27,10 @@ public class DebugUtil {
   public static /*final*/ boolean CHECK = false;
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = false;
   public static final Key<Boolean> TRACK_INVALIDATION_KEY = new Key<Boolean>("TRACK_INVALIDATION_KEY");
-  public static final boolean TRACK_INVALIDATION = false;
+
+  public static boolean shouldTrackInvalidation() {
+    return false;
+  }
 
   public static String psiTreeToString(PsiElement element, boolean skipWhitespaces) {
     return treeToString(SourceTreeToPsiMap.psiElementToTree(element), skipWhitespaces);
