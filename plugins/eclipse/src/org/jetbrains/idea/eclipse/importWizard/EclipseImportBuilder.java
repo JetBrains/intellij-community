@@ -1,6 +1,7 @@
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -21,11 +22,13 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -171,6 +174,30 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     try {
       final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
       final ModifiableRootModel[] rootModels = new ModifiableRootModel[getParameters().projectsToConvert.size()];
+      final Set<String> files = new HashSet<String>();
+      for (String path : getParameters().projectsToConvert) {
+        String modulesDirectory = getParameters().converterOptions.commonModulesDirectory;
+        if (modulesDirectory == null) {
+          modulesDirectory = path;
+        }
+        final String moduleName = EclipseProjectFinder.findProjectName(path);
+        final String imlFilePath = modulesDirectory + File.separator + moduleName + IdeaXml.IML_EXT;
+        if (new File(imlFilePath).isFile()) {
+          files.add(imlFilePath);
+        }
+        final String emlFilePath = modulesDirectory + File.separator + moduleName + EclipseXml.IDEA_SETTINGS_POSTFIX;
+        if (new File(emlFilePath).isFile()) {
+          files.add(emlFilePath);
+        }
+      }
+      if (!files.isEmpty()) {
+        if (Messages.showOkCancelDialog(ApplicationInfoEx.getInstanceEx().getFullApplicationName() + " module files found:\n" + StringUtil.join(files, "\n") +
+                                        ".\n Would you like to reuse them?", "Module files found", Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) {
+          for (String file : files) {
+            FileUtil.delete(new File(file));
+          }
+        }
+      }
       int idx = 0;
       final Set<String> usedVariables = new HashSet<String>();
       for (String path : getParameters().projectsToConvert) {
