@@ -5,7 +5,10 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SpeedSearchBase;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +96,23 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myUseArchetypeCheckBox.addActionListener(updatingListener);
     myArchetypesList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myArchetypesList.setCellRenderer(new MyCellRenderer());
+
+    new ListSpeedSearch(myArchetypesList, new Function<Object, String>() {
+      public String fun(Object o) {
+        Archetype a = (Archetype)o;
+        return a.getGroupId() + ":" + a.getArtifactId() + ":" + a.getVersion();
+      }
+    }).setComparator(new SpeedSearchBase.SpeedSearchComparator(false) {
+      @Override
+      public void translateCharacter(StringBuilder buf, char ch) {
+        if (ch == '*') {
+          buf.append("(.)*");
+        }
+        else {
+          super.translateCharacter(buf, ch);
+        }
+      }
+    });
   }
 
   private MavenProjectModel selectProject(MavenProjectModel current) {
