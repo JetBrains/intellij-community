@@ -19,7 +19,10 @@ public class InstanceOfLeftPartTypeGetter implements ContextGetter {
     if((context = FilterUtil.getPreviousElement(context, true)) == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     if(!PsiKeyword.INSTANCEOF.equals(context.getText())) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     if((context = FilterUtil.getPreviousElement(context, false)) == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+
     final PsiExpression contextOfType = PsiTreeUtil.getContextOfType(context, PsiExpression.class, false);
+    if (contextOfType == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+
     PsiType type = contextOfType.getType();
     if (type == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
