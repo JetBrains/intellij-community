@@ -204,7 +204,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     if (injectedFiles.isEmpty()) return;
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
 
-    JobUtil.invokeConcurrentlyForAll(injectedFiles, new Processor<PsiFile>() {
+    JobUtil.invokeConcurrentlyUnderMyProgress(injectedFiles, new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
 
         AnnotationHolderImpl annotationHolder = createAnnotationHolder();

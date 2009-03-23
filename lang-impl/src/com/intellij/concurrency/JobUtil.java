@@ -2,11 +2,13 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -17,16 +19,12 @@ public class JobUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobUtil");
 
   /**
-   * @param things elements to process concurrently
-   * @param thingProcessor processor to be invoked concurrently on each element from the collection
+   * @param things to process concurrently
+   * @param thingProcessor to be invoked concurrently on each element from the collection
    * @param jobName the name of the job that invokes all the tasks
    * @return false if tasks have been canceled
    * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
    */
-  public static <T> boolean invokeConcurrentlyForAll(@NotNull T[] things, @NotNull final Processor<T> thingProcessor, @NotNull @NonNls String jobName) throws ProcessCanceledException {
-    return invokeConcurrentlyForAll(Arrays.asList(things), thingProcessor, jobName);
-  }
-
   public static <T> boolean invokeConcurrentlyForAll(@NotNull Collection<T> things, @NotNull final Processor<T> thingProcessor, @NotNull @NonNls String jobName) throws ProcessCanceledException {
     if (things.isEmpty()) {
       return true;
@@ -58,4 +56,21 @@ public class JobUtil {
     }
     return !job.isCanceled();
   }
+
+  // execute in multiple threads, with checkCanceled in each delegated to our current progress
+  public static <T> boolean invokeConcurrentlyUnderMyProgress(@NotNull Collection<T> things, @NotNull final Processor<T> thingProcessor, @NotNull @NonNls String jobName) throws ProcessCanceledException {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    return invokeConcurrentlyForAll(things, new Processor<T>() {
+      public boolean process(final T t) {
+        final boolean[] result = new boolean[1];
+        ProgressManager.getInstance().runProcess(new Runnable() {
+          public void run() {
+            result[0] = thingProcessor.process(t);
+          }
+        }, ProgressWrapper.wrap(indicator));
+        return result[0];
+      }
+    }, jobName);
+  }
+
 }

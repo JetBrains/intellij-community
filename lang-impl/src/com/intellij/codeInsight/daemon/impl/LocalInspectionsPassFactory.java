@@ -39,13 +39,13 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
     if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument(), LocalInspectionsPass.IN_PROGRESS_ICON,
                                                                              LocalInspectionsPass.PRESENTABLE_NAME);
     return new LocalInspectionsPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset()){
-      LocalInspectionTool[] getInspectionTools(InspectionProfileWrapper profile) {
-        LocalInspectionTool[] tools = super.getInspectionTools(profile);
-        List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>(tools.length);
+      List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
+        List<LocalInspectionTool> tools = super.getInspectionTools(profile);
+        List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>(tools.size());
         for (LocalInspectionTool tool : tools) {
           if (!tool.runForWholeFile()) result.add(tool);
         }
-        return result.toArray(new LocalInspectionTool[result.size()]);
+        return result;
       }
     };
   }

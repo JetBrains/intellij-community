@@ -12,6 +12,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: anna
@@ -28,8 +29,8 @@ public class InspectionProfileWrapper {
      return (InspectionTool[])myProfile.getInspectionTools();
   }
 
-  public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
-    ArrayList<LocalInspectionTool> enabled = new ArrayList<LocalInspectionTool>();
+  public List<LocalInspectionTool> getHighlightingLocalInspectionTools() {
+    List<LocalInspectionTool> enabled = new ArrayList<LocalInspectionTool>();
     final InspectionTool[] tools = getInspectionTools();
     for (InspectionTool tool : tools) {
       if (tool instanceof LocalInspectionToolWrapper) {
@@ -38,7 +39,7 @@ public class InspectionProfileWrapper {
         }
       }
     }
-    return enabled.toArray(new LocalInspectionTool[enabled.size()]);
+    return enabled;
   }
 
   public String getName() {

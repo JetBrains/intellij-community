@@ -41,16 +41,16 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.LOCAL_INSPECTIONS);
     if (textRange == null || !wholeFileToolsDefined(file)) return null;
     return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength()) {
-      LocalInspectionTool[] getInspectionTools(InspectionProfileWrapper profile) {
-        LocalInspectionTool[] tools = super.getInspectionTools(profile);
+      List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
+        List<LocalInspectionTool> tools = super.getInspectionTools(profile);
         List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>();
         for (LocalInspectionTool tool : tools) {
           if (tool.runForWholeFile()) result.add(tool);
         }
-        return result.toArray(new LocalInspectionTool[result.size()]);
+        return result;
       }
 
-      void inspectInjectedPsi(PsiElement[] elements, LocalInspectionTool[] tools) {
+      void inspectInjectedPsi(PsiElement[] elements, List<LocalInspectionTool> tools) {
         // inspected in LIP already
       }
     };
@@ -58,7 +58,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
 
   private boolean wholeFileToolsDefined(PsiFile file) {
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(file);
-    final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
+    final List<LocalInspectionTool> tools = profile.getHighlightingLocalInspectionTools();
     for (LocalInspectionTool tool : tools) {
       if (tool.runForWholeFile()) return true;
     }

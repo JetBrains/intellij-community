@@ -162,13 +162,13 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     final Map<String, Set<PsiFile>> processedValueToFiles = Collections.synchronizedMap(new HashMap<String, Set<PsiFile>>());
     final Map<String, Set<PsiFile>> processedKeyToFiles = Collections.synchronizedMap(new HashMap<String, Set<PsiFile>>());
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
-    final ProgressIndicator progress = original == null ? null : new ProgressWrapper(original);
+    final ProgressIndicator progress = ProgressWrapper.wrap(original);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        JobUtil.invokeConcurrentlyForAll(properties, new Processor<Property>() {
+        JobUtil.invokeConcurrentlyUnderMyProgress(properties, new Processor<Property>() {
           public boolean process(final Property property) {
             if (original != null) {
-              original.checkCanceled();
+              if (original.isCanceled()) return false;
               original.setText2(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
             }
             processTextUsages(processedValueToFiles, property.getValue(), processedKeyToFiles, searchHelper, scope);
@@ -224,7 +224,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
         progress.setText2(InspectionsBundle.message("duplicate.property.value.progress.indicator.text", value));
         if (progress.isCanceled()) throw new ProcessCanceledException();
       }
-      StringSearcher searcher = new StringSearcher(value);
+      StringSearcher searcher = new StringSearcher(value, true, true);
       StringBuffer message = new StringBuffer();
       int duplicatesCount = 0;
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);

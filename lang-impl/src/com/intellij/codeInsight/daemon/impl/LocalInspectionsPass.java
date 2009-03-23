@@ -88,7 +88,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!HighlightLevelUtil.shouldInspect(myFile)) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
-    final LocalInspectionTool[] tools = getInspectionTools(profile);
+    final List<LocalInspectionTool> tools = getInspectionTools(profile);
 
     inspect(tools, progress, iManager, true, true);
   }
@@ -103,7 +103,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (InspectionProfileEntry toolWrapper : toolWrappers) {
       tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), (LocalInspectionToolWrapper)toolWrapper);
     }
-    LocalInspectionTool[] tools = tool2Wrapper.keySet().toArray(new LocalInspectionTool[tool2Wrapper.size()]);
+    List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>(tool2Wrapper.keySet());
     inspect(tools, progress, iManager, false, ignoreSuppressed);
     addDescriptorsFromInjectedResults(tool2Wrapper, iManager);
     for (int i = 0; i < myTools.size(); i++) {
@@ -160,15 +160,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly,
+  private void inspect(final List<LocalInspectionTool> tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly,
                        final boolean ignoreSuppressed) {
-    if (tools.length == 0) return;
+    if (tools.isEmpty()) return;
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
-    setProgressLimit(1L * tools.length * elements.length);
+    setProgressLimit(1L * tools.size() * elements.length);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
 
-    JobUtil.invokeConcurrentlyForAll(tools, new Processor<LocalInspectionTool>() {
+    JobUtil.invokeConcurrentlyUnderMyProgress(tools, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
         if (progress != null && progress.isCanceled()) {
           return false;
@@ -210,7 +210,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     addHighlightsFromInjectedPsiProblems(myInfos);
   }
 
-  void inspectInjectedPsi(final PsiElement[] elements, final LocalInspectionTool[] tools) {
+  void inspectInjectedPsi(final PsiElement[] elements, final List<LocalInspectionTool> tools) {
     myInjectedPsiInspectionResults = new CopyOnWriteArrayList<InjectedPsiInspectionResult>();
     final Set<PsiFile> injected = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
@@ -220,7 +220,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
       }, false);
     }
-    JobUtil.invokeConcurrentlyForAll(injected, new Processor<PsiFile>() {
+    JobUtil.invokeConcurrentlyUnderMyProgress(injected, new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
         inspectInjectedPsi(injectedPsi, myInjectedPsiInspectionResults, tools);
         return true;
@@ -436,11 +436,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return result.toArray(new PsiElement[result.size()]);
   }
 
-  LocalInspectionTool[] getInspectionTools(InspectionProfileWrapper profile) {
+  List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
     return profile.getHighlightingLocalInspectionTools();
   }
 
-  private static void inspectInjectedPsi(PsiFile injectedPsi, List<InjectedPsiInspectionResult> result, LocalInspectionTool[] tools) {
+  private static void inspectInjectedPsi(PsiFile injectedPsi, List<InjectedPsiInspectionResult> result, List<LocalInspectionTool> tools) {
     InspectionManager inspectionManager = InspectionManager.getInstance(injectedPsi.getProject());
     final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, injectedPsi);
     final PsiElement host = injectedPsi.getContext();

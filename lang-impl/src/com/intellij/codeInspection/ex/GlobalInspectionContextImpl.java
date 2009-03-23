@@ -470,7 +470,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           public void run() {
             runTools(needRepeatSearchRequest, scope, manager);
           }
-        }, myProgressIndicator != null ? new ProgressWrapper(myProgressIndicator) : null);
+        }, ProgressWrapper.wrap(myProgressIndicator));
     }
     catch (ProcessCanceledException e) {
       cleanup((InspectionManagerEx)manager);

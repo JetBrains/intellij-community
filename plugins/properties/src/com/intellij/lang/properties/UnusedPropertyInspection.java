@@ -3,9 +3,9 @@ package com.intellij.lang.properties;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.*;
 import com.intellij.concurrency.JobUtil;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -13,7 +13,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -57,34 +56,30 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
 
     final GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
-    final ProgressIndicator progress = original == null ? null : new ProgressWrapper(original);
-    ProgressManager.getInstance().runProcess(new Runnable() {
-      public void run() {
-        JobUtil.invokeConcurrentlyForAll(properties, new Processor<Property>() {
-          public boolean process(final Property property) {
-            if (original != null) {
-              if (original.isCanceled()) return false;
-              original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
-            }
+    JobUtil.invokeConcurrentlyUnderMyProgress(properties, new Processor<Property>() {
+      public boolean process(final Property property) {
+        if (original != null) {
+          if (original.isCanceled()) return false;
+          original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
+        }
 
-            final PsiReference usage = ReferencesSearch.search(property, searchScope, false).findFirst();
-            if (usage == null) {
-              final ASTNode propertyNode = property.getNode();
-              assert propertyNode != null;
+        final PsiReference usage = ReferencesSearch.search(property, searchScope, false).findFirst();
+        if (usage == null) {
+          final ASTNode propertyNode = property.getNode();
+          assert propertyNode != null;
 
-              ASTNode[] nodes = propertyNode.getChildren(null);
-              PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
-              String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
-              ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-              synchronized (descriptors) {
-                descriptors.add(descriptor);
-              }
-            }
-            return true;
+          ASTNode[] nodes = propertyNode.getChildren(null);
+          PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
+          String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
+          ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          synchronized (descriptors) {
+            descriptors.add(descriptor);
           }
-        }, "Searching properties usages");
+        }
+
+        return true;
       }
-    }, progress);
+    }, "Searching properties usages");
 
     synchronized (descriptors) {
       return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);

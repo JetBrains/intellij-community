@@ -37,16 +37,17 @@ public class ProgressManagerImpl extends ProgressManager {
   private static volatile boolean ourNeedToCheckCancel = false;
   private static volatile int ourLockedCheckCounter = 0;
   private final List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
+  @NonNls private static final String NAME = "Progress Cancel Checker";
 
   public ProgressManagerImpl(Application application) {
     if (!application.isUnitTestMode() && !Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled")) {
-      new Thread("Progress Cancel Checker") {
+      new Thread(NAME) {
         public void run() {
           while (true) {
             try {
               sleep(10);
             }
-            catch (InterruptedException e) {
+            catch (InterruptedException ignored) {
             }
             ourNeedToCheckCancel = true;
           }
@@ -82,9 +83,9 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   private static class NonCancelableIndicator extends EmptyProgressIndicator implements NonCancelableSection {
-    private ProgressIndicator myOld;
+    private final ProgressIndicator myOld;
 
-    public NonCancelableIndicator(ProgressIndicator old) {
+    private NonCancelableIndicator(ProgressIndicator old) {
       myOld = old;
     }
 
@@ -187,7 +188,7 @@ public class ProgressManagerImpl extends ProgressManager {
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     ProgressIndicator oldIndicator = myThreadIndicator.get();
 
-    myThreadIndicator.set(progress);
+    if (progress != null) myThreadIndicator.set(progress);
     myCurrentProgressCount.incrementAndGet();
 
     final boolean modal = progress != null && progress.isModal();
@@ -374,7 +375,7 @@ public class ProgressManagerImpl extends ProgressManager {
   private static class TaskRunnable extends TaskContainer {
     private final ProgressIndicator myIndicator;
 
-    public TaskRunnable(final Task task, final ProgressIndicator indicator) {
+    private TaskRunnable(final Task task, final ProgressIndicator indicator) {
       super(task);
       myIndicator = indicator;
     }
@@ -398,7 +399,7 @@ public class ProgressManagerImpl extends ProgressManager {
     Thread.enumerate(threads);
     for (Thread thread : threads) {
       if (thread == null) continue;
-      if ("Progress Cancel Checker".equals(thread.getName())) {
+      if (NAME.equals(thread.getName())) {
         Thread.State oldState = thread.getState();
         thread.suspend();
         System.out.println(thread +" suspended ("+oldState+ "->"+thread.getState()+")");

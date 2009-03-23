@@ -4,6 +4,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,6 +61,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
 
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
+        ProgressManager.getInstance().checkCanceled();
         if (DEBUG) {
           System.out.println("!!! About to check "+element);
         }
