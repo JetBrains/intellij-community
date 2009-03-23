@@ -28,6 +28,7 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
   private final InputStream myInputStream;
   private final InputStream myErrorStream;
   private int myExitCode;
+  private boolean myDestroyed;
 
   protected InterruptibleProcess(final Process process, final long timeout, final TimeUnit timeUnit) {
     super(timeout, timeUnit);
@@ -50,14 +51,35 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
   }
 
   protected void interrupt() {
+    closeProcess();
+  }
+
+  public static void close(final Process process) {
     try {
-      myInputStream.close();
-      myErrorStream.close();
-      myProcess.destroy();
+      process.getOutputStream().close();
     }
     catch (IOException e) {
-      // Ignore
+      //
     }
+    try {
+      process.getInputStream().close();
+    }
+    catch (IOException e) {
+      //
+    }
+    try {
+      process.getErrorStream().close();
+    }
+    catch (IOException e) {
+      //
+    }
+    process.destroy();
+  }
+
+  public void closeProcess() {
+    if (myDestroyed) return;
+    myDestroyed = true;
+    close(myProcess);
   }
 
   protected void start() {
@@ -92,6 +114,11 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
       final int r = myDelegate.read(b, off, len);
       touch();
       return r;
+    }
+
+    @Override
+    public void close() throws IOException {
+      myDelegate.close();
     }
   }
 }
