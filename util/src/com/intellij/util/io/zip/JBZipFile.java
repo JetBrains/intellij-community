@@ -126,7 +126,12 @@ public class JBZipFile {
     this.encoding = encoding;
     archive = new RandomAccessFile(f, "rw");
     try {
-      populateFromCentralDirectory();
+      if (archive.length() > 0) {
+        populateFromCentralDirectory();
+      }
+      else {
+        getOutputStream(); // Ensure we'll write central directory when closed even if no single entry created.
+      }
     }
     catch (IOException e) {
       try {
