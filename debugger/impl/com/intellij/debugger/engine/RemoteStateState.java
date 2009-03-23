@@ -50,7 +50,7 @@ public class RemoteStateState implements RemoteState {
   }
 
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
-    ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject);
+    ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, false);
     RemoteDebugProcessHandler process = new RemoteDebugProcessHandler(myProject);
     consoleView.attachToProcess(process);
     return new DefaultExecutionResult(consoleView, process, AnAction.EMPTY_ARRAY);

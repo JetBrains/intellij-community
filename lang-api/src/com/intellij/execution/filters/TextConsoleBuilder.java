@@ -24,4 +24,5 @@ public abstract class TextConsoleBuilder {
   public abstract ConsoleView getConsole();
 
   public abstract void addFilter(Filter filter);
+  public abstract void setViewer(boolean isViewer);
 }

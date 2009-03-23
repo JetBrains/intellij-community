@@ -90,6 +90,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
   private ConsoleState myState = ConsoleState.NOT_STARTED;
   private final int CYCLIC_BUFFER_SIZE = getCycleBufferSize();
+  private final boolean isViewer;
 
   private static int getCycleBufferSize() {
     final String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
@@ -122,7 +123,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     private int endOffset;
     private final TextAttributes attributes;
 
-    public TokenInfo(final ConsoleViewContentType contentType, final int startOffset, final int endOffset) {
+    private TokenInfo(final ConsoleViewContentType contentType, final int startOffset, final int endOffset) {
       this.contentType = contentType;
       this.startOffset = startOffset;
       this.endOffset = endOffset;
@@ -157,8 +158,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
 
   private final CompositeFilter myMessageFilter = new CompositeFilter();
 
-  public ConsoleViewImpl(final Project project) {
+  public ConsoleViewImpl(final Project project, boolean viewer) {
     super(new BorderLayout());
+    isViewer = viewer;
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
     myProject = project;
 
@@ -641,7 +643,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   private class ClearAllAction extends AnAction{
-    public ClearAllAction(){
+    private ClearAllAction(){
       super(ExecutionBundle.message("clear.all.from.console.action.name"));
     }
 
@@ -651,7 +653,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   private class CopyAction extends AnAction{
-    public CopyAction(){
+    private CopyAction(){
       super(myEditor != null && myEditor.getSelectionModel().hasSelection() ? ExecutionBundle.message("copy.selected.content.action.name") : ExecutionBundle.message("copy.content.action.name"));
     }
 
@@ -746,13 +748,13 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   private static class MyTypedHandler implements TypedActionHandler {
     private final TypedActionHandler myOriginalHandler;
 
-    public MyTypedHandler(final TypedActionHandler originalAction) {
+    private MyTypedHandler(final TypedActionHandler originalAction) {
       myOriginalHandler = originalAction;
     }
 
     public void execute(final Editor editor, final char charTyped, final DataContext dataContext) {
       final ConsoleViewImpl consoleView = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
-      if (consoleView == null || !consoleView.myState.isRunning()){
+      if (consoleView == null || !consoleView.myState.isRunning() || consoleView.isViewer){
         myOriginalHandler.execute(editor, charTyped, dataContext);
       }
       else{

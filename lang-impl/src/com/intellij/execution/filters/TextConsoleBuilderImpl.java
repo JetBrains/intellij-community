@@ -12,13 +12,14 @@ import java.util.ArrayList;
 public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   private final Project myProject;
   private final ArrayList<Filter> myFilters = new ArrayList<Filter>();
+  private boolean myViewer;
 
   public TextConsoleBuilderImpl(final Project project) {
     myProject = project;
   }
 
   public ConsoleView getConsole() {
-    final ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject);
+    final ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, myViewer);
     for (final Filter filter : myFilters) {
       consoleView.addMessageFilter(filter);
     }
@@ -27,6 +28,11 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
 
   public void addFilter(final Filter filter) {
     myFilters.add(filter);
+  }
+
+  @Override
+  public void setViewer(boolean isViewer) {
+    myViewer = isViewer;
   }
 
 }
