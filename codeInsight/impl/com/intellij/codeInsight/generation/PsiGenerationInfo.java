@@ -6,8 +6,8 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -67,13 +67,13 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfo {
       final Project project = myMember.getProject();
       SmartPsiElementPointer<T> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(myMember);
       PostprocessReformattingAspect reformattingAspect = project.getComponent(PostprocessReformattingAspect.class);
-      reformattingAspect.doPostponedFormatting();
+      reformattingAspect.doPostponedFormatting(myMember.getContainingFile().getViewProvider());
       myMember = pointer.getElement();
       if (myMember != null) {
         final PsiParameterList parameterList = ((PsiMethod)myMember).getParameterList();
         reformattingAspect.disablePostprocessFormattingInside(new Runnable(){
           public void run() {
-            CodeStyleManager.getInstance(project).reformat(parameterList);            
+            CodeStyleManager.getInstance(project).reformat(parameterList);
           }
         });
       }
