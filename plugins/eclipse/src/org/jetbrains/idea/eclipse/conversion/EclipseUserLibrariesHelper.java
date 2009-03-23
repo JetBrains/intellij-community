@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -37,7 +38,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class EclipseUserLibrariesHelper {
   //private static final String ORG_ECLIPSE_JDT_CORE_PREFS = "org.eclipse.jdt.core.prefs";
@@ -70,7 +74,8 @@ public class EclipseUserLibrariesHelper {
       if (!parentFile.mkdir()) return;
     }
     final Element userLibsElement = new Element("eclipse-userlibraries");
-    final Library[] libraries = ProjectLibraryTable.getInstance(project).getLibraries();
+    final List<Library> libraries = new ArrayList<Library>(Arrays.asList(ProjectLibraryTable.getInstance(project).getLibraries()));
+    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries()));
     for (Library library : libraries) {
       Element libElement = new Element("library");
       libElement.setAttribute("name", library.getName());
