@@ -10,8 +10,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
-import org.apache.maven.archetype.catalog.Archetype;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
@@ -34,6 +34,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final String ARCHETYPE_ARTIFACT_ID_KEY = "MavenModuleWizard.archetypeArtifactIdKey";
   private static final String ARCHETYPE_GROUP_ID_KEY = "MavenModuleWizard.archetypeGroupIdKey";
   private static final String ARCHETYPE_VERSION_KEY = "MavenModuleWizard.archetypeVersionKey";
+  private static final String ARCHETYPE_REPOSITORY_KEY = "MavenModuleWizard.archetypeRepositoryKey";
 
   private final Project myProjectOrNull;
   private final MavenModuleBuilder myBuilder;
@@ -99,8 +100,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
     new ListSpeedSearch(myArchetypesList, new Function<Object, String>() {
       public String fun(Object o) {
-        Archetype a = (Archetype)o;
-        return a.getGroupId() + ":" + a.getArtifactId() + ":" + a.getVersion();
+        ArchetypeInfo a = (ArchetypeInfo)o;
+        return a.groupId + ":" + a.artifactId + ":" + a.version;
       }
     }).setComparator(new SpeedSearchBase.SpeedSearchComparator(false) {
       @Override
@@ -136,11 +137,12 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     String archGroupId = getSavedValue(ARCHETYPE_GROUP_ID_KEY, null);
     String archArtifactId = getSavedValue(ARCHETYPE_ARTIFACT_ID_KEY, null);
     String archVersion = getSavedValue(ARCHETYPE_VERSION_KEY, null);
+    String archRepository = getSavedValue(ARCHETYPE_REPOSITORY_KEY, null);
     if (archGroupId == null || archArtifactId == null || archVersion == null) {
-      myBuilder.setArchetypeId(null);
+      myBuilder.setArchetype(null);
     }
     else {
-      myBuilder.setArchetypeId(new MavenId(archGroupId, archArtifactId, archVersion));
+      myBuilder.setArchetype(new ArchetypeInfo(archGroupId, archArtifactId, archVersion, archRepository));
     }
   }
 
@@ -148,14 +150,12 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     saveValue(INHERIT_GROUP_ID_KEY, myInheritGroupIdCheckBox.isSelected());
     saveValue(INHERIT_VERSION_KEY, myInheritVersionCheckBox.isSelected());
 
-    MavenId arch = getSelectedArtifactId();
-    String archGroupId = arch == null ? null : arch.groupId;
-    String archArtifactId = arch == null ? null : arch.artifactId;
-    String archVersion = arch == null ? null : arch.version;
-
-    saveValue(ARCHETYPE_GROUP_ID_KEY, archGroupId);
-    saveValue(ARCHETYPE_ARTIFACT_ID_KEY, archArtifactId);
-    saveValue(ARCHETYPE_VERSION_KEY, archVersion);
+    ArchetypeInfo arch = getSelectedArchetype();
+    if (arch == null) arch = new ArchetypeInfo(null, null, null, null);
+    saveValue(ARCHETYPE_GROUP_ID_KEY, arch.groupId);
+    saveValue(ARCHETYPE_ARTIFACT_ID_KEY, arch.artifactId);
+    saveValue(ARCHETYPE_VERSION_KEY, arch.version);
+    saveValue(ARCHETYPE_REPOSITORY_KEY, arch.repository);
   }
 
   private boolean getSavedValue(String key, boolean defaultValue) {
@@ -192,29 +192,27 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myGroupIdField.setText(myParent == null ? myBuilder.getName() : myParent.getMavenId().groupId);
     myVersionField.setText(myParent == null ? "1.0" : myParent.getMavenId().version);
 
-    MavenId selectedArchId = getSelectedArtifactId();
-    if (selectedArchId == null && myUseArchetypeCheckBox.isSelected()) {
-      selectedArchId = myBuilder.getArchetypeId();
+    ArchetypeInfo selectedArch = getSelectedArchetype();
+    if (selectedArch == null && myUseArchetypeCheckBox.isSelected()) {
+      selectedArch = myBuilder.getArchetype();
     }
 
     DefaultListModel model = new DefaultListModel();
-    List<Archetype> archetypes = new ArrayList<Archetype>(MavenIndicesManager.getInstance().getArchetypes());
+    List<ArchetypeInfo> archetypes = new ArrayList<ArchetypeInfo>(MavenIndicesManager.getInstance().getArchetypes());
 
-    Collections.sort(archetypes, new Comparator<Archetype>() {
-      public int compare(Archetype o1, Archetype o2) {
-        String key1 = o1.getGroupId() + ":" + o1.getArtifactId();
-        String key2 = o2.getGroupId() + ":" + o2.getArtifactId();
+    Collections.sort(archetypes, new Comparator<ArchetypeInfo>() {
+      public int compare(ArchetypeInfo o1, ArchetypeInfo o2) {
+        String key1 = o1.groupId + ":" + o1.artifactId;
+        String key2 = o2.groupId + ":" + o2.artifactId;
 
         int result = key1.compareToIgnoreCase(key2);
         if (result != 0) return result;
 
-        return o2.getVersion().compareToIgnoreCase(o1.getVersion());
+        return o2.version.compareToIgnoreCase(o1.version);
       }
     });
 
-    Archetype selectedArch = null;
-    for (Archetype each : archetypes) {
-      if (getArchetypeId(each).equals(selectedArchId)) selectedArch = each;
+    for (ArchetypeInfo each : archetypes) {
       model.addElement(each);
     }
     myArchetypesList.setModel(model);
@@ -292,16 +290,12 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
                                        myArtifactIdField.getText(),
                                        myVersionField.getText()));
 
-    myBuilder.setArchetypeId(getSelectedArtifactId());
+    myBuilder.setArchetype(getSelectedArchetype());
   }
 
-  private MavenId getSelectedArtifactId() {
+  private ArchetypeInfo getSelectedArchetype() {
     if (!myUseArchetypeCheckBox.isSelected() || myArchetypesList.isSelectionEmpty()) return null;
-    return getArchetypeId((Archetype)myArchetypesList.getSelectedValue());
-  }
-
-  private MavenId getArchetypeId(Archetype arch) {
-    return new MavenId(arch.getGroupId(), arch.getArtifactId(), arch.getVersion());
+    return (ArchetypeInfo)myArchetypesList.getSelectedValue();
   }
 
   @Override
@@ -311,11 +305,11 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private class MyCellRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      Archetype archetype = (Archetype)value;
+      ArchetypeInfo archetype = (ArchetypeInfo)value;
 
-      append(archetype.getGroupId() + ":", SimpleTextAttributes.GRAY_ATTRIBUTES);
-      append(archetype.getArtifactId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      append(":" + archetype.getVersion(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      append(archetype.groupId + ":", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      append(archetype.artifactId, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      append(":" + archetype.version, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ModuleRootManager;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenId;
@@ -50,7 +51,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testCreatingFromArchetype() throws Exception {
-    setArchetype(new MavenId("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0"));
+    setArchetype(new ArchetypeInfo("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null));
     MavenId id = new MavenId("org.foo", "module", "1.0");
     createNewModule(id);
 
@@ -143,7 +144,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setParentProject(myProjectPom);
     setInheritedOptions(true, true);
-    setArchetype(new MavenId("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0"));
+    setArchetype(new ArchetypeInfo("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null));
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
     assertEquals("<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
@@ -226,8 +227,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     myBuilder.setInheritedOptions(groupId, version);
   }
 
-  private void setArchetype(MavenId id) {
-    myBuilder.setArchetypeId(id);
+  private void setArchetype(ArchetypeInfo archetype) {
+    myBuilder.setArchetype(archetype);
   }
 
   private void createNewModule(MavenId id) throws Exception {

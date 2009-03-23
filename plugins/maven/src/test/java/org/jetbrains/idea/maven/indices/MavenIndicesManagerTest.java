@@ -85,10 +85,10 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
   }
 
   private void assertArchetypeExists(String archetypeId) {
-    Set<Archetype> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
+    Set<ArchetypeInfo> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
     List<String> actualNames = new ArrayList<String>();
-    for (Archetype each : achetypes) {
-      actualNames.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());
+    for (ArchetypeInfo each : achetypes) {
+      actualNames.add(each.groupId + ":" + each.artifactId + ":" + each.version);
     }
     assertTrue(actualNames.toString(), actualNames.contains(archetypeId));
   }

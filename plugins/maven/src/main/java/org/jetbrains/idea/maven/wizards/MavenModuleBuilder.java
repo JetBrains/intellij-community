@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +50,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   private boolean myInheritVersion;
 
   private MavenId myProjectId;
-  private MavenId myArchetypeId;
+  private ArchetypeInfo myArchetype;
 
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
     final VirtualFile root = createAndGetContentEntry();
@@ -86,7 +87,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         manager.addManagedFile(pom);
 
-        if (myArchetypeId == null) {
+        if (myArchetype == null) {
           try {
             VfsUtil.createDirectories(root.getPath() + "/src/main/java");
             VfsUtil.createDirectories(root.getPath() + "/src/test/java");
@@ -100,7 +101,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
         EditorHelper.openInEditor(getPsiFile(project, pom));
 
-        if (myArchetypeId != null) generateFromArchetype(project, pom);
+        if (myArchetype != null) generateFromArchetype(project, pom);
       }
     });
   }
@@ -142,9 +143,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     MavenRunnerSettings settings = runner.getState().clone();
     Map<String, String> props = settings.getMavenProperties();
 
-    props.put("archetypeGroupId", myArchetypeId.groupId);
-    props.put("archetypeArtifactId", myArchetypeId.artifactId);
-    props.put("archetypeVersion", myArchetypeId.version);
+    props.put("archetypeGroupId", myArchetype.groupId);
+    props.put("archetypeArtifactId", myArchetype.artifactId);
+    props.put("archetypeVersion", myArchetype.version);
+    if (myArchetype.repository != null) props.put("archetypeRepository", myArchetype.repository);
+
     props.put("groupId", myProjectId.groupId);
     props.put("artifactId", myProjectId.artifactId);
     props.put("version", myProjectId.version);
@@ -255,11 +258,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     return myProjectId;
   }
 
-  public void setArchetypeId(MavenId id) {
-    myArchetypeId = id;
+  public void setArchetype(ArchetypeInfo archetype) {
+    myArchetype = archetype;
   }
 
-  public MavenId getArchetypeId() {
-    return myArchetypeId;
+  public ArchetypeInfo getArchetype() {
+    return myArchetype;
   }
 }

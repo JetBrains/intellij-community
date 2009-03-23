@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.maven.archetype.catalog.Archetype;
@@ -250,20 +251,30 @@ public class MavenIndicesManager implements ApplicationComponent {
     });
   }
 
-  public Set<Archetype> getArchetypes() {
+  public Set<ArchetypeInfo> getArchetypes() {
     ensureInitialized();
     PlexusContainer container = myEmbedder.getPlexusContainer();
-    Set<Archetype> result = new HashSet<Archetype>();
+    Set<ArchetypeInfo> result = new HashSet<ArchetypeInfo>();
     result.addAll(getArchetypesFrom(container, "internal-catalog"));
     result.addAll(getArchetypesFrom(container, "nexus"));
+
+    for (MavenArchetypesProvider each : Extensions.getExtensions(MavenArchetypesProvider.EP_NAME)) {
+      result.addAll(each.getArchetypes());
+    }
     return result;
   }
 
-  private List<Archetype> getArchetypesFrom(PlexusContainer container, String roleHint) {
+  private List<ArchetypeInfo> getArchetypesFrom(PlexusContainer container, String roleHint) {
     try {
       ArchetypeDataSource source = (ArchetypeDataSource)container.lookup(ArchetypeDataSource.class, roleHint);
       ArchetypeCatalog catalog = source.getArchetypeCatalog(new Properties());
-      return catalog.getArchetypes();
+
+      List<ArchetypeInfo> result = new ArrayList<ArchetypeInfo>();
+      for (Archetype each : (Iterable<? extends Archetype>)catalog.getArchetypes()) {
+        result.add(new ArchetypeInfo(each));
+      }
+
+      return result;
     }
     catch (ComponentLookupException e) {
       MavenLog.LOG.warn(e);
