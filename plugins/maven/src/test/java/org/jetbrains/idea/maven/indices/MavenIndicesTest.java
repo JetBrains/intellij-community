@@ -9,7 +9,6 @@ import org.apache.lucene.search.WildcardQuery;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.NullMavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.sonatype.nexus.index.ArtifactInfo;
 
@@ -126,6 +125,22 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     String subDir = "subDir1/subDir2/index";
     initIndices(subDir);
     myIndices.add(myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+  }
+
+  public void testAddingCorrectlyToIndexer() throws Exception {
+    assertEquals(0, myIndices.getIndexer().getIndexingContexts().size());
+
+    MavenIndex i1 = myIndices.add(myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    assertEquals(1, myIndices.getIndexer().getIndexingContexts().size());
+
+    MavenIndex i2 = myIndices.add(myRepositoryHelper.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
+    assertEquals(2, myIndices.getIndexer().getIndexingContexts().size());
+
+    myIndices.updateOrRepair(i1, true, new EmptyProgressIndicator());
+    assertEquals(2, myIndices.getIndexer().getIndexingContexts().size());
+
+    myIndices.updateOrRepair(i2, true, new EmptyProgressIndicator());
+    assertEquals(2, myIndices.getIndexer().getIndexingContexts().size());
   }
 
   public void testClearingIndexDirOnLoadError() throws Exception {

@@ -253,7 +253,7 @@ public class MavenIndex {
     try {
       if (fullUpdate) {
         if (myKind == Kind.LOCAL) FileUtil.delete(getUpdateDir());
-        IndexingContext context = createContext(getUpdateDir());
+        IndexingContext context = createContext(getUpdateDir(), "update");
         try {
           updateContext(context, updater, proxyInfo, progress);
         }
@@ -281,11 +281,12 @@ public class MavenIndex {
     MavenLog.LOG.info("Failed to update Maven indices for: " + myRepositoryPathOrUrl, e);
   }
 
-  private IndexingContext createContext(File contextDir) throws IOException, UnsupportedExistingLuceneIndexException {
+  private IndexingContext createContext(File contextDir, String suffix) throws IOException, UnsupportedExistingLuceneIndexException {
+    String indexId = myDir.getName() + "-" + suffix;
     // Nexus cannot update index if the id does not equal to the stored one.
-    String id = contextDir.exists() ? null : myDir.getName();
-    return myIndexer.addIndexingContext(id,
-                                        id,
+    String repoId = contextDir.exists() ? null : myDir.getName();
+    return myIndexer.addIndexingContext(indexId,
+                                        repoId,
                                         getRepositoryFile(),
                                         contextDir,
                                         getRepositoryUrl(),
@@ -639,7 +640,7 @@ public class MavenIndex {
         groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
         groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
 
-        context = createContext(getDataContextDir(dir));
+        context = createContext(getDataContextDir(dir), dir.getName());
       }
       catch (IOException e) {
         close();

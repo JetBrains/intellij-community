@@ -60,24 +60,36 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
   }
 
   public void testDefaultArchetypes() throws Exception {
-    Set<Archetype> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
-    List<String> actualNames = new ArrayList<String>();
-    for (Archetype each : achetypes) {
-      actualNames.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());
-    }
-    assertTrue(actualNames.toString(), actualNames.contains("org.apache.maven.archetypes:maven-archetype-quickstart:RELEASE"));
+    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-quickstart:RELEASE");
   }
-  
+
   public void testIndexedArchetypes() throws Exception {
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
     myIndicesFixture.getIndicesManager().ensureIndicesExist(myIndicesFixture.getRepositoryHelper().getTestData("archetypes"),
                                                             Collections.<String>emptySet());
 
+    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
+  }
+
+  public void testIndexedArchetypesWithSeveralIndicesAfterReopening() throws Exception {
+    myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
+    myIndicesFixture.getIndicesManager().ensureIndicesExist(myIndicesFixture.getRepositoryHelper().getTestData("archetypes"),
+                                                            Collections.<String>singletonList("foo://bar.baz"));
+
+    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
+
+    myIndicesFixture.tearDown();
+    myIndicesFixture.setUp();
+
+    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
+  }
+
+  private void assertArchetypeExists(String archetypeId) {
     Set<Archetype> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
     List<String> actualNames = new ArrayList<String>();
     for (Archetype each : achetypes) {
       actualNames.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());
     }
-    assertTrue(actualNames.toString(), actualNames.contains("org.apache.maven.archetypes:maven-archetype-foobar:1.0"));
+    assertTrue(actualNames.toString(), actualNames.contains(archetypeId));
   }
 }

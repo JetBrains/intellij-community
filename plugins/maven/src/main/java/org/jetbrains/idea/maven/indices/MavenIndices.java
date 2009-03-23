@@ -8,9 +8,10 @@ import org.apache.maven.settings.Proxy;
 import org.apache.maven.wagon.proxy.ProxyInfo;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.sonatype.nexus.index.NexusIndexer;
 import org.sonatype.nexus.index.ArtifactContextProducer;
+import org.sonatype.nexus.index.NexusIndexer;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.File;
@@ -67,6 +68,11 @@ public class MavenIndices {
         MavenLog.LOG.warn(e);
       }
     }
+  }
+
+  @TestOnly
+  public NexusIndexer getIndexer() {
+    return myIndexer;
   }
 
   public synchronized void close() {
