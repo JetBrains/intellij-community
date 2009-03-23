@@ -10,6 +10,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,16 +26,16 @@ public class InspectionProfileWrapper {
     myProfile = (InspectionProfileImpl)profile;
   }
 
-  public InspectionTool[] getInspectionTools(){
+  public InspectionTool[] getInspectionTools(PsiElement element){
      return (InspectionTool[])myProfile.getInspectionTools();
   }
 
-  public List<LocalInspectionTool> getHighlightingLocalInspectionTools() {
+  public List<LocalInspectionTool> getHighlightingLocalInspectionTools(PsiElement element) {
     List<LocalInspectionTool> enabled = new ArrayList<LocalInspectionTool>();
-    final InspectionTool[] tools = getInspectionTools();
+    final InspectionTool[] tools = getInspectionTools(element);
     for (InspectionTool tool : tools) {
       if (tool instanceof LocalInspectionToolWrapper) {
-        if (myProfile.isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
+        if (myProfile.isToolEnabled(HighlightDisplayKey.find(tool.getShortName()), element)) {
           enabled.add(((LocalInspectionToolWrapper)tool).getTool());
         }
       }
@@ -44,6 +45,10 @@ public class InspectionProfileWrapper {
 
   public String getName() {
     return myProfile.getName();
+  }
+
+  public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
+    return myProfile.isToolEnabled(key, element);
   }
 
   public boolean isToolEnabled(final HighlightDisplayKey key) {

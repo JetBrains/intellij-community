@@ -58,7 +58,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
 
   private boolean wholeFileToolsDefined(PsiFile file) {
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(file);
-    final List<LocalInspectionTool> tools = profile.getHighlightingLocalInspectionTools();
+    final List<LocalInspectionTool> tools = profile.getHighlightingLocalInspectionTools(file);
     for (LocalInspectionTool tool : tools) {
       if (tool.runForWholeFile()) return true;
     }

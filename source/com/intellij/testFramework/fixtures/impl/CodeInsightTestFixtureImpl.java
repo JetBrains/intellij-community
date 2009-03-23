@@ -704,7 +704,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
       }
 
-      public boolean isToolEnabled(HighlightDisplayKey key) {
+      public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
         return key != null && key.toString() != null && myAvailableTools != null && myAvailableTools.containsKey(key.toString());
       }
 

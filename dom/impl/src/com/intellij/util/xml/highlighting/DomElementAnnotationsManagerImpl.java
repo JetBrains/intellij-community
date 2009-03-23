@@ -269,7 +269,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     final InspectionProfile profile = getInspectionProfile(fileElement);
     final List<DomElementsInspection> inspections = new SmartList<DomElementsInspection>();
     for (final InspectionProfileEntry profileEntry : profile.getInspectionTools()) {
-      if (!enabledOnly || profile.isToolEnabled(HighlightDisplayKey.find(profileEntry.getShortName()))) {
+      if (!enabledOnly || profile.isToolEnabled(HighlightDisplayKey.find(profileEntry.getShortName()), fileElement.getFile())) {
         ContainerUtil.addIfNotNull(getSuitableInspection(profileEntry, rootType), inspections);
       }
     }

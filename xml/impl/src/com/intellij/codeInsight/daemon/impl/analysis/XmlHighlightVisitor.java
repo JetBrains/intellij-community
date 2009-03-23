@@ -329,7 +329,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
     final IntentionAction intentionAction = inspection.getIntentionAction(name, type);
-    if (htmlTag && profile.isToolEnabled(key)) {
+    if (htmlTag && profile.isToolEnabled(key, tag)) {
       addElementsForTagWithManyQuickFixes(
         tag,
         localizedMessage,

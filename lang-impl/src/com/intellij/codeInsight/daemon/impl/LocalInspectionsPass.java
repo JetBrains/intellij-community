@@ -362,7 +362,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
-    if (!inspectionProfile.isToolEnabled(key)) return null;
+    if (!inspectionProfile.isToolEnabled(key, myFile)) return null;
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(psiElement), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(message.replaceAll("<[^>]*>", "")) : message;
@@ -437,7 +437,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
-    return profile.getHighlightingLocalInspectionTools();
+    return profile.getHighlightingLocalInspectionTools(myFile);
   }
 
   private static void inspectInjectedPsi(PsiFile injectedPsi, List<InjectedPsiInspectionResult> result, List<LocalInspectionTool> tools) {

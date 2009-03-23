@@ -128,7 +128,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     profile.init(manager.getProject());
     Collection<InspectionTool> suppressedTools = new THashSet<InspectionTool>();
 
-    InspectionTool[] tools = profile.getInspectionTools();
+    InspectionTool[] tools = profile.getInspectionTools(psiElement);
     for (Collection<String> ids : suppressedScopes.values()) {
       for (String id : ids) {
         String shortName = id.trim();

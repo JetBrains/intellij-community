@@ -73,7 +73,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
       }
 
-      public boolean isToolEnabled(HighlightDisplayKey key) {
+      public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
         return key != null && myAvailableTools.containsKey(key.toString());
       }
 

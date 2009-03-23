@@ -56,7 +56,7 @@ public abstract class BaseFormInspection extends BaseJavaLocalInspectionTool imp
   public boolean isActive(PsiElement psiRoot) {
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiRoot.getProject()).getInspectionProfile(psiRoot);
     HighlightDisplayKey key = HighlightDisplayKey.find(myInspectionKey);
-    return key != null && profile.isToolEnabled(key);
+    return key != null && profile.isToolEnabled(key, psiRoot);
   }
 
   @Nullable public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {

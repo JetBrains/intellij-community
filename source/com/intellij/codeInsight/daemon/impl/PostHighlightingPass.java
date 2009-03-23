@@ -182,16 +182,16 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
     myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME);
-    boolean unusedSymbolEnabled = profile.isToolEnabled(myUnusedSymbolKey);
+    boolean unusedSymbolEnabled = profile.isToolEnabled(myUnusedSymbolKey, myFile);
     HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME);
-    boolean unusedImportEnabled = profile.isToolEnabled(unusedImportKey);
+    boolean unusedImportEnabled = profile.isToolEnabled(unusedImportKey, myFile);
     LocalInspectionToolWrapper unusedSymbolTool = (LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME);
     myUnusedSymbolInspection = unusedSymbolTool == null ? null : (UnusedSymbolLocalInspection)unusedSymbolTool.getTool();
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myUnusedSymbolInspection != null);
 
     HighlightDisplayKey deadCodeKey = HighlightDisplayKey.find(DeadCodeInspection.SHORT_NAME);
     myDeadCodeInspection = (DeadCodeInspection)profile.getInspectionTool(DeadCodeInspection.SHORT_NAME);
-    myDeadCodeEnabled = profile.isToolEnabled(deadCodeKey);
+    myDeadCodeEnabled = profile.isToolEnabled(deadCodeKey, myFile);
     if (unusedImportEnabled && PsiUtil.isInJspFile(myFile)) {
       final JspFile jspFile = PsiUtil.getJspFile(myFile);
       if (jspFile != null) {

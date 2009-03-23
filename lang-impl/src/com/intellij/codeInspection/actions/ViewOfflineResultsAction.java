@@ -37,6 +37,7 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +146,7 @@ public class ViewOfflineResultsAction extends AnAction {
     }
     else {
       inspectionProfile = new InspectionProfileImpl("Server Side") {
-        public boolean isToolEnabled(final HighlightDisplayKey key) {
+        public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
           return resMap.containsKey(key.toString());
         }
 

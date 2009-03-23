@@ -418,7 +418,8 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkRawToGenericAssignment(PsiType lType, PsiType rType, @NotNull final PsiElement elementToHighlight) {
     if (!PsiUtil.isLanguageLevel5OrHigher(elementToHighlight)) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
-    if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getInspectionProfile(elementToHighlight).isToolEnabled(key)) return null;
+    if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getInspectionProfile(elementToHighlight).isToolEnabled(key,
+                                                                                                                                             elementToHighlight)) return null;
     if (!isRawToGeneric(lType, rType)) return null;
     String description = JavaErrorMessages.message("generics.unchecked.assignment",
                                                    HighlightUtil.formatType(rType),
@@ -507,7 +508,7 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkUncheckedTypeCast(PsiTypeCastExpression typeCast) {
     if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
-    if (!InspectionProjectProfileManager.getInstance(typeCast.getProject()).getInspectionProfile(typeCast).isToolEnabled(key)) return null;
+    if (!InspectionProjectProfileManager.getInstance(typeCast.getProject()).getInspectionProfile(typeCast).isToolEnabled(key, typeCast)) return null;
     final PsiTypeElement typeElement = typeCast.getCastType();
     if (typeElement == null) return null;
     final PsiType castType = typeElement.getType();
@@ -594,7 +595,7 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkUncheckedCall(JavaResolveResult resolveResult, PsiCall call) {
     if (!PsiUtil.isLanguageLevel5OrHigher(call)) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
-    if (!InspectionProjectProfileManager.getInstance(call.getProject()).getInspectionProfile(call).isToolEnabled(key)) return null;
+    if (!InspectionProjectProfileManager.getInstance(call.getProject()).getInspectionProfile(call).isToolEnabled(key, call)) return null;
 
     final PsiMethod method = (PsiMethod)resolveResult.getElement();
     if (method == null) return null;
@@ -1080,7 +1081,7 @@ public class GenericsHighlightUtil {
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     final InspectionProfile inspectionProfile =
       InspectionProjectProfileManager.getInstance(overrider.getProject()).getInspectionProfile(overrider);
-    if (!inspectionProfile.isToolEnabled(key)) return null;
+    if (!inspectionProfile.isToolEnabled(key, overrider)) return null;
     final LocalInspectionTool tool =
       ((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(UncheckedWarningLocalInspection.SHORT_NAME)).getTool();
     if (InspectionManagerEx.inspectionResultSuppressed(overrider, tool)) return null;

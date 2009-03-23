@@ -20,6 +20,11 @@ import com.intellij.profile.ProfileEx;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.packageDependencies.DependencyValidationManager;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -521,9 +526,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
-  public boolean isToolEnabled(HighlightDisplayKey key) {
+  public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
     final ToolState toolState = getToolState(key.toString());
-    return toolState != null && toolState.isEnabled();    
+    return toolState != null && toolState.isEnabled() && (element == null || toolState.myScope.contains(element.getContainingFile(), DependencyValidationManager.getInstance(element.getProject())));
+  }
+
+  public boolean isToolEnabled(HighlightDisplayKey key) {
+    return isToolEnabled(key, null);
   }
 
   public boolean isExecutable() {
@@ -603,6 +612,23 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     private final HighlightDisplayLevel myLevel;
     private boolean myEnabled;
     private Element myToolElement = null;
+    private PackageSet myScope = new PackageSet() {
+      public boolean contains(PsiFile file, NamedScopesHolder holder) {
+        return true;
+      }
+
+      public PackageSet createCopy() {
+        return this;
+      }
+
+      public String getText() {
+        return "file:*//*";
+      }
+
+      public int getNodePriority() {
+        return 0;
+      }
+    };
 
     private ToolState(final HighlightDisplayLevel level, final boolean enabled) {
       myLevel = level;

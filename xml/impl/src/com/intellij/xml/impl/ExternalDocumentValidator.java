@@ -339,7 +339,7 @@ public class ExternalDocumentValidator {
       (LocalInspectionToolWrapper)profile.getInspectionTool(CheckXmlFileWithXercesValidatorInspection.SHORT_NAME);
 
     if (toolWrapper == null) return;
-    if (!profile.isToolEnabled(HighlightDisplayKey.find(CheckXmlFileWithXercesValidatorInspection.SHORT_NAME))) return;
+    if (!profile.isToolEnabled(HighlightDisplayKey.find(CheckXmlFileWithXercesValidatorInspection.SHORT_NAME), containingFile)) return;
 
     SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
     ExternalDocumentValidator validator = validatorReference != null? validatorReference.get() : null;

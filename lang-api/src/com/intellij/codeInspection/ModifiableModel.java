@@ -19,6 +19,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.Profile;
+import com.intellij.psi.PsiElement;
 
 import java.io.IOException;
 
@@ -45,6 +46,8 @@ public interface ModifiableModel extends Profile {
   HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey);
 
   boolean isToolEnabled(HighlightDisplayKey key);
+
+  boolean isToolEnabled(HighlightDisplayKey key, PsiElement element);
 
   void commit() throws IOException;
 

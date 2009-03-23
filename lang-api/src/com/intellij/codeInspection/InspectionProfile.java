@@ -19,6 +19,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.Profile;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,6 +39,8 @@ public interface InspectionProfile extends Profile {
 
   @NotNull
   ModifiableModel getModifiableModel();
+
+  boolean isToolEnabled(HighlightDisplayKey key, PsiElement element);
 
   boolean isToolEnabled(HighlightDisplayKey key);
 

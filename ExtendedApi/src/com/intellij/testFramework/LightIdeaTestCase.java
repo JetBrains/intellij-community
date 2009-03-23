@@ -47,10 +47,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -303,7 +300,7 @@ import java.util.Map;
         return new InspectionTool[0];
       }
 
-      public boolean isToolEnabled(HighlightDisplayKey key) {
+      public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
         return key != null && availableInspectionTools.containsKey(key.toString());
       }
 
