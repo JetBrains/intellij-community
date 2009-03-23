@@ -61,8 +61,10 @@ public class EclipseUserLibrariesHelper {
   }
 
   public static void appendProjectLibraries(final Project project, final File userLibrariesFile) throws IOException {
-    if (!userLibrariesFile.getParentFile().isDirectory()) {
-      if (!userLibrariesFile.getParentFile().mkdir()) return;
+    final File parentFile = userLibrariesFile.getParentFile();
+    if (parentFile == null) return;
+    if (!parentFile.isDirectory()) {
+      if (!parentFile.mkdir()) return;
     }
     final Element userLibsElement = new Element("eclipse-userlibraries");
     final Library[] libraries = ProjectLibraryTable.getInstance(project).getLibraries();
