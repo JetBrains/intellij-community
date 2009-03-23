@@ -451,18 +451,23 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   protected class MySaveSession implements SaveSession {
     CompoundSaveSession myCompoundSaveSession;
+
+    /*
     private final String myCreationPoint;
 
     @Override
     public String toString() {
       return super.toString() + " " + myCreationPoint;
     }
+    */
 
     public MySaveSession(final MyExternalizationSession externalizationSession) {
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
 
+      /*
       RuntimeException creationPoint = new RuntimeException();
       myCreationPoint = StringUtil.getThrowableText(creationPoint);
+      */
 
       Map<IFile, StateStorage> fileToStorage = new HashMap<IFile, StateStorage>();
       fileToStorage.clear();
