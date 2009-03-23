@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.RangeHighlighterImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -219,6 +220,7 @@ public class UpdateHighlightersUtil {
         RangeHighlighterEx highlighter;
         if (toRemove != null && toRemove.highlighter.isValid()) {
           highlighter = toRemove.highlighter;
+          ((RangeHighlighterImpl)highlighter).setTextAttributes(info.getTextAttributes(psiFile));
         }
         else {
           highlighter = createRangeHighlighter(project, psiFile, info, infoStartOffset, infoEndOffset, markup);
