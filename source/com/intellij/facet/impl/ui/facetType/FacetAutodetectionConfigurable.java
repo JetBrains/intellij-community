@@ -47,7 +47,6 @@ public class FacetAutodetectionConfigurable implements Configurable {
   private JList myFilesList;
   private JButton myRemoveFileButton;
   private JPanel mySettingsPanel;
-  private JLabel mySkipFilesLabel;
   private JPanel mySkipFilesListPanel;
   private final DefaultListModel myModulesListModel;
   private final DefaultListModel myFilesListModel;
@@ -270,9 +269,7 @@ public class FacetAutodetectionConfigurable implements Configurable {
       }
     }
     myAutodetectionWasEnabled = myEnableAutoDetectionCheckBox.isSelected();
-    mySkipFilesLabel.setVisible(!myFilesListModel.isEmpty());
     mySkipFilesListPanel.setVisible(!myFilesListModel.isEmpty());
-    myRemoveFileButton.setVisible(!myFilesListModel.isEmpty());
     updateButtons();
   }
 
