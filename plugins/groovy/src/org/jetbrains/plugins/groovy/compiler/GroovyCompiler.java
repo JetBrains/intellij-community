@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.compiler.impl.javaCompiler.OutputItemImpl;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -75,8 +74,6 @@ import java.util.*;
 public class GroovyCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovyCompiler");
 
-  private static final String XMX_COMPILER_PROPERTY = "-Xmx300m";
-
   private final Project myProject;
   @NonNls private static final String GROOVY_COMPILER = "groovy compiler";
 
@@ -117,10 +114,6 @@ public class GroovyCompiler implements TranslatingCompiler {
     assert sdkType instanceof JavaSdkType;
     commandLine.setExePath(((JavaSdkType)sdkType).getVMExecutablePath(sdk));
 
-//      for debug
-//      commandLine.addParameter("-Xdebug");
-//      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=127.0.0.1:5557");
-
     String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
     final StringBuilder classPathBuilder = new StringBuilder();
     classPathBuilder.append(rtJarPath);
@@ -154,9 +147,11 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     commandLine.addParameter("-cp");
     commandLine.addParameter(classPathBuilder.toString());
-    commandLine.addParameter(XMX_COMPILER_PROPERTY);
-    //commandLine.addParameter("-Xdebug");
-    //commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
+
+    commandLine.addParameter("-Xmx" + System.getProperty("groovy.compiler.Xmx", "400m"));
+
+    //debug
+    //commandLine.addParameter("-Xdebug"); commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
     // Setting up process encoding according to locale
     final ArrayList<String> list = new ArrayList<String>();
@@ -203,7 +198,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
       if (unparsedBuffer.length() != 0) compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
 
-      addSuccessfullyCompiled(successfullyCompiled, processHandler);
+      successfullyCompiled.addAll(processHandler.getSuccessfullyCompiled());
     }
     catch (ExecutionException e) {
       LOG.error(e);
@@ -231,26 +226,6 @@ public class GroovyCompiler implements TranslatingCompiler {
     });
     return buffer.toString();
   }
-
-  private static void addSuccessfullyCompiled(Set<OutputItem> successfullyCompiled, GroovycOSProcessHandler processHandler) {
-    Set<OutputItem> toplevel = processHandler.getSuccessfullyCompiled();
-    for (OutputItem item : toplevel) { //add closure files
-      VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getOutputPath());
-      if (vFile != null) {//defensive check
-        VirtualFile parent = vFile.getParent();
-        assert parent != null;
-        parent.refresh(false, false);
-        String prefix = vFile.getNameWithoutExtension() + "$_closure";
-        for (VirtualFile child : parent.getChildren()) {
-          if (child.getName().startsWith(prefix)) {
-            successfullyCompiled.add(new OutputItemImpl(item.getOutputRootDirectory(), new String(child.getPath().substring(item.getOutputRootDirectory().length() + 1)), item.getSourceFile()));
-          }
-        }
-      }
-      successfullyCompiled.add(item);
-    }
-  }
-
 
   static HashSet<String> required = new HashSet<String>();
 

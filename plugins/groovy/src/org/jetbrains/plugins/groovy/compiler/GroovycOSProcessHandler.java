@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,18 +53,31 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
     super.notifyTextAvailable(text, outputType);
 //    System.out.println("text: " + text);
 
-    parseOutput(text);
+    parseOutput(text, outputType == ProcessOutputTypes.STDERR);
   }
 
   private final StringBuffer outputBuffer = new StringBuffer();
 
-  public void parseOutput(String text) {
+  private void parseOutput(String text, boolean error) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Received from groovyc: " + text);
     }
 
     text = text.trim();
-    if (text != null && !"".equals(text)) {
+
+
+    if (text.startsWith(GroovycRunner.PRESENTABLE_MESSAGE)) {
+      myContext.getProgressIndicator().setText(text.substring(GroovycRunner.PRESENTABLE_MESSAGE.length()));
+      return;
+    }
+
+    if (GroovycRunner.CLEAR_PRESENTABLE.equals(text)) {
+      myContext.getProgressIndicator().setText("Groovy compiler in operation...");
+      return;
+    }
+
+
+    if (StringUtil.isNotEmpty(text)) {
       outputBuffer.append(text);
 
       //compiled start marker have to be in the beginning on each string
@@ -105,7 +119,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
             outputRootDirectory = token;
           }
 
-          myContext.getProgressIndicator().setText(sourceFile);
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(outputPath);
           final TranslatingCompiler.OutputItem item = getOutputItem(outputPath, sourceFile, outputRootDirectory);
           if (item != null) {
             compiledFilesNames.add(item);
@@ -175,7 +189,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         compilerMessages.add(new CompilerMessage(category, message, url, linenumInt, colomnnumInt));
       }
       else {
-        if (outputBuffer.indexOf("Exception") != -1) unparsedOutput.append(outputBuffer);
+        if (error) unparsedOutput.append(outputBuffer);
         outputBuffer.setLength(0);
       }
     }

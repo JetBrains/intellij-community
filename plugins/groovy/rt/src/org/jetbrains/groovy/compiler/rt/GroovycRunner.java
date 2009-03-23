@@ -18,8 +18,10 @@ package org.jetbrains.groovy.compiler.rt;
 import com.yourkit.api.Controller;
 import com.yourkit.api.ProfilingModes;
 import groovy.lang.GroovyClassLoader;
+import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilationUnit;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.Phases;
 import org.codehaus.groovy.control.messages.WarningMessage;
 
 import java.io.*;
@@ -34,7 +36,6 @@ import java.util.*;
  */
 
 public class GroovycRunner {
-  static CompilationUnitsFactory myFactory = new CompilationUnitsFactory();
 
   public static final String CLASSPATH = "classpath";
   public static final String IS_GRAILS = "is_grails";
@@ -57,6 +58,8 @@ public class GroovycRunner {
   public static final String SEPARATOR = "#";
 
   public static final Controller ourController = initController();
+  public static final String PRESENTABLE_MESSAGE = "@#$%@# Presentable:";
+  public static final String CLEAR_PRESENTABLE = "$@#$%^ CLEAR_PRESENTABLE";
 
   private GroovycRunner() {
   }
@@ -176,7 +179,6 @@ public class GroovycRunner {
       }
 
 
-      MyGroovyCompiler groovyCompiler = new MyGroovyCompiler();
       if (srcFiles.isEmpty() && testFiles.isEmpty()) return;
 
       MyCompilationUnits myCompilationUnits =
@@ -184,10 +186,8 @@ public class GroovycRunner {
                                encoding);
 
       MessageCollector messageCollector = new MessageCollector();
-      MyGroovyCompiler.MyExitStatus exitStatus = groovyCompiler.compile(messageCollector, myCompilationUnits);
+      MyCompilationUnits.OutputItem[] successfullyCompiled = MyGroovyCompiler.compile(messageCollector, myCompilationUnits);
 
-
-      MyCompilationUnits.OutputItem[] successfullyCompiled = exitStatus.getSuccessfullyCompiled();
       Set allCompiling = new HashSet();
       allCompiling.addAll(srcFiles);
       allCompiling.addAll(testFiles);
@@ -271,20 +271,24 @@ public class GroovycRunner {
                                                            String ordinaryOutputPath,
                                                            boolean isGrailsModule,
                                                            final String encoding) {
+    System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading classpath...");
     final CompilationUnit sourceUnit = createCompilationUnit(class2File, classpath, ordinaryOutputPath, isGrailsModule, encoding);
     final CompilationUnit testUnit = createCompilationUnit(Collections.EMPTY_MAP, classpath, testOutputPath, isGrailsModule, encoding);
-    MyCompilationUnits myCompilationUnits = myFactory.create(sourceUnit, testUnit);
+    MyCompilationUnits myCompilationUnits = new MyCompilationUnits(sourceUnit, testUnit);
 
+    System.out.println(PRESENTABLE_MESSAGE + "Loading Groovy sources...");
     for (int i = 0; i < srcFilesToCompile.size(); i++) {
       File fileToCompile = (File) srcFilesToCompile.get(i);
       myCompilationUnits.add(fileToCompile, false);
     }
 
+    System.out.println(PRESENTABLE_MESSAGE + "Loading Groovy test sources...");
     for (int i = 0; i < testFilesToCompile.size(); i++) {
       File fileToCompile = (File) testFilesToCompile.get(i);
       myCompilationUnits.add(fileToCompile, true);
     }
 
+    System.out.println(CLEAR_PRESENTABLE);
 
     return myCompilationUnits;
   }
@@ -300,7 +304,15 @@ public class GroovycRunner {
     compilerConfiguration.setClasspath(classpath);
     compilerConfiguration.setTargetDirectory(outputPath);
 
-    CompilationUnit compilationUnit = new CompilationUnit(compilerConfiguration, null, buildClassLoaderFor(compilerConfiguration));
+    CompilationUnit compilationUnit = new CompilationUnit(compilerConfiguration, null, buildClassLoaderFor(compilerConfiguration)) {
+
+      public void gotoPhase(int phase) throws CompilationFailedException {
+        super.gotoPhase(phase);
+        if (phase <= Phases.ALL) {
+          System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: " + getPhaseDescription());
+        }
+      }
+    };
 
     /**
      * Adding here framework-specific Phase operations

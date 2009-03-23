@@ -50,19 +50,30 @@ public class MyCompilationUnits {
   }
 
   private void addSource(File file) {
-    sourceFilesToCompile.add(sourceCompilationUnit.addSource(new File(file.getPath())));
+    sourceFilesToCompile.add(addSourceUnit(file, sourceCompilationUnit));
   }
 
   private void addTest(File file) {
-    testFilesToCompile.add(testCompilationUnit.addSource(new File(file.getPath())));
+    testFilesToCompile.add(addSourceUnit(file, testCompilationUnit));
   }
 
-  public void compile(MessageCollector collector, List compiledFiles, List filesToRecompile) {
-    compile(collector, sourceCompilationUnit, compiledFiles, filesToRecompile);
-    compile(collector, testCompilationUnit, compiledFiles, filesToRecompile);
+  private static SourceUnit addSourceUnit(final File file, final CompilationUnit unit) {
+    return unit.addSource(new SourceUnit(file, unit.getConfiguration(), unit.getClassLoader(),
+                                         unit.getErrorCollector()) {
+      public void parse() throws CompilationFailedException {
+        System.out.println(GroovycRunner.PRESENTABLE_MESSAGE + "Parsing " + file.getName() + "...");
+        super.parse();
+        System.out.println(GroovycRunner.CLEAR_PRESENTABLE);
+      }
+    });
   }
 
-  void compile(MessageCollector collector, CompilationUnit compilationUnit, List compiledFiles, List filesToRecompile) {
+  public void compile(MessageCollector collector, List compiledFiles) {
+    compile(collector, sourceCompilationUnit, compiledFiles);
+    compile(collector, testCompilationUnit, compiledFiles);
+  }
+
+  void compile(MessageCollector collector, CompilationUnit compilationUnit, List compiledFiles) {
     try {
       compilationUnit.compile();
       addCompiledFiles(compilationUnit, compiledFiles);
@@ -89,8 +100,8 @@ public class MyCompilationUnits {
       SourceUnit sourceUnit = (SourceUnit) iterator.next();
       String fileName = sourceUnit.getName();
       //for debug purposes
-      System.out.println("source: " + fileName);
-      System.out.print("classes:");
+      //System.out.println("source: " + fileName);
+      //System.out.print("classes:");
       final List topLevelClasses = sourceUnit.getAST().getClasses();
 
       for (int i = 0; i < topLevelClasses.size(); i++) {
@@ -101,18 +112,18 @@ public class MyCompilationUnits {
           String className = (String)tailIter.next();
           if (className.equals(topLevel) || className.startsWith(nested)) {
             tailIter.remove();
-            System.out.print("  " + className);
+            //System.out.print("  " + className);
             compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + className.replace('.', '/') + ".class", fileName));
           } else {
             break;
           }
         }
       }
-      System.out.println("");
+      //System.out.println("");
     }
   }
 
-  private void addWarnings(ErrorCollector errorCollector, MessageCollector collector) {
+  private static void addWarnings(ErrorCollector errorCollector, MessageCollector collector) {
     for (int i = 0; i < errorCollector.getWarningCount(); i++) {
       WarningMessage warning = errorCollector.getWarning(i);
       collector.addMessage(MessageCollector.WARNING, warning.getMessage(), null, -1, -1);
