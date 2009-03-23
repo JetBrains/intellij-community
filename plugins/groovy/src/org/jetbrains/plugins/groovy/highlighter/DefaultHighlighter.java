@@ -135,7 +135,7 @@ public class DefaultHighlighter {
   public static final TextAttributes UNTYPED_ACCESS_ATTRIB = HighlighterColors.TEXT.getDefaultAttributes().clone();
   static {
     UNTYPED_ACCESS_ATTRIB.setForegroundColor(Color.BLACK);
-    UNTYPED_ACCESS_ATTRIB.setEffectColor(Color.BLACK);
+    UNTYPED_ACCESS_ATTRIB.setEffectColor(Color.GRAY);
     UNTYPED_ACCESS_ATTRIB.setEffectType(EffectType.LINE_UNDERSCORE);
   }
   public static TextAttributesKey UNTYPED_ACCESS = TextAttributesKey.createTextAttributesKey(UNTYPED_ACCESS_ID, UNTYPED_ACCESS_ATTRIB);
@@ -145,7 +145,7 @@ public class DefaultHighlighter {
   static{
     UNRESOLVED_ACCESS_ATTRIBUTES.setForegroundColor(Color.BLACK);
     UNRESOLVED_ACCESS_ATTRIBUTES.setEffectColor(Color.BLACK);
-    UNRESOLVED_ACCESS_ATTRIBUTES.setEffectType(EffectType.WAVE_UNDERSCORE);
+    UNRESOLVED_ACCESS_ATTRIBUTES.setEffectType(EffectType.LINE_UNDERSCORE);
   }
   public static TextAttributesKey UNRESOLVED_ACCESS = TextAttributesKey.createTextAttributesKey(UNRESOLVED_ACCESS_ID, UNRESOLVED_ACCESS_ATTRIBUTES);
 }
