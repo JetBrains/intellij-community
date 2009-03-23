@@ -120,12 +120,12 @@ public class ExportEclipseProjectsAction extends AnAction {
             model.dispose();
           }
         }
-        try {
-          EclipseUserLibrariesHelper.appendProjectLibraries(project, dialog.getUserLibrariesFile());
-        }
-        catch (IOException e1) {
-          LOG.error(e1);
-        }
+      }
+      try {
+        EclipseUserLibrariesHelper.appendProjectLibraries(project, dialog.getUserLibrariesFile());
+      }
+      catch (IOException e1) {
+        LOG.error(e1);
       }
       project.save();
     }
