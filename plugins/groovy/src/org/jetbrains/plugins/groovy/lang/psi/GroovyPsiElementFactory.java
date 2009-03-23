@@ -87,6 +87,7 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrVariableDeclaration createVariableDeclaration(String[] modifiers, GrExpression initializer, PsiType type, String... identifiers);
 
+  @NotNull
   public abstract PsiElement createReferenceNameFromText(String idText);
 
   public abstract PsiElement createDocMemberReferenceNameFromText(String idText);

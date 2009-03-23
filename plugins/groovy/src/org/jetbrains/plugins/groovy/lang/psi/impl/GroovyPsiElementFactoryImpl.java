@@ -69,13 +69,16 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   private static final String DUMMY = "dummy.";
 
-  @Nullable
+  @NotNull
   public PsiElement createReferenceNameFromText(String refName) {
     PsiFile file = createGroovyFile("a." + refName);
     GrTopStatement statement = ((GroovyFileBase) file).getTopStatements()[0];
     if (!(statement instanceof GrReferenceExpression)) return null;
-
-    return ((GrReferenceExpression) statement).getReferenceNameElement();
+    final PsiElement element = ((GrReferenceExpression)statement).getReferenceNameElement();
+    if (element == null) {
+      throw new IncorrectOperationException("Incorrect reference name: " + refName);
+    }
+    return element;
   }
 
   public PsiElement createDocMemberReferenceNameFromText(String idText) {
