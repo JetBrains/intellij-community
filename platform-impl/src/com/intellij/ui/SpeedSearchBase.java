@@ -111,6 +111,15 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   public static class SpeedSearchComparator {
     private Matcher myRecentSearchMatcher;
     private String myRecentSearchText;
+    private boolean myShouldMatchFromTheBeginning;
+
+    public SpeedSearchComparator() {
+      this(true);
+    }
+
+    public SpeedSearchComparator(boolean shouldMatchFromTheBeginning) {
+      myShouldMatchFromTheBeginning = shouldMatchFromTheBeginning;
+    }
 
     public boolean doCompare(String pattern, String text) {
       if (myRecentSearchText != null &&
@@ -144,7 +153,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
     }
 
     public void translatePattern(final StringBuilder buf, final String pattern) {
-      buf.append('^'); // match from the line start
+      if (myShouldMatchFromTheBeginning) buf.append('^'); // match from the line start
       final int len = pattern.length();
       for (int i = 0; i < len; ++i) {
         translateCharacter(buf, pattern.charAt(i));

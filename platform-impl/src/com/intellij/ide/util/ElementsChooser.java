@@ -109,14 +109,7 @@ public class ElementsChooser<T> extends JPanel {
         }
       }
     };
-    speedSearch.setComparator(    new SpeedSearchBase.SpeedSearchComparator() {
-      public void translatePattern(final StringBuilder buf, final String pattern) {
-        final int len = pattern.length();
-        for (int i = 0; i < len; ++i) {
-          translateCharacter(buf, pattern.charAt(i));
-        }
-      }
-    });
+    speedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
     setElements(elements, marked);
   }
 
