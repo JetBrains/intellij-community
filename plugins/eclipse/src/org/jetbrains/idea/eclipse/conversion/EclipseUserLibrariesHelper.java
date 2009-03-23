@@ -61,6 +61,7 @@ public class EclipseUserLibrariesHelper {
   }
 
   public static void appendProjectLibraries(final Project project, final File userLibrariesFile) throws IOException {
+    if (userLibrariesFile.exists() && !userLibrariesFile.isFile()) return;
     final File parentFile = userLibrariesFile.getParentFile();
     if (parentFile == null) return;
     if (!parentFile.isDirectory()) {
