@@ -25,15 +25,17 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public abstract class GlobalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
@@ -62,20 +64,65 @@ public abstract class GlobalSearchScope extends SearchScope {
   private static final String ALL_SCOPE_NAME = PsiBundle.message("psi.search.scope.project.and.libraries");
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
-    if (ALL_SCOPE_NAME.equals(scope.getDisplayName())) return this;
-    return intersection(this, scope);
+    if (ALL_SCOPE_NAME.equals(scope.getDisplayName()) || scope == this) return this;
+    return new IntersectionScope(this, scope, null);
   }
 
-  private static GlobalSearchScope intersection(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
-    return new IntersectionScope(scope1, scope2, null);
+  @NotNull
+  @Override
+  public SearchScope intersectWith(@NotNull SearchScope scope2) {
+    if (scope2 instanceof LocalSearchScope) {
+      LocalSearchScope localScope2 = (LocalSearchScope)scope2;
+      return intersectWith(localScope2);
+    }
+    return intersectWith((GlobalSearchScope)scope2);
   }
 
-  private static GlobalSearchScope union(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
-    return new UnionScope(scope1, scope2, null);
+  public SearchScope intersectWith(LocalSearchScope localScope2) {
+    PsiElement[] elements2 = localScope2.getScope();
+    List<PsiElement> result = new ArrayList<PsiElement>(elements2.length);
+    for (final PsiElement element2 : elements2) {
+      if (PsiSearchScopeUtil.isInScope(this, element2)) {
+        result.add(element2);
+      }
+    }
+    return new LocalSearchScope(result.toArray(new PsiElement[result.size()]), null, localScope2.isIgnoreInjectedPsi());
   }
+
+  @NotNull
+  public SearchScope union(SearchScope scope) {
+    if (scope instanceof GlobalSearchScope) return uniteWith((GlobalSearchScope)scope);
+    return union((LocalSearchScope)scope);
+  }
+
+  @NotNull
+  public SearchScope union(final LocalSearchScope scope) {
+    return new GlobalSearchScope() {
+      @Override
+      public boolean contains(VirtualFile file) {
+        return GlobalSearchScope.this.contains(file) || scope.isInScope(file);
+      }
+
+      @Override
+      public int compare(VirtualFile file1, VirtualFile file2) {
+        return GlobalSearchScope.this.contains(file1) && GlobalSearchScope.this.contains(file2) ? GlobalSearchScope.this.compare(file1, file2) : 0;
+      }
+
+      @Override
+      public boolean isSearchInModuleContent(@NotNull Module aModule) {
+        return GlobalSearchScope.this.isSearchInModuleContent(aModule);
+      }
+
+      @Override
+      public boolean isSearchInLibraries() {
+        return GlobalSearchScope.this.isSearchInLibraries();
+      }
+    };
+  }
+
   public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
-    if (ALL_SCOPE_NAME.equals(scope.getDisplayName())) return scope;
-    return union(this, scope);
+    if (ALL_SCOPE_NAME.equals(scope.getDisplayName()) || scope == this) return scope;
+    return new UnionScope(this, scope, null);
   }
 
   public static GlobalSearchScope allScope(@NotNull Project project) {
@@ -180,12 +227,12 @@ public abstract class GlobalSearchScope extends SearchScope {
     return new FileScope(psiFile);
   }
 
-  public static class IntersectionScope extends GlobalSearchScope {
+  private static class IntersectionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
     private final String myDisplayName;
 
-    public IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
+    private IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
       myScope1 = scope1;
       myScope2 = scope2;
       myDisplayName = displayName;
@@ -233,12 +280,10 @@ public abstract class GlobalSearchScope extends SearchScope {
     private final GlobalSearchScope myScope2;
     private final String myDisplayName;
 
-    public UnionScope(GlobalSearchScope scope1, GlobalSearchScope scope2, String displayName) {
+    private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
       myScope1 = scope1;
       myScope2 = scope2;
       myDisplayName = displayName;
-      LOG.assertTrue(myScope1 != null);
-      LOG.assertTrue(myScope2 != null);
     }
 
     public String getDisplayName() {
@@ -282,7 +327,7 @@ public abstract class GlobalSearchScope extends SearchScope {
   private static class ProductionScopeFilter extends GlobalSearchScope {
     private final ProjectFileIndex myFileIndex;
 
-    public ProductionScopeFilter(Project project) {
+    private ProductionScopeFilter(@NotNull Project project) {
       myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
 
@@ -310,7 +355,7 @@ public abstract class GlobalSearchScope extends SearchScope {
   private static class TestScopeFilter extends GlobalSearchScope {
     private final ProjectFileIndex myFileIndex;
 
-    public TestScopeFilter(Project project) {
+    private TestScopeFilter(@NotNull Project project) {
       myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
 
@@ -339,7 +384,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     private final VirtualFile myDirectory;
     private final boolean myWithSubdirectories;
 
-    public DirectoryScope(PsiDirectory directory, final boolean withSubdirectories) {
+    private DirectoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
       myWithSubdirectories = withSubdirectories;
       myDirectory = directory.getVirtualFile();
     }
@@ -375,7 +420,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     private final VirtualFile myVirtualFile;
     private final Module myModule;
 
-    public FileScope(PsiFile psiFile) {
+    private FileScope(@NotNull PsiFile psiFile) {
       myVirtualFile = psiFile.getVirtualFile();
       Project project = psiFile.getProject();
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -404,7 +449,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     private final PsiManager myManager;
     private final Project myProject;
 
-    public FilterScopeAdapter(Project project, NamedScope set) {
+    private FilterScopeAdapter(@NotNull Project project, @NotNull NamedScope set) {
       mySet = set;
       myProject = project;
       myManager = PsiManager.getInstance(myProject);
@@ -436,7 +481,8 @@ public abstract class GlobalSearchScope extends SearchScope {
     }
   }
 
-  public static GlobalSearchScope getScopeRestrictedByFileTypes (final GlobalSearchScope scope, final FileType... fileTypes) {
+  @NotNull
+  public static GlobalSearchScope getScopeRestrictedByFileTypes (@NotNull GlobalSearchScope scope, final FileType... fileTypes) {
     LOG.assertTrue(fileTypes.length > 0);
     return new FileTypeRestrictionScope(scope, fileTypes);
   }
@@ -445,7 +491,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     private final GlobalSearchScope myScope;
     private final FileType[] myFileTypes;
 
-    public FileTypeRestrictionScope(final GlobalSearchScope scope, final FileType[] fileTypes) {
+    private FileTypeRestrictionScope(@NotNull GlobalSearchScope scope, @NotNull FileType[] fileTypes) {
       myFileTypes = fileTypes;
       myScope = scope;
     }
@@ -471,6 +517,31 @@ public abstract class GlobalSearchScope extends SearchScope {
 
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return myScope.isSearchInModuleContent(aModule);
+    }
+
+    @NotNull
+    @Override
+    public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
+      if (scope instanceof FileTypeRestrictionScope) {
+        FileTypeRestrictionScope restrict = (FileTypeRestrictionScope)scope;
+        if (restrict.myScope == myScope) {
+          List<FileType> intersection = new ArrayList<FileType>(Arrays.asList(restrict.myFileTypes));
+          intersection.retainAll(Arrays.asList(myFileTypes));
+          return new FileTypeRestrictionScope(myScope, intersection.toArray(new FileType[intersection.size()]));
+        }
+      }
+      return super.intersectWith(scope);
+    }
+
+    @Override
+    public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
+      if (scope instanceof FileTypeRestrictionScope) {
+        FileTypeRestrictionScope restrict = (FileTypeRestrictionScope)scope;
+        if (restrict.myScope == myScope) {
+          return new FileTypeRestrictionScope(myScope, ArrayUtil.mergeArrays(myFileTypes, restrict.myFileTypes, FileType.class));
+        }
+      }
+      return super.uniteWith(scope);
     }
   }
 

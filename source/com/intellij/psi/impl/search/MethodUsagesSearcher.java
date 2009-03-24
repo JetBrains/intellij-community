@@ -23,7 +23,7 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
   public boolean execute(final MethodReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
     final PsiMethod method = p.getMethod();
     SearchScope searchScope = p.getScope();
-    PsiManager psiManager = PsiManager.getInstance(method.getProject());
+    final PsiManager psiManager = PsiManager.getInstance(method.getProject());
     final boolean isStrictSignatureSearch = p.isStrictSignatureSearch();
 
     final PsiClass aClass = method.getContainingClass();
@@ -72,11 +72,11 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
 
     final TextOccurenceProcessor processor1 = new MethodTextOccurenceProcessor(consumer, aClass, isStrictSignatureSearch, methods);
 
-    searchScope = searchScope.intersectWith(accessScope);
+    final SearchScope restrictedByAccess = searchScope.intersectWith(accessScope);
 
     short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
     boolean toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
-                                                                              searchScope,
+                                                                              restrictedByAccess,
                                                                               text,
                                                                               searchContext, true);
     if (!toContinue) return false;
@@ -87,35 +87,25 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
       }
     });
     if (propertyName != null) {
-      if (searchScope instanceof GlobalSearchScope) {
-        GlobalSearchScope restrictedSeachScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
-          (GlobalSearchScope)searchScope,
-          StdFileTypes.JSP,
-          StdFileTypes.JSPX,
-          StdFileTypes.XML,
-          StdFileTypes.XHTML
-        );
-        toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
-                                                                        restrictedSeachScope,
-                                                                        propertyName,
-                                                                        UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
-      }
-      else {
-        toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
-                                                                        searchScope,
-                                                                        propertyName,
-                                                                        UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
-      }
-      if (!toContinue) return false;
+      final SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+        public SearchScope compute() {
+          SearchScope additional = GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(psiManager.getProject()),
+                                           StdFileTypes.JSP, StdFileTypes.JSPX,
+                                           StdFileTypes.XML, StdFileTypes.XHTML);
 
-      for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {
-        final SearchScope scope = searchScope.intersectWith(provider.getScope(psiManager.getProject()));
-        toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
-                                                                          scope,
-                                                                          propertyName,
-                                                                          UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
-        if (!toContinue) return false;
-      }
+          for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {
+            SearchScope s = provider.getScope(psiManager.getProject());
+            additional = additional.union(s);
+          }
+
+          return restrictedByAccess.intersectWith(additional);
+        }
+      });
+      toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
+                                                                        scope,
+                                                                        propertyName,
+                                                                        UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
+      if (!toContinue) return false;
     }
 
     return true;

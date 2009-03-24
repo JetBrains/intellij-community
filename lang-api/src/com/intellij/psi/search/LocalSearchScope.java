@@ -17,6 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -107,8 +108,9 @@ public class LocalSearchScope extends SearchScope {
     return result;
   }
 
-  @NotNull public LocalSearchScope intersectWith(@NotNull LocalSearchScope scope){
-    return intersection(this, scope);
+  @NotNull public LocalSearchScope intersectWith(@NotNull LocalSearchScope scope2){
+    if (equals(scope2)) return this;
+    return intersection(this, scope2);
   }
 
   private static LocalSearchScope intersection(LocalSearchScope scope1, LocalSearchScope scope2) {
@@ -124,6 +126,15 @@ public class LocalSearchScope extends SearchScope {
       }
     }
     return new LocalSearchScope(result.toArray(new PsiElement [result.size()]), null, scope1.myIgnoreInjectedPsi || scope2.myIgnoreInjectedPsi);
+  }
+
+  @NotNull
+  @Override
+  public SearchScope intersectWith(@NotNull SearchScope scope2) {
+    if (scope2 instanceof LocalSearchScope) {
+      return intersectWith((LocalSearchScope)scope2);
+    }
+    return ((GlobalSearchScope)scope2).intersectWith(this);
   }
 
   private static PsiElement intersectScopeElements(PsiElement element1, PsiElement element2) {
@@ -145,9 +156,16 @@ public class LocalSearchScope extends SearchScope {
     return "LocalSearchScope:" + result;
   }
 
-  public SearchScope union(LocalSearchScope _scope2) {
+  @NotNull
+  public SearchScope union(SearchScope scope) {
+    if (scope instanceof LocalSearchScope) return union((LocalSearchScope)scope);
+    return ((GlobalSearchScope)scope).union(this);
+  }
+
+  public SearchScope union(LocalSearchScope scope2) {
+    if (equals(scope2)) return this;
     PsiElement[] elements1 = getScope();
-    PsiElement[] elements2 = _scope2.getScope();
+    PsiElement[] elements2 = scope2.getScope();
     boolean[] united = new boolean[elements2.length];
     List<PsiElement> result = new ArrayList<PsiElement>();
     loop1:
@@ -178,5 +196,14 @@ public class LocalSearchScope extends SearchScope {
     PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
     if (commonParent == null) return null;
     return commonParent;
+  }
+
+  public boolean isInScope(VirtualFile file) {
+    for (PsiElement element : myScope) {
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile == null) continue;
+      if (containingFile.getVirtualFile() == file) return true;
+    }
+    return false;
   }
 }
