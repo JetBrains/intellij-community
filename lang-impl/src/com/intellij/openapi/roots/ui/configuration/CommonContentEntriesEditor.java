@@ -275,6 +275,15 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
   public void saveData() {
   }
 
+  protected void addContentEntryPanels(ContentEntry[] contentEntriesArray) {
+    for (ContentEntry contentEntry : contentEntriesArray) {
+      addContentEntryPanel(contentEntry);
+    }
+    myEditorsPanel.revalidate();
+    myEditorsPanel.repaint();
+    selectContentEntry(contentEntriesArray[contentEntriesArray.length - 1]);
+  }
+
   private final class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {
     public void editingStarted(ContentEntryEditor editor) {
       selectContentEntry(editor.getContentEntry());

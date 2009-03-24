@@ -47,12 +47,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
       final ContentEntry[] contentEntriesArray = contentEntries.toArray(new ContentEntry[contentEntries.size()]);
       addSourceRoots(myProject, contentEntriesArray, new Runnable() {
         public void run() {
-          for (ContentEntry contentEntry : contentEntriesArray) {
-            addContentEntryPanel(contentEntry);
-          }
-          myEditorsPanel.revalidate();
-          myEditorsPanel.repaint();
-          selectContentEntry(contentEntriesArray[contentEntriesArray.length - 1]);
+          addContentEntryPanels(contentEntriesArray);
         }
       });
     }
