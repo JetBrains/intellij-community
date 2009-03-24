@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,7 +145,7 @@ public class FocusTrackback {
 
   public void restoreFocus() {
     final Application app = ApplicationManager.getApplication();
-    if (app == null || wrongOS() || myConsumed) return;
+    if (app == null || wrongOS() || myConsumed || isSheduledForRestore()) return;
 
     Project project = null;
     DataContext context =
@@ -210,7 +211,7 @@ public class FocusTrackback {
 
       if (myParentWindow != null) {
         final Window to = toFocus instanceof Window ? (Window) toFocus : SwingUtilities.getWindowAncestor(toFocus);
-        if (to == myParentWindow) {  // IDEADEV-34537
+        if (to != null && UIUtil.findUltimateParent(to) == UIUtil.findUltimateParent(myParentWindow)) {  // IDEADEV-34537
           toFocus.requestFocus();
         }
       } else {

@@ -5,8 +5,8 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -43,6 +44,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -1696,6 +1698,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       setLastEffectiveForcedRequest(command);
     }
 
+    fixStickingDialogs();
+
+    
     LaterInvocator.invokeLater(new Runnable() {
       public void run() {
         if (checkForRejectOrByPass(command, forced, result)) return;
@@ -1720,6 +1725,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
       }
     });
+  }
+
+  private void fixStickingDialogs() {
+    final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    final Window wnd = mgr.getActiveWindow();
+    final Container parent = wnd.getParent();
+    if (wnd != null && !wnd.isShowing() && parent instanceof Window) {
+      final Method setActive = ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), "setGlobalActiveWindow", Window.class);
+      if (setActive != null) {
+        try {
+          setActive.setAccessible(true);
+          setActive.invoke(mgr, (Window)parent);
+        }
+        catch (Exception e) {
+          LOG.info(e);
+        }
+      }
+    }
   }
 
   private boolean checkForRejectOrByPass(final FocusCommand cmd, final boolean forced, final ActionCallback result) {

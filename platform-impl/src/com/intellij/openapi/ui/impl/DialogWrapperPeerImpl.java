@@ -627,10 +627,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         removeComponentListener(myComponentListener);
         myComponentListener = null;
       }
-      if (myFocusTrackback != null) {
+
+      if (myFocusTrackback != null && !myFocusTrackback.isSheduledForRestore()) {
         myFocusTrackback.dispose();
         myFocusTrackback = null;
       }
+
+
       final BufferStrategy strategy = getBufferStrategy();
       if (strategy != null) {
         try {
@@ -642,6 +645,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         }
       }
       super.dispose();
+
 
       if (rootPane != null) { // Workaround for bug in native code to hold rootPane
         try {
