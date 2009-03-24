@@ -160,6 +160,11 @@ public class JBZipFile {
    */
   public void close() throws IOException {
     if (myOutputStream != null) {
+      if (entries.isEmpty()) {
+        final JBZipEntry empty = getOrCreateEntry("/empty.file.marker");
+        myOutputStream.putNextEntryBytes(empty, "empty".getBytes());
+      }
+      
       myOutputStream.finish();
       archive.setLength(myOutputStream.written);
     }
