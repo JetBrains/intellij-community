@@ -1,6 +1,10 @@
 package com.intellij.ide;
 
-import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
@@ -9,12 +13,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.util.Arrays;
+import java.util.List;
+import java.awt.*;
 
-public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class GeneralSettingsConfigurable extends CompositeConfigurable<Configurable> implements SearchableConfigurable {
+  public static ExtensionPointName<Configurable> EP_NAME = ExtensionPointName.create("com.intellij.generalOptionsProvider");
+  
   private MyComponent myComponent;
 
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
+    super.apply();
     GeneralSettings settings = GeneralSettings.getInstance();
 
     settings.setReopenLastProject(myComponent.myChkReopenLastProject.isSelected());
@@ -36,6 +46,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
   }
 
   public boolean isModified() {
+    if (super.isModified()) return true;
     boolean isModified = false;
     GeneralSettings settings = GeneralSettings.getInstance();
     isModified |= settings.isReopenLastProject() != myComponent.myChkReopenLastProject.isSelected();
@@ -66,6 +77,14 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
       }
     });
 
+    List<Configurable> list = getConfigurables();
+    if (!list.isEmpty()) {
+      myComponent.myPluginOptionsPanel.setLayout(new GridLayout(list.size(), 1));
+      for (Configurable c : list) {
+        myComponent.myPluginOptionsPanel.add(c.createComponent());
+      }
+    }
+
     return myComponent.myPanel;
   }
 
@@ -78,6 +97,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
   }
 
   public void reset() {
+    super.reset();
     GeneralSettings settings = GeneralSettings.getInstance();
     myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
     myComponent.myChkSyncOnFrameActivation.setSelected(settings.isSyncOnFrameActivation());
@@ -90,6 +110,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
   }
 
   public void disposeUIResources() {
+    super.disposeUIResources();
     myComponent = null;
   }
 
@@ -109,6 +130,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     private JCheckBox myChkAutoSaveIfInactive;
     private JTextField myTfInactiveTimeout;
     public JCheckBox myConfirmExit;
+    private JPanel myPluginOptionsPanel;
 
 
     public MyComponent() {
@@ -122,5 +144,9 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
+  }
+
+  protected List<Configurable> createConfigurables() {
+    return Arrays.asList(Extensions.getExtensions(EP_NAME));
   }
 }
