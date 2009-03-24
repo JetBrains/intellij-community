@@ -254,7 +254,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           PsiElement qualifierResolved = qualifier.resolve();
           if (qualifierResolved instanceof PsiPackage) {
             PsiPackage aPackage = (PsiPackage) qualifierResolved;
-            PsiClass[] classes = aPackage.getClasses();
+            PsiClass[] classes = aPackage.getClasses(getResolveScope());
             if (kind == CLASS) return classes;
             PsiPackage[] subpackages = aPackage.getSubPackages();
             return ArrayUtil.mergeArrays(classes, subpackages, Object.class);
@@ -329,7 +329,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           if (qualifier != null) {
             PsiElement qualifierResolved = qualifier.resolve();
             if (qualifierResolved instanceof PsiPackage) {
-              PsiClass[] classes = ((PsiPackage) qualifierResolved).getClasses();
+              PsiClass[] classes = ((PsiPackage) qualifierResolved).getClasses(ref.getResolveScope());
               for (final PsiClass aClass : classes) {
                 if (refName.equals(aClass.getName())) {
                   boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
