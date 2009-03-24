@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class BoolUtils{
 
-    private BoolUtils(){
-        super();
-    }
+    private BoolUtils(){}
 
     public static boolean isNegated(PsiExpression exp){
         PsiExpression ancestor = exp;
@@ -74,7 +72,7 @@ public class BoolUtils{
     public static PsiExpression getNegated(PsiExpression exp){
         final PsiPrefixExpression prefixExp = (PsiPrefixExpression) exp;
         final PsiExpression operand = prefixExp.getOperand();
-        if (operand == null) {
+        if(operand == null){
             return null;
         }
         return ParenthesesUtils.stripParentheses(operand);
@@ -90,17 +88,21 @@ public class BoolUtils{
         return false;
     }
 
-    @Nullable
-    public static String getNegatedExpressionText(PsiExpression condition){
-        if (condition instanceof PsiParenthesizedExpression) {
+    public static String getNegatedExpressionText(
+            @Nullable PsiExpression condition){
+        if(condition == null){
+            return "";
+        }
+        if(condition instanceof PsiParenthesizedExpression){
             final PsiParenthesizedExpression parenthesizedExpression =
                     (PsiParenthesizedExpression)condition;
-            final PsiExpression expression = parenthesizedExpression.getExpression();
+            final PsiExpression expression =
+                    parenthesizedExpression.getExpression();
             return '(' + getNegatedExpressionText(expression) + ')';
-        } else if (isNegation(condition)){
+        } else if(isNegation(condition)){
             final PsiExpression negated = getNegated(condition);
             if (negated == null) {
-                return null;
+                return "";
             }
             return negated.getText();
         } else if(ComparisonUtils.isComparison(condition)){
@@ -111,7 +113,9 @@ public class BoolUtils{
                     ComparisonUtils.getNegatedComparison(sign);
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
-            assert rhs != null;
+            if(rhs == null){
+                return lhs.getText() + negatedComparison;
+            }
             return lhs.getText() + negatedComparison + rhs.getText();
         } else if(ParenthesesUtils.getPrecedence(condition) >
                 ParenthesesUtils.PREFIX_PRECEDENCE){
