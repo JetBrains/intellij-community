@@ -6,21 +6,22 @@ import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.CharTable;
 
 public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
-  public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable charTableByTree) {
-    if(!toCode(displayText)) return super.encodeXmlTextContents(displayText, text, charTableByTree);
-    final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, charTableByTree).getTreeElement();
+  public ASTNode encodeXmlTextContents(String displayText, PsiElement text) {
+    if(!toCode(displayText)) return super.encodeXmlTextContents(displayText, text);
+    final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, SharedImplUtil.findCharTableByTree(text.getNode())).getTreeElement();
     int sectionStartOffset = 0;
     int offset = 0;
     while (offset < displayText.length()) {
       if (toCode(displayText.charAt(offset))) {
         final String plainSection = displayText.substring(sectionStartOffset, offset);
         if (plainSection.length() > 0) {
-          dummyParent.rawAddChildren((TreeElement)super.encodeXmlTextContents(plainSection, text, charTableByTree));
+          dummyParent.rawAddChildren((TreeElement)super.encodeXmlTextContents(plainSection, text));
         }
         dummyParent.rawAddChildren(createCharEntity(displayText.charAt(offset), dummyParent.getCharTable()));
         sectionStartOffset = offset + 1;
@@ -29,7 +30,7 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
     }
     final String plainSection = displayText.substring(sectionStartOffset, offset);
     if (plainSection.length() > 0) {
-      dummyParent.rawAddChildren((TreeElement)super.encodeXmlTextContents(plainSection, text, charTableByTree));
+      dummyParent.rawAddChildren((TreeElement)super.encodeXmlTextContents(plainSection, text));
     }
 
     dummyParent.acceptTree(new GeneratedMarkerVisitor());

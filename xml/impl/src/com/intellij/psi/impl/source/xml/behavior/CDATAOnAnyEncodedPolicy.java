@@ -3,26 +3,27 @@ package com.intellij.psi.impl.source.xml.behavior;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.xml.util.XmlUtil;
 
 public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
-  public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable charTableByTree) {
+  public ASTNode encodeXmlTextContents(String displayText, PsiElement text) {
     final ASTNode firstChild = text.getNode().getFirstChildNode();
     boolean textAlreadyHasCDATA = firstChild != null && firstChild.getElementType() == XmlElementType.XML_CDATA;
     if ((textAlreadyHasCDATA || XmlUtil.toCode(displayText)) && displayText.length() > 0) {
-      final FileElement dummyParent = createCDATAElement(text.getManager(), charTableByTree, displayText);
+      final FileElement dummyParent = createCDATAElement(text.getManager(), SharedImplUtil.findCharTableByTree(text.getNode()), displayText);
       return dummyParent.getFirstChildNode();
     }
     else {
-      return super.encodeXmlTextContents(displayText, text, charTableByTree);
+      return super.encodeXmlTextContents(displayText, text);
     }
   }
 

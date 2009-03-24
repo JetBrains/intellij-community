@@ -4,23 +4,25 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
 
 public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy");
 
-  public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable table) {
+  public ASTNode encodeXmlTextContents(String displayText, PsiElement text) {
     final PsiFile containingFile = text.getContainingFile();
-    final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, table).getTreeElement();
+    CharTable charTable = SharedImplUtil.findCharTableByTree(text.getNode());
+    final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, charTable).getTreeElement();
       final XmlTag rootTag =
         ((XmlFile)PsiFileFactory.getInstance(containingFile.getProject())
           .createFileFromText("a.xml", "<a>" + displayText + "</a>")).getDocument().getRootTag();

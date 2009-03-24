@@ -21,7 +21,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.XmlTextLiteralEscaper;
@@ -158,7 +157,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   private void doSetValue(final String s, XmlPsiPolicy policy) throws IncorrectOperationException {
-    final ASTNode firstEncodedElement = policy.encodeXmlTextContents(s, this, SharedImplUtil.findCharTableByTree(this));
+    final ASTNode firstEncodedElement = policy.encodeXmlTextContents(s, this);
 
     if (firstEncodedElement == null) {
       delete();
@@ -230,7 +229,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
           final String oldText = getText();
 
           final ASTNode e =
-            getPolicy().encodeXmlTextContents(newElementText, XmlTextImpl.this, SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
+            getPolicy().encodeXmlTextContents(newElementText, XmlTextImpl.this);
 
           final ASTNode node = psiElement.getNode();
           final ASTNode treeNext = node.getTreeNext();
@@ -281,7 +280,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
               if (newElementText.length() > 0) {
                 final ASTNode e =
-                  getPolicy().encodeXmlTextContents(newElementText, XmlTextImpl.this, SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
+                  getPolicy().encodeXmlTextContents(newElementText, XmlTextImpl.this);
                 replaceChild(psiElement.getNode(), e);
               }
               else {
