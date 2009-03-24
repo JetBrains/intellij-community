@@ -64,27 +64,34 @@ public class PsiSearchScopeUtil {
     }
   }
 
-  public static boolean isInScope(SearchScope scope, PsiElement element) {
+  public static boolean isInScope(@NotNull SearchScope scope, @NotNull PsiElement element) {
     if (scope instanceof LocalSearchScope) {
-      PsiElement[] scopeElements = ((LocalSearchScope)scope).getScope();
-      for (final PsiElement scopeElement : scopeElements) {
-        if (PsiTreeUtil.isAncestor(scopeElement, element, false)) return true;
-      }
-      return false;
+      LocalSearchScope local = (LocalSearchScope)scope;
+      return isInScope(local, element);
     }
     else {
       GlobalSearchScope globalScope = (GlobalSearchScope)scope;
-      PsiFile file = element.getContainingFile();
-      if (file != null) {
-        final PsiElement context = file.getContext();
-        if (context != null) file = context.getContainingFile();
-        if (file == null) return false;
-        VirtualFile virtualFile = file.getVirtualFile();
-        return virtualFile == null || globalScope.contains(file.getVirtualFile());
-      }
-      else {
-        return true;
-      }
+      return isInScope(globalScope, element);
     }
+  }
+
+  public static boolean isInScope(@NotNull GlobalSearchScope globalScope, @NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (file == null) {
+      return true;
+    }
+    final PsiElement context = file.getContext();
+    if (context != null) file = context.getContainingFile();
+    if (file == null) return false;
+    VirtualFile virtualFile = file.getVirtualFile();
+    return virtualFile == null || globalScope.contains(file.getVirtualFile());
+  }
+
+  public static boolean isInScope(@NotNull LocalSearchScope local, @NotNull PsiElement element) {
+    PsiElement[] scopeElements = local.getScope();
+    for (final PsiElement scopeElement : scopeElements) {
+      if (PsiTreeUtil.isAncestor(scopeElement, element, false)) return true;
+    }
+    return false;
   }
 }

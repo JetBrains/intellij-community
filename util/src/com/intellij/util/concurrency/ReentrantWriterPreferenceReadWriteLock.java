@@ -68,9 +68,9 @@ import java.util.ArrayList;
 public class ReentrantWriterPreferenceReadWriteLock extends WriterPreferenceReadWriteLock {
 
   /** Number of acquires on write lock by activeWriter_ thread **/
-  protected long writeHolds_ = 0;
+  private long writeHolds_ = 0;
 
-  protected ThreadToCountMap readers_ = new ThreadToCountMap();
+  private final ThreadToCountMap readers_ = new ThreadToCountMap();
 
   public synchronized boolean isReadLockAcquired(Thread thread){
     return readers_.get(thread) > 0;

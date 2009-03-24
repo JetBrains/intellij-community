@@ -200,19 +200,30 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     try {
       List<String> words = StringUtil.getWordsIn(searcher.getPattern());
       if (words.isEmpty()) return true;
-      final Set<PsiFile> fileSet = new THashSet<PsiFile>();
+      Set<PsiFile> fileSet = new THashSet<PsiFile>();
+      Set<PsiFile> copy = new THashSet<PsiFile>();
       final Application application = ApplicationManager.getApplication();
       for (final String word : words) {
-        List<PsiFile> psiFiles = application.runReadAction(new Computable<List<PsiFile>>() {
-          public List<PsiFile> compute() {
-            return Arrays.asList(myManager.getCacheManager().getFilesWithWord(word, searchContext, scope, caseSensitively));
+        PsiFile[] psiFiles = application.runReadAction(new Computable<PsiFile[]>() {
+          public PsiFile[] compute() {
+            return myManager.getCacheManager().getFilesWithWord(word, searchContext, scope, caseSensitively);
           }
         });
         if (fileSet.isEmpty()) {
-          fileSet.addAll(psiFiles);
+          for (PsiFile psiFile : psiFiles) {
+            fileSet.add(psiFile);
+          }
         }
         else {
-          fileSet.retainAll(psiFiles);
+          for (PsiFile psiFile : psiFiles) {
+            if (fileSet.contains(psiFile)) {
+              copy.add(psiFile);
+            }
+          }
+          Set<PsiFile> tmp = copy;
+          copy = fileSet;
+          fileSet = tmp;
+          copy.clear();
         }
         if (fileSet.isEmpty()) break;
       }
@@ -225,6 +236,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final AtomicBoolean canceled = new AtomicBoolean(false);
       final AtomicBoolean pceThrown = new AtomicBoolean(false);
 
+      final int size = fileSet.size();
       boolean completed = JobUtil.invokeConcurrentlyUnderMyProgress(fileSet, new Processor<PsiFile>() {
         public boolean process(final PsiFile file) {
           if (file instanceof PsiBinaryFile) return true;
@@ -242,7 +254,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                   }
                 }
                 if (progress != null) {
-                  double fraction = (double)counter.incrementAndGet() / fileSet.size();
+                  double fraction = (double)counter.incrementAndGet() / size;
                   progress.setFraction(fraction);
                 }
                 myManager.dropResolveCaches();

@@ -8,7 +8,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class DataInputOutputUtil {
-  public final static long timeBase = 33l * 365l * 24l * 3600l * 1000l;
+  public static final long timeBase = 33L * 365L * 24L * 3600L * 1000L;
 
   private DataInputOutputUtil() {}
 
@@ -41,7 +41,8 @@ public class DataInputOutputUtil {
       return val;
     }
 
-    for (int res = val - 192, sh = 6; ; sh += 7) {
+    int res = val - 192;
+    for (int sh = 6; ; sh += 7) {
       int next = record.readUnsignedByte();
       res |= (next & 0x7F) << sh;
       if ((next & 0x80) == 0) {
@@ -87,7 +88,7 @@ public class DataInputOutputUtil {
 
   public static void writeTIME(DataOutput record, long timestamp) throws IOException {
     long relStamp = timestamp - timeBase;
-    if (relStamp < 0 || relStamp >= 0xFF00000000l) {
+    if (relStamp < 0 || relStamp >= 0xFF00000000L) {
       record.writeByte(255);
       record.writeLong(timestamp);
     }

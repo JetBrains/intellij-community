@@ -59,7 +59,7 @@ public class IndexCacheManagerImpl implements CacheManager{
   public PsiFile[] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     CommonProcessors.CollectProcessor<PsiFile> processor = new CommonProcessors.CollectProcessor<PsiFile>();
     processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively);
-    return processor.toArray(PsiFile.EMPTY_ARRAY);
+    return processor.getResults().isEmpty() ? PsiFile.EMPTY_ARRAY : processor.toArray(PsiFile.EMPTY_ARRAY);
   }
 
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
@@ -113,7 +113,7 @@ public class IndexCacheManagerImpl implements CacheManager{
         }
         });
     }
-    return allFiles.toArray(new PsiFile[allFiles.size()]);
+    return allFiles.isEmpty() ? PsiFile.EMPTY_ARRAY : allFiles.toArray(new PsiFile[allFiles.size()]);
   }
 
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {

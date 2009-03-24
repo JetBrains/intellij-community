@@ -24,11 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 21, 2004
- * Time: 6:52:46 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class CommonProcessors {
   public static class CollectProcessor<T> implements Processor<T> {

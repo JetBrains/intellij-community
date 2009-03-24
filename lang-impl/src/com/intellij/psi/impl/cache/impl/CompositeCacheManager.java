@@ -50,7 +50,7 @@ public class CompositeCacheManager implements CacheManager{
   public PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively) {
     CommonProcessors.CollectProcessor<PsiFile> processor = new CommonProcessors.CollectProcessor<PsiFile>();
     processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively);
-    return processor.toArray(new PsiFile[processor.getResults().size()]);
+    return processor.getResults().isEmpty() ? PsiFile.EMPTY_ARRAY : processor.toArray(new PsiFile[processor.getResults().size()]);
   }
 
   public boolean processFilesWithWord(@NotNull Processor<PsiFile> processor, @NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively) {
@@ -62,11 +62,15 @@ public class CompositeCacheManager implements CacheManager{
 
   @NotNull
   public PsiFile[] getFilesWithTodoItems() {
-    List<PsiFile> files = new ArrayList<PsiFile>();
+    List<PsiFile> files = null;
     for (CacheManager cacheManager : myManagers) {
-      files.addAll(Arrays.asList(cacheManager.getFilesWithTodoItems()));
+      PsiFile[] items = cacheManager.getFilesWithTodoItems();
+      if (items.length != 0 && files == null) {
+        files = new ArrayList<PsiFile>();
+        files.addAll(Arrays.asList(items));
+      }
     }
-    return files.toArray(new PsiFile[files.size()]);
+    return files == null ? PsiFile.EMPTY_ARRAY : files.toArray(new PsiFile[files.size()]);
   }
 
   public int getTodoCount(@NotNull VirtualFile file, final IndexPatternProvider patternProvider) {
