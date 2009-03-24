@@ -463,23 +463,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     public MySaveSession(final MyExternalizationSession externalizationSession) {
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
-
-      /*
-      RuntimeException creationPoint = new RuntimeException();
-      myCreationPoint = StringUtil.getThrowableText(creationPoint);
-      */
-
-      Map<IFile, StateStorage> fileToStorage = new HashMap<IFile, StateStorage>();
-      fileToStorage.clear();
-      for (StateStorage storage : myCompoundSaveSession.getStateStorages()) {
-        final List<IFile> storageFiles = myCompoundSaveSession.getSaveSession(storage).getAllStorageFiles();
-        for (IFile storageFile : storageFiles) {
-          fileToStorage.put(storageFile, storage);
-        }
-      }
-
-
-
     }
 
     public List<IFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {
