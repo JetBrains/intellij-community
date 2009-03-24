@@ -209,6 +209,8 @@
     <projectService serviceInterface="org.jetbrains.plugins.gant.reference.AntTasksProvider"
                     serviceImplementation="org.jetbrains.plugins.gant.reference.AntTasksProvider"/>
 
+    <refactoring.copyHandler implementation="org.jetbrains.plugins.groovy.refactoring.copy.GroovyCopyFilesOrDirectoriesHandler"/>
+
 
     <!-- control flow -->
     <intentionAction>
