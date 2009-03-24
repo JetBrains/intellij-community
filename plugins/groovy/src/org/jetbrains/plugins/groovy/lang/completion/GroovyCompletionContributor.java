@@ -16,9 +16,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import java.util.List;
 
@@ -92,25 +90,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
       item.setInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS);
     }
     result.addElement(item);
-  }
-
-  public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
-    final PsiFile file = context.getFile();
-
-    if (file instanceof GroovyFileBase) {
-      final JavaElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
-
-        @Override
-        public void visitElement(PsiElement element) {
-          if (element instanceof GrTypeDefinition) {
-            element.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, element);
-          }
-          super.visitElement(element);
-        }
-
-      };
-      visitor.visitFile(file);
-    }
   }
 
 }
