@@ -4,10 +4,7 @@ import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
@@ -30,7 +27,6 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
-import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
@@ -53,8 +49,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -67,6 +61,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private boolean mySomeSchemesDeleted = false;
   private Map<NewColorAndFontPanel, SearchableConfigurable> mySubPanels;
+  private Map<ColorAndFontPanelFactory, InnerSearchableConfigurable> mySubPanelFactories;
 
   private SchemesPanel myRootSchemesPanel;
 
@@ -259,7 +254,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     myIsReset = true;
     try {
       myRootSchemesPanel.resetSchemesCombo(source);
-      if (mySubPanels != null) {
+      if (mySubPanelFactories != null) {
         for (NewColorAndFontPanel subPartialConfigurable : getPanels()) {
           subPartialConfigurable.reset(source);
         }
@@ -287,146 +282,93 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     myDisposeCompleted = false;    
     initAll();
 
-    List<NewColorAndFontPanel> panels = createSubPanels();
-
-    for (NewColorAndFontPanel partialConfigurable : panels) {
-      partialConfigurable.addSchemesListener(new ColorAndFontSettingsListener.Abstract(){
-        public void schemeChanged(final Object source) {
-          if (!myIsReset) {
-            resetSchemesCombo(source);
-          }
-        }
-      });
-
-      partialConfigurable.addDescriptionListener(new ColorAndFontSettingsListener.Abstract(){
-        @Override
-        public void fontChanged() {
-          for (NewColorAndFontPanel panel : getPanels()) {
-            panel.updatePreview();
-          }
-        }
-      });
-    }
+    List<ColorAndFontPanelFactory> panelFactories = createPanelFactories();
 
     List<Configurable> result = new ArrayList<Configurable>();
-    mySubPanels = new LinkedHashMap<NewColorAndFontPanel, SearchableConfigurable>(panels.size());
-
-    for (final NewColorAndFontPanel subPanel : panels) {
-      mySubPanels.put(subPanel, new InnerSearchableConfigurable(subPanel));
+    mySubPanelFactories = new LinkedHashMap<ColorAndFontPanelFactory, InnerSearchableConfigurable>(panelFactories.size());
+    for (ColorAndFontPanelFactory panelFactory : panelFactories) {
+      mySubPanelFactories.put(panelFactory, new InnerSearchableConfigurable(panelFactory));
     }
 
-    result.addAll(new ArrayList<SearchableConfigurable>(mySubPanels.values()));
+    result.addAll(new ArrayList<SearchableConfigurable>(mySubPanelFactories.values()));
 
     return result.toArray(new Configurable[result.size()]);
   }
 
   private Set<NewColorAndFontPanel> getPanels() {
-    return mySubPanels.keySet();
+    Set<NewColorAndFontPanel> result = new HashSet<NewColorAndFontPanel>();
+    for (InnerSearchableConfigurable configurable : mySubPanelFactories.values()) {
+      NewColorAndFontPanel panel = configurable.getSubPanelIfInitialized();
+      if (panel != null) {
+        result.add(panel);
+      }
+    }
+    return result;
   }
 
-  private List<NewColorAndFontPanel> createSubPanels() {
-
-    ArrayList<NewColorAndFontPanel> result = new ArrayList<NewColorAndFontPanel>();
-
-    result.add(createFontConfigurable());
+  private List<ColorAndFontPanelFactory> createPanelFactories() {
+    ArrayList<ColorAndFontPanelFactory> result = new ArrayList<ColorAndFontPanelFactory>();
+    result.add(new FontConfigurableFactory());
 
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
-    for (ColorSettingsPage page : pages) {
-      final SimpleEditorPreview preview = new SimpleEditorPreview(this, page);
-      NewColorAndFontPanel panel = NewColorAndFontPanel.create(preview,
-                                                            page.getDisplayName(),
-                                                            this, null, page);
-
-
-      result.add(panel);
-    }
-
-    result.add(createDiffPanel());
-
-    result.add(NewColorAndFontPanel.create(new PreviewPanel.Empty(), FILE_STATUS_GROUP, this, collectFileTypes(), null));
-
-    final JPanel scopePanel = createChooseScopePanel();
-    result.add(NewColorAndFontPanel.create(new PreviewPanel.Empty(){
-      public Component getPanel() {
-        return scopePanel;
-      }
-
-    }, SCOPES_GROUP, this, null, null));
-
-
-    return result;
-  }
-
-  private static Collection<String> collectFileTypes() {
-    ArrayList<String> result = new ArrayList<String>();
-    FileStatus[] statuses = FileStatusFactory.SERVICE.getInstance().getAllFileStatuses();
-
-    for (FileStatus status : statuses) {
-      result.add(status.getText());
-    }
-    return result;
-  }
-
-  private NewColorAndFontPanel createFontConfigurable() {
-    return new NewColorAndFontPanel(new SchemesPanel(this), new FontOptions(this), new FontEditorPreview(this), "Font", null, null){
-      @Override
-      public boolean containsFontOptions() {
-        return true;
-      }
-    };
-  }
-
-  private NewColorAndFontPanel createDiffPanel() {
-    final DiffPreviewPanel diffPreviewPanel = new DiffPreviewPanel(myDisposable);
-    diffPreviewPanel.setMergeRequest(null);
-    final DiffOptionsPanel optionsPanel = new DiffOptionsPanel(this);
-
-    SchemesPanel schemesPanel = new SchemesPanel(this);
- 
-    schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
-      @Override
-      public void schemeChanged(final Object source) {
-        diffPreviewPanel.setColorScheme(getSelectedScheme());
-        optionsPanel.updateOptionsList();
-        diffPreviewPanel.updateView();
-      }
-    } );
-
-    return new NewColorAndFontPanel(schemesPanel, optionsPanel, diffPreviewPanel, DIFF_GROUP, null, null);
-  }
-
-  private static JPanel createChooseScopePanel() {
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    JPanel panel = new JPanel(new GridBagLayout());
-    //panel.setBorder(new LineBorder(Color.red));
-    if (projects.length == 0) return panel;
-    GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                   new Insets(0, 0, 0, 0), 0, 0);
-    final Project contextProject = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    final Project project = contextProject != null ? contextProject : projects[0];
-
-    JButton button = new JButton(ApplicationBundle.message("button.edit.scopes"));
-    button.setPreferredSize(new Dimension(230, button.getPreferredSize().height));
-    panel.add(button, gc);
-    gc.gridx = GridBagConstraints.REMAINDER;
-    gc.weightx = 1;
-    panel.add(new JPanel(), gc);
-
-    gc.gridy++;
-    gc.gridx=0;
-    gc.weighty = 1;
-    panel.add(new JPanel(), gc);
-    button.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
-        if (optionsEditor != null) {
-          optionsEditor.select(ScopeChooserConfigurable.getInstance(project));
+    for (final ColorSettingsPage page : pages) {
+      result.add(new ColorAndFontPanelFactory() {
+        public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
+          final SimpleEditorPreview preview = new SimpleEditorPreview(options, page);
+          return NewColorAndFontPanel.create(preview, page.getDisplayName(), options, null, page);
         }
-      }
-    });
-    return panel;
+
+        public String getPanelDisplayName() {
+          return page.getDisplayName();
+        }
+      });
+    }
+    result.add(new DiffColorsPageFactory());
+    result.add(new FileStatusColorsPageFactory());
+    result.add(new ScopeColorsPageFactory());
+
+    return result;
   }
 
+  private static class FontConfigurableFactory implements ColorAndFontPanelFactory {
+    public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
+      return new NewColorAndFontPanel(new SchemesPanel(options), new FontOptions(options), new FontEditorPreview(options), "Font", null, null){
+        @Override
+        public boolean containsFontOptions() {
+          return true;
+        }
+      };
+    }
+
+    public String getPanelDisplayName() {
+      return "Font";
+    }
+  }
+
+  private class DiffColorsPageFactory implements ColorAndFontPanelFactory {
+    public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
+      final DiffPreviewPanel diffPreviewPanel = new DiffPreviewPanel(myDisposable);
+      diffPreviewPanel.setMergeRequest(null);
+      final DiffOptionsPanel optionsPanel = new DiffOptionsPanel(options);
+
+      SchemesPanel schemesPanel = new SchemesPanel(options);
+
+      schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
+        @Override
+        public void schemeChanged(final Object source) {
+          diffPreviewPanel.setColorScheme(getSelectedScheme());
+          optionsPanel.updateOptionsList();
+          diffPreviewPanel.updateView();
+        }
+      } );
+
+      return new NewColorAndFontPanel(schemesPanel, optionsPanel, diffPreviewPanel, DIFF_GROUP, null, null);
+    }
+
+    public String getPanelDisplayName() {
+      return DIFF_GROUP;
+    }
+  }
 
   private void initAll() {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
@@ -665,11 +607,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         try {
           super.disposeUIResources();
           Disposer.dispose(myDisposable);
-          if (mySubPanels != null) {
-              for (NewColorAndFontPanel subPanel : getPanels()) {
-                subPanel.disposeUIResources();
-              }
-            }
           if (myRootSchemesPanel != null) {
               myRootSchemesPanel.disposeUIResources();
             }
@@ -680,7 +617,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       }
     }
     finally {
-      mySubPanels = null;
+      mySubPanelFactories = null;
 
       myInitResetCompleted = false;
       myInitResetInvoked = false;
@@ -1005,41 +942,65 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return null;
   }
 
-  private Map.Entry<NewColorAndFontPanel,SearchableConfigurable> findPair(final Class pageClass) {
+  @Nullable
+  public InnerSearchableConfigurable findSubConfigurable(final Class pageClass) {
     if (mySubPanels == null) {
       buildConfigurables();
     }
-    for (Map.Entry<NewColorAndFontPanel, SearchableConfigurable> entry : mySubPanels.entrySet()) {
-      if (pageClass.isInstance(entry.getKey().getSettingsPage())) {
-        return entry;
+    for (Map.Entry<ColorAndFontPanelFactory, InnerSearchableConfigurable> entry : mySubPanelFactories.entrySet()) {
+      if (pageClass.isInstance(entry.getValue().createPanel().getSettingsPage())) {
+        return entry.getValue();
       }
     }
     return null;
   }
 
   @Nullable
-  public SearchableConfigurable findSubConfigurable(Class pageClass) {
-    final Map.Entry<NewColorAndFontPanel, SearchableConfigurable> entry = findPair(pageClass);
-    return entry == null ? null : entry.getValue();
-  }
-
-  @Nullable
   public ColorSettingsPage findPage(Class pageClass) {
-    final Map.Entry<NewColorAndFontPanel, SearchableConfigurable> entry = findPair(pageClass);
-    return entry == null ? null : entry.getKey().getSettingsPage();
+    InnerSearchableConfigurable searchableConfigurable = findSubConfigurable(pageClass);
+    return searchableConfigurable != null ? searchableConfigurable.createPanel().getSettingsPage() : null;
   }
 
   private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable {
-    private final NewColorAndFontPanel mySubPanel;
+    private NewColorAndFontPanel mySubPanel;
     private boolean mySubInitInvoked = false;
+    private final ColorAndFontPanelFactory myFactory;
 
-    private InnerSearchableConfigurable(final NewColorAndFontPanel subPanel) {
-      mySubPanel = subPanel;
+    private InnerSearchableConfigurable(final ColorAndFontPanelFactory factory) {
+      myFactory = factory;
     }
 
     @Nls
-        public String getDisplayName() {
-      return mySubPanel.getDisplayName();
+    public String getDisplayName() {
+      return myFactory.getPanelDisplayName();
+    }
+
+    public NewColorAndFontPanel getSubPanelIfInitialized() {
+      return mySubPanel;
+    }
+
+    private NewColorAndFontPanel createPanel() {
+      if (mySubPanel == null) {
+        mySubPanel = myFactory.createPanel(ColorAndFontOptions.this);
+        mySubPanel.reset(this);
+        mySubPanel.addSchemesListener(new ColorAndFontSettingsListener.Abstract(){
+          public void schemeChanged(final Object source) {
+            if (!myIsReset) {
+              resetSchemesCombo(source);
+            }
+          }
+        });
+
+        mySubPanel.addDescriptionListener(new ColorAndFontSettingsListener.Abstract(){
+          @Override
+          public void fontChanged() {
+            for (NewColorAndFontPanel panel : getPanels()) {
+              panel.updatePreview();
+            }
+          }
+        });
+      }
+      return mySubPanel;
     }
 
     public Icon getIcon() {
@@ -1051,10 +1012,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public JComponent createComponent() {
-      return mySubPanel.getPanel();
+      return createPanel().getPanel();
     }
 
     public boolean isModified() {
+      createPanel();
       for (MyColorScheme scheme : mySchemes.values()) {
         if (mySubPanel.containsFontOptions()) {
           if (scheme.isFontModified()) {
@@ -1094,7 +1056,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public void disposeUIResources() {
-      ColorAndFontOptions.this.disposeUIResources();
+      if (mySubPanel != null) {
+        mySubPanel.disposeUIResources();
+      }
     }
 
     public String getId() {
@@ -1102,11 +1066,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public Runnable enableSearch(final String option) {
-      return mySubPanel.showOption(option);
+      return createPanel().showOption(option);
     }
 
     public Set<String> processListOptions() {
-      return mySubPanel.processListOptions();
+      return createPanel().processListOptions();
     }
   }
+
 }
