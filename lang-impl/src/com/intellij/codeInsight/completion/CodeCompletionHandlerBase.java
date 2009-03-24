@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
@@ -64,8 +63,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   public void invokeCompletion(final Project project, final Editor editor, final PsiFile psiFile, int time) {
-    TemplateSettings.getInstance(); //deadlock fix
-
     final Document document = editor.getDocument();
     if (editor.isViewer()) {
       document.fireReadOnlyModificationAttempt();
@@ -111,7 +108,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
         for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
           contributor.beforeCompletion(initializationContext);
-          assert !documentManager.isUncommited(editor.getDocument()) : "Contributor " + contributor + " left the document uncommitted";
+          assert !documentManager.isUncommited(document) : "Contributor " + contributor + " left the document uncommitted";
         }
       }
     }.execute().getResultObject();

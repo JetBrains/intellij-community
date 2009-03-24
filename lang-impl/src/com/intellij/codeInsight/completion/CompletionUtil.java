@@ -33,13 +33,6 @@ public class CompletionUtil {
 
   public static final @NonNls String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER;
   public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = DUMMY_IDENTIFIER.trim();
-  public static final Key<PsiElement> ORIGINAL_KEY = Key.create("ORIGINAL_KEY");
-
-  @NotNull
-  public static <T extends PsiElement> T getOriginalElement(@NotNull T element) {
-    final T data = (T)element.getCopyableUserData(ORIGINAL_KEY);
-    return data != null ? data : element;
-  }
 
   public static boolean startsWith(String text, String prefix) {
     //if (text.length() <= prefix.length()) return false;

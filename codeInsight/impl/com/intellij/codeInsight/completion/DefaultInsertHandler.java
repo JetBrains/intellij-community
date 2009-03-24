@@ -178,10 +178,10 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
         PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
         PsiReference reference = myFile.findReferenceAt(myContext.getStartOffset());
         if (reference instanceof PsiReferenceExpression && !((PsiReferenceExpression) reference).isQualified()) {
-          final PsiMember member = (PsiMember)myLookupItem.getObject();
+          final PsiField member = (PsiField)myLookupItem.getObject();
           final PsiVariable target =
               JavaPsiFacade.getInstance(myProject).getResolveHelper().resolveReferencedVariable(member.getName(), (PsiElement)reference);
-          if (member.getManager().areElementsEquivalent(target, CompletionUtil.getOriginalElement(member))) return;
+          if (member.getManager().areElementsEquivalent(target, JavaCompletionUtil.getOriginalElement(member))) return;
           
           final PsiClass psiClass = member.getContainingClass();
           if (psiClass != null && StringUtil.isNotEmpty(psiClass.getName())) {

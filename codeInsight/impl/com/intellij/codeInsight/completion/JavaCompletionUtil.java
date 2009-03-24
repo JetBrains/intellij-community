@@ -453,6 +453,67 @@ public class JavaCompletionUtil {
     return isExcluded;
   }
 
+  @NotNull
+  public static PsiField getOriginalElement(@NotNull PsiField field) {
+    final PsiClass cls = field.getContainingClass();
+    if (cls != null) {
+      final PsiClass newParent = getOriginalElement(cls);
+      if (newParent != cls) {
+        final PsiField original = newParent.findFieldByName(field.getName(), false);
+        if (original != null) {
+          return original;
+        }
+      }
+    }
+    return field;
+  }
+
+  @NotNull
+  public static PsiTypeParameter getOriginalElement(@NotNull PsiTypeParameter param) {
+    final PsiClass parent = PsiTreeUtil.getParentOfType(param, PsiClass.class, true, PsiMethod.class);
+    if (parent != null) {
+      final PsiClass newParent = getOriginalElement(parent);
+      if (newParent != parent) {
+        for (PsiTypeParameter parameter : newParent.getTypeParameters()) {
+          if (parameter.getName().equals(param.getName())) {
+            return parameter;
+          }
+        }
+      }
+    }
+    return param;
+  }
+
+  @NotNull
+  public static PsiClass getOriginalElement(@NotNull PsiClass cls) {
+    final PsiClass containingClass = cls.getContainingClass();
+    if (containingClass != null) {
+      final PsiClass newParent = getOriginalElement(containingClass);
+      if (newParent != containingClass) {
+        return findClassByName(cls, newParent.getInnerClasses());
+      }
+    }
+
+    final PsiFile containingFile = cls.getContainingFile();
+    if (containingFile instanceof PsiClassOwner) {
+      return findClassByName(cls, ((PsiClassOwner)containingFile.getOriginalFile()).getClasses());
+    }
+
+    return cls;
+  }
+
+  private static PsiClass findClassByName(PsiClass defResult, PsiClass[] classes) {
+    String name = defResult.getName();
+    if (name == null) return defResult;
+
+    for (PsiClass candidate : classes) {
+      if (name.equals(candidate.getName())) {
+        return candidate;
+      }
+    }
+    return defResult;
+  }
+
   @SuppressWarnings({"unchecked"})
   @NotNull
   public static <T extends PsiType> T originalize(@NotNull T type) {
@@ -472,7 +533,7 @@ public class JavaCompletionUtil {
         final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
         if (psiClass == null) return classType;
 
-        return new PsiImmediateClassType(CompletionUtil.getOriginalElement(psiClass), originalize(substitutor));
+        return new PsiImmediateClassType(getOriginalElement(psiClass), originalize(substitutor));
       }
 
       public PsiType visitEllipsisType(final PsiEllipsisType ellipsisType) {
@@ -496,13 +557,14 @@ public class JavaCompletionUtil {
     });
   }
 
-  public static PsiSubstitutor originalize(@Nullable final PsiSubstitutor substitutor) {
+  @Nullable
+  private static PsiSubstitutor originalize(@Nullable final PsiSubstitutor substitutor) {
     if (substitutor == null) return null;
 
     PsiSubstitutor originalSubstitutor = PsiSubstitutor.EMPTY;
     for (final Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
       final PsiType value = entry.getValue();
-      originalSubstitutor = originalSubstitutor.put(CompletionUtil.getOriginalElement(entry.getKey()), value == null ? null : originalize(value));
+      originalSubstitutor = originalSubstitutor.put(getOriginalElement(entry.getKey()), value == null ? null : originalize(value));
     }
     return originalSubstitutor;
   }

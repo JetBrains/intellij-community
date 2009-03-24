@@ -397,24 +397,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (file instanceof PsiJavaFile) {
-      final JavaElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitClass(PsiClass aClass) {
-          aClass.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, aClass);
-          super.visitClass(aClass);
-        }
-
-        @Override public void visitVariable(PsiVariable variable) {
-          variable.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, variable);
-          super.visitVariable(variable);
-        }
-
-        @Override public void visitMethod(PsiMethod method) {
-          method.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, method);
-          super.visitMethod(method);
-        }
-      };
-      visitor.visitFile(file);
-
       autoImport(file, context.getStartOffset() - 1, context.getEditor());
     }
 
