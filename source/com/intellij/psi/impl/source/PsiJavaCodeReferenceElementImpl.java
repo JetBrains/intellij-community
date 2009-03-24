@@ -599,7 +599,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           if (nameIdentifier == null) return false;
           PsiElement nameElement = getReferenceNameElement();
           return nameElement != null && nameElement.textMatches(nameIdentifier) &&
-                 element.getManager().areElementsEquivalent(element, resolve());
+                 element.getManager().areElementsEquivalent(resolve(), element);
         }
         else {
           return false;
@@ -625,7 +625,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     final ASTNode referenceNameElement = getReferenceNameNode();
     if (referenceNameElement == null || referenceNameElement.getElementType() != JavaTokenType.IDENTIFIER) return false;
     final String name = ((PsiClass)element).getName();
-    return name != null && referenceNameElement.getText().equals(name) && element.getManager().areElementsEquivalent(element, resolve());
+    return name != null && referenceNameElement.getText().equals(name) && element.getManager().areElementsEquivalent(resolve(), element);
   }
 
   private String getTextSkipWhiteSpaceAndComments() {

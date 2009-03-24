@@ -102,7 +102,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return element.getManager().areElementsEquivalent(element, resolve());
+    return getElement().getManager().areElementsEquivalent(resolve(), element);
   }
 
   public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, final PsiElement resolveTo) {

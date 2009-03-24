@@ -24,6 +24,7 @@ public class SimpleAccessorReferenceSearcher implements QueryExecutor<PsiReferen
     final PsiMethod method = (PsiMethod)refElement;
     final String propertyName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
+        if (!method.isValid()) return null;
         return PropertyUtil.getPropertyName(method);
       }
     });

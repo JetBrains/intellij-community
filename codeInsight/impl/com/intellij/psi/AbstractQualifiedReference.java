@@ -186,7 +186,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   public boolean isReferenceTo(final PsiElement element) {
     final PsiManager manager = getManager();
     for (final ResolveResult result : multiResolve(false)) {
-      if (manager.areElementsEquivalent(element, result.getElement())) return true;
+      if (manager.areElementsEquivalent(result.getElement(), element)) return true;
     }
     return false;
   }

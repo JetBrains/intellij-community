@@ -30,8 +30,8 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
   @NotNull
   protected abstract ResolveResult[] resolveInner(boolean incompleteCode);
 
-  public boolean isReferenceTo(final PsiElement element){
-    return element.getManager().areElementsEquivalent(element, resolve());
+  public boolean isReferenceTo(final PsiElement element) {
+    return getElement().getManager().areElementsEquivalent(resolve(), element);
   }
 
   public boolean isSoft(){

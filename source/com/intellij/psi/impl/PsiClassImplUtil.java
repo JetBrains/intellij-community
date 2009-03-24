@@ -803,6 +803,7 @@ public class PsiClassImplUtil {
     if (!(another instanceof PsiClass)) return false;
     String name1 = aClass.getName();
     if (name1 == null) return false;
+    if (!another.isValid()) return false;
     String name2 = ((PsiClass)another).getName(); 
     if (name2 == null) return false;
     if (name1.hashCode() != name2.hashCode()) return false;
@@ -832,6 +833,8 @@ public class PsiClassImplUtil {
     if (!(another instanceof PsiField)) return false;
     String name1 = field.getName();
     if (name1 == null) return false;
+    if (!another.isValid()) return false;
+
     String name2 = ((PsiField)another).getName();
     if (!name1.equals(name2)) return false;
     PsiClass aClass1 = field.getContainingClass();
@@ -843,6 +846,7 @@ public class PsiClassImplUtil {
     if (!(another instanceof PsiMethod)) return false;
     PsiMethod method2 = (PsiMethod)another;
     String name1 = method.getName();
+    if (!another.isValid()) return false;
     String name2 = method2.getName();
     if (!name1.equals(name2)) return false;
     PsiClass aClass1 = method.getContainingClass();

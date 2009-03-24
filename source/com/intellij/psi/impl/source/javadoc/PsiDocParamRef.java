@@ -82,7 +82,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         if (!(element instanceof PsiNamedElement)) return false;
         PsiNamedElement namedElement = (PsiNamedElement)element;
         if (!getCanonicalText().equals(namedElement.getName())) return false;
-        return element.getManager().areElementsEquivalent(element, resolve());
+        return getManager().areElementsEquivalent(resolve(), element);
       }
 
       public Object[] getVariants() {

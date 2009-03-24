@@ -24,8 +24,8 @@ public abstract class CachingReference implements PsiReference, EmptyResolveMess
   @Nullable
   public abstract PsiElement resolveInner();
 
-  public boolean isReferenceTo(final PsiElement element){
-    return element.getManager().areElementsEquivalent(element, resolve());
+  public boolean isReferenceTo(final PsiElement element) {
+    return getElement().getManager().areElementsEquivalent(resolve(), element);
   }
 
   public boolean isSoft(){

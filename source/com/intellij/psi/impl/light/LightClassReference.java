@@ -207,7 +207,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
 
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
-    return element.getManager().areElementsEquivalent(element, resolve());
+    return getManager().areElementsEquivalent(resolve(), element);
   }
 
   public Object[] getVariants() {

@@ -30,7 +30,7 @@ public class LightClassReferenceExpression extends LightClassReference implement
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return element.getManager().areElementsEquivalent(element, resolve());
+    return getManager().areElementsEquivalent(resolve(), element);
   }
 
   public Object[] getVariants() {

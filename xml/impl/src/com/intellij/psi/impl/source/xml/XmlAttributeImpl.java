@@ -358,7 +358,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
 
     public boolean isReferenceTo(PsiElement element) {
-      return element.getManager().areElementsEquivalent(element, resolve());
+      return getManager().areElementsEquivalent(element, resolve());
     }
 
     public Object[] getVariants() {

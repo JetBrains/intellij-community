@@ -39,6 +39,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     final PsiElement refElement = p.getElementToSearch();
     final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       public PsiFile compute() {
+        if (!refElement.isValid()) return null;
         return refElement.getContainingFile();
       }
     });
@@ -98,6 +99,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
   public static String getQualifiedName(final PsiClass aClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
+        if (!aClass.isValid()) return null;
         return aClass.getQualifiedName();
       }
     });
@@ -113,7 +115,8 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
   }
 
   private static boolean processReferencesInUIFormsInner(String name,
-                                                         PsiElement element, Processor<PsiReference> processor,
+                                                         PsiElement element,
+                                                         Processor<PsiReference> processor,
                                                          GlobalSearchScope scope1,
                                                          PsiManagerImpl manager,
                                                          final LocalSearchScope filterScope) {

@@ -288,7 +288,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     public boolean isReferenceTo(PsiElement element) {
-      return element.getManager().areElementsEquivalent(element, resolve());
+      return getManager().areElementsEquivalent(resolve(), element);
     }
 
     public TextRange getRangeInElement() {

@@ -301,8 +301,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     final String name = getReferenceName();
     return name != null &&
            element instanceof PsiNamedElement &&
-           name.equals(((PsiNamedElement)element).getName()) &&
-           element.getManager().areElementsEquivalent(element, resolve());
+           name.equals(((PsiNamedElement)element).getName()) && element.getManager().areElementsEquivalent(resolve(), element);
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
