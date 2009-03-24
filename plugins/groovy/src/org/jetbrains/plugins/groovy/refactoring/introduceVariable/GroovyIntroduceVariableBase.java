@@ -324,8 +324,9 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
   private GrVariable insertVariableDefinition(GroovyPsiElement tempContainer, GrExpression selectedExpr,
                                               PsiElement[] occurrences, boolean replaceAllOccurrences,
                                               GrVariableDeclaration varDecl, GroovyPsiElementFactory factory) throws IncorrectOperationException {
-    PsiElement anchorElement = GroovyRefactoringUtil.calculatePositionToInsertBefore(tempContainer, selectedExpr, occurrences, replaceAllOccurrences);
-    assert anchorElement instanceof GrStatement;
+    LOG.assertTrue(occurrences.length > 0);
+    GrStatement anchorElement = (GrStatement)GroovyRefactoringUtil.calculatePositionToInsertBefore(tempContainer, selectedExpr, occurrences, replaceAllOccurrences);
+    LOG.assertTrue(anchorElement != null);
     PsiElement realContainer;
     if (anchorElement.equals(tempContainer)) {
       realContainer = tempContainer.getParent();
