@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,19 @@ import org.jetbrains.annotations.NotNull;
 public class SimplifiableConditionalExpressionInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "simplifiable.conditional.expression.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiConditionalExpression expression =
@@ -52,8 +55,34 @@ public class SimplifiableConditionalExpressionInspection
                 calculateReplacementExpression(expression));
     }
 
+    @Override
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        return new SimplifiableConditionalFix();
+    }
+
+    private static class SimplifiableConditionalFix
+            extends InspectionGadgetsFix {
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "constant.conditional.expression.simplify.quickfix");
+        }
+
+        @Override
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiConditionalExpression expression =
+                    (PsiConditionalExpression)descriptor.getPsiElement();
+            final String newExpression =
+                    calculateReplacementExpression(expression);
+            replaceExpression(expression, newExpression);
+        }
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryConditionalExpressionVisitor();
+        return new SimplifiableConditionalExpressionVisitor();
     }
 
     @NonNls
@@ -110,30 +139,7 @@ public class SimplifiableConditionalExpressionInspection
         }
     }
 
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new SimplifiableConditionalFix();
-    }
-
-    private static class SimplifiableConditionalFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "constant.conditional.expression.simplify.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiConditionalExpression expression =
-                    (PsiConditionalExpression)descriptor.getPsiElement();
-            final String newExpression =
-                    calculateReplacementExpression(expression);
-            replaceExpression(expression, newExpression);
-        }
-    }
-
-    private static class UnnecessaryConditionalExpressionVisitor
+    private static class SimplifiableConditionalExpressionVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitConditionalExpression(

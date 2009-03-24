@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class BoolUtils {
 
-    private BoolUtils() {
-        super();
-    }
+    private BoolUtils() {}
 
     public static boolean isNegation(@NotNull PsiExpression expression) {
         if (!(expression instanceof PsiPrefixExpression)) {
@@ -68,7 +66,9 @@ public class BoolUtils {
                     ComparisonUtils.getNegatedComparison(sign);
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
-            assert rhs != null;
+            if (rhs == null) {
+                return lhs.getText() + negatedComparison;
+            }
             return lhs.getText() + negatedComparison + rhs.getText();
         } else if (ParenthesesUtils.getPrecedence(condition) >
                 ParenthesesUtils.PREFIX_PRECEDENCE) {
