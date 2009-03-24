@@ -31,7 +31,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.Function;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -174,27 +176,59 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     try {
       final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
       final ModifiableRootModel[] rootModels = new ModifiableRootModel[getParameters().projectsToConvert.size()];
-      final Set<String> files = new HashSet<String>();
+      final Set<File> files = new HashSet<File>();
       for (String path : getParameters().projectsToConvert) {
         String modulesDirectory = getParameters().converterOptions.commonModulesDirectory;
         if (modulesDirectory == null) {
           modulesDirectory = path;
         }
         final String moduleName = EclipseProjectFinder.findProjectName(path);
-        final String imlFilePath = modulesDirectory + File.separator + moduleName + IdeaXml.IML_EXT;
-        if (new File(imlFilePath).isFile()) {
-          files.add(imlFilePath);
+        final File imlFile = new File(modulesDirectory + File.separator + moduleName + IdeaXml.IML_EXT);
+        if (imlFile.isFile()) {
+          files.add(imlFile);
         }
-        final String emlFilePath = modulesDirectory + File.separator + moduleName + EclipseXml.IDEA_SETTINGS_POSTFIX;
-        if (new File(emlFilePath).isFile()) {
-          files.add(emlFilePath);
+        final File emlFile = new File(modulesDirectory + File.separator + moduleName + EclipseXml.IDEA_SETTINGS_POSTFIX);
+        if (emlFile.isFile()) {
+          files.add(emlFile);
         }
       }
       if (!files.isEmpty()) {
-        if (Messages.showOkCancelDialog(ApplicationInfoEx.getInstanceEx().getFullApplicationName() + " module files found:\n" + StringUtil.join(files, "\n") +
-                                        ".\n Would you like to reuse them?", "Module files found", Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) {
-          for (String file : files) {
-            FileUtil.delete(new File(file));
+        final int resultCode = Messages.showYesNoCancelDialog(ApplicationInfoEx.getInstanceEx().getFullApplicationName() +
+                                                              " module files found:\n" +
+                                                              StringUtil.join(files,new Function<File, String>() {
+                                                                public String fun(File file) {
+                                                                  return file.getPath();
+                                                                }
+                                                              }, "\n") +
+                                                              ".\n Would you like to reuse them?", "Module files found",
+                                                              Messages.getQuestionIcon());
+        if (resultCode != DialogWrapper.OK_EXIT_CODE) {
+          if (resultCode == DialogWrapper.CANCEL_EXIT_CODE) {
+            final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+            for (File file : files) {
+              final VirtualFile virtualFile = localFileSystem.findFileByIoFile(file);
+              if (virtualFile != null) {
+                final IOException[] ex = new IOException[1];
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  public void run() {
+                    try {
+                      virtualFile.delete(this);
+                    }
+                    catch (IOException e) {
+                      ex[0] = e;
+                    }
+                  }
+                });
+                if (ex[0] != null) {
+                  throw ex[0];
+                }
+              }
+              else {
+                FileUtil.delete(file);
+              }
+            }
+          } else {
+            return result;
           }
         }
       }
