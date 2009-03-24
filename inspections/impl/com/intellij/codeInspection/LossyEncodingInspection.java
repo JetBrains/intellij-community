@@ -7,6 +7,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +50,7 @@ public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
     if (virtualFile == null) return null;
     String text = file.getText();
     Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
+    charset = PropertiesFilesManager.getInstance().nativeToBaseCharset(charset);
 
     int errorCount = 0;
     int start = -1;
@@ -57,7 +59,6 @@ public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
       char c = text.charAt(i);
       if (isRepresentable(c, charset)) {
         if (start != -1) {
-          //if (Character.isWhitespace(c)) i--;
           ProblemDescriptor descriptor = manager.createProblemDescriptor(file, new TextRange(start, i), InspectionsBundle.message(
             "unsupported.character.for.the.charset", charset), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           descriptors.add(descriptor);

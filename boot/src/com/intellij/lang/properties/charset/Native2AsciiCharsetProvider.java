@@ -8,7 +8,7 @@ import java.util.Collections;
 /**
  * @author Alexey
  */
-
+@SuppressWarnings({"UnusedDeclaration"})
 public class Native2AsciiCharsetProvider extends CharsetProvider {
   public Native2AsciiCharsetProvider() {
   }

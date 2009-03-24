@@ -1,6 +1,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.AppTopics;
+import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -180,5 +182,12 @@ public class PropertiesFilesManager implements ApplicationComponent {
     void fileAdded(VirtualFile propertiesFile);
     void fileRemoved(VirtualFile propertiesFile);
     void fileChanged(VirtualFile propertiesFile, final VirtualFilePropertyEvent event);
+  }
+
+  public Charset nativeToBaseCharset(Charset charset) {
+    if (charset instanceof Native2AsciiCharset) {
+      return ((Native2AsciiCharset)charset).getBaseCharset();
+    }
+    return charset;
   }
 }
