@@ -20,6 +20,7 @@
  */
 package com.intellij.execution.junit2.inspection;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
 import com.intellij.codeInspection.reference.RefElement;
@@ -32,6 +33,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import org.jdom.Element;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+
+import java.util.Arrays;
 
 public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
   public boolean ADD_JUNIT_TO_ENTRIES = true;
@@ -61,6 +68,13 @@ public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
             !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT) && name.startsWith("test")
             || "suite".equals(name) || "setUp".equals(name) ||  "tearDown".equals(name)) {
           return true;
+        }
+        if (JUnitUtil.isTestClass(psiClass) && psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+            if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BeforeClass.class.getName(), AfterClass.class.getName()))) return true;
+          } else {
+            if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(Before.class.getName(), After.class.getName()))) return true;
+          }
         }
       }
     }
