@@ -265,8 +265,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                                                     final List<Block> result,
                                                     final Indent indent,
                                                     int offset,
-                                                    TextRange range
-                                                      ) {
+                                                    @Nullable TextRange range) {
     final PsiElement childPsi = child.getPsi();
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, childPsi);
     LOG.assertTrue(builder != null);

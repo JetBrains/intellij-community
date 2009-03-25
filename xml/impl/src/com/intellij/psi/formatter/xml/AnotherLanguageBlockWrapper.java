@@ -15,13 +15,13 @@ public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
   private final Block myOriginal;
   private final Indent myIndent;
   private final int myOffset;
-  private final TextRange myRange;
+  @Nullable private final TextRange myRange;
 
   public AnotherLanguageBlockWrapper(final ASTNode node,
                                      final XmlFormattingPolicy policy,
                                      final Block original, final Indent indent,
                                      final int offset,
-                                     TextRange range) {
+                                     @Nullable TextRange range) {
     super(node, original.getWrap(), original.getAlignment(), policy);
     myOriginal = original;
     myIndent = indent;
