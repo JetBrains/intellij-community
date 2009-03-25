@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
@@ -259,7 +260,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NotNull
   public FileType getFileTypeByFileName(@NotNull String fileName) {
     FileType type = myPatternsTable.findAssociatedFileType(fileName);
-    return type == null ? FileTypes.UNKNOWN : type;
+    return type == null ? UnknownFileType.INSTANCE : type;
   }
 
   @NotNull
@@ -710,6 +711,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     FileType type = getFileTypeByName(fileTypeName);
 
+    if (isDefaults && !ignoreExisting) {
+      extensionsStr = filterAlreadyRegisteredExtensions(extensionsStr);
+    }
+
     List<FileNameMatcher> exts = parse(extensionsStr);
     if (type != null && !ignoreExisting) {
       if (isDefaults) return type;
@@ -756,6 +761,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     return type;
+  }
+
+  private String filterAlreadyRegisteredExtensions(String semicolonDelimited) {
+    StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, FileTypeConsumer.EXTENSION_DELIMITER, false);
+    ArrayList<String> list = new ArrayList<String>();
+    while (tokenizer.hasMoreTokens()) {
+      final String extension = tokenizer.nextToken().trim();
+      if (getFileTypeByExtension(extension) == UnknownFileType.INSTANCE) {
+        list.add(extension);
+      }
+    }
+    return StringUtil.join(list, FileTypeConsumer.EXTENSION_DELIMITER);
   }
 
   private static FileType loadCustomFile(final Element typeElement, ExternalInfo info) {

@@ -29,10 +29,9 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.ide.highlighter;
+package com.intellij.openapi.fileTypes;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +40,9 @@ import javax.swing.*;
 
 public class UnknownFileType implements FileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/unknown.png");
+  public static final FileType INSTANCE = new UnknownFileType();
+
+  private UnknownFileType() {}
 
   @NotNull
   public String getName() {

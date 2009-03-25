@@ -1,7 +1,6 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.ide.highlighter.UnknownFileType;
 import com.intellij.openapi.fileTypes.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +24,6 @@ public class PlatformFileTypeFactory extends FileTypeFactory {
                      new ExtensionFileNameMatcher("jad"),
                      new ExtensionFileNameMatcher("jam"),
                      new ExactFileNameMatcher("readme", true));
-    consumer.consume(new UnknownFileType());
+    consumer.consume(UnknownFileType.INSTANCE);
   }
 }
