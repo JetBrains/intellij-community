@@ -31,33 +31,17 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
 
   private final MyRootsHelper myHelper;
 
-  private static class MyRootsHelper {
+  private static class MyRootsHelper extends ThreadLocalDefendedInvoker<VirtualFile[]> {
     private final ProjectLevelVcsManager myPlVcsManager;
     private final SvnVcs myVcs;
-
-    private final static ThreadLocal<Boolean> ourInsideRefresh = new ThreadLocal<Boolean>() {
-      @Override
-      protected Boolean initialValue() {
-        return Boolean.TRUE;
-      }
-    };
 
     private MyRootsHelper(final Project project, final SvnVcs vcs) {
       myVcs = vcs;
       myPlVcsManager = ProjectLevelVcsManager.getInstance(project);
     }
 
-    public boolean doConvertion() {
-      return Boolean.TRUE.equals(ourInsideRefresh.get());
-    }
-
-    public VirtualFile[] getRootSettings() {
-      try {
-        ourInsideRefresh.set(Boolean.FALSE);
-        return myPlVcsManager.getRootsUnderVcs(myVcs);
-      } finally {
-        ourInsideRefresh.set(Boolean.TRUE);
-      }
+    protected VirtualFile[] execute() {
+      return myPlVcsManager.getRootsUnderVcs(myVcs);
     }
   }
 
@@ -161,7 +145,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
   }
 
   public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
-    if (! myHelper.doConvertion()) return result;
+    if (myHelper.isInside()) return result;
 
     synchronized (myMonitor) {
       final List<VirtualFile> cachedRoots = myMapping.getUnderVcsRoots();
@@ -176,7 +160,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
   public void realRefresh() {
     final boolean goIntoNested = SvnConfiguration.getInstance(myVcs.getProject()).DETECT_NESTED_COPIES;
 
-    final VirtualFile[] roots = myHelper.getRootSettings();
+    final VirtualFile[] roots = myHelper.executeDefended();
 
     final SvnMapping mapping = new SvnMapping();
 
@@ -247,6 +231,6 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
   }
 
   public VirtualFile[] getNotFilteredRoots() {
-    return myHelper.getRootSettings();
+    return myHelper.executeDefended();
   }
 }

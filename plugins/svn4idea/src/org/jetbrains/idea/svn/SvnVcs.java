@@ -104,6 +104,7 @@ import java.util.logging.Level;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs {
+  private final static Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
   private final Map<String, SVNStatusHolder> myStatuses = new SoftHashMap<String, SVNStatusHolder>();
@@ -126,8 +127,6 @@ public class SvnVcs extends AbstractVcs {
   private SvnCommittedChangesProvider myCommittedChangesProvider;
   private final VcsShowSettingOption myCheckoutOptions;
 
-  private final SvnFileUrlMappingImpl myRootsInfo;
-
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
 
@@ -137,6 +136,8 @@ public class SvnVcs extends AbstractVcs {
   public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
   private final SvnChangelistListener myChangeListListener;
   private MessageBusConnection myMessageBusConnection;
+
+  private final SvnCopiesRefreshManager myCopiesRefreshManager;
 
   public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
 
@@ -183,7 +184,7 @@ public class SvnVcs extends AbstractVcs {
     myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
     myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
 
-    myRootsInfo = new SvnFileUrlMappingImpl(myProject, this);
+    myCopiesRefreshManager = new SvnCopiesRefreshManager(project, this);
 
     if (myProject.isDefault()) {
       myChangeListListener = null;
@@ -210,19 +211,15 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public void invokeRefreshSvnRoots(final boolean hidden) {
-    final Runnable refresher = new Runnable() {
-      public void run() {
-        //myRootsInfo.ensureInitialized();
-        myRootsInfo.realRefresh();
-        myProject.getMessageBus().syncPublisher(ROOTS_RELOADED).run();
-      }
-    };
+    REFRESH_LOG.debug("refresh hidden: " + hidden, new Throwable());
     if (hidden) {
-      final Application appManager = ApplicationManager.getApplication();
-      appManager.executeOnPooledThread(refresher);
+      myCopiesRefreshManager.getCopiesRefresh().asynchRequest();
     } else {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(refresher,
-        SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          myCopiesRefreshManager.getCopiesRefresh().synchRequest();
+        }
+      }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);
     }
   }
 
@@ -845,7 +842,7 @@ public class SvnVcs extends AbstractVcs {
   @NotNull
   public SvnFileUrlMapping getSvnFileUrlMapping() {
     //myRootsInfo.ensureInitialized();
-    return myRootsInfo;
+    return myCopiesRefreshManager.getMapping();
   }
 
   /**
@@ -894,7 +891,7 @@ public class SvnVcs extends AbstractVcs {
 
   @Override
   public RootsConvertor getCustomConvertor() {
-    return myRootsInfo;
+    return myCopiesRefreshManager.getMapping();
   }
 
   @Override
@@ -926,9 +923,10 @@ public class SvnVcs extends AbstractVcs {
   @Override
   public List<VirtualFile> filterUniqueRoots(final List<VirtualFile> in) {
     final List<RootUrlInfo> infos = new ArrayList<RootUrlInfo>(in.size());
+    final SvnFileUrlMappingImpl mapping = myCopiesRefreshManager.getMapping();
     for (VirtualFile vf : in) {
       final File ioFile = new File(vf.getPath());
-      final RootUrlInfo info = myRootsInfo.getWcRootForFilePath(ioFile);
+      final RootUrlInfo info = mapping.getWcRootForFilePath(ioFile);
       if (info == null) continue;
       /*if ((info == null) || (! ioFile.getAbsolutePath().equals(info.getIoFile().getAbsolutePath()))) {
         // we get one of roots there, there shouldn't be other paths
