@@ -1109,7 +1109,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       newFileText1 = stripTrailingSpaces(newFileText1);
     }
 
-    actualText = StringUtil.convertLineSeparators(actualText, "\n");
+    actualText = StringUtil.convertLineSeparators(actualText);
 
     //noinspection HardCodedStringLiteral
     Assert.assertEquals("Text mismatch in file " + expectedFile, newFileText1, actualText);

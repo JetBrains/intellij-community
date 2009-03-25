@@ -58,7 +58,7 @@ public class CutLineEndAction extends EditorAction {
                                         Editor editor) {
       String s = doc.getCharsSequence().subSequence(caretOffset, lineEndOffset).toString();
 
-      s = StringUtil.convertLineSeparators(s, "\n");
+      s = StringUtil.convertLineSeparators(s);
       StringSelection contents = new StringSelection(s);
 
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);

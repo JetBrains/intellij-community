@@ -215,14 +215,28 @@ public class StringUtil {
   }
 
   @NotNull public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep) {
-    StringBuilder buffer = new StringBuilder(text.length());
+    StringBuilder buffer = null;
+    int intactLength = 0;
+    final boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
       if (c == '\n') {
-        buffer.append(newSeparator);
-        shiftOffsets(offsetsToKeep, buffer.length(), 1, newSeparator.length());
+        if (!newSeparatorIsSlashN) {
+          if (buffer == null) {
+            buffer = new StringBuilder(text.length());
+            buffer.append(text, 0, intactLength);
+          }
+          buffer.append(newSeparator);
+          shiftOffsets(offsetsToKeep, buffer.length(), 1, newSeparator.length());
+        }
+        else if (buffer == null) intactLength++;
+        else buffer.append(c);
       }
       else if (c == '\r') {
+        if (buffer == null) {
+          buffer = new StringBuilder(text.length());
+          buffer.append(text, 0, intactLength);
+        }
         buffer.append(newSeparator);
         if (i < text.length() - 1 && text.charAt(i + 1) == '\n') {
           i++;
@@ -233,10 +247,11 @@ public class StringUtil {
         }
       }
       else {
-        buffer.append(c);
+        if (buffer == null) intactLength++;
+        else buffer.append(c);
       }
     }
-    return buffer.toString();
+    return buffer == null ? text : buffer.toString();
   }
 
   private static void shiftOffsets(int[] offsets, int changeOffset, int oldLength, int newLength) {

@@ -180,7 +180,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     for (Data content : allContents) {
       String fullString = getStringRepresentationFor(content);
       if (fullString != null) {
-        fullString = StringUtil.convertLineSeparators(fullString, "\n");
+        fullString = StringUtil.convertLineSeparators(fullString);
         int newLineIdx = fullString.indexOf('\n');
         if (newLineIdx == -1) {
           shortened.add(fullString.trim());

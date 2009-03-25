@@ -378,7 +378,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("signature.preview.border.title")), IdeBorderFactory.createEmptyBorder(new Insets(4, 4, 4, 4))));
 
     String s = calculateSignature();
-    s = StringUtil.convertLineSeparators(s, "\n");
+    s = StringUtil.convertLineSeparators(s);
     int height = new StringTokenizer(s, "\n\r").countTokens() + 2;
     if (height > 10) height = 10;
     mySignatureArea = new JTextArea(height, 50);

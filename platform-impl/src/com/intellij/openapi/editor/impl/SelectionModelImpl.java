@@ -497,7 +497,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     String s = myEditor.getSelectionModel().getSelectedText();
     if (s == null) return;
 
-    s = StringUtil.convertLineSeparators(s, "\n");
+    s = StringUtil.convertLineSeparators(s);
     StringSelection contents = new StringSelection(s);
 
     Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myEditor.getContentComponent()));

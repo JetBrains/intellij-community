@@ -221,7 +221,7 @@ public class ExportDialog extends DialogWrapper {
     }
 
     public void actionPerformed(ActionEvent e) {
-      String s = StringUtil.convertLineSeparators(myTextArea.getText(), "\n");
+      String s = StringUtil.convertLineSeparators(myTextArea.getText());
       CopyPasteManager.getInstance().setContents(new StringSelection(s));
     }
   }

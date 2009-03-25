@@ -24,7 +24,7 @@ public abstract class ResolveTestCase extends PsiTestCase {
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("file " + filePath + " not found", vFile);
 
-    String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
+    String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile));
 
     final String fileName = vFile.getName();
 

@@ -786,7 +786,7 @@ public class LineStatusTracker {
   }
 
   public static LineStatusTracker createOn(Document doc, String upToDateContent, Project project) {
-    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(upToDateContent, "\n"));
+    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(upToDateContent));
     final LineStatusTracker tracker = new LineStatusTracker(doc, document, project);
     tracker.initialize(upToDateContent);
     return tracker;

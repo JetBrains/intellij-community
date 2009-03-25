@@ -49,7 +49,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
             final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
             final File ioFile = new File(testFullPath);
             try {
-              String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8)), "\n");
+              String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8)));
               quickFixTestCase.configureFromFileText(ioFile.getName(), contents);
               quickFixTestCase.bringRealEditorBack();
               final Pair<String, Boolean> pair = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);

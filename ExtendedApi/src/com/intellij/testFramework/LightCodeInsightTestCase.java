@@ -91,7 +91,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
 
     final File ioFile = new File(fullPath);
     String fileText = new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8));
-    fileText = StringUtil.convertLineSeparators(fileText, "\n");
+    fileText = StringUtil.convertLineSeparators(fileText);
 
     configureFromFileText(ioFile.getName(), fileText);
   }
@@ -253,7 +253,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     } catch (IOException e) {
       LOG.error(e);
     }
-    checkResultByText(message, StringUtil.convertLineSeparators(fileText, "\n"), ignoreTrailingSpaces);
+    checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces);
   }
 
   /**

@@ -89,7 +89,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     assertNotNull("file " + filePath + " not found", vFile);
 
     String fileText = VfsUtil.loadText(vFile);
-    fileText = StringUtil.convertLineSeparators(fileText, "\n");
+    fileText = StringUtil.convertLineSeparators(fileText);
 
     int offset = fileText.indexOf(marker);
     assertTrue(offset >= 0);
@@ -162,7 +162,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     final String q = "\"";
     System.out.print(q);
 
-    text = StringUtil.convertLineSeparators(text, "\n");
+    text = StringUtil.convertLineSeparators(text);
 
     StringTokenizer tokenizer = new StringTokenizer(text, "\n", true);
     while (tokenizer.hasMoreTokens()) {

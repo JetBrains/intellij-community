@@ -108,7 +108,7 @@ public class TemplateImpl implements Template, SchemeElement {
 
 
   public void addTextSegment(String text) {
-    text = StringUtil.convertLineSeparators(text, "\n");
+    text = StringUtil.convertLineSeparators(text);
     myTemplateText += text;
   }
 
@@ -248,7 +248,7 @@ public class TemplateImpl implements Template, SchemeElement {
     }
 
     if (myString == null) myString = "";
-    myString = StringUtil.convertLineSeparators(myString, "\n");
+    myString = StringUtil.convertLineSeparators(myString);
     mySegments = new ArrayList<Segment>();
     StringBuilder buffer = new StringBuilder("");
     TemplateTextLexer lexer = new TemplateTextLexer();

@@ -15,7 +15,7 @@ import java.io.IOException;
 public class EncodingAwareProperties extends java.util.Properties{
   public void load(File file, String encoding) throws IOException{
     String propText = new String(FileUtil.loadFileText(file, encoding));
-    propText = StringUtil.convertLineSeparators(propText, "\n");
+    propText = StringUtil.convertLineSeparators(propText);
     StringTokenizer stringTokenizer = new StringTokenizer(propText, "\n");
     while (stringTokenizer.hasMoreElements()){
       String line = (String)stringTokenizer.nextElement();

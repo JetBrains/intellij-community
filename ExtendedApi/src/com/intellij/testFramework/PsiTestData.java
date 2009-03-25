@@ -29,7 +29,7 @@ public class PsiTestData implements JDOMExternalizable {
   public void loadText(String root) throws IOException{
     String fileName = root + "/" + TEXT_FILE;
     myText = new String(FileUtil.loadFileText(new File(fileName)));
-    myText = StringUtil.convertLineSeparators(myText, "\n");
+    myText = StringUtil.convertLineSeparators(myText);
   }
 
   public void readExternal(Element element) throws InvalidDataException {

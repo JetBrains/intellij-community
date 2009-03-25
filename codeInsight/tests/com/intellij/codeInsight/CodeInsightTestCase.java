@@ -304,7 +304,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   private EditorInfo copyContent(final VirtualFile from, final VirtualFile to, final List<OutputStream> streamsToClose) throws IOException {
     byte[] content = from.getFileType().isBinary() ? from.contentsToByteArray(): null;
-    final String fileText =  from.getFileType().isBinary() ? null: StringUtil.convertLineSeparators(VfsUtil.loadText(from), "\n");
+    final String fileText = from.getFileType().isBinary() ? null : StringUtil.convertLineSeparators(VfsUtil.loadText(from));
 
     EditorInfo editorInfo = fileText != null ? new EditorInfo(fileText) : null;
     String newFileText = fileText != null ? editorInfo.getNewFileText() : null;
@@ -442,7 +442,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("Cannot find file " + fullPath, vFile);
-    String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
+    String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile));
     Document document = EditorFactory.getInstance().createDocument(fileText);
 
     int caretIndex = fileText.indexOf(CARET_MARKER);
@@ -477,7 +477,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
     
     String text = myFile.getText();
-    text = StringUtil.convertLineSeparators(text, "\n");
+    text = StringUtil.convertLineSeparators(text);
 
     assertEquals("Text mismatch in file " + filePath, newFileText1, text);
 

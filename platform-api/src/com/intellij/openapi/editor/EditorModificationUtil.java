@@ -160,7 +160,7 @@ public class EditorModificationUtil {
       s = (String)content.getTransferData(DataFlavor.stringFlavor);
     }
 
-    s = StringUtil.convertLineSeparators(s, "\n");
+    s = StringUtil.convertLineSeparators(s);
     return s;
   }
 
