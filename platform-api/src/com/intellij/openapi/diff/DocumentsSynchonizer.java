@@ -76,7 +76,7 @@ abstract class DocumentsSynchonizer {
           LOG.assertTrue(endOffset <= document.getTextLength());
           document.replaceString(startOffset, endOffset, newText);
         }
-      }, DiffBundle.message("save.merge.result.command.name"), null);
+      }, DiffBundle.message("save.merge.result.command.name"), document);
     }
     finally {
       myDuringModification = false;

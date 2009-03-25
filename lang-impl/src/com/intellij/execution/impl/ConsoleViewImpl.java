@@ -59,6 +59,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -116,6 +117,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
   private final Set<ConsoleViewContentType> myDeferredTypes = new HashSet<ConsoleViewContentType>();
 
+  @TestOnly
+  public Editor getEditor() {
+    return myEditor;
+  }
 
   private static class TokenInfo{
     private final ConsoleViewContentType contentType;
@@ -194,21 +199,20 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       myDeferredTypes.clear();
       myDeferredUserInput = new StringBuffer();
       myHyperlinks.clear();
-      myEditor.getMarkupModel().removeAllHighlighters();
       myTokens.clear();
-      document = myEditor == null? null : myEditor.getDocument();
+      if (myEditor == null) return;
+      myEditor.getMarkupModel().removeAllHighlighters();
+      document = myEditor.getDocument();
     }
-    if (document != null){
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            public void run() {
-              document.deleteString(0, document.getTextLength());
-            }
-          }, null, document);
-        }
-      });
-    }
+    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, myProject) {
+      public void run() {
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          public void run() {
+            document.deleteString(0, document.getTextLength());
+          }
+        }, null, document);
+      }
+    });
   }
 
   public void scrollTo(final int offset) {
@@ -311,7 +315,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     synchronized(LOCK){
       myDeferredTypes.add(contentType);
 
-      s = StringUtil.convertLineSeparators(s,  "\n");
+      s = StringUtil.convertLineSeparators(s);
       myContentSize += s.length();
       myDeferredOutput.append(s);
       if (contentType == ConsoleViewContentType.USER_INPUT){
@@ -377,7 +381,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
     boolean cycleUsed = USE_CYCLIC_BUFFER && document.getTextLength() + text.length() > CYCLIC_BUFFER_SIZE;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, myProject) {
       public void run() {
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           public void run() {
@@ -847,7 +851,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
         consoleView.myContentSize--;
       }
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, consoleView.myProject) {
         public void run() {
           document.deleteString(length - 1, length);
           editor.getCaretModel().moveToOffset(length - 1);

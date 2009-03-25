@@ -140,7 +140,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
               myEditorField.getCaretModel().moveToOffset(myDocument.getTextLength());
             }
           }
-        }, null, null);
+        }, null, myDocument);
       }
     });
   }

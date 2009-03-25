@@ -43,7 +43,7 @@ public class TypedHandler implements TypedActionHandler {
           EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
         }
       }
-    }, "", null);
+    }, "", editor.getDocument());
 
     if (result == CharFilter.Result.ADD_TO_PREFIX){
       lookup.updateList();

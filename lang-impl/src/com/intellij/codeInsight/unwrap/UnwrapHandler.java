@@ -166,7 +166,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
             }
           });
         }
-      }, null, null);
+      }, null, myEditor.getDocument());
     }
 
     private void saveCaretPosition(PsiFile file) {
