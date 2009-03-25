@@ -733,7 +733,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       assertWritable();
       myModulesCache = null;
       if (myPathToModule.values().contains(module)) {
-        myPathToModule.values().remove(module);
+        myPathToModule.remove(module.getModuleFilePath());
         myModulesToDispose.add(module);
       }
       if (myModuleGroupPath != null){
