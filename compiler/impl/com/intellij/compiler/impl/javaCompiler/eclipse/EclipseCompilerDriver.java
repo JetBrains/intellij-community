@@ -185,11 +185,9 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
       String path = FileUtil.toSystemDependentName(outputDir) + File.separatorChar + relativePath;
                                                     
       try {
-        ClassFile.writeToDisk(
-                true,
-                outputDir,
-                relativePath,
-                classFile);
+        File out = new File(path);
+        FileUtil.createParentDirs(out);
+        FileUtil.writeToFile(out, classFile.getBytes());
       }
       catch (IOException e) {
         LOG.error(e);

@@ -33,7 +33,17 @@ public class EclipseCompiler extends ExternalCompiler {
 
   private final Project myProject;
   private final List<File> myTempFiles = new ArrayList<File>();
-  @NonNls public static final String PATH_TO_COMPILER_JAR = PathManager.getLibPath() + "/org.eclipse.jdt.core.jar";
+  @NonNls private static final String PATH_TO_COMPILER_JAR = findJarPah();
+
+  private static String findJarPah() {
+    File dir = new File(PathManager.getLibPath());
+    File[] jars = dir.listFiles(new FilenameFilter() {
+      public boolean accept(File dir, String name) {
+        return name.startsWith("org.eclipse.jdt.core") && name.endsWith(".jar");
+      }
+    });
+    return jars.length == 0 ? jars[0].getPath() : dir + "/org.eclipse.jdt.core*.jar";
+  }
 
   public EclipseCompiler(Project project) {
     myProject = project;

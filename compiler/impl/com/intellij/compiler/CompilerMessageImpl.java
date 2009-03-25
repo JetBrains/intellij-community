@@ -57,7 +57,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     if (virtualFile != null && virtualFile.isValid()) {
       final int line = getLine() - 1; // editor lines are zero-based
       if (line >= 0) {
-        return myNavigatable = new OpenFileDescriptor(myProject, virtualFile, line, Math.max(0, getColumn()));
+        return myNavigatable = new OpenFileDescriptor(myProject, virtualFile, line, Math.max(0, getColumn()-1));
       }
     }
     return null;
