@@ -35,7 +35,7 @@ public abstract class MavenPsiReference implements PsiReference {
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return element.getManager().areElementsEquivalent(element, resolve());
+    return getElement().getManager().areElementsEquivalent(element, resolve());
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
