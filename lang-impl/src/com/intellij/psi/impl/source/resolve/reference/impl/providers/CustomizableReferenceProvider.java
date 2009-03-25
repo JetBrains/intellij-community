@@ -17,7 +17,7 @@ public interface CustomizableReferenceProvider {
   final class CustomizationKey<T> {
     private final String myOptionDescription;
 
-    CustomizationKey(@NonNls String optionDescription) {
+    public CustomizationKey(@NonNls String optionDescription) {
       myOptionDescription = optionDescription;
     }
 
