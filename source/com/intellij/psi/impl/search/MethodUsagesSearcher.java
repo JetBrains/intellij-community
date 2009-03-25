@@ -9,12 +9,13 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -22,7 +23,7 @@ import com.intellij.util.QueryExecutor;
 public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters> {
   public boolean execute(final MethodReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
     final PsiMethod method = p.getMethod();
-    SearchScope searchScope = p.getScope();
+    final SearchScope searchScope = p.getScope();
     final PsiManager psiManager = PsiManager.getInstance(method.getProject());
     final boolean isStrictSignatureSearch = p.isStrictSignatureSearch();
 
@@ -39,7 +40,7 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     final PsiClass parentClass = method.getContainingClass();
     boolean needStrictSignatureSearch = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        return isStrictSignatureSearch && (parentClass == null
+        return method.isValid() && isStrictSignatureSearch && (parentClass == null
                                         || parentClass instanceof PsiAnonymousClass
                                         || parentClass.hasModifierProperty(PsiModifier.FINAL)
                                         || method.hasModifierProperty(PsiModifier.STATIC)
@@ -55,11 +56,12 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
       });
     }
 
-    final String text = method.getName();
+    final String textToSearch = method.getName();
     final PsiMethod[] methods = isStrictSignatureSearch ? new PsiMethod[]{method} : getOverloads(method);
 
     SearchScope accessScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       public SearchScope compute() {
+        if (!method.isValid()) return searchScope;
         SearchScope accessScope = methods[0].getUseScope();
         for (int i = 1; i < methods.length; i++) {
           PsiMethod method1 = methods[i];
@@ -77,12 +79,13 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
     boolean toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
                                                                               restrictedByAccess,
-                                                                              text,
+                                                                              textToSearch,
                                                                               searchContext, true);
     if (!toContinue) return false;
 
     final String propertyName = ApplicationManager.getApplication().runReadAction(new Computable<String>(){
       public String compute() {
+        if (!method.isValid()) return null;
         return PropertyUtil.getPropertyName(method);
       }
     });
@@ -111,9 +114,11 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     return true;
   }
 
+  @NotNull
   private static PsiMethod[] getOverloads(final PsiMethod method) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
       public PsiMethod[] compute() {
+        if (!method.isValid()) return PsiMethod.EMPTY_ARRAY;
         PsiClass aClass = method.getContainingClass();
         if (aClass == null) return new PsiMethod[]{method};
         return aClass.findMethodsByName(method.getName(), false);
