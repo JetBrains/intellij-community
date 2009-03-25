@@ -109,7 +109,7 @@
       <include name="lib/microba.jar"/>
       <include name="lib/nanoxml-2.2.3.jar"/>
       <include name="lib/openapi.jar"/>
-      <include name="lib/org.eclipse.jdt.core.jar"/>
+      <include name="lib/org.eclipse.jdt.core*.jar"/>
       <include name="lib/oromatcher.jar"/>
       <include name="lib/picocontainer.jar"/>
       <include name="lib/resolver.jar"/>
