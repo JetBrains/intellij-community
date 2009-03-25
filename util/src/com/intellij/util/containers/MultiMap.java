@@ -107,4 +107,8 @@ public class MultiMap<K, V> {
   public void clear() {
     myMap.clear();
   }
+
+  public Collection<V> remove(K key) {
+    return myMap.remove(key);
+  }
 }
