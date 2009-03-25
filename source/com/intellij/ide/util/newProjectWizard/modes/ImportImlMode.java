@@ -85,6 +85,9 @@ public class ImportImlMode extends WizardMode {
 
   public void onChosen(final boolean enabled) {
     UIUtil.setEnabled(myModulePathFieldPanel, enabled, true);
+    if (enabled) {
+      myModulePathFieldPanel.getTextField().requestFocusInWindow();
+    }
   }
 
   private static class ModuleFileChooserDescriptor extends FileChooserDescriptor {
