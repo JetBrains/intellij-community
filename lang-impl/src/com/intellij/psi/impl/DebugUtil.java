@@ -244,21 +244,19 @@ public class DebugUtil {
   }
 
   public static String psiToString(final PsiElement element, final boolean skipWhitespaces) {
-    final StringBuilder stringBuffer = new StringBuilder(element.getTextLength() * 5);
-    if (element.getNode() == null) {
-      psiToBuffer(stringBuffer, element, 0, skipWhitespaces, false, false);
-    }
-    else {
-      treeToBuffer(stringBuffer, element.getNode(), 0, skipWhitespaces, false, false);
-    }
-    return stringBuffer.toString();
+    return psiToString(element, skipWhitespaces, false);
   }
 
   public static String psiToString(@NotNull PsiElement root,
                                  boolean skipWhiteSpaces,
                                  boolean showRanges) {
     final StringBuilder result = new StringBuilder();
-    psiToBuffer(result, root, 0, skipWhiteSpaces, showRanges, showRanges);
+    if (root.getNode() == null) {
+      psiToBuffer(result, root, 0, skipWhiteSpaces, showRanges, showRanges);
+    }
+    else {
+      treeToBuffer(result, root.getNode(), 0, skipWhiteSpaces, showRanges, showRanges);
+    }
     return result.toString();
   }
   

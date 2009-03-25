@@ -31,6 +31,10 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     return PathManagerEx.getTestDataPath();
   }
 
+  protected boolean includeRanges() {
+    return false;
+  }
+
   protected void doTest(boolean checkResult) throws Exception{
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
@@ -41,25 +45,25 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
       checkResult(name + ".txt", myFile);
     }
     else{
-      toParseTreeText(myFile);
+      toParseTreeText(myFile, includeRanges());
     }
     if(myFile instanceof JspFile) ((MultiplePsiFilesPerDocumentFileViewProvider)((JspFile)myFile).getViewProvider()).checkAllTreesEqual();
   }
 
   protected void checkResult(@NonNls String targetDataName, final PsiFile file) throws Exception {
-    doCheckResult(myFullDataPath, file, targetDataName);
+    doCheckResult(myFullDataPath, file, targetDataName, includeRanges());
   }
 
-  public static void doCheckResult(String myFullDataPath,PsiFile file, String targetDataName) throws Exception {
+  public static void doCheckResult(String myFullDataPath, PsiFile file, String targetDataName, boolean printRanges) throws Exception {
     final PsiElement[] psiRoots = file.getPsiRoots();
     if(psiRoots.length > 1){
       for (int i = 0; i < psiRoots.length; i++) {
         final PsiElement psiRoot = psiRoots[i];
-        doCheckResult(myFullDataPath, targetDataName + "." + i, toParseTreeText(psiRoot).trim());
+        doCheckResult(myFullDataPath, targetDataName + "." + i, toParseTreeText(psiRoot, printRanges).trim());
       }
     }
     else{
-      doCheckResult(myFullDataPath, targetDataName, toParseTreeText(file).trim());
+      doCheckResult(myFullDataPath, targetDataName, toParseTreeText(file, printRanges).trim());
     }
   }
 
@@ -86,8 +90,8 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     }
   }
 
-  protected static String toParseTreeText(final PsiElement file) {
-    return DebugUtil.psiToString(file, false);
+  protected static String toParseTreeText(final PsiElement file, boolean printRanges) {
+    return DebugUtil.psiToString(file, false, printRanges);
   }
 
   protected String loadFile(@NonNls String name) throws Exception {
