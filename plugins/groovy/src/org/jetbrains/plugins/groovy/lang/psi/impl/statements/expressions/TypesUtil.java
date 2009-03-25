@@ -3,11 +3,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.project.Project;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -47,17 +50,19 @@ public class TypesUtil {
     return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
   }
 
-  public static PsiType getOverloadedOperatorType(PsiType thisType, IElementType tokenType,
-                                                  GroovyPsiElement place, PsiType[] argumentTypes) {
+  public static PsiType getOverloadedOperatorType(PsiType thisType,
+                                                  IElementType tokenType,
+                                                  GroovyPsiElement place,
+                                                  PsiType[] argumentTypes) {
     return getOverloadedOperatorType(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
   }
 
-  public static PsiType getOverloadedOperatorType(PsiType thisType, String operatorName,
-                                                  GroovyPsiElement place, PsiType[] argumentTypes) {
+  public static PsiType getOverloadedOperatorType(PsiType thisType, String operatorName, GroovyPsiElement place, PsiType[] argumentTypes) {
     if (operatorName != null) {
-      MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
+      MethodResolverProcessor processor =
+        new MethodResolverProcessor(operatorName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
       if (thisType instanceof PsiClassType) {
-        final PsiClass lClass = ((PsiClassType) thisType).resolve();
+        final PsiClass lClass = ((PsiClassType)thisType).resolve();
         if (lClass != null) {
           lClass.processDeclarations(processor, ResolveState.initial(), null, place);
         }
@@ -68,7 +73,7 @@ public class TypesUtil {
       if (candidates.length == 1) {
         final PsiElement element = candidates[0].getElement();
         if (element instanceof PsiMethod) {
-          return candidates[0].getSubstitutor().substitute(((PsiMethod) element).getReturnType());
+          return candidates[0].getSubstitutor().substitute(((PsiMethod)element).getReturnType());
         }
       }
     }
@@ -132,11 +137,20 @@ public class TypesUtil {
     //all numeric types are assignable
     if (isNumericType(lType)) {
       return isNumericType(rType) || rType.equalsToText("java.lang.String") || rType.equals(PsiType.NULL);
-    } else {
-      if (lType.equalsToText("java.lang.String") && isNumericType(rType)) return true;
-      rType = boxPrimitiveType(rType, manager, scope);
-      lType = boxPrimitiveType(lType, manager, scope);
     }
+    if (rType instanceof GrTupleType) {
+      final GrTupleType tuple = (GrTupleType)rType;
+      if (tuple.getComponentTypes().length == 0) {
+        if (lType instanceof PsiArrayType || InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_LIST)) {
+          return true;
+        }
+      }
+    }
+
+    if (lType.equalsToText("java.lang.String") && isNumericType(rType)) return true;
+
+    rType = boxPrimitiveType(rType, manager, scope);
+    lType = boxPrimitiveType(lType, manager, scope);
 
     return lType.isAssignableFrom(rType);
   }
@@ -149,7 +163,8 @@ public class TypesUtil {
       if (lType.equalsToText("java.math.BigDecimal")) lType = PsiType.DOUBLE;
       rType = unboxPrimitiveTypeWrapper(rType);
       if (rType.equalsToText("java.math.BigDecimal")) rType = PsiType.DOUBLE;
-    } else {
+    }
+    else {
       rType = boxPrimitiveType(rType, manager, scope);
       lType = boxPrimitiveType(lType, manager, scope);
     }
@@ -163,8 +178,7 @@ public class TypesUtil {
       return TYPE_TO_RANK.contains(type.getCanonicalText());
     }
 
-    return type instanceof PsiPrimitiveType &&
-        TypeConversionUtil.isNumericType(type);
+    return type instanceof PsiPrimitiveType && TypeConversionUtil.isNumericType(type);
   }
 
   public static PsiType unboxPrimitiveTypeWraperAndEraseGenerics(PsiType result) {
@@ -181,7 +195,7 @@ public class TypesUtil {
 
   public static PsiType boxPrimitiveTypeAndEraseGenerics(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
     if (result instanceof PsiPrimitiveType) {
-      PsiPrimitiveType primitive = (PsiPrimitiveType) result;
+      PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
         return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
@@ -193,7 +207,7 @@ public class TypesUtil {
 
   public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
     if (result instanceof PsiPrimitiveType) {
-      PsiPrimitiveType primitive = (PsiPrimitiveType) result;
+      PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
         return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
@@ -232,8 +246,8 @@ public class TypesUtil {
 
   public static PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
     if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
-      GrTupleType tuple1 = (GrTupleType) type1;
-      GrTupleType tuple2 = (GrTupleType) type2;
+      GrTupleType tuple1 = (GrTupleType)type1;
+      GrTupleType tuple2 = (GrTupleType)type2;
       PsiType[] components1 = tuple1.getComponentTypes();
       PsiType[] components2 = tuple2.getComponentTypes();
       PsiType[] components3 = new PsiType[Math.min(components1.length, components2.length)];
@@ -242,14 +256,17 @@ public class TypesUtil {
         PsiType c2 = components2[i];
         if (c1 == null || c2 == null) {
           components3[i] = null;
-        } else {
+        }
+        else {
           components3[i] = getLeastUpperBound(c1, c2, manager);
         }
       }
-      return new GrTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
-    } else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
-      GrClosureType clType1 = (GrClosureType) type1;
-      GrClosureType clType2 = (GrClosureType) type2;
+      return new GrTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()),
+                             tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+    }
+    else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
+      GrClosureType clType1 = (GrClosureType)type1;
+      GrClosureType clType2 = (GrClosureType)type2;
       PsiType[] parameterTypes1 = clType1.getClosureParameterTypes();
       PsiType[] parameterTypes2 = clType2.getClosureParameterTypes();
       if (parameterTypes1.length == parameterTypes2.length) {
@@ -266,5 +283,50 @@ public class TypesUtil {
     }
 
     return GenericsUtil.getLeastUpperBound(type1, type2, manager);
+  }
+
+  @Nullable
+  public static PsiType getPsiType(PsiElement context, IElementType elemType) {
+    if (elemType == GroovyTokenTypes.kNULL) {
+      return PsiType.NULL;
+    }
+    final String typeName = getPsiTypeName(elemType);
+    if (typeName != null) {
+      return JavaPsiFacade.getElementFactory(context.getProject()).createTypeByFQClassName(typeName, context.getResolveScope());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getPsiTypeName(IElementType elemType) {
+    if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_LITERAL || elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTRING_LITERAL || elemType ==
+                                                                                                                                                                                         org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_LITERAL) {
+      return "java.lang.String";
+    }
+    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_INT) {
+      return "java.lang.Integer";
+    }
+    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_LONG) {
+      return "java.lang.Long";
+    }
+    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_FLOAT) {
+      return "java.lang.Float";
+    }
+    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_DOUBLE) {
+      return "java.lang.Double";
+    }
+    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_BIG_INT) {
+      return "java.math.BigInteger";
+    }
+    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_BIG_DECIMAL) {
+      return "java.math.BigDecimal";
+    }
+    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kFALSE || elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRUE) {
+      return "java.lang.Boolean";
+    }
+    else if (elemType == org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNULL) {
+      return "null";
+    }
+    return null;
   }
 }

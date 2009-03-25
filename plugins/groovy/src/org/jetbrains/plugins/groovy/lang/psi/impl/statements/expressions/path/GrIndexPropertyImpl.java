@@ -18,6 +18,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -25,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 
 /**
  * @author ilyas
@@ -60,12 +64,25 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
     if (thisType != null) {
       if (thisType instanceof PsiArrayType) {
-        PsiType componentType = ((PsiArrayType) thisType).getComponentType();
+        PsiType componentType = ((PsiArrayType)thisType).getComponentType();
         return TypesUtil.boxPrimitiveType(componentType, getManager(), getResolveScope());
       }
 
       GrArgumentList argList = getArgumentList();
       if (argList != null) {
+        if (thisType instanceof GrTupleType) {
+          PsiType[] types = ((GrTupleType)thisType).getParameters();
+          return types.length == 1 ? types[0] : null;
+        }
+
+        if (InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_LIST)) {
+          PsiType iterType = PsiUtil.extractIterableTypeParameter(thisType, true);
+          if (iterType != null) return iterType;
+        }
+
+        if (InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP)) {
+          return PsiUtil.substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+        }
         GrExpression[] arguments = argList.getExpressionArguments();
         PsiType[] argTypes = new PsiType[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
@@ -73,6 +90,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
           if (argType == null) argType = TypesUtil.getJavaLangObject(argList);
           argTypes[i] = argType;
         }
+
         return TypesUtil.getOverloadedOperatorType(thisType, "getAt", this, argTypes);
       }
     }

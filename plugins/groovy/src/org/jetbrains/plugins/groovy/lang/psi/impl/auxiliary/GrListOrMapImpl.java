@@ -21,13 +21,16 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
@@ -81,7 +84,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
       PsiElement parent = listOrMap.getParent();
       if (parent.getParent() instanceof GrVariableDeclaration) {
-        GrTypeElement typeElement = ((GrVariableDeclaration) parent.getParent()).getTypeElementGroovy();
+        GrTypeElement typeElement = ((GrVariableDeclaration)parent.getParent()).getTypeElementGroovy();
         if (typeElement != null) {
           PsiType declaredType = typeElement.getType();
           if (declaredType instanceof PsiArrayType) return declaredType;
@@ -91,7 +94,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
       return getTupleType(listOrMap.getInitializers(), listOrMap);
     }
 
-    private PsiClassType inferMapInitializerType(GrListOrMapImpl listOrMap, JavaPsiFacade facade, GlobalSearchScope scope) {
+    @Nullable
+    private static PsiClassType inferMapInitializerType(GrListOrMapImpl listOrMap, JavaPsiFacade facade, GlobalSearchScope scope) {
       PsiClass mapClass = facade.findClass("java.util.Map", scope);
       PsiElementFactory factory = facade.getElementFactory();
       if (mapClass != null) {
@@ -99,24 +103,56 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         if (typeParameters.length == 2) {
           GrNamedArgument[] namedArgs = listOrMap.getNamedArguments();
           GrExpression[] values = new GrExpression[namedArgs.length];
+          GrArgumentLabel[] labels = new GrArgumentLabel[namedArgs.length];
+
           for (int i = 0; i < values.length; i++) {
             GrExpression expr = namedArgs[i].getExpression();
             if (expr == null) return null;
             values[i] = expr;
+            GrArgumentLabel label = namedArgs[i].getLabel();
+            if (label == null) return null;
+            labels[i] = label;
           }
+
           PsiType initializerType = getInitializerType(values);
+          PsiType labelType = getLabelsType(labels);
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.
-              put(typeParameters[0], factory.createTypeByFQClassName("java.lang.Object", scope)). //todo detail key type
-              put(typeParameters[1], initializerType);
+            put(typeParameters[0], labelType).
+            put(typeParameters[1], initializerType);
           return factory.createType(mapClass, substitutor);
-        } else {
+        }
+        else {
           return facade.getElementFactory().createType(mapClass);
         }
       }
       return null;
     }
 
-    private PsiClassType getTupleType(GrExpression[] initializers, GrListOrMap listOrMap) {
+    @Nullable
+    private static PsiType getLabelsType(GrArgumentLabel[] labels) {
+      if (labels.length == 0) return null;
+      PsiType result = null;
+      PsiManager manager = labels[0].getManager();
+      for (GrArgumentLabel label : labels) {
+        PsiElement el = label.getNameElement();
+        final PsiType other;
+        if (el instanceof GrParenthesizedExpression) {
+          other = ((GrParenthesizedExpression)el).getType();
+        }
+        else {
+          if (el.getNode() != null) {
+            other = TypesUtil.getPsiType(el, el.getNode().getElementType());
+          }
+          else {
+            other = null;
+          }
+        }
+        result = getLeastUpperBound(result, other, manager);
+      }
+      return result;
+    }
+
+    private static PsiClassType getTupleType(GrExpression[] initializers, GrListOrMap listOrMap) {
       PsiType[] result = new PsiType[initializers.length];
       boolean isLValue = PsiUtil.isLValue(listOrMap);
       for (int i = 0; i < result.length; i++) {
@@ -125,20 +161,27 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
       return new GrTupleType(result, JavaPsiFacade.getInstance(listOrMap.getProject()), listOrMap.getResolveScope());
     }
 
-    private PsiType getInitializerType(GrExpression[] initializers) {
+    @Nullable
+    private static PsiType getInitializerType(GrExpression[] initializers) {
       if (initializers.length == 0) return null;
       PsiManager manager = initializers[0].getManager();
       PsiType result = initializers[0].getType();
       for (int i = 1; i < initializers.length; i++) {
-        final PsiType other = initializers[i].getType();
-        if (other == null) continue;
-        if (result == null) result = other;
-        if (result.isAssignableFrom(other)) continue;
-        if (other.isAssignableFrom(result)) result = other;
-        result = TypesUtil.getLeastUpperBound(result, other, manager);
+        result = getLeastUpperBound(result, initializers[i].getType(), manager);
       }
 
       return result;
     }
+
+    private static PsiType getLeastUpperBound(PsiType result, PsiType other, PsiManager manager) {
+      if (other == null) return result;
+      if (result == null) result = other;
+      if (result.isAssignableFrom(other)) return result;
+      if (other.isAssignableFrom(result)) result = other;
+
+      result = TypesUtil.getLeastUpperBound(result, other, manager);
+      return result;
+    }
+
   }
 }

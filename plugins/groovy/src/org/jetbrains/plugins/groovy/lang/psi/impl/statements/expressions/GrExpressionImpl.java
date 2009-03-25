@@ -44,7 +44,7 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 
-  public PsiType getTypeByFQName(String fqName) {
+  public PsiType getTypeByFQName(@NotNull String fqName) {
     return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(fqName, getResolveScope());
   }
 }

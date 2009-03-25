@@ -27,6 +27,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -46,27 +47,7 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
 
   public PsiType getType() {
     IElementType elemType = getFirstChild().getNode().getElementType();
-    if (elemType == mGSTRING_LITERAL || elemType == mSTRING_LITERAL || elemType == mREGEX_LITERAL) {
-      return getTypeByFQName("java.lang.String");
-    } else if (elemType == mNUM_INT) {
-      return getTypeByFQName("java.lang.Integer");
-    } else if (elemType == mNUM_LONG) {
-      return getTypeByFQName("java.lang.Long");
-    } else if (elemType == mNUM_FLOAT) {
-      return getTypeByFQName("java.lang.Float");
-    } else if (elemType == mNUM_DOUBLE) {
-      return getTypeByFQName("java.lang.Double");
-    } else if (elemType == mNUM_BIG_INT) {
-      return getTypeByFQName("java.math.BigInteger");
-    } else if (elemType == mNUM_BIG_DECIMAL) {
-      return getTypeByFQName("java.math.BigDecimal");
-    } else if (elemType == kFALSE || elemType == kTRUE) {
-      return getTypeByFQName("java.lang.Boolean");
-    } else if (elemType == kNULL) {
-      return PsiType.NULL;
-    }
-
-    return null;
+    return TypesUtil.getPsiType(this, elemType);
   }
 
   public void accept(GroovyElementVisitor visitor) {

@@ -5,6 +5,7 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 
 import java.io.IOException;
 
@@ -17,6 +18,11 @@ public class GroovyHighlightingTest extends CodeInsightFixtureTestCase {
     return "/svnPlugins/groovy/testdata/highlighting/";
   }
 
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+  }
+
   public void testDuplicateClosurePrivateVariable() throws Throwable {
     doTest();
   }
@@ -26,6 +32,14 @@ public class GroovyHighlightingTest extends CodeInsightFixtureTestCase {
   }
 
   public void testCircularInheritance() throws Throwable {
+    doTest();
+  }
+
+  public void testEmptyTupleType() throws Throwable {
+    doTest();
+  }
+
+  public void testMapDeclaration() throws Throwable {
     doTest();
   }
 

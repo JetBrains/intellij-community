@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 
 /**
  * @author ven
@@ -51,7 +52,7 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
 
   @Nullable
   public PsiType getTypeGroovy() {
-    return null;
+    return GrParameterImpl.findClosureParameterType(myClosure, getName(), JavaPsiFacade.getElementFactory(getProject()), this);
   }
 
   @Nullable

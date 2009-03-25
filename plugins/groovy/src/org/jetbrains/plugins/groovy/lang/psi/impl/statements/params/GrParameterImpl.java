@@ -19,22 +19,27 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
 
 /**
@@ -61,46 +66,177 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
       PsiType type = typeElement.getType();
       if (!isVarArgs()) {
         return type;
-      } else {
+      }
+      else {
         return new PsiEllipsisType(type);
       }
     }
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     if (isVarArgs()) {
-      PsiClassType type = facade.getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
+      PsiClassType type = factory.createTypeByFQClassName("java.lang.Object", getResolveScope());
       return new PsiEllipsisType(type);
     }
     PsiElement parent = getParent();
     if (parent instanceof GrForInClause) {
-      GrExpression iteratedExpression = ((GrForInClause) parent).getIteratedExpression();
+      GrExpression iteratedExpression = ((GrForInClause)parent).getIteratedExpression();
       if (iteratedExpression instanceof GrRangeExpression) {
-        return facade.getElementFactory().createTypeByFQClassName("java.lang.Integer", getResolveScope());
-      } else if (iteratedExpression != null) {
+        return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, getResolveScope());
+      }
+      else if (iteratedExpression != null) {
         PsiType iterType = iteratedExpression.getType();
-        if (iterType instanceof PsiArrayType) return ((PsiArrayType) iterType).getComponentType();
-        if (iterType instanceof PsiClassType) {
-          PsiClassType.ClassResolveResult result = ((PsiClassType) iterType).resolveGenerics();
-          PsiClass clazz = result.getElement();
-          if (clazz != null) {
-            PsiClass collectionClass = facade.findClass("java.util.Collection", getResolveScope());
-            if (collectionClass != null && collectionClass.getTypeParameters().length == 1) {
-              PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(collectionClass, clazz, result.getSubstitutor());
-              if (substitutor != null) {
-                PsiType substed = substitutor.substitute(collectionClass.getTypeParameters()[0]);
-                if (substed != null) {
-                  return substed;
-                }
-              }
-            }
-
-            if ("java.lang.String".equals(clazz.getQualifiedName())) {
-              return facade.getElementFactory().createTypeByFQClassName("java.lang.Character", getResolveScope());
-            }
-          }
+        PsiType result = findTypeForCollection(iterType, factory, this);
+        if (result != null) {
+          return result;
         }
       }
     }
 
+    String argumentName = getElementToCompare();
+    GrClosableBlock closure = findClosureWithArgument(parent);
+
+    return findClosureParameterType(closure, argumentName, factory, this);
+  }
+
+  @Nullable
+  public static PsiType findClosureParameterType(GrClosableBlock closure,
+                                                 String argumentName,
+                                                 PsiElementFactory factory,
+                                                 PsiElement context) {
+    if (closure != null && closure.getParent() instanceof GrMethodCallExpression) {
+      GrMethodCallExpression methodCall = (GrMethodCallExpression)closure.getParent();
+      String methodName = findMethodName(methodCall);
+      PsiType type = findQualifierType(methodCall);
+      GrParameter[] params = closure.getParameters();
+      if (type == null) {
+        return null;
+      }
+
+      if ("each".equals(methodName) ||
+          "every".equals(methodName) ||
+          "collect".equals(methodName) ||
+          "find".equals(methodName) ||
+          "findAll".equals(methodName) ||
+          "findIndexOf".equals(methodName)) {
+        PsiType res = findTypeForCollection(type, factory, context);
+        if (closure.getParameters().length <= 1 && res != null) {
+          return res;
+        }
+
+        if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+          if (closure.getParameters().length <= 1) {
+            return getEntryForMap(type, factory, context);
+          }
+          if (closure.getParameters().length == 2) {
+            if (argumentName.equals(params[0].getName())) {
+              return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, true);
+            }
+            return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+          }
+        }
+      }
+      else if ("with".equals(methodName) && closure.getParameters().length <= 1) {
+        return type;
+      }
+      else if ("eachWithIndex".equals(methodName)) {
+        PsiType res = findTypeForCollection(type, factory, context);
+        if (closure.getParameters().length == 2 && res != null) {
+          if (argumentName.equals(params[0].getName())) {
+            return res;
+          }
+          return factory.createTypeFromText(CommonClassNames.JAVA_LANG_INTEGER, context);
+        }
+        if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+          if (params.length == 2) {
+            if (argumentName.equals(params[0].getName())) {
+              return getEntryForMap(type, factory, context);
+            }
+            return factory.createTypeFromText(CommonClassNames.JAVA_LANG_INTEGER, context);
+          }
+          if (params.length == 3) {
+            if (argumentName.equals(params[0].getName())) {
+              return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, true);
+            }
+            if (argumentName.equals(params[1].getName())) {
+              return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+            }
+            return factory.createTypeFromText(CommonClassNames.JAVA_LANG_INTEGER, context);
+          }
+        }
+      }
+      else if ("inject".equals(methodName) && params.length == 2) {
+        if (argumentName.equals(params[0].getName())) {
+          return factory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, context);
+        }
+
+        PsiType res = findTypeForCollection(type, factory, context);
+        if (res != null) {
+          return res;
+        }
+        if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+          return getEntryForMap(type, factory, context);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getEntryForMap(PsiType map, PsiElementFactory factory, PsiElement context) {
+    PsiType key = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 0, true);
+    PsiType value = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+    if (key != null && value != null) {
+      return factory.createTypeFromText("java.util.Map.Entry<" + key.getCanonicalText() + ", " + value.getCanonicalText() + ">", context);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType findQualifierType(GrMethodCallExpression methodCall) {
+    GrExpression expression = methodCall.getInvokedExpression();
+    if (!(expression instanceof GrReferenceExpression)) return null;
+
+    GrExpression qualifier = ((GrReferenceExpression)expression).getQualifierExpression();
+    return qualifier != null ? qualifier.getType() : null;
+  }
+
+  @Nullable
+  private static PsiType findTypeForCollection(PsiType iterType, PsiElementFactory factory, PsiElement context) {
+    if (iterType instanceof PsiArrayType) {
+      return ((PsiArrayType)iterType).getComponentType();
+    }
+    if (iterType instanceof GrTupleType) {
+      PsiType[] types = ((GrTupleType)iterType).getParameters();
+      return types.length == 1 ? types[0] : null;
+    }
+
+    PsiType res = PsiUtil.extractIterableTypeParameter(iterType, true);
+    if (res != null) {
+      return res;
+    }
+
+    if (iterType.equalsToText(CommonClassNames.JAVA_LANG_STRING) || iterType.equalsToText("java.io.File")) {
+      return factory.createTypeFromText(CommonClassNames.JAVA_LANG_STRING, context);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String findMethodName(@NotNull GrMethodCallExpression methodCall) {
+    GrExpression expression = methodCall.getInvokedExpression();
+    if (expression instanceof GrReferenceExpression) {
+      return ((GrReferenceExpression)expression).getReferenceName();
+    }
+    return null;
+  }
+
+  @Nullable
+  private static GrClosableBlock findClosureWithArgument(@NotNull PsiElement parent) {
+    if (parent instanceof GrParameterList) {
+      GrParameterList list = (GrParameterList)parent;
+      if (list.getParent() instanceof GrClosableBlock) {
+        return (GrClosableBlock)list.getParent();
+      }
+    }
     return null;
   }
 
@@ -109,10 +245,13 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     PsiType type = super.getType();
     if (isVarArgs()) {
       return new PsiEllipsisType(type);
-    } else if (isMainMethodFirstUntypedParameter()) {
-      PsiClassType stringType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
+    }
+    else if (isMainMethodFirstUntypedParameter()) {
+      PsiClassType stringType =
+        JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
       return stringType.createArrayType();
-    } else {
+    }
+    else {
       return type;
     }
   }
@@ -121,12 +260,12 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     if (getTypeElementGroovy() != null) return false;
 
     if (getParent() instanceof GrParameterList) {
-      GrParameterList parameterList = (GrParameterList) getParent();
+      GrParameterList parameterList = (GrParameterList)getParent();
       GrParameter[] params = parameterList.getParameters();
       if (params.length != 1 || this != params[0]) return false;
 
       if (parameterList.getParent() instanceof GrMethod) {
-        GrMethod method = (GrMethod) parameterList.getParent();
+        GrMethod method = (GrMethod)parameterList.getParent();
         return PsiImplUtil.isMainMethod(method);
       }
     }

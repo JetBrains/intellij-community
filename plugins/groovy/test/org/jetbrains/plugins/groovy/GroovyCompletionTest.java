@@ -16,8 +16,9 @@
 
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,6 +32,12 @@ public class GroovyCompletionTest extends CodeInsightFixtureTestCase {
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/groovy/completion/";
   }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+  }
+  
 
   public void testFinishMethodWithLParen() throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getBar", "getFoo");
@@ -60,5 +67,45 @@ public class GroovyCompletionTest extends CodeInsightFixtureTestCase {
   
   public void testSmartCompletionAfterNewInDeclarationWithAbstractClass() throws Throwable {
     doSmartTest();
+  }
+
+  public void testEachMethodForList() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+  
+  public void testEachMethodForMapWithKeyValue() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+
+  public void testEachMethodForMapWithEntry() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+
+  public void testWithMethod() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");       
+  }
+
+  public void testInjectMethodForCollection() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+
+  public void testInjectMethodForArray() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+
+  public void testInjectMethodForMap() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+
+  public void testClosureDefaultParameterInEachMethod() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+
+  public void testArrayLikeAccessForList() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+
+  public void testArrayLikeAccessForMap() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
 }
