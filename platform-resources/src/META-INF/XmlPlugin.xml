@@ -44,6 +44,7 @@
     <lang.elementManipulator forClass="com.intellij.psi.xml.XmlAttribute" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeManipulator"/>
     <lang.elementManipulator forClass="com.intellij.psi.xml.XmlToken" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator"/>
     <lang.elementManipulator forClass="com.intellij.psi.xml.XmlTag" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTagManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlText" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTextManipulator"/>
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XHTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
 
