@@ -28,6 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.HashMap;
 
+/**
+ * @param <T>
+ * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ */
 public class DataKey<T> {
   private static final Map<String, DataKey> ourDataKeyIndex = new HashMap<String, DataKey>();
 
