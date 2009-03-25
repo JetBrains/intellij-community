@@ -36,11 +36,6 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
 
   private boolean myApplyInHierarchy = true;
 
-  @NotNull
-  public List<TextRange> getInjectedArea(PsiLiteralExpression element) {
-    return Collections.singletonList(TextRange.from(1, element.getTextLength() - 2));
-  }
-
   public boolean isApplicable(@NotNull final PsiMethod method) {
     final PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return false;

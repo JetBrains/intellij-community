@@ -16,16 +16,10 @@
 package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
-import java.util.List;
 
 public class XmlTagInjection extends AbstractTagInjection<XmlTagInjection, XmlText> {
 
@@ -42,21 +36,6 @@ public class XmlTagInjection extends AbstractTagInjection<XmlTagInjection, XmlTe
   public String getDisplayName() {
     final String name = getTagName();
     return name.length() > 0 ? name : "*";
-  }
-
-  @NotNull
-  public List<TextRange> getInjectedArea(final XmlText element) {
-    if (myCompiledValuePattern == null) {
-      return Collections.singletonList(TextRange.from(0, element.getTextLength()));
-    }
-    else {
-      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(element.getValue()));
-      return ranges.size() > 0 ? ContainerUtil.map(ranges, new Function<TextRange, TextRange>() {
-        public TextRange fun(TextRange s) {
-          return new TextRange(element.displayToPhysical(s.getStartOffset()), element.displayToPhysical(s.getEndOffset()));
-        }
-      }) : Collections.<TextRange>emptyList();
-    }
   }
 
   public boolean isApplyToSubTagTexts() {

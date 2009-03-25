@@ -16,20 +16,13 @@
 package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.util.StringMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
-import java.util.List;
 
 public class XmlAttributeInjection extends AbstractTagInjection<XmlAttributeInjection, XmlAttributeValue> {
 
@@ -82,23 +75,6 @@ public class XmlAttributeInjection extends AbstractTagInjection<XmlAttributeInje
                       matches(attr.getParent());
 
     return b && matchXPath(attr);
-  }
-
-  @NotNull
-  public List<TextRange> getInjectedArea(final XmlAttributeValue element) {
-    final TextRange textRange = ElementManipulators.getValueTextRange(element);
-    if (myCompiledValuePattern == null) {
-      return Collections.singletonList(textRange);
-    }
-    else {
-      final XmlAttribute attr = (XmlAttribute)element.getParent();
-      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(attr.getDisplayValue()));
-      return ranges.size() > 0 ? ContainerUtil.map(ranges, new Function<TextRange, TextRange>() {
-        public TextRange fun(TextRange s) {
-          return new TextRange(attr.displayToPhysical(s.getStartOffset()), attr.displayToPhysical(s.getEndOffset())).shiftRight(textRange.getStartOffset());
-        }
-      }) : Collections.<TextRange>emptyList();
-    }
   }
 
   public void copyFrom(@NotNull XmlAttributeInjection other) {

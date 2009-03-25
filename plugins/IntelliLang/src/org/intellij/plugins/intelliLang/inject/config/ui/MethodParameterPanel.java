@@ -67,6 +67,7 @@ import java.util.List;
 public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
 
   LanguagePanel myLanguagePanel;  // read by reflection
+  AdvancedPanel myAdvancedPanel;
 
   private JPanel myRoot;
   private JPanel myClassPanel;
@@ -227,7 +228,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     myParamsTable.revalidate();
   }
 
-  public String getClassName() {
+  private String getClassName() {
     final PsiType type = getClassType();
     if (type == null) {
       return myClassField.getText();
@@ -236,10 +237,15 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   }
 
 
-  protected void apply(MethodParameterInjection other) {
-    other.setClassName(getClassName());
+  protected void apply(final MethodParameterInjection other) {
+    final boolean applyMethods = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        other.setClassName(getClassName());
+        return getClassType() != null;
+      }
+    }).booleanValue();
     other.setApplyInHierarchy(myHierarchy.isSelected());
-    if (getClassType() != null) {
+    if (applyMethods) {
       other.setMethodInfos(ContainerUtil.findAll(myData.values(), new Condition<MethodParameterInjection.MethodInfo>() {
         public boolean value(final MethodParameterInjection.MethodInfo methodInfo) {
           return methodInfo.isEnabled();
@@ -298,6 +304,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     myLanguagePanel = new LanguagePanel(myProject, myOrigInjection);
     myRootNode = new DefaultMutableTreeNode(null, true);
     myParamsTable = new MyView(new ListTreeTableModelOnColumns(myRootNode, createColumnInfos()));
+    myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);    
   }
 
   private ColumnInfo[] createColumnInfos() {

@@ -96,8 +96,13 @@ public final class CustomLanguageInjector implements ProjectComponent {
       final XmlTag xmlTag = (XmlTag)place;
       for (final XmlTagInjection injection : myInjectionConfiguration.getTagInjections()) {
         if (injection.isApplicable(xmlTag)) {
+          final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
+          if (language == null) continue;
+          final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
+
           final Ref<Boolean> hasSubTags = Ref.create(Boolean.FALSE);
           final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
+
           xmlTag.acceptChildren(new PsiElementVisitor() {
             @Override
             public void visitElement(final PsiElement element) {
@@ -118,12 +123,17 @@ public final class CustomLanguageInjector implements ProjectComponent {
             }
           });
           if (!result.isEmpty()) {
-            final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
-            if (language == null) continue;
-            for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
-              trinity.first.putUserData(HAS_UNPARSABLE_FRAGMENTS, hasSubTags.get());
+            if (separateFiles) {
+              for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
+                processor.process(language, Collections.singletonList(trinity));
+              }
             }
-            processor.process(language, result);
+            else {
+              for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
+                trinity.first.putUserData(HAS_UNPARSABLE_FRAGMENTS, hasSubTags.get());
+              }
+              processor.process(language, result);
+            }
           }
           if (injection.isTerminal()) {
             break;
@@ -148,16 +158,25 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
       for (XmlAttributeInjection injection : myInjectionConfiguration.getAttributeInjections()) {
         if (injection.isApplicable(value)) {
-          final List<TextRange> ranges = injection.getInjectedArea(value);
-          if (ranges.isEmpty()) continue;
           final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
           if (language == null) continue;
+          final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
+
+          final List<TextRange> ranges = injection.getInjectedArea(value);
+          if (ranges.isEmpty()) continue;
           final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
           final InjectedLanguage l = InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
           for (TextRange textRange : ranges) {
             result.add(Trinity.create((PsiLanguageInjectionHost)value, l, textRange));
           }
-          processor.process(language, result);
+          if (separateFiles) {
+            for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
+              processor.process(language, Collections.singletonList(trinity));
+            }
+          }
+          else {
+            processor.process(language, result);
+          }
           if (injection.isTerminal()) {
             break;
           }

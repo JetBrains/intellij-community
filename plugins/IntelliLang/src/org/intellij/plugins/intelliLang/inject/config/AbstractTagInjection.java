@@ -17,13 +17,10 @@ package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.SmartList;
-import org.intellij.lang.annotations.RegExp;
 import org.intellij.plugins.intelliLang.util.StringMatcher;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
@@ -32,9 +29,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Base class for XML-related injections (XML tags and attributes).
@@ -51,10 +49,6 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
 
   @NotNull @NonNls
   private Set<String> myTagNamespace = Collections.emptySet();
-
-  @NotNull @NonNls
-  private String myValuePattern = "";
-  protected Pattern myCompiledValuePattern;
 
   @NotNull @NonNls
   private String myXPathCondition = "";
@@ -76,28 +70,6 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
 
   public void setTagNamespace(@NotNull @NonNls String tagNamespace) {
     myTagNamespace = new TreeSet<String>(Arrays.asList(tagNamespace.split("\\|")));
-  }
-
-  @NotNull
-  public String getValuePattern() {
-    return myValuePattern;
-  }
-
-  public void setValuePattern(@RegExp @Nullable String pattern) {
-    try {
-      if (pattern != null && pattern.length() > 0) {
-        myValuePattern = pattern;
-        myCompiledValuePattern = Pattern.compile(pattern, Pattern.DOTALL);
-      }
-      else {
-        myValuePattern = "";
-        myCompiledValuePattern = null;
-      }
-    }
-    catch (Exception e1) {
-      myCompiledValuePattern = null;
-      Logger.getInstance(getClass().getName()).info("Invalid pattern", e1);
-    }
   }
 
   @NotNull
@@ -154,37 +126,22 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
     return true;
   }
 
-  /**
-   * Determines if further injections should be examined if <code>isApplicable</code> has returned true.
-   * <p/>
-   * This is determined by the presence of a value-pattern: If none is present, the entry is considered
-   * to be a terminal one.
-   *
-   * @return true to stop, false to continue
-   */
-  public boolean isTerminal() {
-    return myCompiledValuePattern == null;
-  }
-
   public void copyFrom(@NotNull T other) {
     super.copyFrom(other);
     myTagName = other.myTagName;
     myTagNamespace = other.myTagNamespace;
-    setValuePattern(other.getValuePattern());
     setXPathCondition(other.getXPathCondition());
   }
 
   protected void readExternalImpl(Element e) {
     setTagName(JDOMExternalizer.readString(e, "TAGNAME"));
     setTagNamespace(JDOMExternalizer.readString(e, "TAGNAMESPACE"));
-    setValuePattern(JDOMExternalizer.readString(e, "VALUE_PATTERN"));
     setXPathCondition(JDOMExternalizer.readString(e, "XPATH_CONDITION"));
   }
 
   protected void writeExternalImpl(Element e) {
     JDOMExternalizer.write(e, "TAGNAME", getTagName());
     JDOMExternalizer.write(e, "TAGNAMESPACE", getTagNamespace());
-    JDOMExternalizer.write(e, "VALUE_PATTERN", myValuePattern);
     JDOMExternalizer.write(e, "XPATH_CONDITION", myXPathCondition);
   }
 
@@ -198,7 +155,6 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
 
     if (!myTagName.equals(that.myTagName)) return false;
     if (!myTagNamespace.equals(that.myTagNamespace)) return false;
-    if (!myValuePattern.equals(that.myValuePattern)) return false;
     if (!myXPathCondition.equals(that.myXPathCondition)) return false;
 
     return true;
@@ -208,27 +164,8 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
     int result = super.hashCode();
     result = 31 * result + myTagName.hashCode();
     result = 31 * result + myTagNamespace.hashCode();
-    result = 31 * result + myValuePattern.hashCode();
     result = 31 * result + myXPathCondition.hashCode();
     return result;
-  }
-
-  protected static List<TextRange> getMatchingRanges(Matcher matcher) {
-    final List<TextRange> list = new SmartList<TextRange>();
-    int start = 0;
-    while (matcher.find(start)) {
-      final String group = matcher.group(1);
-      if (group != null) {
-        start = matcher.start(1);
-        final int length = group.length();
-        list.add(TextRange.from(start, length));
-        start += length;
-      }
-      else {
-        break;
-      }
-    }
-    return list;
   }
 
   protected boolean matchXPath(XmlElement context) {
