@@ -41,6 +41,11 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     init();
   }
 
+  @Override
+  protected String getHelpId() {
+    return "vcs.import.into.svn";
+  }
+
   @NonNls
   protected String getDimensionServiceKey() {
     return "svn4idea.import.options";
