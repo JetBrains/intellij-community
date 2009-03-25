@@ -37,6 +37,7 @@ public interface PersistentStateComponent<T> {
    * to be called at any moment of its lifecycle. The method can and will be called several times, if
    * config files were externally changed while IDEA running.
    * @param state loaded component state
+   * @see com.intellij.util.xmlb.XmlSerializerUtil#copyBean(Object, Object) 
    */
   void loadState(T state);
 }
