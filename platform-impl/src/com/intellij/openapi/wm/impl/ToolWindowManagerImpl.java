@@ -107,6 +107,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private FocusCommand myFocusCommandOnAppActivation;
   private ActionCallback myCallbackOnActivation;
+  private WeakReference<Component> myFocusedComponentOnDeactivation;
 
   /**
    * invoked by reflection
@@ -1705,6 +1706,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       public void run() {
         if (checkForRejectOrByPass(command, forced, result)) return;
 
+        myFocusedComponentOnDeactivation = null;
+
         if (myRequestFocusCmd == command) {
           myRequestFocusCmd = null;
 
@@ -1806,6 +1809,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
 
   private class AppListener extends ApplicationAdapter {
+
+    @Override
+    public void applicationDeactivated() {
+      myFocusedComponentOnDeactivation = new WeakReference<Component>(KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner());
+    }
+
     @Override
     public void applicationActivated() {
       final FocusCommand cmd = myFocusCommandOnAppActivation;
@@ -1814,6 +1823,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myCallbackOnActivation = null;
       if (cmd != null) {
         requestFocus(cmd, true).notifyWhenDone(callback);
+      } else {
+        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        final Component old = myFocusedComponentOnDeactivation.get();
+        if (owner == null && old != null) {
+          requestFocus(old, false);          
+        }
       }
     }
   }
