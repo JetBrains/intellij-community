@@ -43,7 +43,7 @@ public class CommonProcessors {
       return true;
     }
 
-    public <T> T[] toArray(T[] a) {
+    public T[] toArray(T[] a) {
       return myCollection.toArray(a);
     }
 
@@ -64,7 +64,7 @@ public class CommonProcessors {
       return true;
     }
 
-    public <T> T[] toArray(T[] a) {
+    public T[] toArray(T[] a) {
       return myCollection.toArray(a);
     }
 
@@ -85,7 +85,12 @@ public class CommonProcessors {
     }
 
     public boolean process(T t) {
-      return !processed.add(t) || myDelegate.process(t);
+      synchronized (processed) {
+        if (!processed.add(t)) {
+          return true;
+        }
+      }
+      return myDelegate.process(t);
     }
   }
 

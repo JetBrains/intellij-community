@@ -158,7 +158,9 @@ public class SliceUtil {
     for (final PsiMethod containingMethod : superMethods) {
       if (!MethodReferencesSearch.search(containingMethod).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference reference) {
-          if (!processed.add(reference)) return true;
+          synchronized (processed) {
+            if (!processed.add(reference)) return true;
+          }
           PsiElement element = reference.getElement().getParent();
           if (!(element instanceof PsiCall)) return true;
           final PsiCall call = (PsiCall)element;
