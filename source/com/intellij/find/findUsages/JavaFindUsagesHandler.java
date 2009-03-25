@@ -327,29 +327,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         }
     }
 
-    if (!ThrowSearchUtil.isSearchable(element) && 
-        options.isSearchForTextOccurences &&
-        options.searchScope instanceof GlobalSearchScope) {
-      String stringToSearch = getStringToSearch(element);
-      if (stringToSearch != null) {
-        final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
-          public TextRange compute() {
-            return element.getTextRange();
-          }
-        });
-        TextOccurrencesUtil.UsageInfoFactory factory = new TextOccurrencesUtil.UsageInfoFactory() {
-          public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-            if (elementTextRange != null
-                && usage.getContainingFile() == element.getContainingFile()
-                && elementTextRange.contains(startOffset)
-                && elementTextRange.contains(endOffset)) {
-              return null;
-            }
-            return new UsageInfo(usage, startOffset, endOffset, true);
-          }
-        };
-        TextOccurrencesUtil.processTextOccurences(element, stringToSearch, (GlobalSearchScope)options.searchScope, processor, factory);
-      }
+    if (!ThrowSearchUtil.isSearchable(element) && options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
+      processUsages(element, processor, options);
     }
   }
 

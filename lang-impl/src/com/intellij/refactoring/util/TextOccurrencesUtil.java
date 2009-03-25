@@ -17,11 +17,11 @@ public class TextOccurrencesUtil {
   private TextOccurrencesUtil() {
   }
 
-  public static void addTextOccurences(PsiElement element,
+  public static void addTextOccurences(@NotNull PsiElement element,
                                        @NotNull String stringToSearch,
-                                       GlobalSearchScope searchScope,
-                                       final List<UsageInfo> results,
-                                       final UsageInfoFactory factory) {
+                                       @NotNull GlobalSearchScope searchScope,
+                                       @NotNull final List<UsageInfo> results,
+                                       @NotNull final UsageInfoFactory factory) {
     processTextOccurences(element, stringToSearch, searchScope, new Processor<UsageInfo>() {
       public boolean process(UsageInfo t) {
         results.add(t);
@@ -30,11 +30,11 @@ public class TextOccurrencesUtil {
     }, factory);
   }
 
-  public static void processTextOccurences(PsiElement element,
+  public static void processTextOccurences(@NotNull PsiElement element,
                                            @NotNull String stringToSearch,
-                                           GlobalSearchScope searchScope,
-                                           final Processor<UsageInfo> processor,
-                                           final UsageInfoFactory factory) {
+                                           @NotNull GlobalSearchScope searchScope,
+                                           @NotNull final Processor<UsageInfo> processor,
+                                           @NotNull final UsageInfoFactory factory) {
     PsiSearchHelper helper = element.getManager().getSearchHelper();
 
     helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
@@ -64,8 +64,10 @@ public class TextOccurrencesUtil {
                                    true);
   }
 
-  public static boolean processUsagesInStringsAndComments(final PsiElement element, final String stringToSearch, final boolean ignoreReferences,
-                                                       final PairProcessor<PsiElement, TextRange> processor) {
+  public static boolean processUsagesInStringsAndComments(@NotNull final PsiElement element,
+                                                          @NotNull final String stringToSearch,
+                                                          final boolean ignoreReferences,
+                                                          @NotNull final PairProcessor<PsiElement, TextRange> processor) {
     PsiManager manager = element.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
     SearchScope scope = element.getUseScope();
@@ -79,10 +81,10 @@ public class TextOccurrencesUtil {
            helper.processCommentsContainingIdentifier(stringToSearch, scope, commentOrLiteralProcessor);
   }
 
-  public static void addUsagesInStringsAndComments(PsiElement element,
+  public static void addUsagesInStringsAndComments(@NotNull PsiElement element,
                                                    @NotNull String stringToSearch,
-                                                   final List<UsageInfo> results,
-                                                   final UsageInfoFactory factory) {
+                                                   @NotNull final List<UsageInfo> results,
+                                                   @NotNull final UsageInfoFactory factory) {
     processUsagesInStringsAndComments(element, stringToSearch, false, new PairProcessor<PsiElement, TextRange>() {
       public boolean process(PsiElement commentOrLiteral, TextRange textRange) {
         UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
@@ -126,7 +128,7 @@ public class TextOccurrencesUtil {
     return true;
   }
 
-  public static boolean isSearchTextOccurencesEnabled(PsiElement element) {
+  public static boolean isSearchTextOccurencesEnabled(@NotNull PsiElement element) {
     return ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.NON_JAVA) != null;
   }
 
