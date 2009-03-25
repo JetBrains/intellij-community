@@ -33,9 +33,10 @@ public class I18nUtil {
       virtualFile = containingFile.getOriginalFile().getVirtualFile();
     }
     if (virtualFile != null) {
-      final Module module = ProjectRootManager.getInstance(context.getProject()).getFileIndex().getModuleForFile(virtualFile);
+      Project project = containingFile.getProject();
+      final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
       if (module != null) {
-        PropertiesReferenceManager refManager = context.getProject().getComponent(PropertiesReferenceManager.class);
+        PropertiesReferenceManager refManager = project.getComponent(PropertiesReferenceManager.class);
         return refManager.findPropertiesFiles(module, resourceBundleName);
       }
     }
