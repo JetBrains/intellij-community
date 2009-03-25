@@ -13,4 +13,6 @@ public interface IdeGlassPaneEx extends IdeGlassPane {
 
   int getComponentCount();
   Component getComponent(int index);
+
+  boolean isInModalContext();
 }

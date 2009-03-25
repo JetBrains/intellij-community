@@ -631,7 +631,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   public static class GlasspanePeerUnavailableException extends Exception {
   }
 
-  private static class TransparentLayeredPane extends JLayeredPane {
+  public static class TransparentLayeredPane extends JLayeredPane {
     private TransparentLayeredPane() {
       setLayout(new BorderLayout());
       setOpaque(false);

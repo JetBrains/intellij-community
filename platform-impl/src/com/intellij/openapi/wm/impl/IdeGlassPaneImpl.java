@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Painter;
+import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
@@ -232,6 +233,17 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
   public void remove(final Component comp) {
     super.remove(comp);
     deactivateIfNeeded();
+  }
+
+  public boolean isInModalContext() {
+    final Component[] components = getComponents();
+    for (Component component : components) {
+      if (component instanceof GlassPaneDialogWrapperPeer.TransparentLayeredPane) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   protected void paintComponent(final Graphics g) {

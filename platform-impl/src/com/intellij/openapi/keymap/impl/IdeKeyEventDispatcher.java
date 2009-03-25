@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.popup.AbstractPopup;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -172,6 +173,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
       window = (Window)component;
     } else {
       window = SwingUtilities.getWindowAncestor(component);
+    }
+
+    if (window instanceof IdeFrameImpl) {
+      final Component pane = ((IdeFrameImpl) window).getGlassPane();
+      if (pane instanceof IdeGlassPaneEx) {
+        return ((IdeGlassPaneEx) pane).isInModalContext();
+      }
     }
 
     if (window instanceof JDialog) {
