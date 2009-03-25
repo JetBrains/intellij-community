@@ -87,13 +87,17 @@ public class UnindexedFilesUpdater implements CacheUpdater {
         indicator.setText2(root.getPresentableUrl());
       }
 
-      for (VirtualFile file : root.getChildren()) {
-        if (file.isDirectory()) {
-          iterateRecursively(file, processor, indicator);
+      if (root.isDirectory()) {
+        for (VirtualFile file : root.getChildren()) {
+          if (file.isDirectory()) {
+            iterateRecursively(file, processor, indicator);
+          }
+          else {
+            processor.processFile(file);
+          }
         }
-        else {
-          processor.processFile(file);
-        }
+      } else {
+        processor.processFile(root);
       }
     }
   }
