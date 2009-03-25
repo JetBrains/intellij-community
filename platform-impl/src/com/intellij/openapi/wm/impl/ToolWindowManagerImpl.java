@@ -1728,6 +1728,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void fixStickingDialogs() {
+    if (!Patches.STICKY_DIALOGS) return;
+
     final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     final Window wnd = mgr.getActiveWindow();
     final Container parent = wnd.getParent();
@@ -1784,7 +1786,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private boolean canExecuteOnInactiveApplication(FocusCommand cmd) {
-    return !SystemInfo.isLinux || cmd.canExecuteOnInactiveApp();
+    return !Patches.REQUEST_FOCUS_MAY_ACTIVATE_APP || cmd.canExecuteOnInactiveApp();
   }
 
   private void setLastEffectiveForcedRequest(FocusCommand command) {
