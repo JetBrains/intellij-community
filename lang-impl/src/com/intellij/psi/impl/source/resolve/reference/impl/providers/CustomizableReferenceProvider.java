@@ -14,7 +14,7 @@ import java.util.Map;
  * @author Maxim.Mossienko
  */
 public interface CustomizableReferenceProvider {
-  final class CustomizationKey<T> {
+  public final class CustomizationKey<T> {
     private final String myOptionDescription;
 
     public CustomizationKey(@NonNls String optionDescription) {
