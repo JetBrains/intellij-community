@@ -58,7 +58,8 @@ public class PersistentEnumerator<Data> implements Forceable {
   private final KeyDescriptor<Data> myDataDescriptor;
   private final byte[] myBuffer = new byte[RECORD_SIZE];
 
-  private static final CacheKey ourFlyweight = new CacheKey(null, null);
+  private static final CacheKey ourFlyweight = new FlyweightKey();
+
   private final File myFile;
   private static final int COLLISION_OFFSET = 0;
   private static final int KEY_HASHCODE_OFFSET = COLLISION_OFFSET + 4;
@@ -86,7 +87,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
 
     public ShareableKey getStableCopy() {
-      return new CacheKey(key, owner);
+      return this;
     }
 
     public boolean equals(final Object o) {
@@ -501,5 +502,15 @@ public class PersistentEnumerator<Data> implements Forceable {
   protected void markClean() throws IOException {
     myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
     myDirty = false;
+  }
+
+  private static class FlyweightKey extends CacheKey {
+    public FlyweightKey() {
+      super(null, null);
+    }
+
+    public ShareableKey getStableCopy() {
+      return new CacheKey(key, owner);
+    }
   }
 }
