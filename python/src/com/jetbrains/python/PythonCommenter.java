@@ -26,19 +26,27 @@ import com.intellij.lang.Commenter;
  * To change this template use File | Settings | File Templates.
  */
 public class PythonCommenter implements Commenter {
-    public String getLineCommentPrefix() {
-        return "#";
-    }
+  public String getLineCommentPrefix() {
+    return "#";
+  }
 
-    public boolean isLineCommentPrefixOnZeroColumn() {
-        return false;
-    }
+  public boolean isLineCommentPrefixOnZeroColumn() {
+    return false;
+  }
 
-    public String getBlockCommentPrefix() {
-        return null;
-    }
+  public String getBlockCommentPrefix() {
+    return null;
+  }
 
-    public String getBlockCommentSuffix() {
-        return null;
-    }
+  public String getBlockCommentSuffix() {
+    return null;
+  }
+
+  public String getCommentedBlockCommentPrefix() {
+    return null;
+  }
+
+  public String getCommentedBlockCommentSuffix() {
+    return null;
+  }
 }
