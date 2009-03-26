@@ -19,9 +19,11 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class UnusedCodeExtension implements JDOMExternalizable {
+  @NotNull
   public abstract String getDisplayName();
   public abstract boolean isEntryPoint(RefElement refElement);
   public abstract boolean isEntryPoint(PsiElement psiElement);

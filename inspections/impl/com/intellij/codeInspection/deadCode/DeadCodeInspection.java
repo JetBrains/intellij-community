@@ -38,6 +38,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -403,22 +404,24 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       return true;
     }
     if (element instanceof PsiClass) {
-      if (((PsiClass)element).isAnnotationType()) {
+      PsiClass aClass = (PsiClass)element;
+      if (aClass.isAnnotationType()) {
         return true;
       }
 
-      if (((PsiClass)element).isEnum()) {
+      if (aClass.isEnum()) {
         return true;
       }
       final PsiClass applet = psiFacade.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
-      if (isAddAppletEnabled() && applet != null && ((PsiClass)element).isInheritor(applet, true)) {
+      if (isAddAppletEnabled() && applet != null && aClass.isInheritor(applet, true)) {
         return true;
       }
 
       final PsiClass servlet = psiFacade.findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
-      if (isAddServletEnabled() && servlet != null && ((PsiClass)element).isInheritor(servlet, true)) {
+      if (isAddServletEnabled() && servlet != null && aClass.isInheritor(servlet, true)) {
         return true;
       }
+      if (isAddMainsEnabled() && PsiMethodUtil.hasMainMethod(aClass)) return true;
     }
     if (element instanceof PsiModifierListOwner
         && AnnotationUtil.isAnnotated((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
