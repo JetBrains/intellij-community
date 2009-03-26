@@ -7,6 +7,8 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.filters.OpenFileHyperlinkInfo;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +24,7 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -373,11 +376,13 @@ public class XDebugSessionImpl implements XDebugSession {
 
     if (breakpoint.isLogMessage()) {
       String text = StringUtil.decapitalize(XBreakpointUtil.getDisplayText(breakpoint));
-      printMessage(XDebuggerBundle.message("xbreakpoint.reached.at.0", text));
+      final XSourcePosition position = breakpoint.getSourcePosition();
+      final OpenFileHyperlinkInfo hyperlinkInfo = position != null ? new OpenFileHyperlinkInfo(myProject, position.getFile(), position.getLine()) : null;
+      printMessage(XDebuggerBundle.message("xbreakpoint.reached.text") + " ", text, hyperlinkInfo);
     }
 
     if (evaluatedLogExpression != null) {
-      printMessage(evaluatedLogExpression);
+      printMessage(evaluatedLogExpression, null, null);
     }
     else {
       String expression = breakpoint.getLogExpression();
@@ -385,7 +390,7 @@ public class XDebugSessionImpl implements XDebugSession {
         LOG.debug("evaluating log expression: " + expression);
         final String message = evaluator.evaluateMessage(expression);
         if (message != null) {
-          printMessage(message);
+          printMessage(message, null, null);
         }
       }
     }
@@ -419,8 +424,24 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  private void printMessage(final String message) {
-    ((ConsoleView)mySessionTab.getConsole()).print(message + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+  private void printMessage(final String message, final String hyperLinkText, @Nullable final HyperlinkInfo info) {
+    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+      public void run() {
+        final ConsoleView consoleView = getConsoleView();
+        consoleView.print(message, ConsoleViewContentType.SYSTEM_OUTPUT);
+        if (info != null) {
+          consoleView.printHyperlink(hyperLinkText, info);
+        }
+        else if (hyperLinkText != null) {
+          consoleView.print(hyperLinkText, ConsoleViewContentType.SYSTEM_OUTPUT);
+        }
+        consoleView.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+      }
+    });
+  }
+
+  private ConsoleView getConsoleView() {
+    return (ConsoleView)mySessionTab.getConsole();
   }
 
   public void positionReached(@NotNull final XSuspendContext suspendContext) {
