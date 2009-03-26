@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.generation;
 
+import org.jetbrains.annotations.NotNull;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -15,6 +16,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.FileViewProvider;
@@ -24,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +60,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.line");
 
-//myCodeInsightSettings = (CodeInsightSettings)ApplicationManager.getApplication().getComponent(CodeInsightSettings.class);
+    //myCodeInsightSettings = (CodeInsightSettings)ApplicationManager.getApplication().getComponent(CodeInsightSettings.class);
     myCodeStyleManager = CodeStyleManager.getInstance(myProject);
 
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -204,38 +207,39 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
     else {
       for (int line = myEndLine; line >= myStartLine; line--) {
-        int offset1 = myStartOffsets[line - myStartLine];
-        int offset2 = myEndOffsets[line - myStartLine];
-        if (offset1 == offset2) continue;
-        Commenter commenter = myCommenters[line - myStartLine];
-        String prefix = commenter.getBlockCommentPrefix();
-        if (prefix == null || !myDocument.getText().substring(offset1, myDocument.getTextLength()).startsWith(prefix)) {
-          prefix = commenter.getLineCommentPrefix();
-        }
-
-        String suffix = commenter.getBlockCommentSuffix();
-        if (suffix == null && prefix != null) suffix = "";
-
-        if (prefix != null && suffix != null) {
-          final int suffixLen = suffix.length();
-          final int prefixLen = prefix.length();
-          if (offset2 >= 0) {
-            if (!CharArrayUtil.regionMatches(chars, offset1 + prefixLen, prefix)) {
-              myDocument.deleteString(offset2 - suffixLen, offset2);
-            }
-          }
-          if (offset1 >= 0) {
-            for (int i = offset2 - suffixLen - 1; i > offset1 + prefixLen; --i) {
-              if (CharArrayUtil.regionMatches(chars, i, suffix)) {
-                myDocument.deleteString(i, i + suffixLen);
-              }
-              else if (CharArrayUtil.regionMatches(chars, i, prefix)) {
-                myDocument.deleteString(i, i + prefixLen);
-              }
-            }
-            myDocument.deleteString(offset1, offset1 + prefixLen);
-          }
-        }
+        uncommentLine(line);
+        //int offset1 = myStartOffsets[line - myStartLine];
+        //int offset2 = myEndOffsets[line - myStartLine];
+        //if (offset1 == offset2) continue;
+        //Commenter commenter = myCommenters[line - myStartLine];
+        //String prefix = commenter.getBlockCommentPrefix();
+        //if (prefix == null || !myDocument.getText().substring(offset1, myDocument.getTextLength()).startsWith(prefix)) {
+        //  prefix = commenter.getLineCommentPrefix();
+        //}
+        //
+        //String suffix = commenter.getBlockCommentSuffix();
+        //if (suffix == null && prefix != null) suffix = "";
+        //
+        //if (prefix != null && suffix != null) {
+        //  final int suffixLen = suffix.length();
+        //  final int prefixLen = prefix.length();
+        //  if (offset2 >= 0) {
+        //    if (!CharArrayUtil.regionMatches(chars, offset1 + prefixLen, prefix)) {
+        //      myDocument.deleteString(offset2 - suffixLen, offset2);
+        //    }
+        //  }
+        //  if (offset1 >= 0) {
+        //    for (int i = offset2 - suffixLen - 1; i > offset1 + prefixLen; --i) {
+        //      if (CharArrayUtil.regionMatches(chars, i, suffix)) {
+        //        myDocument.deleteString(i, i + suffixLen);
+        //      }
+        //      else if (CharArrayUtil.regionMatches(chars, i, prefix)) {
+        //        myDocument.deleteString(i, i + prefixLen);
+        //      }
+        //    }
+        //    myDocument.deleteString(offset1, offset1 + prefixLen);
+        //  }
+        //}
       }
     }
   }
@@ -265,7 +269,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         lineEnd = CharArrayUtil.shiftBackward(chars, lineEnd, " \t");
       }
       commented = (lineStart == lineEnd && myStartLine != myEndLine) || (CharArrayUtil.regionMatches(chars, lineStart, prefix) &&
-                                                                         CharArrayUtil.regionMatches(chars, lineEnd - suffix.length(), suffix));
+                                                                   CharArrayUtil.regionMatches(chars, lineEnd - suffix.length(), suffix));
       if (commented) {
         myStartOffsets[line - myStartLine] = lineStart;
         myEndOffsets[line - myStartLine] = lineEnd;
@@ -362,6 +366,73 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
   }
 
+  private void uncommentRange(int startOffset, int endOffset, @NotNull Commenter commenter) {
+    final String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
+    final String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
+    final String prefix = commenter.getBlockCommentPrefix();
+    final String suffix = commenter.getBlockCommentSuffix();
+    if (prefix == null || suffix == null) {
+      return;
+    }
+    if (endOffset >= suffix.length() && CharArrayUtil.regionMatches(myDocument.getCharsSequence(), endOffset - suffix.length(), suffix)) {
+      myDocument.deleteString(endOffset - suffix.length(), endOffset);
+    }
+    if (commentedPrefix != null && commentedSuffix != null) {
+      CommentByBlockCommentHandler.commentNestedComments(myDocument, new TextRange(startOffset, endOffset), commenter);
+    }
+    myDocument.deleteString(startOffset, startOffset + prefix.length());
+  }
+
+  private void uncommentLine(int line) {
+    Commenter commenter = myCommenters[line - myStartLine];
+    if (commenter == null) commenter = findCommenter(line);
+    if (commenter == null) return;
+
+    final int startOffset = myStartOffsets[line - myStartLine];
+    final int endOffset = myEndOffsets[line - myStartLine];
+    if (startOffset == endOffset) {
+      return;
+    }
+    String prefix = commenter.getLineCommentPrefix();
+    if (prefix != null) {
+      CharSequence chars = myDocument.getCharsSequence();
+      assert CharArrayUtil.regionMatches(chars, startOffset, prefix);
+      int position = 0;//text.indexOf(prefix);
+      myDocument.deleteString(position + startOffset , position + startOffset + prefix.length());
+      return;
+    }
+    String text = myDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();
+
+    prefix = commenter.getBlockCommentPrefix();
+    final String suffix = commenter.getBlockCommentSuffix();
+    if (prefix == null || suffix == null) {
+      return;
+    }
+
+    IntArrayList prefixes = new IntArrayList();
+    IntArrayList suffixes = new IntArrayList();
+    for (int position = 0; position < text.length();) {
+      int prefixPos = text.indexOf(prefix, position);
+      if (prefixPos == -1) {
+        break;
+      }
+      prefixes.add(prefixPos);
+      position = prefixPos + prefix.length();
+      int suffixPos = text.indexOf(suffix, position);
+      if (suffixPos == -1) {
+        suffixPos = text.length() - suffix.length();
+      }
+      suffixes.add(suffixPos);
+      position = suffixPos + suffix.length();
+    }
+
+    assert prefixes.size() == suffixes.size();
+
+    for (int i = prefixes.size() - 1; i >= 0; i--) {
+      uncommentRange(startOffset + prefixes.get(i), Math.min(startOffset + suffixes.get(i) + suffix.length(), endOffset), commenter);
+    }
+  }
+
   private void commentLine(int line, int offset, @Nullable Commenter commenter) {
     if (commenter == null) commenter = findCommenter(line);
     if (commenter == null) return;
@@ -385,37 +456,60 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       else {
         endOffset = CharArrayUtil.shiftBackward(chars, endOffset, " \t");
       }
-      final int suffixLen = suffix.length();
-      final int prefixLen = prefix.length();
-      if (endOffset - offset > prefixLen + suffixLen) {
-        boolean insertPrefix = false;
-        boolean haveWelformedComment = false;
-        int i = endOffset - suffixLen;
-        while (i >= offset) {
-          if (insertPrefix) {
-            if (CharArrayUtil.regionMatches(chars, i, prefix)) {
-              i -= suffixLen;
-              insertPrefix = false;
-              haveWelformedComment = true;
-              continue;
-            }
-            if (CharArrayUtil.regionMatches(chars, i, suffix)) {
-              myDocument.insertString(i + suffixLen, prefix);
-            }
-          }
-          else {
-            if (!CharArrayUtil.regionMatches(chars, i, suffix)) {
-              myDocument.insertString(i + suffixLen, suffix);
-            }
-            haveWelformedComment = false;
-            insertPrefix = true;
-          }
-          --i;
+      final String text = myDocument.getCharsSequence().subSequence(offset, endOffset).toString();
+      final IntArrayList prefixes = new IntArrayList();
+      final IntArrayList suffixes = new IntArrayList();
+      final String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
+      final String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
+      for (int position = 0; position < text.length();) {
+        int nearestPrefix = text.indexOf(prefix, position);
+        if (nearestPrefix == -1) {
+          nearestPrefix = text.length();
         }
-        if (!haveWelformedComment) myDocument.insertString(offset, prefix);
+        int nearestSuffix = text.indexOf(suffix, position);
+        if (nearestSuffix == -1) {
+          nearestSuffix = text.length();
+        }
+        if (Math.min(nearestPrefix, nearestSuffix) == text.length()) {
+          break;
+        }
+        if (nearestPrefix < nearestSuffix) {
+          prefixes.add(nearestPrefix);
+          position = nearestPrefix + prefix.length();
+        }
+        else {
+          suffixes.add(nearestSuffix);
+          position = nearestSuffix + suffix.length();
+        }
       }
-      else {
+      if (!(commentedSuffix == null && !suffixes.isEmpty() && offset + suffixes.get(suffixes.size() - 1) + suffix.length() >= endOffset)) {
         myDocument.insertString(endOffset, suffix);
+      }
+      int nearestPrefix = prefixes.size() - 1;
+      int nearestSuffix = suffixes.size() - 1;
+      while (nearestPrefix >= 0 || nearestSuffix >= 0) {
+        if (nearestSuffix == -1 || nearestPrefix != -1 && prefixes.get(nearestPrefix) > suffixes.get(nearestSuffix)) {
+          final int position = prefixes.get(nearestPrefix);
+          nearestPrefix--;
+          if (commentedPrefix != null) {
+            myDocument.replaceString(offset + position, offset + position + prefix.length(), commentedPrefix);
+          }
+          else if (position != 0) {
+            myDocument.insertString(offset + position, suffix);
+          }
+        }
+        else {
+          final int position = suffixes.get(nearestSuffix);
+          nearestSuffix--;
+          if (commentedSuffix != null) {
+            myDocument.replaceString(offset + position, offset + position + suffix.length(), commentedSuffix);
+          }
+          else if (offset + position + suffix.length() < endOffset) {
+            myDocument.insertString(offset + position + suffix.length(), prefix);
+          }
+        }
+      }
+      if (!(commentedPrefix == null && !prefixes.isEmpty() && prefixes.get(0) == 0)) {
         myDocument.insertString(offset, prefix);
       }
     }

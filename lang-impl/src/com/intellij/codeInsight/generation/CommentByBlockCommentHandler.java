@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -359,11 +360,11 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return result == -1 ? text.length() : result;
   }
 
-  private void commentNestedComments(TextRange range, Commenter commenter) {
+  static void commentNestedComments(@NotNull Document document, TextRange range, Commenter commenter) {
     final int offset = range.getStartOffset();
     final IntArrayList toReplaceWithComments = new IntArrayList();
     final IntArrayList prefixes = new IntArrayList();
-    final String text = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
+    final String text = document.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     final String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
     final String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
     final String commentPrefix = commenter.getBlockCommentPrefix();
@@ -413,10 +414,10 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       int position = toReplaceWithComments.get(i);
       if (prefixIndex >= 0 && position == prefixes.get(prefixIndex)) {
         prefixIndex--;
-        myDocument.replaceString(offset + position, offset + position + commentedPrefix.length(), commentPrefix);
+        document.replaceString(offset + position, offset + position + commentedPrefix.length(), commentPrefix);
       }
       else {
-        myDocument.replaceString(offset + position, offset + position + commentedSuffix.length(), commentSuffix);
+        document.replaceString(offset + position, offset + position + commentedSuffix.length(), commentSuffix);
       }
     }
   }
@@ -481,7 +482,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       int shift = toDelete.first.getEndOffset() - toDelete.first.getStartOffset();
       myDocument.deleteString(toDelete.second.getStartOffset() - shift, toDelete.second.getEndOffset() - shift);
       if (commenter.getCommentedBlockCommentPrefix() != null) {
-        commentNestedComments(new TextRange(toDelete.first.getEndOffset() - shift, toDelete.second.getStartOffset() - shift), commenter);
+        commentNestedComments(myDocument, new TextRange(toDelete.first.getEndOffset() - shift, toDelete.second.getStartOffset() - shift), commenter);
       }
     }
   }
