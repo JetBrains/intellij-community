@@ -7,7 +7,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.lang.properties.PropertiesFilesManager;
+import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,7 +50,7 @@ public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
     if (virtualFile == null) return null;
     String text = file.getText();
     Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
-    charset = PropertiesFilesManager.getInstance().nativeToBaseCharset(charset);
+    charset = Native2AsciiCharset.nativeToBaseCharset(charset);
 
     int errorCount = 0;
     int start = -1;
