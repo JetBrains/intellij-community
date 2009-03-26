@@ -38,7 +38,7 @@ public class Cache {
   public Cache(@NonNls final String storePath, final int cacheSize) throws IOException {
     myStorePath = storePath;
     new File(storePath).mkdirs();
-    myQNameToClassInfoMap = new CachedPersistentHashMap<StorageClassId, ClassInfo>(new File(storePath, "classes"), ClassIdKeyDescriptor.INSTANCE, new DataExternalizer<ClassInfo>() {
+    myQNameToClassInfoMap = new PersistentHashMap<StorageClassId, ClassInfo>(getOrCreateFile("classes"), ClassIdKeyDescriptor.INSTANCE, new DataExternalizer<ClassInfo>() {
       public void save(DataOutput out, ClassInfo value) throws IOException {
         value.save(out);
       }
@@ -47,11 +47,11 @@ public class Cache {
       }
     }, cacheSize);
 
-    myQNameToReferencersMap = new CompilerDependencyStorage<StorageClassId>(new File(storePath, "bdeps"), GenericIdKeyDescriptor.INSTANCE, cacheSize);
-    myQNameToReferencedClassesMap = new CompilerDependencyStorage<StorageClassId>(new File(storePath, "fdeps"), ClassIdKeyDescriptor.INSTANCE, cacheSize);
-    myQNameToSubclassesMap = new CompilerDependencyStorage<StorageClassId>(new File(storePath, "subclasses"), ClassIdKeyDescriptor.INSTANCE, cacheSize);
+    myQNameToReferencersMap = new CompilerDependencyStorage<StorageClassId>(getOrCreateFile("bdeps"), GenericIdKeyDescriptor.INSTANCE, cacheSize);
+    myQNameToReferencedClassesMap = new CompilerDependencyStorage<StorageClassId>(getOrCreateFile("fdeps"), ClassIdKeyDescriptor.INSTANCE, cacheSize);
+    myQNameToSubclassesMap = new CompilerDependencyStorage<StorageClassId>(getOrCreateFile("subclasses"), ClassIdKeyDescriptor.INSTANCE, cacheSize);
 
-    myRemoteQNames = new CachedPersistentHashMap<StorageClassId, Boolean>(new File(storePath, "remote"), ClassIdKeyDescriptor.INSTANCE, new DataExternalizer<Boolean>() {
+    myRemoteQNames = new PersistentHashMap<StorageClassId, Boolean>(getOrCreateFile("remote"), ClassIdKeyDescriptor.INSTANCE, new DataExternalizer<Boolean>() {
       public void save(DataOutput out, Boolean value) throws IOException {
         out.writeBoolean(value.booleanValue());
       }
@@ -65,6 +65,14 @@ public class Cache {
         return value != null? value : Boolean.FALSE;
       }
     };
+  }
+
+  private File getOrCreateFile(final String fileName) throws IOException {
+    final File file = new File(myStorePath, fileName);
+    if (!file.exists()) {
+      file.createNewFile();
+    }
+    return file;
   }
 
   public void dispose() throws CacheCorruptedException {
