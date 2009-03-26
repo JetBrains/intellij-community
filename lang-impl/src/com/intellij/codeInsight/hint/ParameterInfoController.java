@@ -264,7 +264,7 @@ public class ParameterInfoController {
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
-      if (myHint.isVisible()) {
+      if (myHint.isVisible() && myEditor.getComponent().getRootPane() != null) {
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating,offset));
       }
     }
