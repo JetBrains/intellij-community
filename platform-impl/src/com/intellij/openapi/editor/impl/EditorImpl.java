@@ -412,6 +412,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingModel.dispose();
     myGutterComponent.dispose();
     clearCaretThread();
+//    myFoldingModel.dispose();
   }
 
   private void clearCaretThread() {
@@ -4134,7 +4135,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         IterationState state = new IterationState(EditorImpl.this, offset, false);
         int fontType = state.getMergedAttributes().getFontType();
 
-        while (offset < end) {
+        while (offset < end && line < lineCount) {
           char c = text.charAt(offset);
           if (offset >= state.getEndOffset()) {
             state.advance();
