@@ -353,6 +353,14 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         publisher.facetRenamed(info.myFacet, info.myOldName);
       }
     }
+    for (Facet facet : toAdd) {
+      if (facet.getType().isOnlyOneFacetAllowed()) {
+        final Collection<?> facets = getFacetsByType(facet.getTypeId());
+        if (facets.size() > 1) {
+          LOG.error("Only one " + facet.getType().getPresentableName() + " facet per module allowed, but " + facets.size() + " facets found in module " + myModule.getName());
+        }
+      }
+    }
   }
 
 
