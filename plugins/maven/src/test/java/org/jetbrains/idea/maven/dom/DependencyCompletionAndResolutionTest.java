@@ -931,7 +931,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     assertCompletionVariants(myProjectPom, "jmock");
   }
 
-  public void testExclusionHighlighting() throws Throwable {
+  public void testDoNotHighlightUnknownExclusions() throws Throwable {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -942,8 +942,8 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "    <artifactId>junit</artifactId>" +
                      "    <exclusions>" +
                      "      <exclusion>" +
-                     "        <groupId>jmock</groupId>" +
-                     "        <artifactId><error>foo</error></artifactId>" +
+                     "        <groupId>foo</groupId>" +
+                     "        <artifactId>bar</artifactId>" +
                      "      </exclusion>" +
                      "    </exclusions>" +
                      "  </dependency>" +
@@ -963,7 +963,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "    <artifactId>junit</artifactId>" +
                      "    <exclusions>" +
                      "      <<error descr=\"'groupId' child tag should be defined\">exclusion</error>>" +
-                     "        <artifactId><error>jmock</error></artifactId>" +
+                     "        <artifactId>jmock</artifactId>" +
                      "      </exclusion>" +
                      "    </exclusions>" +
                      "  </dependency>" +

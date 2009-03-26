@@ -90,6 +90,10 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return new DependencyStrategy(dependency);
     }
 
+    if (MavenDomUtil.getImmediateParent(context, Exclusion.class) != null ) {
+      return new ExclusionStrategy();
+    }
+
     if (MavenDomUtil.getImmediateParent(context, Plugin.class) != null ) {
       return new PluginOrExtensionStrategy(true);
     }
@@ -218,6 +222,18 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Override
     public PsiFile resolveBySpecifiedPath() {
       return myDependency.getSystemPath().getValue();
+    }
+  }
+
+  private class ExclusionStrategy extends ConverterStrategy {
+    @Override
+    public PsiFile resolve(Project project, MavenId id) {
+      return null;
+    }
+
+    @Override
+    public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
+      return true;
     }
   }
 
