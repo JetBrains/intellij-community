@@ -1033,10 +1033,10 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
 
-          IndexingStamp.flushCache();
           return true;
         }
       });
+      IndexingStamp.flushCache();
     }
 
     public void scheduleInvalidation(final VirtualFile file, final boolean saveContent) {
