@@ -50,6 +50,7 @@ public class FileGroup implements JDOMExternalizable {
 
   @NonNls public static final String MODIFIED_ID = "MODIFIED";
   @NonNls public static final String MERGED_WITH_CONFLICT_ID = "MERGED_WITH_CONFLICTS";
+  @NonNls public static final String MERGED_WITH_PROPERTY_CONFLICT_ID = "MERGED_WITH_PROPERTY_CONFLICT";
   @NonNls public static final String MERGED_ID = "MERGED";
   @NonNls public static final String UNKNOWN_ID = "UNKNOWN";
   @NonNls public static final String LOCALLY_ADDED_ID = "LOCALLY_ADDED";

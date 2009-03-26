@@ -41,6 +41,10 @@ public interface FileStatus {
   FileStatus HIJACKED = ServiceManager.getService(FileStatusFactory.class).createFileStatus("HIJACKED", VcsBundle.message("file.status.name.hijacked"), COLOR_HIJACKED);
   FileStatus MERGED_WITH_CONFLICTS = ServiceManager.getService(FileStatusFactory.class)
    .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.conflicts"), Color.red);
+  FileStatus MERGED_WITH_BOTH_CONFLICTS = ServiceManager.getService(FileStatusFactory.class)
+   .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.conflicts"), Color.red);
+  FileStatus MERGED_WITH_PROPERTY_CONFLICTS = ServiceManager.getService(FileStatusFactory.class)
+   .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS", VcsBundle.message("file.status.name.merged.with.property.conflicts"), Color.red);
   FileStatus DELETED_FROM_FS = ServiceManager.getService(FileStatusFactory.class)
    .createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", VcsBundle.message("file.status.name.deleted.from.file.system"),
                      new Color(119, 56, 149));
