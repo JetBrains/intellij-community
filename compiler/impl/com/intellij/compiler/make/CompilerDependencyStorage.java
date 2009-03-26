@@ -10,7 +10,6 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
@@ -87,10 +86,6 @@ public class CompilerDependencyStorage<Key> implements Flushable, Disposable {
         }
       }
     };
-  }
-
-  public Collection<Key> getAllKeys() throws IOException {
-    return myMap.getAllKeysWithExistingMapping();
   }
 
   public synchronized void remove(Key key) throws IOException {
