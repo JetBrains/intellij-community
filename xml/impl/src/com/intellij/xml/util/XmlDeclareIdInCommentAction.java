@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -97,8 +98,17 @@ public class XmlDeclareIdInCommentAction implements LocalQuickFix {
 
     final PsiElement parent = tag.getParent();
     if (parent != null) {
-      parent.getNode().addChild(tempFile.getChildren()[0].getChildren()[0].getNode(), tag.getNode());
-      parent.getNode().addChild(tempFile.getChildren()[0].getChildren()[0].getNode(), tag.getNode());
+      final PsiElement[] children = tempFile.getChildren();
+      if (children.length > 0) {
+        final PsiElement[] children2 = children[0].getChildren();
+        if (children2.length > 0) {
+          final ASTNode node = children2[0].getNode();
+          if (node != null) {
+            parent.getNode().addChild(node, tag.getNode());
+            parent.getNode().addChild(node, tag.getNode());
+          }
+        }
+      }
     }
   }
 }
