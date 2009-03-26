@@ -39,8 +39,8 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
+import java.util.List;
 
 /**
  * The dialog wrapper. The dialog wrapper could be used only on event dispatch thread.
@@ -91,7 +91,7 @@ public abstract class DialogWrapper {
   private Action myOKAction;
   private Action myCancelAction;
   private Action myHelpAction;
-  private Component[] myButtons;
+  private JButton[] myButtons;
 
   private boolean myClosed = false;
 
@@ -110,8 +110,6 @@ public abstract class DialogWrapper {
     }
   };
   private ErrorText myErrorText;
-
-  private Alarm myErrorTextAlarm = new Alarm();
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
@@ -221,7 +219,7 @@ public abstract class DialogWrapper {
   protected JComponent createSouthPanel() {
     Action[] actions = createActions();
     Action[] leftSideActions = createLeftSideActions();
-    ArrayList<Component> buttons = new ArrayList<Component>();
+    List<JButton> buttons = new ArrayList<JButton>();
 
     boolean hasHelpToMoveToLeftSide = false;
     if (SystemInfo.isMacOSLeopard && Arrays.asList(actions).contains(getHelpAction())) {
@@ -258,7 +256,7 @@ public abstract class DialogWrapper {
                            new GridBagConstraints(gridx, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
                                                   0));
       }
-      myButtons = buttons.toArray(new Component[buttons.size()]);
+      myButtons = buttons.toArray(new JButton[buttons.size()]);
     }
 
     if (hasHelpToMoveToLeftSide) {
@@ -274,7 +272,7 @@ public abstract class DialogWrapper {
     return panel;
   }
 
-  private JPanel createButtons(Action[] actions, ArrayList<Component> buttons) {
+  private JPanel createButtons(Action[] actions, List<JButton> buttons) {
     JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? 0 : 5, 0));
     for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
@@ -418,6 +416,11 @@ public abstract class DialogWrapper {
    */
   protected void dispose() {
     ensureEventDispatchThread();
+    if (myButtons != null) {
+      for (JButton button : myButtons) {
+        button.setAction(null); // avoid memory leak via KeyboardManager
+      }
+    }
     final JRootPane rootPane = getRootPane();
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
@@ -1004,7 +1007,7 @@ public abstract class DialogWrapper {
   }
 
   private class OkAction extends AbstractAction {
-    public OkAction() {
+    private OkAction() {
       putValue(NAME, CommonBundle.getOkButtonText());
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
@@ -1023,7 +1026,7 @@ public abstract class DialogWrapper {
   }
 
   private class CancelAction extends AbstractAction {
-    public CancelAction() {
+    private CancelAction() {
       putValue(NAME, CommonBundle.getCancelButtonText());
     }
 
@@ -1041,7 +1044,7 @@ public abstract class DialogWrapper {
   }
 
   private class HelpAction extends AbstractAction {
-    public HelpAction() {
+    private HelpAction() {
       putValue(NAME, CommonBundle.getHelpButtonText());
     }
 
@@ -1069,7 +1072,7 @@ public abstract class DialogWrapper {
     private final JLabel myLabel = new JLabel();
     private Dimension myPrefSize;
 
-    public ErrorText() {
+    private ErrorText() {
       setLayout(new BorderLayout());
       setBorder(null);
       UIUtil.removeQuaquaVisualMarginsIn(this);
