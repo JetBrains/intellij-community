@@ -15,6 +15,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class TestNGUnusedCodeExtension extends UnusedCodeExtension {
    public boolean ADD_TESTNG_TO_ENTRIES = true;
@@ -27,6 +28,7 @@ public class TestNGUnusedCodeExtension extends UnusedCodeExtension {
     ADD_TESTNG_TO_ENTRIES = selected;
   }
 
+  @NotNull
   public String getDisplayName() {
     return "Automatically add all TestNG classes/methods/etc. to entry points";
   }

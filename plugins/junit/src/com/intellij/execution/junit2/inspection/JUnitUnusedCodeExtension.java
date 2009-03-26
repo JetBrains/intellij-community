@@ -33,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -43,6 +44,7 @@ import java.util.Arrays;
 public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
   public boolean ADD_JUNIT_TO_ENTRIES = true;
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.dead.code.option2");
   }
