@@ -66,6 +66,7 @@ public interface CommonClassNames {
 
 
   @NonNls String JAVA_LANG_CLONEABLE = "java.lang.Cloneable";
+  @NonNls String JAVA_LANG_COMPARABLE = "java.lang.Comparable";
   @NonNls String CLASS_FILE_EXTENSION = ".class";
 
   @NonNls String JAVA_LANG_STRING_SHORT = "String";
