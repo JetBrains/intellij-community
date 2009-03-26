@@ -1825,7 +1825,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         requestFocus(cmd, true).notifyWhenDone(callback);
       } else {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        final Component old = myFocusedComponentOnDeactivation.get();
+        final Component old = myFocusedComponentOnDeactivation != null ? myFocusedComponentOnDeactivation.get() : null;
         if (owner == null && old != null) {
           requestFocus(old, false);          
         }
