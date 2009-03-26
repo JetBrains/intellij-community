@@ -19,16 +19,15 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.semantic.SemElement;
+import com.intellij.semantic.SemKey;
 import com.intellij.util.*;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
-import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
-import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.util.xml.reflect.*;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,8 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class DomInvocationHandler<T extends AbstractDomChildDescriptionImpl> extends UserDataHolderBase implements InvocationHandler, DomElement {
+public abstract class DomInvocationHandler<T extends AbstractDomChildDescriptionImpl> extends UserDataHolderBase implements InvocationHandler, DomElement,
+                                                                                                                            SemElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
   public static final Method ACCEPT_CHILDREN_METHOD = ReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
@@ -165,7 +165,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myManager.fireEvent(new ElementChangedEvent(getProxy()));
   }
 
-  public void copyFrom(DomElement other) {
+  public void copyFrom(final DomElement other) {
     if (other == getProxy()) return;
     assert other.getDomElementType().equals(myType);
 
@@ -174,45 +174,44 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       return;
     }
 
-    final boolean wasInBulkChange = myManager.setBulkChange(true);
-    try {
-      ensureXmlElementExists();
-      final DomGenericInfoEx genericInfo = getGenericInfo();
-      for (final AttributeChildDescriptionImpl description : genericInfo.getAttributeChildrenDescriptions()) {
-        description.getDomAttributeValue(this).setStringValue(description.getDomAttributeValue(other).getStringValue());
-      }
-      for (final DomFixedChildDescription description : genericInfo.getFixedChildrenDescriptions()) {
-        final List<? extends DomElement> list = description.getValues(getProxy());
-        final List<? extends DomElement> otherValues = description.getValues(other);
-        for (int i = 0; i < list.size(); i++) {
-          final DomElement otherValue = otherValues.get(i);
-          final DomElement value = list.get(i);
-          if (otherValue.getXmlElement() == null) {
-            value.undefine();
-          } else {
-            value.copyFrom(otherValue);
+    myManager.performAtomicChange(new Runnable() {
+      public void run() {
+        ensureXmlElementExists();
+        final DomGenericInfoEx genericInfo = getGenericInfo();
+        for (final AttributeChildDescriptionImpl description : genericInfo.getAttributeChildrenDescriptions()) {
+          description.getDomAttributeValue(DomInvocationHandler.this).setStringValue(description.getDomAttributeValue(other).getStringValue());
+        }
+        for (final DomFixedChildDescription description : genericInfo.getFixedChildrenDescriptions()) {
+          final List<? extends DomElement> list = description.getValues(getProxy());
+          final List<? extends DomElement> otherValues = description.getValues(other);
+          for (int i = 0; i < list.size(); i++) {
+            final DomElement otherValue = otherValues.get(i);
+            final DomElement value = list.get(i);
+            if (otherValue.getXmlElement() == null) {
+              value.undefine();
+            } else {
+              value.copyFrom(otherValue);
+            }
           }
         }
-      }
-      for (final DomCollectionChildDescription description : genericInfo.getCollectionChildrenDescriptions()) {
-        for (final DomElement value : description.getValues(getProxy())) {
-          value.undefine();
+        for (final DomCollectionChildDescription description : genericInfo.getCollectionChildrenDescriptions()) {
+          for (final DomElement value : description.getValues(getProxy())) {
+            value.undefine();
+          }
+          for (final DomElement otherValue : description.getValues(other)) {
+            description.addValue(getProxy(), otherValue.getDomElementType()).copyFrom(otherValue);
+          }
         }
-        for (final DomElement otherValue : description.getValues(other)) {
-          description.addValue(getProxy(), otherValue.getDomElementType()).copyFrom(otherValue);
-        }
-      }
 
-      final String stringValue = DomManagerImpl.getDomInvocationHandler(other).getValue();
-      if (StringUtil.isNotEmpty(stringValue)) {
-        setValue(stringValue);
+        final String stringValue = DomManagerImpl.getDomInvocationHandler(other).getValue();
+        if (StringUtil.isNotEmpty(stringValue)) {
+          setValue(stringValue);
+        }
       }
-    }
-    finally {
-      myManager.setBulkChange(wasInBulkChange);
-      if (!wasInBulkChange) {
-        myManager.fireEvent(new ElementChangedEvent(myProxy));
-      }
+    });
+
+    if (!myManager.getSemService().isInsideAtomicChange()) {
+      myManager.fireEvent(new ElementChangedEvent(myProxy));
     }
   }
 
@@ -269,7 +268,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
     myManager.fireEvent(new ElementDefinedEvent(getProxy()));
     addRequiredChildren();
-    myManager.cacheHandler(tag, this);
+    myManager.cacheHandler(getCacheKey(), tag, this);
     return getXmlTag();
   }
 
@@ -525,13 +524,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (tag != null) {
       final List<XmlTag> tags = DomImplUtil.findSubTags(tag.getSubTags(), evaluatedXmlName, getFile());
       if (tags.size() > index) {
-        XmlTag childTag = tags.get(index);
-        DomInvocationHandler handler = myManager.getCachedHandler(childTag);
-        if (!(handler instanceof IndexedElementInvocationHandler)) {
-          handler = new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new PhysicalDomParentStrategy(childTag), myManager, childTag.getNamespace());
-          myManager.cacheHandler(childTag, handler);
-        }
-        return (IndexedElementInvocationHandler)handler;
+        return myManager.getSemService().getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tags.get(index));
       }
     }
     return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager, "");
@@ -549,14 +542,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final XmlAttribute attribute = tag.getAttribute(description.getXmlName().getLocalName(), ns.equals(tag.getNamespace())? null:ns);
       
       if (attribute != null) {
-        AttributeChildInvocationHandler handler = (AttributeChildInvocationHandler)myManager.getCachedHandler(attribute);
-        if (handler == null) {
-          handler = new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, new PhysicalDomParentStrategy(attribute));
-          myManager.cacheHandler(attribute, handler);
+        final AttributeChildInvocationHandler semElement =
+          myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
+        if (semElement == null) {
+          myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
         }
-        return handler;
+        return semElement;
       }
-
     }
     return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, new VirtualDomParentStrategy(this));
   }
@@ -613,7 +605,28 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   protected final void detach() {
     final XmlElement element = getXmlElement();
     setXmlElement(null);
-    if (element != null) myManager.cacheHandler(element, null);
+
+    if (element != null) {
+      myManager.cacheHandler(getCacheKey(), element, null);
+    }
+  }
+
+  final SemKey getCacheKey() {
+    if (this instanceof AttributeChildInvocationHandler) {
+      return DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY;
+    }
+    if (this instanceof DomRootInvocationHandler) {
+      return DomManagerImpl.DOM_HANDLER_KEY;
+    }
+    if (this instanceof IndexedElementInvocationHandler) {
+      return DomManagerImpl.DOM_INDEXED_HANDLER_KEY;
+    }
+
+    if (getChildDescription() instanceof CustomDomChildrenDescription) {
+      return DomManagerImpl.DOM_CUSTOM_HANDLER_KEY;
+    }
+
+    return DomManagerImpl.DOM_COLLECTION_HANDLER_KEY;
   }
 
   protected final void setXmlElement(final XmlElement element) {
@@ -688,12 +701,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
     List<DomElement> elements = new ArrayList<DomElement>(subTags.size());
     for (XmlTag subTag : subTags) {
-      DomInvocationHandler handler = myManager.getCachedHandler(subTag);
-      if (!(handler instanceof CollectionElementInvocationHandler)) {
-        handler = new CollectionElementInvocationHandler(description.getType(), subTag, description, this);
-        myManager.cacheHandler(subTag, handler);
-      }
-      elements.add(handler.getProxy());
+      final SemKey<? extends DomInvocationHandler> key = description instanceof CustomDomChildrenDescription ? DomManagerImpl.DOM_CUSTOM_HANDLER_KEY : DomManagerImpl.DOM_COLLECTION_HANDLER_KEY;
+      elements.add(myManager.getSemService().getSemElement(key, subTag).getProxy());
     }
     return Collections.unmodifiableList(elements);
   }

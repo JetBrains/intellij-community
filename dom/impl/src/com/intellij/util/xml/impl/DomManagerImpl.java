@@ -3,7 +3,6 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,15 +26,17 @@ import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.*;
+import com.intellij.semantic.SemKey;
+import com.intellij.semantic.SemService;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
@@ -53,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
@@ -63,6 +63,13 @@ public final class DomManagerImpl extends DomManager {
   public static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
   static final Key<DomFileDescription> MOCK_DESCIPRTION = Key.create("MockDescription");
   static final Key<DomInvocationHandler> CACHED_DOM_HANDLER = Key.create("CACHED_DOM_HANDLER");
+
+  static final SemKey<FileDescriptionCachedValueProvider> FILE_DESCRIPTION_KEY = SemKey.createKey("FILE_DESCRIPTION_KEY");
+  public static final SemKey<DomInvocationHandler> DOM_HANDLER_KEY = SemKey.createKey("DOM_HANDLER_KEY");
+  static final SemKey<IndexedElementInvocationHandler> DOM_INDEXED_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_INDEXED_HANDLER_KEY");
+  static final SemKey<CollectionElementInvocationHandler> DOM_COLLECTION_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_COLLECTION_HANDLER_KEY");
+  static final SemKey<CollectionElementInvocationHandler> DOM_CUSTOM_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_CUSTOM_HANDLER_KEY");
+  static final SemKey<AttributeChildInvocationHandler> DOM_ATTRIBUTE_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_ATTRIBUTE_HANDLER_KEY");
 
   private final ConcurrentFactoryMap<Type, StaticGenericInfo> myGenericInfos = new ConcurrentFactoryMap<Type, StaticGenericInfo>() {
     @NotNull
@@ -97,12 +104,11 @@ public final class DomManagerImpl extends DomManager {
   private final DomApplicationComponent myApplicationComponent;
   private final DomElementAnnotationsManagerImpl myAnnotationsManager;
   private final PsiFileFactory myFileFactory;
-  private final ConcurrentMap<XmlElement,Object> myHandlerCache = new ConcurrentHashMap<XmlElement, Object>();
 
   private long myModificationCount;
   private boolean myChanging;
   private final ProjectFileIndex myFileIndex;
-  private boolean myBulkChange;
+  private final SemService mySemService;
 
   public DomManagerImpl(final PomModel pomModel,
                         final Project project, final PsiManager psiManager,
@@ -111,8 +117,9 @@ public final class DomManagerImpl extends DomManager {
                         final StartupManager startupManager,
                         final ProjectRootManager projectRootManager,
                         final DomApplicationComponent applicationComponent,
-                        final ConverterManager converterManager) {
+                        final ConverterManager converterManager, SemService semService) {
     myProject = project;
+    mySemService = semService;
     myConverterManager = (ConverterManagerImpl)converterManager;
     myApplicationComponent = applicationComponent;
     myAnnotationsManager = (DomElementAnnotationsManagerImpl)annotationsManager;
@@ -130,22 +137,6 @@ public final class DomManagerImpl extends DomManager {
         return xmlAspect.equals(aspect);
       }
     }, project);
-
-    project.getMessageBus().connect().subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
-      public void modificationCountChanged() {
-        if (!myBulkChange) {
-          myHandlerCache.clear();
-        }
-      }
-    });
-
-    ((PsiManagerEx)psiManager).registerRunnableToRunOnChange(new Runnable() {
-      public void run() {
-        if (!myBulkChange) {
-          myHandlerCache.clear();
-        }
-      }
-    });
 
     myFileFactory = PsiFileFactory.getInstance(project);
 
@@ -224,16 +215,9 @@ public final class DomManagerImpl extends DomManager {
     processFileOrDirectoryChange(file);
   }
 
-  public DomInvocationHandler getCachedHandler(XmlElement element) {
-    return (DomInvocationHandler)myHandlerCache.get(element);
-  }
+  public <T extends DomInvocationHandler> void cacheHandler(SemKey<T> key, XmlElement element, T handler) {
+    mySemService.setCachedSemElement(key, element, handler);
 
-  public void cacheHandler(XmlElement element, DomInvocationHandler handler) {
-    if (handler != null) {
-      myHandlerCache.put(element, handler);
-    } else {
-      myHandlerCache.remove(element);
-    }
     element.putUserData(CACHED_DOM_HANDLER, handler);
   }
 
@@ -307,7 +291,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   final void fireEvent(DomEvent event) {
-    if (myBulkChange) return;
+    if (mySemService.isInsideAtomicChange()) return;
     myModificationCount++;
     myListeners.getMulticaster().eventOccured(event);
   }
@@ -359,7 +343,7 @@ public final class DomManagerImpl extends DomManager {
     //noinspection unchecked
     if (file.getUserData(MOCK_DESCIPRTION) == null) {
       file.putUserData(MOCK_DESCIPRTION, new MockDomFileDescription<T>(aClass, rootTagName, file));
-      myHandlerCache.clear();
+      mySemService.clearCache();
     }
     final DomFileElementImpl<T> fileElement = getFileElement(file);
     assert fileElement != null;
@@ -371,11 +355,7 @@ public final class DomManagerImpl extends DomManager {
   @NotNull
   final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(final XmlFile xmlFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    FileDescriptionCachedValueProvider provider = (FileDescriptionCachedValueProvider)myHandlerCache.get(xmlFile);
-    if (provider == null) {
-      return (FileDescriptionCachedValueProvider<T>)ConcurrencyUtil.cacheOrGet(myHandlerCache, xmlFile, new FileDescriptionCachedValueProvider(this, xmlFile));
-    }
-    return provider;
+    return mySemService.getSemElement(FILE_DESCRIPTION_KEY, xmlFile);
   }
 
   public final Set<DomFileDescription> getFileDescriptions(String rootTagName) {
@@ -455,51 +435,15 @@ public final class DomManagerImpl extends DomManager {
   public GenericAttributeValue getDomElement(final XmlAttribute attribute) {
     if (myChanging) return null;
 
-    final DomInvocationHandler handler = getDomHandler(attribute.getParent());
-    if (handler == null) return null;
-
-    final String localName = attribute.getLocalName();
-    for (final AttributeChildDescriptionImpl description : handler.getGenericInfo().getAttributeChildrenDescriptions()) {
-      if (description.getXmlName().getLocalName().equals(localName)) {
-        final GenericAttributeValue value = description.getDomAttributeValue(handler);
-        if (attribute.equals(value.getXmlAttribute())) {
-          return value;
-        }
-      }
-    }
-    return null;
+    final AttributeChildInvocationHandler handler = mySemService.getSemElement(DOM_ATTRIBUTE_HANDLER_KEY, attribute);
+    return handler == null ? null : (GenericAttributeValue)handler.getProxy();
   }
 
   @Nullable
   DomInvocationHandler getDomHandler(final XmlTag tag) {
     if (tag == null) return null;
 
-    DomInvocationHandler invocationHandler = getCachedHandler(tag);
-    if (invocationHandler != null) return invocationHandler;
-
-    final XmlTag parentTag = tag.getParentTag();
-    if (parentTag == null) {
-      final PsiFile psiFile = tag.getContainingFile();
-      if (psiFile instanceof XmlFile) {
-        final DomRootInvocationHandler handler = getRootInvocationHandler((XmlFile)psiFile);
-        return handler != null && handler.getXmlTag() == tag ? handler : null;
-      }
-      return null;
-    }
-
-    DomInvocationHandler parent = getDomHandler(parentTag);
-    if (parent == null) return null;
-
-    final AbstractDomChildrenDescription childDescription = findChildrenDescription(tag, parent);
-    if (childDescription == null) return null;
-
-    for (DomElement element : childDescription.getValues(parent.getProxy())) {
-      DomInvocationHandler handler = getDomInvocationHandler(element);
-      if (handler != null && tag.equals(handler.getXmlTag())) {
-        return handler;
-      }
-    }
-    return null;
+    return mySemService.getSemElement(DOM_HANDLER_KEY, tag);
   }
 
   @Nullable
@@ -507,7 +451,7 @@ public final class DomManagerImpl extends DomManager {
     return findChildrenDescription(tag, getDomInvocationHandler(parent));
   }
 
-  private static AbstractDomChildrenDescription findChildrenDescription(final XmlTag tag, final DomInvocationHandler parent) {
+  static AbstractDomChildrenDescription findChildrenDescription(final XmlTag tag, final DomInvocationHandler parent) {
     final DomGenericInfoEx info = parent.getGenericInfo();
     return info.findChildrenDescription(parent, tag.getLocalName(), tag.getNamespace(), false, tag.getName());
   }
@@ -531,17 +475,6 @@ public final class DomManagerImpl extends DomManager {
   public final DomFileDescription<?> getDomFileDescription(final XmlFile xmlFile) {
     final DomFileElementImpl<DomElement> element = getFileElement(xmlFile);
     return element != null ? element.getFileDescription() : null;
-  }
-
-  @Nullable
-  private DomRootInvocationHandler getRootInvocationHandler(final XmlFile xmlFile) {
-    if (xmlFile != null) {
-      DomFileElementImpl element = getFileElement(xmlFile);
-      if (element != null) {
-        return element.getRootHandler();
-      }
-    }
-    return null;
   }
 
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
@@ -587,7 +520,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   private void _registerFileDescription(final DomFileDescription description) {
-    myHandlerCache.clear();
+    mySemService.clearCache();
 
     //noinspection unchecked
     final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
@@ -627,13 +560,14 @@ public final class DomManagerImpl extends DomManager {
     return myModificationCount;
   }
 
-  public boolean setBulkChange(final boolean bulkChange) {
-    final boolean oldValue = myBulkChange;
-    myBulkChange = bulkChange;
-    if (!bulkChange) {
-      myHandlerCache.clear();
+  public void performAtomicChange(@NotNull Runnable change) {
+    mySemService.performAtomicChange(change);
+    if (!mySemService.isInsideAtomicChange()) {
       myModificationCount++;
     }
-    return oldValue;
+  }
+
+  public SemService getSemService() {
+    return mySemService;
   }
 }

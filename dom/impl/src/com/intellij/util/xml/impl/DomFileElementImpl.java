@@ -285,6 +285,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return myFileDescription;
   }
 
+  @NotNull
   protected final DomRootInvocationHandler getRootHandler() {
     return myRootHandler;
   }

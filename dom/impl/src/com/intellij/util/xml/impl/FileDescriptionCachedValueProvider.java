@@ -20,6 +20,7 @@ import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
+import com.intellij.semantic.SemElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -30,7 +31,7 @@ import java.util.Set;
  * @author peter
  */
 @SuppressWarnings({"HardCodedStringLiteral", "StringConcatenationInsideStringBufferAppend"})
-class FileDescriptionCachedValueProvider<T extends DomElement> {
+class FileDescriptionCachedValueProvider<T extends DomElement> implements SemElement{
   private static final Key<CachedValue<XmlFileHeader>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
   private static final UserDataCache<CachedValue<XmlFileHeader>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<XmlFileHeader>, XmlFile, Object>() {
     protected CachedValue<XmlFileHeader> compute(final XmlFile file, final Object o) {

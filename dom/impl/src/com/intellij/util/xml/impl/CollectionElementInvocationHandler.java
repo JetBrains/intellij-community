@@ -50,7 +50,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
     final XmlTag tag = getXmlTag();
     if (tag == null) return;
 
-    getManager().cacheHandler(tag, null);
+    getManager().cacheHandler(getCacheKey(), tag, null);
     deleteTag(tag);
     getManager().fireEvent(new ElementChangedEvent(parent));
   }
