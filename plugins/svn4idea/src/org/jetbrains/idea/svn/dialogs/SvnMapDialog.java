@@ -106,7 +106,7 @@ public class SvnMapDialog extends DialogWrapper {
 
     myRefresh.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        SvnVcs.getInstance(myProject).invokeRefreshSvnRoots(false);
+        SvnVcs.getInstance(myProject).invokeRefreshSvnRoots();
         final List<WCInfo> infoList = vcs.getAllWcInfos();
         myTableModel.setItems(infoList);
         myTableView.repaint();

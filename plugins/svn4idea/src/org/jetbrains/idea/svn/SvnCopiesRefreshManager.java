@@ -6,31 +6,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 
 public class SvnCopiesRefreshManager {
-  private final SvnFileUrlMappingImpl myMapping;
-  private DefendedCopiesRefreshProxy myCopiesRefreshProxy;
+  private CopiesRefresh myCopiesRefresh;
 
-  public SvnCopiesRefreshManager(final Project project, final SvnVcs vcs) {
-    myMapping = new SvnFileUrlMappingImpl(project, vcs);
+  public SvnCopiesRefreshManager(final Project project, final SvnFileUrlMappingImpl mapping) {
+    myCopiesRefresh = new MyVeryRefresh();
+    //myCopiesRefreshProxy = new DefendedCopiesRefreshProxy(veryRefresh);
 
-    final MyVeryRefresh veryRefresh = new MyVeryRefresh();
-    myCopiesRefreshProxy = new DefendedCopiesRefreshProxy(veryRefresh);
+    final Runnable refresher = new MyRefresher(project, mapping);
+    //final Runnable proxiedRefresher = myCopiesRefreshProxy.proxyRefresher(refresher);
 
-    final Runnable refresher = new MyRefresher(project, myMapping);
-    final Runnable proxiedRefresher = myCopiesRefreshProxy.proxyRefresher(refresher);
-
-    final RequestsMerger requestsMerger = new RequestsMerger(proxiedRefresher);
-    veryRefresh.setRequestMerger(requestsMerger);
-
-    // do one time after project loaded
-    /*StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myCopiesRefreshProxy.asynchRequest();
-      }
-    });*/
+    final RequestsMerger requestsMerger = new RequestsMerger(refresher);
+    ((MyVeryRefresh) myCopiesRefresh).setRequestMerger(requestsMerger);
   }
 
   public CopiesRefresh getCopiesRefresh() {
-    return myCopiesRefreshProxy;
+    return myCopiesRefresh;
   }
 
   private class MyVeryRefresh implements CopiesRefresh {
@@ -78,11 +68,6 @@ public class SvnCopiesRefreshManager {
         }
       }
     }
-  }
-
-  public SvnFileUrlMappingImpl getMapping() {
-    //myCopiesRefreshProxy.ensureInit();
-    return myMapping;
   }
 
   private static class MyRefresher implements Runnable {

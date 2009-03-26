@@ -137,7 +137,8 @@ public class SvnVcs extends AbstractVcs {
   private final SvnChangelistListener myChangeListListener;
   private MessageBusConnection myMessageBusConnection;
 
-  private final SvnCopiesRefreshManager myCopiesRefreshManager;
+  private SvnCopiesRefreshManager myCopiesRefreshManager;
+  private SvnFileUrlMappingImpl myMapping;
 
   public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
 
@@ -161,7 +162,7 @@ public class SvnVcs extends AbstractVcs {
     return Boolean.valueOf(System.getProperty(systemParameterName));
   }
 
-  public SvnVcs(Project project, MessageBus bus, SvnConfiguration svnConfiguration) {
+  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration) {
     super(project);
     LOG.debug("ct");
     myConfiguration = svnConfiguration;
@@ -184,8 +185,6 @@ public class SvnVcs extends AbstractVcs {
     myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
     myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
 
-    myCopiesRefreshManager = new SvnCopiesRefreshManager(project, this);
-
     if (myProject.isDefault()) {
       myChangeListListener = null;
     } else {
@@ -197,30 +196,38 @@ public class SvnVcs extends AbstractVcs {
       myMessageBusConnection = bus.connect();
       myMessageBusConnection.subscribe(ProjectLevelVcsManagerImpl.VCS_MAPPING_CHANGED, new Runnable() {
         public void run() {
-          invokeRefreshSvnRoots(true);
+          invokeRefreshSvnRoots();
         }
       });
 
       // do one time after project loaded
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
         public void run() {
-          invokeRefreshSvnRoots(true);
+          myMapping = SvnFileUrlMappingImpl.getInstance(project);
+          myCopiesRefreshManager = new SvnCopiesRefreshManager(project, myMapping);
+
+          invokeRefreshSvnRoots();
+
+          // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sence...
+          // once it could be mistaken about copies for 2 minutes on start...
+
+          /*if (! myMapping.getAllWcInfos().isEmpty()) {
+            invokeRefreshSvnRoots();
+            return;
+          }
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+            public void run() {
+              myCopiesRefreshManager.getCopiesRefresh().ensureInit();
+            }
+          }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
         }
       });
     }
   }
 
-  public void invokeRefreshSvnRoots(final boolean hidden) {
-    REFRESH_LOG.debug("refresh hidden: " + hidden, new Throwable());
-    if (hidden) {
-      myCopiesRefreshManager.getCopiesRefresh().asynchRequest();
-    } else {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          myCopiesRefreshManager.getCopiesRefresh().synchRequest();
-        }
-      }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);
-    }
+  public void invokeRefreshSvnRoots() {
+    REFRESH_LOG.debug("refresh: ", new Throwable());
+    myCopiesRefreshManager.getCopiesRefresh().asynchRequest();
   }
 
   private void upgradeIfNeeded(final MessageBus bus) {
@@ -688,6 +695,21 @@ public class SvnVcs extends AbstractVcs {
   }
 
   @Nullable
+  public SVNInfo getInfo(final VirtualFile file) {
+    try {
+      SVNWCClient wcClient = new SVNWCClient(getSvnAuthenticationManager(), getSvnOptions());
+      SVNInfo info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
+      if (info == null || info.getRepositoryRootURL() == null) {
+        info = wcClient.doInfo(new File(file.getPath()), SVNRevision.HEAD);
+      }
+      return info;
+    }
+    catch (SVNException e) {
+      return null;
+    }
+  }
+
+  @Nullable
   public SVNInfo getInfoWithCaching(final VirtualFile file) {
     SVNInfo info;
     SVNInfoHolder infoValue = getCachedInfo(file);
@@ -842,7 +864,7 @@ public class SvnVcs extends AbstractVcs {
   @NotNull
   public SvnFileUrlMapping getSvnFileUrlMapping() {
     //myRootsInfo.ensureInitialized();
-    return myCopiesRefreshManager.getMapping();
+    return myMapping;
   }
 
   /**
@@ -891,7 +913,7 @@ public class SvnVcs extends AbstractVcs {
 
   @Override
   public RootsConvertor getCustomConvertor() {
-    return myCopiesRefreshManager.getMapping();
+    return myMapping;
   }
 
   @Override
@@ -923,7 +945,7 @@ public class SvnVcs extends AbstractVcs {
   @Override
   public List<VirtualFile> filterUniqueRoots(final List<VirtualFile> in) {
     final List<RootUrlInfo> infos = new ArrayList<RootUrlInfo>(in.size());
-    final SvnFileUrlMappingImpl mapping = myCopiesRefreshManager.getMapping();
+    final SvnFileUrlMappingImpl mapping = myMapping;
     for (VirtualFile vf : in) {
       final File ioFile = new File(vf.getPath());
       final RootUrlInfo info = mapping.getWcRootForFilePath(ioFile);

@@ -14,6 +14,10 @@
       <implementation-class>org.jetbrains.idea.svn.SvnConfiguration</implementation-class>
       <option name="workspace" value="true"/>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.svn.SvnFileUrlMappingImpl</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
   </project-components>
 
   <actions>

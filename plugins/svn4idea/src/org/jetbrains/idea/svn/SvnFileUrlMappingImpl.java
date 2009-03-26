@@ -1,12 +1,18 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.StringLenComparator;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -17,7 +23,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
+@State(
+  name = "SvnFileUrlMappingImpl",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileUrlMappingImpl");
 
   private final SvnVcs myVcs;
@@ -45,8 +59,12 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
     }
   }
 
-  SvnFileUrlMappingImpl(final Project project, final SvnVcs vcs) {
-    myVcs = vcs;
+  public static SvnFileUrlMappingImpl getInstance(final Project project) {
+    return project.getComponent(SvnFileUrlMappingImpl.class);
+  }
+
+  private SvnFileUrlMappingImpl(final Project project) {
+    myVcs = SvnVcs.getInstance(project);
     myMapping = new SvnMapping();
     myMoreRealMapping = new SvnMapping();
     myHelper = new MyRootsHelper(project, myVcs);
@@ -190,14 +208,18 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
 
   private void addRoot(final SvnMapping mapping, final Real foundRoot) {
     final SVNInfo info = foundRoot.getInfo();
+    addRootImpl(mapping, foundRoot.getFile(), foundRoot.getVcsRoot(), info);
+  }
+
+  private void addRootImpl(final SvnMapping mapping, final VirtualFile copyRoot, final VirtualFile vcsRoot, final SVNInfo info) {
     if (info != null) {
       final SVNURL repositoryUrl = info.getRepositoryRootURL();
       if (repositoryUrl == null) {
-        LOG.info("Error: cannot find repository URL for versioned folder: " + foundRoot.getFile().getPath());
+        LOG.info("Error: cannot find repository URL for versioned folder: " + copyRoot.getPath());
         return;
       }
 
-      mapping.add(foundRoot.getFile(), foundRoot.getVcsRoot(), info, repositoryUrl);
+      mapping.add(copyRoot, vcsRoot, info, repositoryUrl);
     }
   }
 
@@ -232,5 +254,82 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
 
   public VirtualFile[] getNotFilteredRoots() {
     return myHelper.executeDefended();
+  }
+
+  public SvnMappingSavedPart getState() {
+    final SvnMappingSavedPart result = new SvnMappingSavedPart();
+
+    final SvnMapping mapping = new SvnMapping();
+    final SvnMapping realMapping = new SvnMapping();
+    synchronized (myMonitor) {
+      mapping.copyFrom(myMapping);
+      realMapping.copyFrom(myMoreRealMapping);
+    }
+
+    for (RootUrlInfo info : mapping.getAllCopies()) {
+      result.add(convert(info));
+    }
+    for (RootUrlInfo info : realMapping.getAllCopies()) {
+      result.addReal(convert(info));
+    }
+    return result;
+  }
+
+  private SvnCopyRootSimple convert(final RootUrlInfo info) {
+    final SvnCopyRootSimple copy = new SvnCopyRootSimple();
+    copy.myVcsRoot = FileUtil.toSystemDependentName(info.getRoot().getPath());
+    copy.myCopyRoot = info.getIoFile().getAbsolutePath();
+    return copy;
+  }
+
+  public void loadState(final SvnMappingSavedPart state) {
+    final SvnMapping mapping = new SvnMapping();
+    final SvnMapping realMapping = new SvnMapping();
+
+    try {
+      fillMapping(mapping, state.getMappingRoots());
+      fillMapping(realMapping, state.getMoreRealMappingRoots());
+    } catch (Throwable t) {
+      LOG.info(t);
+      return;
+    }
+
+    synchronized (myMonitor) {
+      myMapping.copyFrom(mapping);
+      myMoreRealMapping.copyFrom(realMapping);
+    }
+  }
+
+  private void fillMapping(final SvnMapping mapping, final List<SvnCopyRootSimple> list) {
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    
+    for (SvnCopyRootSimple simple : list) {
+      final VirtualFile copyRoot = lfs.findFileByIoFile(new File(simple.myCopyRoot));
+      final VirtualFile vcsRoot = lfs.findFileByIoFile(new File(simple.myVcsRoot));
+
+      if (copyRoot == null || vcsRoot == null) continue;
+
+      final SVNInfo svnInfo = myVcs.getInfo(copyRoot);
+      if (svnInfo == null) continue;
+
+      addRootImpl(mapping, copyRoot, vcsRoot, svnInfo);
+    }
+  }
+
+  public void projectOpened() {
+  }
+
+  public void projectClosed() {
+  }
+
+  @NotNull
+  public String getComponentName() {
+    return "SvnFileUrlMappingImpl";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
   }
 }

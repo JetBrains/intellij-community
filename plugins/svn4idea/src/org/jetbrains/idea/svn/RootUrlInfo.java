@@ -52,6 +52,7 @@ public class RootUrlInfo implements RootUrlPair {
     return myIoFile;
   }
 
+  // vcs root
   public VirtualFile getRoot() {
     return myRoot;
   }
