@@ -16,13 +16,10 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog {
   private boolean myHasFindWhatPanel;
   private ThrowSearchUtil.Root [] myRoots;
 
-  public FindThrowUsagesDialog(final PsiElement element, 
-                               final Project project,
-                               final FindUsagesOptions findUsagesOptions, 
-                               boolean toShowInNewTab,
-                                     boolean mustOpenInNewTab,
-                               boolean isSingleFile){
-    super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
+  public FindThrowUsagesDialog(final PsiElement element, final Project project,
+                               final FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, boolean mustOpenInNewTab,
+                               boolean isSingleFile, FindUsagesHandler handler){
+    super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
   protected void init () {

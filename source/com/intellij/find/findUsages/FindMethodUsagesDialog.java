@@ -15,9 +15,10 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog {
   private StateRestoringCheckBox myCbOverridingMethods;
   private boolean myHasFindWhatPanel;
 
-  public FindMethodUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab,
-                                     boolean mustOpenInNewTab,boolean isSingleFile) {
-    super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
+  public FindMethodUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, boolean mustOpenInNewTab,
+                                boolean isSingleFile,
+                                FindUsagesHandler handler) {
+    super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
   @Nullable

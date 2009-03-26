@@ -20,17 +20,17 @@ public abstract class JavaFindUsagesDialog extends AbstractFindUsagesDialog {
   private StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable = false;
 
-  protected JavaFindUsagesDialog(PsiElement element,
-                             Project project,
-                             FindUsagesOptions findUsagesOptions,
-                             boolean toShowInNewTab,
-                             boolean mustOpenInNewTab,
-                             boolean isSingleFile) {
-    super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile,
-          FindUsagesUtil.isSearchForTextOccurencesAvailable(element, isSingleFile), !isSingleFile && !element.getManager().isInProject(element));
+  protected JavaFindUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, boolean mustOpenInNewTab,
+                                 boolean isSingleFile,
+                                 FindUsagesHandler handler) {
+    super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isTextSearch(element, isSingleFile, handler), !isSingleFile && !element.getManager().isInProject(element));
     myPsiElement = element;
     myIncludeOverloadedMethodsAvailable = element instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)element);
     init();
+  }
+
+  private static boolean isTextSearch(PsiElement element, boolean isSingleFile, FindUsagesHandler handler) {
+    return FindUsagesUtil.isSearchForTextOccurencesAvailable(element, isSingleFile, handler);
   }
 
   public void calcFindUsagesOptions(FindUsagesOptions options) {

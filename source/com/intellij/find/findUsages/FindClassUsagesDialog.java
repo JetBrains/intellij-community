@@ -18,9 +18,10 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog {
   private StateRestoringCheckBox myCbDerivedInterfaces;
   private StateRestoringCheckBox myCbDerivedClasses;
 
-  public FindClassUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab,
-                                     boolean mustOpenInNewTab, boolean isSingleFile){
-    super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
+  public FindClassUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, boolean mustOpenInNewTab,
+                               boolean isSingleFile,
+                               FindUsagesHandler handler){
+    super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
   public JComponent getPreferredFocusedControl() {
