@@ -124,7 +124,11 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   }
 
   public FocusTrackback getFocusTrackback() {
-    return myDialog.getFocusTrackback();
+    if (myDialog != null) {
+      return myDialog.getFocusTrackback();
+    }
+    
+    return null;
   }
 
   public void setUndecorated(final boolean undecorated) {
@@ -264,16 +268,22 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   }
 
   public void centerInParent() {
-    myDialog.center();
+    if (myDialog != null) {
+      myDialog.center();
+    }
   }
 
   public void validate() {
-    myDialog.resetSizeCache();
-    myDialog.invalidate();
+    if (myDialog != null) {
+      myDialog.resetSizeCache();
+      myDialog.invalidate();
+    }
   }
 
   public void repaint() {
-    myDialog.repaint();
+    if (myDialog != null) {
+      myDialog.repaint();
+    }
   }
 
   public void pack() {
