@@ -2,9 +2,9 @@ package com.intellij.testFramework;
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
@@ -322,7 +322,6 @@ import java.util.HashSet;
         editorFactory.releaseEditor(editor);
       }
       assertEquals(0, allEditors.length);
-
 
       //cleanTheWorld();
     }
