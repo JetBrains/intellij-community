@@ -28,6 +28,14 @@ public class JavaCommenter implements CodeDocumentationAwareCommenter {
     return "*/";
   }
 
+  public String getCommentedBlockCommentPrefix() {
+    return null;
+  }
+
+  public String getCommentedBlockCommentSuffix() {
+    return null;
+  }
+
   @Nullable
   public IElementType getLineCommentTokenType() {
     return JavaTokenType.END_OF_LINE_COMMENT;

@@ -22,4 +22,12 @@ public class XmlCommenter implements Commenter {
   public String getBlockCommentSuffix() {
     return "-->";
   }
+
+  public String getCommentedBlockCommentPrefix() {
+    return "&lt;!&ndash;";
+  }
+
+  public String getCommentedBlockCommentSuffix() {
+    return "&ndash;&gt;";
+  }
 }

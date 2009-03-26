@@ -57,6 +57,14 @@ public class StandardFileTypeRegistrator implements FileTypeRegistrator {
     public String getBlockCommentSuffix() {
       return myAbstractFileType.getSyntaxTable().getEndComment();
     }
+
+    public String getCommentedBlockCommentPrefix() {
+      return null;
+    }
+
+    public String getCommentedBlockCommentSuffix() {
+      return null;
+    }
   }
 
   private static boolean isEmpty(String str) {

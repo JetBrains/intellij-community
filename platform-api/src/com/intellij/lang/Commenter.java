@@ -48,4 +48,20 @@ public interface Commenter {
    */
   @Nullable
   String getBlockCommentSuffix();
+
+  /**
+   * Returns the string which marks the commented beginning of a block comment in the language,
+   * or null if the language does not support block comments.
+   * @return the commented block comment start text, or null.
+   */
+  @Nullable
+  String getCommentedBlockCommentPrefix();
+
+  /**
+   * Returns the string which marks the commented end of a block comment in the language,
+   * or null if the language does not support block comments.
+   * @return the commented block comment end text, or null.
+   */
+  @Nullable
+  String getCommentedBlockCommentSuffix();
 }

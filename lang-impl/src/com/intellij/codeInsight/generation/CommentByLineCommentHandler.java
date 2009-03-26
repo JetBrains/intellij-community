@@ -34,8 +34,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private Editor myEditor;
   private int myStartOffset;
   private int myEndOffset;
-  private int myLine1;
-  private int myLine2;
+  private int myStartLine;
+  private int myEndLine;
   private int[] myStartOffsets;
   private int[] myEndOffsets;
   private Commenter[] myCommenters;
@@ -57,7 +57,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.line");
 
-    //myCodeInsightSettings = (CodeInsightSettings)ApplicationManager.getApplication().getComponent(CodeInsightSettings.class);
+//myCodeInsightSettings = (CodeInsightSettings)ApplicationManager.getApplication().getComponent(CodeInsightSettings.class);
     myCodeStyleManager = CodeStyleManager.getInstance(myProject);
 
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -95,7 +95,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       if (commenter != null) {
         String prefix = commenter.getLineCommentPrefix();
         if (prefix == null) prefix = commenter.getBlockCommentPrefix();
-        int lineStart = myDocument.getLineStartOffset(myLine1);
+        int lineStart = myDocument.getLineStartOffset(myStartLine);
         lineStart = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), lineStart, " \t");
         lineStart += prefix.length();
         if (lineStart < myDocument.getTextLength() && myDocument.getCharsSequence().charAt(lineStart) == ' ') lineStart++;
@@ -130,24 +130,24 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   }
 
   private void doComment() {
-    myLine1 = myDocument.getLineNumber(myStartOffset);
-    myLine2 = myDocument.getLineNumber(myEndOffset);
+    myStartLine = myDocument.getLineNumber(myStartOffset);
+    myEndLine = myDocument.getLineNumber(myEndOffset);
 
-    if (myLine2 > myLine1 && myDocument.getLineStartOffset(myLine2) == myEndOffset) {
-      myLine2--;
+    if (myEndLine > myStartLine && myDocument.getLineStartOffset(myEndLine) == myEndOffset) {
+      myEndLine--;
     }
 
-    myStartOffsets = new int[myLine2 - myLine1 + 1];
-    myEndOffsets = new int[myLine2 - myLine1 + 1];
-    myCommenters = new Commenter[myLine2 - myLine1 + 1];
+    myStartOffsets = new int[myEndLine - myStartLine + 1];
+    myEndOffsets = new int[myEndLine - myStartLine + 1];
+    myCommenters = new Commenter[myEndLine - myStartLine + 1];
     boolean allLineCommented = true;
     CharSequence chars = myDocument.getCharsSequence();
 
-    boolean singleline = myLine1 == myLine2;
-    int offset = myDocument.getLineStartOffset(myLine1);
+    boolean singleline = myStartLine == myEndLine;
+    int offset = myDocument.getLineStartOffset(myStartLine);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
     final Language languageSuitableForCompleteFragment = PsiUtilBase.reallyEvaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
-      myDocument.getCharsSequence(), myDocument.getLineEndOffset(myLine2), " \t\n"), myFile);
+      myDocument.getCharsSequence(), myDocument.getLineEndOffset(myEndLine), " \t\n"), myFile);
 
     Commenter blockSuitableCommenter = languageSuitableForCompleteFragment == null ? LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage()) : null;
 
@@ -168,10 +168,18 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         public String getBlockCommentSuffix() {
           return mySyntaxTable.getEndComment();
         }
+
+        public String getCommentedBlockCommentPrefix() {
+          return null;
+        }
+
+        public String getCommentedBlockCommentSuffix() {
+          return null;
+        }
       };
     }
 
-    for (int line = myLine1; line <= myLine2; line++) {
+    for (int line = myStartLine; line <= myEndLine; line++) {
       final Commenter commenter = blockSuitableCommenter != null ? blockSuitableCommenter : findCommenter(line);
       if (commenter == null) return;
 
@@ -179,7 +187,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
           (commenter.getBlockCommentPrefix() == null || commenter.getBlockCommentSuffix() == null)) {
         return;
       }
-      myCommenters[line - myLine1] = commenter;
+      myCommenters[line - myStartLine] = commenter;
       if (!isLineCommented(line, chars, commenter) && (singleline || !isLineEmpty(line))) {
         allLineCommented = false;
         break;
@@ -195,11 +203,11 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       }
     }
     else {
-      for (int line = myLine2; line >= myLine1; line--) {
-        int offset1 = myStartOffsets[line - myLine1];
-        int offset2 = myEndOffsets[line - myLine1];
+      for (int line = myEndLine; line >= myStartLine; line--) {
+        int offset1 = myStartOffsets[line - myStartLine];
+        int offset2 = myEndOffsets[line - myStartLine];
         if (offset1 == offset2) continue;
-        Commenter commenter = myCommenters[line - myLine1];
+        Commenter commenter = myCommenters[line - myStartLine];
         String prefix = commenter.getBlockCommentPrefix();
         if (prefix == null || !myDocument.getText().substring(offset1, myDocument.getTextLength()).startsWith(prefix)) {
           prefix = commenter.getLineCommentPrefix();
@@ -240,8 +248,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     if (prefix != null) {
       commented = CharArrayUtil.regionMatches(chars, lineStart, prefix);
       if (commented) {
-        myStartOffsets[line - myLine1] = lineStart;
-        myEndOffsets[line - myLine1] = -1;
+        myStartOffsets[line - myStartLine] = lineStart;
+        myEndOffsets[line - myStartLine] = -1;
       }
     }
     else {
@@ -256,11 +264,11 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       else {
         lineEnd = CharArrayUtil.shiftBackward(chars, lineEnd, " \t");
       }
-      commented = (lineStart == lineEnd && myLine1 != myLine2) || (CharArrayUtil.regionMatches(chars, lineStart, prefix) &&
-                                                                   CharArrayUtil.regionMatches(chars, lineEnd - suffix.length(), suffix));
+      commented = (lineStart == lineEnd && myStartLine != myEndLine) || (CharArrayUtil.regionMatches(chars, lineStart, prefix) &&
+                                                                         CharArrayUtil.regionMatches(chars, lineEnd - suffix.length(), suffix));
       if (commented) {
-        myStartOffsets[line - myLine1] = lineStart;
-        myEndOffsets[line - myLine1] = lineEnd;
+        myStartOffsets[line - myStartLine] = lineStart;
+        myEndOffsets[line - myStartLine] = lineEnd;
       }
     }
     return commented;
@@ -316,7 +324,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   }
 
   public void doDefaultCommenting(Commenter commenter) {
-    for (int line = myLine2; line >= myLine1; line--) {
+    for (int line = myEndLine; line >= myStartLine; line--) {
       int offset = myDocument.getLineStartOffset(line);
       commentLine(line, offset, commenter);
     }
@@ -325,9 +333,9 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private void doIndentCommenting(Commenter commenter) {
     CharSequence chars = myDocument.getCharsSequence();
     final FileType fileType = myFile.getFileType();
-    Indent minIndent = computeMinIndent(myLine1, myLine2, chars, myCodeStyleManager, fileType);
+    Indent minIndent = computeMinIndent(myStartLine, myEndLine, chars, myCodeStyleManager, fileType);
 
-    for (int line = myLine2; line >= myLine1; line--) {
+    for (int line = myEndLine; line >= myStartLine; line--) {
       int lineStart = myDocument.getLineStartOffset(line);
       int offset = lineStart;
       final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
@@ -366,7 +374,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       String suffix = commenter.getBlockCommentSuffix();
       if (prefix == null || suffix == null) return;
       int endOffset = myDocument.getLineEndOffset(line);
-      if (endOffset == offset && myLine1 != myLine2) return;
+      if (endOffset == offset && myStartLine != myEndLine) return;
       final int textLength = myDocument.getTextLength();
       final CharSequence chars = myDocument.getCharsSequence();
       offset = CharArrayUtil.shiftForward(chars, offset, " \t");
