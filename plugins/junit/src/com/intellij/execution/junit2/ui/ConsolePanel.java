@@ -113,7 +113,7 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
     myStatusLine.setMinimumSize(new Dimension(0, myStatusLine.getMinimumSize().height));
     final JPanel rightPanel = new JPanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
-    myTabs = new TabbedPaneWrapper(SwingConstants.TOP);
+    myTabs = new TabbedPaneWrapper(this);
     myTabs.addTab(ExecutionBundle.message("output.tab.title"), OUTPUT_TAB_ICON, console, null);
     myTabs.addTab(ExecutionBundle.message("statistics.tab.title"), STATISTICS_TAB_ICON, myStatisticsPanel, null);
     initAdditionalTabs();
