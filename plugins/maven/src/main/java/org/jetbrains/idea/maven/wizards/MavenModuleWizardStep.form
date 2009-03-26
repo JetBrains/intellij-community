@@ -63,7 +63,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="fdfb1" class="javax.swing.JList" binding="myArchetypesList">
+          <component id="3b1ec" class="com.intellij.util.ui.Tree" binding="myArchetypesTree">
             <constraints/>
             <properties/>
           </component>

@@ -4,12 +4,14 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
-import com.intellij.util.Function;
+import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
@@ -19,12 +21,10 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 import javax.swing.*;
+import javax.swing.tree.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = IconLoader.getIcon("/addmodulewizard.png");
@@ -61,7 +61,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private JCheckBox myInheritVersionCheckBox;
 
   private JCheckBox myUseArchetypeCheckBox;
-  private JList myArchetypesList;
+  private Tree myArchetypesTree;
 
   public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder) {
     myProjectOrNull = project;
@@ -95,13 +95,16 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myInheritVersionCheckBox.addActionListener(updatingListener);
 
     myUseArchetypeCheckBox.addActionListener(updatingListener);
-    myArchetypesList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myArchetypesList.setCellRenderer(new MyCellRenderer());
+    myArchetypesTree.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    new ListSpeedSearch(myArchetypesList, new Function<Object, String>() {
-      public String fun(Object o) {
-        ArchetypeInfo a = (ArchetypeInfo)o;
-        return a.groupId + ":" + a.artifactId + ":" + a.version;
+    myArchetypesTree.setRootVisible(false);
+    myArchetypesTree.setShowsRootHandles(true);
+    myArchetypesTree.setCellRenderer(new MyRenderer());
+
+    new TreeSpeedSearch(myArchetypesTree, new Convertor<TreePath, String>() {
+      public String convert(TreePath path) {
+        ArchetypeInfo info = getArchetypeInfoFromPathComponent(path.getLastPathComponent());
+        return info.groupId + ":" + info.artifactId + ":" + info.version;
       }
     }).setComparator(new SpeedSearchBase.SpeedSearchComparator(false) {
       @Override
@@ -193,14 +196,41 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myVersionField.setText(myParent == null ? "1.0" : myParent.getMavenId().version);
 
     ArchetypeInfo selectedArch = getSelectedArchetype();
-    if (selectedArch == null && myUseArchetypeCheckBox.isSelected()) {
+    if (selectedArch == null) {
       selectedArch = myBuilder.getArchetype();
     }
+    if (selectedArch != null) myUseArchetypeCheckBox.setSelected(true);
 
-    DefaultListModel model = new DefaultListModel();
-    List<ArchetypeInfo> archetypes = new ArrayList<ArchetypeInfo>(MavenIndicesManager.getInstance().getArchetypes());
+    TreeNode root = groupAndSortArchetypes(MavenIndicesManager.getInstance().getArchetypes());
+    TreeModel model = new DefaultTreeModel(root);
+    myArchetypesTree.setModel(model);
 
-    Collections.sort(archetypes, new Comparator<ArchetypeInfo>() {
+    if (selectedArch != null) {
+      TreePath path = findNodePath(selectedArch, model, model.getRoot());
+      if (path != null) {
+        myArchetypesTree.expandPath(path.getParentPath());
+        TreeUtil.selectPath(myArchetypesTree, path, true);
+      }
+    }
+
+    updateComponents();
+  }
+
+  private TreePath findNodePath(ArchetypeInfo object, TreeModel model, Object parent) {
+    for (int i = 0; i < model.getChildCount(parent); i++) {
+      DefaultMutableTreeNode each = (DefaultMutableTreeNode)model.getChild(parent, i);
+      if (each.getUserObject().equals(object)) return new TreePath(each.getPath());
+
+      TreePath result = findNodePath(object, model, each);
+      if (result != null) return result;
+    }
+    return null;
+  }
+
+  private TreeNode groupAndSortArchetypes(Set<ArchetypeInfo> archetypes) {
+    List<ArchetypeInfo> list = new ArrayList<ArchetypeInfo>(archetypes);
+
+    Collections.sort(list, new Comparator<ArchetypeInfo>() {
       public int compare(ArchetypeInfo o1, ArchetypeInfo o2) {
         String key1 = o1.groupId + ":" + o1.artifactId;
         String key2 = o2.groupId + ":" + o2.artifactId;
@@ -212,13 +242,30 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
       }
     });
 
-    for (ArchetypeInfo each : archetypes) {
-      model.addElement(each);
-    }
-    myArchetypesList.setModel(model);
-    myArchetypesList.setSelectedValue(selectedArch, true);
+    Map<String, List<ArchetypeInfo>> map = new TreeMap<String, List<ArchetypeInfo>>();
 
-    updateComponents();
+    for (ArchetypeInfo each : list) {
+      String key = each.groupId + ":" + each.artifactId;
+      List<ArchetypeInfo> versions = map.get(key);
+      if (versions == null) {
+        versions = new ArrayList<ArchetypeInfo>();
+        map.put(key, versions);
+      }
+      versions.add(each);
+    }
+
+    DefaultMutableTreeNode result = new DefaultMutableTreeNode("root", true);
+    for (List<ArchetypeInfo> each : map.values()) {
+      ArchetypeInfo eachArchetype = each.get(0);
+      DefaultMutableTreeNode node = new DefaultMutableTreeNode(eachArchetype, true);
+      for (ArchetypeInfo eachVersion : each) {
+        DefaultMutableTreeNode versionNode = new DefaultMutableTreeNode(eachVersion, false);
+        node.add(versionNode);
+      }
+      result.add(node);
+    }
+
+    return result;
   }
 
   private boolean isMavenizedProject() {
@@ -266,12 +313,12 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     }
 
     if (myUseArchetypeCheckBox.isSelected()) {
-      myArchetypesList.setEnabled(true);
-      myArchetypesList.setBackground(UIUtil.getListBackground());
+      myArchetypesTree.setEnabled(true);
+      myArchetypesTree.setBackground(UIUtil.getListBackground());
     }
     else {
-      myArchetypesList.setEnabled(false);
-      myArchetypesList.setBackground(UIUtil.getComboBoxDisabledBackground());
+      myArchetypesTree.setEnabled(false);
+      myArchetypesTree.setBackground(UIUtil.getComboBoxDisabledBackground());
     }
   }
 
@@ -294,8 +341,12 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   }
 
   private ArchetypeInfo getSelectedArchetype() {
-    if (!myUseArchetypeCheckBox.isSelected() || myArchetypesList.isSelectionEmpty()) return null;
-    return (ArchetypeInfo)myArchetypesList.getSelectedValue();
+    if (!myUseArchetypeCheckBox.isSelected() || myArchetypesTree.isSelectionEmpty()) return null;
+    return getArchetypeInfoFromPathComponent(myArchetypesTree.getLastSelectedPathComponent());
+  }
+
+  private ArchetypeInfo getArchetypeInfoFromPathComponent(Object sel) {
+    return (ArchetypeInfo)((DefaultMutableTreeNode)sel).getUserObject();
   }
 
   @Override
@@ -303,13 +354,27 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     return WIZARD_ICON;
   }
 
-  private class MyCellRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      ArchetypeInfo archetype = (ArchetypeInfo)value;
+  private class MyRenderer extends ColoredTreeCellRenderer {
+    public void customizeCellRenderer(JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+      Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+      if (!(userObject instanceof ArchetypeInfo)) return;
 
-      append(archetype.groupId + ":", SimpleTextAttributes.GRAY_ATTRIBUTES);
-      append(archetype.artifactId, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      append(":" + archetype.version, SimpleTextAttributes.GRAY_ATTRIBUTES);
+      ArchetypeInfo info = (ArchetypeInfo)userObject;
+
+      if (leaf) {
+        append(info.artifactId, SimpleTextAttributes.GRAY_ATTRIBUTES);
+        append(":" + info.version, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+      else {
+        append(info.groupId + ":", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        append(info.artifactId, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
     }
   }
 
@@ -318,3 +383,4 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     return "reference.dialogs.new.project.fromScratch.maven";
   }
 }
+
