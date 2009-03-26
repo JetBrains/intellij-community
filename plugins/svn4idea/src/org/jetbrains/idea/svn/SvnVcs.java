@@ -203,10 +203,7 @@ public class SvnVcs extends AbstractVcs {
       // do one time after project loaded
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
         public void run() {
-          myMapping = SvnFileUrlMappingImpl.getInstance(project);
-          myCopiesRefreshManager = new SvnCopiesRefreshManager(project, myMapping);
-
-          invokeRefreshSvnRoots();
+          postStartup();
 
           // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sence...
           // once it could be mistaken about copies for 2 minutes on start...
@@ -223,6 +220,13 @@ public class SvnVcs extends AbstractVcs {
         }
       });
     }
+  }
+
+  public void postStartup() {
+    myMapping = SvnFileUrlMappingImpl.getInstance(myProject);
+    myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, myMapping);
+
+    invokeRefreshSvnRoots();
   }
 
   public void invokeRefreshSvnRoots() {
