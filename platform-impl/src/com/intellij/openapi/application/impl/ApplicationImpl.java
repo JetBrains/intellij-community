@@ -37,12 +37,14 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +121,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myIsFiringLoadingEvent = false;
   @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private boolean myActive;
+  private boolean myActive = true;
 
   protected void boostrapPicoContainer() {
     super.boostrapPicoContainer();
@@ -136,7 +138,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, String appName) {
     super(null);
 
-    setActive(true);
     getPicoContainer().registerComponentInstance(Application.class, this);
 
     CommonBundle.assertKeyIsFound = isUnitTestMode;
@@ -866,15 +867,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  public void setActive(boolean active) {
-    if (myActive != active) {
-      myActive = active;
-      System.setProperty("idea.active", Boolean.valueOf(myActive).toString());
-      for (ApplicationListener each : myListeners) {
-        if (active) {
-          each.applicationActivated();
-        } else {
-          each.applicationDeactivated();
+  public void tryToApplyActivationState(boolean active, Window window) {
+    final Component frame = UIUtil.findUltimateParent(window);
+
+    if (frame instanceof IdeFrame) {
+      final IdeFrame ideFrame = (IdeFrame)frame;
+      if (myActive != active) {
+        myActive = active;
+        System.setProperty("idea.active", Boolean.valueOf(myActive).toString());
+        for (ApplicationListener each : myListeners) {
+          if (active) {
+            each.applicationActivated(ideFrame);
+          } else {
+            each.applicationDeactivated(ideFrame);
+          }
         }
       }
     }

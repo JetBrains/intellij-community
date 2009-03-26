@@ -479,14 +479,14 @@ public class IdeEventQueue extends EventQueue {
 
     if (e instanceof WindowEvent) {
       WindowEvent we = (WindowEvent)e;
-      if (we.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
+      if (we.getID() == WindowEvent.WINDOW_GAINED_FOCUS && we.getWindow() != null) {
         if (we.getOppositeWindow() == null && !appImpl.isActive()) {
-          appImpl.setActive(true);
+          appImpl.tryToApplyActivationState(true, we.getWindow());
           return true;
         }
-      } else if (we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
+      } else if (we.getID() == WindowEvent.WINDOW_LOST_FOCUS && we.getWindow() != null) {
         if (we.getOppositeWindow() == null && appImpl.isActive()) {
-          appImpl.setActive(false);
+          appImpl.tryToApplyActivationState(false, we.getWindow());
           return true;
         }
       }

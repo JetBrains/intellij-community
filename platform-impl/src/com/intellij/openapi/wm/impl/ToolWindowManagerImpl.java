@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.Patches;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
@@ -41,6 +42,7 @@ import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -108,6 +110,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private FocusCommand myFocusCommandOnAppActivation;
   private ActionCallback myCallbackOnActivation;
   private WeakReference<Component> myFocusedComponentOnDeactivation;
+  private WeakReference<Component> myLastFocusedProjectComponent;
 
   /**
    * invoked by reflection
@@ -141,6 +144,29 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myApp = app;
     myAppListener = new AppListener();
     myApp.addApplicationListener(myAppListener);
+
+    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
+      public boolean dispatch(AWTEvent e) {
+        if (e instanceof FocusEvent) {
+          final FocusEvent fe = (FocusEvent)e;
+          final Component c = fe.getComponent();
+          final IdeFrameImpl frame = myWindowManager.getFrame(myProject);
+          if (c instanceof Window || c == null || frame == null) return false;
+          final Component parent = UIUtil.findUltimateParent(c);
+          if (parent instanceof IdeFrame) {
+            final IdeFrameImpl ideFrame = (IdeFrameImpl)parent;
+            if (fe.getID() == FocusEvent.FOCUS_GAINED && ideFrame != null && ideFrame == myWindowManager.getFrame(myProject)) {
+              myLastFocusedProjectComponent = new WeakReference<Component>(c);
+            }
+          }
+        }
+        return false;
+      }
+    }, myProject);
+  }
+
+  private Component getLastFocusedProjectComponent() {
+    return myLastFocusedProjectComponent != null ? myLastFocusedProjectComponent.get() : null;
   }
 
   public Project getProject() {
@@ -1706,8 +1732,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       public void run() {
         if (checkForRejectOrByPass(command, forced, result)) return;
 
-        myFocusedComponentOnDeactivation = null;
-
         if (myRequestFocusCmd == command) {
           myRequestFocusCmd = null;
 
@@ -1811,12 +1835,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private class AppListener extends ApplicationAdapter {
 
     @Override
-    public void applicationDeactivated() {
-      myFocusedComponentOnDeactivation = new WeakReference<Component>(KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner());
+    public void applicationDeactivated(IdeFrame ideFrame) {
+      final Component c = getLastFocusedProjectComponent();
+      myFocusedComponentOnDeactivation = c != null ? new WeakReference<Component>(c) : null;
     }
 
     @Override
-    public void applicationActivated() {
+    public void applicationActivated(IdeFrame ideFrame) {
       final FocusCommand cmd = myFocusCommandOnAppActivation;
       ActionCallback callback = myCallbackOnActivation;
       myFocusCommandOnAppActivation = null;
@@ -1824,10 +1849,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (cmd != null) {
         requestFocus(cmd, true).notifyWhenDone(callback);
       } else {
-        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        final Component old = myFocusedComponentOnDeactivation != null ? myFocusedComponentOnDeactivation.get() : null;
-        if (owner == null && old != null) {
-          requestFocus(old, false);          
+        final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+
+        if (ideFrame == myWindowManager.getFrame(myProject)) {
+          final Component owner = mgr.getFocusOwner();
+          final Component old = myFocusedComponentOnDeactivation != null ? myFocusedComponentOnDeactivation.get() : null;
+          if (owner == null && old != null && old.isShowing()) {
+            requestFocus(old, false);
+          }
+          myFocusedComponentOnDeactivation = null;
         }
       }
     }

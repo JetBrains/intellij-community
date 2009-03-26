@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.wm.IdeFrame;
+
 public abstract class ApplicationAdapter implements ApplicationListener {
   public boolean canExitApplication() {
     return true;
@@ -32,9 +34,9 @@ public abstract class ApplicationAdapter implements ApplicationListener {
   public void writeActionFinished(Object action) {
   }
 
-  public void applicationActivated() {
+  public void applicationActivated(IdeFrame ideFrame) {
   }
 
-  public void applicationDeactivated() {
+  public void applicationDeactivated(IdeFrame ideFrame) {
   }
 }

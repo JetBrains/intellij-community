@@ -17,6 +17,7 @@ package com.intellij.util.concurrency.readwrite;
 
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.wm.IdeFrame;
 
 public class WriteActionWaiter extends AbstractWaiter implements ApplicationListener {
 
@@ -50,9 +51,9 @@ public class WriteActionWaiter extends AbstractWaiter implements ApplicationList
   public void writeActionStarted(Object action) {
   }
 
-  public void applicationActivated() {
+  public void applicationActivated(IdeFrame ideFrame) {
   }
 
-  public void applicationDeactivated() {
+  public void applicationDeactivated(IdeFrame ideFrame) {
   }
 }
