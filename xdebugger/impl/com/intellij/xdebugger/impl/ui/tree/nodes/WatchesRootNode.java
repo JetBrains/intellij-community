@@ -49,6 +49,11 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     return myChildren;
   }
 
+  @Nullable
+  public List<? extends XDebuggerTreeNode> getAllChildren() {
+    return myChildren;
+  }
+
   public List<? extends XDebuggerTreeNode> getLoadedChildren() {
     if (myLoadedChildren == null) {
       myLoadedChildren = new ArrayList<XDebuggerTreeNode>();

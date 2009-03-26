@@ -121,34 +121,24 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     if (!(root instanceof WatchesRootNode)) return;
     final WatchesRootNode watchesRoot = (WatchesRootNode)root;
 
-    for (XDebuggerTreeNode node : nodes) {
-      if (node instanceof WatchNode) {
-        myWatchExpressions.remove(((WatchNode)node).getExpression());
-      }
-    }
-
-    int minIndex = getMinimumIndex(watchesRoot, nodes);
-    watchesRoot.removeChildren(nodes);
-
-    List<? extends XDebuggerTreeNode> children = watchesRoot.getLoadedChildren();
-    if (children != null && children.size() > 0) {
-      XDebuggerTreeNode node = minIndex < children.size() ? children.get(minIndex) : children.get(children.size() - 1);
-      TreeUtil.selectNode(myTreePanel.getTree(), node);
-    }
-  }
-
-  private static int getMinimumIndex(final XDebuggerTreeNode parent, final List<? extends XDebuggerTreeNode> children) {
-    List<? extends XDebuggerTreeNode> loadedChildren = parent.getLoadedChildren();
+    List<? extends XDebuggerTreeNode> children = watchesRoot.getAllChildren();
     int minIndex = Integer.MAX_VALUE;
-    if (loadedChildren != null) {
-      for (XDebuggerTreeNode node : children) {
-        int index = loadedChildren.indexOf(node);
+    if (children != null) {
+      for (XDebuggerTreeNode node : nodes) {
+        int index = children.indexOf(node);
         if (index != -1) {
           minIndex = Math.min(minIndex, index);
+          myWatchExpressions.remove(index);
         }
       }
     }
-    return minIndex;
+    watchesRoot.removeChildren(nodes);
+
+    List<? extends XDebuggerTreeNode> newChildren = watchesRoot.getAllChildren();
+    if (newChildren != null && newChildren.size() > 0) {
+      XDebuggerTreeNode node = minIndex < newChildren.size() ? newChildren.get(minIndex) : newChildren.get(newChildren.size() - 1);
+      TreeUtil.selectNode(myTreePanel.getTree(), node);
+    }
   }
 
   public String[] getWatchExpressions() {
