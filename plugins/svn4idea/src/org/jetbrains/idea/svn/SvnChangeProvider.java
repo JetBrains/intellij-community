@@ -393,7 +393,8 @@ public class SvnChangeProvider implements ChangeProvider {
       else if (statusType == SVNStatusType.STATUS_CONFLICTED ||
                statusType == SVNStatusType.STATUS_MODIFIED ||
                statusType == SVNStatusType.STATUS_REPLACED ||
-               propStatus == SVNStatusType.STATUS_MODIFIED) {
+               propStatus == SVNStatusType.STATUS_MODIFIED ||
+               propStatus == SVNStatusType.STATUS_CONFLICTED) {
         builder.processChangeInList(new Change(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()),
                                          CurrentContentRevision.create(filePath), fStatus), changeListNameFromStatus(status));
         checkSwitched(filePath, builder, status, fStatus);
@@ -475,7 +476,13 @@ public class SvnChangeProvider implements ChangeProvider {
     }
     else if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED ||
              status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
-      return FileStatus.MERGED_WITH_CONFLICTS;
+      if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED &&
+        status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
+        return FileStatus.MERGED_WITH_BOTH_CONFLICTS;
+      } else if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED) {
+        return FileStatus.MERGED_WITH_CONFLICTS;
+      }
+      return FileStatus.MERGED_WITH_PROPERTY_CONFLICTS;
     }
     else if (status.getContentsStatus() == SVNStatusType.STATUS_MODIFIED ||
              status.getPropertiesStatus() == SVNStatusType.STATUS_MODIFIED) {

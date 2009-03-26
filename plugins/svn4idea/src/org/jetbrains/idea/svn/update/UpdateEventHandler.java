@@ -83,7 +83,12 @@ public class UpdateEventHandler implements ISVNEventHandler {
     }
     else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
       if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-        addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
+        if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
+          addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
+        }
+        if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
+          addFileToGroup(FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID, event);
+        }
         myText2 = SvnBundle.message("progress.text2.conflicted", displayPath);
       }
       else if (event.getContentsStatus() == SVNStatusType.MERGED || event.getPropertiesStatus() == SVNStatusType.MERGED) {
