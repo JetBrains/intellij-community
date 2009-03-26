@@ -163,8 +163,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         throw new IllegalStateException("Seems you haven't called addPlace()");
       }
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-      assert ArrayUtil.indexOf(documentManager.getUncommittedDocuments(), myHostDocument) == -1;
-      assert myHostPsiFile.getText().equals(myHostDocument.getText());
+      assert ArrayUtil.indexOf(documentManager.getUncommittedDocuments(), myHostDocument) == -1 : "document is uncommitted";
+      assert myHostPsiFile.getText().equals(myHostDocument.getText()) : "host text mismatch";
 
       Place place = new Place(shreds, null);
       DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, place);
@@ -186,7 +186,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
 
       InjectedFileViewProvider viewProvider = new InjectedFileViewProvider(myPsiManager, virtualFile, place, documentWindow);
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
-      assert parserDefinition != null;
+      assert parserDefinition != null : "Parser definition for language "+myLanguage+" is null";
       PsiFile psiFile = parserDefinition.createFile(viewProvider);
       place.setInjectedPsi(psiFile);
 
@@ -197,7 +197,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         keepTreeFromChameleoningBack(psiFile);
 
         final ASTNode parsedNode = psiFile.getNode();
-        assert parsedNode instanceof FileElement : parsedNode;
+        assert parsedNode instanceof FileElement : "Parsed to "+parsedNode+" instead of FileElement";
 
         String documentText = documentWindow.getText();
         assert outChars.toString().equals(parsedNode.getText()) : exceptionContext("Before patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars);
@@ -217,7 +217,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         virtualFile.setContent(null, documentWindow.getText(), false);
         FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
         documentManager.getDocument(psiFile); //cache file in document user data
-        assert documentManager.getCachedPsiFile(documentWindow) == psiFile;
+        assert documentManager.getCachedPsiFile(documentWindow) == psiFile : "Cached psi :"+documentManager.getCachedPsiFile(documentWindow)+" instead of "+psiFile;
         viewProvider.forceCachedPsi(psiFile);
 
         PsiFile newFile = registerDocument(documentWindow, psiFile, place, myHostPsiFile, documentManager);
@@ -270,7 +270,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     // need to keep tree reacheable to avoid being garbage-collected (via WeakReference in PsiFileImpl)
     // and then being reparsed from wrong (escaped) document content
     ASTNode node = psiFile.getNode();
-    assert !TreeUtil.isCollapsedChameleon(node);
+    assert !TreeUtil.isCollapsedChameleon(node) : "Chameleon "+node+" is collapsed";
     psiFile.putUserData(TREE_HARD_REF, node);
   }
 
@@ -283,12 +283,11 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     assert isAncestor : exceptionContext(myContextElement + " must be the parent of at least one of injection hosts");
 
     InjectedFileViewProvider injectedFileViewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
-    assert injectedFileViewProvider.isValid();
-    assert documentWindow.getText().equals(psiFile.getText());
-    assert injectedFileViewProvider.getDocument() == documentWindow;
-    assert documentManager.getCachedDocument(psiFile) == documentWindow;
-    assert injectedFileViewProvider.getDocument() == documentWindow;
-    assert psiFile.getVirtualFile() == injectedFileViewProvider.getVirtualFile();
+    assert injectedFileViewProvider.isValid() : "Invalid view provider: "+injectedFileViewProvider;
+    assert documentWindow.getText().equals(psiFile.getText()) : "Document window text mismatch";
+    assert injectedFileViewProvider.getDocument() == documentWindow : "Provider document mismatch";
+    assert documentManager.getCachedDocument(psiFile) == documentWindow : "Cached document mismatch";
+    assert psiFile.getVirtualFile() == injectedFileViewProvider.getVirtualFile() : "Virtual file mismatch";
     PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
   }
 
@@ -360,8 +359,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
 
       ASTNode injectedNode = injectedPsi.getNode();
       ASTNode oldFileNode = oldFile.getNode();
-      assert injectedNode != null;
-      assert oldFileNode != null;
+      assert injectedNode != null : "New node is null";
+      assert oldFileNode != null : "Old node is null";
       if (oldDocument.areRangesEqual(documentWindow)) {
         if (oldFile.getFileType() != injectedPsi.getFileType() || oldFile.getLanguage() != injectedPsi.getLanguage()) {
           injected.remove(i);
