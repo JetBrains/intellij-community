@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,19 +98,11 @@ public class XmlDeclareIdInCommentAction implements LocalQuickFix {
         if (parent != null && parent.isValid()) {
           final XmlTag[] tags = parent.getSubTags();
           if (tags.length > 0) {
-            final PsiElement[] _comment = new PsiElement[]{null};
             final PsiFile psi = tempFile.getViewProvider().getPsi(language);
             if (psi != null) {
-              psi.accept(new XmlRecursiveElementVisitor(false) {
-                @Override
-                public void visitXmlComment(final XmlComment comment) {
-                  _comment[0] = comment;
-                  super.visitXmlComment(comment);
-                }
-              });
-
-              if (_comment[0] != null) {
-                parent.addBefore(_comment[0], tags[0]);
+              final PsiElement element = psi.findElementAt(1);
+              if (element instanceof PsiComment) {
+                parent.addBefore(element, tags[0]);
               }
             }
           }
