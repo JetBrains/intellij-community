@@ -4,8 +4,10 @@
  */
 package com.intellij.projectImport;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 
@@ -19,6 +21,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
+  private static final String PREFFERED = "create.project.preffered.importer";
+
   private final StepSequence mySequence;
   private final JList myList;
   private final JPanel myPanel;
@@ -53,7 +57,17 @@ public class ImportChooserStep extends ProjectImportWizardStep {
         }
       }
     });
-    myList.setSelectedIndex(0);
+    final String id = PropertiesComponent.getInstance().getValue(PREFFERED);
+    if (id == null) {
+      myList.setSelectedIndex(0);
+    } else {
+      for (ProjectImportProvider provider : providers) {
+        if (Comparing.strEqual(provider.getId(), id)) {
+          myList.setSelectedValue(provider, true);
+          break;
+        }
+      }
+    }
   }
 
   private static List<ProjectImportProvider> sorted(ProjectImportProvider[] providers) {
@@ -82,6 +96,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
       final ProjectImportBuilder builder = ((ProjectImportProvider)selectedValue).getBuilder();
       getWizardContext().setProjectBuilder(builder);
       builder.setUpdate(getWizardContext().getProject() != null);
+      PropertiesComponent.getInstance().setValue(PREFFERED, ((ProjectImportProvider)selectedValue).getId());
     }
   }
 
