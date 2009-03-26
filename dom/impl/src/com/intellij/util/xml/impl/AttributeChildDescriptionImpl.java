@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription {
+public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription<Void> {
   private final JavaMethod myGetterMethod;
 
   protected AttributeChildDescriptionImpl(final XmlName attributeName, @NotNull final JavaMethod getter) {
