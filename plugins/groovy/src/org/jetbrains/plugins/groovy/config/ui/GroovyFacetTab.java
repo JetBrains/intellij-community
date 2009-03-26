@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -135,6 +136,13 @@ public class GroovyFacetTab extends FacetEditorTab {
       (GroovySDKComboBox.DefaultGroovySDKComboBoxItem)myComboBox.getSelectedItem();
     final Module module = myEditorContext.getModule();
     if (module != null) {
+      if (selectedItem != null ) {
+        final GroovySDK sdk = selectedItem.getGroovySDK();
+        if (sdk != null && Arrays.asList(GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module)).contains(sdk.getLibrary())) {
+          return;
+        }
+      }
+
       final Project project = module.getProject();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
