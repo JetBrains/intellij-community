@@ -1,5 +1,6 @@
 package com.intellij.openapi.projectRoots.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -15,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -66,6 +68,11 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private String myInitialPath;
   private final History myHistory;
 
+  private Disposable myDisposable = new Disposable() {
+    public void dispose() {
+    }
+  };
+
   public SdkEditor(NotifiableSdkModel sdkModel, History history, final ProjectJdkImpl sdk) {
     mySdkModel = sdkModel;
     myHistory = history;
@@ -111,7 +118,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private void createMainPanel(){
     myMainPanel = new JPanel(new GridBagLayout());
 
-    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane = new TabbedPaneWrapper(myDisposable);
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       if (mySdk == null || mySdk.getSdkType().isRootTypeApplicable(type)) {
         final PathEditor pathEditor = OrderRootTypeUIFactory.FACTORY.getByKey(type).createPathEditor();
@@ -226,6 +233,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
     myAdditionalDataConfigurables.clear();
     myAdditionalDataComponents.clear();
+
+    Disposer.dispose(myDisposable);
   }
 
   private String getHomeValue() {
