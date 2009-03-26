@@ -42,6 +42,14 @@ public class GroovyCommenter implements CodeDocumentationAwareCommenter {
     return "*/";
   }
 
+  public String getCommentedBlockCommentPrefix() {
+    return null;
+  }
+
+  public String getCommentedBlockCommentSuffix() {
+    return null;
+  }
+
   @Nullable
   public IElementType getLineCommentTokenType() {
     return mSL_COMMENT;
