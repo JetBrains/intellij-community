@@ -60,8 +60,8 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -227,7 +227,9 @@ public class SvnVcs extends AbstractVcs {
 
   public void invokeRefreshSvnRoots() {
     REFRESH_LOG.debug("refresh: ", new Throwable());
-    myCopiesRefreshManager.getCopiesRefresh().asynchRequest();
+    if (myCopiesRefreshManager != null) {
+      myCopiesRefreshManager.getCopiesRefresh().asynchRequest();
+    }
   }
 
   private void upgradeIfNeeded(final MessageBus bus) {
