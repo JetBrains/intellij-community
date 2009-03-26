@@ -91,35 +91,34 @@ public class ShowImplementationsAction extends AnAction {
         }
       }
     }
+
+    String text = "";
+    PsiElement[] impls = new PsiElement[0];
+    PsiReference ref = null;
+
     final PsiElement adjustedElement =
       TargetElementUtilBase.getInstance().adjustElement(editor, TargetElementUtilBase.getInstance().getAllAccepted(), element, null);
     if (adjustedElement != null) {
       element = adjustedElement;
+    } else if (file != null && editor != null) {
+      element = DocumentationManager.getInstance(project).getElementFromLookup(editor, file);
     }
-    final PsiReference ref;
-    if (element == null && editor != null) {
-      ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
 
-      if (ref != null) {
+    if (editor != null) {
+      ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      if (element == null && ref != null) {
         element = TargetElementUtilBase.getInstance().adjustReference(ref);
       }
     }
-    else {
-      ref = null;
-    }
 
-    if (element == null && file != null && editor != null) {
-      element = DocumentationManager.getInstance(project).getElementFromLookup(editor, file);
-    }
-    String text = "";
-    PsiElement[] impls = null;
     if (element != null) {
       //if (element instanceof PsiPackage) return;
 
       impls = getSelfAndImplementations(editor, element);
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
-    else if (ref instanceof PsiPolyVariantReference) {
+
+    if (impls.length == 0 && ref instanceof PsiPolyVariantReference) {
       final PsiPolyVariantReference polyReference = (PsiPolyVariantReference)ref;
       text = polyReference.getRangeInElement().substring(polyReference.getElement().getText());
       final ResolveResult[] results = polyReference.multiResolve(false);
@@ -137,6 +136,7 @@ public class ShowImplementationsAction extends AnAction {
         implsList.toArray( impls = new PsiElement[implsList.size()] );
       }
     }
+    
 
     showImplementations(impls, project, text, editor, file);
   }
