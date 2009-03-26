@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.concurrency.Semaphore;
 
 public class SvnCopiesRefreshManager {
@@ -23,11 +22,11 @@ public class SvnCopiesRefreshManager {
     veryRefresh.setRequestMerger(requestsMerger);
 
     // do one time after project loaded
-    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+    /*StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       public void run() {
         myCopiesRefreshProxy.asynchRequest();
       }
-    });
+    });*/
   }
 
   public CopiesRefresh getCopiesRefresh() {
@@ -82,7 +81,7 @@ public class SvnCopiesRefreshManager {
   }
 
   public SvnFileUrlMappingImpl getMapping() {
-    myCopiesRefreshProxy.ensureInit();
+    //myCopiesRefreshProxy.ensureInit();
     return myMapping;
   }
 
