@@ -478,7 +478,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append(";");
   }
 
-  private void writeStubConstructorInvocation(StringBuffer text, PsiMethod constructor, PsiSubstitutor substitutor) {
+  private static void writeStubConstructorInvocation(StringBuffer text, PsiMethod constructor, PsiSubstitutor substitutor) {
     final PsiParameter[] superParams = constructor.getParameterList().getParameters();
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
@@ -501,7 +501,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append("\n");
     text.append("  ");
     if (!isEnum) {
-      writeMethodModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
+      text.append("public ");
+      //writeMethodModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
     }
 
     /************* name **********/
@@ -595,7 +596,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return result;
   }
 
-  private void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
+  private static void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
     GrTypeElement varTypeElement = variableDeclaration.getTypeElementGroovy();
     String varQualifiedTypeName = getTypeText(varTypeElement);
 
@@ -631,7 +632,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     }
   }
 
-  private void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {
+  private static void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {
     if (method == null) return;
     String name = method.getName();
     if (!JavaPsiFacade.getInstance(method.getProject()).getNameHelper().isIdentifier(name))
@@ -765,7 +766,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return canonicalText != null ? canonicalText : type.getPresentableText();
   }
 
-  private void createGeneratedFile(StringBuffer text, String outputDir, String prefix, String generatedItemPath) {
+  private static void createGeneratedFile(StringBuffer text, String outputDir, String prefix, String generatedItemPath) {
     assert prefix != null;
 
     String prefixWithoutSeparator = prefix;
