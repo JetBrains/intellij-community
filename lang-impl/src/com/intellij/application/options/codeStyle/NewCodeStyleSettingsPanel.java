@@ -13,7 +13,7 @@ import java.awt.*;
  * @author max
  */
 public class NewCodeStyleSettingsPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSettingsPanel");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel");
 
   private final Configurable myTab;
 
