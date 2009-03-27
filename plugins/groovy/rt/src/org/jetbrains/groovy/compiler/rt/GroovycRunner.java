@@ -181,19 +181,23 @@ public class GroovycRunner {
 
       if (srcFiles.isEmpty() && testFiles.isEmpty()) return;
 
-      MyCompilationUnits myCompilationUnits =
-        createCompilationUnits(srcFiles, testFiles, class2File, moduleClasspath, moduleTestOutputPath, moduleOutputPath, isGrails,
-                               encoding);
-
       MessageCollector messageCollector = new MessageCollector();
-      MyCompilationUnits.OutputItem[] successfullyCompiled = MyGroovyCompiler.compile(messageCollector, myCompilationUnits);
+      final List compiledFiles = new ArrayList();
+
+      System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading sources...");
+      createCompilationUnits(srcFiles, class2File, moduleClasspath, moduleOutputPath, isGrails, encoding).compile(messageCollector, compiledFiles);
+
+      System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading test sources...");
+      createCompilationUnits(testFiles, class2File, moduleClasspath, moduleTestOutputPath, isGrails, encoding).compile(messageCollector, compiledFiles);
+
+      System.out.println(CLEAR_PRESENTABLE);
 
       Set allCompiling = new HashSet();
       allCompiling.addAll(srcFiles);
       allCompiling.addAll(testFiles);
 
       File[] toRecompilesFiles =
-        successfullyCompiled.length > 0 ? new File[0] : (File[])allCompiling.toArray(new File[allCompiling.size()]);
+        !compiledFiles.isEmpty() ? new File[0] : (File[])allCompiling.toArray(new File[allCompiling.size()]);
 
       CompilerMessage[] compilerMessages = messageCollector.getAllMessage();
 
@@ -204,8 +208,8 @@ public class GroovycRunner {
         */
 
       System.out.println();
-      for (int i = 0; i < successfullyCompiled.length; i++) {
-        MyCompilationUnits.OutputItem compiledOutputItem = successfullyCompiled[i];
+      for (int i = 0; i < compiledFiles.size(); i++) {
+        MyCompilationUnits.OutputItem compiledOutputItem = (MyCompilationUnits.OutputItem)compiledFiles.get(i);
         System.out.print(COMPILED_START);
         System.out.print(compiledOutputItem.getOutputPath());
         System.out.print(SEPARATOR);
@@ -266,29 +270,16 @@ public class GroovycRunner {
       }
     }
   }
-
-  private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, List testFilesToCompile, Map class2File, String classpath, String testOutputPath,
+                                  
+  private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, Map class2File, String classpath, 
                                                            String ordinaryOutputPath,
                                                            boolean isGrailsModule,
                                                            final String encoding) {
-    System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading classpath...");
-    final CompilationUnit sourceUnit = createCompilationUnit(class2File, classpath, ordinaryOutputPath, isGrailsModule, encoding);
-    final CompilationUnit testUnit = createCompilationUnit(Collections.EMPTY_MAP, classpath, testOutputPath, isGrailsModule, encoding);
-    MyCompilationUnits myCompilationUnits = new MyCompilationUnits(sourceUnit, testUnit);
+    MyCompilationUnits myCompilationUnits = new MyCompilationUnits(createCompilationUnit(class2File, classpath, ordinaryOutputPath, isGrailsModule, encoding));
 
-    System.out.println(PRESENTABLE_MESSAGE + "Loading Groovy sources...");
     for (int i = 0; i < srcFilesToCompile.size(); i++) {
-      File fileToCompile = (File) srcFilesToCompile.get(i);
-      myCompilationUnits.add(fileToCompile, false);
+      myCompilationUnits.addSource((File) srcFilesToCompile.get(i));
     }
-
-    System.out.println(PRESENTABLE_MESSAGE + "Loading Groovy test sources...");
-    for (int i = 0; i < testFilesToCompile.size(); i++) {
-      File fileToCompile = (File) testFilesToCompile.get(i);
-      myCompilationUnits.add(fileToCompile, true);
-    }
-
-    System.out.println(CLEAR_PRESENTABLE);
 
     return myCompilationUnits;
   }

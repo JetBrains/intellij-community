@@ -31,35 +31,14 @@ import java.util.*;
 public class MyCompilationUnits {
 
   final CompilationUnit sourceCompilationUnit;
-  final CompilationUnit testCompilationUnit;
 
-  private final List sourceFilesToCompile = new ArrayList();
-  private final List testFilesToCompile = new ArrayList();
-
-  MyCompilationUnits(CompilationUnit sourceCompilationUnit, CompilationUnit testCompilationUnit) {
+  MyCompilationUnits(CompilationUnit sourceCompilationUnit) {
     this.sourceCompilationUnit = sourceCompilationUnit;
-    this.testCompilationUnit = testCompilationUnit;
   }
-
-  public void add(File fileToCompile, boolean inTestSourceFolder) {
-    if (inTestSourceFolder) {
-      addTest(fileToCompile);
-    } else {
-      addSource(fileToCompile);
-    }
-  }
-
-  private void addSource(File file) {
-    sourceFilesToCompile.add(addSourceUnit(file, sourceCompilationUnit));
-  }
-
-  private void addTest(File file) {
-    testFilesToCompile.add(addSourceUnit(file, testCompilationUnit));
-  }
-
-  private static SourceUnit addSourceUnit(final File file, final CompilationUnit unit) {
-    return unit.addSource(new SourceUnit(file, unit.getConfiguration(), unit.getClassLoader(),
-                                         unit.getErrorCollector()) {
+                       
+  public void addSource(final File file) {
+    sourceCompilationUnit.addSource(new SourceUnit(file, sourceCompilationUnit.getConfiguration(), sourceCompilationUnit.getClassLoader(),
+                                         sourceCompilationUnit.getErrorCollector()) {
       public void parse() throws CompilationFailedException {
         System.out.println(GroovycRunner.PRESENTABLE_MESSAGE + "Parsing " + file.getName() + "...");
         super.parse();
@@ -69,24 +48,19 @@ public class MyCompilationUnits {
   }
 
   public void compile(MessageCollector collector, List compiledFiles) {
-    compile(collector, sourceCompilationUnit, compiledFiles);
-    compile(collector, testCompilationUnit, compiledFiles);
-  }
-
-  void compile(MessageCollector collector, CompilationUnit compilationUnit, List compiledFiles) {
     try {
-      compilationUnit.compile();
-      addCompiledFiles(compilationUnit, compiledFiles);
+      sourceCompilationUnit.compile();
+      addCompiledFiles(sourceCompilationUnit, compiledFiles);
     } catch (CompilationFailedException e) {
       processCompilationException(e, collector);
     } catch (IOException e) {
       processException(e, collector);
     } finally {
-      addWarnings(compilationUnit.getErrorCollector(), collector);
+      addWarnings(sourceCompilationUnit.getErrorCollector(), collector);
     }
   }
 
-  private void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles) throws IOException {
+  private static void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
 
     String outputPath = targetDirectory.getCanonicalPath().replace(File.separatorChar, '/');
@@ -173,26 +147,19 @@ public class MyCompilationUnits {
         exception.getLine(), exception.getStartColumn());
   }
 
-  private void addErrorMessage(GroovyRuntimeException exception, MessageCollector collector) {
+  private static void addErrorMessage(GroovyRuntimeException exception, MessageCollector collector) {
     ASTNode astNode = exception.getNode();
     collector.addMessage(MessageCollector.ERROR, exception.getMessageWithoutLocationText(),
         exception.getModule().getDescription(),
         astNode.getLineNumber(), astNode.getColumnNumber());
   }
 
-  private void addErrorMessage(SimpleMessage message, MessageCollector collector) {
+  private static void addErrorMessage(SimpleMessage message, MessageCollector collector) {
     collector.addMessage(MessageCollector.ERROR, message.getMessage(), null, -1, -1);
   }
 
-  private String pathToUrl(String path) {
+  private static String pathToUrl(String path) {
     return "file" + "://" + path;
-  }
-
-  private String getNameWithoutExtension(String filename) {
-    String name = (new File(filename)).getName();
-    int startExtentionIndex = name.lastIndexOf(".");
-
-    return name.substring(0, startExtentionIndex);
   }
 
   public interface OutputItem {
@@ -203,7 +170,7 @@ public class MyCompilationUnits {
     String getOutputRootDirectory();
   }
 
-  public class OutputItemImpl implements OutputItem {
+  public static class OutputItemImpl implements OutputItem {
 
     private final String myOutputPath;
     private final String myOutputDir;

@@ -149,6 +149,7 @@ public class GroovyCompiler implements TranslatingCompiler {
     commandLine.addParameter(classPathBuilder.toString());
 
     commandLine.addParameter("-Xmx" + System.getProperty("groovy.compiler.Xmx", "400m"));
+    commandLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
 
     //debug
     //commandLine.addParameter("-Xdebug"); commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
