@@ -1011,13 +1011,19 @@ public class DeclarationParsing extends Parsing {
     CompositeElement modifierList = parseModifierList(lexer);
 
     CompositeElement type = allowEllipsis ? parseTypeWithEllipsis(lexer) : parseType(lexer);
-    if (type == null){
+    if (type == null && modifierList.getFirstChildNode() == null){
       lexer.restore(pos);
       return null;
     }
 
     CompositeElement param = ASTFactory.composite(PARAMETER);
     param.rawAddChildren(modifierList);
+
+    if (type == null) {
+      type = ASTFactory.composite(TYPE);
+      param.rawAddChildren(Factory.createErrorElement("Parameter type missing"));
+    }
+
     param.rawAddChildren(type);
 
     if (lexer.getTokenType() == IDENTIFIER){

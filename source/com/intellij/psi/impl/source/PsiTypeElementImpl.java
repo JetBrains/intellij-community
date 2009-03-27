@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -46,7 +46,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiType cachedType = myCachedType;
     if (cachedType == null) {
       TreeElement element = getFirstChildNode();
-      assert element != null;
       while (element != null) {
         IElementType elementType = element.getElementType();
         if (element.getTreeNext() == null && ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
@@ -70,6 +69,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         if (element.getTextLength() != 0) break;
         element = element.getTreeNext();
       }
+      
+      if (cachedType == null) cachedType = PsiType.NULL;
       myCachedType = cachedType;
     }
     return cachedType;
