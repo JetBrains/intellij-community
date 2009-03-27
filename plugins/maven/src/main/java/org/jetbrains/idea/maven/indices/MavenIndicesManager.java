@@ -3,11 +3,12 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.maven.archetype.catalog.Archetype;
@@ -17,6 +18,9 @@ import org.apache.maven.archetype.source.ArchetypeDataSourceException;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
@@ -27,23 +31,32 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class MavenIndicesManager implements ApplicationComponent {
+  private static final String ELEMENT_ARCHETYPES = "archetypes";
+  private static final String ELEMENT_ARCHETYPE = "archetype";
+  private static final String ELEMENT_GROUP_ID = "groupId";
+  private static final String ELEMENT_ARTIFACT_ID = "artifactId";
+  private static final String ELEMENT_VERSION = "version";
+  private static final String ELEMENT_REPOSITORY = "repository";
+
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
   }
 
-  private File myTestIndicesDir;
+  private volatile File myTestIndicesDir;
 
   private volatile MavenEmbedder myEmbedder;
   private volatile MavenIndices myIndices;
 
   private final Object myUpdatingIndicesLock = new Object();
   private final List<MavenIndex> myWaitingIndices = new ArrayList<MavenIndex>();
-  private MavenIndex myUpdatingIndex;
-
+  private volatile MavenIndex myUpdatingIndex;
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(IndicesBundle.message("maven.indices.updating"));
+
+  private volatile List<ArchetypeInfo> myUserArchetypes = new ArrayList<ArchetypeInfo>();
 
   public static MavenIndicesManager getInstance() {
     return ApplicationManager.getApplication().getComponent(MavenIndicesManager.class);
@@ -67,19 +80,26 @@ public class MavenIndicesManager implements ApplicationComponent {
     return myIndices;
   }
 
-  private void ensureInitialized() {
+  private synchronized void ensureInitialized() {
     if (myIndices != null) return;
 
     MavenGeneralSettings defaultSettings = new MavenGeneralSettings();
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(defaultSettings, new SoutMavenConsole(), new MavenProcess(new EmptyProgressIndicator())).getEmbedder();
-    File dir = myTestIndicesDir == null
-               ? MavenUtil.getPluginSystemDir("Indices")
-               : myTestIndicesDir;
-    myIndices = new MavenIndices(myEmbedder, dir, new MavenIndex.IndexListener() {
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(defaultSettings,
+                                                               new SoutMavenConsole(),
+                                                               new MavenProcess(new EmptyProgressIndicator())).getEmbedder();
+    myIndices = new MavenIndices(myEmbedder, getIndicesDir(), new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
         scheduleUpdate(Collections.singletonList(index), false);
       }
     });
+
+    loadUserArchetypes();
+  }
+
+  private File getIndicesDir() {
+    return myTestIndicesDir == null
+           ? MavenUtil.getPluginSystemDir("Indices")
+           : myTestIndicesDir;
   }
 
   public void disposeComponent() {
@@ -168,7 +188,6 @@ public class MavenIndicesManager implements ApplicationComponent {
     return StringUtil.split(name, "/");
   }
 
-
   public void scheduleUpdate(List<MavenIndex> indices) {
     scheduleUpdate(indices, true);
   }
@@ -251,17 +270,80 @@ public class MavenIndicesManager implements ApplicationComponent {
     });
   }
 
-  public Set<ArchetypeInfo> getArchetypes() {
+  public synchronized Set<ArchetypeInfo> getArchetypes() {
     ensureInitialized();
     PlexusContainer container = myEmbedder.getPlexusContainer();
     Set<ArchetypeInfo> result = new HashSet<ArchetypeInfo>();
     result.addAll(getArchetypesFrom(container, "internal-catalog"));
     result.addAll(getArchetypesFrom(container, "nexus"));
+    result.addAll(myUserArchetypes);
 
     for (MavenArchetypesProvider each : Extensions.getExtensions(MavenArchetypesProvider.EP_NAME)) {
       result.addAll(each.getArchetypes());
     }
     return result;
+  }
+
+  public synchronized void addArchetype(ArchetypeInfo archetype) {
+    ensureInitialized();
+    myUserArchetypes.add(archetype);
+    saveUserArchetypes();
+  }
+
+  private void loadUserArchetypes() {
+    try {
+      File file = getUserArchetypesFile();
+      if (!file.exists()) return;
+      
+      Document doc = JDOMUtil.loadDocument(file);
+      Element root = doc.getRootElement();
+      if (root == null) return;
+      List<ArchetypeInfo> result = new ArrayList<ArchetypeInfo>();
+      for (Element each : (Iterable<? extends Element>)root.getChildren(ELEMENT_ARCHETYPE)) {
+        String groupId = each.getAttributeValue(ELEMENT_GROUP_ID);
+        String artifactId = each.getAttributeValue(ELEMENT_ARTIFACT_ID);
+        String version = each.getAttributeValue(ELEMENT_VERSION);
+        String repository = each.getAttributeValue(ELEMENT_REPOSITORY);
+
+        if (StringUtil.isEmptyOrSpaces(groupId)
+          || StringUtil.isEmptyOrSpaces(artifactId)
+          || StringUtil.isEmptyOrSpaces(version)) continue;
+
+        result.add(new ArchetypeInfo(groupId, artifactId, version, repository));
+      }
+
+      myUserArchetypes = result;
+    }
+    catch (IOException e) {
+      MavenLog.LOG.warn(e);
+    }
+    catch (JDOMException e) {
+      MavenLog.LOG.warn(e);
+    }
+  }
+
+  private void saveUserArchetypes() {
+    Element root = new Element(ELEMENT_ARCHETYPES);
+    for (ArchetypeInfo each : myUserArchetypes) {
+      Element childElement = new Element(ELEMENT_ARCHETYPE);
+      childElement.setAttribute(ELEMENT_GROUP_ID, each.groupId);
+      childElement.setAttribute(ELEMENT_ARTIFACT_ID, each.artifactId);
+      childElement.setAttribute(ELEMENT_VERSION, each.version);
+      if (each.repository != null) {
+        childElement.setAttribute(ELEMENT_REPOSITORY, each.repository);
+      }
+      root.addContent(childElement);
+    }
+    try {
+      JDOMUtil.writeDocument(new Document(root), getUserArchetypesFile(), "\n");
+    }
+    catch (IOException e) {
+      MavenLog.LOG.warn(e);
+    }
+  }
+
+  private File getUserArchetypesFile() {
+    return new File(getIndicesDir(), "UserArchetypes.xml");
   }
 
   private List<ArchetypeInfo> getArchetypesFrom(PlexusContainer container, String roleHint) {

@@ -61,6 +61,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private JCheckBox myInheritVersionCheckBox;
 
   private JCheckBox myUseArchetypeCheckBox;
+  private JButton myAddArchetypeButton;
   private Tree myArchetypesTree;
 
   public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder) {
@@ -74,14 +75,14 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private void initComponents() {
     mySelectAggregator.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myAggregator = selectProject(myAggregator);
+        myAggregator = doSelectProject(myAggregator);
         updateComponents();
       }
     });
 
     mySelectParent.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myParent = selectProject(myParent);
+        myParent = doSelectProject(myParent);
         updateComponents();
       }
     });
@@ -96,6 +97,12 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
     myUseArchetypeCheckBox.addActionListener(updatingListener);
     myArchetypesTree.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+    myAddArchetypeButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        doAddArchetype();
+      }
+    });
 
     myArchetypesTree.setRootVisible(false);
     myArchetypesTree.setShowsRootHandles(true);
@@ -119,13 +126,28 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     });
   }
 
-  private MavenProjectModel selectProject(MavenProjectModel current) {
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myGroupIdField;
+  }
+
+  private MavenProjectModel doSelectProject(MavenProjectModel current) {
     assert myProjectOrNull != null : "must not be called when creating a new project";
 
     SelectMavenProjectDialog d = new SelectMavenProjectDialog(myProjectOrNull, current);
     d.show();
     if (!d.isOK()) return current;
     return d.getResult();
+  }
+
+  private void doAddArchetype() {
+    MavenAddArchetypeDialog dialog = new MavenAddArchetypeDialog(myMainPanel);
+    dialog.show();
+    if (!dialog.isOK()) return;
+
+    ArchetypeInfo archetype = dialog.getArchetype();
+    MavenIndicesManager.getInstance().addArchetype(archetype);
+    updateArchetypesList(archetype);
   }
 
   @Override
@@ -201,19 +223,22 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     }
     if (selectedArch != null) myUseArchetypeCheckBox.setSelected(true);
 
+    updateArchetypesList(selectedArch);
+    updateComponents();
+  }
+
+  private void updateArchetypesList(ArchetypeInfo selected) {
     TreeNode root = groupAndSortArchetypes(MavenIndicesManager.getInstance().getArchetypes());
     TreeModel model = new DefaultTreeModel(root);
     myArchetypesTree.setModel(model);
 
-    if (selectedArch != null) {
-      TreePath path = findNodePath(selectedArch, model, model.getRoot());
+    if (selected != null) {
+      TreePath path = findNodePath(selected, model, model.getRoot());
       if (path != null) {
         myArchetypesTree.expandPath(path.getParentPath());
         TreeUtil.selectPath(myArchetypesTree, path, true);
       }
     }
-
-    updateComponents();
   }
 
   private TreePath findNodePath(ArchetypeInfo object, TreeModel model, Object parent) {
@@ -312,14 +337,10 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
       myInheritVersionCheckBox.setEnabled(true);
     }
 
-    if (myUseArchetypeCheckBox.isSelected()) {
-      myArchetypesTree.setEnabled(true);
-      myArchetypesTree.setBackground(UIUtil.getListBackground());
-    }
-    else {
-      myArchetypesTree.setEnabled(false);
-      myArchetypesTree.setBackground(UIUtil.getComboBoxDisabledBackground());
-    }
+    boolean archetypesEnabled = myUseArchetypeCheckBox.isSelected();
+    myAddArchetypeButton.setEnabled(archetypesEnabled);
+    myArchetypesTree.setEnabled(archetypesEnabled);
+    myArchetypesTree.setBackground(archetypesEnabled ? UIUtil.getListBackground() : UIUtil.getComboBoxDisabledBackground());
   }
 
   private String formatProjectString(MavenProjectModel project) {

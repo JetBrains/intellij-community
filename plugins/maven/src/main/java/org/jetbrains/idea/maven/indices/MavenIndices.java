@@ -54,6 +54,8 @@ public class MavenIndices {
     File[] indices = myIndicesDir.listFiles();
     if (indices == null) return;
     for (File each : indices) {
+      if (!each.isDirectory()) continue;
+      
       try {
         MavenIndex index = new MavenIndex(myIndexer, myArtifactContextProducer, each, myListener);
         if (findExisting(index.getRepositoryPathOrUrl(), index.getKind()) != null) {

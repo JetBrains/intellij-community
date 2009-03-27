@@ -1,6 +1,9 @@
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.archetype.catalog.Archetype;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ArchetypeInfo {
   public String groupId;
@@ -15,11 +18,14 @@ public class ArchetypeInfo {
          archetype.getRepository());
   }
 
-  public ArchetypeInfo(String groupId, String artifactId, String version, String repository) {
+  public ArchetypeInfo(@NotNull String groupId,
+                       @NotNull String artifactId,
+                       @NotNull String version,
+                       @Nullable String repository) {
     this.groupId = groupId;
     this.artifactId = artifactId;
     this.version = version;
-    this.repository = repository;
+    this.repository = StringUtil.isEmptyOrSpaces(repository) ? null : repository;
   }
 
   @Override

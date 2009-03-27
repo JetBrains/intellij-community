@@ -1,14 +1,13 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.apache.maven.archetype.catalog.Archetype;
 
+import java.io.File;
+import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
-import java.io.File;
 
 public class MavenIndicesManagerTest extends MavenImportingTestCase {
   private MavenIndicesTestFixture myIndicesFixture;
@@ -82,6 +81,20 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
     myIndicesFixture.setUp();
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
+  }
+
+  public void testAddingArchetypes() throws Exception {
+    myIndicesFixture.getIndicesManager().addArchetype(new ArchetypeInfo("myGroup",
+                                                                        "myArtifact",
+                                                                        "666",
+                                                                        "custom.repository"));
+
+    assertArchetypeExists("myGroup:myArtifact:666");
+
+    myIndicesFixture.tearDown();
+    myIndicesFixture.setUp();
+
+    assertArchetypeExists("myGroup:myArtifact:666");
   }
 
   private void assertArchetypeExists(String archetypeId) {
