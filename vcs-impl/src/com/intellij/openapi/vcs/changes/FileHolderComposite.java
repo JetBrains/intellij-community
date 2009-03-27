@@ -17,6 +17,7 @@ public class FileHolderComposite implements FileHolder {
     myHolders.put(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING, new VirtualFileHolder(project, FileHolder.HolderType.MODIFIED_WITHOUT_EDITING));
     myHolders.put(FileHolder.HolderType.IGNORED, new VirtualFileHolder(project, FileHolder.HolderType.IGNORED));
     myHolders.put(FileHolder.HolderType.LOCKED, new VirtualFileHolder(project, FileHolder.HolderType.LOCKED));
+    myHolders.put(FileHolder.HolderType.LOGICALLY_LOCKED, new LogicallyLockedHolder(project));
   }
 
   public FileHolderComposite(final FileHolderComposite holder) {

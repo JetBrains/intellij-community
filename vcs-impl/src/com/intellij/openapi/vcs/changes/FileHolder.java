@@ -12,6 +12,7 @@ interface FileHolder {
     SWITCHED,
     MODIFIED_WITHOUT_EDITING,
     IGNORED,
-    LOCKED
+    LOCKED,
+    LOGICALLY_LOCKED
   }
 }

@@ -137,6 +137,14 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     }
   }
 
+  public void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock) {
+    if (file == null) return;
+    checkIfDisposed();
+    if (myScope.belongsTo(new FilePathImpl(file))) {
+      ((LogicallyLockedHolder) myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).add(file, logicalLock);
+    }
+  }
+
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
     if (file == null || ! myUpdateUnversioned) return;
     checkIfDisposed();

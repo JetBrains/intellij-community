@@ -400,6 +400,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return new ArrayList<VirtualFile>(myComposite.getVFHolder(FileHolder.HolderType.LOCKED).getFiles());
   }
 
+  Map<VirtualFile, LogicalLock> getLogicallyLockedFolders() {
+    return new HashMap<VirtualFile, LogicalLock>(((LogicallyLockedHolder) myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).getMap());
+  }
+
+  public boolean isLogicallyLocked(final VirtualFile file) {
+    return ((LogicallyLockedHolder) myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).getMap().containsKey(file);
+  }
+
   public List<FilePath> getDeletedFiles() {
     return new ArrayList<FilePath>(myComposite.getDeletedFilesHolder().getFiles());
   }

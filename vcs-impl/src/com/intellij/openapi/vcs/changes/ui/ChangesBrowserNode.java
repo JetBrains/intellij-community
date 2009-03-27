@@ -33,6 +33,8 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
       return VcsBundle.message("changes.nodetitle.locked.folders");
     }
   };
+  public static final Object LOGICALLY_LOCKED_TAG = VcsBundle.message("changes.nodetitle.logicallt.locked.folders");
+  
   public static final Object UNVERSIONED_FILES_TAG = new Object() {
     public String toString() {
       return VcsBundle.message("changes.nodetitle.unversioned.files");
@@ -71,6 +73,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     }
     if (userObject == LOCKED_FOLDERS_TAG) {
       return new ChangesBrowserLockedFoldersNode(project, userObject);
+    }
+    if (userObject instanceof ChangesBrowserLogicallyLockedFile) {
+      return (ChangesBrowserNode) userObject;
     }
     return new ChangesBrowserNode(userObject);
   }

@@ -48,6 +48,9 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   public void processLockedFolder(final VirtualFile file) {
   }
 
+  public void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock) {
+  }
+
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
   }
 

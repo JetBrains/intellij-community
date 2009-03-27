@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LogicalLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -77,7 +78,8 @@ public class TreeModelBuilder {
                                      final List<FilePath> locallyDeletedFiles,
                                      final List<VirtualFile> modifiedWithoutEditing,
                                      final MultiMap<String, VirtualFile> switchedFiles,
-                                     @Nullable final List<VirtualFile> ignoredFiles, @Nullable final List<VirtualFile> lockedFolders) {
+                                     @Nullable final List<VirtualFile> ignoredFiles, @Nullable final List<VirtualFile> lockedFolders,
+                                     @Nullable final Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
 
     for (ChangeList list : changeLists) {
       ChangesBrowserNode listNode = ChangesBrowserNode.create(myProject, list);
@@ -103,6 +105,9 @@ public class TreeModelBuilder {
     }
     if (lockedFolders != null && !lockedFolders.isEmpty()) {
       buildVirtualFiles(lockedFolders, ChangesBrowserNode.LOCKED_FOLDERS_TAG);
+    }
+    if (logicallyLockedFiles != null && (! logicallyLockedFiles.isEmpty())) {
+      buildLogicallyLockedFiles(logicallyLockedFiles);
     }
 
     if (!locallyDeletedFiles.isEmpty()) {
@@ -184,6 +189,18 @@ public class TreeModelBuilder {
     }
   }
 
+  private void buildLogicallyLockedFiles(final Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
+    final ChangesBrowserNode baseNode = createNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
+
+    final HashMap<String, ChangesBrowserNode> foldersCache = new HashMap<String, ChangesBrowserNode>();
+    final ChangesGroupingPolicy policy = createGroupingPolicy();
+    for (Map.Entry<VirtualFile, LogicalLock> entry : logicallyLockedFiles.entrySet()) {
+      final VirtualFile file = entry.getKey();
+      final LogicalLock lock = entry.getValue();
+      insertChangeNode(new ChangesBrowserLogicallyLockedFile(myProject, file, lock), foldersCache, policy, baseNode);
+    }
+  }
+
   private void insertChangeNode(final Object change, final HashMap<String, ChangesBrowserNode> foldersCache,
                                 final ChangesGroupingPolicy policy,
                                 final ChangesBrowserNode listNode) {
@@ -259,6 +276,8 @@ public class TreeModelBuilder {
     }
     else if (o instanceof FilePath) {
       return (FilePath)o;
+    } else if (o instanceof ChangesBrowserLogicallyLockedFile) {
+      return new FilePathImpl(((ChangesBrowserLogicallyLockedFile) o).getUserObject());
     }
 
     return null;

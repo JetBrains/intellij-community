@@ -78,7 +78,15 @@ public interface ChangelistBuilder {
    */
   void processIgnoredFile(VirtualFile file);
 
+  /**
+   * technically locked folder (for Subversion: locked in working copy to keep WC's state consistent)
+   */
   void processLockedFolder(VirtualFile file);
+
+  /**
+   * Logically locked file: (in repository) in lock-modify-unlock model
+   */
+  void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock);
 
   /**
    * Report a file which has been updated to a branch other than that of the files around it
