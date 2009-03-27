@@ -49,46 +49,43 @@ import java.util.List;
 public class OptionsEditor extends JPanel implements DataProvider, Place.Navigator, Disposable, AWTEventListener {
   public static DataKey<OptionsEditor> KEY = DataKey.create("options.editor");
 
-  static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.newEditor.OptionsEditor");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.newEditor.OptionsEditor");
 
-  @NonNls static final String MAIN_SPLITTER_PROPORTION = "options.splitter.main.proportions";
-  @NonNls static final String DETAILS_SPLITTER_PROPORTION = "options.splitter.details.proportions";
-  @NonNls static final String LAST_SELECTED_CONFIGURABLE = "options.lastSelected";
+  @NonNls private static final String MAIN_SPLITTER_PROPORTION = "options.splitter.main.proportions";
+  @NonNls private static final String DETAILS_SPLITTER_PROPORTION = "options.splitter.details.proportions";
 
-  @NonNls static final String SEARCH_VISIBLE = "options.searchVisible";
+  @NonNls private static final String SEARCH_VISIBLE = "options.searchVisible";
 
-  Project myProject;
+  private final Project myProject;
 
-  OptionsEditorContext myContext;
+  private final OptionsEditorContext myContext;
 
-  History myHistory = new History(this);
+  private final History myHistory = new History(this);
 
-  final OptionsTree myTree;
-  MySearchField mySearch;
-  Splitter myMainSplitter;
+  private final OptionsTree myTree;
+  private final MySearchField mySearch;
+  private final Splitter myMainSplitter;
   //[back/forward] JComponent myToolbarComponent;
 
-  DetailsComponent myOwnDetails = new DetailsComponent().setEmptyContentText("Select configuration element in the tree to edit its settings");
-  ContentWrapper myContentWrapper = new ContentWrapper();
+  private final DetailsComponent myOwnDetails = new DetailsComponent().setEmptyContentText("Select configuration element in the tree to edit its settings");
+  private final ContentWrapper myContentWrapper = new ContentWrapper();
 
 
-  Map<Configurable, ConfigurableContent> myConfigurable2Content = new HashMap<Configurable, ConfigurableContent>();
-  Map<Configurable, ActionCallback> myConfigurable2LoadCallback = new HashMap<Configurable, ActionCallback>();
+  private final Map<Configurable, ConfigurableContent> myConfigurable2Content = new HashMap<Configurable, ConfigurableContent>();
+  private final Map<Configurable, ActionCallback> myConfigurable2LoadCallback = new HashMap<Configurable, ActionCallback>();
 
-  private final MyColleague myColleague;
-
-  MergingUpdateQueue myModificationChecker;
+  private final MergingUpdateQueue myModificationChecker;
   private final ConfigurableGroup[] myGroups;
 
-  SpotlightPainter mySpotlightPainter = new SpotlightPainter();
-  MergingUpdateQueue mySpotlightUpdate;
-  LoadingDecorator myLoadingDecorator;
-  Filter myFilter;
+  private final SpotlightPainter mySpotlightPainter = new SpotlightPainter();
+  private final MergingUpdateQueue mySpotlightUpdate;
+  private final LoadingDecorator myLoadingDecorator;
+  private final Filter myFilter;
 
-  Wrapper mySearchWrapper = new Wrapper();
-  JPanel myLeftSide;
+  private final Wrapper mySearchWrapper = new Wrapper();
+  private final JPanel myLeftSide;
 
-  boolean myFilterFocumentWasChanged;
+  private boolean myFilterFocumentWasChanged;
   //[back/forward] private ActionToolbar myToolbar;
   private Window myWindow;
 
@@ -185,13 +182,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     myMainSplitter.setSecondComponent(myLoadingDecorator.getComponent());
 
 
-    myMainSplitter.setProportion(readPropertion(.3f, MAIN_SPLITTER_PROPORTION));
-    myContentWrapper.mySplitter.setProportion(readPropertion(.2f, DETAILS_SPLITTER_PROPORTION));
+    myMainSplitter.setProportion(readPropertion(0.3f, MAIN_SPLITTER_PROPORTION));
+    myContentWrapper.mySplitter.setProportion(readPropertion(0.2f, DETAILS_SPLITTER_PROPORTION));
 
     add(myMainSplitter, BorderLayout.CENTER);
 
-    myColleague = new MyColleague();
-    getContext().addColleague(myColleague);
+    MyColleague colleague = new MyColleague();
+    getContext().addColleague(colleague);
 
     if (preselectedConfigurable != null) {
       myTree.select(preselectedConfigurable);
@@ -199,7 +196,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       myTree.selectFirst();
     }
 
-    Toolkit.getDefaultToolkit().addAWTEventListener(this, MouseEvent.MOUSE_EVENT_MASK | KeyEvent.KEY_EVENT_MASK);
+    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
 
     myModificationChecker = new MergingUpdateQueue("OptionsModificationChecker", 1000, false, this, this, this);
     mySpotlightUpdate = new MergingUpdateQueue("OptionsSplotlight", 500, false, this, this, this);
@@ -491,7 +488,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return mySearch.getTextEditor().isFocusOwner();
   }
 
-  class ResetAction extends AbstractAction {
+  private class ResetAction extends AbstractAction {
     Configurable myConfigurable;
 
     ResetAction(final Configurable configurable) {
@@ -511,7 +508,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   }
 
-  private class ContentWrapper extends NonOpaquePanel implements NullableComponent {
+  private static class ContentWrapper extends NonOpaquePanel {
 
     private final JLabel myErrorLabel;
 
@@ -620,8 +617,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   public void apply() {
     Map<Configurable, ConfigurationException> errors = new LinkedHashMap<Configurable, ConfigurationException>();
     final Set<Configurable> modified = getContext().getModified();
-    for (Iterator<Configurable> iterator = modified.iterator(); iterator.hasNext();) {
-      Configurable each = iterator.next();
+    for (Configurable each : modified) {
       try {
         each.apply();
         if (!each.isModified()) {
@@ -636,7 +632,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     getContext().fireErrorsChanged(errors, null);
 
-    if (errors.size() > 0) {
+    if (!errors.isEmpty()) {
       myTree.select(errors.keySet().iterator().next());
     }
   }
@@ -715,14 +711,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         myFiltered = myHits.getAll();
       }
 
-      if (myFiltered != null && myFiltered.size() == 0) {
+      if (myFiltered != null && myFiltered.isEmpty()) {
         mySearch.getTextEditor().setBackground(LightColors.RED);
       } else {
         mySearch.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
       }
 
 
-      Configurable toSelect = null;
       final Configurable current = getContext().getCurrentConfigurable();
 
       boolean shouldMoveSelection = true;
@@ -735,10 +730,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         shouldMoveSelection = false;
       }
 
+      Configurable toSelect = null;
       if (shouldMoveSelection && myHits != null) {
-        if (myHits.getNameHits().size() > 0) {
+        if (!myHits.getNameHits().isEmpty()) {
           toSelect = suggestToSelect(myHits.getNameHits(), myHits.getNameFullHits());
-        } else if (myHits.getContentHits().size() > 0) {
+        } else if (!myHits.getContentHits().isEmpty()) {
           toSelect = suggestToSelect(myHits.getContentHits(), null);
         }
       }
@@ -753,17 +749,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     private boolean isEmptyParent(Configurable configurable) {
-      if (configurable instanceof SearchableConfigurable.Parent) {
-        return !((SearchableConfigurable.Parent)configurable).hasOwnContent();
-      }
-      return false;
+      return configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).hasOwnContent();
     }
 
     @Nullable
     private Configurable suggestToSelect(Set<Configurable> set, Set<Configurable> fullHits) {
       Configurable candidate = null;
-      for (Iterator<Configurable> iterator = set.iterator(); iterator.hasNext();) {
-        Configurable each = iterator.next();
+      for (Configurable each : set) {
         if (fullHits != null && fullHits.contains(each)) return each;
         if (!isEmptyParent(each) && candidate == null) {
           candidate = each;
@@ -860,11 +852,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public boolean canApply() {
-    return getContext().getModified().size() > 0;
-  }
-
-  public boolean canRestore() {
-    return getContext().getModified().size() > 0;
+    return !getContext().getModified().isEmpty();
   }
 
   public void eventDispatched(final AWTEvent event) {
@@ -872,13 +860,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       final MouseEvent me = (MouseEvent)event;
       if (SwingUtilities.isDescendingFrom(me.getComponent(), myContentWrapper) || isPopupOverEditor(me.getComponent())) {
         queueModificationCheck(getContext().getCurrentConfigurable());
-        return;
       }
-    } else if (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED) {
+    }
+    else if (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED) {
       final KeyEvent ke = (KeyEvent)event;
       if (SwingUtilities.isDescendingFrom(ke.getComponent(), myContentWrapper)) {
         queueModificationCheck(getContext().getCurrentConfigurable());
-        return;
       }
     }
   }
@@ -898,8 +885,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private boolean isPopupOverEditor(Component c) {
     final Window wnd = SwingUtilities.getWindowAncestor(c);
-    if (wnd instanceof JWindow && myWindow != null && wnd.getParent() == myWindow) return true;
-    return false;
+    return wnd instanceof JWindow && myWindow != null && wnd.getParent() == myWindow;
   }
 
   private static class MySearchField extends SearchTextField {
@@ -939,7 +925,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   }
 
-  class SpotlightPainter extends AbstractPainter {
+  private class SpotlightPainter extends AbstractPainter {
     Map<Configurable, String> myConfigurableToLastOption = new HashMap<Configurable, String>();
 
     GlassPanel myGP = new GlassPanel(myOwnDetails.getContentGutter());
@@ -1019,7 +1005,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return mySearch.getText() != null ? mySearch.getText().trim() : "";
   }
 
-  private class SearachableWrappper implements SearchableConfigurable {
+  private static class SearachableWrappper implements SearchableConfigurable {
     private final Configurable myConfigurable;
 
     private SearachableWrappper(final Configurable configurable) {
@@ -1068,8 +1054,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   }
 
-
-  abstract class ConfigurableContent {
+  private abstract static class ConfigurableContent {
     abstract void set(ContentWrapper wrapper);
 
     abstract boolean isShowing();
@@ -1081,7 +1066,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     abstract void setText(final String[] bannerText);
   }
 
-  class Simple extends ConfigurableContent {
+  private class Simple extends ConfigurableContent {
 
     JComponent myComponent;
     Configurable myConfigurable;
@@ -1113,8 +1098,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   }
 
-  class Details extends ConfigurableContent {
-
+  private class Details extends ConfigurableContent {
     MasterDetails myConfigurable;
     DetailsComponent myDetails;
     JComponent myMaster;

@@ -32,6 +32,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
 
   private ApplyAction myApplyAction;
   public static final String DIMENSION_KEY = "OptionsEditor";
+  @NonNls static final String LAST_SELECTED_CONFIGURABLE = "options.lastSelected";
 
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     super(project, true);
@@ -125,15 +126,15 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     final PropertiesComponent props = PropertiesComponent.getInstance(myProject);
 
     if (current instanceof SearchableConfigurable) {
-      props.setValue(OptionsEditor.LAST_SELECTED_CONFIGURABLE, ((SearchableConfigurable)current).getId());
+      props.setValue(LAST_SELECTED_CONFIGURABLE, ((SearchableConfigurable)current).getId());
     } else {
-      props.setValue(OptionsEditor.LAST_SELECTED_CONFIGURABLE, current.getClass().getName());
+      props.setValue(LAST_SELECTED_CONFIGURABLE, current.getClass().getName());
     }
   }
 
   @Nullable
   private static Configurable findLastSavedConfigurable(ConfigurableGroup[] groups, final Project project) {
-    final String id = PropertiesComponent.getInstance(project).getValue(OptionsEditor.LAST_SELECTED_CONFIGURABLE);
+    final String id = PropertiesComponent.getInstance(project).getValue(LAST_SELECTED_CONFIGURABLE);
     if (id == null) return null;
 
     final java.util.List<Configurable> all = SearchUtil.expand(groups);
