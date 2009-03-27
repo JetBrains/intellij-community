@@ -15,8 +15,9 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -401,33 +402,12 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (context.getCompletionType() == CompletionType.BASIC && file instanceof PsiJavaFile) {
-      final PsiElement element = file.findElementAt(context.getStartOffset());
-      if (METHOD_START.accepts(element)) {
-        PsiElement decl = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-        if (decl == null) decl = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
-        if (decl != null) {
-          PsiElement sibling = decl.getPrevSibling();
-          while (sibling != null && (sibling instanceof PsiWhiteSpace || sibling instanceof PsiErrorElement)) {
-            sibling = sibling.getPrevSibling();
-          }
-          if (sibling instanceof PsiClassInitializer && ((PsiClassInitializer) sibling).getBody().getRBrace() == null ||
-              sibling instanceof PsiMethod && ((PsiMethod) sibling).getBody() != null && ((PsiMethod) sibling).getBody().getRBrace() == null) {
-            final int textOffset = decl.getTextOffset();
-            context.setFileCopyPatcher(new FileCopyPatcher() {
-              public void patchFileCopy(@NotNull final PsiFile fileCopy, @NotNull final Document document, @NotNull final OffsetMap map) {
-                document.replaceString(map.getOffset(CompletionInitializationContext.START_OFFSET),
-                                       Math.max(map.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET), textOffset),
-                                       CompletionInitializationContext.DUMMY_IDENTIFIER.trim());
-              }
-            });
-            return;
-          }
-        }
-      }
-
-      if (psiElement(PsiIdentifier.class).withParent(PsiMethod.class).accepts(element)) {
+      if (semicolonNeeded(context)) {
+        context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";"));
         return;
       }
+
+      final PsiElement element = file.findElementAt(context.getStartOffset());
 
       if (psiElement().inside(PsiAnnotation.class).accepts(element)) {
         return;
@@ -435,6 +415,33 @@ public class JavaCompletionContributor extends CompletionContributor {
 
       context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER.trim()));
     }
+  }
+
+  private static boolean semicolonNeeded(CompletionInitializationContext context) {
+    HighlighterIterator iterator = ((EditorEx) context.getEditor()).getHighlighter().createIterator(context.getStartOffset());
+    if (iterator.atEnd()) return false;
+
+    if (iterator.getTokenType() == JavaTokenType.IDENTIFIER) {
+      iterator.advance();
+    }
+
+    if (!iterator.atEnd() && iterator.getTokenType() == JavaTokenType.LPARENTH) {
+      return true;
+    }
+
+    while (!iterator.atEnd() && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(iterator.getTokenType())) {
+      iterator.advance();
+    }
+
+    if (iterator.atEnd() || iterator.getTokenType() != JavaTokenType.IDENTIFIER) return false;
+    iterator.advance();
+
+    while (!iterator.atEnd() && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(iterator.getTokenType())) {
+      iterator.advance();
+    }
+    if (iterator.atEnd()) return false;
+
+    return iterator.getTokenType() == JavaTokenType.EQ || iterator.getTokenType() == JavaTokenType.LPARENTH;
   }
 
   private static void autoImport(final PsiFile file, int offset, final Editor editor) {
