@@ -127,21 +127,21 @@ public class SemServiceImpl extends SemService{
     }
 
     final ConcurrentMap<SemKey, List<SemElement>> map = cacheOrGetMap(psi);
-    List<T> result = null;
+    LinkedHashSet<T> result = null;
     for (final SemKey each : myProducers.keySet()) {
       if (each.isKindOf(key)) {
-        List<SemElement> list = ConcurrencyUtil.cacheOrGet(map, each, createSemElement(each, psi));
+        List<SemElement> list = ConcurrencyUtil.cacheOrGet(map, each, createSemElements(each, psi));
         if (!list.isEmpty()) {
-          if (result == null) result = new SmartList<T>();
+          if (result == null) result = new LinkedHashSet<T>();
           result.addAll((List<T>)list);
         }
       }
     }
-    return result == null ? Collections.<T>emptyList() : result;
+    return result == null ? Collections.<T>emptyList() : new ArrayList<T>(result);
   }
 
   @NotNull 
-  private List<SemElement> createSemElement(SemKey key, PsiElement psi) {
+  private List<SemElement> createSemElements(SemKey key, PsiElement psi) {
     List<SemElement> result = null;
     final Collection<NullableFunction<PsiElement, ? extends SemElement>> producers = myProducers.get(key);
     if (!producers.isEmpty()) {
