@@ -307,6 +307,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
     myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
     myVfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
+    myFileContentAttic.dispose();
 
     FileUtil.delete(getMarkerFile());
   }
@@ -955,7 +956,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
-    private final Set<VirtualFile> myFilesToUpdate = Collections.synchronizedSet(new HashSet<VirtualFile>());
+    private final Set<VirtualFile> myFilesToUpdate = Collections.synchronizedSet(new LinkedHashSet<VirtualFile>());
     private final Queue<InvalidationTask> myFutureInvalidations = new LinkedList<InvalidationTask>();
     private final ManagingFS myManagingFS = ManagingFS.getInstance();
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.

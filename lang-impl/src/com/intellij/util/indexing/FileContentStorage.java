@@ -23,7 +23,7 @@ public class FileContentStorage {
   private final TIntHashSet myFileIds = new TIntHashSet();
   private final Object myLock = new Object();
 
-  private final SLRUCache<Integer, byte[]> myCache = new SLRUCache<Integer, byte[]>(200, 56) {
+  private final SLRUCache<Integer, byte[]> myCache = new SLRUCache<Integer, byte[]>(256, 64) {
     @NotNull
     public byte[] createValue(final Integer key) {
       final int _keyValue = key.intValue();
@@ -105,7 +105,7 @@ public class FileContentStorage {
   }
 
   @Nullable
-  public synchronized byte[] remove(VirtualFile file) {
+  public byte[] remove(VirtualFile file) {
     final int fileId = Math.abs(FileBasedIndex.getFileId(file));
     synchronized (myLock) {
       try {
@@ -123,10 +123,14 @@ public class FileContentStorage {
     }
   }
 
-  public synchronized boolean containsContent(VirtualFile file) {
+  public boolean containsContent(VirtualFile file) {
     final int fileId = Math.abs(FileBasedIndex.getFileId(file));
     synchronized (myLock) {
       return myFileIds.contains(fileId);
     }
+  }
+
+  public void dispose() {
+    myCache.clear(); // drop contexts on disk if something is left in memory
   }
 }
