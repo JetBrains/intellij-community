@@ -26,6 +26,11 @@ public class ImportDialog extends RepositoryBrowserDialog {
     updateOKAction();
   }
 
+  @Override
+  protected String getHelpId() {
+    return "vcs.import.into.svn";
+  }
+
   private void updateOKAction() {
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
   }
