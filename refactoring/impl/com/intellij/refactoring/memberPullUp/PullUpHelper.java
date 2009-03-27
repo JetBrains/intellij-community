@@ -10,10 +10,13 @@ package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -92,6 +95,10 @@ public class PullUpHelper {
           myJavaDocPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
 
           final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(methodCopy);
+          CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(method.getProject());
+          if (styleSettings.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(mySourceClass)) {
+            new AddAnnotationFix("java.lang.Override", method).invoke(method.getProject(), null, mySourceClass.getContainingFile());
+          }
           myMembersAfterMove.add(movedElement);
           if (isOriginalMethodAbstract) {
             method.delete();
