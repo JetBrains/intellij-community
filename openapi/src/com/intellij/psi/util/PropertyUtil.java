@@ -62,7 +62,7 @@ public class PropertyUtil {
       if (returnType != null && returnType == PsiType.VOID) return false;
     }
     else if (methodName.startsWith("is")) {
-      if (returnType != null && returnType != PsiType.BOOLEAN) return false;
+      return isBoolean(returnType);
     }
     else {
       return false;
@@ -297,7 +297,7 @@ public class PropertyUtil {
 
   public static String suggestGetterName(@NotNull String propertyName, @Nullable PsiType propertyType, @NonNls String existingGetterName) {
     @NonNls StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
-    if (propertyType == PsiType.BOOLEAN) {
+    if (isBoolean(propertyType)) {
       if (existingGetterName == null || !existingGetterName.startsWith("get")) {
         name.insert(0, "is");
       }
@@ -310,6 +310,10 @@ public class PropertyUtil {
     }
 
     return name.toString();
+  }
+
+  private static boolean isBoolean(@Nullable PsiType propertyType) {
+    return propertyType == PsiType.BOOLEAN || propertyType != null && CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyType.getCanonicalText());
   }
 
   @NonNls
