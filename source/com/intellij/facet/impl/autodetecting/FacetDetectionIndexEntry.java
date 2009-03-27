@@ -11,6 +11,7 @@ import com.intellij.facet.impl.autodetecting.model.FacetInfoBackedByFacet;
 import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.fileIndex.FileIndexEntry;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ import java.util.Set;
  * @author nik
 */
 public class FacetDetectionIndexEntry extends FileIndexEntry {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.autodetecting.FacetDetectionIndexEntry");
   private SmartList<FacetPointer> myFacets;
   private SmartList<Integer> myDetectedFacetIds;
 
@@ -106,6 +108,7 @@ public class FacetDetectionIndexEntry extends FileIndexEntry {
     for (FacetInfo2<Module> info : detectedFacets) {
       if (info instanceof FacetInfoBackedByFacet) {
         FacetPointer<Facet> pointer = facetPointersManager.create(((FacetInfoBackedByFacet)info).getFacet());
+        LOG.assertTrue(pointer.getModuleName().length() > 0);//IDEADEV-34200
         myFacets.add(pointer);
       }
       else {
@@ -136,6 +139,7 @@ public class FacetDetectionIndexEntry extends FileIndexEntry {
     if (myFacets == null) {
       myFacets = new SmartList<FacetPointer>();
     }
+    LOG.assertTrue(pointer.getModuleName().length() > 0);//IDEADEV-34200
     myFacets.add(pointer);
   }
 }
