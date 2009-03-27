@@ -190,7 +190,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
 
     highlighterPanel.add(_panel1, BorderLayout.NORTH);
 
-    TabbedPaneWrapper tabbedPaneWrapper = new TabbedPaneWrapper();
+    TabbedPaneWrapper tabbedPaneWrapper = new TabbedPaneWrapper(this);
     tabbedPaneWrapper.addTab("1", createKeywordsPanel(0));
     tabbedPaneWrapper.addTab("2", createKeywordsPanel(1));
     tabbedPaneWrapper.addTab("3", createKeywordsPanel(2));
