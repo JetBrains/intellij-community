@@ -1855,7 +1855,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       ActionCallback callback = myCallbackOnActivation;
       myFocusCommandOnAppActivation = null;
       myCallbackOnActivation = null;
-      if (cmd != null) {
+      if (cmd != null && !cmd.isExpired()) {
         requestFocus(cmd, true).notifyWhenDone(callback);
       } else {
         final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -1864,7 +1864,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           final Component owner = mgr.getFocusOwner();
           Component old = myFocusedComponentOnDeactivation != null ? myFocusedComponentOnDeactivation.get() : null;
 
-          if (old == null) {
+          if (old == null || !old.isShowing()) {
             old = IdeFocusTraversalPolicy.getPreferredFocusedComponent(((IdeFrameImpl)ideFrame).getRootPane());
           }
 
