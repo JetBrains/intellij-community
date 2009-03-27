@@ -194,7 +194,7 @@ public class SvnVcs extends AbstractVcs {
       myMessageBusConnection = bus.connect();
       myMessageBusConnection.subscribe(ProjectLevelVcsManagerImpl.VCS_MAPPING_CHANGED, new Runnable() {
         public void run() {
-          invokeRefreshSvnRoots();
+          invokeRefreshSvnRoots(true);
         }
       });
 
@@ -224,13 +224,21 @@ public class SvnVcs extends AbstractVcs {
     myMapping = SvnFileUrlMappingImpl.getInstance(myProject);
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, myMapping);
 
-    invokeRefreshSvnRoots();
+    invokeRefreshSvnRoots(true);
   }
 
-  public void invokeRefreshSvnRoots() {
+  public void invokeRefreshSvnRoots(final boolean asynchronous) {
     REFRESH_LOG.debug("refresh: ", new Throwable());
     if (myCopiesRefreshManager != null) {
-      myCopiesRefreshManager.getCopiesRefresh().asynchRequest();
+      if (asynchronous) {
+        myCopiesRefreshManager.getCopiesRefresh().asynchRequest();
+      } else {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            myCopiesRefreshManager.getCopiesRefresh().synchRequest();
+          }
+        }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);
+      }
     }
   }
 
