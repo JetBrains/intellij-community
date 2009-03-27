@@ -162,9 +162,15 @@ public class SliceUtil {
             if (!processed.add(reference)) return true;
           }
           PsiElement element = reference.getElement().getParent();
-          if (!(element instanceof PsiCall)) return true;
-          final PsiCall call = (PsiCall)element;
-          PsiExpression passExpression = call.getArgumentList().getExpressions()[paramSeqNo];
+          PsiExpressionList argumentList;
+          if (element instanceof PsiAnonymousClass) {
+            argumentList = ((PsiAnonymousClass)element).getArgumentList();
+          }
+          else {
+            if (!(element instanceof PsiCall)) return true;
+            argumentList = ((PsiCall)element).getArgumentList();
+          }
+          PsiExpression passExpression = argumentList.getExpressions()[paramSeqNo];
           SliceParameterUsage usage = new SliceParameterUsage(new UsageInfo(passExpression), parameter, parent);
           return processor.process(usage);
         }
