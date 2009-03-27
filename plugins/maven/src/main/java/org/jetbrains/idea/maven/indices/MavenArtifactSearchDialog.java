@@ -63,8 +63,8 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
       }
     };
 
-    myArtifactsPanel = new MavenArtifactSearchPanel(project, !classMode ? initialText : "", false, l);
-    myClassesPanel = new MavenArtifactSearchPanel(project, classMode ? initialText : "", true, l);
+    myArtifactsPanel = new MavenArtifactSearchPanel(project, !classMode ? initialText : "", false, l,getDisposable());
+    myClassesPanel = new MavenArtifactSearchPanel(project, classMode ? initialText : "", true, l,getDisposable());
 
     myTabbedPane.addTab("Search for artifact", myArtifactsPanel);
     myTabbedPane.addTab("Search for class", myClassesPanel);

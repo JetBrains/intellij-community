@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public class RequestsMerger {
   private final List<Runnable> myWaitingStartListeners;
   private final List<Runnable> myWaitingFinishListeners;
 
-  public RequestsMerger(final Runnable runnable) {
+  public RequestsMerger(final Runnable runnable, Disposable parent) {
     myWorker = new MyWorker(runnable);
 
     myState = MyState.empty;
@@ -43,7 +44,7 @@ public class RequestsMerger {
     myWaitingStartListeners = new ArrayList<Runnable>();
     myWaitingFinishListeners = new ArrayList<Runnable>();
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, parent);
   }
 
   public void request() {

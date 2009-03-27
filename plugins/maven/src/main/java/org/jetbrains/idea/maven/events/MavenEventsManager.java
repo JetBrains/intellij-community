@@ -70,12 +70,13 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
   private final Collection<Listener> myListeners = new HashSet<Listener>();
   private TaskSelector myTaskSelector;
 
-  private final Alarm myKeymapUpdaterAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+  private final Alarm myKeymapUpdaterAlarm;
 
   public MavenEventsManager(Project project, MavenProjectsManager projectsManager, MavenRunner runner) {
     myProject = project;
     myProjectsManager = projectsManager;
     myRunner = runner;
+    myKeymapUpdaterAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD,project);
   }
 
   @Override

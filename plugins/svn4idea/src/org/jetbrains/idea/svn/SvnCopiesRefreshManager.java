@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 
 public class SvnCopiesRefreshManager {
-  private CopiesRefresh myCopiesRefresh;
+  private final CopiesRefresh myCopiesRefresh;
 
   public SvnCopiesRefreshManager(final Project project, final SvnFileUrlMappingImpl mapping) {
     myCopiesRefresh = new MyVeryRefresh();
@@ -15,7 +15,7 @@ public class SvnCopiesRefreshManager {
     final Runnable refresher = new MyRefresher(project, mapping);
     //final Runnable proxiedRefresher = myCopiesRefreshProxy.proxyRefresher(refresher);
 
-    final RequestsMerger requestsMerger = new RequestsMerger(refresher);
+    final RequestsMerger requestsMerger = new RequestsMerger(refresher, project);
     ((MyVeryRefresh) myCopiesRefresh).setRequestMerger(requestsMerger);
   }
 

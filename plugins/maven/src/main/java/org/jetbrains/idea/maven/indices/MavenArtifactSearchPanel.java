@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleColoredComponent;
@@ -8,8 +9,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import javax.swing.*;
@@ -35,14 +36,15 @@ public class MavenArtifactSearchPanel extends JPanel {
   private JTextField mySearchField;
   private Tree myResultList;
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+  private final Alarm myAlarm;
 
-  public MavenArtifactSearchPanel(Project project, String initialText, boolean classMode, Listener listener) {
+  public MavenArtifactSearchPanel(Project project, String initialText, boolean classMode, Listener listener, Disposable parent) {
     myProject = project;
     myClassMode = classMode;
     myListener = listener;
 
     initComponents(initialText);
+    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD,parent);
   }
 
   public JTextField getSearchField() {
