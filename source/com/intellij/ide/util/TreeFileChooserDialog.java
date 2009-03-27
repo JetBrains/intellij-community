@@ -183,7 +183,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
     new TreeSpeedSearch(myTree);
 
-    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane = new TabbedPaneWrapper(getDisposable());
 
     final JPanel dummyPanel = new JPanel(new BorderLayout());
     String name = null;

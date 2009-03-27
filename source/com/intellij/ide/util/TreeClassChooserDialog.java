@@ -185,7 +185,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
 
     new TreeSpeedSearch(myTree);
 
-    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane = new TabbedPaneWrapper(getDisposable());
 
     final JPanel dummyPanel = new JPanel(new BorderLayout());
     String name = null;
