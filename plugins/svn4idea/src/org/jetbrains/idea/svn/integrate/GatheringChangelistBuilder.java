@@ -3,10 +3,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangelistBuilder;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.update.UpdatedFilesReverseSide;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -97,6 +94,9 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   }
 
   public void processLockedFolder(final VirtualFile file) {
+  }
+
+  public void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock) {
   }
 
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {

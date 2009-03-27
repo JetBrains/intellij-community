@@ -107,8 +107,6 @@ public class SvnVcs extends AbstractVcs {
   private final static Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
-  private final Map<String, SVNStatusHolder> myStatuses = new SoftHashMap<String, SVNStatusHolder>();
-  private final Map<String, SVNInfoHolder> myInfos = new SoftHashMap<String, SVNInfoHolder>();
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
 
   private final SvnConfiguration myConfiguration;
@@ -532,57 +530,6 @@ public class SvnVcs extends AbstractVcs {
     return mySvnDiffProvider;
   }
 
-  @Nullable
-  public SVNStatusHolder getCachedStatus(VirtualFile vFile) {
-    if (vFile == null) {
-      return null;
-    }
-    SVNStatusHolder value = myStatuses.get(keyForVf(vFile));
-    File file = new File(vFile.getPath());
-    File entriesFile = getEntriesFile(file);
-    File lockFile = new File(entriesFile.getParentFile(), SvnUtil.LOCK_FILE_NAME);
-    // value 0 for modified time also returned for not existing file
-    if (value != null && (value.getEntriesTimestamp() == entriesFile.lastModified()) && (value.getEntriesTimestamp() != 0) &&
-        value.getFileTimestamp() == vFile.getTimeStamp() && value.isLocked() == lockFile.exists()) {
-      return value;
-    }
-    return null;
-  }
-
-  public void cacheStatus(VirtualFile vFile, SVNStatus status) {
-    if (vFile == null) {
-      return;
-    }
-    File file = new File(vFile.getPath());
-    File entriesFile = getEntriesFile(file);
-    myStatuses.put(keyForVf(vFile), new SVNStatusHolder(entriesFile.lastModified(), vFile.getTimeStamp(), status));
-  }
-
-  @Nullable
-  public SVNInfoHolder getCachedInfo(VirtualFile vFile) {
-    if (vFile == null) {
-      return null;
-    }
-
-    SVNInfoHolder value = myInfos.get(keyForVf(vFile));
-    File file = new File(vFile.getPath());
-    File entriesFile = getEntriesFile(file);
-    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
-        value.getFileTimestamp() == vFile.getTimeStamp()) {
-      return value;
-    }
-    return null;
-  }
-
-  public void cacheInfo(VirtualFile vFile, SVNInfo info) {
-    if (vFile == null) {
-      return;
-    }
-    File file = new File(vFile.getPath());
-    File entriesFile = getEntriesFile(file);
-    myInfos.put(keyForVf(vFile), new SVNInfoHolder(entriesFile.lastModified(), vFile.getTimeStamp(), info));
-  }
-
   private Trinity<Long, Long, Long> getTimestampForPropertiesChange(final File ioFile, final boolean isDir) {
     final File dir = isDir ? ioFile : ioFile.getParentFile();
     final String relPath = SVNAdminUtil.getPropPath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
@@ -625,35 +572,11 @@ public class SvnVcs extends AbstractVcs {
     return propValue;
   }
 
-  @Nullable
-  public SVNStatus getStatusWithCaching(final VirtualFile file) {
-    SVNStatusHolder statusHolder = getCachedStatus(file);
-    if (statusHolder != null) {
-      return statusHolder.getStatus();
-    }
-    try {
-      final SVNStatus status = createStatusClient().doStatus(new File(file.getPath()), false);
-      cacheStatus(file, status);
-      return status;
-    }
-    catch (SVNException e) {
-      cacheStatus(file, null);
-    }
-    return null;
-  }
-
   public boolean fileExistsInVcs(FilePath path) {
     File file = path.getIOFile();
     SVNStatus status;
     try {
-      SVNStatusHolder statusValue = getCachedStatus(path.getVirtualFile());
-      if (statusValue != null) {
-        status = statusValue.getStatus();
-      }
-      else {
-        status = createStatusClient().doStatus(file, false);
-        cacheStatus(path.getVirtualFile(), status);
-      }
+      status = createStatusClient().doStatus(file, false);
       if (status != null) {
         final SVNStatusType statusType = status.getContentsStatus();
         if (statusType == SVNStatusType.STATUS_ADDED) {
@@ -671,25 +594,8 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public boolean fileIsUnderVcs(FilePath path) {
-    File file = path.getIOFile();
-    SVNStatus status;
-    try {
-      SVNStatusHolder statusValue = getCachedStatus(path.getVirtualFile());
-      if (statusValue != null) {
-        status = statusValue.getStatus();
-      }
-      else {
-        status = createStatusClient().doStatus(file, false);
-        cacheStatus(path.getVirtualFile(), status);
-      }
-      return status != null && !(status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
-                                 status.getContentsStatus() == SVNStatusType.STATUS_IGNORED ||
-                                 status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED);
-    }
-    catch (SVNException e) {
-      //
-    }
-    return false;
+    final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
+    return (! SvnStatusUtil.isIgnoredInAnySense(clManager, path.getVirtualFile())) && (! clManager.isUnversioned(path.getVirtualFile()));
   }
 
   private static File getEntriesFile(File file) {
@@ -713,28 +619,6 @@ public class SvnVcs extends AbstractVcs {
     catch (SVNException e) {
       return null;
     }
-  }
-
-  @Nullable
-  public SVNInfo getInfoWithCaching(final VirtualFile file) {
-    SVNInfo info;
-    SVNInfoHolder infoValue = getCachedInfo(file);
-    if (infoValue != null) {
-      info = infoValue.getInfo();
-    } else {
-      try {
-        SVNWCClient wcClient = new SVNWCClient(getSvnAuthenticationManager(), getSvnOptions());
-        info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
-        if (info == null || info.getRepositoryRootURL() == null) {
-          info = wcClient.doInfo(new File(file.getPath()), SVNRevision.HEAD);
-        }
-      }
-      catch (SVNException e) {
-        info = null;
-      }
-      cacheInfo(file, info);
-    }
-    return info;
   }
 
   public static class SVNStatusHolder {

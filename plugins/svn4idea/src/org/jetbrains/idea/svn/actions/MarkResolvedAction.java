@@ -37,12 +37,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
 import org.tmatesoft.svn.core.SVNException;
@@ -63,39 +65,11 @@ public class MarkResolvedAction extends BasicAction {
 
   protected boolean isEnabled(Project project, @NotNull SvnVcs vcs, VirtualFile file) {
     if (file.isDirectory()) {
-      SVNInfo info = null;
-      try {
-        SvnVcs.SVNInfoHolder infoValue = vcs.getCachedInfo(file);
-        if (infoValue != null) {
-          return infoValue.getInfo() != null;
-        } else {
-          SVNWCClient wcClient = vcs.createWCClient();
-          info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
-        }
-      }
-      catch (SVNException e) {
-        //
-      }
-      vcs.cacheInfo(file, info);
-      return info != null;
+      return SvnStatusUtil.isUnderControl(project, file);
     }
-    SVNStatus status;
-    try {
-      SvnVcs.SVNStatusHolder statusValue = vcs.getCachedStatus(file);
-      if (statusValue != null) {
-        status = statusValue.getStatus();
-      } else {
-        SVNStatusClient stClient = vcs.createStatusClient();
-        status = stClient.doStatus(new File(file.getPath()), false);
-        vcs.cacheStatus(file, status);
-      }
-      return status != null &&
-             (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED ||
-              status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED);
-    }
-    catch (SVNException e) {
-      return false;
-    }
+    final FileStatus fStatus = FileStatusManager.getInstance(project).getStatus(file);
+    return FileStatus.MERGED_WITH_CONFLICTS.equals(fStatus) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(fStatus) ||
+           FileStatus.MERGED_WITH_PROPERTY_CONFLICTS.equals(fStatus);
   }
 
   protected boolean needsFiles() {

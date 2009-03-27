@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.dialogs.CopyDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -68,21 +69,7 @@ public class CopyAction extends BasicAction {
     if (file == null) {
       return false;
     }
-    SVNInfo info;
-    SvnVcs.SVNInfoHolder infoValue = vcs.getCachedInfo(file);
-    if (infoValue != null) {
-      info = infoValue.getInfo();
-    } else {
-      try {
-        SVNWCClient wcClient = new SVNWCClient(vcs.getSvnAuthenticationManager(), vcs.getSvnOptions());
-        info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
-      }
-      catch (SVNException e) {
-        info = null;
-      }
-      vcs.cacheInfo(file, info);
-    }
-    return info != null && info.getURL() != null;
+    return SvnStatusUtil.isUnderControl(project, file);
   }
 
   protected boolean needsFiles() {

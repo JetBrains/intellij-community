@@ -41,10 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.*;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,34 +56,8 @@ public class ResolveAction extends BasicAction {
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
     if (file.isDirectory()) return true;
-    SVNStatus status;
-    try {
-      SvnVcs.SVNStatusHolder statusValue = vcs.getCachedStatus(file);
-      if (statusValue != null) {
-        status = statusValue.getStatus();
-      } else {
-        SVNStatusClient stClient = vcs.createStatusClient();
-        status = stClient.doStatus(new File(file.getPath()), false);
-      }
-      if (status != null && status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED) {
-        SVNInfo info;
-        SvnVcs.SVNInfoHolder infoValue = vcs.getCachedInfo(file);
-        if (infoValue != null) {
-          info = infoValue.getInfo();
-        } else {
-          SVNWCClient wcClient = vcs.createWCClient();
-          info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
-          vcs.cacheInfo(file, info);
-        }
-        return info != null && info.getConflictNewFile() != null &&
-               info.getConflictOldFile() != null &&
-               info.getConflictWrkFile() != null;
-      }
-    }
-    catch (SVNException e) {
-      //
-    }
-    return false;
+    final FileStatus fStatus = FileStatusManager.getInstance(project).getStatus(file);
+    return FileStatus.MERGED_WITH_CONFLICTS.equals(fStatus) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(fStatus);
   }
 
   protected boolean needsFiles() {

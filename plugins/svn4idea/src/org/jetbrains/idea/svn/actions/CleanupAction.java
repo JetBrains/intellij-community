@@ -39,13 +39,8 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-
-import java.io.File;
 
 public class CleanupAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
@@ -57,21 +52,7 @@ public class CleanupAction extends BasicAction {
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    SVNInfo info;
-    SvnVcs.SVNInfoHolder infoValue = vcs.getCachedInfo(file);
-    if (infoValue != null) {
-      info = infoValue.getInfo();
-    } else {
-      try {
-        SVNWCClient wcClient = new SVNWCClient(vcs.getSvnAuthenticationManager(), vcs.getSvnOptions());
-        info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
-      }
-      catch (SVNException e) {
-        info = null;
-      }
-      vcs.cacheInfo(file, info);
-    }
-    return info != null && info.getURL() != null;
+    return SvnStatusUtil.isUnderControl(project, file);
   }
 
   protected boolean needsFiles() {

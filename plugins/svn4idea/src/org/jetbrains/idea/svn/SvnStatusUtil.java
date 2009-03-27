@@ -1,6 +1,10 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -23,6 +27,25 @@ public class SvnStatusUtil {
     return (status == null) || (ourCanBeAdded.contains(status.getContentsStatus()));
   }
 
+  public static boolean isUnderControl(final Project project, final VirtualFile file) {
+    final ChangeListManager clManager = ChangeListManager.getInstance(project);
+    return (! isIgnoredInAnySense(clManager, file)) && (! clManager.isUnversioned(file));
+  }
+
+  public static boolean isAdded(final Project project, final VirtualFile file) {
+    final FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
+    return FileStatus.ADDED.equals(status);
+  }
+
+  public static boolean isExplicitlyLocked(final Project project, final VirtualFile file) {
+    final ChangeListManager clManager = ChangeListManager.getInstance(project);
+    return ((ChangeListManagerImpl) clManager).isLogicallyLocked(file);
+  }
+
+  public static boolean isIgnoredInAnySense(final ChangeListManager clManager, final VirtualFile file) {
+    return clManager.isIgnoredFile(file) || FileStatus.IGNORED.equals(clManager.getStatus(file));
+  }
+
   public static boolean isValidUnderControlParent(final SVNStatus status) {
     if (status == null) {
       return false;
@@ -34,15 +57,7 @@ public class SvnStatusUtil {
   }
 
   public static boolean fileCanBeAdded(final Project project, final VirtualFile file) {
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-    final SVNStatus status = vcs.getStatusWithCaching(file);
-    if (! notUnderControl(status)) {
-      return false;
-    }
-    /*final VirtualFile parent = file.getParent();
-    if ((parent == null) || (! isValidUnderControlParent(vcs.getStatusWithCaching(parent)))) {
-      return false;
-    }*/
-    return true;
+    final ChangeListManager clManager = ChangeListManager.getInstance(project);
+    return isIgnoredInAnySense(clManager, file) || clManager.isUnversioned(file);
   }
 }

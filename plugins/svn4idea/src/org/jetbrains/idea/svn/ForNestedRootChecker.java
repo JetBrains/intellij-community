@@ -42,7 +42,7 @@ public class ForNestedRootChecker {
 
     @Nullable
     public Real createReal(final VirtualFile file, final VirtualFile vcsRoot) {
-      final SVNInfo info = myVcs.getInfoWithCaching(file);
+      final SVNInfo info = myVcs.getInfo(file);
       if (info == null || info.getRepositoryRootURL() == null || info.getURL() == null) {
         return null;
       }
@@ -59,15 +59,6 @@ public class ForNestedRootChecker {
 
     public boolean replaceWithReal(final Real real, final Node supposed) {
       return supposed.getUrl() == null || ((supposed.getUrl() != null) && (! supposed.getUrl().equals(real.getUrl())));
-    }
-
-    @Nullable
-    public String getReal(final VirtualFile file) {
-      SVNInfo info = myVcs.getInfoWithCaching(file);
-      if (info == null) {
-        return null;
-      }
-      return info.getURL().toString();
     }
 
     @Nullable

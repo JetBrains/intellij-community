@@ -2,14 +2,15 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RelocateDialog;
 import org.tmatesoft.svn.core.SVNException;
@@ -28,8 +29,7 @@ public class RelocateAction extends BasicAction {
   }
 
   protected boolean isEnabled(final Project project, final SvnVcs vcs, final VirtualFile file) {
-    SVNInfo info = vcs.getInfoWithCaching(file);
-    return info != null && info.getURL() != null;
+    return SvnStatusUtil.isUnderControl(project, file);
   }
 
   protected boolean needsFiles() {
@@ -37,7 +37,7 @@ public class RelocateAction extends BasicAction {
   }
 
   protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context) throws VcsException {
-    SVNInfo info = activeVcs.getInfoWithCaching(file);
+    SVNInfo info = activeVcs.getInfo(file);
     assert info != null;
     RelocateDialog dlg = new RelocateDialog(project, info.getURL());
     dlg.show();

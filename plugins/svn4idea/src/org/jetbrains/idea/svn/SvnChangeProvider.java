@@ -358,6 +358,16 @@ public class SvnChangeProvider implements ChangeProvider {
       // external to wc
       return;
     }
+    if (status.getRemoteLock() != null) {
+      final SVNLock lock = status.getRemoteLock();
+      context.getBuilder().processLogicallyLockedFolder(filePath.getVirtualFile(),
+            new LogicalLock(false, lock.getOwner(), lock.getComment(), lock.getCreationDate(), lock.getExpirationDate()));
+    }
+    if (status.getLocalLock() != null) {
+      final SVNLock lock = status.getLocalLock();
+      context.getBuilder().processLogicallyLockedFolder(filePath.getVirtualFile(),
+            new LogicalLock(true, lock.getOwner(), lock.getComment(), lock.getCreationDate(), lock.getExpirationDate()));
+    }
     if (filePath.isDirectory() && status.isLocked()) {
       context.getBuilder().processLockedFolder(filePath.getVirtualFile());
     }

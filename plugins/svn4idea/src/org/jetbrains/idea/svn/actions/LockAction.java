@@ -35,17 +35,12 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 
@@ -62,22 +57,7 @@ public class LockAction extends BasicAction {
     if (file == null || file.isDirectory()) {
       return false;
     }
-    SVNInfo info;
-    SvnVcs.SVNInfoHolder infoValue = vcs.getCachedInfo(file);
-    if (infoValue != null) {
-      info = infoValue.getInfo();
-    } else {
-      try {
-        SVNWCClient wcClient = new SVNWCClient(vcs.getSvnAuthenticationManager(), vcs.getSvnOptions());
-        info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
-      }
-      catch (SVNException e) {
-        info = null;
-      }
-      vcs.cacheInfo(file, info);
-    }
-    return info != null && info.getKind() == SVNNodeKind.FILE &&
-           info.getLock() == null && info.getSchedule() == null;
+    return SvnStatusUtil.isUnderControl(project, file) && (! SvnStatusUtil.isAdded(project, file)) && (! SvnStatusUtil.isExplicitlyLocked(project, file));
   }
 
   protected boolean needsFiles() {
