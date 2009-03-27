@@ -190,7 +190,8 @@ public class RenameUtil {
       writableMetaData.setName(newName);
     }
     else {
-      ((PsiNamedElement)namedElement).setName(newName);
+      PsiElement namedElementAfterRename = ((PsiNamedElement)namedElement).setName(newName);
+      if (namedElementAfterRename != null) namedElement = namedElementAfterRename;
     }
 
     if (hasBindables) {

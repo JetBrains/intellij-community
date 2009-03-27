@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -37,7 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class GlobalSearchScope extends SearchScope {
+public abstract class GlobalSearchScope extends SearchScope implements VirtualFileFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
 
   public abstract boolean contains(VirtualFile file);
@@ -57,6 +58,10 @@ public abstract class GlobalSearchScope extends SearchScope {
 
   public boolean isSearchInModuleContent(@NotNull Module aModule, boolean testSources) {
     return isSearchInModuleContent(aModule);
+  }
+
+  public boolean accept(VirtualFile file) {
+    return contains(file);
   }
 
   public abstract boolean isSearchInLibraries();

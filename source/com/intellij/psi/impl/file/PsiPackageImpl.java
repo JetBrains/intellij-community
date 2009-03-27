@@ -36,6 +36,7 @@ import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.refactoring.rename.RenameUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +127,8 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     for (PsiDirectory dir : dirs) {
       dir.setName(name);
     }
-    return this;
+    String nameAfterRename = RenameUtil.getQualifiedNameAfterRename(getQualifiedName(), name);
+    return JavaPsiFacade.getInstance(getProject()).findPackage(nameAfterRename);
   }
 
   public void checkSetName(@NotNull String name) throws IncorrectOperationException {
