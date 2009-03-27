@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
@@ -52,6 +53,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   @NonNls private static final String CODETEMPLATES_DIR = "code";
   @NonNls private static final String J2EE_TEMPLATES_DIR = "j2ee";
 
+  private final String myName;
   @NonNls private final String myDefaultTemplatesDir;
   @NonNls private final String myTemplatesDir;
   private MyTemplates myTemplates;
@@ -65,7 +67,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   private VirtualFile myDefaultDescription;
 
   private static VirtualFile[] ourTopDirs;
-  private final VirtualFileManager myVirtualFileManager;
   private final FileTypeManagerEx myTypeManager;
   @NonNls private static final String ELEMENT_DELETED_TEMPLATES = "deleted_templates";
   @NonNls private static final String ELEMENT_DELETED_INCLUDES = "deleted_includes";
@@ -76,20 +77,20 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_REFORMAT = "reformat";
 
-  private final Map<String, String> myLocalizedTemplateNames = new HashMap<String, String>();
   private final Object LOCK = new Object();
   private static final Object TOP_DIRS_LOCK = new Object();
 
+  private final FileTemplateManagerImpl[] myChildren;
   public static FileTemplateManagerImpl getInstance() {
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
   }
 
-  public FileTemplateManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull FileTypeManagerEx typeManager, MessageBus bus) {
-    this(".", TEMPLATES_DIR, virtualFileManager, typeManager,
-         new FileTemplateManagerImpl(INTERNAL_DIR, TEMPLATES_DIR + File.separator + INTERNAL_DIR, virtualFileManager, typeManager, null, null, null, null),
-         new FileTemplateManagerImpl(INCLUDES_DIR, TEMPLATES_DIR + File.separator + INCLUDES_DIR, virtualFileManager, typeManager, null, null, null, null),
-         new FileTemplateManagerImpl(CODETEMPLATES_DIR, TEMPLATES_DIR + File.separator + CODETEMPLATES_DIR, virtualFileManager, typeManager, null, null, null, null),
-         new FileTemplateManagerImpl(J2EE_TEMPLATES_DIR, TEMPLATES_DIR + File.separator + J2EE_TEMPLATES_DIR, virtualFileManager, typeManager, null, null, null, null));
+  public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager, @NotNull MessageBus bus) {
+    this("Default", ".", TEMPLATES_DIR, typeManager,
+         new FileTemplateManagerImpl("Internal", INTERNAL_DIR, TEMPLATES_DIR + File.separator + INTERNAL_DIR, typeManager, null, null, null, null),
+         new FileTemplateManagerImpl("Includes", INCLUDES_DIR, TEMPLATES_DIR + File.separator + INCLUDES_DIR, typeManager, null, null, null, null),
+         new FileTemplateManagerImpl("Code", CODETEMPLATES_DIR, TEMPLATES_DIR + File.separator + CODETEMPLATES_DIR, typeManager, null, null, null, null),
+         new FileTemplateManagerImpl("J2EE", J2EE_TEMPLATES_DIR, TEMPLATES_DIR + File.separator + J2EE_TEMPLATES_DIR, typeManager, null, null, null, null));
 
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       public void before(final List<? extends VFileEvent> events) {
@@ -101,20 +102,23 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     });
   }
 
-  private FileTemplateManagerImpl(@NotNull @NonNls String defaultTemplatesDir,
+  private FileTemplateManagerImpl(@NotNull @NonNls String name,
+                                  @NotNull @NonNls String defaultTemplatesDir,
                                   @NotNull @NonNls String templatesDir,
-                                  @NotNull VirtualFileManager virtualFileManager,
-                                  @NotNull FileTypeManagerEx fileTypeManagerEx, FileTemplateManagerImpl internalTemplatesManager,
-                                  FileTemplateManagerImpl patternsManager, FileTemplateManagerImpl codeTemplatesManager,
+                                  @NotNull FileTypeManagerEx fileTypeManagerEx,
+                                  FileTemplateManagerImpl internalTemplatesManager,
+                                  FileTemplateManagerImpl patternsManager,
+                                  FileTemplateManagerImpl codeTemplatesManager,
                                   FileTemplateManagerImpl j2eeTemplatesManager) {
+    myName = name;
     myDefaultTemplatesDir = defaultTemplatesDir;
     myTemplatesDir = templatesDir;
-    myVirtualFileManager = virtualFileManager;
     myTypeManager = fileTypeManagerEx;
     myInternalTemplatesManager = internalTemplatesManager;
     myPatternsManager = patternsManager;
     myCodeTemplatesManager = codeTemplatesManager;
     myJ2eeTemplatesManager = j2eeTemplatesManager;
+    myChildren = internalTemplatesManager == null ? new FileTemplateManagerImpl[0] : new FileTemplateManagerImpl[]{internalTemplatesManager,patternsManager,codeTemplatesManager,j2eeTemplatesManager};
   }
 
   @NotNull
@@ -346,17 +350,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
           }
         }
       }
-      if (myInternalTemplatesManager != null) {
-        myInternalTemplatesManager.saveTemplates();
-      }
-      if (myPatternsManager != null) {
-        myPatternsManager.saveTemplates();
-      }
-      if (myCodeTemplatesManager != null) {
-        myCodeTemplatesManager.saveTemplates();
-      }
-      if (myJ2eeTemplatesManager != null) {
-        myJ2eeTemplatesManager.saveTemplates();
+      for (FileTemplateManagerImpl child : myChildren) {
+        child.saveTemplates();
       }
     }
     catch (IOException e) {
@@ -555,11 +550,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   @NotNull
   public String localizeInternalTemplateName(@NotNull final FileTemplate template) {
-    String localizedName = myLocalizedTemplateNames.get(template.getName());
-    if (localizedName == null) {
-      localizedName = myLocalizedTemplateNames.get(template.getName() + "." + template.getExtension());
-    }
-    return localizedName != null ? localizedName : template.getName();
+    return template.getName();
   }
 
   @NonNls
@@ -569,16 +560,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   public FileTemplate getCodeTemplate(@NotNull @NonNls String templateName) {
-    return getTemplateFromManager(templateName, myCodeTemplatesManager, "Code");
+    return getTemplateFromManager(templateName, myCodeTemplatesManager);
   }
 
   public FileTemplate getJ2eeTemplate(@NotNull @NonNls String templateName) {
-    return getTemplateFromManager(templateName, myJ2eeTemplatesManager, "J2EE");
+    return getTemplateFromManager(templateName, myJ2eeTemplatesManager);
   }
 
-  private FileTemplate getTemplateFromManager(@NotNull @NonNls String templateName,
-                                              @NotNull FileTemplateManagerImpl templatesManager,
-                                              @NotNull @NonNls String templateType) {
+  private FileTemplate getTemplateFromManager(@NotNull @NonNls String templateName, @NotNull FileTemplateManagerImpl templatesManager) {
     String name = templateName;
     String extension = myTypeManager.getExtension(name);
     if (extension.length() > 0) {
@@ -593,19 +582,26 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     else {
       if (ApplicationManager.getApplication().isUnitTestMode() && templateName.endsWith("ForTest")) return null;
 
-      VirtualFile[] defaultTemplates = templatesManager.getDefaultTemplates();
-      @NonNls String message =
-        "Unable to find " + templateType + " Template '" + templateName + "'! Default " + templateType + " Templates are: ";
-      for (int i = 0; i < defaultTemplates.length; i++) {
-        VirtualFile defaultTemplate = defaultTemplates[i];
-        if (i != 0) {
-          message += ", ";
-        }
-        message += defaultTemplate.getPresentableUrl();
-      }
+      String message = templateNotFound(templateName, templatesManager);
       LOG.error(message);
     }
     return null;
+  }
+
+  private static String templateNotFound(String templateName, FileTemplateManagerImpl templatesManager) {
+    VirtualFile[] defaultTemplates = templatesManager.getDefaultTemplates();
+    @NonNls String message =
+      "Unable to find template '" + templateName + "' in " + templatesManager +
+      "\n" +
+      "Default templates are: ";
+    for (int i = 0; i < defaultTemplates.length; i++) {
+      VirtualFile defaultTemplate = defaultTemplates[i];
+      if (i != 0) {
+        message += ", ";
+      }
+      message += defaultTemplate.getPresentableUrl();
+    }
+    return message;
   }
 
 
@@ -669,8 +665,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   private static VirtualFile getDefaultFromManager(@NotNull @NonNls String name,
                                                    @NotNull @NonNls String extension,
-                                                   FileTemplateManagerImpl manager) {
-    if (manager == null) return null;
+                                                   @NotNull FileTemplateManagerImpl manager) {
     VirtualFile[] files = manager.getDefaultTemplates();
     for (VirtualFile file : files) {
       if (DEFAULT_TEMPLATE_EXTENSION.equals(file.getExtension())) {
@@ -684,12 +679,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   public VirtualFile getDefaultTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension) {
     VirtualFile result;
     if ((result = getDefaultFromManager(name, extension, this)) != null) return result;
-    if ((result = getDefaultFromManager(name, extension, myInternalTemplatesManager)) != null) return result;
-    if ((result = getDefaultFromManager(name, extension, myPatternsManager)) != null) return result;
-    if ((result = getDefaultFromManager(name, extension, myJ2eeTemplatesManager)) != null) return result;
-    return getDefaultFromManager(name, extension, myCodeTemplatesManager);
+    for (FileTemplateManagerImpl child : myChildren) {
+      if ((result = getDefaultFromManager(name, extension, child)) != null) return result;
+    }
+    return null;
   }
 
+  @NotNull
   public FileTemplate getDefaultTemplate(@NotNull @NonNls String name) {
     @NonNls String extension = myTypeManager.getExtension(name);
     String nameWithoutExtension = StringUtil.trimEnd(name, "." + extension);
@@ -697,7 +693,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       extension = "java";
     }
     VirtualFile file = getDefaultTemplate(nameWithoutExtension, extension);
-    if (file == null) return null;
+    if (file == null) {
+      String message = "";
+      for (FileTemplateManagerImpl child : ArrayUtil.append(myChildren,this)) {
+        message += templateNotFound(name, child) + "\n";
+      }
+      LOG.error(message);
+      return null;
+    }
     return new FileTemplateImpl(file, nameWithoutExtension, extension);
   }
 
@@ -937,5 +940,11 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
 
+  }
+
+  @NonNls
+  @Override
+  public String toString() {
+    return myName + " file template manager";
   }
 }
