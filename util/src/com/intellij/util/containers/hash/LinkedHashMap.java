@@ -98,7 +98,9 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     final int hash = HashUtil.hash(key);
     final int index = hash % table.length;
     Entry<K, V> e = table[index];
-    if (e == null) return null;
+    if (e == null) {
+      return null;
+    }
     K entryKey;
     if (e.keyHash == hash && ((entryKey = e.key) == key || entryKey.equals(key))) {
       table[index] = e.hashNext;
@@ -107,7 +109,9 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
       for (; ;) {
         final Entry<K, V> last = e;
         e = e.hashNext;
-        if (e == null) return null;
+        if (e == null) {
+          return null;
+        }
         if (e.keyHash == hash && ((entryKey = e.key) == key || entryKey.equals(key))) {
           last.hashNext = e.hashNext;
           break;
@@ -183,6 +187,10 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     else {
       back = prev;
     }
+
+    // Help GC
+    e.previous = null;
+    e.next = null;
   }
 
   private void rehash(int capacity) {
