@@ -69,10 +69,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
     return true;
   }
 
-  public boolean isToShowWhenChildIsShown() {
-    return true;
-  }
-
   public boolean isVisible() {
     return true;
   }
@@ -135,7 +131,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
 
   }
 
-  private Configurable createExcludesWrapper(final ExcludedEntriesConfigurable excludes) {
+  private static Configurable createExcludesWrapper(final ExcludedEntriesConfigurable excludes) {
     return new Configurable(){
         @Nls
         public String getDisplayName() {
@@ -154,7 +150,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
           return excludes.createComponent();
         }
 
-        public void apply() throws ConfigurationException {
+        public void apply() {
           excludes.apply();
         }
 

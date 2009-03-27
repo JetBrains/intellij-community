@@ -185,8 +185,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       final BackendCompiler JIKES_BACKEND = new JikesCompiler(myProject);
       myRegisteredCompilers.add(JIKES_BACKEND);
 
-      final EclipseCompiler eclipse = new EclipseCompiler(myProject);
-      if (eclipse.isInitialized()) {
+      if (EclipseCompiler.isInitialized()) {
+        final EclipseCompiler eclipse = new EclipseCompiler(myProject);
         myRegisteredCompilers.add(eclipse);
       }
       //try {

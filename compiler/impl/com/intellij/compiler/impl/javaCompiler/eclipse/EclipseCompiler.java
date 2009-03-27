@@ -42,14 +42,14 @@ public class EclipseCompiler extends ExternalCompiler {
         return name.startsWith("org.eclipse.jdt.core") && name.endsWith(".jar");
       }
     });
-    return jars.length == 0 ? jars[0].getPath() : dir + "/org.eclipse.jdt.core*.jar";
+    return jars.length == 0 ? dir + "/org.eclipse.jdt.core*.jar" : jars[0].getPath();
   }
 
   public EclipseCompiler(Project project) {
     myProject = project;
   }
 
-  public boolean isInitialized() {
+  public static boolean isInitialized() {
     File file = new File(PATH_TO_COMPILER_JAR);
     return file.exists();
   }
@@ -102,7 +102,7 @@ public class EclipseCompiler extends ExternalCompiler {
     throws IOException {
 
     final ArrayList<String> commandLine = new ArrayList<String>();
-    final IOException[] ex = new IOException[]{null};
+    final IOException[] ex = {null};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
