@@ -84,10 +84,11 @@ public class Alarm implements Disposable {
     this(ThreadToUse.SWING_THREAD, parentDisposable);
   }
 
-  public Alarm(ThreadToUse threadToUse) {
+  public Alarm(@NotNull ThreadToUse threadToUse) {
     this(threadToUse, null);
+    LOG.assertTrue(threadToUse != ThreadToUse.OWN_THREAD, "You must provide parent Disposable for ThreadToUse.OWN_THREAD Alarm");
   }
-  public Alarm(ThreadToUse threadToUse, Disposable parentDisposable) {
+  public Alarm(@NotNull ThreadToUse threadToUse, Disposable parentDisposable) {
     myThreadToUse = threadToUse;
     myExecutorService = threadToUse == ThreadToUse.OWN_THREAD ? Executors.newSingleThreadExecutor(THREAD_FACTORY_OWN) : ourSharedExecutorService;
 

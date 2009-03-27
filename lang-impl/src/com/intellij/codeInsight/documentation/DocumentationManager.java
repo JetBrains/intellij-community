@@ -51,7 +51,7 @@ public class DocumentationManager {
   private final Project myProject;
   private Editor myEditor = null;
   private ParameterInfoController myParameterInfoController;
-  private final Alarm myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+  private final Alarm myUpdateDocAlarm;
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
@@ -95,6 +95,7 @@ public class DocumentationManager {
       }
     };
     myActionManagerEx.addAnActionListener(actionListener, project);
+    myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD,myProject);
   }
 
   public JBPopup showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {

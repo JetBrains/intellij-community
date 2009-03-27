@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -55,7 +56,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
   };
 
-  private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+  private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.OWN_THREAD, ApplicationManager.getApplication());
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
   private final Queue<Document> myChangedDocuments = new ConcurrentLinkedQueue<Document>();
   private final Runnable myEncodingUpdateRunnable = new Runnable() {
