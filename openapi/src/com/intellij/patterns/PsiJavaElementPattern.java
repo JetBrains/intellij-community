@@ -32,7 +32,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
           PsiJavaPatterns.psiAnnotation().qName(annotationQualifiedName))));
   }
 
-  public Self insideAnnotationParam(final ElementPattern annotationQualifiedName, @NonNls final String parameterName) {
+  public Self insideAnnotationParam(final ElementPattern<String> annotationQualifiedName, @NonNls final String parameterName) {
     return inside(true,
       PsiJavaPatterns.psiNameValuePair().withName(parameterName).withParent(
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(
