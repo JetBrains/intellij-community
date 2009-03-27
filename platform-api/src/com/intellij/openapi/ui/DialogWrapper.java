@@ -111,6 +111,8 @@ public abstract class DialogWrapper {
   };
   private ErrorText myErrorText;
 
+  private Alarm myErrorTextAlarm = new Alarm();
+
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
    *
@@ -416,11 +418,6 @@ public abstract class DialogWrapper {
    */
   protected void dispose() {
     ensureEventDispatchThread();
-    if (myButtons != null) {
-      for (JButton button : myButtons) {
-        button.setAction(null); // avoid memory leak via KeyboardManager
-      }
-    }
     final JRootPane rootPane = getRootPane();
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
@@ -1053,10 +1050,15 @@ public abstract class DialogWrapper {
     }
   }
 
-  protected final void setErrorText(@Nullable String text) {
-    myErrorText.setError(text);
-    updateHeightForErrorText();
-    myErrorText.repaint();
+  protected final void setErrorText(@Nullable final String text) {
+    myErrorTextAlarm.cancelAllRequests();
+    myErrorTextAlarm.addRequest(new Runnable() {
+      public void run() {
+        myErrorText.setError(text);
+        updateHeightForErrorText();
+        myErrorText.repaint();
+      }
+    }, 300);
   }
 
   private void updateHeightForErrorText() {
@@ -1074,26 +1076,30 @@ public abstract class DialogWrapper {
 
     private ErrorText() {
       setLayout(new BorderLayout());
-      setBorder(null);
       UIUtil.removeQuaquaVisualMarginsIn(this);
       add(myLabel, BorderLayout.CENTER);
     }
 
     public void setError(String text) {
+      final Dimension oldSize = getPreferredSize();
+
       if (text == null) {
         myLabel.setText("");
         myLabel.setIcon(null);
+        setVisible(false);
         setBorder(null);
       }
       else {
         myLabel.setText("<html><body><font color=red><left>" + text + "</left></b></font></body></html>");
         myLabel.setIcon(IconLoader.getIcon("/actions/lightning.png"));
-        myLabel.setBorder(new EmptyBorder(2, 2, 0, 0));
-        if (myPrefSize == null) {
-          myPrefSize = myLabel.getPreferredSize();
-        }
+        myLabel.setBorder(new EmptyBorder(4, 10, 0, 2));
+        setVisible(true);
       }
-      revalidate();
+
+      final Dimension size = getPreferredSize();
+      if (oldSize.height < size.height) {
+        revalidate();
+      }
     }
 
     public Dimension getPreferredSize() {
