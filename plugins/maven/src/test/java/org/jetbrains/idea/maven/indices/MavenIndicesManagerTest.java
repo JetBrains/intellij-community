@@ -87,7 +87,8 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
     myIndicesFixture.getIndicesManager().addArchetype(new ArchetypeInfo("myGroup",
                                                                         "myArtifact",
                                                                         "666",
-                                                                        "custom.repository"));
+                                                                        null,
+                                                                        null));
 
     assertArchetypeExists("myGroup:myArtifact:666");
 

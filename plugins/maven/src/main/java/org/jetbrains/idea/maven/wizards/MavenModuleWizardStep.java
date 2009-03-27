@@ -4,6 +4,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
@@ -21,6 +22,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,7 +37,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final String ARCHETYPE_ARTIFACT_ID_KEY = "MavenModuleWizard.archetypeArtifactIdKey";
   private static final String ARCHETYPE_GROUP_ID_KEY = "MavenModuleWizard.archetypeGroupIdKey";
   private static final String ARCHETYPE_VERSION_KEY = "MavenModuleWizard.archetypeVersionKey";
-  private static final String ARCHETYPE_REPOSITORY_KEY = "MavenModuleWizard.archetypeRepositoryKey";
 
   private final Project myProjectOrNull;
   private final MavenModuleBuilder myBuilder;
@@ -63,6 +65,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private JCheckBox myUseArchetypeCheckBox;
   private JButton myAddArchetypeButton;
   private Tree myArchetypesTree;
+  private JScrollPane myArchetypeDescriptionScrollPane;
+  private JTextArea myArchetypeDescriptionField;
 
   public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder) {
     myProjectOrNull = project;
@@ -107,6 +111,13 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myArchetypesTree.setRootVisible(false);
     myArchetypesTree.setShowsRootHandles(true);
     myArchetypesTree.setCellRenderer(new MyRenderer());
+    myArchetypesTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+    myArchetypesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        updateArchetypeDescription();
+      }
+    });
 
     new TreeSpeedSearch(myArchetypesTree, new Convertor<TreePath, String>() {
       public String convert(TreePath path) {
@@ -124,6 +135,9 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
         }
       }
     });
+
+    myArchetypeDescriptionField.setEditable(false);
+    myArchetypeDescriptionField.setBackground(UIUtil.getPanelBackground());
   }
 
   @Override
@@ -162,12 +176,11 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     String archGroupId = getSavedValue(ARCHETYPE_GROUP_ID_KEY, null);
     String archArtifactId = getSavedValue(ARCHETYPE_ARTIFACT_ID_KEY, null);
     String archVersion = getSavedValue(ARCHETYPE_VERSION_KEY, null);
-    String archRepository = getSavedValue(ARCHETYPE_REPOSITORY_KEY, null);
     if (archGroupId == null || archArtifactId == null || archVersion == null) {
       myBuilder.setArchetype(null);
     }
     else {
-      myBuilder.setArchetype(new ArchetypeInfo(archGroupId, archArtifactId, archVersion, archRepository));
+      myBuilder.setArchetype(new ArchetypeInfo(archGroupId, archArtifactId, archVersion, null, null));
     }
   }
 
@@ -176,11 +189,9 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     saveValue(INHERIT_VERSION_KEY, myInheritVersionCheckBox.isSelected());
 
     ArchetypeInfo arch = getSelectedArchetype();
-    if (arch == null) arch = new ArchetypeInfo(null, null, null, null);
-    saveValue(ARCHETYPE_GROUP_ID_KEY, arch.groupId);
-    saveValue(ARCHETYPE_ARTIFACT_ID_KEY, arch.artifactId);
-    saveValue(ARCHETYPE_VERSION_KEY, arch.version);
-    saveValue(ARCHETYPE_REPOSITORY_KEY, arch.repository);
+    saveValue(ARCHETYPE_GROUP_ID_KEY, arch == null ? null : arch.groupId);
+    saveValue(ARCHETYPE_ARTIFACT_ID_KEY, arch == null ? null : arch.artifactId);
+    saveValue(ARCHETYPE_VERSION_KEY, arch == null ? null : arch.version);
   }
 
   private boolean getSavedValue(String key, boolean defaultValue) {
@@ -239,6 +250,20 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
         TreeUtil.selectPath(myArchetypesTree, path, true);
       }
     }
+
+    updateArchetypeDescription();
+  }
+
+  private void updateArchetypeDescription() {
+    ArchetypeInfo sel = getSelectedArchetype();
+    String desc = sel == null ? null : sel.description;
+    if (StringUtil.isEmptyOrSpaces(desc)) {
+      myArchetypeDescriptionScrollPane.setVisible(false);
+    } else {
+      myArchetypeDescriptionScrollPane.setVisible(true);
+      myArchetypeDescriptionField.setText(desc);
+    }
+    myMainPanel.revalidate();
   }
 
   private TreePath findNodePath(ArchetypeInfo object, TreeModel model, Object parent) {
@@ -340,7 +365,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     boolean archetypesEnabled = myUseArchetypeCheckBox.isSelected();
     myAddArchetypeButton.setEnabled(archetypesEnabled);
     myArchetypesTree.setEnabled(archetypesEnabled);
-    myArchetypesTree.setBackground(archetypesEnabled ? UIUtil.getListBackground() : UIUtil.getComboBoxDisabledBackground());
+    myArchetypesTree.setBackground(archetypesEnabled ? UIUtil.getListBackground() : UIUtil.getPanelBackground());
   }
 
   private String formatProjectString(MavenProjectModel project) {

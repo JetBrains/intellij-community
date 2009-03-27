@@ -68,6 +68,7 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
     return new ArchetypeInfo(myGroupIdField.getText(),
                              myArtifactIdField.getText(),
                              myVersionField.getText(),
-                             myRepositoryField.getText());
+                             myRepositoryField.getText(),
+                             null);
   }
 }

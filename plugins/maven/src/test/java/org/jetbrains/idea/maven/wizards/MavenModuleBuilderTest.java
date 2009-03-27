@@ -51,7 +51,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   public void testCreatingFromArchetype() throws Exception {
-    setArchetype(new ArchetypeInfo("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null));
+    setArchetype(new ArchetypeInfo("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
     MavenId id = new MavenId("org.foo", "module", "1.0");
     createNewModule(id);
 
@@ -144,7 +144,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setParentProject(myProjectPom);
     setInheritedOptions(true, true);
-    setArchetype(new ArchetypeInfo("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null));
+    setArchetype(new ArchetypeInfo("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
     assertEquals("<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +

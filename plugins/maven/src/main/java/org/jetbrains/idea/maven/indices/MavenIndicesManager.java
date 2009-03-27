@@ -41,6 +41,7 @@ public class MavenIndicesManager implements ApplicationComponent {
   private static final String ELEMENT_ARTIFACT_ID = "artifactId";
   private static final String ELEMENT_VERSION = "version";
   private static final String ELEMENT_REPOSITORY = "repository";
+  private static final String ELEMENT_DESCRIPTION = "description";
 
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
@@ -304,12 +305,13 @@ public class MavenIndicesManager implements ApplicationComponent {
         String artifactId = each.getAttributeValue(ELEMENT_ARTIFACT_ID);
         String version = each.getAttributeValue(ELEMENT_VERSION);
         String repository = each.getAttributeValue(ELEMENT_REPOSITORY);
+        String description = each.getAttributeValue(ELEMENT_DESCRIPTION);
 
         if (StringUtil.isEmptyOrSpaces(groupId)
           || StringUtil.isEmptyOrSpaces(artifactId)
           || StringUtil.isEmptyOrSpaces(version)) continue;
 
-        result.add(new ArchetypeInfo(groupId, artifactId, version, repository));
+        result.add(new ArchetypeInfo(groupId, artifactId, version, repository, description));
       }
 
       myUserArchetypes = result;
@@ -331,6 +333,9 @@ public class MavenIndicesManager implements ApplicationComponent {
       childElement.setAttribute(ELEMENT_VERSION, each.version);
       if (each.repository != null) {
         childElement.setAttribute(ELEMENT_REPOSITORY, each.repository);
+      }
+      if (each.description != null) {
+        childElement.setAttribute(ELEMENT_DESCRIPTION, each.description);
       }
       root.addContent(childElement);
     }
