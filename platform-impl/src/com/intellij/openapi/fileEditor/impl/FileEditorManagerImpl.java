@@ -1299,6 +1299,10 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     return getOpenFiles();
   }
 
+  public void openFiles() {
+    getSplitters().openFiles();
+  }
+
   protected void queueUpdateFile(final VirtualFile file) {
     myQueue.queue(new Update(file) {
       public void run() {
