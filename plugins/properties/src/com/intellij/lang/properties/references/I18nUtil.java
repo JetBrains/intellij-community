@@ -11,11 +11,12 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -70,40 +71,5 @@ public class I18nUtil {
       }
     }
     return paths;
-  }
-
-  /**
-   * Returns number of different parameters in i18n message. For example, for string
-   * <i>Class {0} info: Class {0} extends class {1} and implements interface {2}</i>
-   * number of parameters is 3.
-   *
-   * @param expression i18n literal
-   * @return number of parameters
-   */
-  public static int getPropertyValueParamsMaxCount(final PsiLiteralExpression expression) {
-    int maxCount = -1;
-    for (PsiReference reference : expression.getReferences()) {
-      if (reference instanceof PsiPolyVariantReference) {
-        for (ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(false)) {
-          if (result.isValidResult() && result.getElement() instanceof Property) {
-            String value = ((Property)result.getElement()).getValue();
-            MessageFormat format;
-            try {
-              format = new MessageFormat(value);
-            }
-            catch (Exception e) {
-              continue; // ignore syntax error
-            }
-            try {
-              int count = format.getFormatsByArgumentIndex().length;
-              maxCount = Math.max(maxCount, count);
-            }
-            catch (IllegalArgumentException ignored) {
-            }
-          }
-        }
-      }
-    }
-    return maxCount;
   }
 }

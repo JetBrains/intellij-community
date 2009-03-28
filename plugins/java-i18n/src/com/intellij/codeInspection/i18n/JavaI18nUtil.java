@@ -5,10 +5,11 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
-import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
+import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -22,6 +23,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -213,5 +215,40 @@ public class JavaI18nUtil extends I18nUtil {
 
       }
     }, context, null);
+  }
+
+  /**
+   * Returns number of different parameters in i18n message. For example, for string
+   * <i>Class {0} info: Class {0} extends class {1} and implements interface {2}</i>
+   * number of parameters is 3.
+   *
+   * @param expression i18n literal
+   * @return number of parameters
+   */
+  public static int getPropertyValueParamsMaxCount(final PsiLiteralExpression expression) {
+    int maxCount = -1;
+    for (PsiReference reference : expression.getReferences()) {
+      if (reference instanceof PsiPolyVariantReference) {
+        for (ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(false)) {
+          if (result.isValidResult() && result.getElement() instanceof Property) {
+            String value = ((Property)result.getElement()).getValue();
+            MessageFormat format;
+            try {
+              format = new MessageFormat(value);
+            }
+            catch (Exception e) {
+              continue; // ignore syntax error
+            }
+            try {
+              int count = format.getFormatsByArgumentIndex().length;
+              maxCount = Math.max(maxCount, count);
+            }
+            catch (IllegalArgumentException ignored) {
+            }
+          }
+        }
+      }
+    }
+    return maxCount;
   }
 }

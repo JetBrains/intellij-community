@@ -7,7 +7,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ConstantExpressionEvaluator;
@@ -41,7 +40,7 @@ public class PropertyFoldingBuilder implements FoldingBuilder {
               parent instanceof PsiExpressionList &&
               ((PsiExpressionList)parent).getExpressions()[0] == expression) {
             final PsiExpressionList expressions = (PsiExpressionList)parent;
-            final int count = I18nUtil.getPropertyValueParamsMaxCount(expression);
+            final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(expression);
             final PsiExpression[] args = expressions.getExpressions();
             if (args.length == 1 + count && parent.getParent() instanceof PsiMethodCallExpression) {
               boolean ok = true;
@@ -86,7 +85,7 @@ public class PropertyFoldingBuilder implements FoldingBuilder {
     if (args.length > 0
         && args[0] instanceof PsiLiteralExpression
         && isI18nProperty((PsiLiteralExpression)args[0])) {
-      final int count = I18nUtil.getPropertyValueParamsMaxCount((PsiLiteralExpression)args[0]);
+      final int count = JavaI18nUtil.getPropertyValueParamsMaxCount((PsiLiteralExpression)args[0]);
       if (args.length == 1 + count) {
         String text = getI18nMessage((PsiLiteralExpression)args[0]);
         for (int i = 1; i < count + 1; i++) {

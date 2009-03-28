@@ -11,7 +11,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -168,7 +167,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
         annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
         if (! JavaI18nUtil.mustBePropertyKey(expression, annotationParams)) return;
 
-        final int paramsCount = I18nUtil.getPropertyValueParamsMaxCount(expression);
+        final int paramsCount = JavaI18nUtil.getPropertyValueParamsMaxCount(expression);
         if (paramsCount == -1) return;
 
         final PsiExpressionList expressions = (PsiExpressionList)expression.getParent();
