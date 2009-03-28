@@ -9,6 +9,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -22,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(
@@ -114,12 +115,15 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       for (UsageInfo usageInfo : usages) {
         final MyUsageInfo info = (MyUsageInfo)usageInfo;
         final PsiElement element = myElementsToMove[info.myIndex];
-        final PsiElement usageElement = info.getElement();
-        if (usageElement != null) {
-          final PsiFile usageFile = usageElement.getContainingFile();
-          final PsiFile psiFile = usageFile.getViewProvider().getPsi(usageFile.getViewProvider().getBaseLanguage());
-          if (psiFile != null && psiFile.equals(element)) {
-            continue;  // already processed in MoveFilesOrDirectoriesUtil.doMoveFile
+        
+        if (info.getReference() instanceof FileReference) {
+          final PsiElement usageElement = info.getElement();
+          if (usageElement != null) {
+            final PsiFile usageFile = usageElement.getContainingFile();
+            final PsiFile psiFile = usageFile.getViewProvider().getPsi(usageFile.getViewProvider().getBaseLanguage());
+            if (psiFile != null && psiFile.equals(element)) {
+              continue;  // already processed in MoveFilesOrDirectoriesUtil.doMoveFile
+            }
           }
         }
 

@@ -2,7 +2,6 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.idea.IdeaTestUtil;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +24,7 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
 
   protected void doTest(PerformAction performAction) throws Exception {
     String testName = getTestName(true);
-    String root = PathManagerEx.getTestDataPath() + getTestRoot() + testName;
+    String root = getTestDataPath() + getTestRoot() + testName;
 
     String rootBefore = root + "/before";
     VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete, false);
