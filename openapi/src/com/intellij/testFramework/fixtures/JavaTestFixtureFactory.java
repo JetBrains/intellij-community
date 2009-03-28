@@ -20,5 +20,7 @@ public abstract class JavaTestFixtureFactory {
     return ourInstance;
   }
 
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
+
   public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
 }

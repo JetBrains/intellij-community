@@ -4,14 +4,14 @@
  */
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -25,7 +25,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
   protected void setUp() throws Exception {
     super.setUp();
 
-    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = JavaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
 
     myFixture.setUp();

@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
  * This is to be provided by IDEA and not by plugin authors.
  *
  * @see IdeaTestFixtureFactory#createFixtureBuilder() 
- * @see IdeaTestFixtureFactory#createLightFixtureBuilder()
+ * @see JavaTestFixtureFactory#createLightFixtureBuilder()
  */
 public interface IdeaProjectTestFixture extends IdeaTestFixture {
   Project getProject();

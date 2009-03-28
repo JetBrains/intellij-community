@@ -15,6 +15,10 @@ public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
     return new JavaCodeInsightTestFixtureImpl(projectFixture);
   }
 
+  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
+    return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl());
+  }
+
   public static class MyJavaModuleFixtureBuilderImpl extends JavaModuleFixtureBuilderImpl {
     public MyJavaModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> testFixtureBuilder) {
       super(testFixtureBuilder);

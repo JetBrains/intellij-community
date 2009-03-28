@@ -40,10 +40,6 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     }
   }
 
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
-    return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl());
-  }
-
   public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
     return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(), myFixtureBuilderProviders);
   }

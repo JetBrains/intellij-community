@@ -47,8 +47,6 @@ public abstract class IdeaTestFixtureFactory {
 
   public abstract void registerFixtureBuilder(Class<? extends ModuleFixtureBuilder> aClass, String implClassName);
 
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
-
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder();
 
   public abstract CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);

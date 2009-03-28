@@ -15,7 +15,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import junit.framework.TestCase;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 public class InspectionProfileTest extends TestCase {
-  private final IdeaTestFixture myFixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture();
+  private final IdeaTestFixture myFixture = JavaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture();
 
   protected void setUp() throws Exception {
     super.setUp();

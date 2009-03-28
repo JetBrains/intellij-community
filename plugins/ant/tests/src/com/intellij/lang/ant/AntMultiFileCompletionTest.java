@@ -13,7 +13,7 @@ package com.intellij.lang.ant;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import junit.framework.TestCase;
 
@@ -55,7 +55,7 @@ public class AntMultiFileCompletionTest extends TestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+    final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createLightFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
     myFixture.setTestDataPath(getTestDataPath());
