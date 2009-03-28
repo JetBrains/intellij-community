@@ -6,18 +6,24 @@ package com.intellij.testFramework;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
@@ -39,6 +45,8 @@ public abstract class UsefulTestCase extends TestCase {
   };
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static CodeStyleSettings myOldCodeStyleSettings;
+
+  protected static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
 
   static {
     try {
@@ -62,7 +70,7 @@ public abstract class UsefulTestCase extends TestCase {
       final CodeInsightSettings settings = CodeInsightSettings.getInstance();
       Element newS = new Element("temp");
       settings.writeExternal(newS);
-      assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
+      Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
 
 
       CodeStyleSettings codeStyleSettings = getCurrentCodeStyleSettings();
@@ -116,8 +124,8 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> void assertOrderedEquals(final String errorMsg, Collection<T> actual, T... expected) {
-    assertNotNull(actual);
-    assertNotNull(expected);
+    Assert.assertNotNull(actual);
+    Assert.assertNotNull(expected);
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
@@ -127,13 +135,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static <T> void assertOrderedEquals(final String erroMsg, final Collection<? extends T> actual, final Collection<? extends T> expected) {
     if (!new ArrayList<T>(actual).equals(new ArrayList<T>(expected))) {
-      assertEquals(erroMsg, toString(expected), toString(actual));
-      fail();
+      Assert.assertEquals(erroMsg, toString(expected), toString(actual));
+      Assert.fail();
     }
   }
 
   public static <T> void assertOrderedCollection(T[] collection, Consumer<T>... checkers) {
-    assertNotNull(collection);
+    Assert.assertNotNull(collection);
     assertOrderedCollection(Arrays.asList(collection), checkers);
   }
 
@@ -143,8 +151,8 @@ public abstract class UsefulTestCase extends TestCase {
   
   public static <T> void assertSameElements(Collection<? extends T> collection, T... expected) {
     if (collection.size() != expected.length || !new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(collection))) {
-      assertEquals(toString(expected, "\n"), toString(collection, "\n"));
-      assertEquals(new HashSet<T>(Arrays.asList(expected)), new HashSet<T>(collection));
+      Assert.assertEquals(toString(expected, "\n"), toString(collection, "\n"));
+      Assert.assertEquals(new HashSet<T>(Arrays.asList(expected)), new HashSet<T>(collection));
     }
 
   }
@@ -173,9 +181,9 @@ public abstract class UsefulTestCase extends TestCase {
   }
   
   public static <T> void assertOrderedCollection(Collection<? extends T> collection, Consumer<T>... checkers) {
-    assertNotNull(collection);
+    Assert.assertNotNull(collection);
     if (collection.size() != checkers.length) {
-      fail(toString(collection));
+      Assert.fail(toString(collection));
     }
     int i = 0;
     for (final T actual : collection) {
@@ -195,9 +203,9 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> void assertUnorderedCollection(Collection<? extends T> collection, Consumer<T>... checkers) {
-    assertNotNull(collection);
+    Assert.assertNotNull(collection);
     if (collection.size() != checkers.length) {
-      fail(toString(collection));
+      Assert.fail(toString(collection));
     }
     Set<Consumer<T>> checkerSet = new HashSet<Consumer<T>>(Arrays.asList(checkers));
     int i = 0;
@@ -217,7 +225,7 @@ public abstract class UsefulTestCase extends TestCase {
       }
       if (flag) {
         lastError.printStackTrace();
-        fail("Incorrect element(" + i + "): " + actual);
+        Assert.fail("Incorrect element(" + i + "): " + actual);
       }
       i++;
     }
@@ -234,20 +242,20 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> T assertInstanceOf(Object o, Class<T> aClass) {
-    assertNotNull(o);
-    assertTrue(o.getClass().getName(), aClass.isInstance(o));
+    Assert.assertNotNull(o);
+    Assert.assertTrue(o.getClass().getName(), aClass.isInstance(o));
     return (T)o;
   }
 
   public static <T> T assertOneElement(Collection<T> collection) {
-    assertNotNull(collection);
-    assertEquals(toString(collection), 1, collection.size());
+    Assert.assertNotNull(collection);
+    Assert.assertEquals(toString(collection), 1, collection.size());
     return collection.iterator().next();
   }
 
   public static <T> T assertOneElement(T[] ts) {
-    assertNotNull(ts);
-    assertEquals(1, ts.length);
+    Assert.assertNotNull(ts);
+    Assert.assertEquals(1, ts.length);
     return ts[0];
   }
 
@@ -282,12 +290,12 @@ public abstract class UsefulTestCase extends TestCase {
   public static void assertSameLines(String expected, String actual) {
     String expectedText = StringUtil.convertLineSeparators(expected.trim());
     String actualText = StringUtil.convertLineSeparators(actual.trim());
-    assertEquals(expectedText, actualText);
+    Assert.assertEquals(expectedText, actualText);
   }
 
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
-    assertTrue(name.startsWith("test"));
+    Assert.assertTrue(name.startsWith("test"));
     name = name.substring("test".length());
     if (lowercaseFirstLetter) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
@@ -348,11 +356,33 @@ public abstract class UsefulTestCase extends TestCase {
 
     String newString = JDOMUtil.writeElement(newS, "\n");
     String oldString = JDOMUtil.writeElement(oldS, "\n");
-    assertEquals(message, oldString, newString);
+    Assert.assertEquals(message, oldString, newString);
   }
 
   public boolean isPerformanceTest() {
     String name = getName();
     return name != null && name.contains("Performance") || getClass().getName().contains("Performance");
+  }
+
+  public static void doPostponedFormatting(final Project project) {
+    try {
+      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+            }
+          });
+        }
+      });
+    }
+    catch (Throwable e) {
+      // Way to go...
+    }
+  }
+
+  public static void markProjectCreationPlace(Project project, String place) {
+    project.putUserData(CREATION_PLACE, place);
   }
 }

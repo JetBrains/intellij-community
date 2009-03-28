@@ -141,6 +141,17 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     }
   }
 
+  @Override
+  protected void setupRootModel(ModifiableRootModel rootModel) {
+    if (myOutputPath != null) {
+      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myOutputPath);
+      assert virtualFile != null : "cannot find output path: " + myOutputPath;
+      rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(virtualFile);
+      rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
+      rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
+    }
+  }
+
   protected void libraryCreated(Library library, Module module) {}
 
   private static class Lib {

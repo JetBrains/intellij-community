@@ -7,7 +7,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -21,8 +20,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
-import org.junit.Assert;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -245,13 +244,7 @@ public class ExpectedHighlightingData {
           type = (HighlightInfoType)field.get(null);
         }
         catch (Exception e) {
-          try {
-            Field javaField = JavaHighlightInfoTypes.class.getField(typeString);
-            type = (HighlightInfoType)javaField.get(null);
-          }
-          catch (Exception e2) {
-            LOG.error(e);
-          }
+          // ignore
         }
         LOG.assertTrue(type != null, "Wrong highlight type: " + typeString);
       }

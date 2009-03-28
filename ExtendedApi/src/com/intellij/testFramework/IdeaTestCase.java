@@ -34,7 +34,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,7 +50,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.PatchedWeakReference;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -155,7 +153,6 @@ import java.util.HashSet;
     return myModule;
   }
 
-  private static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
   protected void setUpProject() throws Exception {
     myProjectManager = ProjectManagerEx.getInstanceEx();
     assertNotNull("Cannot instantiate ProjectManager component", myProjectManager);
@@ -177,9 +174,6 @@ import java.util.HashSet;
 
   private void markProjectCreationPlace() {
     markProjectCreationPlace(myProject, getClass().getName() + "." + getName());
-  }
-  public static void markProjectCreationPlace(Project project, String place) {
-    project.putUserData(CREATION_PLACE, place);
   }
 
   protected void runStartupActivities() {
@@ -245,24 +239,6 @@ import java.util.HashSet;
     }
     PatchedWeakReference.clearAll();
     resetAllFields();
-  }
-
-  public static void doPostponedFormatting(final Project project) {
-    try {
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              PsiDocumentManager.getInstance(project).commitAllDocuments();
-              PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-            }
-          });
-        }
-      });
-    }
-    catch (Throwable e) {
-      // Way to go...
-    }
   }
 
   protected void tearDown() throws Exception {

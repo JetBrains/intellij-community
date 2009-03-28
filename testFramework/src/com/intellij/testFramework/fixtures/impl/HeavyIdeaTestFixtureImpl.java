@@ -30,13 +30,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -80,7 +79,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    IdeaTestCase.doPostponedFormatting(myProject);
+    doPostponedFormatting(myProject);
 
     Disposer.dispose(myProject);
 
@@ -114,7 +113,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
-    IdeaTestCase.markProjectCreationPlace(myProject, buffer.toString());
+    markProjectCreationPlace(myProject, buffer.toString());
 
     for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().setUp();
@@ -158,17 +157,6 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       }
     }
   }
-
-  public PsiClass addClass(@NonNls String rootPath, @NotNull @NonNls final String classText) throws IOException {
-    final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
-    final String qName = aClass.getQualifiedName();
-    assert qName != null;
-
-    final PsiFile psiFile = addFileToProject(rootPath, qName.replace('.', '/') + ".java", classText);
-
-    return ((PsiJavaFile)psiFile).getClasses()[0];
-  }
-
 
   public PsiFile addFileToProject(@NonNls String rootPath, @NonNls final String relativePath, @NonNls final String fileText) throws IOException {
     final VirtualFile[] roots = ModuleRootManager.getInstance(getModule()).getSourceRoots();

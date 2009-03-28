@@ -65,7 +65,6 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -117,8 +116,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
 
   private final TempDirTestFixture myTempDirFixture = new TempDirTestFixtureImpl();
-  private final IdeaProjectTestFixture myProjectFixture;
-  private final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
+  protected final IdeaProjectTestFixture myProjectFixture;
+  protected final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
   @NonNls private static final String XXX = "XXX";
   private PsiElement myFileContext;
 
@@ -355,7 +354,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     checkResultByFile(fileAfter);
   }
 
-  private void assertInitialized() {
+  protected void assertInitialized() {
     Assert.assertNotNull("setUp() hasn't been called", myPsiManager);
   }
 
@@ -445,11 +444,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     EditorActionManager actionManager = EditorActionManager.getInstance();
     actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
-  }
-
-  public JavaPsiFacade getJavaFacade() {
-    assertInitialized();
-    return JavaPsiFacade.getInstance(getProject());
   }
 
   public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) throws Throwable {
@@ -550,13 +544,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return ContainerUtil.concat(result.values());
   }
 
-
-  public PsiClass addClass(@NotNull @NonNls final String classText) throws IOException {
-    assertInitialized();
-    final PsiClass psiClass = ((HeavyIdeaTestFixture)myProjectFixture).addClass(getTempDirPath(), classText);
-    myAddedClasses.add(psiClass.getContainingFile().getVirtualFile());
-    return psiClass;
-  }
 
   public PsiFile addFileToProject(@NonNls final String relativePath, @NonNls final String fileText) throws IOException {
     assertInitialized();
@@ -921,7 +908,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     };
 
-    JavaPsiFacadeEx.getInstanceEx(project).setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
+    ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(javaFilesFilter);
 
     final long start = System.currentTimeMillis();
 //    ProfilingUtil.startCPUProfiling();
@@ -929,7 +916,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     duration.set(System.currentTimeMillis() - start);
 //    ProfilingUtil.captureCPUSnapshot("testing");
 
-    JavaPsiFacadeEx.getInstanceEx(project).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     data.checkResult(infos, myEditor.getDocument().getText());
   }

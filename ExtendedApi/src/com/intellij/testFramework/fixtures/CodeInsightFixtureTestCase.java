@@ -10,10 +10,10 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
@@ -31,14 +31,14 @@ import java.util.Arrays;
  * @author peter
  */
 public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
-  protected CodeInsightTestFixture myFixture;
+  protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
 
   protected void setUp() throws Exception {
     super.setUp();
 
     final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
+    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     final JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
     tuneFixture(moduleFixtureBuilder);    

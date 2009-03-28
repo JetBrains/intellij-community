@@ -26,7 +26,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -267,8 +270,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Nullable
   GutterIconRenderer findGutter(@NonNls String filePath) throws Throwable;
 
-  PsiClass addClass(@NotNull @NonNls final String classText) throws IOException;
-
   PsiManager getPsiManager();
 
   @Nullable LookupElement[] completeBasic();
@@ -287,8 +288,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void type(final char c);
 
   void performEditorAction(String actionId);
-
-  JavaPsiFacade getJavaFacade();
 
   int configureFromTempProjectFile(String filePath) throws IOException;
 

@@ -4,12 +4,12 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -20,7 +20,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.ide.highlighter.ModuleFileType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -37,7 +36,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected final List<String> mySourceRoots = new ArrayList<String>();
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
   private T myModuleFixture;
-  private String myOutputPath;
+  protected String myOutputPath;
 
   public ModuleFixtureBuilderImpl(@NotNull final ModuleType moduleType, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     myModuleType = moduleType;
@@ -119,14 +118,11 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
         }
       }
     }
-    if (myOutputPath != null) {
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myOutputPath);
-      assert virtualFile != null : "cannot find output path: " + myOutputPath;
-      rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(virtualFile);
-      rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
-      rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
-    }
+    setupRootModel(rootModel);
     rootModel.commit();
+  }
+
+  protected void setupRootModel(ModifiableRootModel rootModel) {
   }
 
 }

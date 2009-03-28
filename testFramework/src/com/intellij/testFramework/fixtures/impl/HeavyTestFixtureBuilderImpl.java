@@ -4,14 +4,10 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.util.Pair;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.pico.IdeaPicoContainer;
 import org.picocontainer.MutablePicoContainer;
@@ -40,15 +36,6 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
         return (ModuleFixtureBuilder)container.getComponentInstanceOfType(implClass);
       }
     };
-  }
-
-  public TestFixtureBuilder<IdeaProjectTestFixture> setModuleType(final ModuleType moduleType) {
-    new Pair<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>>(JavaModuleFixtureBuilder.class, JavaModuleFixtureBuilderImpl.class);
-    throw new UnsupportedOperationException("setModuleType is not implemented in : " + getClass());
-  }
-
-  public TestFixtureBuilder<IdeaProjectTestFixture> setLanguageLevel(final LanguageLevel languageLevel) {
-    throw new UnsupportedOperationException("setLanguageLevel is not implemented in : " + getClass());
   }
 
   public HeavyIdeaTestFixture getFixture() {
