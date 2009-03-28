@@ -37,7 +37,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
@@ -143,7 +143,7 @@ public class AbstractVcsTestCase {
   protected void initProject(final File clientRoot) throws Exception {
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
     myProjectFixture = testFixtureBuilder.getFixture();
-    testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
+    testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
     myProjectFixture.setUp();
     myProject = myProjectFixture.getProject();
 

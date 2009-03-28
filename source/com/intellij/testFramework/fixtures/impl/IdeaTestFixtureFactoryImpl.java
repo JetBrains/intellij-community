@@ -4,6 +4,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 
@@ -21,6 +22,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     new HashMap<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>>();
 
   public IdeaTestFixtureFactoryImpl() {
+    registerFixtureBuilder(EmptyModuleFixtureBuilder.class, MyEmptyModuleFixtureBuilderImpl.class);
   }
 
   public final <T extends ModuleFixtureBuilder> void registerFixtureBuilder(Class<T> aClass, Class<? extends T> implClass) {
@@ -52,5 +54,15 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
 
   public TempDirTestFixture createTempDirTestFixture() {
     return new TempDirTestFixtureImpl();
+  }
+
+  public static class MyEmptyModuleFixtureBuilderImpl extends EmptyModuleFixtureBuilderImpl {
+    public MyEmptyModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> testFixtureBuilder) {
+      super(testFixtureBuilder);
+    }
+
+    protected ModuleFixture instantiateFixture() {
+      return new ModuleFixtureImpl(this);
+    }
   }
 }
