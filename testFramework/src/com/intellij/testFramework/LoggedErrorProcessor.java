@@ -31,12 +31,13 @@
  */
 package com.intellij.testFramework;
 
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NonNls;
 
 @NonNls public abstract class LoggedErrorProcessor {
 
   private final static LoggedErrorProcessor DEFAULT = new LoggedErrorProcessor() {
-    public void processError(String message, Throwable t, String[] details, org.apache.log4j.Logger logger) {
+    public void processError(String message, Throwable t, String[] details, Logger logger) {
       logger.info(message, t);
       System.err.println("ERROR: " + message);
       t.printStackTrace();
@@ -65,5 +66,5 @@ import org.jetbrains.annotations.NonNls;
     ourInstance = DEFAULT;
   }
 
-  public abstract void processError(String message, Throwable t, String[] details, org.apache.log4j.Logger logger);
+  public abstract void processError(String message, Throwable t, String[] details, Logger logger);
 }
