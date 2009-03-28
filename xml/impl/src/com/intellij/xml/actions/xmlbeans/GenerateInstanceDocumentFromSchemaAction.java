@@ -1,10 +1,7 @@
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -34,7 +31,7 @@ import java.util.List;
 public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    final VirtualFile file = DataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
     final boolean enabled = isAcceptableFile(file);
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
@@ -43,8 +40,8 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
-    final VirtualFile file = DataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 
     final GenerateInstanceDocumentFromSchemaDialog dialog = new GenerateInstanceDocumentFromSchemaDialog(project, file);
     dialog.setOkAction(new Runnable() {
