@@ -1,13 +1,11 @@
 package org.intellij.lang.xpath;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-
+import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.openapi.application.PathManager;
-
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import junit.framework.TestCase;
+import org.intellij.lang.xpath.xslt.XsltSupport;
 
 /*
 * Created by IntelliJ IDEA.
@@ -19,7 +17,7 @@ public abstract class TestBase extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+        final JavaTestFixtureFactory factory = JavaTestFixtureFactory.getFixtureFactory();
         final IdeaProjectTestFixture fixture = factory.createLightFixtureBuilder().getFixture();
         myFixture = factory.createCodeInsightFixture(fixture);
 
