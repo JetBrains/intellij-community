@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="boot" />
-    <orderEntry type="module" module-name="ExtendedApi" />
   </component>
 </module>
 
