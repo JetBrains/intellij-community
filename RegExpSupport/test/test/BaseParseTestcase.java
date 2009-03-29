@@ -22,7 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import junit.framework.TestCase;
 import org.intellij.lang.regexp.RegExpFileType;
@@ -32,8 +32,8 @@ public abstract class BaseParseTestcase extends TestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createLightFixtureBuilder();
+    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+    final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder();
 
     myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
     myFixture.setTestDataPath(getTestDataPath());
