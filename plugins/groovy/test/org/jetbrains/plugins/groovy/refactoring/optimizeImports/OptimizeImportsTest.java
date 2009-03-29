@@ -20,7 +20,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 /**
  * @author ilyas
  */
-public class OptimizeImportsTest extends CodeInsightFixtureTestCase {
+public class OptimizeImportsTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addJdk(TestUtils.getMockJdkHome());

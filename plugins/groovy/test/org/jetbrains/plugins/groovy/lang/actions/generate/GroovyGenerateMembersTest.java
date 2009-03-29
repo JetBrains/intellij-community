@@ -4,15 +4,15 @@
  */
 package org.jetbrains.plugins.groovy.lang.actions.generate;
 
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.actions.generate.constructors.ConstructorGenerateHandler;
 
 /**
  * @author peter
  */
-public class GroovyGenerateMembersTest extends CodeInsightFixtureTestCase {
+public class GroovyGenerateMembersTest extends JavaCodeInsightFixtureTestCase {
 
   public void testConstructorAtOffset() throws Throwable {
     doTest();

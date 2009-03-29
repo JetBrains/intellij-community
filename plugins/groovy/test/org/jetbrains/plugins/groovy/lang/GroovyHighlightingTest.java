@@ -4,15 +4,15 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 import java.io.IOException;
 
 /**
  * @author peter
  */
-public class GroovyHighlightingTest extends CodeInsightFixtureTestCase {
+public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/highlighting/";

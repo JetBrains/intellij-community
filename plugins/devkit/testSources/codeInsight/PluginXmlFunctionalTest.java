@@ -7,8 +7,8 @@ package org.jetbrains.idea.devkit.codeInsight;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.idea.devkit.DevKitInspectionToolProvider;
 
@@ -17,7 +17,7 @@ import java.io.IOException;
 /**
  * @author peter
  */
-public class PluginXmlFunctionalTest extends CodeInsightFixtureTestCase {
+public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   private TempDirTestFixture myTempDirFixture;
 
   @Override

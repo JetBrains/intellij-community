@@ -2,7 +2,7 @@ package org.jetbrains.plugins.groovy.lang.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
@@ -20,7 +20,7 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 01.04.2008
  */                                  
-public class DynamicTest extends CodeInsightFixtureTestCase {
+public class DynamicTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

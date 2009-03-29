@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,7 +27,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
  * Time: 5:06:05 PM
  * To change this template use File | Settings | File Templates.
  */
-public class GroovyCompletionTest extends CodeInsightFixtureTestCase {
+public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/svnPlugins/groovy/testdata/groovy/completion/";
