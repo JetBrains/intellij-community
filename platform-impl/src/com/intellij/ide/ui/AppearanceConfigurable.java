@@ -111,8 +111,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.HIDE_TOOL_STRIPES = !myComponent.myShowToolStripesCheckBox.isSelected();
     update |= settings.SHOW_ICONS_IN_MENUS != myComponent.myCbDisplayIconsInMenu.isSelected();
     settings.SHOW_ICONS_IN_MENUS = myComponent.myCbDisplayIconsInMenu.isSelected();
-    update |= settings.ALWAYS_SHOW_WINDOW_BUTTONS != myComponent.myAlwaysShowWindowButtonsCheckBox.isSelected();
-    settings.ALWAYS_SHOW_WINDOW_BUTTONS = myComponent.myAlwaysShowWindowButtonsCheckBox.isSelected();
     update |= settings.SHOW_MEMORY_INDICATOR != myComponent.myShowMemoryIndicatorCheckBox.isSelected();
     settings.SHOW_MEMORY_INDICATOR = myComponent.myShowMemoryIndicatorCheckBox.isSelected();
     update |= settings.CYCLE_SCROLLING != myComponent.myCycleScrollingCheckBox.isSelected();
@@ -171,7 +169,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAnimateWindowsCheckBox.setSelected(settings.ANIMATE_WINDOWS);
     myComponent.myWindowShortcutsCheckBox.setSelected(settings.SHOW_WINDOW_SHORTCUTS);
     myComponent.myShowToolStripesCheckBox.setSelected(!settings.HIDE_TOOL_STRIPES);
-    myComponent.myAlwaysShowWindowButtonsCheckBox.setSelected(settings.ALWAYS_SHOW_WINDOW_BUTTONS);
     myComponent.myCbDisplayIconsInMenu.setSelected(settings.SHOW_ICONS_IN_MENUS);
     myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.SHOW_MEMORY_INDICATOR);
     myComponent.myCycleScrollingCheckBox.setSelected(settings.CYCLE_SCROLLING);
@@ -209,7 +206,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.ANIMATE_WINDOWS;
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.SHOW_WINDOW_SHORTCUTS;
     isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.HIDE_TOOL_STRIPES;
-    isModified |= myComponent.myAlwaysShowWindowButtonsCheckBox.isSelected() != settings.ALWAYS_SHOW_WINDOW_BUTTONS;
     isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.SHOW_ICONS_IN_MENUS;
     isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.SHOW_MEMORY_INDICATOR;
     isModified |= myComponent.myCycleScrollingCheckBox.isSelected() != settings.CYCLE_SCROLLING;
@@ -277,7 +273,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myAnimateWindowsCheckBox;
     private JCheckBox myWindowShortcutsCheckBox;
     private JCheckBox myShowToolStripesCheckBox;
-    private JCheckBox myAlwaysShowWindowButtonsCheckBox;
     private JCheckBox myShowMemoryIndicatorCheckBox;
     private JComboBox myLafComboBox;
     private JCheckBox myCycleScrollingCheckBox;
