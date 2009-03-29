@@ -164,6 +164,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
   private final MessageBusConnection myConnection;
+  private boolean myToolbarVisible = true;
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
@@ -232,6 +233,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void constructUi() {
     myActionGroupPanel = new JPanel();
+    myActionGroupPanel.setVisible(myToolbarVisible);
 
     myLabel = new JLabel("View as:");
     myLabel.setDisplayedMnemonic('a');
@@ -300,6 +302,13 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         }, ModalityState.NON_MODAL);
       }
     });
+  }
+
+  public void setToolbarVisible(boolean visible) {
+    myToolbarVisible = visible;
+    if (myActionGroupPanel != null) {
+      myActionGroupPanel.setVisible(myToolbarVisible);
+    }
   }
 
   public synchronized void addProjectPane(final AbstractProjectViewPane pane) {
