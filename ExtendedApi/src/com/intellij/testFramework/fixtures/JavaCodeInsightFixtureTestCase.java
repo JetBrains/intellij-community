@@ -30,7 +30,7 @@ import java.util.Arrays;
 /**
  * @author peter
  */
-public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
+public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
 

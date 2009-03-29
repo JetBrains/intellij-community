@@ -4,24 +4,24 @@
  */
 package com.intellij.testFramework.fixtures;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.application.Result;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.Function;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Arrays;
 
 /**
  * @author peter
  */
-public class InjectedLanguageFixtureTestCase extends CodeInsightFixtureTestCase {
+public class InjectedLanguageFixtureTestCase extends JavaCodeInsightFixtureTestCase {
   protected void checkCompletionVariants(final FileType fileType, final String text, final String... strings) throws Throwable {
     myFixture.configureByText(fileType, text.replaceAll("\\|", "<caret>"));
     tuneCompletionFile(myFixture.getFile());
