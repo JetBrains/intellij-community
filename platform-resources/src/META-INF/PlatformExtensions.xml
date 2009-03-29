@@ -130,9 +130,6 @@
 
   <applicationConfigurable implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable"/>
 
-  <!-- Scopes -->
-  <projectConfigurable implementation="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"/>
-
   <applicationService serviceInterface="com.intellij.psi.search.scope.packageSet.PackageSetFactory"
                       serviceImplementation="com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl"/>
   <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>

@@ -60,6 +60,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private final Project myProject;
 
   public static ScopeChooserConfigurable getInstance(Project project) {
+    // in platform, ScopeChooserConfigurable is registered as a service, not as a top-level configurable
+    Factory factory = ServiceManager.getService(project, Factory.class);
+    if (factory != null) {
+      return factory.getInstance();
+    }
     return ShowSettingsUtil.getInstance().findProjectConfigurable(project, ScopeChooserConfigurable.class);
   }
 
@@ -462,4 +467,18 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
+  // workaround: ScopeChooserConfigurable is a MasterDetailsComponent which is a PersistentStateComponent,
+  // but it doesn't have (and doesn't need) a @State annotation. so we get an exception if we load it as a service
+  // directly
+  public static class Factory {
+    private ScopeChooserConfigurable myConfigurable;
+
+    public Factory(Project project) {
+      myConfigurable = new ScopeChooserConfigurable(project);
+    }
+
+    public ScopeChooserConfigurable getInstance() {
+      return myConfigurable;
+    }
+  }
 }
