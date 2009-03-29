@@ -1,7 +1,6 @@
 package com.intellij.codeInspection.duplicatePropertyInspection;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorComposer;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
@@ -365,7 +364,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
+    return InspectionsBundle.message("group.names.internationalization.issues");
   }
 
   @NotNull
