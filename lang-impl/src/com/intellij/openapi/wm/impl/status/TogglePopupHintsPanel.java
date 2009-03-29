@@ -100,10 +100,11 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
         myHectorLabel.setIcon(INSPECTIONS_ICON);
         String text = InspectionProjectProfileManager.getInstance(file.getProject()).getProfileName(file);
         if (text != null){
+          text = "Inspections: " + text;
           final Font font = getFont();
           if (font != null) {
             final int width = getFontMetrics(font).stringWidth(text);
-            if (width > 60 && text.length() > 30){
+            if (width > 80 && text.length() > 30){
               text = text.substring(0, 27) + "...";
             }
             if (myMinLength < width){
@@ -118,7 +119,7 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
       }
       else {
         myHectorLabel.setIcon(INSPECTIONS_OFF_ICON);
-        myInspectionProfileLabel.setText("");
+        myInspectionProfileLabel.setText("Inspections: Off");
       }
       myHectorLabel.setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text"));
       myInspectionProfileLabel.setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.profile.text"));
