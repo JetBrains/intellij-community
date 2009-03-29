@@ -1,11 +1,9 @@
 package org.intellij.lang.regexp;
 
-import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpProperty;
@@ -44,6 +42,7 @@ public class RegExpDocumentationProvider extends QuickDocumentationProvider {
 
   @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+    /*
     if (element instanceof RegExpProperty) {
       final String s;
       if (object instanceof PresentableLookupValue) {
@@ -70,6 +69,7 @@ public class RegExpDocumentationProvider extends QuickDocumentationProvider {
         return f.findClass("java.util.regex.Pattern", GlobalSearchScope.allScope(project));
       }
     }
+      */
     return super.getDocumentationElementForLookupItem(psiManager, object, element);
   }
 
