@@ -698,6 +698,14 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
   }
 
+  public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
+    final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
+    if (viewPane != null && viewPane instanceof AbstractProjectViewPSIPane) {
+      return ((AbstractProjectViewPSIPane) viewPane).selectCB(element, file, requestFocus);
+    }
+    return new ActionCallback.Rejected();
+  }
+
   public void dispose() {
     myConnection.disconnect();
   }

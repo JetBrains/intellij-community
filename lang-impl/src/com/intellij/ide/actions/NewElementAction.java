@@ -10,13 +10,16 @@ import com.intellij.openapi.ui.popup.ListPopup;
 public class NewElementAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
+    showPopup(e.getDataContext());
+  }
+
+  protected void showPopup(DataContext dataContext) {
     final ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(IdeBundle.message("title.popup.new.element"),
                               getGroup(),
                               dataContext,
                               false, false, false,
-                              null, -1, e.getData(LangDataKeys.PRESELECT_NEW_ACTION_CONDITION));
+                              null, -1, LangDataKeys.PRESELECT_NEW_ACTION_CONDITION.getData(dataContext));
 
     popup.showInBestPositionFor(dataContext);
   }
@@ -38,7 +41,7 @@ public class NewElementAction extends AnAction {
     presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(), event));
   }
 
-  private DefaultActionGroup getGroup() {
+  protected static DefaultActionGroup getGroup() {
     return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_NEW);
   }
 }

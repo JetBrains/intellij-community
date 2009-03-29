@@ -101,7 +101,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       AbstractTreeNode node = expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, Conditions.<AbstractTreeNode>alwaysTrue());
       selected = getNodeForElement(node);
     }
-    return TreeUtil.selectInTree(selected, requestFocus, getTree());
+    return TreeUtil.selectInTree(myProject, selected, requestFocus, getTree(), true);
   }
 
   public void selectInWidth(final Object element, final boolean requestFocus, final Condition<AbstractTreeNode> nonStopCondition) {

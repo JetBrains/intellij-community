@@ -1,8 +1,8 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
+import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;

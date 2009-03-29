@@ -17,10 +17,12 @@ package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
@@ -678,6 +680,20 @@ public final class TreeUtil {
     tree.expandPath(treePath);
     if (requestFocus) {
       tree.requestFocus();
+    }
+    return selectPath(tree, treePath, center);
+  }
+
+  public static ActionCallback selectInTree(Project project, DefaultMutableTreeNode node, boolean requestFocus, JTree tree, boolean center) {
+    if (node == null) return new ActionCallback.Done();
+
+    final TreePath treePath = new TreePath(node.getPath());
+    tree.expandPath(treePath);
+    if (requestFocus) {
+      ActionCallback result = new ActionCallback(2);
+      IdeFocusManager.getInstance(project).requestFocus(tree, true).notifyWhenDone(result);
+      selectPath(tree, treePath, center).notifyWhenDone(result);
+      return result;
     }
     return selectPath(tree, treePath, center);
   }

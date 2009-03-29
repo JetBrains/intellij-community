@@ -2,6 +2,7 @@ package com.intellij.ide.projectView;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 
@@ -13,6 +14,8 @@ public abstract class ProjectView {
   }
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
+
+  public abstract ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
 
   public abstract PsiElement getParentOfCurrentSelection();
 
