@@ -5,8 +5,8 @@ package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.lang.properties.LastSelectedPropertiesFileStore;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -108,7 +108,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     myPropertiesFile.setHistorySize(-1);
     myPropertiesFilePanel.add(GuiUtils.constructFieldWithBrowseButton(myPropertiesFile, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        TreeClassChooserFactory chooserFactory = TreeClassChooserFactory.getInstance(myProject);
+        TreeFileChooserFactory chooserFactory = TreeFileChooserFactory.getInstance(myProject);
         TreeFileChooser fileChooser = chooserFactory.createFileChooser(
           CodeInsightBundle.message("i18nize.dialog.property.file.chooser.title"), getPropertiesFile(), StdFileTypes.PROPERTIES, null);
         fileChooser.showDialog();

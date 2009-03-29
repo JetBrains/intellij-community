@@ -179,6 +179,9 @@
   <projectService serviceInterface="com.intellij.moduleDependencies.DependenciesAnalyzeManager"
                   serviceImplementation="com.intellij.moduleDependencies.DependenciesAnalyzeManager"/>
 
+  <projectService serviceInterface="com.intellij.ide.util.TreeFileChooserFactory"
+                  serviceImplementation="com.intellij.ide.util.TreeFileChooserFactoryImpl"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage" id="custom"/>
 
