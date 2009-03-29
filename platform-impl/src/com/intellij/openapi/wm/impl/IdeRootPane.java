@@ -2,6 +2,8 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.CustomizeUIAction;
+import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -19,6 +21,7 @@ import com.intellij.openapi.wm.StatusBarCustomComponentFactory;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
+import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -177,9 +180,15 @@ public class IdeRootPane extends JRootPane{
       true
     );
     toolBar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
+
+    DefaultActionGroup menuGroup = new DefaultActionGroup();
+    menuGroup.add(new ViewToolbarAction());
+    menuGroup.add(new CustomizeUIAction());
+    PopupHandler.installUnknownPopupHandler(toolBar.getComponent(), menuGroup, myActionManager);
+
     return toolBar.getComponent();
   }
-
+ 
   private void createStatusBar() {
     myStatusBar = new StatusBarImpl(myUISettings);
   }

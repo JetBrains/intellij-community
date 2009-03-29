@@ -6,6 +6,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 
 public class ViewToolbarAction extends ToggleAction {
+  public ViewToolbarAction() {
+    super("Show Toolbar");
+  }
+
   public boolean isSelected(AnActionEvent event) {
     return UISettings.getInstance().SHOW_MAIN_TOOLBAR;
   }

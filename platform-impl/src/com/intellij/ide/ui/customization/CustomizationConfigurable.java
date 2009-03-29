@@ -4,6 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,10 @@ import javax.swing.*;
  * Date: Mar 17, 2005
  */
 public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable{
+  public static CustomizationConfigurable getInstance() {
+    return ShowSettingsUtil.getInstance().findApplicationConfigurable(CustomizationConfigurable.class);
+  }
+
   private CustomizableActionsPanel myPanel;
 
   public JComponent createComponent() {
