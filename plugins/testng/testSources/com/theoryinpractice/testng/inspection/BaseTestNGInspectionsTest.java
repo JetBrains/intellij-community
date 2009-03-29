@@ -12,10 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.PathUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +34,7 @@ public abstract class BaseTestNGInspectionsTest {
   public void setUp() throws Exception {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
-    myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
+    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
     final String dataPath = PathManager.getHomePath() + "/svnPlugins/testng/testData";
     myFixture.setTestDataPath(dataPath);
     final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);

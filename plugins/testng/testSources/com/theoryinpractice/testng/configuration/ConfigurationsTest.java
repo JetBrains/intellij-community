@@ -20,10 +20,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.TestType;
 import org.testng.Assert;
@@ -40,6 +37,7 @@ public class ConfigurationsTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
+    JavaTestFixtureFactory.getFixtureFactory();   // registers Java module fixture builder
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createTempDirTestFixture();
