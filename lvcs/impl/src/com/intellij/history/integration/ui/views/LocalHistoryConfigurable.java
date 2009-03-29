@@ -1,12 +1,13 @@
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.LocalHistoryConfiguration;
+import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.NumberDocument;
 import org.jetbrains.annotations.Nullable;
 
 import static javax.swing.BorderFactory.createCompoundBorder;
@@ -17,7 +18,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.PlainDocument;
 import java.awt.*;
 
 public class LocalHistoryConfigurable extends BaseConfigurable implements SearchableConfigurable {
@@ -80,7 +80,13 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
 
     Dimension size = new Dimension(50, myPurgePeriodField.getPreferredSize().height);
     myPurgePeriodField.setPreferredSize(size);
-    myPurgePeriodField.setDocument(new MyDocument());
+    myPurgePeriodField.setDocument(new NumberDocument() {
+      @Override
+      public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+        super.insertString(offs, str, a);
+        setModified(true);
+      }
+    });
 
     return panel;
   }
@@ -156,22 +162,4 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
     return LocalHistoryConfiguration.getInstance();
   }
 
-  private class MyDocument extends PlainDocument {
-    public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
-      char[] source = str.toCharArray();
-      char[] result = new char[source.length];
-      int j = 0;
-
-      for (int i = 0; i < result.length; i++) {
-        if (Character.isDigit(source[i])) {
-          result[j++] = source[i];
-        }
-        else {
-          Toolkit.getDefaultToolkit().beep();
-        }
-      }
-      super.insertString(offs, new String(result, 0, j), a);
-      setModified(true);
-    }
-  }
 }

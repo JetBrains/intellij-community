@@ -216,9 +216,6 @@
   <!-- External Tools -->
   <applicationConfigurable implementation="com.intellij.tools.ToolConfigurable"/>
 
-  <!-- Local History -->
-  <applicationConfigurable implementation="com.intellij.history.integration.ui.views.LocalHistoryConfigurable"/>
-
   <!-- Project Code Style -->
   <!--<projectConfigurable implementation="com.intellij.application.options.ProjectCodeStyleConfigurable" order="before vcs"/>-->
 
