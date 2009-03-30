@@ -3,8 +3,9 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public interface IndexSink {
-  void occurrence(@NotNull StubIndexKey indexKey, @NotNull Object value);
+  <Psi extends PsiElement, K> void occurrence(@NotNull StubIndexKey<K, Psi> indexKey, @NotNull K value);
 }
