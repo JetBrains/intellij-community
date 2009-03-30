@@ -30,7 +30,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         String text = element.getText();
         String[] words = text.split("\\s");
-        if (words.length == 0) return PsiReference.EMPTY_ARRAY;
+        if (words.length != 1) return PsiReference.EMPTY_ARRAY;
         return new JavaClassReferenceProvider(element.getProject()){
           public boolean isSoft() {
             return true;
