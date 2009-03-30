@@ -388,7 +388,7 @@ public class IdeEventQueue extends EventQueue {
     myEventCount++;
 
 
-    if (processAppActivationEvents(e)) return;
+    processAppActivationEvents(e);
 
     if (!myPopupManager.isPopupActive()) {
 
@@ -471,9 +471,9 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private boolean processAppActivationEvents(AWTEvent e) {
+  private void processAppActivationEvents(AWTEvent e) {
     final Application app = ApplicationManager.getApplication();
-    if (!(app instanceof ApplicationImpl)) return false;
+    if (!(app instanceof ApplicationImpl)) return;
 
     ApplicationImpl appImpl = (ApplicationImpl)app;
 
@@ -482,18 +482,13 @@ public class IdeEventQueue extends EventQueue {
       if (we.getID() == WindowEvent.WINDOW_GAINED_FOCUS && we.getWindow() != null) {
         if (we.getOppositeWindow() == null && !appImpl.isActive()) {
           appImpl.tryToApplyActivationState(true, we.getWindow());
-          return true;
         }
       } else if (we.getID() == WindowEvent.WINDOW_LOST_FOCUS && we.getWindow() != null) {
         if (we.getOppositeWindow() == null && appImpl.isActive()) {
           appImpl.tryToApplyActivationState(false, we.getWindow());
-          return true;
         }
       }
     }
-
-
-    return false;
   }
 
 
