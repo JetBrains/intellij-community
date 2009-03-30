@@ -49,7 +49,9 @@ public class NewModuleAction extends AnAction {
       }
       if (builder instanceof ModuleBuilder) {
         Module module = ((ModuleBuilder) builder).commitModule(project, null);
-        processCreatedModule(module, dataFromContext);
+        if (module != null) {
+          processCreatedModule(module, dataFromContext);
+        }
       }
       else {
         builder.commit(project, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
