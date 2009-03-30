@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.config.StorageAccessors;
@@ -622,7 +623,7 @@ class RunConfigurable extends BaseConfigurable {
     }
   }
 
-  private void createNewConfiguration(final RunnerAndConfigurationSettingsImpl settings, final DefaultMutableTreeNode node) {
+  private SingleConfigurationConfigurable<RunConfiguration> createNewConfiguration(final RunnerAndConfigurationSettingsImpl settings, final DefaultMutableTreeNode node) {
     final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable =
         SingleConfigurationConfigurable.editSettings(settings);
     installUpdateListeners(configurationConfigurable);
@@ -630,6 +631,7 @@ class RunConfigurable extends BaseConfigurable {
     node.add(nodeToAdd);
     ((DefaultTreeModel)myTree.getModel()).reload(node);
     TreeUtil.selectNode(myTree, nodeToAdd);
+    return configurationConfigurable;
   }
 
   private void createNewConfiguration(final ConfigurationFactory factory) {
@@ -843,8 +845,12 @@ class RunConfigurable extends BaseConfigurable {
       try {
         final DefaultMutableTreeNode typeNode = getSelectedConfigurationTypeNode();
         final RunnerAndConfigurationSettingsImpl settings = configuration.getSnapshot();
-        settings.setName(createUniqueName(typeNode));
-        createNewConfiguration(settings, typeNode);
+        final String copyName = createUniqueName(typeNode);
+        settings.setName(copyName);
+        final SingleConfigurationConfigurable<RunConfiguration> configurable = createNewConfiguration(settings, typeNode);
+        IdeFocusManager.getInstance(myProject).requestFocus(configurable.getNameTextField(), true);
+        configurable.getNameTextField().setSelectionStart(0);
+        configurable.getNameTextField().setSelectionEnd(copyName.length());
       }
       catch (ConfigurationException e1) {
         Messages.showErrorDialog(myToolbarComponent, e1.getMessage(), e1.getTitle());

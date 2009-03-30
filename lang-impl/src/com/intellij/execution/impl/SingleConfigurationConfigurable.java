@@ -164,7 +164,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return getValidationResult() == null;
   }
 
-  public final JComponent getNameTextField() {
+  public final JTextField getNameTextField() {
     return myComponent.myNameText;
   }
 
