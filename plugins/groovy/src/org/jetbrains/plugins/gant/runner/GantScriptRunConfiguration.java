@@ -178,7 +178,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     params.setMainClass(GANT_STARTER);
   }
 
-  private void configureGantStarter(JavaParameters params, final Module module) {
+  private void configureGantStarter(JavaParameters params, final Module module) throws CantRunException {
     // add GantStarter parameters
 
     String gantHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
@@ -192,7 +192,9 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     params.getProgramParametersList().add("--classpath");
 
     // Clear module libraries from JDK's occurrences
-    StringBuffer buffer = RunnerUtil.getClearClassPathString(params, module);
+    final JavaParameters tmp = new JavaParameters();
+    tmp.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
+    StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);
 
     params.getProgramParametersList().add("\"" + workDir + File.pathSeparator + buffer.toString() + "\"");
     if (isDebugEnabled) {
