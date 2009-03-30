@@ -2,8 +2,8 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ExecutionCallback {
   private final Executed myExecuted;
@@ -27,11 +27,13 @@ public class ExecutionCallback {
   }
 
   final void doWhenExecuted(@NotNull final Runnable runnable) {
-    if (myRunnables == null) {
-      myRunnables = new ArrayList<Runnable>();
-    }
+    synchronized (this) {
+      if (myRunnables == null) {
+        myRunnables = new ArrayList<Runnable>();
+      }
 
-    myRunnables.add(runnable);
+      myRunnables.add(runnable);
+    }
 
     callback();
   }
@@ -46,8 +48,11 @@ public class ExecutionCallback {
 
   private void callback() {
     if (myExecuted.isExecuted() && myRunnables != null) {
-      final Runnable[] all = myRunnables.toArray(new Runnable[myRunnables.size()]);
-      myRunnables.clear();
+      Runnable[] all;
+      synchronized (this) {
+        all = myRunnables.toArray(new Runnable[myRunnables.size()]);
+        myRunnables.clear();
+      }
       for (Runnable each : all) {
         each.run();
       }
