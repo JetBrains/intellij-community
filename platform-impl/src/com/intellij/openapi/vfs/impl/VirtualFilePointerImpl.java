@@ -28,6 +28,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
   private static final Key<Throwable> CREATE_TRACE = Key.create("CREATION_TRACE");
   private static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
+  private static final boolean TRACE_CREATION = /*true || */LOG.isDebugEnabled();
 
   VirtualFilePointerImpl(VirtualFile file, String url, VirtualFileManager virtualFileManager, VirtualFilePointerListener listener, Disposable parentDisposable) {
     myFile = file;
@@ -35,7 +36,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     myVirtualFileManager = virtualFileManager;
     myListener = listener;
     useCount = 0;
-    if (LOG.isDebugEnabled()) {
+    if (TRACE_CREATION) {
       putUserData(CREATE_TRACE, new Throwable("parent ="+parentDisposable));
     }
   }
@@ -177,7 +178,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
       throw new MyEx("Punching the dead horse.\nurl="+toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
     }
     if (--useCount == 0) {
-      if (LOG.isDebugEnabled()) {
+      if (TRACE_CREATION) {
         putUserData(KILL_TRACE, new Throwable());
       }
       String url = getUrl();

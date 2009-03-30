@@ -240,6 +240,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   public void disposeComponent() {
     Disposer.dispose(this);
+    assertPointersDisposed();
+  }
+
+  public void assertPointersDisposed() {
     for (Map.Entry<VirtualFilePointerListener, TreeMap<String, VirtualFilePointerImpl>> entry : myUrlToPointerMaps.entrySet()) {
       VirtualFilePointerListener listener = entry.getKey();
       TreeMap<String, VirtualFilePointerImpl> map = entry.getValue();

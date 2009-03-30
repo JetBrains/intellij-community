@@ -54,7 +54,7 @@ public class PathUtil {
     return path.replace('/', File.separatorChar);
   }
 
-  public static final String getCanonicalPath(@NonNls String path) {
+  public static String getCanonicalPath(@NonNls String path) {
     if (path == null || path.length() == 0) {
       return path;
     }
@@ -73,7 +73,7 @@ public class PathUtil {
         stack.push(token);
       }
     }
-    final StringBuffer result = new StringBuffer(path.length());
+    final StringBuilder result = new StringBuilder(path.length());
     if (path.charAt(0) == '/') {
       result.append("/");
     }

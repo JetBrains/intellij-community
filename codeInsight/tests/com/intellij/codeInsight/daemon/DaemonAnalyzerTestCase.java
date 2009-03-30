@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -102,6 +103,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       DaemonCodeAnalyzer.getInstance(getProject()).projectClosed();
     }
     super.tearDown();
+    ((VirtualFilePointerManagerImpl)VirtualFilePointerManagerImpl.getInstance()).assertPointersDisposed();
   }
 
   protected void enableInspectionTool(LocalInspectionTool tool){

@@ -38,7 +38,7 @@ public abstract class FacetDetector<T, C extends FacetConfiguration> {
   /**
    * @param id unique id
    */
-  protected FacetDetector(final @NotNull @NonNls String id) {
+  protected FacetDetector(@NonNls @NotNull final String id) {
     myId = id;
   }
 
