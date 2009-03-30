@@ -113,7 +113,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private File getCacheFile() {
-    return new File(MavenUtil.getPluginSystemDir("Compiler"), myProject.getLocationHash());
+    return new File(CompilerPaths.getCompilerSystemDirectory(myProject), "maven_compiler_caches.dat");
   }
 
   public boolean validateConfiguration(CompileScope scope) {
