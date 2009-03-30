@@ -94,6 +94,33 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
     assertNotCopied("target/classes/file.txt");
   }
 
+  public void testDoNotCopyIgnoredFiles() throws Exception {
+    createProjectSubFile("res/CVS/file.properties");
+    createProjectSubFile("res/.svn/file.properties");
+    createProjectSubFile("res/zzz/file.properties");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <includes>" +
+                  "        <include>**/*.properties</include>" +
+                  "      </includes>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertNotCopied("target/classes/CVS");
+    assertNotCopied("target/classes/.svn");
+    assertCopied("target/classes/zzz/file.properties");
+  }
+
   public void testDeletingFilesThatWasCopiedAndThenDeleted() throws Exception {
     VirtualFile file = createProjectSubFile("res/file.properties");
 

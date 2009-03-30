@@ -11,6 +11,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -41,10 +43,12 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create(MavenResourceCompiler.class.getSimpleName() + ".FILES_TO_DELETE");
 
   private Project myProject;
+  private ProjectFileIndex myFileIndex;
   private Map<String, Set<String>> myOutputItemsCache = new HashMap<String, Set<String>>();
 
   public MavenResourceCompiler(Project project) {
     myProject = project;
+    myFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     loadCache();
   }
 
@@ -292,6 +296,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       }
       else {
         String relPath = VfsUtil.getRelativePath(eachSourceFile, sourceRoot, '/');
+        if (myFileIndex.isIgnored(eachSourceFile)) continue;
         if (!MavenUtil.isIncluded(relPath, includes, excludes)) continue;
 
         String outputPath = outputDir + "/" + relPath;
