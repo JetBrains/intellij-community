@@ -219,11 +219,15 @@ public class BackendCompilerWrapper {
           final StringBuilder names = StringBuilderSpinAllocator.alloc();
           try {
             for (int idx = 0; idx < modules.length; idx++) {
-              Module module = modules[idx];
+              final Module module = modules[idx];
               if (idx > 0) {
                 names.append(", ");
               }
               names.append(module.getName());
+              if (names.length() > 128 && (idx + 1 < modules.length) /*name is already too long and seems to grow longer*/) {
+                names.append("...");
+                break;
+              }
             }
             myModuleName = names.toString();
           }
