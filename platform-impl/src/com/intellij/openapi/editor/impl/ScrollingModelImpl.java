@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.ide.ui.UISettings;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -243,7 +244,7 @@ public class ScrollingModelImpl implements ScrollingModel {
     VisibleEditorsTracker editorsTracker = VisibleEditorsTracker.getInstance();
     boolean useAnimation;
     //System.out.println("myCurrentCommandStart - myLastCommandFinish = " + (myCurrentCommandStart - myLastCommandFinish));
-    if (!myEditor.getSettings().isAnimatedScrolling() || myAnimationDisabled) {
+    if (!myEditor.getSettings().isAnimatedScrolling() || myAnimationDisabled || UISettings.isRemoteDesktopConnected()) {
       useAnimation = false;
     }
     else if (CommandProcessor.getInstance().getCurrentCommand() == null) {
