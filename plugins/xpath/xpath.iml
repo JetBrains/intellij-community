@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="xslt-rt" />
     <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="ExtendedApi" />
   </component>
 </module>
 
