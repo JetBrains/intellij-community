@@ -4,15 +4,14 @@ import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiMetaData;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.meta.PsiMetaOwner;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class UsageViewShortNameLocation implements ElementDescriptionLocation {
+public class UsageViewShortNameLocation extends ElementDescriptionLocation {
   private UsageViewShortNameLocation() {
   }
 

@@ -1,19 +1,16 @@
 package com.intellij.usageView;
 
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.util.xml.TypeNameManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -55,39 +52,16 @@ public class UsageViewUtil {
 
   public static String getShortName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
-    final String name = ElementDescriptionUtil.getElementDescription(psiElement, UsageViewShortNameLocation.INSTANCE);
-    return name == null ? "" : name;
+    return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewShortNameLocation.INSTANCE);
   }
 
   public static String getLongName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
-    final String desc = ElementDescriptionUtil.getElementDescription(psiElement, UsageViewLongNameLocation.INSTANCE);
-    return desc == null ? "" : desc;
+    return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewLongNameLocation.INSTANCE);
   }
 
   public static String getType(@NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiMetaOwner) {
-      final PsiMetaData metaData = ((PsiMetaOwner)psiElement).getMetaData();
-      if (metaData instanceof PsiPresentableMetaData) {
-        return ((PsiPresentableMetaData)metaData).getTypeName();
-      }
-    }
-
-    if (psiElement instanceof PsiFile) {
-      return LangBundle.message("terms.file");
-    }
-    if (psiElement instanceof PsiDirectory) {
-      return LangBundle.message("terms.directory");
-    }
-
-    final Language lang = psiElement.getLanguage();
-    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
-    final String type = provider.getType(psiElement);
-    if (StringUtil.isNotEmpty(type)) {
-      return type;
-    }
-
-    return TypeNameManager.getTypeName(psiElement.getClass());
+    return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewTypeLocation.INSTANCE);
   }
 
   public static String getDescriptiveName(final PsiElement psiElement) {

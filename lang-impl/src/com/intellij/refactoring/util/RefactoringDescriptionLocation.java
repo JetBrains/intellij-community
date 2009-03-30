@@ -6,7 +6,7 @@ import com.intellij.psi.ElementDescriptionProvider;
 /**
  * @author yole
  */
-public class RefactoringDescriptionLocation implements ElementDescriptionLocation {
+public class RefactoringDescriptionLocation extends ElementDescriptionLocation {
   private final boolean myWithParent;
 
   private RefactoringDescriptionLocation(boolean withParent) {

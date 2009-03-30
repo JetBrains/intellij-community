@@ -5,7 +5,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface ElementDescriptionLocation {
+public class ElementDescriptionLocation {
   @Nullable
-  ElementDescriptionProvider getDefaultProvider();
+  public ElementDescriptionProvider getDefaultProvider() {
+    return null;
+  }
 }

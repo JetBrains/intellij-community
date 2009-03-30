@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class UsageViewLongNameLocation implements ElementDescriptionLocation {
+public class UsageViewLongNameLocation extends ElementDescriptionLocation {
   private UsageViewLongNameLocation() {
   }
 

@@ -1,6 +1,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.Extensions;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -9,6 +10,7 @@ public class ElementDescriptionUtil {
   private ElementDescriptionUtil() {
   }
 
+  @NotNull
   public static String getElementDescription(PsiElement element, ElementDescriptionLocation location) {
     for(ElementDescriptionProvider provider: Extensions.getExtensions(ElementDescriptionProvider.EP_NAME)) {
       String result = provider.getElementDescription(element, location);

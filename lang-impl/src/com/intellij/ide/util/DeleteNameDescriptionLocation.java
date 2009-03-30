@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class DeleteNameDescriptionLocation implements ElementDescriptionLocation {
+public class DeleteNameDescriptionLocation extends ElementDescriptionLocation {
   private DeleteNameDescriptionLocation() {
   }
 

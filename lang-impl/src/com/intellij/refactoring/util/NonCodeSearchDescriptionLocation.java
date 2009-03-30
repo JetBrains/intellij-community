@@ -6,7 +6,7 @@ import com.intellij.psi.ElementDescriptionProvider;
 /**
  * @author yole
  */
-public class NonCodeSearchDescriptionLocation implements ElementDescriptionLocation {
+public class NonCodeSearchDescriptionLocation extends ElementDescriptionLocation {
   private final boolean myNonJava;
 
   private NonCodeSearchDescriptionLocation(final boolean nonJava) {
