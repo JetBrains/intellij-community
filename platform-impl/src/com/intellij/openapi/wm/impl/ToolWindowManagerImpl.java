@@ -1730,7 +1730,19 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (myRequestFocusCmd == command) {
           myRequestFocusCmd = null;
 
-          command.run().notifyWhenDone(result);
+          command.run().doWhenDone(new Runnable() {
+            public void run() {
+              LaterInvocator.invokeLater(new Runnable() {
+                public void run() {
+                  result.setDone();
+                }
+              });
+            }
+          }).doWhenRejected(new Runnable() {
+            public void run() {
+              result.setRejected();
+            }
+          });
 
           restartIdleAlarm();
 

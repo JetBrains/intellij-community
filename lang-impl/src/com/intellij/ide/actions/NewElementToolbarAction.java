@@ -3,10 +3,8 @@ package com.intellij.ide.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -25,13 +23,7 @@ public class NewElementToolbarAction extends NewElementAction {
       final PsiFileSystemItem psiFile = e.getData(LangDataKeys.PSI_FILE).getParent();
       ProjectViewImpl.getInstance(project).selectCB(psiFile, psiFile.getVirtualFile(), true).doWhenDone(new Runnable() {
         public void run() {
-          // the invokeLater() shouldn't be necessary, but it doesn't work otherwise
-          LaterInvocator.invokeLater(new Runnable() {
-            public void run() {
-              DataContext context = DataManager.getInstance().getDataContext();
-              showPopup(context);
-            }
-          });
+          showPopup(DataManager.getInstance().getDataContext());
         }
       });
     }
