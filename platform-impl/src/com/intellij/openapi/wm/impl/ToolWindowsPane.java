@@ -451,7 +451,7 @@ final class ToolWindowsPane extends JPanel{
       try{
         // Show component.
         final UISettings uiSettings=UISettings.getInstance();
-        if(!myDirtyMode && uiSettings.ANIMATE_WINDOWS){
+        if(!myDirtyMode && uiSettings.ANIMATE_WINDOWS && !UISettings.isRemoteDesktopConnected()){
           // Prepare top image. This image is scrolling over bottom image.
           final Image topImage=myLayeredPane.getTopImage();
           final Graphics topGraphics=topImage.getGraphics();
@@ -646,7 +646,7 @@ final class ToolWindowsPane extends JPanel{
     public final void run(){
       try{
         final UISettings uiSettings=UISettings.getInstance();
-        if(!myDirtyMode && uiSettings.ANIMATE_WINDOWS){
+        if(!myDirtyMode && uiSettings.ANIMATE_WINDOWS && !UISettings.isRemoteDesktopConnected()){
           final Rectangle bounds=myComponent.getBounds();
           // Prepare top image. This image is scrolling over bottom image. It contains
           // picture of component is being removed.
