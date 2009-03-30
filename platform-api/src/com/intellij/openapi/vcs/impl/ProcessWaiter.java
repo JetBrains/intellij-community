@@ -25,13 +25,25 @@ public abstract class ProcessWaiter<T extends Runnable> {
     myInStreamListener = createStreamListener(worker.getInputStream());
 
     final Application app = ApplicationManager.getApplication();
-    final Future<?> errorStreamReadingFuture = app.executeOnPooledThread(myErrStreamListener);
-    final Future<?> outputStreamReadingFuture = app.executeOnPooledThread(myInStreamListener);
+    Future<?> errorStreamReadingFuture = null;
+    Future<?> outputStreamReadingFuture = null;
 
-    final int rc = worker.execute();
-    if (tryReadStreams(rc)) {
-      errorStreamReadingFuture.get(timeout, TimeUnit.MILLISECONDS);
-      outputStreamReadingFuture.get(timeout, TimeUnit.MILLISECONDS);
+    final int rc;
+    try {
+      errorStreamReadingFuture = app.executeOnPooledThread(myErrStreamListener);
+      outputStreamReadingFuture = app.executeOnPooledThread(myInStreamListener);
+      rc = worker.execute();
+      if (tryReadStreams(rc)) {
+        errorStreamReadingFuture.get(timeout, TimeUnit.MILLISECONDS);
+        outputStreamReadingFuture.get(timeout, TimeUnit.MILLISECONDS);
+      }
+    } finally {
+      if (errorStreamReadingFuture != null) {
+        errorStreamReadingFuture.cancel(true);
+      }
+      if (outputStreamReadingFuture != null) {
+        outputStreamReadingFuture.cancel(true);
+      }
     }
 
     return rc;
