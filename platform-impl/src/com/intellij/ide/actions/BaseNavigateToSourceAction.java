@@ -20,7 +20,13 @@ public abstract class BaseNavigateToSourceAction extends AnAction {
 
   public void update(AnActionEvent event){
     DataContext dataContext = event.getDataContext();
-    event.getPresentation().setEnabled(isEnabled(dataContext));
+    final boolean enabled = isEnabled(dataContext);
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      event.getPresentation().setVisible(enabled);
+    }
+    else {
+      event.getPresentation().setEnabled(enabled);
+    }
   }
 
   private boolean isEnabled(final DataContext dataContext) {
