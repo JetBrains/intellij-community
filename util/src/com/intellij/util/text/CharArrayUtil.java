@@ -367,6 +367,8 @@ public class CharArrayUtil {
       }
       else if(isWhitespace){
         whitespaceEnd = i;
+      } else {
+        lastTextFound = result.size();
       }
     }
     if(whitespaceEnd > 0) result.add(new TextRange(0, whitespaceEnd + 1).shiftRight(shift));
