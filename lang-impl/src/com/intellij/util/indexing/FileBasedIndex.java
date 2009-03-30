@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -52,6 +53,7 @@ import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 
@@ -185,6 +187,11 @@ public class FileBasedIndex implements ApplicationComponent {
       myFileContentAttic = new FileContentStorage(new File(PathManager.getIndexRoot(), "updates.tmp"));
     }
     finally {
+      ShutDownTracker.getInstance().registerShutdownThread(new Thread("Index shutdown") {
+        public void run() {
+          performShutdown();
+        }
+      });
       workInProgressFile.createNewFile();
       saveRegisteredIndices(myIndices.keySet());
     }
@@ -297,11 +304,22 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void disposeComponent() {
+    performShutdown();
+  }
+
+  private AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
+
+  private void performShutdown() {
+    if (!myShutdownPerformed.compareAndSet(false, true)) {
+      return; // already shut down
+    }
+    //LOG.info("===============START DISPOSING INDEX===========================");
     myChangedFilesUpdater.forceUpdate();
 
     for (ID<?, ?> indexId : myIndices.keySet()) {
       final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
       assert index != null;
+      //LOG.info("DISPOSING " + indexId);
       index.dispose();
     }
 
@@ -310,6 +328,7 @@ public class FileBasedIndex implements ApplicationComponent {
     myFileContentAttic.dispose();
 
     FileUtil.delete(getMarkerFile());
+    //LOG.info("===============END DISPOSING INDEX===========================");
   }
 
   public void flushCaches() {
