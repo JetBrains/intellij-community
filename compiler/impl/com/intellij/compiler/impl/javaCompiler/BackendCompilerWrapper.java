@@ -309,7 +309,7 @@ public class BackendCompilerWrapper {
       return false;
     }
     final String moduleOutputDirectory = getOutputDir(module);
-    return !moduleTestOutputDirectory.equals(moduleOutputDirectory);
+    return !FileUtil.pathsEqual(moduleTestOutputDirectory, moduleOutputDirectory);
   }
 
   public VirtualFile[] getFilesToRecompile() {
@@ -513,7 +513,9 @@ public class BackendCompilerWrapper {
         threadFuture.get();
       }
       catch (InterruptedException e) {
-      } catch(ExecutionException e) {}
+      }
+      catch(ExecutionException e) {
+      }
     }
   }
 
@@ -829,8 +831,7 @@ public class BackendCompilerWrapper {
     if (myModuleToTestsOutput.containsKey(module)) {
       return myModuleToTestsOutput.get(module);
     }
-    final VirtualFile outputDir = myCompileContext.getModuleOutputDirectoryForTests(module);
-    final String out = outputDir != null ? outputDir.getPath() : null;
+    final String out = CompilerPaths.getModuleOutputPath(module, true);
     myModuleToTestsOutput.put(module, out);
     return out;
   }
@@ -841,8 +842,7 @@ public class BackendCompilerWrapper {
     if (myModuleToOutput.containsKey(module)) {
       return myModuleToOutput.get(module);
     }
-    final VirtualFile outputDir = myCompileContext.getModuleOutputDirectory(module);
-    final String out = outputDir != null ? outputDir.getPath() : null;
+    final String out = CompilerPaths.getModuleOutputPath(module, false);
     myModuleToOutput.put(module, out);
     return out;
   }
@@ -905,6 +905,7 @@ public class BackendCompilerWrapper {
     public void run() {
       String path;
       try {
+        //noinspection StringEquality
         while ((path = getNextPath()) != myStopThreadToken) {
           processPath(path.replace('/', File.separatorChar));
         }

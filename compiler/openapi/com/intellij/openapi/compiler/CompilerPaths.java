@@ -150,36 +150,34 @@ public class CompilerPaths {
   public static String getModuleOutputPath(final Module module, boolean forTestClasses) {
     final String outPathUrl;
     final Application application = ApplicationManager.getApplication();
+    final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
     if (forTestClasses) {
       if (application.isDispatchThread()) {
-        final String url = CompilerModuleExtension.getInstance(module).getCompilerOutputUrlForTests();
-        outPathUrl = (url != null) ? url : CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
+        final String url = extension.getCompilerOutputUrlForTests();
+        outPathUrl = (url != null) ? url : extension.getCompilerOutputUrl();
       }
       else {
         outPathUrl = application.runReadAction(new Computable<String>() {
           public String compute() {
-            final String url = CompilerModuleExtension.getInstance(module).getCompilerOutputUrlForTests();
-            return (url != null) ? url : CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
+            final String url = extension.getCompilerOutputUrlForTests();
+            return (url != null) ? url : extension.getCompilerOutputUrl();
           }
         });
       }
     }
     else { // for ordinary classes
       if (application.isDispatchThread()) {
-        outPathUrl = CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
+        outPathUrl = extension.getCompilerOutputUrl();
       }
       else {
         outPathUrl = application.runReadAction(new Computable<String>() {
           public String compute() {
-            return CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
+            return extension.getCompilerOutputUrl();
           }
         });
       }
     }
-    if (outPathUrl != null) {
-      return VirtualFileManager.extractPath(outPathUrl);
-    }
-    return null;
+    return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
   }
 
   @NonNls
