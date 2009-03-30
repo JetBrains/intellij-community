@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
@@ -58,9 +59,15 @@ public class EclipseClasspathTest extends IdeaTestCase {
   }
 
   private void doTest() throws Exception {
-    final String path = getProject().getBaseDir().getPath() + "/test";
+    doTest("/test");
+  }
 
-    final Element classpathElement = JDOMUtil.loadDocument(new File(path, EclipseXml.DOT_CLASSPATH_EXT)).getRootElement();
+  private void doTest(final String relativePath) throws Exception {
+    final String path = getProject().getBaseDir().getPath() + relativePath;
+
+    final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
+    final String fileText = new String(FileUtil.loadFileText(classpathFile)).replaceAll("\\$ROOT\\$", getProject().getBaseDir().getPath());
+    final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
         return ModuleManager.getInstance(getProject())
@@ -79,8 +86,13 @@ public class EclipseClasspathTest extends IdeaTestCase {
     new EclipseClasspathWriter(model).writeClasspath(resultClasspathElement, classpathElement);
     model.dispose();
 
-    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(resultClasspathElement), "\n")),
+    String resulted = new String(JDOMUtil.printDocument(new Document(resultClasspathElement), "\n"));
+    Assert.assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
                       JDOMUtil.areElementsEqual(classpathElement, resultClasspathElement));
+  }
+
+  public void testAbsolutePaths() throws Exception {
+    doTest("/parent/parent/test");
   }
 
 
