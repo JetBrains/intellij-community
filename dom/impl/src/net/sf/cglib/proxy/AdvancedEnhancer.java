@@ -147,15 +147,6 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   private Long serialVersionUID;
   private boolean interceptDuringConstruction = true;
 
-  //Changes by Peter Gromov
-  private Set<JavaMethodSignature> myAdditionalMethods = Collections.emptySet();
-  //Changes by Gregory Shrago
-  private boolean myInterceptObjectMethodsFlag = true;
-
-  public void setInterceptObjectMethodsFlag(final boolean interceptObjectMethodsFlag) {
-    myInterceptObjectMethodsFlag = interceptObjectMethodsFlag;
-  }
-
   /**
    * Create a new <code>Enhancer</code>. A new <code>Enhancer</code>
    * object should be used for each generated object, and should not
@@ -218,11 +209,6 @@ public class AdvancedEnhancer extends AbstractClassGenerator
    */
   public void setCallback(final Callback callback) {
     setCallbacks(new Callback[]{ callback });
-  }
-
-  //Changes by Peter Gromov
-  public void setAdditionalMethods(final Set<JavaMethodSignature> additionalMethods) {
-    myAdditionalMethods = additionalMethods;
   }
 
   /**
@@ -491,21 +477,17 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     final Map<Method, Method> covariantMethods = new HashMap<Method, Method>();
     getMethods(sc, interfaces, actualMethods, new ArrayList<Method>(), forcePublic);
 
-    //Changes by Peter Gromov
+    //Changes by Peter Gromov & Gregory Shrago
 
     final Set<JavaMethodSignature> finalMethods = new HashSet<JavaMethodSignature>();
     for(Class aClass = sc; aClass != null; aClass = aClass.getSuperclass()) {
-      if (Object.class.equals(aClass)) {
-        actualMethods.remove(aClass.getDeclaredMethod("finalize"));
-        if (myInterceptObjectMethodsFlag) continue;
-      }
       for (final Method method : aClass.getDeclaredMethods()) {
         final int modifiers = method.getModifiers();
         final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
         if ((modifiers & Constants.ACC_FINAL) != 0) {
           finalMethods.add(signature);
           removeAllCovariantMethods(actualMethods, method, covariantMethods);
-        } else if ((modifiers & Constants.ACC_ABSTRACT) == 0 && !(myAdditionalMethods.contains(signature))
+        } else if ((modifiers & Constants.ACC_ABSTRACT) == 0
                    || finalMethods.contains(signature)) {
           removeAllCovariantMethods(actualMethods, method, covariantMethods);
         }
@@ -574,9 +556,10 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     for (Iterator<Method> it = actualMethods.iterator(); it.hasNext();) {
       Method actualMethod = it.next();
       if (actualMethod.equals(method)) {
-        it.remove();
+        continue;
       }
-      else if (actualMethod.getName().equals(method.getName())
+
+      if (actualMethod.getName().equals(method.getName())
                && Arrays.equals(actualMethod.getParameterTypes(), method.getParameterTypes())
                && ReflectionCache.isAssignable(actualMethod.getReturnType(), method.getReturnType())) {
         if ((actualMethod.getModifiers() & Constants.ACC_ABSTRACT) != 0) {

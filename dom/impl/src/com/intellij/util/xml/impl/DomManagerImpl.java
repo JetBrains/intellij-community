@@ -500,7 +500,7 @@ public final class DomManagerImpl extends DomManager {
     //noinspection unchecked
 
     return (T)AdvancedProxy.createProxy(initial.getClass().getSuperclass(), intf.toArray(new Class[intf.size()]),
-                                        handler, Collections.<JavaMethodSignature>emptySet());
+                                        handler);
   }
 
   public final <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
