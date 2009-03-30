@@ -57,4 +57,8 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends CodeInsightTe
     doTest();
   }
 
+  public void testMultilineDeclarations() throws Exception {
+    doTest();
+  }
+
 }

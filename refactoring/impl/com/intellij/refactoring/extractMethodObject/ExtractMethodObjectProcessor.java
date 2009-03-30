@@ -290,6 +290,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       if (replacement != null) {
         if (statement instanceof PsiLocalVariable) {
           final PsiLocalVariable variable = (PsiLocalVariable)statement;
+          variable.normalizeDeclaration();
           final PsiExpression initializer = variable.getInitializer();
           LOG.assertTrue(initializer != null);
           final PsiStatement assignmentStatement = myElementFactory.createStatementFromText(var2FieldNames.get(variable.getName()) + " = " + initializer.getText() + ";", statement);
