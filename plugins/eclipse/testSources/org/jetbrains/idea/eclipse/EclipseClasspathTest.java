@@ -128,4 +128,28 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
+  public void testSashaCheAllProps() throws Exception {
+    doTest();
+  }
+
+  public void testSashaCheHome() throws Exception {
+    doTest();
+  }
+
+  //public void testSashaCheNoJava() throws Exception {
+  //  doTest();
+  //}
+
+  public void testSashaCheNoSource() throws Exception {
+    doTest();
+  }
+
+  public void testSashaChePlugin() throws Exception {
+    doTest();
+  }
+
+  public void testSashaCheRoot() throws Exception {
+    doTest();
+  }
+
 }
