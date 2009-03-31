@@ -112,6 +112,8 @@ public class MethodSignatureUtil {
   public static boolean isSuperMethod(final PsiMethod superMethodCandidate, final PsiMethod derivedMethod) {
     PsiClass superClassCandidate = superMethodCandidate.getContainingClass();
     PsiClass derivedClass = derivedMethod.getContainingClass();
+    if (derivedClass == null || superClassCandidate == null) return false;
+    if (!derivedClass.isInheritor(superClassCandidate, true)) return false;
     final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClassCandidate, derivedClass, PsiSubstitutor.EMPTY);
     final MethodSignature superSignature = superMethodCandidate.getSignature(superSubstitutor);
     final MethodSignature derivedSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
