@@ -8,6 +8,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,6 +53,14 @@ public class PsiModifierListOwnerPattern<T extends PsiModifierListOwner, Self ex
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         final PsiModifierList modifierList = t.getModifierList();
         return modifierList != null && modifierList.findAnnotation(qualifiedName) != null;
+      }
+    });
+  }
+
+  public Self withAnnotations(@NonNls final String... qualifiedNames) {
+    return with(new PatternCondition<T>("withAnnotations") {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        return AnnotationUtil.findAnnotation(t, qualifiedNames) != null;
       }
     });
   }
