@@ -18,9 +18,11 @@ package com.siyeh.ig.bugs;
 import com.intellij.psi.PsiAssertStatement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,8 +54,14 @@ public class ConstantAssertConditionInspection extends BaseInspection {
         @Override
         public void visitAssertStatement(PsiAssertStatement statement) {
             super.visitAssertStatement(statement);
-            final PsiExpression expression = statement.getAssertCondition();
+            final PsiExpression assertCondition =
+                    statement.getAssertCondition();
+            final PsiExpression expression =
+                    ParenthesesUtils.stripParentheses(assertCondition);
             if (expression == null) {
+                return;
+            }
+            if (BoolUtils.isFalse(expression)) {
                 return;
             }
             if (!PsiUtil.isConstantExpression(expression)) {
