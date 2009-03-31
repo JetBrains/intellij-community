@@ -9,13 +9,11 @@
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,21 +23,13 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
-import org.jdom.Document;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.CharArrayReader;
 import java.io.File;
-import java.io.StreamTokenizer;
-import java.util.ArrayList;
-import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class InspectionTestCase extends PsiTestCase {
@@ -83,15 +73,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     final String testDir = getTestDataPath() + "/" + folderName;
     runTool(testDir, jdkName, tool, runDeadCodeFirst);
 
-    final Element root = new Element("problems");
-    final Document doc = new Document(root);
-    tool.updateContent();  //e.g. dead code need check for reachables
-    tool.exportResults(root);
-
-    File file = new File(testDir + "/expected.xml");
-    Document expectedDocument = JDOMUtil.loadDocument(file);
-
-    compareWithExpected(expectedDocument, doc, checkRange);
+    InspectionTestUtil.compareToolResults(tool, checkRange, testDir);
   }
 
   protected void runTool(@NonNls final String testDir, @NonNls final String jdkName, final InspectionTool tool) {
@@ -130,21 +112,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
                               final AnalysisScope scope,
                               final GlobalInspectionContextImpl globalContext,
                               final InspectionManagerEx inspectionManager) {
-    final String shortName = tool.getShortName();
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key == null){
-      HighlightDisplayKey.register(shortName);
-    }
-
-    tool.initialize(globalContext);
-    ((RefManagerImpl)globalContext.getRefManager()).initializeAnnotators();
-    if (tool.isGraphNeeded()){
-      ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
-    }
-
-    tool.runInspection(scope, inspectionManager);
-
-    tool.queryExternalUsagesRequests(inspectionManager);
+    InspectionTestUtil.runTool(tool, scope, globalContext, inspectionManager);
 
     final GlobalJavaInspectionContextImpl javaInspectionContext =
         (GlobalJavaInspectionContextImpl)globalContext.getExtension(GlobalJavaInspectionContextImpl.CONTEXT);
@@ -194,91 +162,4 @@ public abstract class InspectionTestCase extends PsiTestCase {
     return PathManagerEx.getTestDataPath()+"/inspection/";
   }
 
-  protected static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
-    List<Element> expectedProblems = new ArrayList<Element>(expectedDoc.getRootElement().getChildren("problem"));
-    List<Element> reportedProblems = new ArrayList<Element>(doc.getRootElement().getChildren("problem"));
-
-    Element[] expectedArrayed = expectedProblems.toArray(new Element[expectedProblems.size()]);
-    boolean failed = false;
-
-expected:
-    for (Element expectedProblem : expectedArrayed) {
-      Element[] reportedArrayed = reportedProblems.toArray(new Element[reportedProblems.size()]);
-      for (Element reportedProblem : reportedArrayed) {
-        if (compareProblemWithExpected(reportedProblem, expectedProblem, checkRange)) {
-          expectedProblems.remove(expectedProblem);
-          reportedProblems.remove(reportedProblem);
-          continue expected;
-        }
-      }
-
-      Document missing = new Document((Element)expectedProblem.clone());
-      System.out.println("The following haven't been reported as expected: " + new String(JDOMUtil.printDocument(missing, "\n")));
-      failed = true;
-    }
-
-    for (Object reportedProblem1 : reportedProblems) {
-      Element reportedProblem = (Element)reportedProblem1;
-      Document extra = new Document((Element)reportedProblem.clone());
-      System.out.println("The following has been unexpectedly reported: " + new String(JDOMUtil.printDocument(extra, "\n")));
-      failed = true;
-    }
-
-    assertFalse(failed);
-  }
-
-  private static boolean compareProblemWithExpected(Element reportedProblem, Element expectedProblem, boolean checkRange) throws Exception {
-    if (!compareFiles(reportedProblem, expectedProblem)) return false;
-    if (!compareLines(reportedProblem, expectedProblem)) return false;
-    if (!compareDescriptions(reportedProblem, expectedProblem)) return false;
-    if (checkRange && !compareTextRange(reportedProblem, expectedProblem)) return false;
-    return true;
-  }
-
-  private static boolean compareTextRange(final Element reportedProblem, final Element expectedProblem) {
-    Element reportedTextRange = reportedProblem.getChild("entry_point");
-    if (reportedTextRange == null) return false;
-    Element expectedTextRange = expectedProblem.getChild("entry_point");
-    return Comparing.equal(reportedTextRange.getAttributeValue("TYPE"), expectedTextRange.getAttributeValue("TYPE")) &&
-           Comparing.equal(reportedTextRange.getAttributeValue("FQNAME"), expectedTextRange.getAttributeValue("FQNAME"));
-  }
-
-  private static boolean compareDescriptions(Element reportedProblem, Element expectedProblem) throws Exception {
-    String expectedDescription = expectedProblem.getChildText("description");
-    String reportedDescription = reportedProblem.getChildText("description");
-    if (expectedDescription.equals(reportedDescription)) return true;
-    
-    StreamTokenizer tokenizer = new StreamTokenizer(new CharArrayReader(expectedDescription.toCharArray()));
-    tokenizer.quoteChar('\'');
-
-    int idx = 0;
-    while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
-      String word;
-      if (tokenizer.sval != null) {
-        word = tokenizer.sval;
-      } else if (tokenizer.ttype == StreamTokenizer.TT_NUMBER) {
-        word = Double.toString(tokenizer.nval);
-      }
-      else {
-        continue;
-      }
-
-      idx = reportedDescription.indexOf(word, idx);
-      if (idx == -1) return false;
-      idx += word.length();
-    }
-
-    return true;
-  }
-
-  private static boolean compareLines(Element reportedProblem, Element expectedProblem) {
-    return Comparing.equal(reportedProblem.getChildText("line"), expectedProblem.getChildText("line"));
-  }
-
-  private static boolean compareFiles(Element reportedProblem, Element expectedProblem) {
-    String reportedFileName = reportedProblem.getChildText("file");
-    File reportedFile = new File(reportedFileName);
-
-    return Comparing.equal(reportedFile.getName(), expectedProblem.getChildText("file"));
-  }
 }
