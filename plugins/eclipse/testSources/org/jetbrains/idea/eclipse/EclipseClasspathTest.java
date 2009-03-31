@@ -140,9 +140,9 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
-  public void testSashaCheAllProps() throws Exception {
-    doTest();
-  }
+  //public void testSashaCheAllProps() throws Exception {
+  //  doTest("/eclipse-ws-3.4.1-a/all-props");
+  //}
 
   public void testSashaCheHome() throws Exception {
     doTest();
