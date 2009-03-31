@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="test/native"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="all-props/native"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry excluding="excl/" including="incl/" kind="src" path="src-props-1">
@@ -19,7 +19,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="lib" path="lib-1/copy-every/lib-1" sourcepath="lib-1/copy-every/src">
 		<attributes>
-			<attribute name="javadoc_location" value="http://www.fake-site.org"/>
+			<attribute name="javadoc_location" value="file:$ROOT$/eclipse-ws-3.4.1-a/all-props/lib-1/copy-every/doc/api"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry exported="true" kind="lib" path="/ws-internals/lib-2/copy-every/lib-2" sourcepath="/ws-internals/lib-2/copy-every/src">
@@ -27,9 +27,14 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/ws-internals/lib-2/jar-all-2.zip!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="$ROOT$/eclipse-externals/lib-3/copy-every/lib-3" sourcepath="$ROOT$/eclipse-externals/lib-3/copy-every/src">
+		<attributes>
+			<attribute name="javadoc_location" value="http://open-space.org"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry exported="true" kind="lib" path="lib-4/jar-every/lib-4.jar" sourcepath="lib-4/jar-every/src.zip">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/test/lib-4/jar-every/apidoc.zip!/"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/all-props/lib-4/jar-every/apidoc.zip!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry exported="true" kind="lib" path="/ws-internals/lib-5/jar-every/lib-5.jar" sourcepath="/ws-internals/lib-5/jar-every/src.zip">
@@ -37,7 +42,17 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/ws-internals/lib-5/jar-all-5.zip!/doc/api"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry exported="true" kind="var" path="ECLIPSE_VARS/lib-7/jar-every/lib-7.jar" sourcepath="/ECLIPSE_VARS/lib-7/copy-every/src"/>
+	<classpathentry exported="true" kind="lib" path="$ROOT$/eclipse-externals/lib-6/jar-every/lib-6.jar" sourcepath="$ROOT$/eclipse-externals/lib-6/jar-every/src.zip">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:$ROOT$/eclipse-externals/lib-6/jar-all-6.zip!/doc/api"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry exported="true" kind="var" path="ECLIPSE_VARS/lib-7/jar-every/lib-7.jar" sourcepath="/ECLIPSE_VARS/lib-7/copy-every/src">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:$ROOT$/eclipse-vars/lib-7/jar-all-7.zip!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.USER_LIBRARY/lib-8"/>
 	<classpathentry exported="true" kind="var" path="ECLIPSE_VARS_LIB_9_CLS" sourcepath="/ECLIPSE_VARS_LIB_9_SRC"/>
 	<classpathentry exported="true" kind="var" path="ECLIPSE_VARS_LIB_A_CLS" sourcepath="/ECLIPSE_VARS_LIB_A_SRC"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
