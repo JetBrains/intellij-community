@@ -46,7 +46,6 @@ import java.util.List;
  * The dialog wrapper. The dialog wrapper could be used only on event dispatch thread.
  * In case when the dialog must be created from other threads use
  * {@link EventQueue#invokeLater(Runnable)} or {@link EventQueue#invokeAndWait(Runnable)}.
- *
  */
 public abstract class DialogWrapper {
   /**
@@ -418,6 +417,13 @@ public abstract class DialogWrapper {
    */
   protected void dispose() {
     ensureEventDispatchThread();
+
+    if (myButtons != null) {
+      for (JButton button : myButtons) {
+        button.setAction(null); // avoid memory leak via KeyboardManager
+      }
+    }
+
     final JRootPane rootPane = getRootPane();
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
@@ -452,6 +458,7 @@ public abstract class DialogWrapper {
   /**
    * You can use this method if you want to know by which event this actions got triggered. It is called only if
    * the cancel action was triggered by some input event, <code>doCancelAction</code> is called otherwise.
+   *
    * @param source
    * @see #doCancelAction
    */
@@ -503,9 +510,10 @@ public abstract class DialogWrapper {
    * @see #createJButtonForAction
    */
   protected Action[] createActions() {
-    if(getHelpId() == null) {
+    if (getHelpId() == null) {
       return new Action[]{getOKAction(), getCancelAction()};
-    } else {
+    }
+    else {
       return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
     }
   }
@@ -809,7 +817,7 @@ public abstract class DialogWrapper {
    * This method is invoked by default implementation of "Help" action.
    * This is convenient place to override functionality of "Help" action.
    * Note that the method does nothing if "Help" action isn't enabled.
-   *
+   * <p/>
    * The default implementation shows the help page with id returned
    * by the method {@link #getHelpId()}. If that method returns null,
    * the message box with message "no help available" is shown.
