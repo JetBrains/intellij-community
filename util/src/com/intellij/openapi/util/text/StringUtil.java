@@ -712,7 +712,12 @@ public class StringUtil {
 
   @NotNull
   public static String notNullize(final String s) {
-    return s == null ? "" : s;
+    return notNullize(s, "");
+  }
+
+  @NotNull
+  public static String notNullize(final String s, final String defaultValue) {
+    return s == null ? defaultValue : s;
   }
 
   public static boolean isEmptyOrSpaces(final String s) {
