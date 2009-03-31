@@ -22,6 +22,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,16 +94,16 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), getHighlights(), getId());
   }
 
-  private Collection<HighlightInfo> getHighlights() {
+  private List<HighlightInfo> getHighlights() {
     if (myReadAccessRanges.isEmpty() && myWriteAccessRanges.isEmpty()) {
       return Collections.emptyList();
     }
-    Collection<HighlightInfo> result = new ArrayList<HighlightInfo>(myReadAccessRanges.size() + myWriteAccessRanges.size());
+    List<HighlightInfo> result = new ArrayList<HighlightInfo>(myReadAccessRanges.size() + myWriteAccessRanges.size());
     for (TextRange range: myReadAccessRanges) {
-      result.add(HighlightInfo.createHighlightInfo(ourReadHighlightInfoType, range, null));
+      ContainerUtil.addIfNotNull(HighlightInfo.createHighlightInfo(ourReadHighlightInfoType, range, null),result);
     }
     for (TextRange range: myWriteAccessRanges) {
-      result.add(HighlightInfo.createHighlightInfo(ourWriteHighlightInfoType, range, null));
+      ContainerUtil.addIfNotNull(HighlightInfo.createHighlightInfo(ourWriteHighlightInfoType, range, null),result);
     }
     return result;
   }
