@@ -20,14 +20,12 @@ import java.util.List;
  */
 public class FieldConflictsResolver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.FieldConflictsResolver");
-  private final String myName;
   private final PsiCodeBlock myScope;
   private final PsiField myField;
   private final List<PsiReferenceExpression> myReferenceExpressions;
   private PsiClass myQualifyingClass;
 
   public FieldConflictsResolver(String name, PsiCodeBlock scope) {
-    myName = name;
     myScope = scope;
     if (myScope == null) {
       myField = null;
@@ -35,7 +33,7 @@ public class FieldConflictsResolver {
       return;
     }
     JavaPsiFacade facade = JavaPsiFacade.getInstance(myScope.getProject());
-    final PsiVariable oldVariable = facade.getResolveHelper().resolveReferencedVariable(myName, myScope);
+    final PsiVariable oldVariable = facade.getResolveHelper().resolveReferencedVariable(name, myScope);
     myField = oldVariable instanceof PsiField ? (PsiField) oldVariable : null;
     if (!(oldVariable instanceof PsiField)) {
       myReferenceExpressions = null;
@@ -58,18 +56,21 @@ public class FieldConflictsResolver {
 
   public PsiExpression fixInitializer(PsiExpression initializer) {
     if (myField == null) return initializer;
-    final PsiReferenceExpression[] replacedRef = new PsiReferenceExpression[] { null };
-    initializer.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    final PsiReferenceExpression[] replacedRef = {null};
+    initializer.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiExpression qualifierExpression = expression.getQualifierExpression();
         if (qualifierExpression != null) {
           qualifierExpression.accept(this);
-        } else {
+        }
+        else {
           final PsiElement result = expression.resolve();
           if (expression.getManager().areElementsEquivalent(result, myField)) {
             try {
               replacedRef[0] = qualifyReference(expression, myField, myQualifyingClass);
-            } catch (IncorrectOperationException e) {
+            }
+            catch (IncorrectOperationException e) {
               LOG.error(e);
             }
           }
@@ -93,7 +94,8 @@ public class FieldConflictsResolver {
   }
 
 
-  public static PsiReferenceExpression qualifyReference(PsiReferenceExpression referenceExpression, final PsiMember member,
+  public static PsiReferenceExpression qualifyReference(PsiReferenceExpression referenceExpression,
+                                                        final PsiMember member,
                                                         @Nullable final PsiClass qualifyingClass) throws IncorrectOperationException {
     PsiManager manager = referenceExpression.getManager();
     PsiReferenceExpression expressionFromText;
@@ -105,16 +107,18 @@ public class FieldConflictsResolver {
         expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("A.this." + member.getName(), null);
         final PsiJavaCodeReferenceElement classQualifier = ((PsiThisExpression)expressionFromText.getQualifierExpression()).getQualifier();
         classQualifier.replace(factory.createClassReferenceElement(containingClass));
-      } else {
-        expressionFromText = (PsiReferenceExpression) factory.createExpressionFromText("this." + member.getName(), null);
       }
-    } else {
-      expressionFromText = (PsiReferenceExpression) factory.createExpressionFromText("A." + member.getName(), null);
+      else {
+        expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("this." + member.getName(), null);
+      }
+    }
+    else {
+      expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("A." + member.getName(), null);
       final PsiReferenceExpression qualifier = factory.createReferenceExpression(qualifyingClass);
       expressionFromText.getQualifierExpression().replace(qualifier);
     }
     CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-    expressionFromText = (PsiReferenceExpression) codeStyleManager.reformat(expressionFromText);
-    return (PsiReferenceExpression) referenceExpression.replace(expressionFromText);
+    expressionFromText = (PsiReferenceExpression)codeStyleManager.reformat(expressionFromText);
+    return (PsiReferenceExpression)referenceExpression.replace(expressionFromText);
   }
 }
