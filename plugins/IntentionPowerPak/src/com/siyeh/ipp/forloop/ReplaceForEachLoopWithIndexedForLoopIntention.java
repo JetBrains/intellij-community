@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.siyeh.ipp.forloop;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -26,11 +28,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new IndexedForEachLoopPredicate();
     }
 
+    @Override
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiForeachStatement statement =
@@ -38,45 +42,96 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         if (statement == null) {
             return;
         }
-        final Project project = statement.getProject();
-        final JavaCodeStyleManager codeStyleManager =
-                JavaCodeStyleManager.getInstance(project);
         final PsiExpression iteratedValue = statement.getIteratedValue();
         if (iteratedValue == null) {
             return;
         }
-        @NonNls final StringBuilder newStatement = new StringBuilder();
-        final PsiParameter iterationParameter = statement.getIterationParameter();
+        final PsiParameter iterationParameter =
+                statement.getIterationParameter();
         final PsiType type = iterationParameter.getType();
-        final boolean isArray = iteratedValue.getType() instanceof PsiArrayType;
-        final String index =
+        final PsiType iteratedValueType = iteratedValue.getType();
+        if (iteratedValueType == null) {
+            return;
+        }
+        final boolean isArray = iteratedValueType instanceof PsiArrayType;
+        final Project project = statement.getProject();
+        final JavaCodeStyleManager codeStyleManager =
+                JavaCodeStyleManager.getInstance(project);
+        final String indexText =
                 codeStyleManager.suggestUniqueVariableName("i", statement, true);
+        final String iteratedValueText;
+        if (iteratedValue instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression)iteratedValue;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            iteratedValueText = methodExpression.getText();
+        } else {
+            iteratedValueText = iteratedValue.getText();
+        }
+        final String lengthText;
+        if (isArray) {
+            lengthText = codeStyleManager.suggestUniqueVariableName(
+                    iteratedValueText + "Length", statement, true);
+        } else {
+            lengthText = codeStyleManager.suggestUniqueVariableName(
+                    iteratedValueText + "Size", statement, true);
+        }
+        if (iteratedValue instanceof PsiMethodCallExpression) {
+            final String variableName =
+                    codeStyleManager.suggestUniqueVariableName(
+                            iteratedValueText, statement, true);
+            final StringBuilder declaration = new StringBuilder();
+            final CodeStyleSettings codeStyleSettings =
+                    CodeStyleSettingsManager.getSettings(project);
+            if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+                declaration.append("final ");
+            }
+            declaration.append(iteratedValueType.getCanonicalText());
+            declaration.append(' ');
+            declaration.append(variableName);
+            declaration.append('=');
+            declaration.append(iteratedValue.getText());
+            declaration.append(';');
+            final PsiElementFactory elementFactory =
+                    JavaPsiFacade.getElementFactory(project);
+            final PsiStatement declarationStatement =
+                    elementFactory.createStatementFromText(
+                            declaration.toString(), statement);
+            statement.getParent().addBefore(declarationStatement, statement);
+        }
+        @NonNls final StringBuilder newStatement = new StringBuilder();
         newStatement.append("for(int ");
-        newStatement.append(index);
-        newStatement.append(" = 0;");
-        newStatement.append(index);
-        newStatement.append('<');
-        newStatement.append(iteratedValue.getText());
+        newStatement.append(indexText);
+        newStatement.append(" = 0, ");
+
+        newStatement.append(lengthText);
+        newStatement.append(" = ");
+        newStatement.append(iteratedValueText);
         if (isArray) {
             newStatement.append(".length;");
         } else {
             newStatement.append(".size();");
         }
-        newStatement.append(index);
+        newStatement.append(indexText);
+        newStatement.append('<');
+        newStatement.append(lengthText);
+        newStatement.append(';');
+        newStatement.append(indexText);
         newStatement.append("++)");
         newStatement.append("{ ");
         newStatement.append(type.getCanonicalText());
         newStatement.append(' ');
         newStatement.append(iterationParameter.getName());
         newStatement.append(" = ");
-        newStatement.append(iteratedValue.getText());
+        newStatement.append(iteratedValueText);
         if (isArray) {
             newStatement.append('[');
-            newStatement.append(index);
+            newStatement.append(indexText);
             newStatement.append("];");
         } else {
             newStatement.append(".get(");
-            newStatement.append(index);
+            newStatement.append(indexText);
             newStatement.append(");");
         }
         final PsiStatement body = statement.getBody();

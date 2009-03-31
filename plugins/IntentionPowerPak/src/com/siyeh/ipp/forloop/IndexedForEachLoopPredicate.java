@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,13 +54,14 @@ class IndexedForEachLoopPredicate implements PsiElementPredicate{
             if (aClass == null) {
                 return false;
             }
-            final PsiManager manager = element.getManager();
             final Project project = element.getProject();
-          final PsiClass listInterface =
-            JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.List", GlobalSearchScope.allScope(project));
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiClass listInterface =
+                    psiFacade.findClass("java.util.List",
+                            GlobalSearchScope.allScope(project));
             if (listInterface == null ||
                     !InheritanceUtil.isInheritorOrSelf(aClass,
-                                                       listInterface, true)) {
+                            listInterface, true)) {
                 return false;
             }
         }
