@@ -12,7 +12,7 @@
 	</classpathentry>
 	<classpathentry kind="src" output="bin-props-2" path="src-props-2">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/home/alexander.chernikov/work/eclipse-externals/native"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="$ROOT$/eclipse-externals/native"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="test"/>
