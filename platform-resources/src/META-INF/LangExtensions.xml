@@ -236,6 +236,7 @@
   <dataValidator key="psi.File" implementationClass="com.intellij.ide.impl.PsiElementDataValidator"/>
   <dataValidator key="psi.Element" implementationClass="com.intellij.ide.impl.PsiElementDataValidator"/>
   <dataValidator key="psi.Element.array" implementationClass="com.intellij.ide.impl.PsiElementArrayDataValidator"/>
+  <dataValidator key="module" implementationClass="com.intellij.ide.impl.ModuleDataValidator"/>
 
   <patternDialectProvider implementation="com.intellij.packageDependencies.ui.ProjectPatternProvider"/>
   <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider"/>
