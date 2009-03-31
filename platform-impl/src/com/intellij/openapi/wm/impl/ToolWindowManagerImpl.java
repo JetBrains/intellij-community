@@ -1766,8 +1766,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     final Window wnd = mgr.getActiveWindow();
-    final Container parent = wnd.getParent();
-    if (wnd != null && !wnd.isShowing() && parent instanceof Window) {
+    if (wnd != null && !wnd.isShowing() && wnd.getParent() instanceof Window) {
+      final Container parent = wnd.getParent();
       final Method setActive = ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), "setGlobalActiveWindow", Window.class);
       if (setActive != null) {
         try {
