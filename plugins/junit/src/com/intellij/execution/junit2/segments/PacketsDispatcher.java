@@ -20,13 +20,13 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PacketsDispatcher implements PacketProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.segments.PacketsDispatcher");
-  private final List<PacketConsumer> myListeners = new CopyOnWriteArrayList<PacketConsumer>();
+  private final List<PacketConsumer> myListeners = ContainerUtil.createEmptyCOWList();
   private final InputObjectRegistry myObjectRegistry;
 
   public PacketsDispatcher() {
