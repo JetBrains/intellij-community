@@ -7,7 +7,9 @@ package com.intellij.psi;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.pom.PsiDeclaredTarget;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,6 +23,13 @@ public class DelegatePsiTarget implements PsiTarget {
   }
 
   public int getTextOffset() {
+    if (this instanceof PsiDeclaredTarget) {
+      final TextRange range = ((PsiDeclaredTarget)this).getNameIdentifierRange();
+      if (range != null) {
+        return range.getStartOffset() + myElement.getTextRange().getStartOffset();
+      }
+    }
+
     return myElement.getTextOffset();
   }
 

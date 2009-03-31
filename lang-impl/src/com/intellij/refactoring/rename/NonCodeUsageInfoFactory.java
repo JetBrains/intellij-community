@@ -4,7 +4,9 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class NonCodeUsageInfoFactory implements TextOccurrencesUtil.UsageInfoFactory {
   private final PsiElement myElement;
@@ -15,7 +17,13 @@ public class NonCodeUsageInfoFactory implements TextOccurrencesUtil.UsageInfoFac
     myStringToReplace = stringToReplace;
   }
 
+  @Nullable
   public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+    final PsiElement namedElement = TargetElementUtilBase.getInstance().getNamedElement(usage, startOffset);
+    if (namedElement != null) {
+      return null;
+    }
+
     int start = usage.getTextRange().getStartOffset();
     return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, myElement, myStringToReplace);
   }

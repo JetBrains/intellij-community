@@ -185,6 +185,8 @@
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage" id="custom"/>
 
+  <elementDescriptionProvider implementation="com.intellij.psi.impl.DefaultPomTargetDescriptionProvider" order="last" id="pomDefault"/>
+
   <!-- Editor -->
   <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
 

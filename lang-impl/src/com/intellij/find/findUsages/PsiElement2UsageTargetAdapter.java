@@ -144,7 +144,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
         final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
         myIconOpen = presentation != null ? presentation.getIcon(true) : null;
         myIconClosed = presentation != null ? presentation.getIcon(false) : null;
-        myPresentableText = UsageViewUtil.createNodeText(element, true);
+        myPresentableText = UsageViewUtil.createNodeText(element);
         if (myIconOpen == null || myIconClosed == null) {
           if (element instanceof PsiMetaOwner) {
             final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;

@@ -10,6 +10,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -17,16 +19,20 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.PomDeclarationSearcher;
+import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PomTargetPsiElementImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.Language;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class TargetElementUtilBase {
   public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
@@ -137,7 +143,7 @@ public class TargetElementUtilBase {
 
     if ((flags & ELEMENT_NAME_ACCEPTED) != 0) {
       if (element instanceof PsiNamedElement) return element;
-      return getNamedElement(element);
+      return getNamedElement(element, offset);
     }
     return null;
   }
@@ -156,6 +162,35 @@ public class TargetElementUtilBase {
   public PsiElement adjustReference(@NotNull PsiReference ref){
     return null;
   }
+
+  @Nullable
+  public PsiElement getNamedElement(@Nullable final PsiElement element, int offsetInElement) {
+    if (element == null) return null;
+
+    final List<PomTarget> targets = CollectionFactory.arrayList();
+    final Consumer<PomTarget> consumer = new Consumer<PomTarget>() {
+      public void consume(PomTarget target) {
+        targets.add(target);
+      }
+    };
+
+    PsiElement parent = element;
+
+    int offset = offsetInElement;
+    while (parent != null) {
+      for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
+        searcher.findDeclarationsAt(parent, offset, consumer);
+        if (!targets.isEmpty()) {
+          return new PomTargetPsiElementImpl(element.getProject(), targets.get(0));
+        }
+      }
+      offset -= parent.getStartOffsetInParent();
+      parent = parent.getParent();
+    }
+
+    return getNamedElement(element);
+  }
+
 
   @Nullable
   protected PsiElement getNamedElement(@Nullable final PsiElement element) {

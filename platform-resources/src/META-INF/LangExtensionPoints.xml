@@ -230,6 +230,8 @@
 
   <extensionPoint name="psi.referenceContributor" interface="com.intellij.psi.PsiReferenceContributor"/>
 
+  <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
+
   <extensionPoint name="statistician" interface="com.intellij.psi.statistics.StatisticsExtensionPoint"/>
   <extensionPoint name="weigher" interface="com.intellij.psi.WeigherExtensionPoint"/>
   <extensionPoint name="completion.contributor" interface="com.intellij.codeInsight.completion.CompletionContributor"/>

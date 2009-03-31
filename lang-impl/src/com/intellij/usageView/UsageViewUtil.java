@@ -7,10 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.meta.PsiPresentableMetaData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -25,24 +23,8 @@ public class UsageViewUtil {
 
   private UsageViewUtil() { }
 
-  public static String createNodeText(PsiElement element, boolean useFullName) {
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
-      final PsiMetaData metaData = psiMetaOwner.getMetaData();
-      if (metaData instanceof PsiPresentableMetaData) {
-        return ((PsiPresentableMetaData)metaData).getTypeName() + " " + getMetaDataName(metaData);
-      }
-    }
-                                         
-    if (element != null) {
-      if (element instanceof PsiFile) {
-        return ((PsiFile) element).getName();
-      }
-      FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage());
-      return provider.getNodeText(element, useFullName);
-    }
-
-    return "";
+  public static String createNodeText(PsiElement element) {
+    return ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE);
   }
 
   public static String getMetaDataName(final PsiMetaData metaData) {
