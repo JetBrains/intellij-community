@@ -15,33 +15,53 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class FrameStateManagerImpl extends FrameStateManager implements ApplicationComponent,PropertyChangeListener {
+public class FrameStateManagerImpl extends FrameStateManager implements ApplicationComponent {
 
   private final CopyOnWriteArrayList<FrameStateListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private boolean myShouldSynchronize;
   private final Alarm mySyncAlarm;
 
-  public FrameStateManagerImpl() {
+  public FrameStateManagerImpl(final ApplicationImpl app) {
 
     myShouldSynchronize = false;
     mySyncAlarm = new Alarm();
 
-    KeyboardFocusManager focusManager=KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    focusManager.addPropertyChangeListener("activeWindow",this);
-    focusManager.addPropertyChangeListener("focusedWindow",this);
-    focusManager.addPropertyChangeListener("focusOwner",this);
+    app.addApplicationListener(new ApplicationAdapter() {
+      @Override
+      public void applicationActivated(IdeFrame ideFrame) {
+        mySyncAlarm.cancelAllRequests();
+        if (myShouldSynchronize) {
+          myShouldSynchronize = false;
+          fireActivationEvent();
+        }
+      }
+
+      @Override
+      public void applicationDeactivated(IdeFrame ideFrame) {
+        mySyncAlarm.cancelAllRequests();
+        mySyncAlarm.addRequest(new Runnable() {
+          public void run() {
+            if (!app.isActive()) {
+              myShouldSynchronize = true;
+              fireDeactivationEvent();
+            }
+          }
+        }, 200);
+      }
+    });
+
   }
 
   @NotNull
@@ -54,30 +74,6 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
   }
 
   public void disposeComponent() {
-  }
-
-  public void propertyChange(PropertyChangeEvent e) {
-    final KeyboardFocusManager focusManager = (KeyboardFocusManager)e.getSource();
-    Window activeWindow = focusManager.getActiveWindow();
-
-    if (activeWindow != null) {
-      mySyncAlarm.cancelAllRequests();
-      if (myShouldSynchronize) {
-        myShouldSynchronize = false;
-        fireActivationEvent();
-      }
-    }
-    else{
-      mySyncAlarm.cancelAllRequests();
-      mySyncAlarm.addRequest(new Runnable() {
-        public void run() {
-          if (focusManager.getActiveWindow() == null) {
-            myShouldSynchronize = true;
-            fireDeactivationEvent();
-          }
-        }
-      }, 200);
-    }
   }
 
   private void fireDeactivationEvent() {

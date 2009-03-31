@@ -868,7 +868,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  public void tryToApplyActivationState(boolean active, Window window) {
+  public boolean tryToApplyActivationState(boolean active, Window window) {
     final Component frame = UIUtil.findUltimateParent(window);
 
     if (frame instanceof IdeFrame) {
@@ -883,8 +883,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
             each.applicationDeactivated(ideFrame);
           }
         }
+        return true;
       }
     }
+
+    return false;
   }
 
   public boolean isActive() {

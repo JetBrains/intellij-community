@@ -388,7 +388,7 @@ public class IdeEventQueue extends EventQueue {
     myEventCount++;
 
 
-    processAppActivationEvents(e);
+    if (processAppActivationEvents(e)) return;
 
     if (!myPopupManager.isPopupActive()) {
 
@@ -471,24 +471,27 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private void processAppActivationEvents(AWTEvent e) {
+  private boolean processAppActivationEvents(AWTEvent e) {
     final Application app = ApplicationManager.getApplication();
-    if (!(app instanceof ApplicationImpl)) return;
+    if (!(app instanceof ApplicationImpl)) return false;
 
     ApplicationImpl appImpl = (ApplicationImpl)app;
 
+    boolean consumed = false;
     if (e instanceof WindowEvent) {
       WindowEvent we = (WindowEvent)e;
       if (we.getID() == WindowEvent.WINDOW_GAINED_FOCUS && we.getWindow() != null) {
         if (we.getOppositeWindow() == null && !appImpl.isActive()) {
-          appImpl.tryToApplyActivationState(true, we.getWindow());
+          consumed = appImpl.tryToApplyActivationState(true, we.getWindow());
         }
       } else if (we.getID() == WindowEvent.WINDOW_LOST_FOCUS && we.getWindow() != null) {
         if (we.getOppositeWindow() == null && appImpl.isActive()) {
-          appImpl.tryToApplyActivationState(false, we.getWindow());
+          consumed = appImpl.tryToApplyActivationState(false, we.getWindow());
         }
       }
     }
+
+    return consumed && Patches.REQUEST_FOCUS_MAY_ACTIVATE_APP;
   }
 
 
