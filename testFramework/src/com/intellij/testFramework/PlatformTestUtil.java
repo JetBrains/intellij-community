@@ -2,12 +2,15 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
@@ -98,5 +101,30 @@ public class PlatformTestUtil {
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
     Assert.assertEquals(expected, treeStringPresentation);
+  }
+
+  public static void waitForAlarm(final int delay) throws InterruptedException {
+    final boolean[] invoked = new boolean[]{false};
+    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    alarm.addRequest(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            alarm.addRequest(new Runnable() {
+              public void run() {
+                invoked[0] = true;
+              }
+            }, delay);
+          }
+        });
+      }
+    }, delay);
+
+    UIUtil.dispatchAllInvocationEvents();
+
+    while (!invoked[0]) {
+      UIUtil.dispatchAllInvocationEvents();
+      Thread.sleep(delay);
+    }
   }
 }

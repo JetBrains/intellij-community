@@ -2,21 +2,19 @@ package com.intellij.projectView;
 
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
-import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.*;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +24,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -126,40 +123,6 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     assertStructureEqual(packageDirectory, expected, maxRowCount, myStructure);
   }
 
-  private static VirtualFile[] getFiles(AbstractTreeNode kid) {
-    if (kid instanceof BasePsiNode) {
-      Object value = kid.getValue();
-      VirtualFile virtualFile = PsiUtilBase.getVirtualFile((PsiElement)value);
-      return new VirtualFile[]{virtualFile};
-    }
-    else if (kid instanceof PackageElementNode) {
-      return ((PackageElementNode)kid).getVirtualFiles();
-    }
-    else {
-      return new VirtualFile[0];
-    }
-
-  }
-
-  private static void collect(AbstractTreeNode node, MultiValuesMap<VirtualFile, AbstractTreeNode> map,
-                                final AbstractTreeStructure structure) {
-    Object[] kids = structure.getChildElements(node);
-    for (Object kid1 : kids) {
-      ProjectViewNode kid = (ProjectViewNode)kid1;
-      final VirtualFile[] files = getFiles(kid);
-      for (VirtualFile vFile : files) {
-        map.put(vFile, kid);
-        ProjectViewNode eachParent = (ProjectViewNode)kid.getParent();
-        while (eachParent != null) {
-          map.put(vFile, eachParent);
-          eachParent = (ProjectViewNode)eachParent.getParent();
-        }
-
-      }
-      collect(kid, map, structure);
-    }
-  }
-
   protected void useStandardProviders() {
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject));
   }
@@ -231,7 +194,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   public static void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
     Disposer.dispose(pane);
     pane.createComponent();
-    assertNull(getNodeForElement(element,pane));
+    assertNull(getNodeForElement(element, pane));
     pane.select(element, virtualFile, true);
     assertTrue(isExpanded(element, pane));
   }
@@ -246,20 +209,14 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   public static void checkContainsMethod(final Object rootElement, final AbstractTreeStructure structure) {
-    MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<VirtualFile, AbstractTreeNode>();
-    collect((AbstractTreeNode)rootElement, map, structure);
-
-    for (VirtualFile eachFile : map.keySet()) {
-      Collection<AbstractTreeNode> nodes = map.values();
-      for (final AbstractTreeNode node : nodes) {
-        ProjectViewNode eachNode = (ProjectViewNode)node;
-        boolean actual = eachNode.contains(eachFile);
-        boolean expected = map.get(eachFile).contains(eachNode);
-        if (actual != expected) {
-          assertTrue("file=" + eachFile + " node=" + eachNode.getTestPresentation() + " expected:" + expected, false);
+    ProjectViewTestUtil.checkContainsMethod(rootElement, structure, new Function<AbstractTreeNode, VirtualFile[]>() {
+      public VirtualFile[] fun(AbstractTreeNode kid) {
+        if (kid instanceof PackageElementNode) {
+          return ((PackageElementNode)kid).getVirtualFiles();
         }
+        return null;
       }
-    }
+    });
   }
 
   protected String getTestPath() {
