@@ -81,8 +81,6 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private final ArrayList<LogCommand> myLog = new ArrayList<LogCommand>(1024);
   private int myCommandsProcessedCount = 0;
 
-  private JLabel myProgressStatisticsLabel;
-  private JLabel myProgressTextLabel;
   private JPanel myProgressPanel;
 
   private final Timer myScrollerTimer = new Timer(1000, new ActionListener() {
@@ -265,41 +263,6 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return messageView;
   }
 
-  public void setProgressStatistics(final String s) {
-    initProgressPanel();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myProgressStatisticsLabel.setText(s);
-      }
-    });
-  }
-
-  public void setProgressText(final String s) {
-    initProgressPanel();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myProgressTextLabel.setText(s);
-      }
-    });
-  }
-
-  private void initProgressPanel() {
-    if (myProgressPanel == null) {
-      myProgressPanel = new JPanel(new GridLayout(1, 2));
-      myProgressStatisticsLabel = new JLabel();
-      myProgressPanel.add(myProgressStatisticsLabel);
-      myProgressTextLabel = new JLabel();
-      myProgressPanel.add(myProgressTextLabel);
-      myMessagePanel.add(myProgressPanel, BorderLayout.SOUTH);
-      // fix of 9377
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myMessagePanel.validate();
-        }
-      });
-    }
-  }
-
   public void removeProgressPanel() {
     if (myProgressPanel != null) {
       myMessagePanel.remove(myProgressPanel);
@@ -412,7 +375,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     AntMessage message = createErrorMessage(MessageType.ERROR, priority, error);
     addMessage(MessageType.ERROR, priority, error, message.getFile(), message.getLine(), message.getColumn());
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    wolf.weHaveGotProblem(wolf.convertToProblem(message.getFile(), message.getLine(), message.getColumn(), message.getTextLines()));
+    wolf.queue(message.getFile());
   }
 
   public void outputException(String exception) {
@@ -420,7 +383,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     AntMessage message = createErrorMessage(MessageType.ERROR, 0, exception);
     addCommand(new AddExceptionCommand(message));
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    wolf.weHaveGotProblem(wolf.convertToProblem(message.getFile(), message.getLine(), message.getColumn(), message.getTextLines()));
+    wolf.queue(message.getFile());
   }
 
 
@@ -482,7 +445,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
           return new AntMessage(type, priority, text, result, line, 1);
         }
-        catch (NumberFormatException e) {
+        catch (NumberFormatException ignored) {
         }
       }
     }
@@ -502,7 +465,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     addCommand(new AddJavacMessageCommand(message, url));
     if (type == MessageType.ERROR) {
       WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-      wolf.weHaveGotProblem(wolf.convertToProblem(file, line, column, text));
+      wolf.queue(file);
     }
   }
 
@@ -533,7 +496,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     private final ContentManager myContentManager;
     private final Project myProject;
 
-    public CloseListener(Content content, ContentManager contentManager, Project project) {
+    private CloseListener(Content content, ContentManager contentManager, Project project) {
       myContent = content;
       myContentManager = contentManager;
       myProject = project;
@@ -616,7 +579,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   }
 
-  abstract static class LogCommand {
+  private abstract static class LogCommand {
     private final int myPriority;
 
     LogCommand(int priority) {
@@ -630,7 +593,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     abstract void execute(AntOutputView outputView);
   }
 
-  static final class StartBuildCommand extends LogCommand {
+  private static final class StartBuildCommand extends LogCommand {
     private final AntMessage myMessage;
 
     StartBuildCommand(String buildName) {
@@ -643,7 +606,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  static final class BuildFailedCommand extends LogCommand {
+  private static final class BuildFailedCommand extends LogCommand {
     private final AntMessage myMessage;
 
     BuildFailedCommand(String buildName) {
@@ -656,7 +619,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  static final class FinishBuildCommand extends LogCommand {
+  private static final class FinishBuildCommand extends LogCommand {
     private final String myFinishStatusText;
 
     FinishBuildCommand(String finishStatusText) {
@@ -669,7 +632,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  static final class StartTargetCommand extends LogCommand {
+  private static final class StartTargetCommand extends LogCommand {
     private final AntMessage myMessage;
 
     StartTargetCommand(String targetName) {
@@ -682,7 +645,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  static final class FinishTargetCommand extends LogCommand {
+  private static final class FinishTargetCommand extends LogCommand {
     FinishTargetCommand() {
       super(0);
     }
@@ -693,7 +656,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
 
-  static final class StartTaskCommand extends LogCommand {
+  private static final class StartTaskCommand extends LogCommand {
     private final AntMessage myMessage;
 
     StartTaskCommand(String taskName) {
@@ -706,7 +669,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  static final class FinishTaskCommand extends LogCommand {
+  private static final class FinishTaskCommand extends LogCommand {
     FinishTaskCommand() {
       super(0);
     }
@@ -716,9 +679,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-
-  static final class AddMessageCommand extends LogCommand {
-    protected final AntMessage myAntMessage;
+  private static final class AddMessageCommand extends LogCommand {
+    final AntMessage myAntMessage;
 
     AddMessageCommand(AntMessage antMessage) {
       super(antMessage.getPriority());
@@ -730,7 +692,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  final class AddExceptionCommand extends LogCommand {
+  private final class AddExceptionCommand extends LogCommand {
     private final AntMessage myAntMessage;
 
     AddExceptionCommand(AntMessage antMessage) {
@@ -743,11 +705,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  static final class AddJavacMessageCommand extends LogCommand {
+  private static final class AddJavacMessageCommand extends LogCommand {
     private final String myUrl;
     private final AntMessage myAntMessage;
 
-    public AddJavacMessageCommand(AntMessage antMessage, String url) {
+    AddJavacMessageCommand(AntMessage antMessage, String url) {
       super(antMessage.getPriority());
       myAntMessage = antMessage;
       myUrl = url;
@@ -872,7 +834,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
 
     protected final void flushDelayedMessages() {
-      if (myDelayedMessages.size() > 0) {
+      if (!myDelayedMessages.isEmpty()) {
         AntMessage[] messages = myDelayedMessages.toArray(new AntMessage[myDelayedMessages.size()]);
         myDelayedMessages.clear();
         myTreeView.addMessages(messages);
@@ -889,11 +851,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return myTreeView.getPreviousOccurenceActionName();
   }
 
-  public OccurenceNavigator.OccurenceInfo goNextOccurence() {
+  public OccurenceInfo goNextOccurence() {
     return isTreeView() ? myTreeView.goNextOccurence() : null;
   }
 
-  public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
+  public OccurenceInfo goPreviousOccurence() {
     return isTreeView() ? myTreeView.goPreviousOccurence() : null;
   }
 

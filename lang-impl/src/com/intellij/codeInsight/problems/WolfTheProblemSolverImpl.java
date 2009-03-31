@@ -32,25 +32,24 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author cdr
  */
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final Map<VirtualFile, ProblemFileInfo> myProblems = new THashMap<VirtualFile, ProblemFileInfo>();
-  private final CopyOnWriteArrayList<VirtualFile> myCheckingQueue = new CopyOnWriteArrayList<VirtualFile>();
+  private final Collection<VirtualFile> myCheckingQueue = new THashSet<VirtualFile>(10);
 
   private final Project myProject;
-  private final List<ProblemListener> myProblemListeners = new CopyOnWriteArrayList<ProblemListener>();
-  private final List<Condition<VirtualFile>> myFilters =
-    new CopyOnWriteArrayList<Condition<VirtualFile>>();
+  private final List<ProblemListener> myProblemListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Condition<VirtualFile>> myFilters = ContainerUtil.createEmptyCOWList();
   private final ProblemListener fireProblemListeners = new ProblemListener() {
     public void problemsAppeared(VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
@@ -96,7 +95,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       old = myProblems.remove(problemFile);
     }
     if (old != null) {
-      myCheckingQueue.remove(problemFile);
+      synchronized (myCheckingQueue) {
+        myCheckingQueue.remove(problemFile);
+      }
       // firing outside lock
       fireProblemListeners.problemsDisappeared(problemFile);
     }
@@ -219,11 +220,27 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress, ProgressableTextEditorHighlightingPass pass) throws ProcessCanceledException{
     if (!myProject.isOpen()) return;
 
-    pass.setProgressLimit(myCheckingQueue.size());
+    int size;
+    synchronized (myCheckingQueue) {
+      size = myCheckingQueue.size();
+    }
+    pass.setProgressLimit(size);
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     String oldInfo = saveStatusBarInfo(statusBar);
     try {
-      for (final VirtualFile virtualFile : myCheckingQueue) {
+      while (true) {
+        final VirtualFile virtualFile;
+        synchronized (myCheckingQueue) {
+          Iterator<VirtualFile> iterator = myCheckingQueue.iterator();
+          if (iterator.hasNext()) {
+            virtualFile = iterator.next();
+            iterator.remove();
+          }
+          else {
+            virtualFile = null;
+          }
+        }
+        if (virtualFile == null) break;
         progress.checkCanceled();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -389,6 +406,14 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     });
   }
 
+  @Override
+  public void queue(VirtualFile suspiciousFile) {
+    if (!isToBeHighlighted(suspiciousFile)) return;
+    synchronized (myCheckingQueue) {
+      myCheckingQueue.add(suspiciousFile);
+    }
+  }
+
   public boolean isProblemFile(VirtualFile virtualFile) {
     synchronized (myProblems) {
       return myProblems.containsKey(virtualFile);
@@ -421,7 +446,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         fireListener = true;
       }
       storedProblems.problems.add(problem);
-      myCheckingQueue.addIfAbsent(virtualFile);
+      synchronized (myCheckingQueue) {
+        myCheckingQueue.add(virtualFile);
+      }
     }
     if (fireListener) {
       fireProblemListeners.problemsAppeared(virtualFile);
@@ -441,7 +468,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         fireListener = true;
       }
       storedProblems.problems.addAll(problems);
-      myCheckingQueue.addIfAbsent(virtualFile);
+      synchronized (myCheckingQueue) {
+        myCheckingQueue.add(virtualFile);
+      }
     }
     if (fireListener) {
       fireProblemListeners.problemsAppeared(virtualFile);
@@ -492,7 +521,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         newInfo.problems.add(problem);
         newInfo.hasSyntaxErrors |= ((ProblemImpl)problem).isSyntaxOnly();
       }
-      myCheckingQueue.addIfAbsent(file);
+      synchronized (myCheckingQueue) {
+        myCheckingQueue.add(file);
+      }
       fireChanged = hasProblemsBefore && !oldInfo.equals(newInfo);
     }
     if (!hasProblemsBefore) {

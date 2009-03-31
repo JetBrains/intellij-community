@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.problems;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
@@ -7,8 +8,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiElement;
-import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,19 +24,11 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     return myDelegate != null && myDelegate.isProblemFile(virtualFile);
   }
 
-  public void weHaveGotProblem(Problem problem) {
-    if (myDelegate != null) myDelegate.weHaveGotProblem(problem);
-  }
-
   public void weHaveGotProblems(@NotNull final VirtualFile virtualFile, @NotNull final List<Problem> problems) {
     if (myDelegate != null) myDelegate.weHaveGotProblems(virtualFile, problems);
   }
 
   public boolean hasProblemFilesBeneath(final Condition<VirtualFile> condition) {
-    return false;
-  }
-
-  public boolean hasProblemFilesBeneath(PsiElement scope) {
     return false;
   }
 
@@ -62,6 +53,11 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   public void registerFileHighlightFilter(Condition<VirtualFile> filter, Disposable parentDisposable) {
+  }
+
+  @Override
+  public void queue(VirtualFile suspiciousFile) {
+    if (myDelegate != null) myDelegate.queue(suspiciousFile);
   }
 
   public void projectOpened() {

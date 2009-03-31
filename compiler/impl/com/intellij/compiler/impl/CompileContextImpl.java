@@ -152,7 +152,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       myMessages.put(msg.getCategory(), messages);
     }
     if (messages.add(msg)) {
-      myTask.addMessage(this, msg);
+      myTask.addMessage(msg);
     }
   }
 

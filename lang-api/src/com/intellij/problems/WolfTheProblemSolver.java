@@ -40,7 +40,6 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
 
   public abstract boolean isProblemFile(VirtualFile virtualFile);
 
-  public abstract void weHaveGotProblem(Problem problem);
   public abstract void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems);
   public abstract void clearProblems(@NotNull VirtualFile virtualFile);
 
@@ -69,4 +68,5 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   public abstract void removeProblemListener(ProblemListener listener);
 
   public abstract void registerFileHighlightFilter(Condition<VirtualFile> filter, Disposable parentDisposable);
+  public abstract void queue(VirtualFile suspiciousFile);
 }

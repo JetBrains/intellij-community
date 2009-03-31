@@ -7,19 +7,15 @@ package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerMessageImpl;
-import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressFunComponentProvider;
@@ -31,7 +27,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +35,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
-import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
@@ -66,13 +60,11 @@ public class CompilerTask extends Task.Backgroundable {
   private CompilerProgressDialog myDialog;
   private NewErrorTreeViewPanel myErrorTreeView;
   private final Object myMessageViewLock = new Object();
-  private final Project myProject;
   private final String myContentName;
   private final boolean myHeadlessMode;
   private boolean myIsBackgroundMode;
   private int myErrorCount = 0;
   private int myWarningCount = 0;
-  private final String myStatisticsText = "";
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private boolean myMessagesAutoActivated = false;
 
@@ -83,7 +75,6 @@ public class CompilerTask extends Task.Backgroundable {
 
   public CompilerTask(@NotNull Project project, boolean compileInBackground, String contentName, final boolean headlessMode) {
     super(project, contentName);
-    myProject = project;
     myIsBackgroundMode = compileInBackground;
     myContentName = contentName;
     myHeadlessMode = headlessMode || IS_UNIT_TEST_MODE;
@@ -194,7 +185,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
   }
 
-  public void addMessage(final CompileContext compileContext, final CompilerMessage message) {
+  public void addMessage(final CompilerMessage message) {
     prepareMessageView();
 
     final CompilerMessageCategory messageCategory = message.getCategory();
@@ -203,7 +194,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
     else if (CompilerMessageCategory.ERROR.equals(messageCategory)) {
       myErrorCount += 1;
-      informWolf(message, compileContext);
+      informWolf(message);
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -224,24 +215,10 @@ public class CompilerTask extends Task.Backgroundable {
     }
   }
 
-  private void informWolf(final CompilerMessage message, final CompileContext compileContext) {
+  private void informWolf(final CompilerMessage message) {
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    Problem problem = wolf.convertToProblem(getVirtualFile(message), convertToHighlightSeverity(message), getTextRange(message),
-                                            message.getMessage());
-    if (problem != null && problem.getVirtualFile() != null) {
-      final VirtualFile virtualFile = problem.getVirtualFile();
-      Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-        public Document compute() {
-          return FileDocumentManager.getInstance().getDocument(virtualFile);
-        }
-      });
-
-      Long compileStart = compileContext.getUserData(CompileDriver.COMPILATION_START_TIMESTAMP);
-      if (document != null && compileStart != null && compileStart.longValue() > document.getModificationStamp()) {
-        // user might have changed the file after compile start
-        wolf.weHaveGotProblem(problem);
-      }
-    }
+    VirtualFile file = getVirtualFile(message);
+    wolf.queue(file);
   }
 
   private void doAddMessage(final CompilerMessage message) {
@@ -259,9 +236,11 @@ public class CompilerTask extends Task.Backgroundable {
         else {
           myErrorTreeView.addMessage(type, text, file, -1, -1, message.getVirtualFile());
         }
-        
-        final boolean shouldAutoActivate = !myMessagesAutoActivated && 
-                                     (CompilerMessageCategory.ERROR.equals(category) || (CompilerMessageCategory.WARNING.equals(category) && !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()));
+
+        final boolean shouldAutoActivate = !myMessagesAutoActivated &&
+                                           (CompilerMessageCategory.ERROR.equals(category) ||
+                                            CompilerMessageCategory.WARNING.equals(category) &&
+                                             !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings());
         if (shouldAutoActivate) {
           myMessagesAutoActivated = true;
           activateMessageView();
@@ -330,13 +309,13 @@ public class CompilerTask extends Task.Backgroundable {
           if (myIsBackgroundMode) {
             if (myErrorTreeView != null) {
               //myErrorTreeView.setProgressText(s);
-              myErrorTreeView.setProgressStatistics(myStatisticsText);
+              myErrorTreeView.setProgressStatistics("");
             }
           }
           else {
             if (myDialog != null) {
               myDialog.setStatusText(s);
-              myDialog.setStatisticsText(myStatisticsText);
+              myDialog.setStatisticsText("");
             }
           }
         }
@@ -442,11 +421,11 @@ public class CompilerTask extends Task.Backgroundable {
         closeProgressDialog();
         synchronized (myMessageViewLock) {
           if (myErrorTreeView != null) {
-            final boolean shouldRetainView = myErrorCount > 0 || (myWarningCount > 0 && !myErrorTreeView.isHideWarnings());
+            final boolean shouldRetainView = myErrorCount > 0 || myWarningCount > 0 && !myErrorTreeView.isHideWarnings();
             if (shouldRetainView) {
-              addMessage(null, new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
+              addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
                                         CompilerBundle.message("statistics.error.count", myErrorCount), null, -1, -1, null));
-              addMessage(null, new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
+              addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
                                         CompilerBundle.message("statistics.warnings.count", myWarningCount), null, -1, -1, null));
               //activateMessageView();
               myErrorTreeView.selectFirstMessage();
@@ -494,21 +473,6 @@ public class CompilerTask extends Task.Backgroundable {
       }
     }
     return virtualFile;
-  }
-
-  private static HighlightSeverity convertToHighlightSeverity(final CompilerMessage message) {
-    CompilerMessageCategory category = message.getCategory();
-    switch (category) {
-      case ERROR:
-        return HighlightSeverity.ERROR;
-      case WARNING:
-        return HighlightSeverity.WARNING;
-      case INFORMATION:
-        return HighlightSeverity.INFORMATION;
-      case STATISTICS:
-        return HighlightSeverity.INFORMATION;
-    }
-    return null;
   }
 
   public static TextRange getTextRange(final CompilerMessage message) {
@@ -594,10 +558,8 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     private boolean shouldAskUser() {
-      if (myUserAcceptedCancel) {
-        return false; // do not ask second time if user already accepted closing
-      }
-      return !myIsApplicationExitingOrProjectClosing && myIndicator.isRunning();
+      // do not ask second time if user already accepted closing
+      return !myUserAcceptedCancel && !myIsApplicationExitingOrProjectClosing && myIndicator.isRunning();
     }
 
     public void projectOpened(Project project) {
