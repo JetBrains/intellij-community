@@ -4,6 +4,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -42,6 +43,11 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
 
   public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
     return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(), myFixtureBuilderProviders);
+  }
+
+  @Override
+  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
+    return new LightTestFixtureBuilderImpl<IdeaProjectTestFixture>(new LightIdeaTestFixtureImpl(null, EmptyModuleType.getInstance()));
   }
 
   public CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture) {

@@ -10,11 +10,13 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Factory;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -23,11 +25,20 @@ import org.jetbrains.annotations.Nullable;
  * @author mike
  */
 class LightIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFixture {
+  private final Factory<Sdk> mySdkFactory;
+  protected final ModuleType myModuleType;
+
+  public LightIdeaTestFixtureImpl(@Nullable final Factory<Sdk> sdk, final ModuleType moduleType) {
+    mySdkFactory = sdk;
+    myModuleType = moduleType;
+  }
+
   public void setUp() throws Exception {
     super.setUp();
 
-    LightIdeaTestCase.initApplication(new MyDataProvider());
-    LightIdeaTestCase.doSetup(JavaSdkImpl.getMockJdk("java 1.4"), new LocalInspectionTool[0], null);
+    LightPlatformTestCase.initApplication(new MyDataProvider());
+    final Sdk sdk = mySdkFactory == null ? null : mySdkFactory.create();
+    LightPlatformTestCase.doSetup(sdk, myModuleType, new LocalInspectionTool[0], null);
     storeSettings();
   }
 
@@ -50,12 +61,12 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFix
   public void tearDown() throws Exception {
     CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     checkForSettingsDamage();
-    LightIdeaTestCase.doTearDown();
+    LightPlatformTestCase.doTearDown();
     super.tearDown();
   }
 
   public Project getProject() {
-    return LightIdeaTestCase.getProject();
+    return LightPlatformTestCase.getProject();
   }
 
   @Override
@@ -64,6 +75,6 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFix
   }
 
   public Module getModule() {
-    return LightIdeaTestCase.getModule();
+    return LightPlatformTestCase.getModule();
   }
 }
