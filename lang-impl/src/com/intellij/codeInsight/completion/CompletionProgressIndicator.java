@@ -159,7 +159,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void updateLookup() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myEditor.isDisposed() || myDisposed || !myEditor.getComponent().isShowing()) return;
+    if (myEditor.isDisposed() || myDisposed) return;
 
     myLookup.updateList();
     if (!myInitialized) {
