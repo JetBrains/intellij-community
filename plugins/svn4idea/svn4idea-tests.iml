@@ -33,6 +33,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="lang-api" />
   </component>
 </module>
 
