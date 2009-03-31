@@ -2,9 +2,10 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.idea.svn.history.*;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -12,7 +13,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
-public class SvnCachingRevisionsTest extends IdeaTestCase {
+public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   private SvnRepositoryLocation myLocation;
   private LoadedRevisionsCache myInternalManager;
   private final static String URL = "file:///C:/repo/trunk";
@@ -24,13 +25,12 @@ public class SvnCachingRevisionsTest extends IdeaTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myLocation = new SvnRepositoryLocation(URL);
-    myInternalManager = LoadedRevisionsCache.getInstance(myProject);
-    
-    myFilesToDelete.add(SvnApplicationSettings.getLoadedRevisionsDir(myProject));
+    myInternalManager = LoadedRevisionsCache.getInstance(myFixture.getProject());
   }
 
   @Override
   protected void tearDown() throws Exception {
+    FileUtil.delete(SvnApplicationSettings.getLoadedRevisionsDir(myFixture.getProject()));
     super.tearDown();
   }
 
