@@ -71,7 +71,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
     if (parent == null) return child.getPath().replace('/', File.separatorChar);
     final String parentPath = parent.getPath();
     final int beginOffset = (parentPath.length() == 1 && '/' == parentPath.charAt(0)) ? 0 : 1; // IDEADEV-35767
-    return child.getPath().substring(parent.getPath().length() + beginOffset).replace('/', File.separatorChar);
+    return child.getPath().substring(parent.getPath().length() + beginOffset).replace('/', File.separatorChar); 
   }
 
   public int getSortWeight() {
