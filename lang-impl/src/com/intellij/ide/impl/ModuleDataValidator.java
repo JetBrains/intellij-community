@@ -7,6 +7,6 @@ import com.intellij.openapi.module.Module;
  */
 public class ModuleDataValidator extends DataValidator<Module> {
   public Module findInvalid(String dataId, Module data, Object dataSource) {
-    return data.isDisposed() ? null : data;
+    return data.isDisposed() ? data : null;
   }
 }
