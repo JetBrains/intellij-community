@@ -31,7 +31,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
@@ -72,7 +71,7 @@ public class EclipseImlTest extends IdeaTestCase {
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
         return ModuleManager.getInstance(getProject())
-          .newModule(new File(path).getParent() + File.separator + EclipseProjectFinder.findProjectName(path) + File.separator + EclipseProjectFinder
+          .newModule(new File(path) + File.separator + EclipseProjectFinder
             .findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
       }
     });
@@ -92,8 +91,7 @@ public class EclipseImlTest extends IdeaTestCase {
 
 
     final Element expectedIml = JDOMUtil.loadDocument(new File(getProject().getBaseDir().getPath() + "/expected", "expected.iml")).getRootElement();
-    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(actualImlElement), "\n")).
-      replaceAll(StringUtil.escapeToRegexp(getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
+    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(actualImlElement), "\n")),
                       JDOMUtil.areElementsEqual(expectedIml, actualImlElement));
   }
 
@@ -119,8 +117,8 @@ public class EclipseImlTest extends IdeaTestCase {
   //  doTest("/eclipse-ws-3.4.1-a/all-props");
   //}
 
-  //public void testSashaCheRoot() throws Exception {
-  //  doTest();
-  //}
+  public void testSashaCheRoot() throws Exception {
+    doTest();
+  }
 
 }
