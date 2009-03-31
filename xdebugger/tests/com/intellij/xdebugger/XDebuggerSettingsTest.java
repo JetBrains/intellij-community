@@ -1,7 +1,7 @@
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.testFramework.LiteFixture;
+import com.intellij.testFramework.PlatformLiteFixture;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class XDebuggerSettingsTest extends LiteFixture {
+public class XDebuggerSettingsTest extends PlatformLiteFixture {
   protected void setUp() throws Exception {
     super.setUp();
     initApplication();

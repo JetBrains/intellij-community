@@ -18,8 +18,8 @@ import org.picocontainer.PicoContainer;
 
 import java.lang.reflect.Array;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager {
   private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);

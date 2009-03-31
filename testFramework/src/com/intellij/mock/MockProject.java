@@ -35,10 +35,6 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     return ServiceManager.getService(this, PomModel.class);
   }
 
-  public boolean isDummy() {
-    return false;
-  }
-
   public Condition getDisposed() {
     return new Condition() {
       public boolean value(final Object o) {
