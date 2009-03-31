@@ -122,7 +122,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     while (expression != null) {
       if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && expression.getType() != PsiType.VOID) {
         if (!(expression instanceof PsiReferenceExpression && (expression.getParent() instanceof PsiMethodCallExpression ||
-                                                               ((PsiReferenceExpression)expression).resolve() instanceof PsiClass))) {
+                                                               ((PsiReferenceExpression)expression).resolve() instanceof PsiClass))
+            && !(expression instanceof PsiAssignmentExpression)) {
           expressions.add(expression);
         }
       }
