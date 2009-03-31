@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  */
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
-  private static final int VERSION = 4;
+  private static final int VERSION = 5;
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private final ArrayList<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
@@ -484,10 +484,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (savedVersion < 2) {
       restoreStandardFileExtensions();
     }
-    if (savedVersion < VERSION) {
+    if (savedVersion < 4) {
       addIgnore("*.pyc");
       addIgnore("*.pyo");
       addIgnore(".git");
+    }
+    if (savedVersion < VERSION) {
+      addIgnore("*.hprof");
     }
   }
 
