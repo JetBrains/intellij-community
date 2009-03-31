@@ -3,14 +3,14 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 /**
  * @author Roman Chernyatchik
  */
-public abstract class BaseSMTRunnerTestCase extends LightIdeaTestCase {
+public abstract class BaseSMTRunnerTestCase extends LightPlatformTestCase {
   protected SMTestProxy mySuite;
   protected SMTestProxy mySimpleTest;
 

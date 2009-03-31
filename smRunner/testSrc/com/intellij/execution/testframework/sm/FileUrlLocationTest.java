@@ -33,6 +33,7 @@ public class FileUrlLocationTest extends RailsFixtureTestCase {
     //System.out.println(location.getPsiElement().getText());
     //System.out.println(location.getPsiElement().getTextOffset());
     assertEquals(expectedOffset, location.getPsiElement().getTextOffset());
-    assertTrue(location.getPsiElement().getText().startsWith(expectedStartsWith));
+    final String element = location.getPsiElement().getText();
+    assertTrue(element, element.startsWith(expectedStartsWith));
   }
 }
