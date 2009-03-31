@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
@@ -59,9 +60,15 @@ public class EclipseImlTest extends IdeaTestCase {
   }
 
   private void doTest() throws Exception {
-    final String path =  getProject().getBaseDir().getPath()  + "/test";
+    doTest("/test");
+  }
 
-    final Element classpathElement = JDOMUtil.loadDocument(new File(path, EclipseXml.DOT_CLASSPATH_EXT)).getRootElement();
+  private void doTest(final String relativePath) throws Exception {
+    final String path = getProject().getBaseDir().getPath() + relativePath;
+
+    final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
+    final String fileText = new String(FileUtil.loadFileText(classpathFile)).replaceAll("\\$ROOT\\$", getProject().getBaseDir().getPath());
+    final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
         return ModuleManager.getInstance(getProject())
@@ -85,7 +92,9 @@ public class EclipseImlTest extends IdeaTestCase {
 
 
     final Element expectedIml = JDOMUtil.loadDocument(new File(getProject().getBaseDir().getPath() + "/expected", "expected.iml")).getRootElement();
-    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(actualImlElement), "\n")), JDOMUtil.areElementsEqual(expectedIml, actualImlElement));
+    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(actualImlElement), "\n")).
+      replaceAll(StringUtil.escapeToRegexp(getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
+                      JDOMUtil.areElementsEqual(expectedIml, actualImlElement));
   }
 
 
@@ -105,5 +114,13 @@ public class EclipseImlTest extends IdeaTestCase {
   public void testEmpty() throws Exception {
     doTest();
   }
+
+  //public void testSashaCheAllProps() throws Exception {
+  //  doTest("/eclipse-ws-3.4.1-a/all-props");
+  //}
+
+  //public void testSashaCheRoot() throws Exception {
+  //  doTest();
+  //}
 
 }
