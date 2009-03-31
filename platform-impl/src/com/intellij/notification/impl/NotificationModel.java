@@ -1,5 +1,6 @@
 package com.intellij.notification.impl;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -7,15 +8,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author spleaner
  */
 public class NotificationModel {
 
-  private LinkedList<NotificationImpl> myNotifications = new LinkedList<NotificationImpl>();
-  private List<NotificationModelListener> myListeners = new CopyOnWriteArrayList<NotificationModelListener>();
+  private final LinkedList<NotificationImpl> myNotifications = new LinkedList<NotificationImpl>();
+  private final List<NotificationModelListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public void addListener(@NotNull final NotificationModelListener listener) {
     myListeners.add(listener);

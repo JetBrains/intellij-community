@@ -13,13 +13,13 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author mike
@@ -31,7 +31,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   private Map<OrderRootType, VirtualFile[]> myFiles = new HashMap<OrderRootType, VirtualFile[]>();
 
   private boolean myInsideChange = false;
-  private final List<ProjectRootListener> myListeners = new CopyOnWriteArrayList<ProjectRootListener>();
+  private final List<ProjectRootListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private boolean myNoCopyJars = false;
 

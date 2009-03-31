@@ -41,6 +41,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -52,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -86,7 +86,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private final ChangedFilesUpdater myChangedFilesUpdater;
 
-  private final List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
+  private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createEmptyCOWList();
 
   public static final int OK = 1;
   public static final int REQUIRES_REBUILD = 2;

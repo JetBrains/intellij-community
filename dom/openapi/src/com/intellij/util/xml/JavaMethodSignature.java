@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
@@ -182,7 +183,8 @@ public class JavaMethodSignature {
     JavaMethodSignature signature = ourSignatures.get(method);
     if (signature != null) return signature;
 
-    ourSignatures.put(method, signature = new JavaMethodSignature(method.getName(), method.getParameterTypes()));
+    Class<?>[] parameters = method.getParameterTypes();
+    ourSignatures.put(method, signature = new JavaMethodSignature(method.getName(), parameters.length == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : parameters));
     return signature;
   }
 

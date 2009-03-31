@@ -3,6 +3,7 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,18 +11,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.intellij.util.ProcessingContext;
-
 /**
  * @author peter
  */
 public class CollectionPattern<T> extends ObjectPattern<Collection<T>, CollectionPattern<T>> {
+  private static final InitialPatternCondition CONDITION = new InitialPatternCondition<Collection>(Collection.class) {
+    public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      return o instanceof Collection;
+    }
+  };
+
   protected CollectionPattern() {
-    super(new InitialPatternCondition(Collection.class) {
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return o instanceof Collection;
-      }
-    });
+    super(CONDITION);
   }
 
   public CollectionPattern<T> all(final ElementPattern<? extends T> pattern) {

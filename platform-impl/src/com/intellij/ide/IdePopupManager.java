@@ -2,6 +2,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.IdePopupManager");
 
-  private final CopyOnWriteArrayList<IdePopupEventDispatcher> myDispatchStack = new CopyOnWriteArrayList<IdePopupEventDispatcher>();
+  private final CopyOnWriteArrayList<IdePopupEventDispatcher> myDispatchStack = ContainerUtil.createEmptyCOWList();
 
   boolean isPopupActive() {
     for (IdePopupEventDispatcher each : myDispatchStack) {

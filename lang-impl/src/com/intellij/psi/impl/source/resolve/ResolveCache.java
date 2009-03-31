@@ -11,13 +11,13 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.lang.ref.Reference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ResolveCache {
@@ -31,7 +31,7 @@ public class ResolveCache {
   private final AtomicInteger myClearCount = new AtomicInteger(0);
   private final PsiManagerEx myManager;
 
-  private final List<Runnable> myRunnablesToRunOnDropCaches = new CopyOnWriteArrayList<Runnable>();
+  private final List<Runnable> myRunnablesToRunOnDropCaches = ContainerUtil.createEmptyCOWList();
 
   public interface AbstractResolver<TRef extends PsiReference,TResult> {
     TResult resolve(TRef ref, boolean incompleteCode);

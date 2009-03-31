@@ -14,17 +14,19 @@ import java.util.Collection;
  * @author peter
  */
 public class StringPattern extends ObjectPattern<String, StringPattern> {
+  private static final InitialPatternCondition<String> CONDITION = new InitialPatternCondition<String>(String.class) {
+    public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      return o instanceof String;
+    }
+
+
+    public void append(@NonNls final StringBuilder builder, final String indent) {
+      builder.append("string()");
+    }
+  };
+
   protected StringPattern() {
-    super(new InitialPatternCondition<String>(String.class) {
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return o instanceof String;
-      }
-
-
-      public void append(@NonNls final StringBuilder builder, final String indent) {
-        builder.append("string()");
-      }
-    });
+    super(CONDITION);
   }
 
   @NotNull

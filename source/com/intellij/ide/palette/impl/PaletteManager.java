@@ -13,20 +13,20 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author yole
@@ -37,9 +37,9 @@ public class PaletteManager implements ProjectComponent {
   private PaletteWindow myPaletteWindow;
   private ToolWindow myPaletteToolWindow;
   private final MyFileEditorManagerListener myListener;
-  private final List<KeyListener> myKeyListeners = new CopyOnWriteArrayList<KeyListener>();
-  private final List<PaletteDragEventListener> myDragEventListeners = new CopyOnWriteArrayList<PaletteDragEventListener>();
-  private final List<ListSelectionListener> mySelectionListeners = new CopyOnWriteArrayList<ListSelectionListener>();
+  private final List<KeyListener> myKeyListeners = ContainerUtil.createEmptyCOWList();
+  private final List<PaletteDragEventListener> myDragEventListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ListSelectionListener> mySelectionListeners = ContainerUtil.createEmptyCOWList();
 
   public PaletteManager(Project project, FileEditorManager fileEditorManager) {
     myProject = project;

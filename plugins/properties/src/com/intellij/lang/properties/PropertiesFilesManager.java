@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author max
@@ -32,7 +32,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
   private final VirtualFileListener myVirtualFileListener;
   private final VirtualFileManager myVirtualFileManager;
   private final FileTypeManager myFileTypeManager;
-  private final List<PropertiesFileListener> myPropertiesFileListeners = new CopyOnWriteArrayList<PropertiesFileListener>();
+  private final List<PropertiesFileListener> myPropertiesFileListeners = ContainerUtil.createEmptyCOWList();
 
   public static PropertiesFilesManager getInstance() {
     return ApplicationManager.getApplication().getComponent(PropertiesFilesManager.class);

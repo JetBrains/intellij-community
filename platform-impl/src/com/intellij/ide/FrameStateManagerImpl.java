@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class FrameStateManagerImpl extends FrameStateManager implements ApplicationComponent,PropertyChangeListener {
 
-  private final CopyOnWriteArrayList<FrameStateListener> myListeners = new CopyOnWriteArrayList<FrameStateListener>();
+  private final CopyOnWriteArrayList<FrameStateListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private boolean myShouldSynchronize;
   private final Alarm mySyncAlarm;

@@ -14,12 +14,14 @@ import org.jetbrains.annotations.NonNls;
  * @author peter
  */
 public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValue,XmlAttributeValuePattern>{
+  private static final InitialPatternCondition<XmlAttributeValue> CONDITION = new InitialPatternCondition<XmlAttributeValue>(XmlAttributeValue.class) {
+    public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      return o instanceof XmlAttributeValue;
+    }
+  };
+
   protected XmlAttributeValuePattern() {
-    super(new InitialPatternCondition<XmlAttributeValue>(XmlAttributeValue.class) {
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return o instanceof XmlAttributeValue;
-      }
-    });
+    super(CONDITION);
   }
 
   public XmlAttributeValuePattern withLocalName(@NonNls String... names) {

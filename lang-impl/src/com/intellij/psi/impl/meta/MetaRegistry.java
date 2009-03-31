@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.PatternFilter;
@@ -14,12 +15,11 @@ import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.patterns.ElementPattern;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,7 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * To change this template use Options | File Templates.
  */
 public class MetaRegistry extends MetaDataRegistrar {
-  private static final List<MyBinding> ourBindings = new CopyOnWriteArrayList<MyBinding>();
+  private static final List<MyBinding> ourBindings = ContainerUtil.createEmptyCOWList();
   private static volatile boolean ourContributorsLoaded = false;
 
   private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");

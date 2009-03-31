@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * User: lex
@@ -33,7 +33,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Time: 6:00:55 PM
  */
 public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
-  private final List<HotSwapVetoableListener> myListeners = new CopyOnWriteArrayList<HotSwapVetoableListener>();
+  private final List<HotSwapVetoableListener> myListeners = ContainerUtil.createEmptyCOWList();
   private boolean myAskBeforeHotswap = true;
   private final Project myProject;
   private boolean myPerformHotswapAfterThisCompilation = true;

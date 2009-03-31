@@ -24,11 +24,11 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author cdr
@@ -236,7 +236,7 @@ public class InjectedLanguageUtil {
   public static List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
     List<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);
     if (injected == null) {
-      injected = ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, new CopyOnWriteArrayList<DocumentWindow>());
+      injected = ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, ContainerUtil.<DocumentWindow>createEmptyCOWList());
     }
     return injected;
   }
@@ -276,7 +276,8 @@ public class InjectedLanguageUtil {
   static List<RangeMarker> getCachedInjectedRegions(Document hostDocument) {
     List<RangeMarker> injectedRegions = hostDocument.getUserData(INJECTED_REGIONS_KEY);
     if (injectedRegions == null) {
-      injectedRegions = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(INJECTED_REGIONS_KEY, new CopyOnWriteArrayList<RangeMarker>());
+      injectedRegions = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(INJECTED_REGIONS_KEY,
+                                                                             ContainerUtil.<RangeMarker>createEmptyCOWList());
     }
     return injectedRegions;
   }

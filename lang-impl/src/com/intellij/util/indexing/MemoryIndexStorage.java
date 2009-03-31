@@ -2,11 +2,11 @@ package com.intellij.util.indexing;
 
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -19,7 +19,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   private final Map<Key, UpdatableValueContainer<Value>> myMap = new HashMap<Key,UpdatableValueContainer<Value>>();
   private final IndexStorage<Key, Value> myBackendStorage;
   private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
-  private final List<BufferingStateListener> myListeners = new CopyOnWriteArrayList<BufferingStateListener>();
+  private final List<BufferingStateListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public static interface BufferingStateListener {
     void bufferingStateChanged(boolean newState);

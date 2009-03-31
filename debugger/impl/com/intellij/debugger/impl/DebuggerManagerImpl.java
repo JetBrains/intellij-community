@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.jar.Attributes;
 
 public class DebuggerManagerImpl extends DebuggerManagerEx {
@@ -52,7 +52,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private final Project myProject;
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
   private final BreakpointManager myBreakpointManager;
-  private final List<NameMapper> myNameMappers = new CopyOnWriteArrayList<NameMapper>();
+  private final List<NameMapper> myNameMappers = ContainerUtil.createEmptyCOWList();
   private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories = new ArrayList<Function<DebugProcess, PositionManager>>();
   
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);

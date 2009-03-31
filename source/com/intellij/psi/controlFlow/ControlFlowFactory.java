@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
@@ -134,7 +135,7 @@ public class ControlFlowFactory {
     Reference<CopyOnWriteArrayList<ControlFlowContext>> cachedRef = cachedFlows.get(element);
     CopyOnWriteArrayList<ControlFlowContext> cached = cachedRef == null ? null : cachedRef.get();
     if (cached == null) {
-      cached = new CopyOnWriteArrayList<ControlFlowContext>();
+      cached = ContainerUtil.createEmptyCOWList();
       Reference<CopyOnWriteArrayList<ControlFlowContext>> reference = new SoftReference<CopyOnWriteArrayList<ControlFlowContext>>(cached);
       cachedRef = ConcurrencyUtil.cacheOrGet(cachedFlows, element, reference);
       CopyOnWriteArrayList<ControlFlowContext> existing = cachedRef.get();

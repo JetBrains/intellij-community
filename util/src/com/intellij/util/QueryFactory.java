@@ -15,17 +15,17 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author max
  */
 public class QueryFactory<Result, Parameters> {
-  private final List<QueryExecutor<Result, Parameters>> myExecutors = new CopyOnWriteArrayList<QueryExecutor<Result,Parameters>>();
+  private final List<QueryExecutor<Result, Parameters>> myExecutors = ContainerUtil.createEmptyCOWList();
 
   public void registerExecutor(@NotNull QueryExecutor<Result, Parameters> executor) {
     myExecutors.add(executor);

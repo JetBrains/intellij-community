@@ -28,6 +28,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
 
-  private final CopyOnWriteArrayList<SelectionListener> mySelectionListeners = new CopyOnWriteArrayList<SelectionListener>();
+  private final CopyOnWriteArrayList<SelectionListener> mySelectionListeners = ContainerUtil.createEmptyCOWList();
   private MyRangeMarker mySelectionMarker = null;
   private final EditorImpl myEditor;
   private int myLastSelectionStart;

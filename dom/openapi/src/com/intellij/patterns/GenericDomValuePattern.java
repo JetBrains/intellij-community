@@ -13,12 +13,14 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue<T>, GenericDomValuePattern<T>>{
+  private static final InitialPatternCondition CONDITION = new InitialPatternCondition(GenericDomValue.class) {
+    public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      return o instanceof GenericDomValue;
+    }
+  };
+
   protected GenericDomValuePattern() {
-    super(new InitialPatternCondition(GenericDomValue.class) {
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return o instanceof GenericDomValue;
-      }
-    });
+    super(CONDITION);
   }
 
   protected GenericDomValuePattern(final Class<T> aClass) {
@@ -30,7 +32,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
     });
   }
 
-  public GenericDomValuePattern<T> withStringValue(final ElementPattern pattern) {
+  public GenericDomValuePattern<T> withStringValue(final ElementPattern<String> pattern) {
     return with(new PatternCondition<GenericDomValue<T>>("withStringValue") {
       public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final ProcessingContext context) {
         return pattern.getCondition().accepts(genericDomValue.getStringValue(), context);

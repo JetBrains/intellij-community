@@ -30,8 +30,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Eugene Belyaev
@@ -71,7 +71,7 @@ public class CommanderPanel extends JPanel {
   private static final String ACTION_GO_UP = "GoUp";
   private ProjectAbstractTreeStructureBase myProjectTreeStructure;
   private boolean myActive = true;
-  private final List<CommanderHistoryListener> myHistoryListeners = new CopyOnWriteArrayList<CommanderHistoryListener>();
+  private final List<CommanderHistoryListener> myHistoryListeners = ContainerUtil.createEmptyCOWList();
   private boolean myMoveFocus = false;
 
   public CommanderPanel(final Project project, final boolean enablePopupMenu) {

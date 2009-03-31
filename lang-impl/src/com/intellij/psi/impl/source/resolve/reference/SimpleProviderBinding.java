@@ -2,14 +2,14 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.pom.references.PomReferenceProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
-import com.intellij.pom.references.PomReferenceProvider;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * To change this template use Options | File Templates.
  */
 public class SimpleProviderBinding<PsiReferenceProvider> implements ProviderBinding<PsiReferenceProvider> {
-  private final List<Trinity<PsiReferenceProvider,ElementPattern,Double>> myProviderPairs = new CopyOnWriteArrayList<Trinity<PsiReferenceProvider,ElementPattern,Double>>();
+  private final List<Trinity<PsiReferenceProvider, ElementPattern, Double>> myProviderPairs = ContainerUtil.createEmptyCOWList();
 
   public void registerProvider(PsiReferenceProvider provider,ElementPattern pattern, double priority){
     myProviderPairs.add(Trinity.create(provider, pattern, priority));

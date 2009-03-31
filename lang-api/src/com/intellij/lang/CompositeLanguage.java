@@ -17,13 +17,13 @@
 package com.intellij.lang;
 
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CompositeLanguage extends Language{
-  private final List<LanguageFilter> myFilters = new CopyOnWriteArrayList<LanguageFilter>();
+  private final List<LanguageFilter> myFilters = ContainerUtil.createEmptyCOWList();
 
   protected CompositeLanguage(final String id) {
     super(id);

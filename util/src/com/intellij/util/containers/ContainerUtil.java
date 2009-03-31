@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.io.Serializable;
 
 public class ContainerUtil {
   public static List<Object> mergeSortedLists(List<Object> list1, List<Object> list2, Comparator<Object> comparator, boolean mergeEqualItems){
@@ -605,6 +607,40 @@ public class ContainerUtil {
   private static <T> void vecswap(List<T> x, int a, int b, int n) {
     for (int i = 0; i < n; i++, a++, b++) {
       swapElements(x, a, b);
+    }
+  }
+
+  public static <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
+    // does not create garbage new Object[0]
+    return new CopyOnWriteArrayList<T>(ContainerUtil.<T>emptyList());
+  }
+
+  public static <T> List<T> emptyList() {
+    return (List<T>)EmptyList.INSTANCE;
+  }
+
+  private static class EmptyList extends AbstractList<Object> implements RandomAccess, Serializable {
+    private static final EmptyList INSTANCE = new EmptyList();
+    public int size() {
+      return 0;
+    }
+
+    public boolean contains(Object obj) {
+      return false;
+    }
+
+    public Object get(int index) {
+      throw new IndexOutOfBoundsException("Index: " + index);
+    }
+
+    @Override
+    public Object[] toArray() {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
+    @Override
+    public <T> T[] toArray(T[] a) {
+      return a;
     }
   }
 }

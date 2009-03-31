@@ -20,14 +20,14 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
-  protected final List<VirtualFileListener> myFileListeners = new CopyOnWriteArrayList<VirtualFileListener>();
+  protected final List<VirtualFileListener> myFileListeners = ContainerUtil.createEmptyCOWList();
 
   public void addVirtualFileListener(VirtualFileListener listener) {
     synchronized (myFileListeners) {

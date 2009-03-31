@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -22,7 +23,6 @@ import javax.swing.tree.TreeNode;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author nik
@@ -33,7 +33,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
   private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
   private XSourcePosition mySourcePosition;
-  private final List<XDebuggerTreeListener> myListeners = new CopyOnWriteArrayList<XDebuggerTreeListener>();
+  private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createEmptyCOWList();
   private final XDebugSession mySession;
 
   public XDebuggerTree(final @NotNull XDebugSession session, final XDebuggerEditorsProvider editorsProvider, final XSourcePosition sourcePosition) {

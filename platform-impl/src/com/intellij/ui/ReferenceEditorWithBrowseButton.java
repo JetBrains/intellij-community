@@ -11,17 +11,17 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.awt.event.ActionListener;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author ven
  */
 public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor{
   private final Function<String,Document> myFactory;
-  private final List<DocumentListener> myDocumentListeners = new CopyOnWriteArrayList<DocumentListener>();
+  private final List<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
 
   public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener, final Project project, final Function<String,Document> factory, String text) {
     this(browseActionListener, new EditorTextField(factory.fun(text), project, StdFileTypes.JAVA), factory);

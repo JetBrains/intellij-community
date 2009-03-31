@@ -2,11 +2,12 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.pom.references.PomReferenceProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.pom.references.PomReferenceProvider;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ public abstract class NamedObjectProviderBinding<PsiReferenceProvider> implement
       CopyOnWriteArrayList<Trinity<PsiReferenceProvider, ElementPattern,Double>> psiReferenceProviders = map.get(attributeName);
 
       if (psiReferenceProviders == null) {
-        psiReferenceProviders = ConcurrencyUtil.cacheOrGet(map, caseSensitive ? attributeName : attributeName.toLowerCase(), new CopyOnWriteArrayList<Trinity<PsiReferenceProvider, ElementPattern,Double>>());
+        psiReferenceProviders = ConcurrencyUtil.cacheOrGet(map, caseSensitive ? attributeName : attributeName.toLowerCase(), ContainerUtil.<Trinity<PsiReferenceProvider, ElementPattern, Double>>createEmptyCOWList());
       }
 
       psiReferenceProviders.add(new Trinity<PsiReferenceProvider, ElementPattern,Double>(provider, filter, priority));

@@ -19,9 +19,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author max
@@ -34,7 +34,7 @@ public class UsageModelTracker implements Disposable {
   }
 
   private final Project myProject;
-  private final List<UsageModelTrackerListener> myListeners = new CopyOnWriteArrayList<UsageModelTrackerListener>();
+  private final List<UsageModelTrackerListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public UsageModelTracker(Project project, Disposable parentDisposable) {
     myProject = project;

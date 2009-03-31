@@ -23,17 +23,17 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ChangeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.ChangeUtil");
-  private static final List<TreeCopyHandler> ourCopyHandlers = new CopyOnWriteArrayList<TreeCopyHandler>();
-  private static final List<TreeGenerator> ourTreeGenerators = new CopyOnWriteArrayList<TreeGenerator>();
+  private static final List<TreeCopyHandler> ourCopyHandlers = ContainerUtil.createEmptyCOWList();
+  private static final List<TreeGenerator> ourTreeGenerators = ContainerUtil.createEmptyCOWList();
 
   private ChangeUtil() { }
 

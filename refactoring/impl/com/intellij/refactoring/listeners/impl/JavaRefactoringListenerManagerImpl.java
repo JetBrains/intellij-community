@@ -1,18 +1,18 @@
 package com.intellij.refactoring.listeners.impl;
 
-import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
-import com.intellij.refactoring.listeners.MoveMemberListener;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMember;
+import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
+import com.intellij.refactoring.listeners.MoveMemberListener;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author yole
  */
 public class JavaRefactoringListenerManagerImpl extends JavaRefactoringListenerManager {
-  private final List<MoveMemberListener> myMoveMemberListeners = new CopyOnWriteArrayList<MoveMemberListener>();
+  private final List<MoveMemberListener> myMoveMemberListeners = ContainerUtil.createEmptyCOWList();
 
   public void addMoveMembersListener(MoveMemberListener moveMembersListener) {
     myMoveMemberListeners.add(moveMembersListener);

@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author max
@@ -211,7 +211,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   void inspectInjectedPsi(final PsiElement[] elements, final List<LocalInspectionTool> tools) {
-    myInjectedPsiInspectionResults = new CopyOnWriteArrayList<InjectedPsiInspectionResult>();
+    myInjectedPsiInspectionResults = ContainerUtil.createEmptyCOWList();
     final Set<PsiFile> injected = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
       InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {

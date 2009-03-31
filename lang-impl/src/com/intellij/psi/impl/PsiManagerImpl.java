@@ -44,6 +44,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -51,7 +52,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
@@ -66,14 +66,14 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final ResolveCache myResolveCache;
   private final CachedValuesManager myCachedValuesManager;
 
-  private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = new CopyOnWriteArrayList<PsiTreeChangePreprocessor>();
-  private final List<PsiTreeChangeListener> myTreeChangeListeners = new CopyOnWriteArrayList<PsiTreeChangeListener>();
+  private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = ContainerUtil.createEmptyCOWList();
+  private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createEmptyCOWList();
   private boolean myTreeChangeEventIsFiring = false;
 
-  private final List<Runnable> myRunnablesOnChange = new CopyOnWriteArrayList<Runnable>();
-  private final List<WeakReference<Runnable>> myWeakRunnablesOnChange = new CopyOnWriteArrayList<WeakReference<Runnable>>();
-  private final List<Runnable> myRunnablesOnAnyChange = new CopyOnWriteArrayList<Runnable>();
-  private final List<Runnable> myRunnablesAfterAnyChange = new CopyOnWriteArrayList<Runnable>();
+  private final List<Runnable> myRunnablesOnChange = ContainerUtil.createEmptyCOWList();
+  private final List<WeakReference<Runnable>> myWeakRunnablesOnChange = ContainerUtil.createEmptyCOWList();
+  private final List<Runnable> myRunnablesOnAnyChange = ContainerUtil.createEmptyCOWList();
+  private final List<Runnable> myRunnablesAfterAnyChange = ContainerUtil.createEmptyCOWList();
 
   private boolean myIsDisposed;
 
@@ -82,8 +82,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
   private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
-  
-  private final List<LanguageInjector> myLanguageInjectors = new CopyOnWriteArrayList<LanguageInjector>();
+
+  private final List<LanguageInjector> myLanguageInjectors = ContainerUtil.createEmptyCOWList();
   private final ProgressManager myProgressManager;
 
   public PsiManagerImpl(Project project,

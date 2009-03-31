@@ -28,11 +28,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The standard {@link StructureViewModel} implementation which is linked to a text editor.
@@ -43,7 +43,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public abstract class TextEditorBasedStructureViewModel implements StructureViewModel {
   private final Editor myEditor;
   private final CaretListener myCaretListener;
-  private final List<FileEditorPositionListener> myListeners = new CopyOnWriteArrayList<FileEditorPositionListener>();
+  private final List<FileEditorPositionListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   /**
    * Creates a structure view model instance linked to a text editor displaying the specified

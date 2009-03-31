@@ -20,17 +20,17 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Represents some data that probably can be compared with some other.
  * @see com.intellij.openapi.diff.DiffRequest
  */
 public abstract class DiffContent {
-  private final List<Listener> myListeners = new CopyOnWriteArrayList<Listener>();
+  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public void addListener(Listener listener) { myListeners.add(listener); }
   public void removeListener(Listener listener) { myListeners.remove(listener); }

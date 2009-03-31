@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +52,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
 
 //  private HashMap myStatisticsMap = new HashMap(); // command name --> count
 
-  private final CopyOnWriteArrayList<CommandListener> myListeners = new CopyOnWriteArrayList<CommandListener>();
+  private final CopyOnWriteArrayList<CommandListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private int myUndoTransparentCount = 0;
 

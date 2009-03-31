@@ -22,6 +22,7 @@ package com.intellij.util.messages.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -35,7 +36,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MessageBusImpl implements MessageBus {
   private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = new ThreadLocal<Queue<DeliveryJob>>() {
@@ -47,7 +47,7 @@ public class MessageBusImpl implements MessageBus {
   private final ConcurrentMap<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final ConcurrentMap<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
-  private final List<MessageBusImpl> myChildBusses = new CopyOnWriteArrayList<MessageBusImpl>();
+  private final List<MessageBusImpl> myChildBusses = ContainerUtil.createEmptyCOWList();
 
   private static final Object NA = new Object();
   private final MessageBusImpl myParentBus;
@@ -191,7 +191,7 @@ public class MessageBusImpl implements MessageBus {
   public void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
-      topicSubscribers = new CopyOnWriteArrayList<MessageBusConnectionImpl>();
+      topicSubscribers = ContainerUtil.createEmptyCOWList();
       topicSubscribers = ConcurrencyUtil.cacheOrGet(mySubscribers, topic, topicSubscribers);
     }
 

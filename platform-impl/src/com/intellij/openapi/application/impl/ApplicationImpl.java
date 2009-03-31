@@ -43,6 +43,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -66,7 +67,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final ModalityState MODALITY_STATE_NONE = ModalityState.NON_MODAL;
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
-  private final List<ApplicationListener> myListeners = new CopyOnWriteArrayList<ApplicationListener>();
+  private final List<ApplicationListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private boolean myTestModeFlag = false;
   private boolean myHeadlessMode = false;

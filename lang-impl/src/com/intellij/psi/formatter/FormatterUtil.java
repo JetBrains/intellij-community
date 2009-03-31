@@ -40,13 +40,13 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class FormatterUtil {
-  private static final List<FormatterUtilHelper> ourHelpers = new CopyOnWriteArrayList<FormatterUtilHelper>();
+  private static final List<FormatterUtilHelper> ourHelpers = ContainerUtil.createEmptyCOWList();
 
   private FormatterUtil() {
   }

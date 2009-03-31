@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.InvocationHandler;
@@ -35,7 +36,7 @@ public class EventDispatcher <T extends EventListener>{
 
   private final T myMulticaster;
 
-  private final CopyOnWriteArrayList<T> myListeners = new CopyOnWriteArrayList<T>();
+  private final CopyOnWriteArrayList<T> myListeners = ContainerUtil.createEmptyCOWList();
 
   public static <T extends EventListener> EventDispatcher<T> create(Class<T> listenerClass) {
     return new EventDispatcher<T>(listenerClass);

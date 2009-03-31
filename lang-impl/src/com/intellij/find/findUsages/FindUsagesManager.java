@@ -1,8 +1,8 @@
 package com.intellij.find.findUsages;
 
-import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.navigation.NavigationItem;
@@ -38,6 +38,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private SearchData myLastSearchInFileData = new SearchData();
-  private final CopyOnWriteArrayList<SearchData> myFindUsagesHistory = new CopyOnWriteArrayList<SearchData>();
+  private final CopyOnWriteArrayList<SearchData> myFindUsagesHistory = ContainerUtil.createEmptyCOWList();
 
   public FindUsagesManager(final Project project, com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;

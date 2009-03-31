@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.Nullable;
@@ -43,9 +44,8 @@ public class GetInvocation implements Invocation {
       final CachedValuesManager cachedValuesManager = PsiManager.getInstance(project).getCachedValuesManager();
       handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(new CachedValueProvider<CopyOnWriteArrayList<Pair<Converter,Object>>>() {
         public Result<CopyOnWriteArrayList<Pair<Converter,Object>>> compute() {
-          return Result.create(new CopyOnWriteArrayList<Pair<Converter, Object>>(),
-                               PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(
-            project));
+          return Result.create(ContainerUtil.<Pair<Converter,Object>>createEmptyCOWList(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager,
+                               ProjectRootManager.getInstance(project));
         }
       }, false));
     }

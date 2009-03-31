@@ -6,6 +6,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MappingListCellRenderer;
 import com.jgoodies.forms.layout.*;
 import org.jetbrains.annotations.NonNls;
@@ -18,7 +19,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author yole
@@ -49,7 +49,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private FormLayout myLayout;
   private int myIndex;
   private boolean myIsRow;
-  private final List<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
+  private final List<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
   private boolean myShowing = false;
   private boolean mySaving = false;
 

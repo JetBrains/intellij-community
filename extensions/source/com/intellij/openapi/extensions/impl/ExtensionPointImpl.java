@@ -15,9 +15,10 @@
  */
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,6 @@ import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Array;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author AKireyev
@@ -48,7 +48,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final PluginDescriptor myDescriptor;
 
   private final Set<ExtensionComponentAdapter> myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>();
-  private final List<ExtensionPointListener<T>> myEPListeners = new CopyOnWriteArrayList<ExtensionPointListener<T>>();
+  private final List<ExtensionPointListener<T>> myEPListeners = ContainerUtil.createEmptyCOWList();
   private final List<ExtensionComponentAdapter> myLoadedAdapters = new ArrayList<ExtensionComponentAdapter>();
 
   private Class<T> myExtensionClass;

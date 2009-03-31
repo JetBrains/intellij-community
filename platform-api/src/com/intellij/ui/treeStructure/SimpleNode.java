@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.Nullable;
@@ -31,13 +32,12 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class SimpleNode extends NodeDescriptor implements ComparableObject {
 
   protected static final SimpleNode[] NO_CHILDREN = new SimpleNode[0];
 
-  protected final List<ColoredFragment> myColoredText = new CopyOnWriteArrayList<ColoredFragment>();
+  protected final List<ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
   private Font myFont;
 
   protected SimpleNode(Project project) {

@@ -14,6 +14,7 @@ import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(
   name = "KeymapManager",
@@ -39,7 +39,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");
 
-  private final List<KeymapManagerListener> myListeners = new CopyOnWriteArrayList<KeymapManagerListener>();
+  private final List<KeymapManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
   private String myActiveKeymapName;
   private final Map<String, String> myBoundShortcuts = new HashMap<String, String>();
 

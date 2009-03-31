@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProfilingUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
@@ -54,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
@@ -70,7 +70,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
 
   private final ArrayList<Project> myOpenProjects = new ArrayList<Project>();
-  private final List<ProjectManagerListener> myListeners = new CopyOnWriteArrayList<ProjectManagerListener>();
+  private final List<ProjectManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private Project myCurrentTestProject = null;
 
