@@ -35,12 +35,12 @@ public class JavaCopyFilesOrDirectoriesHandler extends CopyFilesOrDirectoriesHan
     if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
       return true;
     }
-    PsiDirectory[] subdirectories = directory.getSubdirectories();
+    /*PsiDirectory[] subdirectories = directory.getSubdirectories();
     for (PsiDirectory subdirectory : subdirectories) {
       if (hasPackages(subdirectory)) {
         return true;
       }
-    }
+    }*/
     return false;
   }
 }
