@@ -737,7 +737,11 @@ public class ExpectedTypesProvider {
 
     @Override public void visitConditionalExpression(PsiConditionalExpression expr) {
       if (myExpr.equals(expr.getCondition())) {
-        if (myForCompletion) return;
+        if (myForCompletion) {
+          myExpr = expr;
+          myExpr.getParent().accept(this);
+          return;
+        }
 
         ExpectedTypeInfo info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
                                                PsiType.BOOLEAN, TailType.NONE);
