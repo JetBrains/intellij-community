@@ -140,27 +140,27 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
-  public void testSashaCheAllProps() throws Exception {
+  public void testAllProps() throws Exception {
     doTest("/eclipse-ws-3.4.1-a/all-props");
   }
 
-  public void testSashaCheHome() throws Exception {
+  public void testHome() throws Exception {
     doTest();
   }
 
-  //public void testSashaCheNoJava() throws Exception {
+  //public void testNoJava() throws Exception {
   //  doTest();
   //}
 
-  public void testSashaCheNoSource() throws Exception {
+  public void testNoSource() throws Exception {
     doTest();
   }
 
-  public void testSashaChePlugin() throws Exception {
+  public void testPlugin() throws Exception {
     doTest();
   }
 
-  public void testSashaCheRoot() throws Exception {
+  public void testRoot() throws Exception {
     doTest();
   }
 
