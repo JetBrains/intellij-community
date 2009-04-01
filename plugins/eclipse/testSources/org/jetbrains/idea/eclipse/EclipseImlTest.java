@@ -113,11 +113,11 @@ public class EclipseImlTest extends IdeaTestCase {
     doTest();
   }
 
-  public void testSashaCheAllProps() throws Exception {
+  public void testAllProps() throws Exception {
     doTest("/eclipse-ws-3.4.1-a/all-props");
   }
 
-  public void testSashaCheRoot() throws Exception {
+  public void testRoot() throws Exception {
     doTest();
   }
 
