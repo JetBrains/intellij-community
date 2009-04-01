@@ -520,7 +520,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
       }
 
-      myPopup = myParentWindow.isShowing() ? new MyDialogWrapper(myParentWindow) : new MyDialogWrapper(myProject);
+      myPopup = myParentWindow.isShowing() ? new MyDialogWrapper(myParentWindow, myShouldShowCancel) : new MyDialogWrapper(myProject, myShouldShowCancel);
       myPopup.setUndecorated(true);
 
       SwingUtilities.invokeLater(new Runnable() {
@@ -546,14 +546,25 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
 
     private class MyDialogWrapper extends DialogWrapper {
-      public MyDialogWrapper(Project project) {
+      private boolean myIsCancellable;
+
+      public MyDialogWrapper(Project project, final boolean cancellable) {
         super(project, false);
         init();
+        myIsCancellable = cancellable;
       }
 
-      public MyDialogWrapper(Component parent) {
+      public MyDialogWrapper(Component parent, final boolean cancellable) {
         super(parent, false);
         init();
+        myIsCancellable = cancellable;
+      }
+
+      @Override
+      public void doCancelAction() {
+        if (myIsCancellable) {
+          super.doCancelAction();
+        }
       }
 
       @Override
