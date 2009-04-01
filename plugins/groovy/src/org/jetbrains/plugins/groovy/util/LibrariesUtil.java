@@ -167,12 +167,12 @@ public abstract class LibrariesUtil {
 
   public static void placeEntryToCorrectPlace(ModifiableRootModel model, LibraryOrderEntry addedEntry) {
     final OrderEntry[] order = model.getOrderEntries();
-    //place library before jdk
+    //place library after module sources
     assert order[order.length - 1] == addedEntry;
     int insertionPoint = -1;
     for (int i = 0; i < order.length - 1; i++) {
-      if (order[i] instanceof JdkOrderEntry) {
-        insertionPoint = i;
+      if (order[i] instanceof ModuleSourceOrderEntry) {
+        insertionPoint = i + 1;
         break;
       }
     }
