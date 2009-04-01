@@ -331,9 +331,8 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       return;
     }
 
-    Set<String> copy = new HashSet<String>(cachedPaths);
-    copy.removeAll(currentPaths);
-    result.addAll(copy);
+    cachedPaths.removeAll(currentPaths);
+    result.addAll(cachedPaths);
   }
 
   private void removeObsoleteModulesFromCache() {
