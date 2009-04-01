@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" exported="" />
-    <orderEntry type="library" exported="" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="lang-impl" exported="" />
     <orderEntry type="library" exported="" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="platform-impl" exported="" />
