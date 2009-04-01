@@ -102,8 +102,9 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void initComponent() {
-    schedule(myProject);
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !myProject.isDefault()) {
+    boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (!unitTestMode) schedule(myProject);
+    if (!unitTestMode && !myProject.isDefault()) {
       initialize();
     }
   }
