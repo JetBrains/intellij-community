@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
@@ -66,7 +67,10 @@ public class EclipseImlTest extends IdeaTestCase {
     final String path = getProject().getBaseDir().getPath() + relativePath;
 
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-    final String fileText = new String(FileUtil.loadFileText(classpathFile)).replaceAll("\\$ROOT\\$", getProject().getBaseDir().getPath());
+    String fileText = new String(FileUtil.loadFileText(classpathFile)).replaceAll("\\$ROOT\\$", getProject().getBaseDir().getPath());
+    if (!SystemInfo.isWindows) {
+      fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
+    }
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
