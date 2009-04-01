@@ -581,17 +581,12 @@ public class Cache {
         return;
       }
 
-      final StorageFieldId fieldId = new StorageFieldId(qName, UNKNOWN);
       for (FieldInfo fieldInfo : classInfo.getFields()) {
-        fieldId.setFieldName(fieldInfo.getName());
-        myQNameToReferencersMap.remove(fieldId);
+        myQNameToReferencersMap.remove(new StorageFieldId(qName, fieldInfo.getName()));
       }
 
-      final StorageMethodId methodId = new StorageMethodId(qName, UNKNOWN, UNKNOWN);
       for (MethodInfo methodInfo : classInfo.getMethods()) {
-        methodId.setMethodName(methodInfo.getName());
-        methodId.setMethodDescriptor(methodInfo.getDescriptor());
-        myQNameToReferencersMap.remove(methodId);
+        myQNameToReferencersMap.remove(new StorageMethodId(qName, methodInfo.getName(), methodInfo.getDescriptor()));
       }
 
       myQNameToReferencersMap.remove(classId);

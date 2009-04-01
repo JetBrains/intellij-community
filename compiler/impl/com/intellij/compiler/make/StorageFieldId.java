@@ -4,8 +4,8 @@ package com.intellij.compiler.make;
  * @author Eugene Zhuravlev
  *         Date: Dec 1, 2008
  */
-public class StorageFieldId extends StorageClassId{
-  private int myFieldName;
+public final class StorageFieldId extends StorageClassId{
+  private final int myFieldName;
 
   public StorageFieldId(int QName, int fieldName) {
     super(QName);
@@ -16,15 +16,11 @@ public class StorageFieldId extends StorageClassId{
     return myFieldName;
   }
 
-  public void setFieldName(int fieldName) {
-    myFieldName = fieldName;
-  }
-
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof StorageFieldId)) return false;
 
-    StorageFieldId that = (StorageFieldId)o;
+    final StorageFieldId that = (StorageFieldId)o;
     return myFieldName == that.myFieldName && getClassQName() == that.getClassQName();
   }
 

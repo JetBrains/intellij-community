@@ -107,7 +107,7 @@ public class CompilerDependencyStorage<Key> implements Flushable, Disposable {
     myCache.get(key).add(value);
   }
 
-  public int[] getValues(Key key) throws IOException {
+  public synchronized int[] getValues(Key key) throws IOException {
     return myCache.get(key).getValues();
   }
 

@@ -5,7 +5,7 @@ package com.intellij.compiler.make;
  *         Date: Dec 1, 2008
  */
 public class StorageClassId {
-  private int myQName;
+  private final int myQName;
 
   public StorageClassId(int QName) {
     myQName = QName;
@@ -15,17 +15,11 @@ public class StorageClassId {
     return myQName;
   }
 
-  public void setQName(int QName) {
-    myQName = QName;
-  }
-
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof StorageClassId)) return false;
 
-    StorageClassId that = (StorageClassId)o;
-
-    if (myQName != that.myQName) return false;
+    if (myQName != ((StorageClassId)o).myQName) return false;
 
     return true;
   }

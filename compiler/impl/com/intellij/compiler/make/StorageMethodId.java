@@ -4,9 +4,9 @@ package com.intellij.compiler.make;
  * @author Eugene Zhuravlev
  *         Date: Dec 1, 2008
  */
-public class StorageMethodId extends StorageClassId{
-  private int myMethodName;
-  private int myMethodDescriptor;
+public final class StorageMethodId extends StorageClassId{
+  private final int myMethodName;
+  private final int myMethodDescriptor;
 
   public StorageMethodId(int QName, int methodName, int methodDescriptor) {
     super(QName);
@@ -18,21 +18,13 @@ public class StorageMethodId extends StorageClassId{
     return myMethodName;
   }
 
-  public void setMethodName(int methodName) {
-    myMethodName = methodName;
-  }
-
   public int getMethodDescriptor() {
     return myMethodDescriptor;
   }
 
-  public void setMethodDescriptor(int methodDescriptor) {
-    myMethodDescriptor = methodDescriptor;
-  }
-
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof StorageMethodId)) return false;
 
     StorageMethodId that = (StorageMethodId)o;
     return myMethodDescriptor == that.myMethodDescriptor && myMethodName == that.myMethodName && getClassQName() == that.getClassQName();
