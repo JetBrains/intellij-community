@@ -2,6 +2,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -290,6 +290,16 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (baseLanguage != file.getLanguage()) {
       PsiFile basePsi = file.getViewProvider().getPsi(baseLanguage);
       if (basePsi != null && context.isEnabled(instance.getContextType(basePsi, offset))) {
+        return true;
+      }
+    }
+
+    // if we have, for example, a Ruby fragment in RHTML selected with its exact bounds, the file language and the base
+    // language will be ERb, so we won't match HTML templates for it. but they're actually valid
+    if (offset > 0) {
+      final Language prevLanguage = PsiUtilBase.getLanguageAtOffset(file, offset - 1);
+      final PsiFile prevPsi = file.getViewProvider().getPsi(prevLanguage);
+      if (prevPsi != null && context.isEnabled(instance.getContextType(prevPsi, offset - 1))) {
         return true;
       }
     }
