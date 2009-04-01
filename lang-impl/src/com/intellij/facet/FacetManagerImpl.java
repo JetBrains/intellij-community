@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.*;
 import com.intellij.util.messages.MessageBus;
@@ -197,7 +198,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   private void registerLoadingError(final Facet underlyingFacet, final FacetState child, final String errorMessage) {
     myInvalidFacets.put(underlyingFacet, child);
     FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(myModule, errorMessage, underlyingFacet, child);
-    ProjectFacetManagerEx.getInstanceEx(myModule.getProject()).registerFacetLoadingError(description);
+    ProjectLoadingErrorsNotifier.getInstance(myModule.getProject()).registerError(description);
   }
 
   private <C extends FacetConfiguration> void addFacet(final FacetType<?, C> type, final FacetState state, final Facet underlyingFacet,

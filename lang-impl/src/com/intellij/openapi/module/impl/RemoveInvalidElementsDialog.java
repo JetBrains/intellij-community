@@ -1,6 +1,7 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -11,25 +12,24 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class RemoveInvalidElementsDialog<E extends RemoveInvalidElementsDialog.ErrorDescription> extends DialogWrapper {
+public class RemoveInvalidElementsDialog extends DialogWrapper {
   private JPanel myContentPanel;
   private JPanel myMainPanel;
   private JLabel myDescriptionLabel;
-  private final Map<JCheckBox, E> myCheckboxes = new HashMap<JCheckBox, E>();
+  private final Map<JCheckBox, ConfigurationErrorDescription> myCheckboxes = new HashMap<JCheckBox, ConfigurationErrorDescription>();
 
-  private RemoveInvalidElementsDialog(final String title, String description, final Project project, Collection<E> errors) {
+  private RemoveInvalidElementsDialog(final String title, String invalidElements, final Project project, ConfigurationErrorDescription[] errors) {
     super(project, true);
     setTitle(title);
-    myDescriptionLabel.setText(description);
+    myDescriptionLabel.setText(ProjectBundle.message("label.text.0.cannot.be.loaded", invalidElements));
     myContentPanel.setLayout(new VerticalFlowLayout());
-    for (E error : errors) {
+    for (ConfigurationErrorDescription error : errors) {
       JCheckBox checkBox = new JCheckBox(error.getElementName() + ".");
       checkBox.setSelected(true);
       myCheckboxes.put(checkBox, error);
@@ -51,27 +51,31 @@ public class RemoveInvalidElementsDialog<E extends RemoveInvalidElementsDialog.E
   }
 
 
-  public static <E extends ErrorDescription> List<E> showDialog(@NotNull Project project, @NotNull String title, @NotNull String description,
-                                                                final String removeConfirmation, @NotNull List<E> elements) {
-    if (elements.size() == 1) {
-      E element = elements.get(0);
-      String message = element.getDescription() + "\n" + MessageFormat.format(removeConfirmation, element.getElementName());
+  public static void showDialog(@NotNull Project project, @NotNull String title, @NotNull String invalidElements,
+                                @NotNull ConfigurationErrorDescription[] errors) {
+    if (errors.length == 1) {
+      ConfigurationErrorDescription error = errors[0];
+      String message = error.getDescription() + "\n" + error.getRemoveConfirmationMessage();
       String[] options = {CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()};
       final int answer = Messages.showDialog(project, message, title, options, 1, Messages.getErrorIcon());
-      return answer == 0 ? new ArrayList<E>(elements) : Collections.<E>emptyList();
+      if (answer == 0) {
+        error.removeInvalidElement();
+      }
+      return;
     }
 
-    RemoveInvalidElementsDialog<E> dialog = new RemoveInvalidElementsDialog<E>(title, description, project, elements);
+    RemoveInvalidElementsDialog dialog = new RemoveInvalidElementsDialog(title, invalidElements, project, errors);
     dialog.show();
-    if (!dialog.isOK()) {
-      return Collections.emptyList();
+    if (dialog.isOK()) {
+      for (ConfigurationErrorDescription errorDescription : dialog.getSelectedItems()) {
+        errorDescription.removeInvalidElement();
+      }
     }
-    return dialog.getSelectedItems();
   }
 
-  private List<E> getSelectedItems() {
-    List<E> items = new ArrayList<E>();
-    for (Map.Entry<JCheckBox, E> entry : myCheckboxes.entrySet()) {
+  private List<ConfigurationErrorDescription> getSelectedItems() {
+    List<ConfigurationErrorDescription> items = new ArrayList<ConfigurationErrorDescription>();
+    for (Map.Entry<JCheckBox, ConfigurationErrorDescription> entry : myCheckboxes.entrySet()) {
       if (entry.getKey().isSelected()) {
         items.add(entry.getValue());
       }
@@ -81,11 +85,5 @@ public class RemoveInvalidElementsDialog<E extends RemoveInvalidElementsDialog.E
 
   protected JComponent createCenterPanel() {
     return myMainPanel;
-  }
-
-  public static interface ErrorDescription {
-    String getDescription();
-
-    String getElementName();
   }
 }

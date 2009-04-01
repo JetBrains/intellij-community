@@ -1,34 +1,47 @@
 package com.intellij.openapi.module.impl;
 
+import com.intellij.openapi.module.ConfigurationErrorDescription;
+import com.intellij.openapi.project.ProjectBundle;
+
 import java.io.File;
 
 /**
  * @author nik
  */
-public class ModuleLoadingErrorDescription implements RemoveInvalidElementsDialog.ErrorDescription {
-  private final String myDescription;
+public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription {
   private final ModuleManagerImpl.ModulePath myModulePath;
+  private final ModuleManagerImpl myModuleManager;
 
-  public ModuleLoadingErrorDescription(final String description, final ModuleManagerImpl.ModulePath modulePath) {
-    myDescription = description;
+  private ModuleLoadingErrorDescription(final String description, final ModuleManagerImpl.ModulePath modulePath, ModuleManagerImpl moduleManager,
+                                        final String elementName) {
+    super(elementName, ProjectBundle.message("element.kind.name.module"), description);
     myModulePath = modulePath;
+    myModuleManager = moduleManager;
   }
 
-  public String getDescription() {
-    return myDescription;
+  public ModuleManagerImpl.ModulePath getModulePath() {
+    return myModulePath;
   }
 
-  public String getElementName() {
-    String path = myModulePath.getPath();
+  @Override
+  public void removeInvalidElement() {
+    myModuleManager.removeFailedModulePath(myModulePath);
+  }
+
+  @Override
+  public String getRemoveConfirmationMessage() {
+    return ProjectBundle.message("module.remove.from.project.confirmation", getElementName());
+  }
+
+  public static ModuleLoadingErrorDescription create(final String description, final ModuleManagerImpl.ModulePath modulePath,
+                                                     ModuleManagerImpl moduleManager) {
+    String path = modulePath.getPath();
     int start = path.lastIndexOf(File.separatorChar)+1;
     int finish = path.lastIndexOf('.');
     if (finish == -1 || finish <= start) {
       finish = path.length();
     }
-    return path.substring(start, finish);
-  }
-
-  public ModuleManagerImpl.ModulePath getModulePath() {
-    return myModulePath;
+    final String moduleName = path.substring(start, finish);
+    return new ModuleLoadingErrorDescription(description, modulePath, moduleManager, moduleName);
   }
 }

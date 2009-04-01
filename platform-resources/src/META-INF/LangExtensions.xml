@@ -122,7 +122,15 @@
 
   <projectService serviceInterface="com.intellij.facet.ProjectWideFacetListenersRegistry"
                   serviceImplementation="com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl"/>
+
   <projectService serviceInterface="com.intellij.facet.FacetFinder" serviceImplementation="com.intellij.facet.impl.FacetFinderImpl"/>
+
+  <projectService serviceInterface="com.intellij.facet.ProjectFacetManager"
+                  serviceImplementation="com.intellij.facet.impl.ProjectFacetManagerImpl"/>
+
+  <projectService serviceInterface="com.intellij.openapi.module.ProjectLoadingErrorsNotifier"
+                  serviceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsNotifierImpl"/>
+
   <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
                  serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
 

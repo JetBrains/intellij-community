@@ -234,13 +234,15 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               myFailedModulePaths.remove(modulePath);
             }
             catch (final IOException e) {
-              errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath));
+              errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
+                                                           modulePath, ModuleManagerImpl.this));
             }
             catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-              errors.add(new ModuleLoadingErrorDescription(moduleWithNameAlreadyExists.getMessage(), modulePath));
+              errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, ModuleManagerImpl.this));
             }
             catch (StateStorage.StateStorageException e) {
-              errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath));
+              errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
+                                                           modulePath, ModuleManagerImpl.this));
             }
           }
 
@@ -288,17 +290,11 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       throw new RuntimeException(errors.get(0).getDescription());
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        Collection<ModuleLoadingErrorDescription> selected =
-            RemoveInvalidElementsDialog.showDialog(myProject, ProjectBundle.message("module.remove.from.project.title"),
-                                                   ProjectBundle.message("error.message.cannot.load.modules"),
-                                                   ProjectBundle.message("module.remove.from.project.confirmation"), errors);
-        for (ModuleLoadingErrorDescription description : selected) {
-          myFailedModulePaths.remove(description.getModulePath());
-        }
-      }
-    }, ModalityState.NON_MODAL);
+    ProjectLoadingErrorsNotifier.getInstance(myProject).registerErrors(errors);
+  }
+
+  public void removeFailedModulePath(@NotNull ModulePath modulePath) {
+    myFailedModulePaths.remove(modulePath);
   }
 
   @NotNull
