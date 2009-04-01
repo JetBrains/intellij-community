@@ -3,8 +3,9 @@ package com.intellij.compiler.impl;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.FileIndex;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ public abstract class FileIndexCompileScope extends UserDataHolderBase implement
 
   protected abstract FileIndex[] getFileIndices();
 
+  @NotNull
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     final FileIndex[] fileIndices = getFileIndices();

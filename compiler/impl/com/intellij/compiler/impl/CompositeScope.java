@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -41,6 +42,7 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
     }
   }
 
+  @NotNull
   public VirtualFile[] getFiles(FileType fileType, boolean inSourceOnly) {
     Set<VirtualFile> allFiles = new THashSet<VirtualFile>();
     for (CompileScope scope : myScopes) {
@@ -61,6 +63,7 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
     return false;
   }
 
+  @NotNull
   public Module[] getAffectedModules() {
     Set<Module> modules = new HashSet<Module>();
     for (final CompileScope compileScope : myScopes) {

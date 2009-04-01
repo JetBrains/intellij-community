@@ -17,8 +17,12 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class ModuleCompileScope extends FileIndexCompileScope {
   private final Project myProject;
@@ -61,6 +65,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     }
   }
 
+  @NotNull
   public Module[] getAffectedModules() {
     return myScopeModules.toArray(new Module[myScopeModules.size()]);
   }

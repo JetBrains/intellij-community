@@ -238,7 +238,7 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
   private static class MyCompilationUnit extends CompilationUnit {
     private final String myDefaultEncoding;
 
-    public MyCompilationUnit(final String sourceFilePath, final String defaultEncoding) {
+    private MyCompilationUnit(final String sourceFilePath, final String defaultEncoding) {
       super(null, sourceFilePath, defaultEncoding);
       myDefaultEncoding = defaultEncoding;
     }

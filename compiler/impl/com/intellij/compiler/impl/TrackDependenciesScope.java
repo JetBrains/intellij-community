@@ -3,14 +3,15 @@ package com.intellij.compiler.impl;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -26,6 +27,7 @@ public class TrackDependenciesScope extends UserDataHolderBase implements Compil
     myDelegate = delegate;
   }
 
+  @NotNull
   public VirtualFile[] getFiles(FileType fileType, boolean inSourceOnly) {
     return myDelegate.getFiles(fileType, inSourceOnly);
   }
@@ -34,6 +36,7 @@ public class TrackDependenciesScope extends UserDataHolderBase implements Compil
     return myDelegate.belongs(url);
   }
 
+  @NotNull
   public Module[] getAffectedModules() {
     final Module[] affectedModules = myDelegate.getAffectedModules();
     // the dependencies between files may span several modules, so dependent modules might be affected

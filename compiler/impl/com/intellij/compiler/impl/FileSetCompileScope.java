@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -36,10 +37,12 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
     );
   }
 
+  @NotNull
   public Module[] getAffectedModules() {
     return myAffectedModules;
   }
 
+  @NotNull
   public VirtualFile[] getFiles(final FileType fileType, boolean inSourceOnly) {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     final FileTypeManager typeManager = FileTypeManager.getInstance();

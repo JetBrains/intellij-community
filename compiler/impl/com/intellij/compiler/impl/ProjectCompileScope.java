@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 public class ProjectCompileScope extends FileIndexCompileScope {
   private final Project myProject;
@@ -47,6 +48,7 @@ public class ProjectCompileScope extends FileIndexCompileScope {
     //return !FileUtil.startsWith(url, myTempDirUrl);
   }
 
+  @NotNull
   public Module[] getAffectedModules() {
     return ModuleManager.getInstance(myProject).getModules();
   }

@@ -79,23 +79,15 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
   }
 
   public final String getNextLine() {
-    try {
-      final String line = readLine(myCompilerOutStreamReader);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("LIne read: #" + line + "#");
-      }
-      if (TERMINATION_STRING.equals(line)) {
-        myLastReadLine = null;
-      }
-      else {
-        myLastReadLine = line == null ? null : myTrimLines ? line.trim() : line;
-      }
+    final String line = readLine(myCompilerOutStreamReader);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("LIne read: #" + line + "#");
     }
-    catch (IOException e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.error(e);
-      }
+    if (TERMINATION_STRING.equals(line)) {
       myLastReadLine = null;
+    }
+    else {
+      myLastReadLine = line == null ? null : myTrimLines ? line.trim() : line;
     }
     return myLastReadLine;
   }
@@ -119,7 +111,7 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
   protected abstract void processCompiledClass(final String classFileToProcess) throws CacheCorruptedException;
 
 
-  private String readLine(final Reader reader) throws IOException {
+  private String readLine(final Reader reader) {
     StringBuilder buffer;
     boolean releaseBuffer = true;
     try {

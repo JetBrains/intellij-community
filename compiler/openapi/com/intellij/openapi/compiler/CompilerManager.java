@@ -47,7 +47,7 @@ public abstract class CompilerManager {
    *
    * @param compiler the compiler to register.
    */
-  public abstract void addCompiler(Compiler compiler);
+  public abstract void addCompiler(@NotNull Compiler compiler);
 
   /**
    * Registers a custom translating compiler. Input and output filetype sets allow compiler manager
@@ -57,20 +57,20 @@ public abstract class CompilerManager {
    * @param inputTypes a set of filetypes that compiler accepts as input
    * @param outputTypes a set of filetypes that compiler can generate
    */
-  public abstract void addTranslatingCompiler(TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
+  public abstract void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
 
   @NotNull
-  public abstract Set<FileType> getRegisteredInputTypes(TranslatingCompiler compiler);
+  public abstract Set<FileType> getRegisteredInputTypes(@NotNull TranslatingCompiler compiler);
   
   @NotNull
-  public abstract Set<FileType> getRegisteredOutputTypes(TranslatingCompiler compiler);
+  public abstract Set<FileType> getRegisteredOutputTypes(@NotNull TranslatingCompiler compiler);
   
   /**
    * Unregisters a custom compiler.
    *
    * @param compiler the compiler to unregister.
    */
-  public abstract void removeCompiler(Compiler compiler);
+  public abstract void removeCompiler(@NotNull Compiler compiler);
 
   /**
    * Returns all registered compilers of the specified class.
@@ -78,21 +78,22 @@ public abstract class CompilerManager {
    * @param compilerClass the class for which the compilers should be returned.
    * @return all registered compilers of the specified class.
    */
-   public abstract <T  extends Compiler> T[] getCompilers(Class<T> compilerClass);
+  @NotNull
+  public abstract <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass);
 
   /**
    * Registers the type as a compilable type so that Compile action will be enabled on files of this type.
    *
    * @param type the type for which the Compile action is enabled.
    */
-  public abstract void addCompilableFileType(FileType type);
+  public abstract void addCompilableFileType(@NotNull FileType type);
 
   /**
    * Unregisters the type as a compilable type so that Compile action will be disabled on files of this type.
    *
    * @param type the type for which the Compile action is disabled.
    */
-  public abstract void removeCompilableFileType(FileType type);
+  public abstract void removeCompilableFileType(@NotNull FileType type);
 
   /**
    * Checks if files of the specified type can be compiled by one of registered compilers.
@@ -103,27 +104,28 @@ public abstract class CompilerManager {
    * @return true if the file type is compilable, false otherwise.
    * @see com.intellij.openapi.compiler.CompilerManager#addCompilableFileType(FileType)
    */
-  public abstract boolean isCompilableFileType(FileType type);
+  public abstract boolean isCompilableFileType(@NotNull FileType type);
 
   /**
    * Registers a compiler task that will be executed before the compilation.
    *
    * @param task the task to register.
    */
-  public abstract void addBeforeTask(CompileTask task);
+  public abstract void addBeforeTask(@NotNull CompileTask task);
 
   /**
    * Registers a compiler task  that will be executed after the compilation.
    *
    * @param task the task to register.
    */
-  public abstract void addAfterTask(CompileTask task);
+  public abstract void addAfterTask(@NotNull CompileTask task);
 
   /**
    * Returns the list of all tasks to be executed before compilation.
    *
    * @return all tasks to be executed before compilation.
    */
+  @NotNull
   public abstract CompileTask[] getBeforeTasks();
 
   /**
@@ -131,6 +133,7 @@ public abstract class CompilerManager {
    *
    * @return all tasks to be executed after compilation.
    */
+  @NotNull
   public abstract CompileTask[] getAfterTasks();
 
   /**
@@ -141,7 +144,7 @@ public abstract class CompilerManager {
    * @param callback          a notification callback, or null if no notifications needed.
    * @param trackDependencies if true, all files that the given set depends on, recursively, will be compiled.
    */
-  public abstract void compile(VirtualFile[] files, @Nullable CompileStatusNotification callback, boolean trackDependencies);
+  public abstract void compile(@NotNull VirtualFile[] files, @Nullable CompileStatusNotification callback, boolean trackDependencies);
 
   /**
    * Compile all sources (including test sources) from the module. Compiler excludes are not honored.
@@ -150,7 +153,7 @@ public abstract class CompilerManager {
    * @param callback          a notification callback, or null if no notifications needed
    * @param trackDependencies if true, all files that the given set depends on, recursively, will be compiled.
    */
-  public abstract void compile(Module module, @Nullable CompileStatusNotification callback, final boolean trackDependencies);
+  public abstract void compile(@NotNull Module module, @Nullable CompileStatusNotification callback, final boolean trackDependencies);
 
   /**
    * Compile all files from the scope given.  Compiler excludes are not honored.
@@ -159,7 +162,7 @@ public abstract class CompilerManager {
    * @param callback          a notification callback, or null if no notifications needed
    * @param trackDependencies if true, all files that the given set depends on, recursively, will be compiled.
    */
-  public abstract void compile(CompileScope scope, CompileStatusNotification callback, final boolean trackDependencies);
+  public abstract void compile(@NotNull CompileScope scope, CompileStatusNotification callback, final boolean trackDependencies);
 
   /**
    * Compile all modified files and all files that depend on them all over the project.
@@ -176,7 +179,7 @@ public abstract class CompilerManager {
    * @param module   a module which sources are to be compiled.
    * @param callback a notification callback, or null if no notifications needed.
    */
-  public abstract void make(Module module, @Nullable CompileStatusNotification callback);
+  public abstract void make(@NotNull Module module, @Nullable CompileStatusNotification callback);
 
   /**
    * Compile all modified files and all files that depend on them from the modules and all modules these modules depend on recursively.
@@ -186,7 +189,7 @@ public abstract class CompilerManager {
    * @param modules  modules to compile
    * @param callback a notification callback, or null if no notifications needed.
    */
-  public abstract void make(Project project, Module[] modules, @Nullable CompileStatusNotification callback);
+  public abstract void make(@NotNull Project project, @NotNull Module[] modules, @Nullable CompileStatusNotification callback);
 
   /**
    * Compile all modified files and all files that depend on them from the scope given.
@@ -195,14 +198,14 @@ public abstract class CompilerManager {
    * @param scope    a scope to be compiled
    * @param callback a notification callback, or null if no notifications needed
    */
-  public abstract void make(CompileScope scope, @Nullable CompileStatusNotification callback);
+  public abstract void make(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
    * Checks if compile scope given is up-to-date
    * @param scope
    * @return true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted 
    */
-  public abstract boolean isUpToDate(CompileScope scope);
+  public abstract boolean isUpToDate(@NotNull CompileScope scope);
   /**
    * Rebuild the whole project from scratch. Compiler excludes are honored.
    *
@@ -218,7 +221,7 @@ public abstract class CompilerManager {
    * @param contentName    the name of a tab in message view where the execution results will be displayed.
    * @param onTaskFinished a runnable to be executed when the task finishes, null if nothing should be executed.
    */
-  public abstract void executeTask(CompileTask task, CompileScope scope, String contentName,
+  public abstract void executeTask(@NotNull CompileTask task, @NotNull CompileScope scope, String contentName,
                                    @Nullable Runnable onTaskFinished);
 
   /**
@@ -226,14 +229,14 @@ public abstract class CompilerManager {
    *
    * @param listener the listener to be registered.
    */
-  public abstract void addCompilationStatusListener(CompilationStatusListener listener);
+  public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener);
 
   /**
    * Unregister a compilation listener.
    *
    * @param listener the listener to be unregistered.
    */
-  public abstract void removeCompilationStatusListener(CompilationStatusListener listener);
+  public abstract void removeCompilationStatusListener(@NotNull CompilationStatusListener listener);
 
   /**
    * Checks if the specified file is excluded from compilation.
@@ -241,21 +244,23 @@ public abstract class CompilerManager {
    * @param file the file to check.
    * @return true if the file is excluded from compilation, false otherwise
    */
-  public abstract boolean isExcludedFromCompilation(VirtualFile file);
+  public abstract boolean isExcludedFromCompilation(@NotNull VirtualFile file);
 
+  @NotNull
   public abstract OutputToSourceMapping getJavaCompilerOutputMapping();
 
   /*
    * Convetience methods for creating frequently-used compile scopes
    */
-  public abstract CompileScope createFilesCompileScope(VirtualFile[] files);
-  
-  public abstract CompileScope createModuleCompileScope(Module module, final boolean includeDependentModules);
-
-  public abstract CompileScope createModulesCompileScope(Module[] modules, final boolean includeDependentModules);
-
-  public abstract CompileScope createModuleGroupCompileScope(Project project, Module[] modules, final boolean includeDependentModules);
-
-  public abstract CompileScope createProjectCompileScope(final Project project);
+  @NotNull
+  public abstract CompileScope createFilesCompileScope(@NotNull VirtualFile[] files);
+  @NotNull
+  public abstract CompileScope createModuleCompileScope(@NotNull Module module, final boolean includeDependentModules);
+  @NotNull
+  public abstract CompileScope createModulesCompileScope(@NotNull Module[] modules, final boolean includeDependentModules);
+  @NotNull
+  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, @NotNull Module[] modules, final boolean includeDependentModules);
+  @NotNull
+  public abstract CompileScope createProjectCompileScope(@NotNull Project project);
   
 }

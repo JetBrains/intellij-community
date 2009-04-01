@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,6 +37,7 @@ public interface CompileScope extends UserDataHolder {
    *                     Otherwise files are searched in all directories that belong to the scope.
    * @return a list of files of given type that belong to this scope.
    */
+  @NotNull
   VirtualFile[] getFiles(@Nullable FileType fileType, boolean inSourceOnly);
 
   /**
@@ -52,5 +54,6 @@ public interface CompileScope extends UserDataHolder {
    *
    * @return a list of modules this scope affects.
    */
+  @NotNull
   Module[] getAffectedModules();
 }

@@ -10,7 +10,7 @@ import java.util.List;
 public abstract class OutputParser {
   protected final List<ParserAction> myParserActions = new ArrayList<ParserAction>(10);
 
-  public static interface Callback {
+  public interface Callback {
     @NonNls String getNextLine();        
     @NonNls String getCurrentLine();
     void setProgressText(String text);

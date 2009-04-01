@@ -88,7 +88,6 @@ public class BackendCompilerWrapper {
   }
 
   public TranslatingCompiler.OutputItem[] compile() throws CompilerException, CacheCorruptedException {
-    VirtualFile[] dependentFiles = null;
     Application application = ApplicationManager.getApplication();
     final Set<VirtualFile> allDependent = new HashSet<VirtualFile>();
     COMPILE:
@@ -103,6 +102,7 @@ public class BackendCompilerWrapper {
       }
 
 
+      VirtualFile[] dependentFiles;
       do {
         dependentFiles = findDependentFiles();
 
@@ -135,8 +135,7 @@ public class BackendCompilerWrapper {
     }
     finally {
       myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.deleting.temp.files"));
-      for (final Module module : myModuleToTempDirMap.keySet()) {
-        final VirtualFile file = myModuleToTempDirMap.get(module);
+      for (final VirtualFile file : myModuleToTempDirMap.values()) {
         if (file != null) {
           final File ioFile = application.runReadAction(new Computable<File>() {
             public File compute() {
@@ -169,7 +168,7 @@ public class BackendCompilerWrapper {
 
   // package-info.java hack
   private void processPackageInfoFiles() {
-    if (myFilesToRecompile.size() == 0) {
+    if (myFilesToRecompile.isEmpty()) {
       return;
     }
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -180,7 +179,7 @@ public class BackendCompilerWrapper {
             packageInfoFiles.add(file);
           }
         }
-        if (packageInfoFiles.size() > 0) {
+        if (!packageInfoFiles.isEmpty()) {
           final Set<VirtualFile> badFiles = getFilesCompiledWithErrors();
           for (final VirtualFile packageInfoFile : packageInfoFiles) {
             if (!badFiles.contains(packageInfoFile)) {
@@ -224,7 +223,7 @@ public class BackendCompilerWrapper {
                 names.append(", ");
               }
               names.append(module.getName());
-              if (names.length() > 128 && (idx + 1 < modules.length) /*name is already too long and seems to grow longer*/) {
+              if (names.length() > 128 && idx + 1 < modules.length /*name is already too long and seems to grow longer*/) {
                 names.append("...");
                 break;
               }
@@ -346,7 +345,7 @@ public class BackendCompilerWrapper {
     myProcessedFiles.addAll(deps.getSecond());
     
     final Set<VirtualFile> dependentFiles = new HashSet<VirtualFile>();
-    final CacheCorruptedException[] _ex = new CacheCorruptedException[]{null};
+    final CacheCorruptedException[] _ex = {null};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
@@ -397,7 +396,7 @@ public class BackendCompilerWrapper {
   private class SynchedCompilerParsing extends CompilerParsingThreadImpl {
     private final ClassParsingThread myClassParsingThread;
 
-    public SynchedCompilerParsing(Process process,
+    private SynchedCompilerParsing(Process process,
                                   final CompileContext context,
                                   OutputParser outputParser,
                                   ClassParsingThread classParsingThread,
@@ -512,9 +511,9 @@ public class BackendCompilerWrapper {
       try {
         threadFuture.get();
       }
-      catch (InterruptedException e) {
+      catch (InterruptedException ignored) {
       }
-      catch(ExecutionException e) {
+      catch(ExecutionException ignored) {
       }
     }
   }
@@ -852,7 +851,7 @@ public class BackendCompilerWrapper {
   private String myModuleName = null;
 
   private void sourceFileProcessed() {
-    myFilesCount += 1;
+    myFilesCount++;
     updateStatistics();
   }
 
@@ -903,9 +902,9 @@ public class BackendCompilerWrapper {
     }
 
     public void run() {
-      String path;
       try {
         //noinspection StringEquality
+        String path;
         while ((path = getNextPath()) != myStopThreadToken) {
           processPath(path.replace('/', File.separatorChar));
         }
@@ -1026,7 +1025,7 @@ public class BackendCompilerWrapper {
     private final String myPath;
     private final int myKind;
 
-    public OutputDir(String path, int kind) {
+    private OutputDir(String path, int kind) {
       myPath = path;
       myKind = kind;
     }
@@ -1049,14 +1048,8 @@ public class BackendCompilerWrapper {
 
       final OutputDir outputDir = (OutputDir)o;
 
-      if (myKind != outputDir.myKind) {
-        return false;
-      }
-      if (!myPath.equals(outputDir.myPath)) {
-        return false;
-      }
+      return myKind == outputDir.myKind && myPath.equals(outputDir.myPath);
 
-      return true;
     }
 
     public int hashCode() {
@@ -1071,7 +1064,7 @@ public class BackendCompilerWrapper {
     public final String relativePathToSource;
     public final String pathToClass;
 
-    public CompiledClass(final int qName, final String relativePathToSource, final String pathToClass) {
+    private CompiledClass(final int qName, final String relativePathToSource, final String pathToClass) {
       this.qName = qName;
       this.relativePathToSource = relativePathToSource;
       this.pathToClass = pathToClass;

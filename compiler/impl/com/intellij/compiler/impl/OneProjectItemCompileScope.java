@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ public class OneProjectItemCompileScope extends UserDataHolderBase implements Co
     myUrl = file.isDirectory()? url + "/" : url;
   }
 
+  @NotNull
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
     final List<VirtualFile> files = new ArrayList<VirtualFile>(1);
     final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -49,6 +51,7 @@ public class OneProjectItemCompileScope extends UserDataHolderBase implements Co
     return FileUtil.pathsEqual(url, myUrl);
   }
 
+  @NotNull
   public Module[] getAffectedModules() {
     final Module module = ModuleUtil.findModuleForFile(myFile, myProject);
     if (module == null) {
