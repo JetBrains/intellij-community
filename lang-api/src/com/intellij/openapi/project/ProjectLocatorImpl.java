@@ -17,7 +17,7 @@ public class ProjectLocatorImpl extends ProjectLocator {
     if (projects.length == 1 && !projects[0].isDisposed()) return projects[0];
 
     for (Project project : projects) {
-      if (!project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+      if (project.isInitialized() && !project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
         return project;
       }
     }
