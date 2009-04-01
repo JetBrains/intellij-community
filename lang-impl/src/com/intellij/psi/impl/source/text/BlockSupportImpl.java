@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -224,12 +225,14 @@ public class BlockSupportImpl extends BlockSupport {
     }
     else {
       final FileViewProvider viewProvider = fileImpl.getViewProvider();
-      final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), viewProvider.getVirtualFile().getFileType(), newFileText, viewProvider.getVirtualFile().getCharset(),
+      FileType fileType = viewProvider.getVirtualFile().getFileType();
+      final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), fileType, newFileText, viewProvider.getVirtualFile().getCharset(),
                                                               fileImpl.getModificationStamp());
-      final PsiFileImpl newFile = (PsiFileImpl)viewProvider.createCopy(lightFile).getPsi(fileImpl.getLanguage());
+      FileViewProvider copy = viewProvider.createCopy(lightFile);
+      final PsiFileImpl newFile = (PsiFileImpl)copy.getPsi(fileImpl.getLanguage());
 
       if (newFile == null) {
-        LOG.error("View provider " + viewProvider + " refused to parse text with language " + fileImpl.getLanguage());
+        LOG.error("View provider " + viewProvider + " refused to parse text with " + fileImpl.getLanguage()+"; base: "+viewProvider.getBaseLanguage()+"; copy: "+copy.getBaseLanguage()+"; fileType: "+fileType);
         return;
       }
 
