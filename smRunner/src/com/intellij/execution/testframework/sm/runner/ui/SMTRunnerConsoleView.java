@@ -67,8 +67,10 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   }
 
   public void dispose() {
-    Disposer.dispose(myResultsViewer);
-    myResultsViewer = null;
+    if (myResultsViewer != null) {
+      Disposer.dispose(myResultsViewer);
+      myResultsViewer = null;
+    }
 
     super.dispose();
   }
