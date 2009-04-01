@@ -367,16 +367,21 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     final Document document = myEditor.getDocument();
     PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(document);
-    final int offset = myContext.getStartOffset();
+    PsiElement elementAt = myFile.findElementAt(myContext.getStartOffset());
+    if (elementAt == null) return false;
+    
+    final PsiElement parentElement = elementAt.getParent();
 
-    if (PsiTreeUtil.findElementOfClassAtOffset(myFile, offset, PsiImportStatement.class, false) == null) return false;
+    PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class, PsiComment.class);
+    if (parent == null && parentElement instanceof PsiErrorElement) {
+      PsiElement nextElement = parentElement.getNextSibling();
+      if (nextElement instanceof PsiWhiteSpace) nextElement = nextElement.getNextSibling();
+      if (nextElement instanceof PsiClass) parent = nextElement;
+    }
+    if (!(parent instanceof PsiModifierListOwner)) return false;
+    if (parent instanceof PsiPackage) return true;
 
-    //outside of any class: we are surely inserting an annotation
-    if (PsiTreeUtil.findElementOfClassAtOffset(myFile, offset, PsiClass.class, false) == null) return true;
-
-    //the easiest check that there's a @ before the identifier
-    return PsiTreeUtil.findElementOfClassAtOffset(myFile, offset, PsiAnnotation.class, false) != null;
-
+    return elementAt.getTextRange().getStartOffset() <= parent.getTextOffset();
   }
 
   protected void removeEndOfIdentifier(boolean needParenth){
