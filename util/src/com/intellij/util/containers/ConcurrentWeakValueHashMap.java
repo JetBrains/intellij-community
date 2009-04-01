@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -173,6 +174,28 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
   }
 
   public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("method not implemented");
+    final Set<K> keys = keySet();
+    Set<Entry<K, V>> entries = new HashSet<Entry<K, V>>();
+
+    for (final K key : keys) {
+      final V value = get(key);
+      if (value != null) {
+        entries.add(new Entry<K, V>() {
+          public K getKey() {
+            return key;
+          }
+
+          public V getValue() {
+            return value;
+          }
+
+          public V setValue(V value) {
+            throw new UnsupportedOperationException("setValue is not implemented");
+          }
+        });
+      }
+    }
+
+    return entries;
   }
 }

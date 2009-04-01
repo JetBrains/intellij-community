@@ -198,19 +198,19 @@ public class FileManagerImpl implements FileManager {
 
   @TestOnly
   public void checkConsistency() {
-    ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> fileToViewProvider = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    HashMap<VirtualFile, FileViewProvider> fileToViewProvider = new HashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
     myVFileToViewProviderMap.clear();
     for (VirtualFile vFile : fileToViewProvider.keySet()) {
       final FileViewProvider fileViewProvider = fileToViewProvider.get(vFile);
 
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile);
-      if (psiFile1 != null && fileViewProvider != null) { // might get collected
+      if (psiFile1 != null && fileViewProvider != null && fileViewProvider.isPhysical()) { // might get collected
         Assert.assertEquals(psiFile1.getClass(), fileViewProvider.getPsi(fileViewProvider.getBaseLanguage()).getClass());
       }
     }
 
-    ConcurrentHashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = new ConcurrentHashMap<VirtualFile, PsiDirectory>((Map<? extends VirtualFile,? extends PsiDirectory>)myVFileToPsiDirMap);
+    HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = new HashMap<VirtualFile, PsiDirectory>(myVFileToPsiDirMap);
     myVFileToPsiDirMap.clear();
 
     for (VirtualFile vFile : fileToPsiDirMap.keySet()) {
