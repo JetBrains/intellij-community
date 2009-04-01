@@ -396,7 +396,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return new ArrayList<VirtualFile>(myComposite.getVFHolder(FileHolder.HolderType.IGNORED).getFiles());
   }
 
-  List<VirtualFile> getLockedFolders() {
+  public List<VirtualFile> getLockedFolders() {
     return new ArrayList<VirtualFile>(myComposite.getVFHolder(FileHolder.HolderType.LOCKED).getFiles());
   }
 
