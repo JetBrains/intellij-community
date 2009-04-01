@@ -47,6 +47,7 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.testng.IDEACoverageListener;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
 import org.testng.annotations.AfterClass;
