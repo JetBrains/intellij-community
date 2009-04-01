@@ -32,6 +32,8 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.FrameStateManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -137,6 +139,7 @@ public class SvnVcs extends AbstractVcs {
 
   private SvnCopiesRefreshManager myCopiesRefreshManager;
   private SvnFileUrlMappingImpl myMapping;
+  private final MyFrameStateListener myFrameStateListener;
 
   public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
 
@@ -160,7 +163,8 @@ public class SvnVcs extends AbstractVcs {
     return Boolean.valueOf(System.getProperty(systemParameterName));
   }
 
-  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration) {
+  public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final ChangeListManager changeListManager,
+                final VcsDirtyScopeManager vcsDirtyScopeManager) {
     super(project);
     LOG.debug("ct");
     myConfiguration = svnConfiguration;
@@ -189,7 +193,7 @@ public class SvnVcs extends AbstractVcs {
       upgradeIfNeeded(bus);
 
       myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
-      ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+      changeListManager.addChangeListListener(myChangeListListener);
 
       myMessageBusConnection = bus.connect();
       myMessageBusConnection.subscribe(ProjectLevelVcsManagerImpl.VCS_MAPPING_CHANGED, new Runnable() {
@@ -218,6 +222,8 @@ public class SvnVcs extends AbstractVcs {
         }
       });
     }
+
+    myFrameStateListener = new MyFrameStateListener(changeListManager, vcsDirtyScopeManager);
   }
 
   public void postStartup() {
@@ -337,10 +343,12 @@ public class SvnVcs extends AbstractVcs {
     VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
     // this will initialize its inner listener for committed changes upload
     LoadedRevisionsCache.getInstance(myProject);
+    FrameStateManager.getInstance().addListener(myFrameStateListener);
   }
 
   @Override
   public void deactivate() {
+    FrameStateManager.getInstance().removeListener(myFrameStateListener);
     if (myMessageBusConnection != null) {
       myMessageBusConnection.disconnect();
     }
@@ -861,5 +869,25 @@ public class SvnVcs extends AbstractVcs {
         return o.getVirtualFile();
       }
     });
+  }
+
+  private static class MyFrameStateListener implements FrameStateListener {
+    private final ChangeListManager myClManager;
+    private final VcsDirtyScopeManager myDirtyScopeManager;
+
+    private MyFrameStateListener(ChangeListManager clManager, VcsDirtyScopeManager dirtyScopeManager) {
+      myClManager = clManager;
+      myDirtyScopeManager = dirtyScopeManager;
+    }
+
+    public void onFrameDeactivated() {
+    }
+
+    public void onFrameActivated() {
+      final List<VirtualFile> folders = ((ChangeListManagerImpl)myClManager).getLockedFolders();
+      if (! folders.isEmpty()) {
+        myDirtyScopeManager.filesDirty(null, folders);
+      }
+    }
   }
 }
