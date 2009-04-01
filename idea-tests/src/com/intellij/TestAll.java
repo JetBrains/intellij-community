@@ -8,17 +8,13 @@
  */
 package com.intellij;
 
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.testFramework.TestLoggerFactory;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.util.ProfilingUtil;
 import junit.framework.*;
 
@@ -122,8 +118,8 @@ public class TestAll implements Test {
     if (IdeaTestCase.ourTestThread != null) {
       return IdeaTestCase.ourTestThread;
     }
-    else if (LightIdeaTestCase.ourTestThread != null) {
-      return LightIdeaTestCase.ourTestThread;
+    else if (LightPlatformTestCase.ourTestThread != null) {
+      return LightPlatformTestCase.ourTestThread;
     }
     else {
       return null;
@@ -292,7 +288,7 @@ public class TestAll implements Test {
       return (Test)suiteMethod.invoke(null, new Class[0]);
     }
     catch (NoSuchMethodException e) {
-      if (JUnitUtil.isJUnit4TestClass(testCaseClass)) {
+      if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {
         return new JUnit4TestAdapter(testCaseClass);
       }
       return new TestSuite(testCaseClass){

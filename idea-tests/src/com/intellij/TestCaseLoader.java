@@ -8,9 +8,9 @@
  */
 package com.intellij;
 
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.idea.Bombed;
-import com.intellij.idea.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestRunnerUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -80,7 +80,7 @@ public class TestCaseLoader {
       }
     } catch (NoSuchMethodException e) { }
 
-    return JUnitUtil.isJUnit4TestClass(testCaseClass);
+    return TestRunnerUtil.isJUnit4TestClass(testCaseClass);
   }
 
   /*
@@ -93,23 +93,23 @@ public class TestCaseLoader {
   public static boolean isBombed(final Method method) {
     final Bombed bombedAnnotation = method.getAnnotation(Bombed.class);
     if (bombedAnnotation == null) return false;
-    if (IdeaTestUtil.isRotten(bombedAnnotation)) {
+    if (PlatformTestUtil.isRotten(bombedAnnotation)) {
       String message = "Disarm the stale bomb for '" + method + "' in class '" + method.getDeclaringClass() + "'";
       System.err.println(message);
       //Assert.fail(message);
     }
-    return !IdeaTestUtil.bombExplodes(bombedAnnotation);
+    return !PlatformTestUtil.bombExplodes(bombedAnnotation);
   }
 
   public static boolean isBombed(final Class<?> testCaseClass) {
     final Bombed bombedAnnotation = testCaseClass.getAnnotation(Bombed.class);
     if (bombedAnnotation == null) return false;
-    if (IdeaTestUtil.isRotten(bombedAnnotation)) {
+    if (PlatformTestUtil.isRotten(bombedAnnotation)) {
       String message = "Disarm the stale bomb for '" + testCaseClass + "'";
       System.err.println(message);
      // Assert.fail(message);
     }
-    return !IdeaTestUtil.bombExplodes(bombedAnnotation);
+    return !PlatformTestUtil.bombExplodes(bombedAnnotation);
   }
 
   public void loadTestCases(final Collection<String> classNamesIterator) {

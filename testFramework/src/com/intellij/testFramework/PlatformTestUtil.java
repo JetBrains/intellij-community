@@ -1,15 +1,18 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
@@ -17,6 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * @author yole
@@ -126,5 +131,42 @@ public class PlatformTestUtil {
       UIUtil.dispatchAllInvocationEvents();
       Thread.sleep(delay);
     }
+  }
+
+  private static Date raidDate(Bombed bombed) {
+    final Calendar instance = Calendar.getInstance();
+    instance.set(Calendar.YEAR, bombed.year());
+    instance.set(Calendar.MONTH, bombed.month());
+    instance.set(Calendar.DAY_OF_MONTH, bombed.day());
+    instance.set(Calendar.HOUR_OF_DAY, bombed.time());
+    instance.set(Calendar.MINUTE, 0);
+    Date time = instance.getTime();
+
+    return time;
+  }
+
+  public static boolean bombExplodes(Bombed bombedAnnotation) {
+    Date now = new Date();
+    return now.after(raidDate(bombedAnnotation));
+  }
+
+  public static boolean bombExplodes(int year, int month, int day, int h, int m, String who, String message) {
+    final Calendar instance = Calendar.getInstance();
+    instance.set(Calendar.YEAR, year);
+    instance.set(Calendar.MONTH, month);
+    instance.set(Calendar.DAY_OF_MONTH, day);
+    instance.set(Calendar.HOUR_OF_DAY, h);
+    instance.set(Calendar.MINUTE, m);
+    Date time = instance.getTime();
+    return isItMe(who) || new Date().after(time);
+  }
+
+  public static boolean isRotten(Bombed bomb) {
+    long bombRotPeriod = 30L * 24 * 60 * 60 * 1000; // month
+    return new Date().after(new Date(raidDate(bomb).getTime() + bombRotPeriod));
+  }
+
+  private static boolean isItMe(final String who) {
+    return Comparing.equal(who, SystemProperties.getUserName(), false);
   }
 }
