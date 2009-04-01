@@ -118,20 +118,21 @@ public class SdkConfigurationUtil {
       return;
     }
 
-    Sdk sdk = findOrCreateSdk(sdkTypes [0]);
+    Sdk sdk = findOrCreateSdk(sdkTypes);
     if (sdk != null) {
       setDirectoryProjectSdk(project, sdk);
     }
   }
 
   @Nullable
-  public static Sdk findOrCreateSdk(final SdkType sdkType) {
-    Sdk sdk = null;
-    List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(sdkType);
-    if (sdks.size() > 0) {
-      sdk = sdks.get(0);
+  public static Sdk findOrCreateSdk(final SdkType... sdkTypes) {
+    for (SdkType type : sdkTypes) {
+      List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(type);
+      if (sdks.size() > 0) {
+        return sdks.get(0);
+      }
     }
-    else {
+    for (SdkType sdkType : sdkTypes) {
       final String suggestedHomePath = sdkType.suggestHomePath();
       if (suggestedHomePath != null && sdkType.isValidSdkHome(suggestedHomePath)) {
         VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
@@ -140,11 +141,11 @@ public class SdkConfigurationUtil {
           }
         });
         if (sdkHome != null) {
-          sdk = setupSdk(sdkHome, sdkType);
+          return setupSdk(sdkHome, sdkType);
         }
       }
     }
-    return sdk;
+    return null;
   }
 
   public static String createUniqueSdkName(SdkType type, String home, final Collection<Sdk> sdks) {
