@@ -49,11 +49,11 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
-  public void setDeclaredAttributeValue(@NonNls String attributeName, @Nullable PsiAnnotationMemberValue value) {
+  public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@NonNls String attributeName, @Nullable T value) {
     final PsiAnnotationMemberValue existing = findDeclaredAttributeValue(attributeName);
     if (value == null) {
       if (existing == null) {
-        return;
+        return null;
       }
       existing.getParent().delete();
     } else {
@@ -75,6 +75,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
         getParameterList().addBefore(createNameValuePair(value, namePrefix), null);
       }
     }
+    return (T)findDeclaredAttributeValue(attributeName);
   }
 
   private PsiNameValuePair createNameValuePair(PsiAnnotationMemberValue value, String namePrefix) {

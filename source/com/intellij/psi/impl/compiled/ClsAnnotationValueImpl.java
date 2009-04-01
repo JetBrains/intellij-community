@@ -89,7 +89,7 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
-  public void setDeclaredAttributeValue(@NonNls String attributeName, PsiAnnotationMemberValue value) {
+  public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@NonNls String attributeName, T value) {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 

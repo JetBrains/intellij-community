@@ -4,10 +4,9 @@
  */
 package com.intellij.psi.ref;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiChildLink;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +37,9 @@ public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, Ps
   @NotNull
   public PsiAnnotationMemberValue createChild(@NotNull PsiAnnotation psiAnnotation) throws IncorrectOperationException {
     psiAnnotation.getText();
-    throw new UnsupportedOperationException("Method createChild is not yet implemented in " + getClass().getName());
+    final PsiExpression nullValue = JavaPsiFacade.getElementFactory(psiAnnotation.getProject()).createExpressionFromText(PsiKeyword.NULL, null);
+    psiAnnotation.setDeclaredAttributeValue(myAttributeName, nullValue);
+    return ObjectUtils.assertNotNull(psiAnnotation.findDeclaredAttributeValue(myAttributeName));
   }
 
 }

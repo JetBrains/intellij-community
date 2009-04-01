@@ -90,5 +90,5 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    * @param attributeName attribute name
    * @param value new value template element
    */
-  void setDeclaredAttributeValue(@NonNls String attributeName, @Nullable PsiAnnotationMemberValue value);
+  <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@NonNls String attributeName, @Nullable T value);
 }
