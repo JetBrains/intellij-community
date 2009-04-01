@@ -1,3 +1,5 @@
+package com.intellij;
+
 import junit.framework.Test;
 
 /**
