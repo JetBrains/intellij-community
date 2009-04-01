@@ -7,6 +7,7 @@
 package com.intellij.xml.refactoring;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -17,6 +18,7 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -73,6 +75,15 @@ public class XmlTagRenameHandler implements RenameHandler {
         final PsiFile file = LangDataKeys.PSI_FILE.getData(context);
         if (file instanceof XmlFile) {
           return file.getViewProvider().findElementAt(offset);
+        }
+        if (file != null) {
+          final Language language = PsiUtilBase.getLanguageAtOffset(file, offset);
+          if (language != file.getLanguage()) {
+            final PsiFile psiAtOffset = file.getViewProvider().getPsi(language);
+            if (psiAtOffset instanceof XmlFile) {
+              return psiAtOffset.findElementAt(offset);
+            }
+          }
         }
       }
     }
