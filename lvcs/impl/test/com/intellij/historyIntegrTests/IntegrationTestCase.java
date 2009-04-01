@@ -3,8 +3,8 @@ package com.intellij.historyIntegrTests;
 import com.intellij.history.Clock;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryComponent;
 import com.intellij.history.utils.RunnableAdapter;
@@ -16,7 +16,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-public abstract class IntegrationTestCase extends IdeaTestCase {
+public abstract class IntegrationTestCase extends PlatformTestCase {
   private Locale myDefaultLocale;
 
   protected String FILTERED_DIR_NAME = "CVS";
