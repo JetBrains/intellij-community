@@ -80,7 +80,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final PerIndexDocumentMap<CharSequence> myLastIndexedUnsavedContent = new PerIndexDocumentMap<CharSequence>() {
     @Override
     protected CharSequence createDefault(Document document) {
-      return loadContent(FileDocumentManager.getInstance().getFile(document));
+      return loadContent(myFileDocumentManager.getFile(document));
     }
   };
 
@@ -94,6 +94,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<ID<?, ?>, AtomicInteger> myRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
 
   private final VirtualFileManagerEx myVfManager;
+  private final FileDocumentManager myFileDocumentManager;
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
@@ -110,8 +111,9 @@ public class FileBasedIndex implements ApplicationComponent {
     boolean acceptInput(VirtualFile file);
   }
 
-  public FileBasedIndex(final VirtualFileManagerEx vfManager, MessageBus bus) throws IOException {
+  public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm, MessageBus bus) throws IOException {
     myVfManager = vfManager;
+    myFileDocumentManager = fdm;
 
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
@@ -187,7 +189,7 @@ public class FileBasedIndex implements ApplicationComponent {
       myFileContentAttic = new FileContentStorage(new File(PathManager.getIndexRoot(), "updates.tmp"));
     }
     finally {
-      ShutDownTracker.getInstance().registerShutdownThread(new Thread("Index shutdown") {
+      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
         public void run() {
           performShutdown();
         }
@@ -313,6 +315,8 @@ public class FileBasedIndex implements ApplicationComponent {
     if (!myShutdownPerformed.compareAndSet(false, true)) {
       return; // already shut down
     }
+    myFileDocumentManager.saveAllDocuments();
+    
     //LOG.info("===============START DISPOSING INDEX===========================");
     myChangedFilesUpdater.forceUpdate();
 
@@ -671,7 +675,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private Set<Document> getUnsavedOrTransactedDocuments() {
-    Set<Document> docs = new HashSet<Document>(Arrays.asList(FileDocumentManager.getInstance().getUnsavedDocuments()));
+    Set<Document> docs = new HashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
     docs.addAll(myTransactionMap.keySet());
     return docs;
   }
@@ -757,7 +761,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private void indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId) throws StorageException {
-    final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+    final VirtualFile vFile = myFileDocumentManager.getFile(document);
     if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
       return;
     }

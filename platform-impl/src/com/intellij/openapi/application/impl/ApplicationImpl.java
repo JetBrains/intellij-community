@@ -191,7 +191,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private void registerShutdownHook() {
     ShutDownTracker.getInstance(); // Necessary to avoid creating an instance while already shutting down.
 
-    ShutDownTracker.getInstance().registerShutdownThread(new Thread(new Runnable() {
+    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
         if (isDisposed() || isDisposeInProgress()) return;
         try {
@@ -210,7 +210,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           LOG.error(e);
         }
       }
-    }));
+    });
   }
 
   private void disposeSelf() {
@@ -833,7 +833,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void assertIsDispatchThread(String message) {
-    if (myTestModeFlag || myHeadlessMode) return;
+    if (myTestModeFlag || myHeadlessMode || ShutDownTracker.isShutdownHookRunning()) return;
     final Thread currentThread = Thread.currentThread();
     if (ourDispatchThread == currentThread) return;
 

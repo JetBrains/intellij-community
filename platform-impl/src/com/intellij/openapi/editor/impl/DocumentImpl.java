@@ -15,10 +15,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.LocalTimeCounter;
@@ -172,8 +169,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
           }
         }
 
-    for (int i = 0; i < editors.length; i++) {
-      editors[i].getCaretModel().moveToVisualPosition(visualCarets[i]);
+    if (!ShutDownTracker.isShutdownHookRunning()) {
+      for (int i = 0; i < editors.length; i++) {
+        editors[i].getCaretModel().moveToVisualPosition(visualCarets[i]);
+      }
     }
   }
 
@@ -417,6 +416,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
+    if (ShutDownTracker.isShutdownHookRunning()) {
+      return null; // suppress events in shutdown hook
+    }
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
 
     DocumentListener[] listeners = getCachedListeners();
@@ -434,6 +436,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
+    if (ShutDownTracker.isShutdownHookRunning()) {
+      return; // suppress events in shutdown hook
+    }
     try{
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 

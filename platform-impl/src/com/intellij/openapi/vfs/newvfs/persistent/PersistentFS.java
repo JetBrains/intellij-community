@@ -6,6 +6,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
@@ -62,10 +63,14 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       });
     }
     */
+    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+      public void run() {
+        myRecords.dispose();
+      }
+    });
   }
 
   public void disposeComponent() {
-    myRecords.dispose();
   }
 
   @NonNls

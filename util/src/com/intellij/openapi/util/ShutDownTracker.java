@@ -24,7 +24,9 @@ public class ShutDownTracker implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.ShutDownTracker");
   private static ShutDownTracker ourInstance;
   private final List<Thread> myThreads = new ArrayList<Thread>();
-  private final List<Thread> myShutdownTreads = new ArrayList<Thread>();
+  private final List<Thread> myShutdownThreads = new ArrayList<Thread>();
+  private final List<Runnable> myShutdownTasks = new ArrayList<Runnable>();
+  private volatile boolean myIsShutdownHookRunning = false;
 
   private ShutDownTracker() {
     //noinspection HardCodedStringLiteral
@@ -38,7 +40,12 @@ public class ShutDownTracker implements Runnable {
     return ourInstance;
   }
 
+  public static boolean isShutdownHookRunning() {
+    return getInstance().myIsShutdownHookRunning;
+  }
+
   public void run() {
+    myIsShutdownHookRunning = true;
     Thread[] threads = getStopperThreads();
     while (threads.length > 0) {
       Thread thread = threads[0];
@@ -58,8 +65,18 @@ public class ShutDownTracker implements Runnable {
       threads = getStopperThreads();
     }
 
-    while (myShutdownTreads.size() > 0) {
-      final Thread thread = myShutdownTreads.remove(0);
+    for (int idx = myShutdownTasks.size() - 1; idx >= 0; idx--) {
+      final Runnable task = myShutdownTasks.remove(idx);
+      try {
+        task.run();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
+    for (int idx = myShutdownThreads.size() - 1; idx >= 0; idx--) {
+      final Thread thread = myShutdownThreads.remove(idx);
       thread.start();
       try {
         thread.join();
@@ -85,10 +102,14 @@ public class ShutDownTracker implements Runnable {
   }
 
   public void registerShutdownThread(final Thread thread) {
-    myShutdownTreads.add(thread);
+    myShutdownThreads.add(thread);
   }
 
   public void registerShutdownThread(int index, final Thread thread) {
-    myShutdownTreads.add(index, thread);
+    myShutdownThreads.add(index, thread);
+  }
+
+  public void registerShutdownTask(Runnable task) {
+    myShutdownTasks.add(task);
   }
 }
