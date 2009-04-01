@@ -8,6 +8,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.*;
@@ -20,7 +21,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -33,6 +33,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBusConnection;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -205,7 +206,7 @@ public class FileManagerImpl implements FileManager {
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile);
       if (psiFile1 != null && fileViewProvider != null) { // might get collected
-        LOG.assertTrue(psiFile1.getClass().equals(fileViewProvider.getPsi(fileViewProvider.getBaseLanguage()).getClass()));
+        Assert.assertEquals(psiFile1.getClass(), fileViewProvider.getPsi(fileViewProvider.getBaseLanguage()).getClass());
       }
     }
 

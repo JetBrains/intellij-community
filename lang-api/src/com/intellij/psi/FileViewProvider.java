@@ -72,5 +72,6 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
 
   boolean isLockedByPsiOperations();
 
+  @NotNull
   FileViewProvider createCopy(LightVirtualFile copy);
 }

@@ -128,6 +128,7 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     return false;
   }
 
+  @NotNull
   public FileViewProvider createCopy(final LightVirtualFile copy) {
     throw new RuntimeException("Clone is not supported for DummyHolderProviders. Use DummyHolder clone directly.");
   }

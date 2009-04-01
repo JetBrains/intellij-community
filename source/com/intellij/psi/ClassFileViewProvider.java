@@ -37,6 +37,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     return null;
   }
 
+  @NotNull
   public SingleRootFileViewProvider createCopy(final LightVirtualFile copy) {
     return new ClassFileViewProvider(getManager(), copy, false);
   }

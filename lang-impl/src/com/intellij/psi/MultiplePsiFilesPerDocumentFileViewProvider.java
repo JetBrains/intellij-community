@@ -107,6 +107,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     }
   }
 
+  @NotNull
   public final MultiplePsiFilesPerDocumentFileViewProvider createCopy(final LightVirtualFile fileCopy) {
     final MultiplePsiFilesPerDocumentFileViewProvider copy = cloneInner(fileCopy);
     copy.myOriginal = myOriginal == null ? this : myOriginal;
