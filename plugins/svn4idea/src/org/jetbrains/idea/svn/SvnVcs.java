@@ -249,8 +249,7 @@ public class SvnVcs extends AbstractVcs {
           try {
             ChangeListManager.getInstanceChecked(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
 
-            final SvnBranchConfigurationManager.SvnSupportOptions supportOptions =
-            SvnBranchConfigurationManager.getInstance(myProject).getSupportOptions();
+            final SvnConfiguration.SvnSupportOptions supportOptions = myConfiguration.getSupportOptions();
 
             upgradeTo15(supportOptions);
             if (! supportOptions.changeListsSynchronized()) {
@@ -311,7 +310,7 @@ public class SvnVcs extends AbstractVcs {
     }
   }
 
-  private void upgradeTo15(final SvnBranchConfigurationManager.SvnSupportOptions supportOptions) {
+  private void upgradeTo15(final SvnConfiguration.SvnSupportOptions supportOptions) {
     if (! supportOptions.upgradeTo15Asked()) {
       final SvnWorkingCopyChecker workingCopyChecker = new SvnWorkingCopyChecker();
 

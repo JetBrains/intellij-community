@@ -95,36 +95,8 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     public boolean mySupportsUserInfoFilter;
   }
 
-  public class SvnSupportOptions {
-    private final Long myVersion;
-
-    public SvnSupportOptions(final Long version) {
-      myVersion = version;
-    }
-
-    private final static long UPGRADE_TO_15_VERSION_ASKED = 123;
-    private final static long CHANGELIST_SUPPORT = 124;
-
-    public boolean upgradeTo15Asked() {
-      return (myVersion != null) && (UPGRADE_TO_15_VERSION_ASKED <= myVersion);
-    }
-
-    public boolean changeListsSynchronized() {
-      return (myVersion != null) && (CHANGELIST_SUPPORT <= myVersion);
-    }
-
-    public void upgradeToChangeListsSynchronized() {
-      myConfigurationBean.myVersion = CHANGELIST_SUPPORT;
-    }
-  }
-
-  public SvnSupportOptions getSupportOptions() {
-    final SvnSupportOptions supportOptions = new SvnSupportOptions(myConfigurationBean.myVersion);
-    // will be set to SvnSupportOptions.CHANGELIST_SUPPORT after sync
-    if (myConfigurationBean.myVersion == null || myConfigurationBean.myVersion.longValue() < SvnSupportOptions.CHANGELIST_SUPPORT) {
-      myConfigurationBean.myVersion = SvnSupportOptions.UPGRADE_TO_15_VERSION_ASKED;
-    }
-    return supportOptions;
+  public Long getSupportValue() {
+    return myConfigurationBean.myVersion;
   }
 
   private ConfigurationBean myConfigurationBean = new ConfigurationBean();
@@ -238,10 +210,6 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   public ConfigurationBean getState() {
-    // will be set to SvnSupportOptions.CHANGELIST_SUPPORT after sync
-    if (myConfigurationBean.myVersion == null || myConfigurationBean.myVersion.longValue() < SvnSupportOptions.CHANGELIST_SUPPORT) {
-      myConfigurationBean.myVersion = SvnSupportOptions.UPGRADE_TO_15_VERSION_ASKED;
-    }
     final ConfigurationBean result = new ConfigurationBean();
     result.myVersion = myConfigurationBean.myVersion;
     final UrlSerializationHelper helper = new UrlSerializationHelper(SvnVcs.getInstance(myProject));

@@ -80,6 +80,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private final Project myProject;
   private SvnAuthenticationManager myAuthManager;
   private String myUpgradeMode;
+  private SvnSupportOptions mySupportOptions;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public String LAST_MERGED_REVISION = null;
@@ -111,6 +112,44 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public SvnConfiguration(final Project project) {
     myProject = project;
+  }
+
+  public class SvnSupportOptions {
+    /**
+     * version of "support SVN in IDEA". for features tracking. should grow
+     */
+    private Long myVersion;
+
+    public SvnSupportOptions(final Long version) {
+      myVersion = version;
+      // will be set to SvnSupportOptions.CHANGELIST_SUPPORT after sync
+      if (myVersion == null || myVersion.longValue() < SvnSupportOptions.CHANGELIST_SUPPORT) {
+        myVersion = SvnSupportOptions.UPGRADE_TO_15_VERSION_ASKED;
+      }
+    }
+
+    private final static long UPGRADE_TO_15_VERSION_ASKED = 123;
+    private final static long CHANGELIST_SUPPORT = 124;
+
+    public boolean upgradeTo15Asked() {
+      return (myVersion != null) && (UPGRADE_TO_15_VERSION_ASKED <= myVersion);
+    }
+
+    public boolean changeListsSynchronized() {
+      return (myVersion != null) && (CHANGELIST_SUPPORT <= myVersion);
+    }
+
+    public void upgradeToChangeListsSynchronized() {
+      myVersion = CHANGELIST_SUPPORT;
+    }
+  }
+
+  public SvnSupportOptions getSupportOptions() {
+    if (mySupportOptions == null) {
+      // used to be kept in SvnBranchConfigurationManager
+      mySupportOptions = new SvnSupportOptions(SvnBranchConfigurationManager.getInstance(myProject).getSupportValue());
+    }
+    return mySupportOptions;
   }
 
   public String getConfigurationDirectory() {
@@ -217,6 +256,10 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     } else {
       myIsUseDefaultProxy = Boolean.parseBoolean(useProxy.getText());
     }
+    final Element supportedVersion = element.getChild("supportedVersion");
+    if (supportedVersion != null) {
+      mySupportOptions = new SvnSupportOptions(Long.parseLong(supportedVersion.getText()));
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -245,6 +288,9 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
       element.addContent(new Element("upgradeMode").setText(myUpgradeMode));
     }
     element.addContent(new Element("myIsUseDefaultProxy").setText(myIsUseDefaultProxy ? "true" : "false"));
+    if (mySupportOptions != null) {
+      element.addContent(new Element("supportedVersion").setText("" + mySupportOptions.myVersion));
+    }
   }
 
   public void projectOpened() {
