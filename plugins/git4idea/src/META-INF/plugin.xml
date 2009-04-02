@@ -13,7 +13,7 @@
 
     <group id="GitFileGroup">
       <separator/>
-      <action id="Git.Init" class="git4idea.actions.GitInit" text="Git Init ..."/>
+      <action id="Git.Init" class="git4idea.actions.GitInit" text="Git Init..."/>
       />
       <separator/>
       <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
@@ -57,7 +57,7 @@
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..."/>
       <separator/>
-      <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase ..."/>
+      <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase..."/>
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebasing"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit in Rebasing"/>
