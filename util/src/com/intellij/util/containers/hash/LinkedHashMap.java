@@ -81,7 +81,8 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     this.top = e;
     size++;
     if (removeEldestEntry(back)) {
-      remove(back.key);
+      final V val = remove(back.key);
+      assert val != null : "LinkedHashMap.Entry was not removed. Possibly mutable key: " + back.key;
     }
     else if (size > capacity) {
       rehash((int)(capacity * HashUtil.CAPACITY_MULTIPLE));
