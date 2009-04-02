@@ -43,7 +43,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
     importProject();
     assertModules("project", "m1", "m2", "m3");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -56,8 +56,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     assertCompletionVariants(myProjectPom, "m1", "m2", "m2/m3");
 
-    updateModulePom("m2",
-                    "<groupId>test</groupId>" +
+    createModulePom("m2", "<groupId>test</groupId>" +
                     "<artifactId>project</artifactId>" +
                     "<version>1</version>" +
                     "<packaging>pom</packaging>" +
@@ -77,7 +76,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "<packaging>pom</packaging>");
     importProject();
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -106,7 +105,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                     "<artifactId>m2</artifactId>" +
                     "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -141,7 +140,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     importProject();
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -151,13 +150,12 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  <module>m2</module>" +
                      "</modules>");
 
-
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
     assertEquals("m1", ref.getCanonicalText());
     assertEquals(getPsiFile(m1), ref.resolve());
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -172,7 +170,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertEquals("m2", ref.getCanonicalText());
     assertEquals(getPsiFile(m2), ref.resolve());
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -205,7 +203,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     importProject();
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -219,7 +217,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertEquals("./m", ref.getCanonicalText());
     assertEquals(getPsiFile(m), ref.resolve());
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -255,7 +253,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     importProject();
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -281,7 +279,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "<packaging>pom</packaging>");
     importProject();
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -314,7 +312,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "<packaging>pom</packaging>");
     importProject();
 
-    updateProjectPom("<artifactId>project</artifactId>" +
+    createProjectPom("<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
 
                      "<parent>" +
@@ -351,7 +349,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "<packaging>pom</packaging>");
     importProject();
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -379,7 +377,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "<packaging>pom</packaging>");
     importProject();
 
-    updateProjectPom("<artifactId>project</artifactId>" +
+    createProjectPom("<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
 
                      "<modules>" +
@@ -409,7 +407,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "<packaging>pom</packaging>");
     importProject();
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -437,7 +435,7 @@ public class ModuleCompletionAndResolutionTest extends MavenCompletionAndResolut
                     "<version>1</version>");
     importProject();
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +

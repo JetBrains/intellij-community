@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenProcess;
-import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -85,9 +83,10 @@ public class MavenIndicesManager implements ApplicationComponent {
     if (myIndices != null) return;
 
     MavenGeneralSettings defaultSettings = new MavenGeneralSettings();
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(defaultSettings,
-                                                               new SoutMavenConsole(),
-                                                               new MavenProcess(new EmptyProgressIndicator())).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedder(defaultSettings).getEmbedder();
+    File dir = myTestIndicesDir == null
+               ? MavenUtil.getPluginSystemDir("Indices")
+               : myTestIndicesDir;
     myIndices = new MavenIndices(myEmbedder, getIndicesDir(), new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
         scheduleUpdate(Collections.singletonList(index), false);

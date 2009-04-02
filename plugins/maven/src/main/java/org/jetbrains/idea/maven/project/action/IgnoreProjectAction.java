@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.project.MavenIgnoreConfigurable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -18,7 +18,7 @@ public class IgnoreProjectAction extends AnAction {
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final MavenProjectsManager projectsManager = project != null ? MavenProjectsManager.getInstance(project) : null;
-    final List<MavenProjectModel> nodes = e.getData(MavenDataKeys.MAVEN_PROJECT_NODES);
+    final List<MavenProject> nodes = e.getData(MavenDataKeys.MAVEN_PROJECT_NODES);
 
     final boolean enabled = projectsManager != null && nodes != null && isEnabled(projectsManager, nodes);
     e.getPresentation().setEnabled(enabled);
@@ -32,12 +32,12 @@ public class IgnoreProjectAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final MavenProjectsManager projectsManager = project != null ? MavenProjectsManager.getInstance(project) : null;
-    final List<MavenProjectModel> nodes = e.getData(MavenDataKeys.MAVEN_PROJECT_NODES);
+    final List<MavenProject> nodes = e.getData(MavenDataKeys.MAVEN_PROJECT_NODES);
 
     if (projectsManager != null && nodes != null && isEnabled(projectsManager, nodes)) {
       final boolean flag = projectsManager.getIgnoredFlag(nodes.get(0));
       if (flag == projectsManager.isIgnored(nodes.get(0))) {
-        for (MavenProjectModel each : nodes) {
+        for (MavenProject each : nodes) {
           projectsManager.setIgnoredFlag(each, !flag);
         }
       }
@@ -47,11 +47,11 @@ public class IgnoreProjectAction extends AnAction {
     }
   }
 
-  private boolean isEnabled(final MavenProjectsManager projectsManager, final List<MavenProjectModel> nodes) {
+  private boolean isEnabled(final MavenProjectsManager projectsManager, final List<MavenProject> nodes) {
     int ignoredCount = 0;
     int individuallyIgnoredCount = 0;
 
-    for (MavenProjectModel each : nodes) {
+    for (MavenProject each : nodes) {
       if (projectsManager.isIgnored(each)) {
         ignoredCount++;
       }

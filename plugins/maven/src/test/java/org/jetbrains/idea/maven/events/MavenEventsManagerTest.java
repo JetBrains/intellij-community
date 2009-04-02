@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.events;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,7 +16,8 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
     super.setUp();
     myEventsManager = MavenEventsManager.getInstance(myProject);
     myEventsManager.doInit();
-    myMavenProjectsManager.initEventsHandling();
+    MavenProjectsManager.getInstance(myProject).doInitComponent(false);
+    MavenProjectsManager.getInstance(myProject).initEventsHandling();
   }
 
   public void testRefreshingActionsOnImport() throws Exception {
@@ -28,7 +30,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
     VirtualFile p2 = createModulePom("p2", "<groupId>test</groupId>" +
                                            "<artifactId>p2</artifactId>" +
                                            "<version>1</version>");
-    importSeveralProjects(p1, p2);
+    importProjects(p1, p2);
 
     assertKeymapContains(p1, "clean");
     assertKeymapContains(p2, "clean");
@@ -41,7 +43,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
 
     assertKeymapDoesNotContain(myProjectPom, "surefire:test");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -69,7 +71,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
 
     assertKeymapDoesNotContain(m, "clean");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -89,7 +91,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
                                            "<artifactId>p2</artifactId>" +
                                            "<version>1</version>");
 
-    importSeveralProjects(p1, p2);
+    importProjects(p1, p2);
 
     assertKeymapContains(p1, "clean");
     assertKeymapContains(p2, "clean");
@@ -108,7 +110,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
     VirtualFile p2 = createModulePom("p2", "<groupId>test</groupId>" +
                                            "<artifactId>p2</artifactId>" +
                                            "<version>1</version>");
-    importSeveralProjects(p1, p2);
+    importProjects(p1, p2);
 
     assertKeymapContains(p1, "clean");
     assertKeymapContains(p2, "clean");

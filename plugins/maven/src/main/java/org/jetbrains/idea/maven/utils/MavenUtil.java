@@ -9,13 +9,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.maven.model.Model;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 import java.io.File;
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -59,9 +66,9 @@ public class MavenUtil {
            "</project>";
   }
 
-  public static MavenModel getMavenModel(Project p, VirtualFile f) {
+  public static MavenDomProjectModel getMavenModel(Project p, VirtualFile f) {
     PsiFile psiFile = PsiManager.getInstance(p).findFile(f);
-    DomFileElement<MavenModel> root = DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenModel.class);
+    DomFileElement<MavenDomProjectModel> root = DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenDomProjectModel.class);
     return root.getRootElement();
   }
 
@@ -88,5 +95,45 @@ public class MavenUtil {
       if (each.matcher(relativeName).matches()) return false;
     }
     return true;
+  }
+  
+  public static <T extends Serializable> T cloneObject(T object) {
+    try {
+      return (T)BeanUtils.cloneBean(object);
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+    catch (InstantiationException e) {
+      throw new RuntimeException(e);
+    }
+    catch (InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+    catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static void stripDown(Object object) {
+    try {
+      for (Field each : ReflectionUtil.collectFields(object.getClass())) {
+        Class<?> type = each.getType();
+        each.setAccessible(true);
+        if (type.isArray() || Collection.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type)) {
+          each.set(object, null);
+        }
+        else {
+          Package pack = type.getPackage();
+          if (pack != null && Model.class.getPackage().getName().equals(pack.getName())) {
+            Object value = each.get(object);
+            if (value != null) stripDown(value);
+          }
+        }
+      }
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

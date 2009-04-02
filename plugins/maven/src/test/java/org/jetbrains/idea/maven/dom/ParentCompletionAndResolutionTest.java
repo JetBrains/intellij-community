@@ -13,7 +13,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -24,7 +24,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "</parent>");
     assertCompletionVariants(myProjectPom, "junit", "jmock", "test");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -34,7 +34,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "</parent>");
     assertCompletionVariants(myProjectPom, "junit");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -56,10 +56,9 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
 
-    importSeveralProjects(myProjectPom, m);
+    importProjects(myProjectPom, m);
 
-    updateModulePom("m",
-                    "<groupId>test</groupId>" +
+    createModulePom("m", "<groupId>test</groupId>" +
                     "<artifactId>m</artifactId>" +
                     "<version>1</version>" +
 
@@ -79,7 +78,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -102,7 +101,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -128,7 +127,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -163,7 +162,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -189,7 +188,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -207,7 +206,7 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -306,9 +305,9 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                                     "<artifactId>one</artifactId>" +
                                     "<version>1</version>");
 
-    importSeveralProjects(myProjectPom, m);
+    importProjects(myProjectPom, m);
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -340,9 +339,9 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                                     "<artifactId>one</artifactId>" +
                                     "<version>1</version>");
 
-    importSeveralProjects(myProjectPom, m);
+    importProjects(myProjectPom, m);
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 

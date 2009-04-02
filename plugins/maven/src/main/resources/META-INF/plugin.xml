@@ -41,12 +41,14 @@
     <editorTabTitleProvider implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleProvider"/>
 
     <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenModelDomDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenPluginModelDomDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription"/>
     <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider" order="first"/>
     <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>
-    <dom.extender domClass="org.jetbrains.idea.maven.dom.model.Configuration" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
-    <dom.extender domClass="org.jetbrains.idea.maven.dom.model.ConfigurationParameter" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
+    <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
+    <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
 
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction</className>
@@ -77,6 +79,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectsNavigator</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.embedder.MavenOutputToolWindow</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater</implementation-class>

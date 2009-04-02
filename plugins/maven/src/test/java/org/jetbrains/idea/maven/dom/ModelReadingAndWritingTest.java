@@ -9,8 +9,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.dom.model.Dependency;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 public class ModelReadingAndWritingTest extends MavenImportingTestCase {
@@ -24,7 +24,7 @@ public class ModelReadingAndWritingTest extends MavenImportingTestCase {
   }
 
   public void testReading() throws Exception {
-    MavenModel model = getDomModel();
+    MavenDomProjectModel model = getDomModel();
 
     assertEquals("test", model.getGroupId().getStringValue());
     assertEquals("project", model.getArtifactId().getStringValue());
@@ -34,7 +34,7 @@ public class ModelReadingAndWritingTest extends MavenImportingTestCase {
   public void testWriting() throws Exception {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        MavenModel model = getDomModel();
+        MavenDomProjectModel model = getDomModel();
 
         model.getGroupId().setStringValue("foo");
         model.getArtifactId().setStringValue("bar");
@@ -58,9 +58,9 @@ public class ModelReadingAndWritingTest extends MavenImportingTestCase {
   public void testAddingADependency() throws Exception {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        MavenModel model = getDomModel();
+        MavenDomProjectModel model = getDomModel();
 
-        Dependency d = model.getDependencies().addDependency();
+        MavenDomDependency d = model.getDependencies().addDependency();
         d.getGroupId().setStringValue("group");
         d.getArtifactId().setStringValue("artifact");
         d.getVersion().setStringValue("version");
@@ -86,7 +86,7 @@ public class ModelReadingAndWritingTest extends MavenImportingTestCase {
                  "</project>", VfsUtil.loadText(myProjectPom));
   }
 
-  private MavenModel getDomModel() {
+  private MavenDomProjectModel getDomModel() {
     return MavenUtil.getMavenModel(myProject, myProjectPom);
   }
 

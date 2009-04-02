@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
@@ -151,7 +151,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
     myMavenProjectsListener = new MavenProjectsManager.Listener() {
       boolean isActivated;
       public void activate() {
-        for (MavenProjectModel each : myProjectsManager.getProjects()) {
+        for (MavenProject each : myProjectsManager.getProjects()) {
           myFileToNode.put(each.getFile(), new PomNode(each));
         }
 
@@ -159,7 +159,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
         isActivated = true;
       }
 
-      public void setIgnored(MavenProjectModel project, boolean on) {
+      public void setIgnored(MavenProject project, boolean on) {
         if (!isActivated) return;
 
         final PomNode pomNode = myFileToNode.get(project);
@@ -175,25 +175,23 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
         myTree.repaint();
       }
 
-      public void projectAdded(final MavenProjectModel project) {
-        if (!isActivated) return;
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-
-            final PomNode newNode = new PomNode(project);
-            myFileToNode.put(project.getFile(), newNode);
-            myRoot.addToStructure(newNode);
-            myRoot.updateProfileNodes();
-
-            updateFromRoot(true, true);
-            myTree.repaint();
-          }
-        });
+      public void projectReadQuickly(MavenProject project) {
+        onProjectChange(project);
       }
 
-      public void projectUpdated(final MavenProjectModel project) {
+      public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+        onProjectChange(project);
+      }
+
+      public void projectAggregatorChanged(MavenProject project) {
+        onProjectChange(project);
+      }
+
+      public void projectResolved(MavenProject project) {
+        onProjectChange(project);
+      }
+
+      private void onProjectChange(final MavenProject project) {
         if (!isActivated) return;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -205,7 +203,10 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
               pomNode.onFileUpdate();
             }
             else {
-              projectAdded(project);
+              final PomNode newNode = new PomNode(project);
+              myFileToNode.put(project.getFile(), newNode);
+              myRoot.addToStructure(newNode);
+              updateFromRoot(true, true);
             }
             myRoot.updateProfileNodes();
             myTree.repaint();
@@ -213,7 +214,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
         });
       }
 
-      public void projectRemoved(final MavenProjectModel project) {
+      public void projectRemoved(final MavenProject project) {
         if (!isActivated) return;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {

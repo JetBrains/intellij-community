@@ -235,7 +235,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                                      "  </resources>" +
                                      "</build>");
 
-    importSeveralProjects(m1, m2);
+    importProjects(m1, m2);
     compileModules("module1", "module2");
 
     assertResult(m1, "target/classes/file1.properties", "value=1");
@@ -306,7 +306,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     compileModules("project");
     assertResult("target/classes/file.properties", "value=1");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 

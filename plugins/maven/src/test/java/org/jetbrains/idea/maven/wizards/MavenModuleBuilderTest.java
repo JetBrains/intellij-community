@@ -1,14 +1,14 @@
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ModuleRootManager;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.indices.ArchetypeInfo;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenId;
 
@@ -21,6 +21,8 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myBuilder = new MavenModuleBuilder();
+
+    createJdk("Java 1.5");
     setModuleNameAndRoot("module", getProjectPath());
   }
 
@@ -28,10 +30,10 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     MavenId id = new MavenId("org.foo", "module", "1.0");
     createNewModule(id);
 
-    List<MavenProjectModel> projects = MavenProjectsManager.getInstance(myProject).getProjects();
+    List<MavenProject> projects = MavenProjectsManager.getInstance(myProject).getProjects();
     assertEquals(1, projects.size());
 
-    MavenProjectModel project = projects.get(0);
+    MavenProject project = projects.get(0);
     assertEquals(id, project.getMavenId());
 
     assertModules("module");
@@ -40,11 +42,11 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
 
     assertNotNull(myProjectRoot.findFileByRelativePath("src/main/java"));
     assertNotNull(myProjectRoot.findFileByRelativePath("src/test/java"));
-    
+
     assertSources("module", "src/main/java");
     assertTestSources("module", "src/test/java");
   }
-  
+
   public void testInheritJdkFromProject() throws Exception {
     createNewModule(new MavenId("org.foo", "module", "1.0"));
     assertTrue(ModuleRootManager.getInstance(getModule("module")).isSdkInherited());
@@ -55,10 +57,10 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     MavenId id = new MavenId("org.foo", "module", "1.0");
     createNewModule(id);
 
-    List<MavenProjectModel> projects = MavenProjectsManager.getInstance(myProject).getProjects();
+    List<MavenProject> projects = MavenProjectsManager.getInstance(myProject).getProjects();
     assertEquals(1, projects.size());
 
-    MavenProjectModel project = projects.get(0);
+    MavenProject project = projects.get(0);
     assertEquals(id, project.getMavenId());
 
     assertNotNull(myProjectRoot.findFileByRelativePath("src/main/java/org/foo/App.java"));
@@ -203,9 +205,9 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     dir.createChildData(this, "pom.xml");
 
     setModuleNameAndRoot("module", dir.getPath() + "/module");
-    
+
      // should not throw
-    MavenProjectModel project = myBuilder.findPotentialParentProject(myProject);
+    MavenProject project = myBuilder.findPotentialParentProject(myProject);
     assertNull(project);
   }
 
@@ -239,6 +241,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     model.commit();
 
     // emulate invokeLater from MavenModuleBulder.
+    MavenProjectsManager.getInstance(myProject).scheduleUpdateAll();
     MavenProjectsManager.getInstance(myProject).reimport();
   }
 }

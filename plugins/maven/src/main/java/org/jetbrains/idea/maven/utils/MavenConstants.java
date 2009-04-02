@@ -2,12 +2,19 @@ package org.jetbrains.idea.maven.utils;
 
 public class MavenConstants {
   public static final String POM_XML = "pom.xml";
+  public static final String PROFILES_XML = "profiles.xml";
+  public static final String SETTINGS_XML = "settings.xml";
 
-  public static final String JAR_TYPE = "jar";
-  public static final String WAR_TYPE = "war";
-
-  public static final String TEST_SCOPE = "test";
+  public static final String TYPE_JAR = "jar";
+  public static final String TYPE_WAR = "war";
 
   public static final String JAVADOC_CLASSIFIER = "javadoc";
   public static final String SOURCES_CLASSIFIER = "sources";
+
+  public static final String SCOPE_COMPILE = "compile";
+  public static final String SCOPE_PROVIDEED = "provided";
+  public static final String SCOPE_RUNTIME = "runtime";
+  public static final String SCOPE_TEST = "test";
+  public static final String SCOPE_SYSTEM = "system";
+  public static final String SCOPE_IMPORT = "import";
 }

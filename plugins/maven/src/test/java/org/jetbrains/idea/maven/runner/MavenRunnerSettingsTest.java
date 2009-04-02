@@ -30,12 +30,22 @@ public class MavenRunnerSettingsTest extends MavenImportingTestCase {
   }
 
   public void testUsingLatestAvailableJdk() throws Exception {
-    ProjectJdkTable.getInstance().addJdk(createJdk("Java 1.3"));
-    ProjectJdkTable.getInstance().addJdk(createJdk("Java 1.5"));
-    ProjectJdkTable.getInstance().addJdk(createJdk("Java 1.4"));
+    Sdk jdk3 = createJdk("Java 1.3");
+    Sdk jdk4 = createJdk("Java 1.4");
+    Sdk jdk5 = createJdk("Java 1.5");
+    ProjectJdkTable.getInstance().addJdk(jdk3);
+    ProjectJdkTable.getInstance().addJdk(jdk5);
+    ProjectJdkTable.getInstance().addJdk(jdk4);
 
-    MavenRunnerSettings settings = new MavenRunnerSettings();
-    assertEquals("Java 1.5", settings.getJreName());
+    try {
+      MavenRunnerSettings settings = new MavenRunnerSettings();
+      assertEquals("Java 1.5", settings.getJreName());
+    }
+    finally {
+      ProjectJdkTable.getInstance().removeJdk(jdk3);
+      ProjectJdkTable.getInstance().removeJdk(jdk4);
+      ProjectJdkTable.getInstance().removeJdk(jdk5);
+    }
   }
 
   public void testUsingInternalJdkIfNoOtherIsDefined() throws Exception {

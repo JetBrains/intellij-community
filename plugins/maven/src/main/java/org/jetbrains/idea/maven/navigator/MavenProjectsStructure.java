@@ -18,10 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenPlugin;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenId;
@@ -480,7 +477,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     void addToStructure(PomNode pomNode) {
-      if (!getTreeViewSettings().showIgnored && myProjectsManager.isIgnored(pomNode.myProjectModel)) {
+      if (!getTreeViewSettings().showIgnored && myProjectsManager.isIgnored(pomNode.myMavenProject)) {
         return;
       }
       addUnder(pomNode);
@@ -501,18 +498,18 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class PomNode extends CustomNode {
-    final private MavenProjectModel myProjectModel;
+    final private MavenProject myMavenProject;
     private String savedPath = "";
     private String actionIdPrefix = "";
 
-    private final LifecycleNode lifecycleNode;
-    private final PluginsNode pluginsNode;
+    private LifecycleNode lifecycleNode;
+    private PluginsNode pluginsNode;
     public NestedPomsNode modulePomsNode;
     public NestedPomsNode nonModulePomsNode;
 
-    public PomNode(MavenProjectModel mavenProjectModel) {
+    public PomNode(MavenProject mavenProject) {
       super(null);
-      this.myProjectModel = mavenProjectModel;
+      this.myMavenProject = mavenProject;
 
       lifecycleNode = new LifecycleNode(this);
       pluginsNode = new PluginsNode(this);
@@ -527,7 +524,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public VirtualFile getFile() {
-      return myProjectModel.getFile();
+      return myMavenProject.getFile();
     }
 
     protected List<? extends CustomNode> getStructuralChildren() {
@@ -546,12 +543,12 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public String getId() {
-      final String name = myProjectModel.getProjectName();
+      final String name = myMavenProject.getProjectName();
       if (!StringUtil.isEmptyOrSpaces(name)) {
         return name;
       }
 
-      final String artifactId = myProjectModel.getMavenId().artifactId;
+      final String artifactId = myMavenProject.getMavenId().artifactId;
       if (!StringUtil.isEmptyOrSpaces(artifactId)) {
         return artifactId;
       }
@@ -559,13 +556,13 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       return NavigatorBundle.message("node.pom.unnamed");
     }
 
-    public MavenProjectModel getProjectModel() {
-      return myProjectModel;
+    public MavenProject getMavenProject() {
+      return myMavenProject;
     }
 
     private VirtualFile getDirectory() {
       //noinspection ConstantConditions
-      return myProjectModel.getDirectoryFile();
+      return myMavenProject.getDirectoryFile();
     }
 
     public boolean isAncestor(PomNode that) {
@@ -574,14 +571,14 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Nullable
     public Navigatable getNavigatable() {
-      return PsiManager.getInstance(MavenProjectsStructure.this.myProject).findFile(myProjectModel.getFile());
+      return PsiManager.getInstance(MavenProjectsStructure.this.myProject).findFile(myMavenProject.getFile());
     }
 
     private void updateNode() {
       updateErrorLevel();
       updateNameAndDescription();
 
-      savedPath = myProjectModel.getFile().getPath();
+      savedPath = myMavenProject.getFile().getPath();
       actionIdPrefix = myEventsHandler.getActionId(savedPath, null);
 
       lifecycleNode.updateGoals();
@@ -590,13 +587,13 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void updateErrorLevel() {
-      List<MavenProjectModelProblem> problems = myProjectModel.getProblems();
+      List<MavenProjectProblem> problems = myMavenProject.getProblems();
       if (problems.isEmpty()) {
         setNodeErrorLevel(ErrorLevel.NONE);
       }
       else {
         boolean isError = false;
-        for (MavenProjectModelProblem each : problems) {
+        for (MavenProjectProblem each : problems) {
           if (each.isCritical()) {
             isError = true;
             break;
@@ -608,7 +605,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected SimpleTextAttributes getPlainAttributes() {
-      if (myProjectsManager.isIgnored(myProjectModel)) {
+      if (myProjectsManager.isIgnored(myMavenProject)) {
         return new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, Color.GRAY);
       }
       return super.getPlainAttributes();
@@ -628,7 +625,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       desc.append("  <table>");
       desc.append("  <tr>");
       desc.append("  <td>Project:</td>");
-      desc.append("  <td nowrap>" + myProjectModel.getMavenId() + "</td>");
+      desc.append("  <td nowrap>" + myMavenProject.getMavenId() + "</td>");
       desc.append("  </tr>");
       desc.append("  <tr>");
       desc.append("  <td>Location:</td>");
@@ -661,14 +658,14 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private void appendProblems(StringBuilder desc, boolean critical) {
-      List<MavenProjectModelProblem> problems = collectProblems(critical);
+      List<MavenProjectProblem> problems = collectProblems(critical);
       if (problems.isEmpty()) return;
 
       desc.append("<tr>");
       desc.append("<td>");
       desc.append("<table>");
       boolean first = true;
-      for (MavenProjectModelProblem each : problems) {
+      for (MavenProjectProblem each : problems) {
         desc.append("<tr>");
         if (first) {
           desc.append("<td valign=top>" + formatHtmlImage(critical ? ERROR_ICON_URL : WARNING_ICON_URL) + "</td>");
@@ -686,7 +683,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       desc.append("</tr>");
     }
 
-    private String wrappedText(MavenProjectModelProblem each) {
+    private String wrappedText(MavenProjectProblem each) {
       String text = each.getDescription();
       StringBuffer result = new StringBuffer();
       int count = 0;
@@ -704,9 +701,9 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       return result.toString();
     }
 
-    private List<MavenProjectModelProblem> collectProblems(boolean critical) {
-      List<MavenProjectModelProblem> result = new ArrayList<MavenProjectModelProblem>();
-      for (MavenProjectModelProblem each : myProjectModel.getProblems()) {
+    private List<MavenProjectProblem> collectProblems(boolean critical) {
+      List<MavenProjectProblem> result = new ArrayList<MavenProjectProblem>();
+      for (MavenProjectProblem each : myMavenProject.getProblems()) {
         if (critical == each.isCritical()) result.add(each);
       }
       return result;
@@ -714,7 +711,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
     private void createPluginsNode() {
       pluginsNode.clear();
-      for (MavenPlugin each : myProjectModel.getPlugins()) {
+      for (MavenPlugin each : myMavenProject.getPlugins()) {
         if (!hasPlugin(each)) {
           pluginsNode.add(new PluginNode(this, each.getMavenId()));
         }
@@ -776,7 +773,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
     public boolean containsAsModule(PomNode node) {
       MavenProjectsManager m = MavenProjectsManager.getInstance(MavenProjectsStructure.this.myProject);
-      return m.isModuleOf(myProjectModel, node.myProjectModel);
+      return m.isModuleOf(myMavenProject, node.myMavenProject);
     }
 
     public void setIgnored(boolean on) {
@@ -951,7 +948,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected SimpleTextAttributes getPlainAttributes() {
-      if (goal.equals(pomNode.myProjectModel.getDefaultGoal())) {
+      if (goal.equals(pomNode.myMavenProject.getDefaultGoal())) {
         return new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, getColor());
       }
       return super.getPlainAttributes();
@@ -1127,7 +1124,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
   public class PluginNode extends GoalGroupNode {
     private final MavenId myId;
-    private final MavenPluginInfo myPluginInfo;
+    private MavenPluginInfo myPluginInfo;
 
     public PluginNode(PomNode parent, final MavenId id) {
       super(parent);

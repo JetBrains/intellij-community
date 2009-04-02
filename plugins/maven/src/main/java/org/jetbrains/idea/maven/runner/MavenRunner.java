@@ -18,13 +18,13 @@ import org.jetbrains.idea.maven.embedder.MavenConsoleHelper;
 import org.jetbrains.idea.maven.embedder.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.DummyProjectComponent;
+import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.List;
 
 @State(name = "MavenRunner", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenRunner extends DummyProjectComponent implements PersistentStateComponent<MavenRunnerSettings> {
+public class MavenRunner extends SimpleProjectComponent implements PersistentStateComponent<MavenRunnerSettings> {
   private final Project myProject;
 
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
@@ -151,7 +151,7 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new SoutMavenConsole();
     }
-    return new MavenConsoleImpl("Maven Goal", myProject, coreSettings);
+    return new MavenConsoleImpl("Maven Goal", myProject);
   }
 
   private MavenExecutor createExecutor(MavenRunnerParameters taskParameters,

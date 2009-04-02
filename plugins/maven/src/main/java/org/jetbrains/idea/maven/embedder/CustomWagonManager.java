@@ -7,8 +7,6 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.WagonException;
-import org.codehaus.plexus.context.Context;
-import org.codehaus.plexus.context.ContextException;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.io.File;
@@ -17,39 +15,38 @@ import java.util.List;
 import java.util.Set;
 
 public class CustomWagonManager extends DefaultWagonManager {
-  public static final String IS_ONLINE = "IS_ONLINE";
-  public static final String IS_STRICT = "IS_STRICT";
-
-  private boolean isOnline;
+  private boolean myCustomized;
+  private boolean myUseRemoteRepository;
+  private boolean myFailOnUnresolved;
 
   private Set<MavenId> myUnresolvedIds = new HashSet<MavenId>();
   private int myOpenCount;
-  private boolean isStrict;
-  private boolean isInProcess = false;
+  private boolean myInProcess = false;
 
-  @Override
-  public void contextualize(Context context) throws ContextException {
-    super.contextualize(context);
-    isOnline = (Boolean)context.get(IS_ONLINE);
-    isStrict = (Boolean)context.get(IS_STRICT);
+  public void customize(boolean useRemoteRepository, boolean failOnUnresolved) {
+    myCustomized = true;
+    myUseRemoteRepository = useRemoteRepository;
+    myFailOnUnresolved = failOnUnresolved;
   }
 
-  public Set<MavenId> getUnresolvedIds() {
-    return myUnresolvedIds;
+  public void reset() {
+    myCustomized = false;
   }
 
-  public void resetUnresolvedArtifacts() {
+  public Set<MavenId> retrieveUnresolvedIds() {
+    Set<MavenId> result = myUnresolvedIds;
     myUnresolvedIds = new HashSet<MavenId>();
+    return result;
   }
 
   @Override
   public void getArtifact(Artifact artifact, List remoteRepositories) throws TransferFailedException, ResourceDoesNotExistException {
-    if (isInProcess) {
+    if (!myCustomized || myInProcess) {
       super.getArtifact(artifact, remoteRepositories);
       return;
     }
 
-    isInProcess = true;
+    myInProcess = true;
     try {
       if (isOpen()) {
         try {
@@ -61,19 +58,19 @@ public class CustomWagonManager extends DefaultWagonManager {
       postResolve(artifact);
     }
     finally {
-      isInProcess = false;
+      myInProcess = false;
     }
   }
 
   @Override
   public void getArtifact(Artifact artifact, List remoteRepositories, boolean force)
     throws TransferFailedException, ResourceDoesNotExistException {
-    if (isInProcess) {
+    if (!myCustomized || myInProcess) {
       super.getArtifact(artifact, remoteRepositories, force);
       return;
     }
 
-    isInProcess = true;
+    myInProcess = true;
     try {
       if (isOpen()) {
         try {
@@ -85,7 +82,7 @@ public class CustomWagonManager extends DefaultWagonManager {
       postResolve(artifact);
     }
     finally {
-      isInProcess = false;
+      myInProcess = false;
     }
   }
 
@@ -98,12 +95,12 @@ public class CustomWagonManager extends DefaultWagonManager {
   @Override
   public void getArtifact(Artifact artifact, ArtifactRepository repository, boolean force)
     throws TransferFailedException, ResourceDoesNotExistException {
-    if (isInProcess) {
+    if (!myCustomized || myInProcess) {
       super.getArtifact(artifact, repository, force);
       return;
     }
 
-    isInProcess = true;
+    myInProcess = true;
     try {
       if (isOpen()) {
         try {
@@ -115,14 +112,15 @@ public class CustomWagonManager extends DefaultWagonManager {
       postResolve(artifact);
     }
     finally {
-      isInProcess = false;
+      myInProcess = false;
     }
   }
 
   @Override
   public void getArtifactMetadata(ArtifactMetadata metadata, ArtifactRepository repository, File destination, String checksumPolicy)
     throws TransferFailedException, ResourceDoesNotExistException {
-    if (isOpen()) {
+
+    if (!myCustomized || isOpen()) {
       super.getArtifactMetadata(metadata, repository, destination, checksumPolicy);
     }
   }
@@ -133,18 +131,18 @@ public class CustomWagonManager extends DefaultWagonManager {
                                                           File destination,
                                                           String checksumPolicy)
     throws TransferFailedException, ResourceDoesNotExistException {
-    if (isOpen()) {
+    if (!myCustomized || isOpen()) {
       super.getArtifactMetadataFromDeploymentRepository(metadata, repository, destination, checksumPolicy);
     }
   }
 
   private void postResolve(Artifact artifact) {
     if (!artifact.isResolved()) myUnresolvedIds.add(new MavenId(artifact));
-    if (!isStrict) artifact.setResolved(true);
+    if (!myFailOnUnresolved) artifact.setResolved(true);
   }
 
   private boolean isOpen() {
-    return isOnline || myOpenCount > 0;
+    return myUseRemoteRepository || myOpenCount > 0;
   }
 
   public void open() {

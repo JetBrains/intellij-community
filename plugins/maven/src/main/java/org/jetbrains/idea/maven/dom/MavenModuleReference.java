@@ -10,9 +10,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -21,16 +19,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -65,11 +63,11 @@ public class MavenModuleReference extends MavenPsiReference implements LocalQuic
   }
 
   public Object[] getVariants() {
-    List<DomFileElement<MavenModel>> files = PomDescriptor.collectProjectPoms(getProject());
+    List<DomFileElement<MavenDomProjectModel>> files = PomDescriptor.collectProjectPoms(getProject());
 
     List<Object> result = new ArrayList<Object>();
 
-    for (DomFileElement<MavenModel> eachDomFile : files) {
+    for (DomFileElement<MavenDomProjectModel> eachDomFile : files) {
       VirtualFile eachVFile = eachDomFile.getOriginalFile().getVirtualFile();
       if (eachVFile == myVirtualFile) continue;
 
@@ -98,8 +96,7 @@ public class MavenModuleReference extends MavenPsiReference implements LocalQuic
   }
 
   private PsiFile getPsiFile(VirtualFile file) {
-    Document doc = FileDocumentManager.getInstance().getDocument(file);
-    return PsiDocumentManager.getInstance(getProject()).getPsiFile(doc);
+    return PsiManager.getInstance(getProject()).findFile(file);
   }
 
   private Project getProject() {

@@ -20,7 +20,7 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
     super.tearDown();
   }
 
-  public void testAutomaticallyAddingAndUpdatingLocalRepository() throws Exception {
+  public void testAutomaticallyAddAndUpdateLocalRepository() throws Exception {
     List<MavenIndex> indices = myIndicesFixture.getProjectIndicesManager().getIndices();
 
     assertEquals(1, indices.size());
@@ -30,7 +30,7 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
     assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
   }
 
-  public void testAutomaticallyRemoteRepositoriesOnProjectUpdate() throws Exception {
+  public void testAutomaticallyAddRemoteRepositoriesOnProjectUpdate() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");

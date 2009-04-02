@@ -10,35 +10,35 @@ import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.model.Configuration;
-import org.jetbrains.idea.maven.dom.model.ConfigurationParameter;
-import org.jetbrains.idea.maven.dom.model.PluginExecution;
-import org.jetbrains.idea.maven.dom.plugin.MavenPluginModel;
-import org.jetbrains.idea.maven.dom.plugin.Mojo;
-import org.jetbrains.idea.maven.dom.plugin.Parameter;
+import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
+import org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter;
+import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomParameter;
 
 import java.util.*;
 
-public class MavenPluginConfigurationDomExtender extends DomExtender<Configuration> {
-  public static final Key<Parameter> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
+public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
+  public static final Key<MavenDomParameter> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
 
   @Override
-  public void registerExtensions(@NotNull Configuration config, @NotNull DomExtensionsRegistrar r) {
-    MavenPluginModel pluginModel = MavenPluginDomUtil.getMavenPlugin(config);
+  public void registerExtensions(@NotNull MavenDomConfiguration config, @NotNull DomExtensionsRegistrar r) {
+    MavenDomPluginModel pluginModel = MavenPluginDomUtil.getMavenPlugin(config);
     if (pluginModel == null) {
-      r.registerCustomChildrenExtension(ConfigurationParameter.class);
+      r.registerCustomChildrenExtension(MavenDomConfigurationParameter.class);
       return;
     }
 
-    for (Parameter each : collectParameters(pluginModel, config)) {
+    for (MavenDomParameter each : collectParameters(pluginModel, config)) {
       registerPluginParameter(r, each);
     }
   }
 
-  private Collection<Parameter> collectParameters(MavenPluginModel pluginModel, Configuration config) {
+  private Collection<MavenDomParameter> collectParameters(MavenDomPluginModel pluginModel, MavenDomConfiguration config) {
     List<String> selectedGoals = null;
 
-    PluginExecution executionElement = config.getParentOfType(PluginExecution.class, false);
+    MavenDomPluginExecution executionElement = config.getParentOfType(MavenDomPluginExecution.class, false);
     if (executionElement != null) {
       selectedGoals = new ArrayList<String>();
       for (GenericDomValue<String> goal : executionElement.getGoals().getGoals()) {
@@ -46,14 +46,14 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
       }
     }
 
-    Map<String, Parameter> namesWithParameters = new HashMap<String, Parameter>();
+    Map<String, MavenDomParameter> namesWithParameters = new HashMap<String, MavenDomParameter>();
 
-    for (Mojo eachMojo : pluginModel.getMojos().getMojos()) {
+    for (MavenDomMojo eachMojo : pluginModel.getMojos().getMojos()) {
       String goal = eachMojo.getGoal().getStringValue();
       if (goal == null) continue;
 
       if (selectedGoals == null || selectedGoals.contains(goal)) {
-        for (Parameter eachParameter : eachMojo.getParameters().getParameters()) {
+        for (MavenDomParameter eachParameter : eachMojo.getParameters().getParameters()) {
           if (!eachParameter.getEditable().getValue()) continue;
 
           String name = eachParameter.getName().getStringValue();
@@ -68,7 +68,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     return namesWithParameters.values();
   }
 
-  private void registerPluginParameter(DomExtensionsRegistrar r, final Parameter parameter) {
+  private void registerPluginParameter(DomExtensionsRegistrar r, final MavenDomParameter parameter) {
     String paramName = parameter.getName().getStringValue();
     String alias = parameter.getAlias().getStringValue();
 
@@ -76,21 +76,21 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     if (alias != null) registerPluginParameter(r, parameter, alias);
   }
 
-  private void registerPluginParameter(DomExtensionsRegistrar r, final Parameter parameter, final String parameterName) {
+  private void registerPluginParameter(DomExtensionsRegistrar r, final MavenDomParameter parameter, final String parameterName) {
     DomExtension e;
     if (isCollection(parameter)) {
-      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), ConfigurationParameter.class);
+      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), MavenDomConfigurationParameter.class);
       e.addExtender(new DomExtender() {
         public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
           for (String each : collectPossibleNameForCollectionParameter(parameterName)) {
-            DomExtension inner = registrar.registerCollectionChildrenExtension(new XmlName(each), ConfigurationParameter.class);
+            DomExtension inner = registrar.registerCollectionChildrenExtension(new XmlName(each), MavenDomConfigurationParameter.class);
             inner.putUserData(DomExtension.KEY_DECLARATION, parameter);
           }
         }
       });
     }
     else {
-      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), ConfigurationParameter.class);
+      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), MavenDomConfigurationParameter.class);
     }
     e.putUserData(DomExtension.KEY_DECLARATION, parameter);
 
@@ -109,7 +109,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
     return result;
   }
 
-  private boolean isCollection(Parameter parameter) {
+  private boolean isCollection(MavenDomParameter parameter) {
     String type = parameter.getType().getStringValue();
     if (type.endsWith("[]")) return true;
 

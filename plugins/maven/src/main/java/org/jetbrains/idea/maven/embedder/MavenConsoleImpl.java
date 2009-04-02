@@ -16,6 +16,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -34,19 +35,22 @@ public class MavenConsoleImpl extends MavenConsole {
   private final AtomicBoolean isOpen = new AtomicBoolean(false);
   private final Pair<MavenRunnerParameters, MavenRunnerSettings> myParametersAndSettings;
 
-  public MavenConsoleImpl(String title, Project project, MavenGeneralSettings coreSettings) {
-    this(title, project, coreSettings, null);
+  public MavenConsoleImpl(String title, Project project) {
+    this(title, project, null);
   }
 
   public MavenConsoleImpl(String title,
                           Project project,
-                          MavenGeneralSettings coreSettings,
                           Pair<MavenRunnerParameters, MavenRunnerSettings> parametersAndSettings) {
-    super(coreSettings.getOutputLevel(), coreSettings.isPrintErrorStackTraces());
+    super(getGeneralSettings(project).getOutputLevel(), getGeneralSettings(project).isPrintErrorStackTraces());
     myTitle = title;
     myProject = project;
     myConsoleView = createConsoleView();
     myParametersAndSettings = parametersAndSettings;
+  }
+
+  private static MavenGeneralSettings getGeneralSettings(Project project) {
+    return MavenProjectsManager.getInstance(project).getGeneralSettings();
   }
 
   private ConsoleView createConsoleView() {
@@ -138,7 +142,7 @@ public class MavenConsoleImpl extends MavenConsole {
         ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
         if (!toolWindow.isActive())  {
           toolWindow.activate(null, false);
-        }
+      }
       }
     });
   }

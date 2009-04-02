@@ -33,10 +33,10 @@ public class MavenProjectConfigurator {
   private final MavenImportingSettings myImportingSettings;
   private final List<ModifiableRootModel> myRootModelsToCommit = new ArrayList<ModifiableRootModel>();
 
-  private final Map<MavenProjectModel, Module> myMavenProjectToModule = new HashMap<MavenProjectModel, Module>();
-  private final Map<MavenProjectModel, String> myMavenProjectToModuleName = new HashMap<MavenProjectModel, String>();
-  private final Map<MavenProjectModel, String> myMavenProjectToModulePath = new HashMap<MavenProjectModel, String>();
-  private final List<Module> myCreatedModules = new ArrayList<Module>();
+  private Map<MavenProject, Module> myMavenProjectToModule = new HashMap<MavenProject, Module>();
+  private Map<MavenProject, String> myMavenProjectToModuleName = new HashMap<MavenProject, String>();
+  private Map<MavenProject, String> myMavenProjectToModulePath = new HashMap<MavenProject, String>();
+  private List<Module> myCreatedModules = new ArrayList<Module>();
 
   public MavenProjectConfigurator(Project p,
                                   MavenProjectsTree projectsTree,
@@ -48,8 +48,8 @@ public class MavenProjectConfigurator {
     myImportingSettings = importingSettings;
   }
 
-  public List<PostProjectConfigurationTask> config(final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
-    List<PostProjectConfigurationTask> postTasks = new ArrayList<PostProjectConfigurationTask>();
+  public List<MavenProjectsProcessorPostConfigurationTask> config(final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
+    List<MavenProjectsProcessorPostConfigurationTask> postTasks = new ArrayList<MavenProjectsProcessorPostConfigurationTask>();
 
     myModuleModel = model != null ? model : ModuleManager.getInstance(myProject).getModifiableModel();
     myLibrariesProvider = new ProjectLibrariesProvider(myProject);
@@ -76,7 +76,7 @@ public class MavenProjectConfigurator {
     // and FileWatcher differs from real-life execution.
 
     List<MavenArtifact> artifacts = new ArrayList<MavenArtifact>();
-    for (MavenProjectModel each : getMavenProjectsToConfigure()) {
+    for (MavenProject each : getMavenProjectsToConfigure()) {
       artifacts.addAll(each.getDependencies());
     }
 
@@ -89,7 +89,7 @@ public class MavenProjectConfigurator {
   }
 
   private void mapModulesToMavenProjects() {
-    for (MavenProjectModel each : getMavenProjectsToConfigure()) {
+    for (MavenProject each : getMavenProjectsToConfigure()) {
       myMavenProjectToModule.put(each, myFileToModuleMapping.get(each.getFile()));
     }
     MavenModuleNameMapper.map(myMavenTree,
@@ -110,14 +110,14 @@ public class MavenProjectConfigurator {
     Matcher matcher = pattern.matcher(options);
 
     if (matcher.find()) {
-      String currentValue = MavenProjectModel.normalizeCompilerLevel(matcher.group(2));
+      String currentValue = MavenProject.normalizeCompilerLevel(matcher.group(2));
 
       if (compareCompilerLevel(level, currentValue) < 0) {
         StringBuffer buffer = new StringBuffer();
         matcher.appendReplacement(buffer, "-target " + level);
         matcher.appendTail(buffer);
         options = buffer.toString();
-      }
+  }
     }
     else {
       if (!StringUtil.isEmptyOrSpaces(options)) options += " ";
@@ -129,7 +129,7 @@ public class MavenProjectConfigurator {
   private String calcTargetLevel() {
     String resultSource = null;
     String resultTarget = null;
-    for (MavenProjectModel each : myMavenTree.getProjects()) {
+    for (MavenProject each : myMavenTree.getProjects()) {
       String source = each.getSourceLevel();
       String target = each.getTargetLevel();
       if (resultSource == null || compareCompilerLevel(source, resultSource) > 0) resultSource = source;
@@ -182,18 +182,18 @@ public class MavenProjectConfigurator {
     return obsolete;
   }
 
-  private void configModules(List<PostProjectConfigurationTask> postTasks, final ModulesProvider modulesProvider) {
-    List<MavenProjectModel> projects = getMavenProjectsToConfigure();
-    Set<MavenProjectModel> projectsWithNewlyCreatedModules = new HashSet<MavenProjectModel>();
+  private void configModules(List<MavenProjectsProcessorPostConfigurationTask> postTasks, final ModulesProvider modulesProvider) {
+    List<MavenProject> projects = getMavenProjectsToConfigure();
+    Set<MavenProject> projectsWithNewlyCreatedModules = new HashSet<MavenProject>();
 
-    for (MavenProjectModel each : projects) {
+    for (MavenProject each : projects) {
       if (ensureModuleCreated(each)) {
         projectsWithNewlyCreatedModules.add(each);
       }
     }
 
     LinkedHashMap<Module, MavenModuleConfigurator> configurators = new LinkedHashMap<Module, MavenModuleConfigurator>();
-    for (MavenProjectModel each : projects) {
+    for (MavenProject each : projects) {
       Module module = myMavenProjectToModule.get(each);
       MavenModuleConfigurator c = createModuleConfigurator(module, each, modulesProvider);
       configurators.put(module, c);
@@ -201,11 +201,11 @@ public class MavenProjectConfigurator {
       c.config(projectsWithNewlyCreatedModules.contains(each));
     }
 
-    for (MavenProjectModel each : projects) {
+    for (MavenProject each : projects) {
       configurators.get(myMavenProjectToModule.get(each)).preConfigFacets();
     }
 
-    for (MavenProjectModel each : projects) {
+    for (MavenProject each : projects) {
       configurators.get(myMavenProjectToModule.get(each)).configFacets(postTasks);
     }
 
@@ -217,20 +217,20 @@ public class MavenProjectConfigurator {
     MavenProjectsManager.getInstance(myProject).setMavenizedModules(modules);
   }
 
-  private List<MavenProjectModel> getMavenProjectsToConfigure() {
-    List<MavenProjectModel> result = new ArrayList<MavenProjectModel>();
-    for (MavenProjectModel each : myMavenTree.getProjects()) {
+  private List<MavenProject> getMavenProjectsToConfigure() {
+    List<MavenProject> result = new ArrayList<MavenProject>();
+    for (MavenProject each : myMavenTree.getProjects()) {
       if (!shouldCreateModuleFor(each)) continue;
       result.add(each);
     }
     return result;
   }
 
-  private boolean shouldCreateModuleFor(MavenProjectModel project) {
+  private boolean shouldCreateModuleFor(MavenProject project) {
     return myImportingSettings.isCreateModulesForAggregators() || !project.isAggregator();
   }
 
-  private boolean ensureModuleCreated(MavenProjectModel project) {
+  private boolean ensureModuleCreated(MavenProject project) {
     if (myMavenProjectToModule.get(project) != null) return false;
 
     String path = myMavenProjectToModulePath.get(project);
@@ -244,7 +244,7 @@ public class MavenProjectConfigurator {
   }
 
   private MavenModuleConfigurator createModuleConfigurator(Module module,
-                                                           MavenProjectModel mavenProject,
+                                                           MavenProject mavenProject,
                                                            ModulesProvider modulesProvider) {
     return new MavenModuleConfigurator(module,
                                        myModuleModel,
@@ -275,7 +275,7 @@ public class MavenProjectConfigurator {
     myMavenTree.visit(new MavenProjectsTree.SimpleVisitor() {
       int depth = 0;
 
-      public void visit(MavenProjectModel each) {
+      public void visit(MavenProject each) {
         depth++;
 
         String name = myMavenProjectToModuleName.get(each);
@@ -290,11 +290,11 @@ public class MavenProjectConfigurator {
         if (module == null) {
           // todo: IDEADEV-30669 hook
           String message = "Module " + name + "not found.";
-          message += "\nmavenProject=" + each.getFile();
+          message += "\nmavenProject="+each.getFile();
           module = myMavenProjectToModule.get(each);
           message += "\nmyMavenProjectToModule=" + (module == null ? null : module.getName());
-          message += "\nmyMavenProjectToModuleName=" + myMavenProjectToModuleName.get(each);
-          message += "\nmyMavenProjectToModulePath=" + myMavenProjectToModulePath.get(each);
+          message += "\nmyMavenProjectToModuleName=" +myMavenProjectToModuleName.get(each);
+          message += "\nmyMavenProjectToModulePath=" +myMavenProjectToModulePath.get(each);
           MavenLog.LOG.warn(message);
           return;
         }
@@ -302,14 +302,14 @@ public class MavenProjectConfigurator {
         myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
       }
 
-      public void leave(MavenProjectModel each) {
+      public void leave(MavenProject each) {
         if (shouldCreateGroup(each)) {
           groups.pop();
         }
         depth--;
       }
 
-      private boolean shouldCreateGroup(MavenProjectModel node) {
+      private boolean shouldCreateGroup(MavenProject node) {
         return !myMavenTree.getModules(node).isEmpty()
                && (createTopLevelGroup || depth > 1);
       }

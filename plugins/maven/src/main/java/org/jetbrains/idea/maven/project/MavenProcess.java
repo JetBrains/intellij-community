@@ -54,8 +54,8 @@ public class MavenProcess {
     if (canceledEx[0] != null) throw canceledEx[0];
   }
 
-  public static MavenTaskHandler runInBackground(Project project,
-                                                 String title,
+  public static MavenTaskHandler runInBackground(final Project project,
+                                                 final String title,
                                                  final boolean canBeCancelled,
                                                  MavenTask task) {
     final Semaphore startSemaphore = new Semaphore();
@@ -80,18 +80,6 @@ public class MavenProcess {
           finishSemaphore.up();
           taskHolder[0] = null; // memory leaks prevention
         }
-      }
-
-      @Override
-      public boolean shouldStartInBackground() {
-        MavenTask task = taskHolder[0];
-        return task != null ? task.shouldStartInBackground() : true;
-      }
-
-      @Override
-      public void processSentToBackground() {
-        MavenTask task = taskHolder[0];
-        if (task != null) task.setStartInBackground();
       }
     });
 
@@ -131,16 +119,6 @@ public class MavenProcess {
   }
 
   public static abstract class MavenTask {
-    public abstract void run(MavenProcess p) throws MavenProcessCanceledException;
-
-    public boolean shouldStartInBackground() {
-      return false;
-    }
-
-    public void setStartInBackground() {
-    }
-
-    public void setStartInForeground() {
-    }
+    public abstract void run(MavenProcess process) throws MavenProcessCanceledException;
   }
 }

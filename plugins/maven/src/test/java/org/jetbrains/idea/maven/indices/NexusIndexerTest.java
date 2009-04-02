@@ -9,7 +9,6 @@ import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.codehaus.plexus.PlexusContainer;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.NullMavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexContextInInconsistentStateException;
@@ -35,7 +34,7 @@ public class NexusIndexerTest extends MavenTestCase {
     super.setUp();
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1_index", "local1", "remote");
 
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenGeneralSettings(), NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings()).getEmbedder();
 
     PlexusContainer p = myEmbedder.getPlexusContainer();
     myIndexer = (NexusIndexer)p.lookup(NexusIndexer.class);

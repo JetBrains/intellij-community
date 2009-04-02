@@ -11,6 +11,7 @@ import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.*;
 
 import javax.swing.*;
@@ -66,7 +67,6 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
   public void updateDataModel() {
     MavenImportingSettings settings = getImportingSettings();
     myImporterSettingsForm.getData(settings);
-    myImporterSettingsForm.updateData(getWizardContext());
     suggestProjectNameAndPath(settings.getDedicatedModuleDir(), myRootPathComponent.getPath());
   }
 

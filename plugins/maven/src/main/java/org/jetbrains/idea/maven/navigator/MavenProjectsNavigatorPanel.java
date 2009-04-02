@@ -16,7 +16,7 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.runner.MavenGoalLocation;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
@@ -99,10 +99,10 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     return null;
   }
 
-  private List<MavenProjectModel> extractPomNodes() {
-    List<MavenProjectModel> result = new ArrayList<MavenProjectModel>();
+  private List<MavenProject> extractPomNodes() {
+    List<MavenProject> result = new ArrayList<MavenProject>();
     for (MavenProjectsStructure.PomNode each : getSelectedPomNodes()) {
-      result.add(each.getProjectModel());
+      result.add(each.getMavenProject());
     }
     return result.isEmpty() ? null : result;
   }
@@ -148,7 +148,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   private List<String> extractGoals() {
     final MavenProjectsStructure.PomNode pomNode = getSelectedPomNode();
     if (pomNode != null) {
-      MavenProjectModel project = pomNode.getProjectModel();
+      MavenProject project = pomNode.getMavenProject();
       String goal = project.getDefaultGoal();
       if (!StringUtil.isEmptyOrSpaces(goal)) {
         return Collections.singletonList(goal);

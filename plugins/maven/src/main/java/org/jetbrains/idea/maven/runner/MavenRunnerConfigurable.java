@@ -26,7 +26,7 @@ import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
@@ -70,7 +70,7 @@ public abstract class MavenRunnerConfigurable implements Configurable {
     MavenProjectsManager s = MavenProjectsManager.getInstance(myProject);
     Map<String, String> result = new LinkedHashMap<String, String>();
 
-    for (MavenProjectModel each : s.getProjects()) {
+    for (MavenProject each : s.getProjects()) {
       Properties properties = each.getProperties();
       for (Map.Entry p : properties.entrySet()) {
         result.put((String)p.getKey(), (String)p.getValue());

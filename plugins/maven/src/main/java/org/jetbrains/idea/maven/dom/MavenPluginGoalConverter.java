@@ -5,8 +5,8 @@ import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.plugin.MavenPluginModel;
-import org.jetbrains.idea.maven.dom.plugin.Mojo;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,11 +25,11 @@ public class MavenPluginGoalConverter extends MavenPropertyResolvingConverter<St
 
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
-    MavenPluginModel model = MavenPluginDomUtil.getMavenPlugin(context.getInvocationElement());
+    MavenDomPluginModel model = MavenPluginDomUtil.getMavenPlugin(context.getInvocationElement());
     if (model == null) return Collections.emptyList();
 
     List<String> result = new ArrayList<String>();
-    for (Mojo each : model.getMojos().getMojos()) {
+    for (MavenDomMojo each : model.getMojos().getMojos()) {
       String goal = each.getGoal().getStringValue();
       if (goal != null) result.add(goal);
     }
@@ -38,10 +38,10 @@ public class MavenPluginGoalConverter extends MavenPropertyResolvingConverter<St
 
   @Override
   public PsiElement resolve(String text, ConvertContext context) {
-    MavenPluginModel model = MavenPluginDomUtil.getMavenPlugin(context.getInvocationElement());
+    MavenDomPluginModel model = MavenPluginDomUtil.getMavenPlugin(context.getInvocationElement());
     if (model == null) return null;
     
-    for (Mojo each : model.getMojos().getMojos()) {
+    for (MavenDomMojo each : model.getMojos().getMojos()) {
       String goal = each.getGoal().getStringValue();
       if (text.equals(goal)) return each.getXmlElement();
     }

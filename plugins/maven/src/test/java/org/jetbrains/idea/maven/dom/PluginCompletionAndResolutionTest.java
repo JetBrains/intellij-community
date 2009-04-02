@@ -27,7 +27,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testGroupIdCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -43,7 +43,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testArtifactIdCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -60,7 +60,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testArtifactWithoutGroupCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -77,7 +77,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testResolvingPlugins() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -101,7 +101,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   public void testResolvingAbsentPlugins() throws Exception {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -119,7 +119,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testDoNotHighlightAbsentGroupIdAndVersion() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -134,7 +134,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testHighlightingAbsentArtifactId() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -164,7 +164,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   private void putCaretInConfigurationSection() throws IOException {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -181,7 +181,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testNoParametersForUnknownPlugin() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -200,7 +200,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testNoParametersIfNothingIsSpecified() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -218,7 +218,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testResolvingParamaters() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -250,7 +250,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testResolvingInnerParamatersIntoOuter() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -284,7 +284,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testGoalsCompletionAndHighlighting() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -305,7 +305,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     assertCompletionVariants(myProjectPom, "compile", "testCompile");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -328,7 +328,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testGoalsResolution() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -364,7 +364,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testGoalsCompletionAndResolutionForUnknownPlugin() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -385,7 +385,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     assertCompletionVariants(myProjectPom);
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -410,7 +410,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testPhaseCompletionAndHighlighting() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -429,7 +429,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     assertCompletionVariantsInclude(myProjectPom, "clean", "compile", "package");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -450,7 +450,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testNoExecutionParametersIfGoalIsNotSpecified() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -473,7 +473,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testExecutionParametersForSpecificGoal() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -501,7 +501,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testExecutionParametersForSeveralSpecificGoals() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -528,7 +528,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testAliasCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -547,7 +547,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testListElementsCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -571,7 +571,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   public void testListElementWhatHasUnpluralizedNameCompletion() throws Exception {
     // NPE test - StringUtil.unpluralize returns null.
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -592,7 +592,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testDoNotHighlightUnknownElementsUnderLists() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -613,7 +613,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testArrayElementsCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -637,7 +637,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   public void testCompletionInCustomObjects() throws Exception {
     if (ignore()) return;
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -660,7 +660,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testDocumentationForParameter() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -679,7 +679,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testDoNotCompleteNorHighlightNonPluginConfiguration() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -699,7 +699,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testDoNotHighlighInnerParameters() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -720,7 +720,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testDoNotHighlighInnerParameterAttributes() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -744,7 +744,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testDoNotCompleteHighlighParameterAttributes() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -763,7 +763,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testWorksWithPropertiesInPluginId() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -774,7 +774,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "</properties>");
     importProject(); // let us recognize the properties first
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -801,7 +801,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
   }
 
   public void testDoNotHighlightPropertiesForUnknownPlugins() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 

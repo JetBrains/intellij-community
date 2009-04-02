@@ -163,7 +163,7 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
     compileModules("project");
     assertCopied("target/classes/file.properties");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -254,7 +254,7 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
   public void testOverridingWebResourceFilters() throws Exception {
     if (ignore()) return;
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>war</packaging>" +

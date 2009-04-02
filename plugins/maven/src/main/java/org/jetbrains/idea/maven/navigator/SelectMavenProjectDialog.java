@@ -3,18 +3,18 @@ package org.jetbrains.idea.maven.navigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.ui.treeStructure.SimpleNode;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
-  private MavenProjectModel myResult;
+  private MavenProject myResult;
 
-  public SelectMavenProjectDialog(Project project, final MavenProjectModel current) {
+  public SelectMavenProjectDialog(Project project, final MavenProject current) {
     super(project, "Select Maven Project", MavenProjectsStructure.PomNode.class, new NodeSelector() {
       public SimpleNode findNode(MavenProjectsStructure.PomNode pomNode) {
-        return pomNode.getProjectModel() == current ? pomNode : null;
+        return pomNode.getMavenProject() == current ? pomNode : null;
       }
     });
 
@@ -42,12 +42,12 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
         ((MavenProjectsStructure.CustomNode)node).getParent(MavenProjectsStructure.PomNode.class);
       }
     }
-    myResult = node != null ? ((MavenProjectsStructure.PomNode)node).getProjectModel() : null;
+    myResult = node != null ? ((MavenProjectsStructure.PomNode)node).getMavenProject() : null;
 
     super.doOKAction();
   }
 
-  public MavenProjectModel getResult() {
+  public MavenProject getResult() {
     return myResult;
   }
 }

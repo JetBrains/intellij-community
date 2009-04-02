@@ -11,7 +11,7 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 public abstract class MavenReferenceConverter<T> extends Converter<T> implements CustomReferenceConverter<T> {
   @Override
@@ -28,7 +28,7 @@ public abstract class MavenReferenceConverter<T> extends Converter<T> implements
 
   @NotNull
   public PsiReference[] createReferences(GenericDomValue value, PsiElement element, ConvertContext context) {
-    Pair<VirtualFile, DomFileElement<MavenModel>> fileAndDom = getFileAndDom(context);
+    Pair<VirtualFile, DomFileElement<MavenDomProjectModel>> fileAndDom = getFileAndDom(context);
 
     String originalText = value.getStringValue();
     String resolvedText = PropertyResolver.resolve(originalText, fileAndDom.second);
@@ -45,8 +45,8 @@ public abstract class MavenReferenceConverter<T> extends Converter<T> implements
                                                        VirtualFile virtualFile,
                                                        XmlFile psiFile);
 
-  private Pair<VirtualFile, DomFileElement<MavenModel>> getFileAndDom(ConvertContext context) {
-    DomFileElement<MavenModel> dom = context.getInvocationElement().getRoot();
+  private Pair<VirtualFile, DomFileElement<MavenDomProjectModel>> getFileAndDom(ConvertContext context) {
+    DomFileElement<MavenDomProjectModel> dom = context.getInvocationElement().getRoot();
     VirtualFile virtualFile = dom.getOriginalFile().getVirtualFile();
     return Pair.create(virtualFile, dom);
   }

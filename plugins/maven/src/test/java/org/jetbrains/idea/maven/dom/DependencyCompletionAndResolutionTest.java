@@ -13,8 +13,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
-import org.jetbrains.idea.maven.dom.model.Dependency;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
@@ -30,7 +30,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testGroupIdCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -44,7 +44,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testArtifactIdCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -59,7 +59,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testDoNotCompleteArtifactIdOnUnknownGroup() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -74,7 +74,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testVersionCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -90,7 +90,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testDoesNotCompleteVersionOnUnknownGroupOrArtifact() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -104,7 +104,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
     assertCompletionVariants(myProjectPom);
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -120,7 +120,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testAddingLocalProjectsIntoCompletion() throws Exception {
-    updateProjectPom("<groupId>project-group</groupId>" +
+    createProjectPom("<groupId>project-group</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -141,8 +141,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
     importProject();
 
-    updateModulePom("m2",
-                    "<groupId>project-group</groupId>" +
+    createModulePom("m2", "<groupId>project-group</groupId>" +
                     "<artifactId>m2</artifactId>" +
                     "<version>2</version>" +
 
@@ -157,7 +156,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testResolvingPropertiesForLocalProjectsInCompletion() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -188,8 +187,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     importProject();
     assertModules("project", "module1", "module2");
 
-    updateModulePom("m2",
-                    "<groupId>test</groupId>" +
+    createModulePom("m2", "<groupId>test</groupId>" +
                     "<artifactId>module2</artifactId>" +
                     "<version>1</version>" +
                     "<dependencies>" +
@@ -202,8 +200,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
     assertCompletionVariants(m, "1");
 
-    updateModulePom("m2",
-                    "<groupId>test</groupId>" +
+    createModulePom("m2", "<groupId>test</groupId>" +
                     "<artifactId>module2</artifactId>" +
                     "<version>1</version>" +
 
@@ -221,7 +218,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   public void testChangingExistingProjects() throws Exception {
     if (ignore()) return;
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -241,8 +238,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                     "<version>1</version>");
     importProject();
 
-    updateModulePom("m1",
-                    "<groupId>test</groupId>" +
+    createModulePom("m1", "<groupId>test</groupId>" +
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>" +
 
@@ -255,20 +251,17 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
     assertCompletionVariants(m1, "project", "m1", "m2");
 
-    updateModulePom("m1",
-                    "<groupId>test</groupId>" +
+    createModulePom("m1", "<groupId>test</groupId>" +
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>");
 
-    updateModulePom("m2",
-                    "<groupId>test</groupId>" +
+    createModulePom("m2", "<groupId>test</groupId>" +
                     "<artifactId>m2_new</artifactId>" +
                     "<version>1</version>");
 
     importProject();
 
-    updateModulePom("m1",
-                    "<groupId>test</groupId>" +
+    createModulePom("m1", "<groupId>test</groupId>" +
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>" +
 
@@ -290,7 +283,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -303,9 +296,9 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
     assertCompletionVariants(myProjectPom, "m1");
 
-    updateModulePom("m1", "");
+    createModulePom("m1", "");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -326,7 +319,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                                     "<artifactId>m1</artifactId>" +
                                     "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -341,7 +334,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
     m.delete(null);
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -356,7 +349,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testResolutionOutsideTheProject() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -377,7 +370,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testResolutionIsTypeBased() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -409,10 +402,9 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                                      "<artifactId>m2</artifactId>" +
                                      "<version>1</version>");
 
-    importSeveralProjects(m1, m2);
+    importProjects(m1, m2);
 
-    updateModulePom("m1",
-                    "<groupId>test</groupId>" +
+    createModulePom("m1", "<groupId>test</groupId>" +
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>" +
 
@@ -432,7 +424,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   public void testResolvingSystemScopeDependencies() throws Throwable {
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -454,7 +446,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testHighlightInvalidSystemScopeDependencies() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -473,7 +465,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   public void testDoNotHighlightValidSystemScopeDependencies() throws Throwable {
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -492,7 +484,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   public void testResolvingSystemScopeDependenciesWithProperties() throws Throwable {
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -520,7 +512,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   public void testResolvingSystemScopeDependenciesFromSystemPath() throws Throwable {
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -542,7 +534,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testChooseFileIntentionForSystemDependency() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -575,14 +567,14 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = prevValue;
     }
 
-    MavenModel model = MavenUtil.getMavenModel(myProject, myProjectPom);
-    Dependency dep = model.getDependencies().getDependencies().get(0);
+    MavenDomProjectModel model = MavenUtil.getMavenModel(myProject, myProjectPom);
+    MavenDomDependency dep = model.getDependencies().getDependencies().get(0);
 
     assertEquals(getPsiFile(libFile), dep.getSystemPath().getValue());
   }
 
   public void testNoChooseFileIntentionForNonSystemDependency() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -600,7 +592,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testTypeCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -614,7 +606,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testDoNotHighlightUnknownType() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -631,7 +623,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testScopeCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -644,8 +636,8 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     assertCompletionVariants(myProjectPom, "compile", "provided", "runtime", "test", "system", "import");
   }
 
-  public void testDoNotHighlightUnknownScope() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+  public void testInvalidScopeHighlighting() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -662,7 +654,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testPropertiesInScopes() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -683,7 +675,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testDoesNotHighlightCorrectValues() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -699,7 +691,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testHighlightingArtifactIdAndVersionIfGroupIsUnknown() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -715,7 +707,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testHighlightingArtifactAndVersionIfGroupIsEmpty() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -731,7 +723,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testHighlightingVersionAndArtifactIfArtifactTheyAreFromAnotherGroup() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -747,7 +739,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testHighlightingVersionIfArtifactIsEmpty() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -763,7 +755,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testHighlightingVersionIfArtifactIsUnknown() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -779,7 +771,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testHighlightingVersionItIsFromAnotherGroup() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -795,7 +787,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testDoNotHighlightVersionRanges() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -813,7 +805,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   public void testHighlightingCoordinatesWithClosedTags() throws Throwable {
     if (ignore()) return;
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -829,7 +821,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testHandlingProperties() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -840,7 +832,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "</properties>");
     importProject();
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -858,7 +850,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testHandlingPropertiesWhenProjectIsNotYetLoaded() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -897,7 +889,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testUpdateIndicesIntention() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -911,7 +903,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testExclusionCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -932,7 +924,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testDoNotHighlightUnknownExclusions() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -953,7 +945,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testExclusionHighlightingAbsentGroupId() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -973,7 +965,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testExclusionHighlightingAbsentArtifactId() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 

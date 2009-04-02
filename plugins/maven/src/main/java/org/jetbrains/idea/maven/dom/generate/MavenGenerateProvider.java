@@ -8,7 +8,7 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.actions.generate.AbstractDomGenerateProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 public abstract class MavenGenerateProvider<ELEMENT_TYPE extends DomElement> extends AbstractDomGenerateProvider<ELEMENT_TYPE> {
   public MavenGenerateProvider(String description, Class<ELEMENT_TYPE> clazz) {
@@ -22,20 +22,20 @@ public abstract class MavenGenerateProvider<ELEMENT_TYPE extends DomElement> ext
 
   @Override
   public ELEMENT_TYPE generate(@Nullable DomElement parent, Editor editor) {
-    return doGenerate((MavenModel)parent, editor);
+    return doGenerate((MavenDomProjectModel)parent, editor);
   }
 
-  protected abstract ELEMENT_TYPE doGenerate(MavenModel mavenModel, Editor editor);
+  protected abstract ELEMENT_TYPE doGenerate(MavenDomProjectModel mavenModel, Editor editor);
 
   @Override
   public boolean isAvailableForElement(@NotNull DomElement el) {
     DomElement root = el.getRoot().getRootElement();
     return root.getModule() != null
-           && root instanceof MavenModel
-           && isAvailableForModel((MavenModel)root);
+           && root instanceof MavenDomProjectModel
+           && isAvailableForModel((MavenDomProjectModel)root);
   }
 
-  protected boolean isAvailableForModel(MavenModel mavenModel) {
+  protected boolean isAvailableForModel(MavenDomProjectModel mavenModel) {
     return true;
   }
 }

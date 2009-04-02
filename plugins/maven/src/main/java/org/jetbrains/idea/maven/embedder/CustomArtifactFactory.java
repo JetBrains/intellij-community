@@ -1,9 +1,9 @@
 package org.jetbrains.idea.maven.embedder;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.factory.DefaultArtifactFactory;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 import org.codehaus.plexus.context.Context;
@@ -11,9 +11,19 @@ import org.codehaus.plexus.context.ContextException;
 
 import java.lang.reflect.Field;
 
-public class CustomArtifactFactory implements ArtifactFactory, Contextualizable {
-  private final ArtifactFactory myWrapee = new DefaultArtifactFactory();
+public class CustomArtifactFactory implements ArtifactFactory, Contextualizable{
+  private boolean myCustomized;
+
+  private ArtifactFactory myWrapee = new DefaultArtifactFactory();
   private ArtifactHandlerManager artifactHandlerManager;
+
+  public void customize() {
+    myCustomized = true;
+  }
+
+  public void reset() {
+    myCustomized = false;
+  }
 
   public void contextualize(Context context) throws ContextException {
     try {
@@ -78,6 +88,7 @@ public class CustomArtifactFactory implements ArtifactFactory, Contextualizable 
   }
 
   private Artifact wrap(Artifact a) {
+    if (!myCustomized) return a;
     return a != null ? new CustomArtifact(a) : null;
   }
 

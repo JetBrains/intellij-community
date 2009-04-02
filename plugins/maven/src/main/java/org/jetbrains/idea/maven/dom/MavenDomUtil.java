@@ -8,9 +8,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
-import org.jetbrains.idea.maven.dom.model.MavenParent;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomParent;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenId;
@@ -32,8 +32,8 @@ public class MavenDomUtil {
     return FileUtil.toSystemIndependentName(result);
   }
 
-  public static MavenParent updateMavenParent(MavenModel mavenModel, MavenProjectModel parentProject) {
-    MavenParent result = mavenModel.getMavenParent();
+  public static MavenDomParent updateMavenParent(MavenDomProjectModel mavenModel, MavenProject parentProject) {
+    MavenDomParent result = mavenModel.getMavenParent();
 
     VirtualFile pomFile = mavenModel.getRoot().getFile().getVirtualFile();
     Project project = mavenModel.getXmlElement().getProject();

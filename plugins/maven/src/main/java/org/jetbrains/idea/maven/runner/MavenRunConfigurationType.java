@@ -20,7 +20,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
@@ -110,7 +110,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final VirtualFile virtualFile = localFileSystem.findFileByPath(runnerParameters.getPomFilePath());
     if (virtualFile != null) {
-      MavenProjectModel mavenProject = MavenProjectsManager.getInstance(project).findProject(virtualFile);
+      MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(virtualFile);
       if (mavenProject != null) {
         if (!StringUtil.isEmptyOrSpaces(mavenProject.getMavenId().artifactId)) {
           return mavenProject.getMavenId().artifactId;

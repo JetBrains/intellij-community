@@ -10,18 +10,18 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
-import org.jetbrains.idea.maven.dom.model.Plugin;
-import org.jetbrains.idea.maven.dom.plugin.MavenPluginModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 
 public class MavenPluginDomUtil {
-  public static MavenPluginModel getMavenPlugin(DomElement element) {
+  public static MavenDomPluginModel getMavenPlugin(DomElement element) {
     Project p = element.getXmlElement().getProject();
 
-    Plugin pluginElement = element.getParentOfType(Plugin.class, false);
+    MavenDomPlugin pluginElement = element.getParentOfType(MavenDomPlugin.class, false);
     if (pluginElement == null) return null;
 
     VirtualFile pluginXmlFile = getPluginXmlFile(p, pluginElement);
@@ -30,7 +30,7 @@ public class MavenPluginDomUtil {
     return getMavenPluginModel(p, pluginXmlFile);
   }
 
-  private static VirtualFile getPluginXmlFile(Project p, Plugin pluginElement) {
+  private static VirtualFile getPluginXmlFile(Project p, MavenDomPlugin pluginElement) {
     String groupId = resolveProperties(pluginElement.getGroupId());
     String artifactId = resolveProperties(pluginElement.getArtifactId());
     String version = resolveProperties(pluginElement.getVersion());
@@ -49,8 +49,8 @@ public class MavenPluginDomUtil {
     return PropertyResolver.resolve(value);
   }
 
-  private static MavenPluginModel getMavenPluginModel(Project p, VirtualFile pluginXml) {
+  private static MavenDomPluginModel getMavenPluginModel(Project p, VirtualFile pluginXml) {
     PsiFile psiFile = PsiManager.getInstance(p).findFile(pluginXml);
-    return DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenPluginModel.class).getRootElement();
+    return DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenDomPluginModel.class).getRootElement();
   }
 }

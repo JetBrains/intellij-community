@@ -64,7 +64,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                                                           myMavenProjectsManager,
                                                           myProject.getComponent(MavenEventsManager.class)) {
       {
-        for (MavenProjectModel each : myMavenProjectsManager.getProjects()) {
+        for (MavenProject each : myMavenProjectsManager.getProjects()) {
           this.myRoot.addUnder(new MavenProjectsStructure.PomNode(each));
         }
       }
@@ -317,10 +317,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void importProject(VirtualFile file) throws MavenException {
-    importSeveralProjects(file);
+    importProjects(file);
   }
 
-  protected void importSeveralProjects(VirtualFile... files) throws MavenException {
+  protected void importProjects(VirtualFile... files) throws MavenException {
     doImportProjects(Arrays.asList(files));
   }
 
@@ -328,26 +328,28 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     try {
       myProfilesList = Arrays.asList(profiles);
 
-      myMavenProjectsManager.doInitComponent(false);
+      initMavenProjectsManager(false);
       myMavenProjectsManager.setManagedFiles(files);
       myMavenProjectsManager.setActiveProfiles(myProfilesList);
-      myMavenProjectsManager.doReimport(NULL_MAVEN_CONSOLE);
-      myMavenTree = myMavenProjectsManager.getMavenProjectTree();
+      myMavenProjectsManager.scheduleUpdateAll();
+      myMavenProjectsManager.doReimport();
+      myMavenTree = myMavenProjectsManager.getProjectsTree();
     }
     catch (MavenProcessCanceledException e) {
       throw new RuntimeException(e);
     }
   }
 
+  protected void initMavenProjectsManager(boolean enableEventHandling) {
+    myMavenProjectsManager.doInitComponent(false);
+    if (enableEventHandling) myMavenProjectsManager.initEventsHandling();
+  }
+
   protected void resolveProject() throws MavenException, MavenProcessCanceledException {
     myMavenProjectsManager.updateDependencies();
   }
 
-  protected void resolvePlugins() throws MavenException, MavenProcessCanceledException {
-    myMavenProjectsManager.resolvePlugins();
-  }
-
-  protected void generateSources() throws MavenException, MavenProcessCanceledException {
+  protected void generateSourcesAndUpdateFolders() throws MavenException, MavenProcessCanceledException {
     myMavenProjectsManager.updateFolders();
   }
 

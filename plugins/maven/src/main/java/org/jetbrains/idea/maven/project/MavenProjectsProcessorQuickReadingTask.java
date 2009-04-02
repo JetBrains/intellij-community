@@ -1,0 +1,43 @@
+package org.jetbrains.idea.maven.project;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.embedder.MavenConsole;
+
+import java.util.List;
+
+public class MavenProjectsProcessorQuickReadingTask implements MavenProjectsProcessorTask {
+  private final Project myProject;
+  private final MavenProjectsTree myTree;
+  private volatile MavenGeneralSettings mySettings;
+  private volatile List<VirtualFile> myFilesToUpdate;
+  private volatile List<VirtualFile> myFilesToDelete;
+
+  public MavenProjectsProcessorQuickReadingTask(Project project, MavenProjectsTree tree, MavenGeneralSettings settings) {
+    myProject = project;
+    myTree = tree;
+    mySettings = settings;
+  }
+
+  public MavenProjectsProcessorQuickReadingTask(Project project, MavenProjectsTree tree, List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete) {
+    myProject = project;
+    myTree = tree;
+    myFilesToUpdate = filesToUpdate;
+    myFilesToDelete = filesToDelete;
+  }
+
+  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProcess process)
+    throws MavenProcessCanceledException {
+    if (myFilesToUpdate == null) {
+      myTree.updateAll(myProject, true, embeddersManager, mySettings, console, process);
+    }
+    else {
+      myTree.delete(myProject, myFilesToDelete, true, embeddersManager, console, process);
+      myTree.update(myProject, myFilesToUpdate, true, embeddersManager, console, process);
+    }
+  }
+
+  public boolean immediateInTestMode() {
+    return true;
+  }
+}

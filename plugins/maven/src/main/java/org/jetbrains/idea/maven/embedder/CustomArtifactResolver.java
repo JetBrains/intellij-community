@@ -6,28 +6,36 @@ import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.DefaultArtifactResolver;
 import org.apache.maven.project.build.model.DefaultModelLineageBuilder;
-import org.codehaus.plexus.context.Context;
-import org.codehaus.plexus.context.ContextException;
-import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.File;
 import java.util.List;
 
-public class CustomArtifactResolver extends DefaultArtifactResolver implements Contextualizable {
-  public static final String MAVEN_PROJECT_MODEL_MANAGER = "MAVEN_PROJECT_MODEL_MANAGER";
+public class CustomArtifactResolver extends DefaultArtifactResolver {
+  private boolean myCustomized = false;
 
-  private final CustomWagonManagerHelper myWagonManagerHelper = new CustomWagonManagerHelper(DefaultArtifactResolver.class, this);
-  private MavenProjectsTree myModelManager;
+  private MavenProjectsTree myProjectsTree;
+  private CustomWagonManagerHelper myWagonManagerHelper = new CustomWagonManagerHelper(DefaultArtifactResolver.class, this);
 
-  public void contextualize(Context context) throws ContextException {
-    myModelManager = (MavenProjectsTree)context.get(MAVEN_PROJECT_MODEL_MANAGER);
+  public void customize(MavenProjectsTree tree) {
+    myCustomized = true;
+    myProjectsTree = tree;
+  }
+
+  public void reset() {
+    myCustomized = false;
+    myProjectsTree = null;
   }
 
   @Override
   public void resolve(Artifact artifact, List remoteRepositories, ArtifactRepository localRepository)
-      throws ArtifactResolutionException, ArtifactNotFoundException {
+    throws ArtifactResolutionException, ArtifactNotFoundException {
+    if (!myCustomized) {
+      super.resolve(artifact, remoteRepositories, localRepository);
+      return;
+    }
+
     if (resolveAsModule(artifact)) return;
 
     boolean shouldOpen = isResolvingParent(artifact);
@@ -42,7 +50,11 @@ public class CustomArtifactResolver extends DefaultArtifactResolver implements C
 
   @Override
   public void resolveAlways(Artifact artifact, List remoteRepositories, ArtifactRepository localRepository)
-      throws ArtifactResolutionException, ArtifactNotFoundException {
+    throws ArtifactResolutionException, ArtifactNotFoundException {
+    if (!myCustomized) {
+      super.resolveAlways(artifact, remoteRepositories, localRepository);
+    }
+
     if (resolveAsModule(artifact)) return;
 
     boolean shouldOpen = isResolvingParent(artifact);
@@ -69,7 +81,7 @@ public class CustomArtifactResolver extends DefaultArtifactResolver implements C
   }
 
   private boolean resolveAsModule(Artifact a) {
-    MavenProjectModel project = myModelManager.findProject(a);
+    MavenProject project = myProjectsTree.findProject(a);
     if (project == null) return false;
 
     a.setResolved(true);

@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
 import java.util.List;
@@ -837,8 +837,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     if (ignore()) return;
 
-    MavenProjectModel root = myMavenTree.getRootProjects().get(0);
-    List<MavenProjectModel> modules = myMavenTree.getModules(root);
+    MavenProject root = myMavenTree.getRootProjects().get(0);
+    List<MavenProject> modules = myMavenTree.getModules(root);
 
     assertOrderedElementsAreEqual(root.getProblems());
     assertOrderedElementsAreEqual(modules.get(0).getProblems(),
@@ -978,7 +978,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModuleLibDeps("project", "junit:junit:4.0");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -1011,7 +1011,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m2</artifactId>" +
                                      "<version>1</version>");
-    importSeveralProjects(m1, m2);
+    importProjects(m1, m2);
     assertModuleModuleDeps("m1", "m2");
 
     Module module = createModule("my-module");
@@ -1022,7 +1022,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModuleModuleDeps("m1", "m2", "my-module");
 
-    importSeveralProjects(m1, m2);
+    importProjects(m1, m2);
 
     assertModuleModuleDeps("m1", "my-module", "m2");
   }
@@ -1044,15 +1044,14 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m2</artifactId>" +
                                      "<version>1</version>");
-    importSeveralProjects(m1, m2);
+    importProjects(m1, m2);
     assertModuleModuleDeps("m1", "m2");
 
-    updateModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>");
 
-    importSeveralProjects(m1, m2);
+    importProjects(m1, m2);
     assertModuleModuleDeps("m1");
   }
 
@@ -1140,7 +1139,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                            "Maven: group:lib3:1",
                            "Maven: group:lib4:1");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -1157,7 +1156,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    updateModulePom("m", "<groupId>test</groupId>" +
+    createModulePom("m", "<groupId>test</groupId>" +
                          "<artifactId>m</artifactId>" +
                          "<version>2</version>" +
 
@@ -1205,11 +1204,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     clearLibraryRoots("Maven: group:lib2:1", JavadocOrderRootType.getInstance());
     addLibraryRoot("Maven: group:lib2:1", JavadocOrderRootType.getInstance(), "file://foo.baz");
 
-    updateProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>");
-    importProject();
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>");
 
     assertProjectLibraries("Maven: group:lib1:1",
                            "Maven: group:lib2:1");
@@ -1239,15 +1237,14 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries("Maven: group:lib1:ear:1",
                            "Maven: group:lib2:war:1");
 
-    updateProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>war</packaging>");
-    importProject();
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>war</packaging>");
 
     assertProjectLibraries();
   }
-  
+
   public void testRemovingUnusedLibraryWithClassifier() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1273,11 +1270,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries("Maven: group:lib1:tests:1",
                            "Maven: group:lib2:war:tests:1");
 
-    updateProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>war</packaging>");
-    importProject();
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>war</packaging>");
 
     assertProjectLibraries();
   }

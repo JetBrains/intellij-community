@@ -4,17 +4,15 @@ import com.intellij.openapi.util.Comparing;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.NotNull;
 
-public class MavenId implements Comparable<MavenId> {
+import java.io.Serializable;
+
+public class MavenId implements Serializable, Comparable<MavenId> {
   public String groupId;
   public String artifactId;
   public String version;
   public String type;
   public String classifier;
   private String baseVersion;
-
-  @SuppressWarnings({"UnusedDeclaration"})
-  public MavenId() {
-  }
 
   public MavenId(String groupId, String artifactId, String version) {
     this.groupId = groupId;
@@ -65,7 +63,7 @@ public class MavenId implements Comparable<MavenId> {
   public String toString() {
     String result = groupId + ":" + artifactId;
 
-    if (type != null && !MavenConstants.JAR_TYPE.equals(type)) result += ":" + type;
+    if (type != null && !MavenConstants.TYPE_JAR.equals(type)) result += ":" + type;
     if (classifier != null) result += ":" + classifier;
 
     String selectedVersion = baseVersion == null ? version : baseVersion;

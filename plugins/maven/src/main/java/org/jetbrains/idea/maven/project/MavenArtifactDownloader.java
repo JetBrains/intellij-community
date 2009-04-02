@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 
@@ -15,10 +14,10 @@ public class MavenArtifactDownloader {
   private final MavenEmbedderWrapper myEmbedder;
   private final MavenProcess myProgress;
   private final MavenProjectsTree myProjectsTree;
-  private final List<MavenProjectModel> myMavenProjects;
+  private final List<MavenProject> myMavenProjects;
 
   public static void download(MavenProjectsTree projectsTree,
-                              List<MavenProjectModel> mavenProjects,
+                              List<MavenProject> mavenProjects,
                               MavenDownloadingSettings settings,
                               boolean demand,
                               MavenEmbedderWrapper embedder,
@@ -27,7 +26,7 @@ public class MavenArtifactDownloader {
   }
 
   private MavenArtifactDownloader(MavenProjectsTree projectsTree,
-                                  List<MavenProjectModel> mavenProjects,
+                                  List<MavenProject> mavenProjects,
                                   MavenDownloadingSettings settings,
                                   MavenEmbedderWrapper embedder,
                                   MavenProcess p) {
@@ -41,7 +40,7 @@ public class MavenArtifactDownloader {
   private void download(boolean demand) throws MavenProcessCanceledException {
     List<File> downloadedFiles = new ArrayList<File>();
     try {
-      Map<MavenArtifact, Set<ArtifactRepository>> artifacts = collectArtifactsToDownload();
+      Map<MavenArtifact, Set<MavenRemoteRepository>> artifacts = collectArtifactsToDownload();
 
       if (shouldDownload(mySettings.getDownloadSources(), demand)) {
         download(MavenConstants.SOURCES_CLASSIFIER, artifacts, downloadedFiles);
@@ -76,20 +75,20 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private Map<MavenArtifact, Set<ArtifactRepository>> collectArtifactsToDownload() {
-    Map<MavenArtifact, Set<ArtifactRepository>> result = new HashMap<MavenArtifact, Set<ArtifactRepository>>();
+  private Map<MavenArtifact, Set<MavenRemoteRepository>> collectArtifactsToDownload() {
+    Map<MavenArtifact, Set<MavenRemoteRepository>> result = new HashMap<MavenArtifact, Set<MavenRemoteRepository>>();
 
-    for (MavenProjectModel each : myMavenProjects) {
-      List<ArtifactRepository> repositories = each.getRemoteRepositories();
+    for (MavenProject each : myMavenProjects) {
+      List<MavenRemoteRepository> repositories = each.getRemoteRepositories();
 
       for (MavenArtifact eachDependency : each.getDependencies()) {
         if (!each.isSupportedDependency(eachDependency)) continue;
         if (Artifact.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
         if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
 
-        Set<ArtifactRepository> registeredRepositories = result.get(eachDependency);
+        Set<MavenRemoteRepository> registeredRepositories = result.get(eachDependency);
         if (registeredRepositories == null) {
-          registeredRepositories = new LinkedHashSet<ArtifactRepository>();
+          registeredRepositories = new LinkedHashSet<MavenRemoteRepository>();
           result.put(eachDependency, registeredRepositories);
         }
         registeredRepositories.addAll(repositories);
@@ -99,12 +98,12 @@ public class MavenArtifactDownloader {
   }
 
   private void download(String classifier,
-                        Map<MavenArtifact, Set<ArtifactRepository>> libraryArtifacts,
+                        Map<MavenArtifact, Set<MavenRemoteRepository>> libraryArtifacts,
                         List<File> downloadedFiles) throws MavenProcessCanceledException {
     myProgress.setText(ProjectBundle.message("maven.downloading.artifact", classifier));
 
     int step = 0;
-    for (Map.Entry<MavenArtifact, Set<ArtifactRepository>> eachEntry : libraryArtifacts.entrySet()) {
+    for (Map.Entry<MavenArtifact, Set<MavenRemoteRepository>> eachEntry : libraryArtifacts.entrySet()) {
       MavenArtifact eachArtifact = eachEntry.getKey();
 
       myProgress.checkCanceled();
@@ -114,9 +113,9 @@ public class MavenArtifactDownloader {
       Artifact a = myEmbedder.createArtifact(eachArtifact.getGroupId(),
                                              eachArtifact.getArtifactId(),
                                              eachArtifact.getVersion(),
-                                             MavenConstants.JAR_TYPE,
+                                             MavenConstants.TYPE_JAR,
                                              classifier);
-      myEmbedder.resolve(a, new ArrayList<ArtifactRepository>(eachEntry.getValue()), myProgress);
+      myEmbedder.resolve(a, new ArrayList<MavenRemoteRepository>(eachEntry.getValue()), myProgress);
       if (a.isResolved()) downloadedFiles.add(a.getFile());
     }
   }

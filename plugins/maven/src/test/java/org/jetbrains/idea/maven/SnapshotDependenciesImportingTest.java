@@ -1,5 +1,7 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -10,7 +12,7 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     // disable local mirrors
-    setCustomSettingsFile("<settings></settings>");
+    updateSettingsXmlFully("<settings></settings>");
   }
 
   @Override
@@ -145,6 +147,7 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
 
     resolveProject();
     download();
+
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
                        "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
@@ -189,7 +192,7 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     return "<repositories>" +
            "  <repository>" +
            "    <id>internal</id>" +
-           "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
+           "    <url>file:///" + FileUtil.toSystemIndependentName(remoteRepoDir.getPath()) + "</url>" +
            "    <snapshots>" +
            "      <enabled>true</enabled>" +
            "      <updatePolicy>always</updatePolicy>" +
@@ -202,7 +205,7 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     return "<distributionManagement>" +
            "  <snapshotRepository>" +
            "    <id>internal</id>" +
-           "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
+           "    <url>file:///" + FileUtil.toSystemIndependentName(remoteRepoDir.getPath()) + "</url>" +
            "  </snapshotRepository>" +
            "</distributionManagement>";
   }

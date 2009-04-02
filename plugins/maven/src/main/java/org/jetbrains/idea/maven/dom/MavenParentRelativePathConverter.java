@@ -13,8 +13,8 @@ import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenId;
 
@@ -35,6 +35,7 @@ public class MavenParentRelativePathConverter extends MavenPropertyResolvingConv
   public String toString(@Nullable PsiFile f, ConvertContext context) {
     if (f == null) return null;
     PsiFile currentPsiFile = context.getFile().getOriginalFile();
+    if (currentPsiFile == null) currentPsiFile = context.getFile();
     VirtualFile currentFile = currentPsiFile.getVirtualFile();
     return MavenDomUtil.calcRelativePath(currentFile.getParent(), f.getVirtualFile());
   }
@@ -44,7 +45,7 @@ public class MavenParentRelativePathConverter extends MavenPropertyResolvingConv
   public Collection<PsiFile> getVariants(ConvertContext context) {
     List<PsiFile> result = new ArrayList<PsiFile>();
     PsiFile currentFile = context.getFile().getOriginalFile();
-    for (DomFileElement<MavenModel> each : PomDescriptor.collectProjectPoms(context.getFile().getProject())) {
+    for (DomFileElement<MavenDomProjectModel> each : PomDescriptor.collectProjectPoms(context.getFile().getProject())) {
       PsiFile file = each.getOriginalFile();
       if (file == currentFile) continue;
       result.add(file);
@@ -79,7 +80,7 @@ public class MavenParentRelativePathConverter extends MavenPropertyResolvingConv
       MavenId id = MavenArtifactCoordinatesHelper.getId(myContext);
 
       MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-      MavenProjectModel parentFile = manager.findProject(id);
+      MavenProject parentFile = manager.findProject(id);
       if (parentFile != null) {
         VirtualFile currentFile = myContext.getFile().getVirtualFile();
         el.setStringValue(MavenDomUtil.calcRelativePath(currentFile.getParent(), parentFile.getFile()));

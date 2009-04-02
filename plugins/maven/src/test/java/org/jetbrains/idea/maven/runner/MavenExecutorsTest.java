@@ -9,19 +9,10 @@ import org.jetbrains.idea.maven.NullMavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 
 public class MavenExecutorsTest extends MavenTestCase {
-  public void testEmbeddedExecutor() throws Exception {
-    doTestExecution(true);
-  }
-
   public void testExternalExecutor() throws Exception {
-    doTestExecution(false);
-  }
-
-  private void doTestExecution(boolean useEmbedder) throws IOException {
     VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}");
 
     createProjectPom("<groupId>test</groupId>" +
@@ -34,13 +25,8 @@ public class MavenExecutorsTest extends MavenTestCase {
     MavenRunnerSettings settings = new MavenRunnerSettings();
 
     MavenExecutor e;
-    if (useEmbedder) {
-      e = new MavenEmbeddedExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
-    }
-    else {
-      settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
-      e = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
-    }
+    settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
+    e = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
 
     assertTrue(e.execute(new EmptyProgressIndicator()));
 

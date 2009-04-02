@@ -6,7 +6,7 @@ public class PackagingCompletionTest extends MavenCompletionAndResolutionTestCas
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 

@@ -50,7 +50,7 @@ public class ReimportingTest extends MavenImportingTestCase {
   }
 
   public void testAddingNewModule() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
                      "<version>1</version>" +
@@ -70,7 +70,7 @@ public class ReimportingTest extends MavenImportingTestCase {
   }
 
   public void testRemovingObsoleteModule() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
                      "<version>1</version>" +
@@ -85,7 +85,7 @@ public class ReimportingTest extends MavenImportingTestCase {
   }
 
   public void testDoesNotRemoveObsoleteModuleIfUserSaysNo() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
                      "<version>1</version>" +
@@ -100,7 +100,7 @@ public class ReimportingTest extends MavenImportingTestCase {
   }
 
   public void testDoesNotAskUserTwiceToRemoveTheSameModule() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
                      "<version>1</version>" +
@@ -145,7 +145,7 @@ public class ReimportingTest extends MavenImportingTestCase {
   }
 
   public void testReimportingWithProfiles() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
                      "<version>1</version>" +
@@ -182,7 +182,7 @@ public class ReimportingTest extends MavenImportingTestCase {
 
   public void testReimportingWhenModuleHaveRootOfThePraent() throws Exception {
     createProjectSubDir("m1/res");
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
                      "<version>1</version>" +
@@ -192,7 +192,7 @@ public class ReimportingTest extends MavenImportingTestCase {
                      "  <module>m2</module>" +
                      "</modules>");
 
-    updateModulePom("m2",
+    createModulePom("m2",
                     "<groupId>test</groupId>" +
                     "<artifactId>m2</artifactId>" +
                     "<version>1</version>" +

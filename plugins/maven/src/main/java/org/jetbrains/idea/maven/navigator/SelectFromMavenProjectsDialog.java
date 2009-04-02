@@ -8,7 +8,7 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
@@ -93,7 +93,7 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
 
     public SimpleNode init() {
       SimpleNode result = null;
-      for (MavenProjectModel each : myProjectsManager.getProjects()) {
+      for (MavenProject each : myProjectsManager.getProjects()) {
         PomNode node = new PomNode(each);
 
         myRoot.addToStructure(node);

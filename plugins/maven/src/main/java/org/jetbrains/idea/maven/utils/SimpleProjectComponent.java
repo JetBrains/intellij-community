@@ -7,14 +7,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Kaznacheev
  */
-public abstract class DummyProjectComponent implements ProjectComponent {
+public abstract class SimpleProjectComponent implements ProjectComponent {
   @NonNls private final String myComponentName;
 
-  protected DummyProjectComponent(@NonNls final String componentName) {
+  protected SimpleProjectComponent(@NonNls final String componentName) {
     myComponentName = componentName;
   }
 
-  protected DummyProjectComponent() {
+  protected SimpleProjectComponent() {
     this(null);
   }
 

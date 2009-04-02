@@ -1,21 +1,13 @@
 package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.apache.maven.MavenTools;
-import org.apache.maven.artifact.factory.ArtifactFactory;
-import org.apache.maven.artifact.manager.WagonManager;
-import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.embedder.*;
-import org.apache.maven.extension.ExtensionManager;
-import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenProcess;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.JDOMReader;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
@@ -35,7 +27,6 @@ public class MavenEmbedderFactory {
   @NonNls private static final String BIN_DIR = "bin";
   @NonNls private static final String DOT_M2_DIR = ".m2";
   @NonNls private static final String CONF_DIR = "conf";
-  @NonNls private static final String SETTINGS_FILE = "settings.xml";
   @NonNls private static final String M2_CONF_FILE = "m2.conf";
 
   @NonNls private static final String REPOSITORY_DIR = "repository";
@@ -44,16 +35,16 @@ public class MavenEmbedderFactory {
 
   @NonNls private static final String[] standardPhases = {"clean", "compile", "test", "package", "install", "site"};
   @NonNls private static final String[] standardGoals = {"clean", "validate", "generate-sources", "process-sources", "generate-resources",
-      "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
-      "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
-      "verify", "install", "site", "deploy"};
+    "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
+    "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
+    "verify", "install", "site", "deploy"};
 
   private static volatile Properties mySystemPropertiesCache;
 
   @Nullable
-  public static File resolveMavenHomeDirectory(@Nullable final String override) {
-    if (!StringUtil.isEmptyOrSpaces(override)) {
-      return new File(override);
+  public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
+    if (!StringUtil.isEmptyOrSpaces(overrideMavenHome)) {
+      return new File(overrideMavenHome);
     }
 
     final String m2home = System.getenv(ENV_M2_HOME);
@@ -84,10 +75,10 @@ public class MavenEmbedderFactory {
   }
 
   @Nullable
-  public static File resolveGlobalSettingsFile(@Nullable String override) {
-    final File directory = resolveMavenHomeDirectory(override);
+  public static File resolveGlobalSettingsFile(@Nullable String overrideMavenHome) {
+    final File directory = resolveMavenHomeDirectory(overrideMavenHome);
     if (directory != null) {
-      final File file = new File(new File(directory, CONF_DIR), SETTINGS_FILE);
+      final File file = new File(new File(directory, CONF_DIR), MavenConstants.SETTINGS_XML);
       if (file.exists()) {
         return file;
       }
@@ -96,13 +87,13 @@ public class MavenEmbedderFactory {
   }
 
   @Nullable
-  public static File resolveUserSettingsFile(@Nullable String override) {
-    if (!StringUtil.isEmptyOrSpaces(override)) {
-      return new File(override);
+  public static File resolveUserSettingsFile(@Nullable String overrideSettingsFile) {
+    if (!StringUtil.isEmptyOrSpaces(overrideSettingsFile)) {
+      return new File(overrideSettingsFile);
     }
     final String userHome = System.getProperty(PROP_USER_HOME);
     if (!StringUtil.isEmptyOrSpaces(userHome)) {
-      final File file = new File(new File(userHome, DOT_M2_DIR), SETTINGS_FILE);
+      final File file = new File(new File(userHome, DOT_M2_DIR), MavenConstants.SETTINGS_XML);
       if (file.exists()) {
         return file;
       }
@@ -159,51 +150,14 @@ public class MavenEmbedderFactory {
     return Arrays.asList(standardGoals);
   }
 
-  public static MavenEmbedderWrapper createEmbedderForRead(MavenGeneralSettings settings,
-                                                           MavenConsole console,
-                                                           MavenProcess process) {
-    return createEmbedderForRead(settings, console, process, null);
-  }
-
-  public static MavenEmbedderWrapper createEmbedderForRead(MavenGeneralSettings settings,
-                                                           MavenConsole console,
-                                                           MavenProcess process,
-                                                           MavenProjectsTree projectsTree) {
-    return createEmbedder(settings, console, process,  new MyReadResolveCustomizer(projectsTree, false, false));
-  }
-
-  public static MavenEmbedderWrapper createEmbedderForResolve(MavenGeneralSettings settings,
-                                                              MavenConsole console,
-                                                              MavenProcess process,
-                                                              MavenProjectsTree projectsTree) {
-    return createEmbedderForResolve(settings, console, process, projectsTree, false);
-  }
-
-  public static MavenEmbedderWrapper createEmbedderForResolve(MavenGeneralSettings settings,
-                                                              MavenConsole console,
-                                                              MavenProcess process,
-                                                              MavenProjectsTree projectsTree,
-                                                              boolean strictResolve) {
-    return createEmbedder(settings, console, process, new MyReadResolveCustomizer(projectsTree, true, strictResolve));
-  }
-
-  public static MavenEmbedderWrapper createEmbedderForExecute(MavenGeneralSettings settings,
-                                                              MavenConsole console,
-                                                              MavenProcess process) {
-    return createEmbedder(settings, console, process, new MyBasicCustomizer());
-  }
-
-  private static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings settings,
-                                                     MavenConsole console,
-                                                     MavenProcess process,
-                                                     ContainerCustomizer customizer) {
+  public static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings settings) {
     Configuration configuration = new DefaultConfiguration();
 
-    configuration.setConfigurationCustomizer(customizer);
+    configuration.setConfigurationCustomizer(MavenEmbedderWrapper.createCustomizer());
     configuration.setClassLoader(settings.getClass().getClassLoader());
     configuration.setLocalRepository(settings.getEffectiveLocalRepository());
 
-    MavenEmbedderLogger logger = new MavenConsoleLogger(console);
+    MavenEmbedderLogger logger = new MavenConsoleLogger();
     logger.setThreshold(settings.getOutputLevel());
     configuration.setMavenEmbedderLogger(logger);
 
@@ -226,7 +180,7 @@ public class MavenEmbedderFactory {
     try {
       MavenEmbedder e = new MavenEmbedder(configuration);
       e.getSettings().setUsePluginRegistry(settings.isUsePluginRegistry());
-      return new MavenEmbedderWrapper(e, process);
+      return new MavenEmbedderWrapper(e);
     }
     catch (MavenEmbedderException e) {
       MavenLog.LOG.info(e);
@@ -265,50 +219,6 @@ public class MavenEmbedderFactory {
       if (result.getUserSettingsException() != null) {
         configuration.setUserSettingsFile(null);
       }
-    }
-  }
-
-  private static class MyBasicCustomizer implements ContainerCustomizer {
-    public void customize(PlexusContainer c) {
-      ComponentDescriptor d;
-
-      d = c.getComponentDescriptor(MavenTools.ROLE);
-      d.setImplementation(CustomMavenTools.class.getName());
-    }
-  }
-
-  private static class MyReadResolveCustomizer extends MyBasicCustomizer {
-    private final MavenProjectsTree myProjectsTree;
-    private final boolean isOnline;
-    private final boolean isStrict;
-
-    public MyReadResolveCustomizer(MavenProjectsTree projectsTree, boolean online, boolean strict) {
-      myProjectsTree = projectsTree;
-      isOnline = online;
-      isStrict = strict;
-    }
-
-    public void customize(PlexusContainer c) {
-      super.customize(c);
-      ComponentDescriptor d;
-
-      d = c.getComponentDescriptor(ArtifactFactory.ROLE);
-      d.setImplementation(CustomArtifactFactory.class.getName());
-
-      if (myProjectsTree != null) {
-        c.getContext().put(CustomArtifactResolver.MAVEN_PROJECT_MODEL_MANAGER, myProjectsTree);
-
-        d = c.getComponentDescriptor(ArtifactResolver.ROLE);
-        d.setImplementation(CustomArtifactResolver.class.getName());
-      }
-
-      d = c.getComponentDescriptor(WagonManager.ROLE);
-      d.setImplementation(CustomWagonManager.class.getName());
-      c.getContext().put(CustomWagonManager.IS_ONLINE, isOnline);
-      c.getContext().put(CustomWagonManager.IS_STRICT, isStrict);
-
-      d = c.getComponentDescriptor(ExtensionManager.class.getName());
-      d.setImplementation(CustomExtensionManager.class.getName());
     }
   }
 }

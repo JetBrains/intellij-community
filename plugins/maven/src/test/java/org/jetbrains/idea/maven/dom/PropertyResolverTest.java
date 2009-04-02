@@ -9,7 +9,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 import java.io.File;
 import java.util.Properties;
@@ -262,7 +262,7 @@ public class PropertyResolverTest extends MavenImportingTestCase {
     PsiFile psi = PsiDocumentManager.getInstance(myProject).getPsiFile(d);
 
     DomManager domManager = DomManager.getDomManager(myProject);
-    DomFileElement<MavenModel> dom = domManager.getFileElement((XmlFile)psi, MavenModel.class);
+    DomFileElement<MavenDomProjectModel> dom = domManager.getFileElement((XmlFile)psi, MavenDomProjectModel.class);
 
     return PropertyResolver.resolve(text, dom);
   }

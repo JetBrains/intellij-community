@@ -15,8 +15,8 @@ public class MavenModuleConfigurator {
   private final Module myModule;
   private final ModifiableModuleModel myModuleModel;
   private final MavenProjectsTree myMavenTree;
-  private final MavenProjectModel myMavenProject;
-  private final Map<MavenProjectModel, String> myMavenProjectToModuleName;
+  private final MavenProject myMavenProject;
+  private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
   private final ModulesProvider myModulesProvider;
   private final ProjectLibrariesProvider myLibrariesProvider;
@@ -25,8 +25,8 @@ public class MavenModuleConfigurator {
   public MavenModuleConfigurator(Module module,
                                  ModifiableModuleModel moduleModel,
                                  MavenProjectsTree mavenTree,
-                                 MavenProjectModel mavenProject,
-                                 Map<MavenProjectModel, String> mavenProjectToModuleName,
+                                 MavenProject mavenProject,
+                                 Map<MavenProject, String> mavenProjectToModuleName,
                                  MavenImportingSettings settings,
                                  ModulesProvider modulesProvider,
                                  ProjectLibrariesProvider librariesProvider) {
@@ -59,7 +59,7 @@ public class MavenModuleConfigurator {
     }
   }
 
-  public void configFacets(List<PostProjectConfigurationTask> postTasks) {
+  public void configFacets(List<MavenProjectsProcessorPostConfigurationTask> postTasks) {
     for (FacetImporter importer : getSuitableFacetImporters()) {
       importer.process(myModuleModel,
                        myModule,
@@ -82,7 +82,7 @@ public class MavenModuleConfigurator {
   private void configDependencies() {
     for (MavenArtifact artifact : myMavenProject.getDependencies()) {
       boolean isExportable = artifact.isExportable();
-      MavenProjectModel depProject = myMavenTree.findProject(artifact.getMavenId());
+      MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());
       if (depProject != null) {
         myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), isExportable);
       }

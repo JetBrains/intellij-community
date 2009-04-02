@@ -4,10 +4,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.lucene.search.Query;
-import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.DummyProjectComponent;
+import org.jetbrains.idea.maven.project.MavenRemoteRepository;
+import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenId;
 import org.sonatype.nexus.index.ArtifactInfo;
 
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MavenProjectIndicesManager extends DummyProjectComponent {
+public class MavenProjectIndicesManager extends SimpleProjectComponent {
   private final Project myProject;
   private final AtomicReference<List<MavenIndex>> myProjectIndices = new AtomicReference<List<MavenIndex>>(new ArrayList<MavenIndex>());
 
@@ -45,19 +45,22 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     }
 
     getMavenProjectManager().addListener(new MavenProjectsManager.ListenerAdapter() {
+      @Override
       public void activate() {
         updateIndicesList();
       }
 
-      public void projectAdded(MavenProjectModel project) {
+      public void projectReadQuickly(MavenProject project) {
         updateIndicesList();
       }
 
-      public void projectUpdated(MavenProjectModel project) {
+      @Override
+      public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
         updateIndicesList();
       }
 
-      public void projectRemoved(MavenProjectModel project) {
+      @Override
+      public void projectRemoved(MavenProject project) {
         updateIndicesList();
       }
     });
@@ -76,8 +79,8 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
   private Set<String> collectRemoteRepositories() {
     Set<String> result = new HashSet<String>();
 
-    for (MavenProjectModel each : getMavenProjectManager().getProjects()) {
-      for (ArtifactRepository eachRepository : each.getRemoteRepositories()) {
+    for (MavenProject each : getMavenProjectManager().getProjects()) {
+      for (MavenRemoteRepository eachRepository : each.getRemoteRepositories()) {
         String url = eachRepository.getUrl();
         if (url == null) continue;
         result.add(url);
@@ -225,7 +228,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
 
   private Set<MavenId> getProjectsIds() {
     Set<MavenId> result = new HashSet<MavenId>();
-    for (MavenProjectModel each : MavenProjectsManager.getInstance(myProject).getProjects()) {
+    for (MavenProject each : MavenProjectsManager.getInstance(myProject).getProjects()) {
       result.add(each.getMavenId());
     }
     return result;

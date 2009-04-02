@@ -21,7 +21,7 @@ public class ExtensionCompletionAndResolutionTest extends MavenCompletionAndReso
   }
 
   public void testGroupIdCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -37,7 +37,7 @@ public class ExtensionCompletionAndResolutionTest extends MavenCompletionAndReso
   }
 
   public void testArtifactIdCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -54,7 +54,7 @@ public class ExtensionCompletionAndResolutionTest extends MavenCompletionAndReso
   }
 
   public void testArtifactWithoutGroupCompletion() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -74,7 +74,7 @@ public class ExtensionCompletionAndResolutionTest extends MavenCompletionAndReso
   }
 
   public void testResolving() throws Exception {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -98,7 +98,7 @@ public class ExtensionCompletionAndResolutionTest extends MavenCompletionAndReso
   public void testResolvingAbsentPlugins() throws Exception {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
 
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -116,7 +116,7 @@ public class ExtensionCompletionAndResolutionTest extends MavenCompletionAndReso
   }
 
   public void testDoNotHighlightAbsentGroupIdAndVersion() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -131,7 +131,7 @@ public class ExtensionCompletionAndResolutionTest extends MavenCompletionAndReso
   }
 
   public void testHighlightingAbsentArtifactId() throws Throwable {
-    updateProjectPom("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 

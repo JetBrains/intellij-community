@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenId;
@@ -76,29 +76,29 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   private ConverterStrategy selectStrategy(ConvertContext context) {
-    if (MavenDomUtil.getImmediateParent(context, MavenModel.class) != null) {
+    if (MavenDomUtil.getImmediateParent(context, MavenDomProjectModel.class) != null) {
       return new ProjectStrategy();
     }
 
-    MavenParent parent = MavenDomUtil.getImmediateParent(context, MavenParent.class);
+    MavenDomParent parent = MavenDomUtil.getImmediateParent(context, MavenDomParent.class);
     if (parent != null) {
       return new ParentStrategy(parent);
     }
 
-    Dependency dependency = MavenDomUtil.getImmediateParent(context, Dependency.class);
+    MavenDomDependency dependency = MavenDomUtil.getImmediateParent(context, MavenDomDependency.class);
     if (dependency != null) {
       return new DependencyStrategy(dependency);
     }
 
-    if (MavenDomUtil.getImmediateParent(context, Exclusion.class) != null ) {
+    if (MavenDomUtil.getImmediateParent(context, MavenDomExclusion.class) != null ) {
       return new ExclusionStrategy();
     }
 
-    if (MavenDomUtil.getImmediateParent(context, Plugin.class) != null ) {
+    if (MavenDomUtil.getImmediateParent(context, MavenDomPlugin.class) != null ) {
       return new PluginOrExtensionStrategy(true);
     }
 
-    if (MavenDomUtil.getImmediateParent(context, Extension.class) != null) {
+    if (MavenDomUtil.getImmediateParent(context, MavenDomExtension.class) != null) {
       return new PluginOrExtensionStrategy(false);
     }
 
@@ -152,8 +152,8 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     private PsiFile resolveInProjects(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
-      MavenProjectModel Project = projectsManager.findProject(id);
-      return Project == null ? null : psiManager.findFile(Project.getFile());
+      MavenProject project = projectsManager.findProject(id);
+      return project == null ? null : psiManager.findFile(project.getFile());
     }
 
     private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
@@ -190,9 +190,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   private class ParentStrategy extends ConverterStrategy {
-    private final MavenParent myParent;
+    private MavenDomParent myParent;
 
-    public ParentStrategy(MavenParent parent) {
+    public ParentStrategy(MavenDomParent parent) {
       myParent = parent;
     }
 
@@ -208,9 +208,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   private class DependencyStrategy extends ConverterStrategy {
-    private final Dependency myDependency;
+    private MavenDomDependency myDependency;
 
-    public DependencyStrategy(Dependency dependency) {
+    public DependencyStrategy(MavenDomDependency dependency) {
       myDependency = dependency;
     }
 

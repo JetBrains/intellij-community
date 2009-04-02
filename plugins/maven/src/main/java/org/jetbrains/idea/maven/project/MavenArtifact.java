@@ -22,23 +22,27 @@ import org.jetbrains.idea.maven.embedder.CustomArtifact;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.io.File;
+import java.io.Serializable;
 
-public class MavenArtifact {
-  private final String myGroupId;
-  private final String myArtifactId;
-  private final String myVersion;
-  private final String myBaseVersion;
-  private final String myType;
-  private final String myClassifier;
+public class MavenArtifact implements Serializable {
+  private String myGroupId;
+  private String myArtifactId;
+  private String myVersion;
+  private String myBaseVersion;
+  private String myType;
+  private String myClassifier;
 
-  private final String myScope;
-  private final boolean myOptional;
+  private String myScope;
+  private boolean myOptional;
 
-  private final String myExtension;
+  private String myExtension;
 
-  private volatile File myFile;
-  private volatile boolean myResolved;
-  private volatile boolean myStubbed;
+  private File myFile;
+  private boolean myResolved;
+  private boolean myStubbed;
+
+  protected MavenArtifact() {
+  }
 
   public MavenArtifact(Artifact artifact) {
     myGroupId = artifact.getGroupId();
@@ -49,7 +53,7 @@ public class MavenArtifact {
     myClassifier = artifact.getClassifier();
 
     myScope = artifact.getScope();
-    myOptional =artifact.isOptional();
+    myOptional = artifact.isOptional();
 
     myExtension = getExtension(artifact);
 

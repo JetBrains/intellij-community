@@ -7,15 +7,7 @@ import java.io.File;
 import java.util.*;
 
 public class ArchetypesTest extends MavenTestCase {
-  public void testGeneratingUsingEmbeddedMaven() throws Exception {
-    doTestGenerating(true);
-  }
-
-  public void testGeneratingUsingExternalMaven() throws Exception {
-    doTestGenerating(false);
-  }
-  
-  private void doTestGenerating(boolean useEmbedder) throws Exception {
+  public void testGenerating() throws Exception {
     File dir = new File(myDir.getPath(), "generated");
     dir.mkdirs();
 
@@ -33,12 +25,8 @@ public class ArchetypesTest extends MavenTestCase {
 
     settings.setMavenProperties(props);
     MavenExecutor exec;
-    if (useEmbedder) {
-      exec = new MavenEmbeddedExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
-    } else {
-      settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
-      exec = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
-    }
+    settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
+    exec = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
     exec.execute(new EmptyProgressIndicator());
 
     assertTrue(new File(dir, "bar/pom.xml").exists());

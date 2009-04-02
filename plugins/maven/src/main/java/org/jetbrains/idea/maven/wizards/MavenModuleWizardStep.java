@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenId;
 
@@ -40,8 +40,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private final Project myProjectOrNull;
   private final MavenModuleBuilder myBuilder;
-  private MavenProjectModel myAggregator;
-  private MavenProjectModel myParent;
+  private MavenProject myAggregator;
+  private MavenProject myParent;
 
   private String myInheritedGroupId;
   private String myInheritedVersion;
@@ -145,7 +145,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     return myGroupIdField;
   }
 
-  private MavenProjectModel doSelectProject(MavenProjectModel current) {
+  private MavenProject doSelectProject(MavenProject current) {
     assert myProjectOrNull != null : "must not be called when creating a new project";
 
     SelectMavenProjectDialog d = new SelectMavenProjectDialog(myProjectOrNull, current);
@@ -219,7 +219,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   @Override
   public void updateStep() {
     if (isMavenizedProject()) {
-      MavenProjectModel parent = myBuilder.findPotentialParentProject(myProjectOrNull);
+      MavenProject parent = myBuilder.findPotentialParentProject(myProjectOrNull);
       myAggregator = parent;
       myParent = parent;
     }
@@ -368,7 +368,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myArchetypesTree.setBackground(archetypesEnabled ? UIUtil.getListBackground() : UIUtil.getPanelBackground());
   }
 
-  private String formatProjectString(MavenProjectModel project) {
+  private String formatProjectString(MavenProject project) {
     if (project == null) return "<none>";
     MavenId id = project.getMavenId();
     return id.groupId + ":" + id.artifactId + ":" + id.version;

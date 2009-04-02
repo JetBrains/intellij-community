@@ -25,12 +25,12 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashSet;
-import org.apache.maven.model.Resource;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.PropertyResolver;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenResource;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -135,7 +135,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         List<String> filesToDelete = new ArrayList<String>();
 
         for (Module eachModule : context.getCompileScope().getAffectedModules()) {
-          MavenProjectModel mavenProject = mavenProjectManager.findProject(eachModule);
+          MavenProject mavenProject = mavenProjectManager.findProject(eachModule);
           if (mavenProject == null) continue;
 
           Properties properties = loadFilters(context, mavenProject);
@@ -164,7 +164,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }.execute().getResultObject();
   }
 
-  private List<String> collectNonFilteredExtensions(MavenProjectModel mavenProject) {
+  private List<String> collectNonFilteredExtensions(MavenProject mavenProject) {
     List<String> result = new ArrayList<String>(Arrays.asList("jpg", "jpeg", "gif", "bmp", "png"));
     Element extensionsElement = mavenProject.findPluginConfigurationElement("org.apache.maven.plugins",
                                                                             "maven-resources-plugin",
@@ -189,7 +189,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return sorted.hashCode();
   }
 
-  private Properties loadFilters(CompileContext context, MavenProjectModel mavenProject) {
+  private Properties loadFilters(CompileContext context, MavenProject mavenProject) {
     Properties properties = new Properties();
     for (String each : mavenProject.getFilters()) {
       try {
@@ -210,7 +210,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private void collectProcessingItems(Module module,
-                                      MavenProjectModel mavenProject,
+                                      MavenProject mavenProject,
                                       CompileContext context,
                                       Properties properties,
                                       long propertiesHashCode,
@@ -224,9 +224,9 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       return;
     }
 
-    List<Resource> resources = tests ? mavenProject.getTestResources() : mavenProject.getResources();
+    List<MavenResource> resources = tests ? mavenProject.getTestResources() : mavenProject.getResources();
 
-    for (Resource each : resources) {
+    for (MavenResource each : resources) {
       VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(each.getDirectory());
       if (dir == null) continue;
 
@@ -241,7 +241,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                              resourceOutputDir,
                              includes,
                              excludes,
-                             each.isFiltering(),
+                             each.isFiltered(),
                              properties,
                              propertiesHashCode,
                              nonFilteredExtensions,

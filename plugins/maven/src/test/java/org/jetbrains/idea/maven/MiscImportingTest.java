@@ -109,19 +109,20 @@ public class MiscImportingTest extends MavenImportingTestCase {
     File jarFile = new File(getRepositoryFile(), "junit/junit/4.0/junit-4.0.jar");
     assertTrue(jarFile.exists());
 
-    setCustomSettingsFile("<settings>" +
-                          "  <proxies>" +
-                          "   <proxy>" +
-                          "      <id>my</id>" +
-                          "      <active>true</active>" +
-                          "      <protocol>http</protocol>" +
-                          "      <host>proxy-auth-test.labs.intellij.net</host>" +
-                          "      <port>3128</port>" +
-                          "      <username>user1</username>" +
-                          "      <password>invalid</password>" + // valid password is 'fg3W9' (see http://www.jetbrains.net/confluence/display/JBINT/HTTP+Proxy+with+authorization)
-                          "    </proxy>" +
-                          "  </proxies>" +
-                          "</settings>");
+    myMavenProjectsManager.initEventsHandling();
+
+    // valid password is 'fg3W9' (see http://www.jetbrains.net/confluence/display/JBINT/HTTP+Proxy+with+authorization)
+    updateSettingsXml("<proxies>" +
+                       " <proxy>" +
+                       "    <id>my</id>" +
+                       "    <active>true</active>" +
+                       "    <protocol>http</protocol>" +
+                       "    <host>proxy-auth-test.labs.intellij.net</host>" +
+                       "    <port>3128</port>" +
+                       "    <username>user1</username>" +
+                       "    <password>invalid</password>" +
+                       "  </proxy>" +
+                       "</proxies>");
 
     removeFromLocalRepository("junit");
     assertFalse(jarFile.exists());

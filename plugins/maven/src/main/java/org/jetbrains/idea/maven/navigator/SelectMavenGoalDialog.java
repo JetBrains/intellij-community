@@ -10,7 +10,7 @@ public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
   public SelectMavenGoalDialog(Project project, final String pomPath, final String goal, String title) {
     super(project, title, MavenProjectsStructure.GoalNode.class, new NodeSelector() {
       public SimpleNode findNode(MavenProjectsStructure.PomNode pomNode) {
-        if (pomNode.getProjectModel().getPath().equals(pomPath)) {
+        if (pomNode.getMavenProject().getPath().equals(pomPath)) {
           return pomNode.findGoalNode(goal);
         }
         return null;
@@ -29,7 +29,7 @@ public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
     SimpleNode node = getSelectedNode();
     if (node instanceof MavenProjectsStructure.GoalNode) {
       MavenProjectsStructure.GoalNode goalNode = (MavenProjectsStructure.GoalNode)node;
-      myPomPath = goalNode.getParent(MavenProjectsStructure.PomNode.class).getProjectModel().getPath();
+      myPomPath = goalNode.getParent(MavenProjectsStructure.PomNode.class).getMavenProject().getPath();
       myGoal = goalNode.getGoal();
     }
   }

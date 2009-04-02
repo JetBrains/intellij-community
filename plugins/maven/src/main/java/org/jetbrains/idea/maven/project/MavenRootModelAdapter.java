@@ -38,7 +38,7 @@ public class MavenRootModelAdapter {
     }
   }
 
-  public void init(MavenProjectModel p, boolean isNewlyCreatedModule) {
+  public void init(MavenProject p, boolean isNewlyCreatedModule) {
     setupInitialValues(isNewlyCreatedModule);
     initContentRoots(p);
     initOrderEntries();
@@ -54,8 +54,8 @@ public class MavenRootModelAdapter {
     }
   }
 
-  private void initContentRoots(MavenProjectModel p) {
-    findOrCreateContentRoot(toUrl(p.getFile().getParent().getPath()));
+  private void initContentRoots(MavenProject p) {
+    findOrCreateContentRoot(toUrl(p.getDirectory()));
   }
 
   private void initOrderEntries() {
@@ -209,8 +209,7 @@ public class MavenRootModelAdapter {
       String artifactPath = artifact.getFile().getPath();
 
       setUrl(libraryModel, makeUrl(artifactPath, null), OrderRootType.CLASSES);
-      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER), OrderRootType.SOURCES);
-      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER), JavadocOrderRootType.getInstance());
+      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER), OrderRootType.SOURCES);      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER), JavadocOrderRootType.getInstance());
 
       provider.commit(libraryModel);
     }

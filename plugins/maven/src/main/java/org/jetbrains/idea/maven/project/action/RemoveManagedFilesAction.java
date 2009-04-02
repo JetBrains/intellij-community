@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
+import java.util.Arrays;
+
 public class RemoveManagedFilesAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
@@ -30,7 +32,6 @@ public class RemoveManagedFilesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project p = e.getData(PlatformDataKeys.PROJECT);
     VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-
-    MavenProjectsManager.getInstance(p).removeManagedFiles(files);
+    MavenProjectsManager.getInstance(p).removeManagedFiles(Arrays.asList(files));
   }
 }

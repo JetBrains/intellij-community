@@ -25,12 +25,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import org.jetbrains.idea.maven.utils.DummyProjectComponent;
+import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class MavenDomElementDescriptorHolder extends DummyProjectComponent {
+public class MavenDomElementDescriptorHolder extends SimpleProjectComponent {
   private final Project myProject;
   private volatile XmlNSDescriptorImpl myNSDescriptor;
 

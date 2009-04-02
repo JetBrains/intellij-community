@@ -5,22 +5,22 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
-import org.jetbrains.idea.maven.dom.model.MavenParent;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 
 public class GenerateParentAction extends GenerateDomElementAction {
   public GenerateParentAction() {
-    super(new MavenGenerateProvider<MavenParent>("Generate Parent", MavenParent.class) {
-      protected MavenParent doGenerate(final MavenModel mavenModel, Editor editor) {
+    super(new MavenGenerateProvider<MavenDomParent>("Generate Parent", MavenDomParent.class) {
+      protected MavenDomParent doGenerate(final MavenDomProjectModel mavenModel, Editor editor) {
         SelectMavenProjectDialog d = new SelectMavenProjectDialog(editor.getProject(), null);
         d.show();
         if (!d.isOK()) return null;
-        final MavenProjectModel parentProject = d.getResult();
+        final MavenProject parentProject = d.getResult();
         if (parentProject == null) return null;
 
-        return new WriteCommandAction<MavenParent>(editor.getProject(), getDescription()) {
+        return new WriteCommandAction<MavenDomParent>(editor.getProject(), getDescription()) {
           protected void run(Result result) throws Throwable {
             result.setResult(MavenDomUtil.updateMavenParent(mavenModel, parentProject));
           }
@@ -28,7 +28,7 @@ public class GenerateParentAction extends GenerateDomElementAction {
       }
 
       @Override
-      protected boolean isAvailableForModel(MavenModel mavenModel) {
+      protected boolean isAvailableForModel(MavenDomProjectModel mavenModel) {
         return mavenModel.getMavenParent().getXmlElement() == null;
       }
     });

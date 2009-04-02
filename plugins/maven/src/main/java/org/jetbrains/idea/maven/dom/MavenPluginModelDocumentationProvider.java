@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.idea.maven.dom.plugin.Parameter;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomParameter;
 
 public class MavenPluginModelDocumentationProvider implements DocumentationProvider {
   public String getQuickNavigateInfo(PsiElement element) {
@@ -27,7 +27,7 @@ public class MavenPluginModelDocumentationProvider implements DocumentationProvi
   }
 
   private String getDocForMavenPluginParameter(PsiElement element) {
-    Parameter p = element.getUserData(MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY);
+    MavenDomParameter p = element.getUserData(MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY);
     if (p == null) return null;
     return p.getDescription().getStringValue();
   }

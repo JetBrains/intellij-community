@@ -3,11 +3,11 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
-public class MavenModelInspection extends BasicDomElementsInspection<MavenModel> implements InspectionToolProvider {
+public class MavenModelInspection extends BasicDomElementsInspection<MavenDomProjectModel> implements InspectionToolProvider {
   public MavenModelInspection() {
-    super(MavenModel.class);
+    super(MavenDomProjectModel.class);
   }
 
   @NotNull

@@ -10,7 +10,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.projectImport.SelectImportedProjectsStep;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
 
@@ -22,12 +22,12 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
   public ModuleWizardStep[] createSteps(WizardContext wizardContext) {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
     return new ModuleWizardStep[]{new MavenProjectRootStep(wizardContext), new SelectProfilesStep(wizardContext),
-      new SelectImportedProjectsStep<MavenProjectModel>(wizardContext) {
-        protected String getElementText(final MavenProjectModel node) {
+      new SelectImportedProjectsStep<MavenProject>(wizardContext) {
+        protected String getElementText(final MavenProject project) {
           final StringBuilder stringBuilder = new StringBuilder();
-          stringBuilder.append(node.getMavenId());
+          stringBuilder.append(project.getMavenId());
           final String relPath =
-            VfsUtil.getRelativePath(node.getFile().getParent(), ((MavenProjectBuilder)getBuilder()).getRootDirectory(), File.separatorChar);
+            VfsUtil.getRelativePath(project.getDirectoryFile(), ((MavenProjectBuilder)getBuilder()).getRootDirectory(), File.separatorChar);
           if (relPath.length() != 0) {
             stringBuilder.append(" [").append(relPath).append("]");
           }
@@ -42,6 +42,6 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
         public String getHelpId() {
           return "reference.dialogs.new.project.import.maven.page3";
         }
-      }, stepFactory.createProjectJdkStep(wizardContext)/*, stepFactory.createNameAndLocationStep(wizardContext)*/};
+      }, stepFactory.createProjectJdkStep(wizardContext), stepFactory.createNameAndLocationStep(wizardContext)};
   }
 }

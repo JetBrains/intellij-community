@@ -404,7 +404,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                     "<version>1</version>");
 
     getMavenImporterSettings().setCreateModuleGroups(true);
-    importSeveralProjects(p1, p2);
+    importProjects(p1, p2);
     assertModules("project1", "project2", "m1", "m2", "m3");
 
     assertModuleGroupPath("project1", "project1 and modules");

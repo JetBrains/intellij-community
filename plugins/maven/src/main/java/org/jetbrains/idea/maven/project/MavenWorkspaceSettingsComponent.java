@@ -4,13 +4,13 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.idea.maven.utils.DummyProjectComponent;
+import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
 /**
  * @author Vladislav.Kaznacheev
  */
 @State(name = "MavenImportPreferences", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenWorkspaceSettingsComponent extends DummyProjectComponent implements PersistentStateComponent<MavenWorkspaceSettings> {
+public class MavenWorkspaceSettingsComponent extends SimpleProjectComponent implements PersistentStateComponent<MavenWorkspaceSettings> {
 
   public MavenWorkspaceSettingsComponent() {
     super("MavenImportPreferences");

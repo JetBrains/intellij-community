@@ -164,24 +164,39 @@ public abstract class MavenTestCase extends TestCase {
     return myProjectRoot.getParent().getPath();
   }
 
-  protected void setCustomSettingsFile(String content) throws IOException {
-    File file = new File(myDir, "settings.xml");
-    file.createNewFile();
-    FileUtil.writeToFile(file, content.getBytes());
-    getMavenGeneralSettings().setMavenSettingsFile(file.getPath());
+  protected void updateSettingsXml(String content) throws IOException {
+    updateSettingsXmlFully(createSettingsXmlContent(content));
+  }
+
+  protected void updateSettingsXmlFully(String content) throws IOException {
+    File ioFile = new File(myDir, "settings.xml");
+    ioFile.createNewFile();
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    f.setBinaryContent(content.getBytes());
+    getMavenGeneralSettings().setMavenSettingsFile(f.getPath());
+  }
+
+  protected void deleteSettingsXml() throws IOException {
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDir, "settings.xml"));
+    if (f != null) f.delete(this);
+  }
+
+  private String createSettingsXmlContent(String content) {
+    return "<settings>" +
+           content +
+           "<mirrors>" +
+           "  <mirror>" +
+           "    <id>Nexus</id>" +
+           "    <name>Nexus Public Mirror</name>" +
+           "    <url>http://maven.labs.intellij.net:8081/nexus/content/groups/public/</url>" +
+           "    <mirrorOf>*</mirrorOf>" +
+           "  </mirror>" +
+           "</mirrors>" +
+           "</settings>";
   }
 
   protected void restoreSettingsFile() throws IOException {
-    setCustomSettingsFile("<settings>\n" +
-                          "  <mirrors>\n" +
-                          "    <mirror>\n" +
-                          "      <id>Nexus</id>\n" +
-                          "      <name>Nexus Public Mirror</name>\n" +
-                          "      <url>http://maven.labs.intellij.net:8081/nexus/content/groups/public/</url>\n" +
-                          "      <mirrorOf>*</mirrorOf>\n" +
-                          "    </mirror>\n" +
-                          "  </mirrors>\n" +
-                          "</settings>");
+    updateSettingsXml("");
   }
 
   protected Module createModule(String name) throws IOException {
@@ -193,25 +208,16 @@ public abstract class MavenTestCase extends TestCase {
     myProjectPom = createPomFile(myProjectRoot, xml);
   }
 
-  protected void updateProjectPom(String xml) throws IOException {
-    setPomContent(myProjectPom, xml);
-  }
-
   protected VirtualFile createModulePom(String relativePath, String xml) throws IOException {
     return createPomFile(createProjectSubDir(relativePath), xml);
   }
 
-  protected void updateModulePom(String relativePath, String xml) throws IOException {
-    setPomContent(myProjectRoot.findFileByRelativePath(relativePath + "/pom.xml"), xml);
-  }
-
   protected VirtualFile createPomFile(VirtualFile dir, String xml) throws IOException {
-    VirtualFile f = dir.createChildData(null, "pom.xml");
-    myAllPoms.add(f);
-    return setPomContent(f, xml);
-  }
-
-  private VirtualFile setPomContent(VirtualFile f, String xml) throws IOException {
+    VirtualFile f = dir.findChild("pom.xml");
+    if (f == null) {
+      f = dir.createChildData(null, "pom.xml");
+      myAllPoms.add(f);
+    }
     f.setBinaryContent(createProjectXml(xml).getBytes());
     return f;
   }
@@ -227,7 +233,18 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   protected void createProfilesXml(String xml) throws IOException {
-    VirtualFile f = myProjectRoot.createChildData(null, "profiles.xml");
+    createProfilesFile(myProjectRoot, xml);
+  }
+
+  protected void createProfilesXml(String relativePath, String xml) throws IOException {
+    createProfilesFile(createProjectSubDir(relativePath), xml);
+  }
+
+  private void createProfilesFile(VirtualFile dir, String xml) throws IOException {
+    VirtualFile f = dir.findChild("profiles.xml");
+    if (f == null) {
+      f = dir.createChildData(null, "profiles.xml");
+    }
     f.setBinaryContent(createValidProfiles(xml).getBytes());
   }
 
@@ -236,6 +253,11 @@ public abstract class MavenTestCase extends TestCase {
            "<profiles>" +
            xml +
            "</profiles>";
+  }
+
+  protected void deleteProfilesXml() throws IOException {
+    VirtualFile f = myProjectRoot.findChild("profiles.xml");
+    if (f != null) f.delete(this);
   }
 
   protected void createStdProjectFolders() {

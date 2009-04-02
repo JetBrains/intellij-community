@@ -19,7 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.model.Dependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
@@ -46,12 +46,12 @@ public class ChooseFileIntentionAction implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!MavenDomUtil.isPomFile(file)) return false;
-    Dependency dep = getDependency(file, editor);
+    MavenDomDependency dep = getDependency(file, editor);
     return dep != null && "system".equals(dep.getScope().getStringValue());
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final Dependency dep = getDependency(file, editor);
+    final MavenDomDependency dep = getDependency(file, editor);
     PsiFile currentValue = dep.getSystemPath().getValue();
     FileChooserDialog dialog =
         getFileChooserFactory().createFileChooser(new FileChooserDescriptor(true, false, true, true, false, false),
@@ -74,7 +74,7 @@ public class ChooseFileIntentionAction implements IntentionAction {
     return FileChooserFactory.getInstance();
   }
 
-  private Dependency getDependency(PsiFile file, Editor editor) {
+  private MavenDomDependency getDependency(PsiFile file, Editor editor) {
     PsiElement el = PsiUtilBase.getElementAtOffset(file, editor.getCaretModel().getOffset());
     if (el == null) return null;
 
@@ -84,6 +84,6 @@ public class ChooseFileIntentionAction implements IntentionAction {
     DomElement dom = DomManager.getDomManager(el.getProject()).getDomElement(tag);
     if (dom == null) return null;
 
-    return dom.getParentOfType(Dependency.class, false);
+    return dom.getParentOfType(MavenDomDependency.class, false);
   }
 }

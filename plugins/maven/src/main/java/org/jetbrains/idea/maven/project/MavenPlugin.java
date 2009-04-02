@@ -26,16 +26,20 @@ import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MavenPlugin {
-  private final String myGroupId;
-  private final String myArtifactId;
-  private final String myVersion;
+public class MavenPlugin implements Serializable {
+  private String myGroupId;
+  private String myArtifactId;
+  private String myVersion;
 
-  private final String myConfiguration;
-  private final List<Execution> myExecutions = new ArrayList<Execution>();
+  private String myConfiguration;
+  private List<Execution> myExecutions = new ArrayList<Execution>();
+
+  protected MavenPlugin() {
+  }
 
   public MavenPlugin(Plugin plugin) {
     myGroupId = plugin.getGroupId();
@@ -118,9 +122,12 @@ public class MavenPlugin {
     return result;
   }
 
-  public static class Execution {
-    private final List<String> myGoals;
-    private final String myConfiguration;
+  public static class Execution implements Serializable {
+    private List<String> myGoals;
+    private String myConfiguration;
+
+    public Execution() {
+    }
 
     public Execution(PluginExecution execution) {
       myGoals = execution.getGoals();

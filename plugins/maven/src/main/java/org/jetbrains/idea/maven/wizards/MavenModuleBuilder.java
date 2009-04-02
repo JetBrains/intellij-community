@@ -22,9 +22,9 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenModel;
-import org.jetbrains.idea.maven.dom.model.Module;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomModule;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
@@ -43,8 +43,8 @@ import java.util.Map;
 public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private String myContentRootPath;
 
-  private MavenProjectModel myAggregatorProject;
-  private MavenProjectModel myParentProject;
+  private MavenProject myAggregatorProject;
+  private MavenProject myParentProject;
 
   private boolean myInheritGroupId;
   private boolean myInheritVersion;
@@ -72,9 +72,9 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
                                     "Create new Maven module",
                                     getPsiFile(project, myAggregatorProject.getFile())) {
         protected void run() throws Throwable {
-          MavenModel model = MavenUtil.getMavenModel(project, myAggregatorProject.getFile());
+          MavenDomProjectModel model = MavenUtil.getMavenModel(project, myAggregatorProject.getFile());
           model.getPackaging().setStringValue("pom");
-          Module module = model.getModules().addModule();
+          MavenDomModule module = model.getModules().addModule();
           module.setValue(getPsiFile(project, pom));
         }
       }.execute();
@@ -110,7 +110,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     new WriteCommandAction.Simple(project, "Create new Maven module") {
       protected void run() throws Throwable {
         if (myParentProject != null) {
-          MavenModel model = MavenUtil.getMavenModel(project, pom);
+          MavenDomProjectModel model = MavenUtil.getMavenModel(project, pom);
           MavenDomUtil.updateMavenParent(model, myParentProject);
 
           if (myInheritGroupId) {
@@ -186,7 +186,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     return StdModuleTypes.JAVA;
   }
 
-  public MavenProjectModel findPotentialParentProject(Project project) {
+  public MavenProject findPotentialParentProject(Project project) {
     if (!MavenProjectsManager.getInstance(project).isInitialized()) return null;
 
     File parentDir = new File(myContentRootPath).getParentFile();
@@ -221,19 +221,19 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   public void addSourcePath(Pair<String, String> sourcePathInfo) {
   }
 
-  public void setAggregatorProject(MavenProjectModel project) {
+  public void setAggregatorProject(MavenProject project) {
     myAggregatorProject = project;
   }
 
-  public MavenProjectModel getAggregatorProject() {
+  public MavenProject getAggregatorProject() {
     return myAggregatorProject;
   }
 
-  public void setParentProject(MavenProjectModel project) {
+  public void setParentProject(MavenProject project) {
     myParentProject = project;
   }
 
-  public MavenProjectModel getParentProject() {
+  public MavenProject getParentProject() {
     return myParentProject;
   }
 

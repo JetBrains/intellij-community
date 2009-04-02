@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -28,6 +30,7 @@ public class MavenGeneralSettings implements Cloneable {
 
   private File myEffectiveLocalRepositoryCache;
 
+  private List<Listener> myListeners = new ArrayList<Listener>();
 
   public boolean getPluginUpdatePolicy() {
     return pluginUpdatePolicy;
@@ -90,9 +93,11 @@ public class MavenGeneralSettings implements Cloneable {
   public void setLocalRepository(final @Nullable String localRepository) {
     if (localRepository != null) {
       if (!Comparing.equal(this.localRepository, localRepository)) {
+        this.localRepository = localRepository;
+
         myEffectiveLocalRepositoryCache = null;
+        firePathChanged();
       }
-      this.localRepository = localRepository;
     }
   }
 
@@ -103,9 +108,11 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setMavenHome(@NotNull final String mavenHome) {
     if (!Comparing.equal(this.mavenHome, mavenHome)) {
+      this.mavenHome = mavenHome;
+
       myEffectiveLocalRepositoryCache = null;
+      firePathChanged();
     }
-    this.mavenHome = mavenHome;
   }
 
   @NotNull
@@ -116,9 +123,11 @@ public class MavenGeneralSettings implements Cloneable {
   public void setMavenSettingsFile(@Nullable String mavenSettingsFile) {
     if (mavenSettingsFile != null) {
       if (!Comparing.equal(this.mavenSettingsFile, mavenSettingsFile)) {
+        this.mavenSettingsFile = mavenSettingsFile;
+        
         myEffectiveLocalRepositoryCache = null;
+        firePathChanged();
       }
-      this.mavenSettingsFile = mavenSettingsFile;
     }
   }
 
@@ -191,5 +200,23 @@ public class MavenGeneralSettings implements Cloneable {
     catch (CloneNotSupportedException e) {
       throw new Error(e);
     }
+  }
+
+  public void addListener(Listener l) {
+    myListeners.add(l);
+  }
+
+  public void removeListener(Listener l) {
+    myListeners.remove(l);
+  }
+
+  private void firePathChanged() {
+    for (Listener each : myListeners) {
+      each.pathChanged();
+    }
+  }
+
+  public interface Listener {
+    void pathChanged();
   }
 }

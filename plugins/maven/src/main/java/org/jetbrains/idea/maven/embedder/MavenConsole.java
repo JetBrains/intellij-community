@@ -117,7 +117,7 @@ public abstract class MavenConsole {
 
       if (myPrintStrackTrace) {
         doPrint(LINE_SEPARATOR + StringUtil.getThrowableText(throwable), OutputType.ERROR);
-      }
+        }
       else {
         doPrint(LINE_SEPARATOR +
                 "To view full stack traces, please go to the Settings->Maven and check the 'Print Exception Stack Traces' box." +

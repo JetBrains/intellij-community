@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenPlugin;
 import org.jetbrains.idea.maven.runner.MavenRunConfigurationType;
@@ -83,7 +83,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     MavenEventsManager eventsHandler = MavenEventsManager.getInstance(project);
 
     List<MavenGoalAction> actionList = new ArrayList<MavenGoalAction>();
-    for (MavenProjectModel eachProject : projectsManager.getProjects()) {
+    for (MavenProject eachProject : projectsManager.getProjects()) {
       if (projectsManager.isIgnored(eachProject)) continue;
       actionList.addAll(collectActions(eachProject, projectsManager, eventsHandler));
     }
@@ -91,7 +91,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     doUpdateActions(actionIdPrefix, actionList);
   }
 
-  public static void updateActions(@NotNull Project project, MavenProjectModel mavenProject, boolean delete) {
+  public static void updateActions(@NotNull Project project, MavenProject mavenProject, boolean delete) {
     String actionIdPrefix = getActionPrefix(project, mavenProject);
     if (delete) {
       doUpdateActions(actionIdPrefix, Collections.<MavenGoalAction>emptyList());
@@ -104,7 +104,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     doUpdateActions(actionIdPrefix,  collectActions(mavenProject, projectsManager, eventsHandler));
   }
 
-  private static List<MavenGoalAction> collectActions(MavenProjectModel eachProject,
+  private static List<MavenGoalAction> collectActions(MavenProject eachProject,
                                                       MavenProjectsManager projectsManager,
                                                       MavenEventsManager eventsHandler) {
     List<MavenGoalAction> result = new ArrayList<MavenGoalAction>();
@@ -120,7 +120,7 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   @TestOnly
-  static String getActionPrefix(Project project, MavenProjectModel mavenProject) {
+  static String getActionPrefix(Project project, MavenProject mavenProject) {
     String pomPath = mavenProject == null ? null : mavenProject.getPath();
     return MavenEventsManager.getInstance(project).getActionId(pomPath, null);
   }
@@ -137,14 +137,14 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   private static String getMavenProjectName(MavenProjectsManager projectsManager, VirtualFile file) {
-    MavenProjectModel n = projectsManager.findProject(file);
+    MavenProject n = projectsManager.findProject(file);
     if (n != null) {
       return n.getProjectName();
     }
     return EventsBundle.message("maven.event.unknown.project");
   }
 
-  private static Collection<String> collectGoals(MavenProjectModel project, File repository) {
+  private static Collection<String> collectGoals(MavenProject project, File repository) {
     Collection<String> result = new HashSet<String>();
     result.addAll(MavenEmbedderFactory.getStandardGoalsList());
 

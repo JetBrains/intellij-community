@@ -32,9 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
-import org.jetbrains.idea.maven.utils.DummyProjectComponent;
+import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
@@ -46,7 +46,7 @@ import java.util.*;
  * @author Vladislav.Kaznacheev
  */
 @State(name = "MavenEventsHandler", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenEventsManager extends DummyProjectComponent implements PersistentStateComponent<MavenEventsState> {
+public class MavenEventsManager extends SimpleProjectComponent implements PersistentStateComponent<MavenEventsState> {
   public static MavenEventsManager getInstance(Project project) {
     return project.getComponent(MavenEventsManager.class);
   }
@@ -369,7 +369,7 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
     if (mavenTask != null) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mavenTask.pomPath);
       if (file != null) {
-        MavenProjectModel project = myProjectsManager.findProject(file);
+        MavenProject project = myProjectsManager.findProject(file);
         if (project != null) {
           StringBuilder stringBuilder = new StringBuilder();
           stringBuilder.append("'");
@@ -420,31 +420,33 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
     }
   }
 
-  private class MyProjectStateListener implements MavenProjectsManager.Listener {
+  private class MyProjectStateListener extends MavenProjectsManager.ListenerAdapter {
+    @Override
     public void activate() {
       scheduleKeymapUpdate(null, false);
     }
 
-    public void projectAdded(MavenProjectModel project) {
+    @Override
+    public void projectReadQuickly(MavenProject project) {
       scheduleKeymapUpdate(project, false);
     }
 
-    public void projectUpdated(MavenProjectModel project) {
-      scheduleKeymapUpdate(project, false);
+    @Override
+    public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+      projectReadQuickly(project);
     }
 
-    public void projectRemoved(MavenProjectModel project) {
+    @Override
+    public void projectRemoved(MavenProject project) {
       scheduleKeymapUpdate(project, true);
     }
 
-    public void setIgnored(MavenProjectModel project, boolean on) {
+    @Override
+    public void setIgnored(MavenProject project, boolean on) {
       scheduleKeymapUpdate(project, on);
     }
 
-    public void profilesChanged(List<String> profiles) {
-    }
-
-    private void scheduleKeymapUpdate(final MavenProjectModel mavenProject , final boolean delete) {
+    private void scheduleKeymapUpdate(final MavenProject mavenProject , final boolean delete) {
       Runnable updateTask = new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;

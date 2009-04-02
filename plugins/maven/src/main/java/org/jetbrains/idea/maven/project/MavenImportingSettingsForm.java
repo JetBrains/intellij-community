@@ -12,10 +12,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public class MavenImportingSettingsForm {
+
   private JPanel panel;
   private JCheckBox myModuleDirCheckBox;
   private TextFieldWithBrowseButton myModuleDirControl;
@@ -26,7 +24,6 @@ public class MavenImportingSettingsForm {
   private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myUpdateFoldersOnImportCheckBox;
   private JComboBox myUpdateFoldersOnImportPhaseComboBox;
-  private JCheckBox myResolveInBackgroundCheckBox;
   private JPanel myFormatPanel;
   private ProjectFormatPanel myProjectFormatPanel;
 
@@ -49,13 +46,9 @@ public class MavenImportingSettingsForm {
     if(isImportStep){
       myProjectFormatPanel = new ProjectFormatPanel();
       myFormatPanel.add(myProjectFormatPanel.getPanel(), BorderLayout.WEST);
-      myResolveInBackgroundCheckBox.setVisible(false);
     } else {
       myUseExhaustiveSearchCheckBox.setVisible(false);
     }
-
-
-    myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
   }
 
   private void enableControls() {
@@ -83,7 +76,6 @@ public class MavenImportingSettingsForm {
     data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
     data.setUpdateFoldersOnImport(myUpdateFoldersOnImportCheckBox.isSelected());
     data.setUpdateFoldersOnImportPhase((String)myUpdateFoldersOnImportPhaseComboBox.getSelectedItem());
-    data.setResolveInBackground(myResolveInBackgroundCheckBox.isSelected());
   }
 
   public void setData(final MavenImportingSettings data) {
@@ -97,7 +89,6 @@ public class MavenImportingSettingsForm {
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
     myUpdateFoldersOnImportCheckBox.setSelected(data.isUpdateFoldersOnImport());
     myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
-    myResolveInBackgroundCheckBox.setSelected(data.isResolveInBackground());
 
     enableControls();
   }

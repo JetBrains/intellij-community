@@ -13,7 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenId;
 
@@ -52,7 +52,7 @@ public class AddMavenDependencyQuickFix implements IntentionAction {
     if (dependency == null) return;
 
     Module module = getModuleForFile(file);
-    MavenProjectModel mavenProject = MavenProjectsManager.getInstance(project).findProject(module);
+    MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(module);
 
     MavenProjectsManager.getInstance(project).addDependency(mavenProject, dependency);
   }
