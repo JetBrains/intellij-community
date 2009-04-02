@@ -66,8 +66,7 @@ abstract class AbstractCollectionBinding implements Binding {
 
   protected Binding getElementBinding(Class<? extends Object> elementClass) {
     final Binding binding = getElementBindings().get(elementClass);
-    if (binding == null) throw new XmlSerializationException("Class " + elementClass + " is not bound");
-    return binding;
+    return binding == null ? myXmlSerializer.getBinding(elementClass) : binding;
   }
 
   private Map<Class, Binding> getElementBindings() {
@@ -91,7 +90,6 @@ abstract class AbstractCollectionBinding implements Binding {
     for (Binding binding : getElementBindings().values()) {
       if (binding.isBoundTo(node)) return binding;
     }
-
     throw new XmlSerializationException("Node " + node + " is not bound");
   }
 
