@@ -321,5 +321,13 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
       }
       return rc;
     }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      if (inputs.length > 0) {
+        return inputs[0];
+      }
+      return super.getPreferredFocusedComponent();
+    }
   }
 }
