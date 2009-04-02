@@ -316,6 +316,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       if (!updateIndex(project, root, realAdded, realRemoved, exceptions)) {
         return false;
       }
+      for (FilePath f : realAdded) {
+        VcsDirtyScopeManager.getInstance(project).fileDirty(f);
+      }
+      for (FilePath f : realRemoved) {
+        VcsDirtyScopeManager.getInstance(project).fileDirty(f);
+      }
     }
     // perform merge commit
     try {
