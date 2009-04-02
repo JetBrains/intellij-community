@@ -29,6 +29,7 @@ import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
 import com.intellij.util.xml.reflect.*;
 import net.sf.cglib.proxy.InvocationHandler;
+import net.sf.cglib.proxy.AdvancedProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

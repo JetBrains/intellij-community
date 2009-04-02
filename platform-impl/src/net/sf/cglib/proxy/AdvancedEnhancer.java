@@ -15,10 +15,9 @@
  */
 package net.sf.cglib.proxy;
 
-import com.intellij.util.xml.JavaMethodSignature;
-import com.intellij.util.ReflectionCache;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.util.ReflectionCache;
 import net.sf.cglib.asm.ClassVisitor;
 import net.sf.cglib.asm.Label;
 import net.sf.cglib.asm.Type;
@@ -479,16 +478,9 @@ public class AdvancedEnhancer extends AbstractClassGenerator
 
     //Changes by Peter Gromov & Gregory Shrago
 
-    final Set<JavaMethodSignature> finalMethods = new HashSet<JavaMethodSignature>();
     for(Class aClass = sc; aClass != null; aClass = aClass.getSuperclass()) {
       for (final Method method : aClass.getDeclaredMethods()) {
-        final int modifiers = method.getModifiers();
-        final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
-        if ((modifiers & Constants.ACC_FINAL) != 0) {
-          finalMethods.add(signature);
-          removeAllCovariantMethods(actualMethods, method, covariantMethods);
-        } else if ((modifiers & Constants.ACC_ABSTRACT) == 0
-                   || finalMethods.contains(signature)) {
+        if (actualMethods.contains(method)) {
           removeAllCovariantMethods(actualMethods, method, covariantMethods);
         }
       }
@@ -553,17 +545,24 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   private static void removeAllCovariantMethods(final List<Method> actualMethods, final Method method, final Map<Method, Method> covariantMethods) {
+    if ((method.getModifiers() & Constants.ACC_SYNTHETIC) != 0) {
+      return;
+    }
+
     for (Iterator<Method> it = actualMethods.iterator(); it.hasNext();) {
       Method actualMethod = it.next();
       if (actualMethod.equals(method)) {
         continue;
       }
 
-      if (actualMethod.getName().equals(method.getName())
-               && Arrays.equals(actualMethod.getParameterTypes(), method.getParameterTypes())
-               && ReflectionCache.isAssignable(actualMethod.getReturnType(), method.getReturnType())) {
-        if ((actualMethod.getModifiers() & Constants.ACC_ABSTRACT) != 0) {
-          covariantMethods.put(actualMethod, method);
+      if (!actualMethod.getName().equals(method.getName()) ||
+          !Arrays.equals(actualMethod.getParameterTypes(), method.getParameterTypes())) {
+        continue;
+      }
+
+      if (ReflectionCache.isAssignable(actualMethod.getReturnType(), method.getReturnType())) {
+        if ((actualMethod.getModifiers() & Constants.ACC_ABSTRACT) != 0 || (actualMethod.getModifiers() & Constants.ACC_SYNTHETIC) != 0) {
+          covariantMethods.put(actualMethod, method); //generate bridge
         }
         else {
           it.remove();

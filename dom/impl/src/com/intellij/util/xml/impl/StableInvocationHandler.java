@@ -10,6 +10,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.MergedObject;
 import com.intellij.util.xml.StableElement;
 import net.sf.cglib.proxy.InvocationHandler;
+import net.sf.cglib.proxy.AdvancedProxy;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

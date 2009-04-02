@@ -69,6 +69,7 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" name="commons-net" level="project" />
+    <orderEntry type="library" name="CGLIB" level="project" />
   </component>
 </module>
 

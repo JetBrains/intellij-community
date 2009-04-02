@@ -10,7 +10,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ConcurrentSoftArrayHashMap;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.xml.impl.AdvancedProxy;
+import net.sf.cglib.proxy.AdvancedProxy;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;

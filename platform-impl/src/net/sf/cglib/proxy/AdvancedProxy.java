@@ -1,18 +1,17 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml.impl;
+package net.sf.cglib.proxy;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import net.sf.cglib.core.CodeGenerationException;
-import net.sf.cglib.proxy.*;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Map;
@@ -125,9 +124,6 @@ public class AdvancedProxy {
     }
     catch (CodeGenerationException e) {
       final Throwable throwable = e.getCause();
-      if (throwable instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)throwable;
-      }
       if (throwable instanceof InvocationTargetException) {
         final InvocationTargetException targetException = (InvocationTargetException)throwable;
         final Throwable cause = targetException.getCause();
@@ -137,6 +133,9 @@ public class AdvancedProxy {
         if (cause instanceof Error) {
           throw (Error)cause;
         }
+      }
+      if (throwable instanceof RuntimeException) {
+        throw (RuntimeException)throwable;
       }
       throw e;
     }

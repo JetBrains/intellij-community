@@ -1,10 +1,12 @@
 package net.sf.cglib.proxy;
 
-import net.sf.cglib.core.*;
-import net.sf.cglib.asm.Type;
+import net.sf.cglib.core.Block;
+import net.sf.cglib.core.ClassEmitter;
+import net.sf.cglib.core.CodeEmitter;
+import net.sf.cglib.core.MethodInfo;
 
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
