@@ -29,6 +29,10 @@ public class MembersChangeTest extends CompilerTestCase {
 
   public void testAddAbstractMethod() throws Exception  {doTest();}
 
+  public void testAddFinalMethodHavingNonFinalMethodInSubclass() throws Exception  {doTest();}
+
+  public void testAddNonStaticMethodHavingStaticMethodInSubclass() throws Exception  {doTest();}
+
   public void testAddConstructorParameter() throws Exception  {doTest();}
 
   public void testHierarchy() throws Exception {doTest();}
