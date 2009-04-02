@@ -48,7 +48,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
         }
     }
 
-    @Override public void visitPyExceptBlock(final PyExceptBlock node) {
+    @Override public void visitPyExceptBlock(final PyExceptPart node) {
         PyExpression target = node.getTarget();
         if (target != null) {
             target.accept(new ExprVisitor(Operation.Except));
@@ -56,7 +56,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     }
 
     @Override public void visitPyForStatement(final PyForStatement node) {
-        PyExpression target = node.getTargetExpression();
+        PyExpression target = node.getForPart().getTarget();
         if (target != null) {
             target.accept(new ExprVisitor(Operation.For));
         }

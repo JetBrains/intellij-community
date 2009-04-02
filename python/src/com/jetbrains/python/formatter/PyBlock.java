@@ -18,15 +18,19 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStatementPart;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,14 +227,35 @@ public class PyBlock implements Block {
   public ChildAttributes getChildAttributes(int newChildIndex) {
     int statementListsBelow = 0;
     if (newChildIndex > 0) {
+      // always pass decision to a sane block from top level from file or definition
+      if (_node.getPsi() instanceof PyFile || _node.getElementType() == PyTokenTypes.COLON) {
+        return ChildAttributes.DELEGATE_TO_PREV_CHILD;
+      }
+      
       PyBlock insertAfterBlock = (PyBlock)_subBlocks.get(newChildIndex - 1);
+
+      System.out.println( // XXX debug
+        "getChildAttributes(" + newChildIndex + "): " + ((PyBlock)insertAfterBlock).getNode().getPsi().toString() +
+        " " + insertAfterBlock.getTextRange().getStartOffset()
+        + ":" + insertAfterBlock.getTextRange().getLength()
+      );
+
+      ASTNode prevNode = insertAfterBlock.getNode();
+      PsiElement prevElt = prevNode.getPsi();
+
+      // stmt lists, parts and definitions should also think for themselves
+      if (prevElt instanceof PyStatementList || prevElt instanceof PyStatementPart) {
+        return ChildAttributes.DELEGATE_TO_PREV_CHILD;
+      }
+
       ASTNode lastChild = insertAfterBlock.getNode();
 
       // HACK? This code fragment is needed to make testClass2() pass,
       // but I don't quite understand why it is necessary and why the formatter
       // doesn't request childAttributes from the correct block
       while (lastChild != null) {
-        if (lastChild.getElementType() == PyElementTypes.STATEMENT_LIST && hasLineBreakBefore(lastChild)) {
+        IElementType last_type = lastChild.getElementType();
+        if ( last_type == PyElementTypes.STATEMENT_LIST && hasLineBreakBefore(lastChild)) {
           statementListsBelow++;
         }
         else if (statementListsBelow > 0 && lastChild.getPsi() instanceof PsiErrorElement) {
@@ -251,10 +276,18 @@ public class PyBlock implements Block {
     // the innermost block, so we need to resolve the situation here. Nested
     // delegation sometimes causes NPEs in formatter core, so we calculate the
     // correct indent manually.
-    if (statementListsBelow > 1) {
+    if (statementListsBelow > 0) { // was 1... strange
       int indent = _settings.getIndentSize(_language.getAssociatedFileType());
       return new ChildAttributes(Indent.getSpaceIndent(indent * statementListsBelow), null);
     }
+
+    /*
+    // it might be something like "def foo(): # comment" or "[1, # comment"; jump up to the real thing
+    if (_node instanceof PsiComment || _node instanceof PsiWhiteSpace) {
+      get
+    }
+    */
+
 
     return new ChildAttributes(getChildIndent(newChildIndex), getChildAlignment());
   }
@@ -273,6 +306,13 @@ public class PyBlock implements Block {
       PyBlock insertAfterBlock = (PyBlock)_subBlocks.get(newChildIndex - 1);
       ASTNode afterNode = insertAfterBlock.getNode();
 
+      System.out.println( // XXX debug
+        "getChildIndent(" + newChildIndex + "): " + ((PyBlock)insertAfterBlock).getNode().getPsi().toString() +
+        " " + insertAfterBlock.getTextRange().getStartOffset()
+        + ":" + insertAfterBlock.getTextRange().getLength()
+      );
+
+
       // handle pressing Enter after colon and before first statement in
       // existing statement list
       if (afterNode.getElementType() == PyElementTypes.STATEMENT_LIST || afterNode.getElementType() == PyTokenTypes.COLON) {
@@ -286,8 +326,47 @@ public class PyBlock implements Block {
         return Indent.getNormalIndent();
       }
     }
+    else if (lastChild != null && PyElementTypes.LIST_LIKE_EXPRESSIONS.contains(lastChild.getElementType())) {
+      // handle pressing enter at the end of a list literal when there's no closing paren or bracket 
+      ASTNode lastLastChild = lastChild.getLastChildNode();
+      if (lastLastChild != null && lastLastChild.getPsi() instanceof PsiErrorElement) {
+        // we're at a place like this: [foo, ... bar, <caret>
+        // we'd rather align to foo. this may be not a multiple of tabs.
+        PsiElement expr = lastChild.getPsi();
+        PsiElement exprItem = expr.getFirstChild();
+        boolean found = false;
+        while (exprItem != null) { // find a worthy element to align to
+          if (exprItem instanceof PyElement) {
+            found = true; // align to foo in "[foo,"
+            break;
+          }
+          if (exprItem instanceof PsiComment) {
+            found = true; // align to foo in "[ # foo,"
+            break;
+          }
+          exprItem = exprItem.getNextSibling();
+        }
+        if (found) {
+          PsiDocumentManager docMgr = PsiDocumentManager.getInstance(exprItem.getProject());
+          Document doc = docMgr.getDocument(exprItem.getContainingFile());
+          if (doc != null) {
+            int line_num = doc.getLineNumber(exprItem.getTextOffset());
+            int item_col = exprItem.getTextOffset() - doc.getLineStartOffset(line_num);
+            PsiElement here_elt = getNode().getPsi();
+            line_num = doc.getLineNumber(here_elt.getTextOffset());
+            int node_col = here_elt.getTextOffset() - doc.getLineStartOffset(line_num);
+            int padding = item_col - node_col;
+            if (padding > 0) { // negative is a syntax error,  but possible
+              return Indent.getSpaceIndent(padding);
+            }
+          }
+        }
+        return Indent.getContinuationIndent(); // a fallback
+      }
+    }
 
-    if (_listElementTypes.contains(_node.getElementType())) {
+    // constructs that imply indent for their children
+    if (_listElementTypes.contains(_node.getElementType()) || _node.getPsi() instanceof PyStatementPart) {
       return Indent.getNormalIndent();
     }
 

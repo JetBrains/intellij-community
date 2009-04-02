@@ -17,7 +17,6 @@
 package com.jetbrains.python.psi;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,10 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * Time: 23:37:32
  * To change this template use File | Settings | File Templates.
  */
-public interface PyExceptBlock extends PyElement, NameDefiner {
-    PyExceptBlock[] EMPTY_ARRAY = new PyExceptBlock[0];
+public interface PyExceptPart extends PyElement, NameDefiner, PyStatementPart {
+    PyExceptPart[] EMPTY_ARRAY = new PyExceptPart[0];
 
     @Nullable PyExpression getExceptClass();
     @Nullable PyExpression getTarget();
-    @NotNull PyStatementList getStatementList();
 }

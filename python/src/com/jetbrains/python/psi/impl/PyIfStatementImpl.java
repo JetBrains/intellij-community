@@ -22,12 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyIfStatement;
-import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -36,65 +32,61 @@ import org.jetbrains.annotations.Nullable;
  * Time: 21:08:06
  * To change this template use File | Settings | File Templates.
  */
-public class PyIfStatementImpl extends PyElementImpl implements PyIfStatement {
-    private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.PyIfStatementImpl");
+public class PyIfStatementImpl extends PyPartitionedElementImpl implements PyIfStatement {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.PyIfStatementImpl");
 
-    public PyIfStatementImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyIfStatementImpl(ASTNode astNode) {
+      super(astNode);
+  }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyIfStatement(this);
-    }
+  @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+      pyVisitor.visitPyIfStatement(this);
+  }
 
+  @NotNull
+  public PyIfPart getIfPart() {
+    return (PyIfPart)getPartNotNull(PyElementTypes.IF_PART_IF);
+  }
 
-    @NotNull public PyExpression[] getConditions() {
-        return childrenToPsi(PyElementTypes.EXPRESSIONS, PyExpression.EMPTY_ARRAY);
-    }
+  @NotNull
+  public PyIfPart[] getElifParts() {
+    return childrenToPsi(PyElementTypes.ELIFS, PyIfPart.EMPTY_ARRAY);
+  }
 
-    @NotNull public PyStatementList[] getStatementLists() {
-        final ASTNode[] conditions = getNode().getChildren(PyElementTypes.EXPRESSIONS);
-        final PyStatementList[] statementLists = childrenToPsi(PyElementTypes.STATEMENT_LISTS, PyStatementList.EMPTY_ARRAY);
-        LOG.assertTrue(statementLists.length == conditions.length || statementLists.length == conditions.length+1);
-        if (statementLists.length > conditions.length) {
-            final PyStatementList[] result = new PyStatementList[conditions.length];
-            System.arraycopy(statementLists, 0, result, 0, conditions.length);
-            return result;
-        }
-        return statementLists;
-    }
+  public PyElsePart getElsePart() {
+    return (PyElsePart)getPart(PyElementTypes.ELSE_PART);
+  }
 
-    public @Nullable PyStatementList getElseStatementList() {
-        final ASTNode[] conditions = getNode().getChildren(PyElementTypes.EXPRESSIONS);
-        final PyStatementList[] statementLists = childrenToPsi(PyElementTypes.STATEMENT_LISTS, PyStatementList.EMPTY_ARRAY);
-        LOG.assertTrue(statementLists.length == conditions.length || statementLists.length == conditions.length+1);
-        if (statementLists.length > conditions.length) {
-            return statementLists [statementLists.length-1];
-        }
-        return null;
-    }
-
-    @Override public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+  @Override public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                                  @NotNull ResolveState substitutor,
                                                  PsiElement lastParent,
                                                  @NotNull PsiElement place)
     {
-        if (lastParent != null) {
-            return true;
-        }
-
-        PyStatementList[] statementLists = getStatementLists();
-        for (PyStatementList statementList: statementLists) {
-            if (!statementList.processDeclarations(processor, substitutor, lastParent, place)) {
-                return false;
-            }
-        }
-        PyStatementList elseList = getElseStatementList();
-        //noinspection RedundantIfStatement
-        if (elseList != null && !elseList.processDeclarations(processor, substitutor, lastParent, place)) {
+      if (lastParent != null) {
+          return true;
+      }
+      for (PyStatementPart part : getParts()) {
+        PyStatementList stmtList = part.getStatementList();
+        if (stmtList != null && !stmtList.processDeclarations(processor, substitutor, lastParent, place)) {
             return false;
         }
-        return true;
+      }
+
+      /*
+
+      PyStatementList[] statementLists = getStatementLists();
+      for (PyStatementList statementList: statementLists) {
+          if (!statementList.processDeclarations(processor, substitutor, lastParent, place)) {
+              return false;
+          }
+      }
+      PyStatementList elseList = getElseStatementList();
+      //noinspection RedundantIfStatement
+      if (elseList != null && !elseList.processDeclarations(processor, substitutor, lastParent, place)) {
+          return false;
+      }
+      */
+      return true;
     }
 
 }

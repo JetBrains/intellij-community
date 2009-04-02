@@ -20,12 +20,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyWhileStatement;
+import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,39 +31,51 @@ import com.jetbrains.python.psi.PyWhileStatement;
  * Time: 15:47:44
  * To change this template use File | Settings | File Templates.
  */
-public class PyWhileStatementImpl extends PyElementImpl implements PyWhileStatement {
-    public PyWhileStatementImpl(ASTNode astNode) {
-        super(astNode);
-    }
+public class PyWhileStatementImpl extends PyPartitionedElementImpl implements PyWhileStatement {
+  public PyWhileStatementImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyWhileStatement(this);
-    }
+  @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyWhileStatement(this);
+  }
 
-    public @NotNull PyStatementList getStatementList() {
-        return childToPsiNotNull(PyElementTypes.STATEMENT_LISTS, 0);
-    }
+  @NotNull
+  public PyWhilePart getWhilePart() {
+    return (PyWhilePart)getPartNotNull(PyElementTypes.WHILE_PART);
+  }
 
-    public @Nullable PyStatementList getElseStatementList() {
-        return childToPsi(PyElementTypes.STATEMENT_LISTS, 1);
-    }
+  public PyElsePart getElsePart() {
+    return (PyElsePart)getPart(PyElementTypes.ELSE_PART);
+  }
 
-    @Override public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+  @Override public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                                  @NotNull ResolveState substitutor,
                                                  PsiElement lastParent,
                                                  @NotNull PsiElement place)
     {
-        if (lastParent != null) {
-            return true;
-        }
+      if (lastParent != null) return true;
 
-        if (!getStatementList().processDeclarations(processor, substitutor, null, place)) {
-            return false;
+      for (PyStatementPart part : getParts()) {
+        PyStatementList stmtList = part.getStatementList();
+        if (stmtList != null) {
+            return stmtList.processDeclarations(processor, substitutor, null, place);
         }
-        PyStatementList elseList = getElseStatementList();
+      }
+
+      /*
+      final PyStatementList whileStmts = getWhilePart().getStatementList();
+      if (whileStmts != null && !whileStmts.processDeclarations(processor, substitutor, null, place)) {
+        return false;
+      }
+      final PyElsePart elsePart = getElsePart();
+      if (elsePart != null) {
+        PyStatementList elseList = elsePart.getStatementList();
         if (elseList != null) {
             return elseList.processDeclarations(processor, substitutor, null, place);
         }
-        return true;
+      }
+      */
+      return true;
     }
 }

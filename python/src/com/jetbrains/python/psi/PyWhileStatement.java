@@ -20,13 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 15:47:19
- * To change this template use File | Settings | File Templates.
+ * The 'while' statement.
  */
 public interface PyWhileStatement extends PyLoopStatement {
-    @NotNull PyStatementList getStatementList();
-    @Nullable PyStatementList getElseStatementList();
+  @NotNull PyWhilePart getWhilePart();
+  @Nullable PyElsePart getElsePart();
 }

@@ -27,7 +27,7 @@ public interface PyElementTypes {
   PyElementType ARGUMENT_LIST = new PyElementType("ARGUMENT_LIST", PyArgumentListImpl.class);
   PyElementType IMPORT_ELEMENT = new PyElementType("IMPORT_ELEMENT", PyImportElementImpl.class);
   PyElementType STAR_IMPORT_ELEMENT = new PyElementType("STAR_IMPORT_ELEMENT", PyStarImportElementImpl.class);
-  PyElementType EXCEPT_BLOCK = new PyElementType("EXCEPT_BLOCK", PyExceptBlockImpl.class);
+  PyElementType EXCEPT_PART = new PyElementType("EXCEPT_PART", PyExceptPartImpl.class);
   PyElementType PRINT_TARGET = new PyElementType("PRINT_TARGET", PyPrintTargetImpl.class);
   PyElementType DECORATOR = new PyElementType("DECORATOR", PyDecoratorImpl.class);
 
@@ -100,6 +100,8 @@ public interface PyElementTypes {
                                          REPR_EXPRESSION, GENERATOR_EXPRESSION, CONDITIONAL_EXPRESSION, YIELD_EXPRESSION,
                                          TARGET_EXPRESSION);
 
+  TokenSet LIST_LIKE_EXPRESSIONS = TokenSet.create(LIST_LITERAL_EXPRESSION, LIST_COMP_EXPRESSION, TUPLE_EXPRESSION);
+
   TokenSet STATEMENT_LISTS = TokenSet.create(STATEMENT_LIST);
 
   TokenSet BINARY_OPS = TokenSet.create(PyTokenTypes.OR_KEYWORD, PyTokenTypes.AND_KEYWORD, PyTokenTypes.LT, PyTokenTypes.GT,
@@ -107,5 +109,20 @@ public interface PyElementTypes {
                                         PyTokenTypes.EQEQ, PyTokenTypes.GE, PyTokenTypes.LE, PyTokenTypes.NE, PyTokenTypes.NE_OLD,
                                         PyTokenTypes.IN_KEYWORD, PyTokenTypes.IS_KEYWORD, PyTokenTypes.NOT_KEYWORD, PyTokenTypes.PLUS,
                                         PyTokenTypes.MINUS, PyTokenTypes.MULT, PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC);
+
+  // Parts
+  PyElementType IF_PART_IF = new PyElementType("IF_IF", PyIfPartIfImpl.class);
+  PyElementType IF_PART_ELIF = new PyElementType("IF_ELIF", PyIfPartElifImpl.class);
+
+  PyElementType FOR_PART = new PyElementType("FOR_PART", PyForPartImpl.class);
+  PyElementType WHILE_PART = new PyElementType("WHILE_PART", PyWhilePartImpl.class);
+
+  PyElementType TRY_PART = new PyElementType("TRY_PART", PyTryPartImpl.class);
+  PyElementType FINALLY_PART = new PyElementType("FINALLY_PART", PyFinallyPartImpl.class);
+
+  PyElementType ELSE_PART = new PyElementType("ELSE_PART", PyElsePartImpl.class);
+
+  TokenSet PARTS = TokenSet.create(IF_PART_IF, IF_PART_ELIF, FOR_PART, WHILE_PART, TRY_PART, FINALLY_PART, ELSE_PART); 
+  TokenSet ELIFS = TokenSet.create(IF_PART_ELIF); 
 
 }

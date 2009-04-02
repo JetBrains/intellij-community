@@ -21,20 +21,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyStatementList;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 21:21:12
- * To change this template use File | Settings | File Templates.
+ * Date: 29.05.2005 (initial)
  */
-public class PyForStatementImpl extends PyElementImpl implements PyForStatement {
+public class PyForStatementImpl extends PyPartitionedElementImpl implements PyForStatement {
   public PyForStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -44,24 +39,13 @@ public class PyForStatementImpl extends PyElementImpl implements PyForStatement 
     pyVisitor.visitPyForStatement(this);
   }
 
+  public PyElsePart getElsePart() {
+    return (PyElsePart)getPart(PyElementTypes.ELSE_PART);
+  }
+
   @NotNull
-  public PyStatementList getStatementList() {
-    return childToPsiNotNull(PyElementTypes.STATEMENT_LISTS, 0);
-  }
-
-  @Nullable
-  public PyStatementList getElseStatementList() {
-    return childToPsi(PyElementTypes.STATEMENT_LISTS, 1);
-  }
-
-  @Nullable
-  public PyExpression getTargetExpression() {
-    return childToPsi(PyElementTypes.EXPRESSIONS, 0);
-  }
-
-  @Nullable
-  public PyExpression getLoopExpression() {
-    return childToPsi(PyElementTypes.EXPRESSIONS, 1);
+  public PyForPart getForPart() {
+    return (PyForPart)getPartNotNull(PyElementTypes.FOR_PART);
   }
 
   @Override
@@ -69,25 +53,29 @@ public class PyForStatementImpl extends PyElementImpl implements PyForStatement 
                                      @NotNull ResolveState substitutor,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    final PyExpression target = getTargetExpression();
+    PyForPart forPart = getForPart();
+    final PyExpression target = forPart.getTarget();
     if (target != null && target != lastParent && !target.processDeclarations(processor, substitutor, null, place)) {
       return false;
     }
 
-    final PyStatementList statementList = getStatementList();
-    if (statementList != lastParent && !statementList.processDeclarations(processor, substitutor, null, place)) {
+    final PyStatementList statementList = forPart.getStatementList();
+    if (statementList != null && statementList != lastParent && !statementList.processDeclarations(processor, substitutor, null, place)) {
       return false;
     }
-    PyStatementList elseList = getElseStatementList();
-    if (elseList != null && elseList != lastParent) {
-      return elseList.processDeclarations(processor, substitutor, null, place);
+    PyElsePart elsePart = getElsePart();
+    if (elsePart != null) {
+      PyStatementList elseList = elsePart.getStatementList();
+      if (elseList != null && elseList != lastParent) {
+        return elseList.processDeclarations(processor, substitutor, null, place);
+      }
     }
     return true;
   }
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    PyExpression tgt = getTargetExpression();
+    PyExpression tgt = getForPart().getTarget();
     if (tgt instanceof PyReferenceExpression) return new SingleIterable<PyElement>(tgt);
     else {
       return PyUtil.flattenedParens(new PyElement[]{tgt});

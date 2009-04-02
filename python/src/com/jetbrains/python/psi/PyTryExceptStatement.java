@@ -20,22 +20,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
+ * The 'try/except/else/finally' statement.
  * Date: 02.06.2005
- * Time: 23:14:36
- * To change this template use File | Settings | File Templates.
  */
 public interface PyTryExceptStatement extends PyStatement {
   @NotNull
-  PyStatementList getTryStatementList();
+  PyTryPart getTryPart();
 
   @NotNull
-  PyExceptBlock[] getExceptBlocks();
+  PyExceptPart[] getExceptParts();
 
   @Nullable
-  PyStatementList getElseStatementList();
+  PyElsePart getElsePart();
 
   @Nullable
-  PyStatementList getFinallyStatementList();
+  PyFinallyPart getFinallyPart();
+
 }

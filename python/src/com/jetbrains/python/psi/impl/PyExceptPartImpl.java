@@ -29,8 +29,8 @@ import com.jetbrains.python.psi.*;
  * Time: 23:37:49
  * To change this template use File | Settings | File Templates.
  */
-public class PyExceptBlockImpl extends PyElementImpl implements PyExceptBlock {
-  public PyExceptBlockImpl(ASTNode astNode) {
+public class PyExceptPartImpl extends PyElementImpl implements PyExceptPart {
+  public PyExceptPartImpl(ASTNode astNode) {
       super(astNode);
   }
 

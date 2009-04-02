@@ -20,15 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 21:20:52
- * To change this template use File | Settings | File Templates.
+ * The 'for/else' statement.
  */
 public interface PyForStatement extends PyStatement, NameDefiner {
-    @NotNull PyStatementList getStatementList();
-    @Nullable PyStatementList getElseStatementList();
-    @Nullable PyExpression getTargetExpression();
-    @Nullable PyExpression getLoopExpression();
+  @NotNull PyForPart getForPart();
+  @Nullable PyElsePart getElsePart();
+
 }

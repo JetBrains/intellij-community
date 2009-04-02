@@ -1,14 +1,15 @@
 PyFile:TryExceptFinally.py
   PyTryExceptStatement
-    PsiElement(Py:TRY_KEYWORD)('try')
-    PsiElement(Py:COLON)(':')
-    PsiWhiteSpace('\n  ')
-    PyStatementList
-      PyExpressionStatement
-        PyReferenceExpression: x
-          PsiElement(Py:IDENTIFIER)('x')
+    PyTryPart
+      PsiElement(Py:TRY_KEYWORD)('try')
+      PsiElement(Py:COLON)(':')
+      PsiWhiteSpace('\n  ')
+      PyStatementList
+        PyExpressionStatement
+          PyReferenceExpression: x
+            PsiElement(Py:IDENTIFIER)('x')
     PsiWhiteSpace('\n')
-    PyExceptBlock
+    PyExceptPart
       PsiElement(Py:EXCEPT_KEYWORD)('except')
       PsiElement(Py:COLON)(':')
       PsiWhiteSpace('\n  ')
@@ -17,10 +18,11 @@ PyFile:TryExceptFinally.py
           PyReferenceExpression: y
             PsiElement(Py:IDENTIFIER)('y')
     PsiWhiteSpace('\n')
-    PsiElement(Py:FINALLY_KEYWORD)('finally')
-    PsiElement(Py:COLON)(':')
-    PsiWhiteSpace('\n  ')
-    PyStatementList
-      PyExpressionStatement
-        PyReferenceExpression: z
-          PsiElement(Py:IDENTIFIER)('z')
+    PyFinallyPart
+      PsiElement(Py:FINALLY_KEYWORD)('finally')
+      PsiElement(Py:COLON)(':')
+      PsiWhiteSpace('\n  ')
+      PyStatementList
+        PyExpressionStatement
+          PyReferenceExpression: z
+            PsiElement(Py:IDENTIFIER)('z')

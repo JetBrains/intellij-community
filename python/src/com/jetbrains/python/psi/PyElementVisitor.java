@@ -158,7 +158,7 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyElement(node);
   }
 
-  public void visitPyExceptBlock(final PyExceptBlock node) {
+  public void visitPyExceptBlock(final PyExceptPart node) {
     visitPyElement(node);
   }
 

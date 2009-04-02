@@ -483,62 +483,83 @@ public class StatementParsing
   private void parseIfStatement() {
     assertCurrentToken(PyTokenTypes.IF_KEYWORD);
     final PsiBuilder.Marker ifStatement = myBuilder.mark();
+    final PsiBuilder.Marker ifPart = myBuilder.mark();
     myBuilder.advanceLexer();
     getExpressionParser().parseExpression();
     checkMatches(PyTokenTypes.COLON, "colon expected");
     parseSuite();
+    ifPart.done(PyElementTypes.IF_PART_IF);
+    PsiBuilder.Marker elifPart = myBuilder.mark();
     while (myBuilder.getTokenType() == PyTokenTypes.ELIF_KEYWORD) {
       myBuilder.advanceLexer();
       getExpressionParser().parseExpression();
       checkMatches(PyTokenTypes.COLON, "colon expected");
       parseSuite();
+      elifPart.done(PyElementTypes.IF_PART_ELIF);
+      elifPart = myBuilder.mark();
     }
+    elifPart.drop(); // we always kept an open extra elif
+    final PsiBuilder.Marker elsePart = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
       myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.COLON, "colon expected");
       parseSuite();
+      elsePart.done(PyElementTypes.ELSE_PART);
     }
+    else elsePart.drop();
     ifStatement.done(PyElementTypes.IF_STATEMENT);
   }
 
   private void parseForStatement() {
     assertCurrentToken(PyTokenTypes.FOR_KEYWORD);
     final PsiBuilder.Marker statement = myBuilder.mark();
+    final PsiBuilder.Marker forPart = myBuilder.mark();
     myBuilder.advanceLexer();
     getExpressionParser().parseExpression(true, true);
     checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
     getExpressionParser().parseExpression();
     checkMatches(PyTokenTypes.COLON, "colon expected");
     parseSuite();
+    forPart.done(PyElementTypes.FOR_PART);
+    final PsiBuilder.Marker elsePart = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
       myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.COLON, "colon expected");
       parseSuite();
+      elsePart.done(PyElementTypes.ELSE_PART);
     }
+    else elsePart.drop();
     statement.done(PyElementTypes.FOR_STATEMENT);
   }
 
   private void parseWhileStatement() {
     assertCurrentToken(PyTokenTypes.WHILE_KEYWORD);
     final PsiBuilder.Marker statement = myBuilder.mark();
+    final PsiBuilder.Marker whilePart = myBuilder.mark();
     myBuilder.advanceLexer();
     getExpressionParser().parseExpression();
     checkMatches(PyTokenTypes.COLON, "colon expected");
     parseSuite();
+    whilePart.done(PyElementTypes.WHILE_PART);
+    final PsiBuilder.Marker elsePart = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
       myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.COLON, "colon expected");
       parseSuite();
+      elsePart.done(PyElementTypes.ELSE_PART);
     }
+    else elsePart.drop();
     statement.done(PyElementTypes.WHILE_STATEMENT);
   }
 
   private void parseTryStatement() {
     assertCurrentToken(PyTokenTypes.TRY_KEYWORD);
     final PsiBuilder.Marker statement = myBuilder.mark();
+    final PsiBuilder.Marker tryPart = myBuilder.mark();
     myBuilder.advanceLexer();
     checkMatches(PyTokenTypes.COLON, "colon expected");
     parseSuite();
+    tryPart.done(PyElementTypes.TRY_PART);
     boolean haveExceptClause = false;
     if (myBuilder.getTokenType() == PyTokenTypes.EXCEPT_KEYWORD) {
       haveExceptClause = true;
@@ -558,23 +579,31 @@ public class StatementParsing
         }
         checkMatches(PyTokenTypes.COLON, "colon expected");
         parseSuite();
-        exceptBlock.done(PyElementTypes.EXCEPT_BLOCK);
+        exceptBlock.done(PyElementTypes.EXCEPT_PART);
       }
+      final PsiBuilder.Marker elsePart = myBuilder.mark();
       if (myBuilder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
         myBuilder.advanceLexer();
         checkMatches(PyTokenTypes.COLON, "colon expected");
         parseSuite();
+        elsePart.done(PyElementTypes.ELSE_PART);
       }
+      else elsePart.drop();
     }
+    final PsiBuilder.Marker finallyPart = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.FINALLY_KEYWORD) {
       myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.COLON, "colon expected");
       parseSuite();
+      finallyPart.done(PyElementTypes.FINALLY_PART);
     }
-    else if (!haveExceptClause) {
-      myBuilder.error("'except' or 'finally' expected");
-      // much better to have a statement of incorrectly determined type
-      // than "TRY" and "COLON" tokens attached to nothing
+    else {
+      finallyPart.drop();
+      if (!haveExceptClause) {
+        myBuilder.error("'except' or 'finally' expected");
+        // much better to have a statement of incorrectly determined type
+        // than "TRY" and "COLON" tokens attached to nothing
+      }
     }
     statement.done(PyElementTypes.TRY_EXCEPT_STATEMENT);
   }

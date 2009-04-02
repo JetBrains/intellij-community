@@ -17,7 +17,7 @@
 package com.jetbrains.python.validation;
 
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyExceptBlock;
+import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 
 /**
@@ -27,13 +27,13 @@ import com.jetbrains.python.psi.PyTryExceptStatement;
  */
 public class TryExceptAnnotator extends PyAnnotator {
     @Override public void visitPyTryExceptStatement(final PyTryExceptStatement node) {
-        PyExceptBlock[] exceptBlocks = node.getExceptBlocks();
+        PyExceptPart[] exceptParts = node.getExceptParts();
         boolean haveDefaultExcept = false;
-        for(PyExceptBlock block: exceptBlocks) {
+        for(PyExceptPart part : exceptParts) {
             if (haveDefaultExcept) {
-                getHolder().createErrorAnnotation(block, PyBundle.message("ANN.default.except.must.be.last"));
+                getHolder().createErrorAnnotation(part, PyBundle.message("ANN.default.except.must.be.last"));
             }
-            if (block.getExceptClass() == null) {
+            if (part.getExceptClass() == null) {
                 haveDefaultExcept = true;
             }
         }

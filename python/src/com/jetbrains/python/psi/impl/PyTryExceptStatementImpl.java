@@ -22,13 +22,8 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExceptBlock;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyTryExceptStatement;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -37,8 +32,8 @@ import org.jetbrains.annotations.Nullable;
  * Time: 23:14:57
  * To change this template use File | Settings | File Templates.
  */
-public class PyTryExceptStatementImpl extends PyElementImpl implements PyTryExceptStatement {
-  private static final TokenSet EXCEPT_BLOCKS = TokenSet.create(PyElementTypes.EXCEPT_BLOCK);
+public class PyTryExceptStatementImpl extends PyPartitionedElementImpl implements PyTryExceptStatement {
+  private static final TokenSet EXCEPT_BLOCKS = TokenSet.create(PyElementTypes.EXCEPT_PART);
 
   public PyTryExceptStatementImpl(ASTNode astNode) {
     super(astNode);
@@ -50,45 +45,22 @@ public class PyTryExceptStatementImpl extends PyElementImpl implements PyTryExce
   }
 
   @NotNull
-  public PyStatementList getTryStatementList() {
-    return childToPsiNotNull(PyElementTypes.STATEMENT_LISTS, 0);
+  public PyExceptPart[] getExceptParts() {
+    return childrenToPsi(EXCEPT_BLOCKS, PyExceptPart.EMPTY_ARRAY);
+  }
+
+  public PyElsePart getElsePart() {
+    return (PyElsePart)getPart(PyElementTypes.ELSE_PART);
   }
 
   @NotNull
-  public PyExceptBlock[] getExceptBlocks() {
-    return childrenToPsi(EXCEPT_BLOCKS, PyExceptBlock.EMPTY_ARRAY);
+  public PyTryPart getTryPart() {
+    return (PyTryPart)getPartNotNull(PyElementTypes.TRY_PART);
   }
 
-  @Nullable
-  public PyStatementList getElseStatementList() {
-    final ASTNode node = getNode().findChildByType(PyTokenTypes.ELSE_KEYWORD);
-    if (node != null) {
-      return (PyStatementList)findNextChildOfType(node, PyElementTypes.STATEMENT_LISTS);
-    }
 
-    return null;
-  }
-
-  @Nullable
-  public PyStatementList getFinallyStatementList() {
-    final ASTNode node = getNode().findChildByType(PyTokenTypes.FINALLY_KEYWORD);
-    if (node != null) {
-      return (PyStatementList)findNextChildOfType(node, PyElementTypes.STATEMENT_LISTS);
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private static PsiElement findNextChildOfType(ASTNode node, final TokenSet matchTokens) {
-    ASTNode sibling = node.getTreeNext();
-    while (sibling != null) {
-      if (matchTokens.contains(sibling.getElementType())) {
-        return sibling.getPsi();
-      }
-      sibling = sibling.getTreeNext();
-    }
-    return null;
+  public PyFinallyPart getFinallyPart() {
+    return (PyFinallyPart)getPart(PyElementTypes.FINALLY_PART);
   }
 
   @Override
@@ -96,21 +68,28 @@ public class PyTryExceptStatementImpl extends PyElementImpl implements PyTryExce
                                      @NotNull ResolveState substitutor,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    final PyStatementList tryStatementList = getTryStatementList();
-    if (tryStatementList != lastParent && !tryStatementList.processDeclarations(processor, substitutor, null, place)) {
+    /*
+    final PyStatementList tryStatementList = getTryPart().getStatementList();
+    if (tryStatementList != null && tryStatementList != lastParent && !tryStatementList.processDeclarations(processor, substitutor, null, place)) {
       return false;
     }
+    */
 
-    for (PyExceptBlock block : getExceptBlocks()) {
-      if (block != lastParent && !block.processDeclarations(processor, substitutor, null, place)) {
+    for (PyStatementPart part : /*getExceptParts()*/ getParts()) {
+      if (part != lastParent && !part.processDeclarations(processor, substitutor, null, place)) {
         return false;
       }
     }
 
-    PyStatementList elseStatementList = getElseStatementList();
-    if (elseStatementList != null && elseStatementList != lastParent) {
-      return elseStatementList.processDeclarations(processor, substitutor, null, place);
+    /*
+    final PyElsePart elsePart = getElsePart();
+    if (elsePart != null) {
+      PyStatementList elseStatementList = elsePart.getStatementList();
+      if (elseStatementList != null && elseStatementList != lastParent) {
+        return elseStatementList.processDeclarations(processor, substitutor, null, place);
+      }
     }
+    */
     return true;
   }
 }

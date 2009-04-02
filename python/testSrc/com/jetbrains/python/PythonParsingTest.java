@@ -19,6 +19,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(true);
   }
 
+  public void testIfStatement() throws Exception {
+    doTest(true);
+  }
+
   public void testConditionalExpression() throws Exception {
     doTest(true);
   }

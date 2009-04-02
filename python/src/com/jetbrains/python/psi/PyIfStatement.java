@@ -20,14 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 21:07:48
- * To change this template use File | Settings | File Templates.
+ * The 'if/elif/else' statement.
  */
 public interface PyIfStatement extends PyStatement {
-    @NotNull PyExpression[] getConditions();
-    @NotNull PyStatementList[] getStatementLists();
-    @Nullable PyStatementList getElseStatementList();
+  @NotNull PyIfPart getIfPart();
+  @NotNull PyIfPart[] getElifParts();
+  @Nullable PyElsePart getElsePart();
 }
