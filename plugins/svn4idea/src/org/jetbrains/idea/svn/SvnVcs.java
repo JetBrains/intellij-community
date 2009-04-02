@@ -201,33 +201,35 @@ public class SvnVcs extends AbstractVcs {
           invokeRefreshSvnRoots(true);
         }
       });
-
-      // do one time after project loaded
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-        public void run() {
-          postStartup();
-
-          // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sence...
-          // once it could be mistaken about copies for 2 minutes on start...
-
-          /*if (! myMapping.getAllWcInfos().isEmpty()) {
-            invokeRefreshSvnRoots();
-            return;
-          }
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-            public void run() {
-              myCopiesRefreshManager.getCopiesRefresh().ensureInit();
-            }
-          }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
-        }
-      });
     }
+
+    // do one time after project loaded
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        postStartup();
+
+        // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sence...
+        // once it could be mistaken about copies for 2 minutes on start...
+
+        /*if (! myMapping.getAllWcInfos().isEmpty()) {
+          invokeRefreshSvnRoots();
+          return;
+        }
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            myCopiesRefreshManager.getCopiesRefresh().ensureInit();
+          }
+        }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
+      }
+    });
 
     myFrameStateListener = new MyFrameStateListener(changeListManager, vcsDirtyScopeManager);
   }
 
   public void postStartup() {
     myMapping = SvnFileUrlMappingImpl.getInstance(myProject);
+    // only mapping for default
+    if (myProject.isDefault()) return;
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, myMapping);
 
     invokeRefreshSvnRoots(true);
