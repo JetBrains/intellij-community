@@ -23,7 +23,7 @@ public class MessageViewImpl implements MessageView {
   private final List<Runnable> myPostponedRunnables = new ArrayList<Runnable>();
 
   public MessageViewImpl(final Project project, final StartupManager startupManager, final ToolWindowManager toolWindowManager) {
-    startupManager.runWhenProjectIsInitialized(new Runnable() {
+    final Runnable runnable = new Runnable() {
       public void run() {
         myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM, project);
         myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowMessages.png"));
@@ -33,7 +33,18 @@ public class MessageViewImpl implements MessageView {
         }
         myPostponedRunnables.clear();
       }
-    });
+    };
+    if (project.isInitialized()) {
+      runnable.run();
+    }
+    else {
+      startupManager.registerPostStartupActivity(new Runnable(){
+        public void run() {
+          runnable.run();
+        }
+      });
+    }
+
   }
 
   public ContentManager getContentManager() {
