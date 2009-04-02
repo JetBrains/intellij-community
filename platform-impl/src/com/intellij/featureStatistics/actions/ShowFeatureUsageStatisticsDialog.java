@@ -6,6 +6,8 @@ import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -114,9 +116,11 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   };
 
   private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{DISPLAY_NAME, GROUP_NAME, USED_TOTAL, LAST_USED, USAGE_FREQUENCY};
+  private final Project myProject;
 
   public ShowFeatureUsageStatisticsDialog(Project project) {
     super(project, true);
+    myProject = project;
     setTitle(FeatureStatisticsBundle.message("feature.statistics.dialog.title"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     setModal(false);
@@ -172,6 +176,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
         FeatureUsageTracker.getInstance().SHOW_IN_COMPILATION_PROGRESS = compiler.isSelected();
       }
     });
+    compiler.setVisible(haveCompilerExtensionPoint());
 
     final JCheckBox other = new JCheckBox(FeatureStatisticsBundle.message("feature.statistics.show.on.startup"));
     other.setSelected(FeatureUsageTracker.getInstance().SHOW_IN_OTHER_PROGRESS);
@@ -213,6 +218,16 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     });
 
     return splitter;
+  }
+
+  private boolean haveCompilerExtensionPoint() {
+    final ExtensionPoint[] extensionPoints = Extensions.getArea(myProject).getExtensionPoints();
+    for (ExtensionPoint extensionPoint : extensionPoints) {
+      if (extensionPoint.getName().equals("com.intellij.compiler")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static String getGroupName(FeatureDescriptor featureDescriptor) {
