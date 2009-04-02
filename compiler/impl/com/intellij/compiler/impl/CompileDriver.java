@@ -745,7 +745,7 @@ public class CompileDriver {
     final TranslatingCompiler[] translators = compilerManager.getCompilers(TranslatingCompiler.class);
 
     final Set<FileType> generatedTypes = new HashSet<FileType>();
-    VfsSnapshot snapshot = null;
+    VirtualFile[] snapshot = null;
 
     for (final TranslatingCompiler translator : translators) {
       if (context.getProgressIndicator().isCanceled()) {
@@ -754,9 +754,9 @@ public class CompileDriver {
 
       if (snapshot == null || ModuleCompilerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(translator))) {
         // rescan snapshot if previously generated files can influence the input of this compiler
-        snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VfsSnapshot>() {
-          public VfsSnapshot compute() {
-            return new VfsSnapshot(context.getCompileScope().getFiles(null, true));
+        snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
+          public VirtualFile[] compute() {
+            return context.getCompileScope().getFiles(null, true);
           }
         });
       }
@@ -871,58 +871,56 @@ public class CompileDriver {
     context.getProgressIndicator().pushState();
     try {
       final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
-      final Compiler[] allCompilers = CompilerManager.getInstance(myProject).getCompilers(Compiler.class);
       final VirtualFile[] allSources = context.getProjectCompileScope().getFiles(null, true);
       context.getProgressIndicator().setText(CompilerBundle.message("progress.clearing.output"));
-      for (final Compiler compiler : allCompilers) {
-        if (compiler instanceof GeneratingCompiler) {
-          try {
-            if (!myShouldClearOutputDirectory) {
-              final StateCache<ValidityState> cache = getGeneratingCompilerCache((GeneratingCompiler)compiler);
-              final Iterator<String> urlIterator = cache.getUrlsIterator();
-              while (urlIterator.hasNext()) {
-                deleteFile(new File(VirtualFileManager.extractPath(urlIterator.next())));
-              }
-            }
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-        }
-        else if (compiler instanceof FileProcessingCompiler) {
-        }
-        else if (compiler instanceof TranslatingCompiler) {
-          if (!myShouldClearOutputDirectory) {
-            final ArrayList<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                TranslatingCompilerFilesMonitor.getInstance().collectFiles(
-                  context,
-                  (TranslatingCompiler)compiler, Arrays.<VirtualFile>asList(allSources).iterator(),
-                  true /*pass true to make sure that every source in scope file is processed*/,
-                  false /*important! should pass false to enable collection of files to delete*/,
-                  new ArrayList<VirtualFile>(),
-                  toDelete
-                );
-              }
-            });
-            for (Trinity<File, String, Boolean> trinity : toDelete) {
-              final File file = trinity.getFirst();
-              final boolean deleted = deleteFile(file);
-              if (isTestMode && deleted) {
-                CompilerManagerImpl.addDeletedPath(FileUtil.toSystemIndependentName(file.getPath()));
-              }
-            }
-          }
-        }
-      }
       if (myShouldClearOutputDirectory) {
         clearOutputDirectories(outputDirectories);
       }
       else { // refresh is still required
-        pruneEmptyDirectories(outputDirectories); // to avoid too much files deleted events
-
-        CompilerUtil.refreshIODirectories(outputDirectories);
+        try {
+          for (final Compiler compiler : CompilerManager.getInstance(myProject).getCompilers(Compiler.class)) {
+            try {
+              if (compiler instanceof GeneratingCompiler) {
+                final StateCache<ValidityState> cache = getGeneratingCompilerCache((GeneratingCompiler)compiler);
+                final Iterator<String> urlIterator = cache.getUrlsIterator();
+                while (urlIterator.hasNext()) {
+                  context.getProgressIndicator().checkCanceled();
+                  deleteFile(new File(VirtualFileManager.extractPath(urlIterator.next())));
+                }
+              }
+              else if (compiler instanceof TranslatingCompiler) {
+                final ArrayList<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
+                ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  public void run() {
+                    TranslatingCompilerFilesMonitor.getInstance().collectFiles(
+                      context,
+                      (TranslatingCompiler)compiler, Arrays.<VirtualFile>asList(allSources).iterator(),
+                      true /*pass true to make sure that every source in scope file is processed*/,
+                      false /*important! should pass false to enable collection of files to delete*/,
+                      new ArrayList<VirtualFile>(),
+                      toDelete
+                    );
+                  }
+                });
+                for (Trinity<File, String, Boolean> trinity : toDelete) {
+                  context.getProgressIndicator().checkCanceled();
+                  final File file = trinity.getFirst();
+                  final boolean deleted = deleteFile(file);
+                  if (isTestMode && deleted) {
+                    CompilerManagerImpl.addDeletedPath(FileUtil.toSystemIndependentName(file.getPath()));
+                  }
+                }
+              }
+            }
+            catch (IOException e) {
+              LOG.info(e);
+            }
+          }
+          pruneEmptyDirectories(context.getProgressIndicator(), outputDirectories); // to avoid too much files deleted events
+        }
+        finally {
+          CompilerUtil.refreshIODirectories(outputDirectories);
+        }
       }
       dropScopesCaches();
 
@@ -942,19 +940,20 @@ public class CompileDriver {
     });
   }
 
-  private static void pruneEmptyDirectories(final Set<File> directories) {
+  private static void pruneEmptyDirectories(ProgressIndicator progress, final Set<File> directories) {
     for (File directory : directories) {
-      doPrune(directory, directories);
+      doPrune(progress, directory, directories);
     }
   }
 
-  private static boolean doPrune(final File directory, final Set<File> outPutDirectories) {
+  private static boolean doPrune(ProgressIndicator progress, final File directory, final Set<File> outPutDirectories) {
+    progress.checkCanceled();
     final File[] files = directory.listFiles();
     boolean isEmpty = true;
     if (files != null) {
       for (File file : files) {
         if (file.isDirectory() && !outPutDirectories.contains(file)) {
-          if (doPrune(file, outPutDirectories)) {
+          if (doPrune(progress, file, outPutDirectories)) {
             deleteFile(file);
           }
           else {
@@ -1238,7 +1237,7 @@ public class CompileDriver {
   }
 
   private boolean compileSources(final CompileContextEx context,
-                                 final VfsSnapshot snapshot,
+                                 final VirtualFile[] snapshot,
                                  final TranslatingCompiler compiler,
                                  final boolean forceCompile,
                                  final boolean isRebuild,
@@ -1258,7 +1257,7 @@ public class CompileDriver {
         public void run() {
 
           TranslatingCompilerFilesMonitor.getInstance().collectFiles(
-              context, compiler, Arrays.asList(snapshot.getFiles()).iterator(), forceCompile, isRebuild, toCompile, toDelete
+              context, compiler, Arrays.asList(snapshot).iterator(), forceCompile, isRebuild, toCompile, toDelete
           );
           if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
             final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
@@ -1318,7 +1317,6 @@ public class CompileDriver {
   }
 
   private static boolean syncOutputDir(final CompileContextEx context, final Collection<Trinity<File, String, Boolean>> toDelete, final Set<File> outputDirectories) throws CacheCorruptedException {
-    DeleteHelper deleteHelper = new DeleteHelper(outputDirectories);
     int total = toDelete.size();
     final DependencyCache dependencyCache = context.getDependencyCache();
     final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
@@ -1331,9 +1329,10 @@ public class CompileDriver {
       boolean wereFilesDeleted = false;
       for (final Trinity<File, String, Boolean> trinity : toDelete) {
         context.getProgressIndicator().setFraction(((double)(++current)) / total);
+        context.getProgressIndicator().checkCanceled();
         final File outputPath = trinity.getFirst();
         filesToRefresh.add(outputPath);
-        if (deleteHelper.delete(outputPath)) {
+        if (deleteFile(outputPath)) {
           wereFilesDeleted = true;
           final String className = trinity.getSecond();
           if (className != null) {
@@ -1349,10 +1348,10 @@ public class CompileDriver {
           }
         }
       }
+      pruneEmptyDirectories(context.getProgressIndicator(), outputDirectories);
       return wereFilesDeleted;
     }
     finally {
-      deleteHelper.finish();
       CompilerUtil.refreshIOFiles(filesToRefresh);
       context.getProgressIndicator().popState();
     }
