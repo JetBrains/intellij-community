@@ -139,11 +139,20 @@ public class PythonSdkType extends SdkType {
     return f != null && f.exists();
   }
 
+  @Nullable
   private static File getJythonBinaryPath(final String path) {
     if (SystemInfo.isWindows) {
       return new File(path, "jython.bat");
     }
-    // TODO: support Mac and Linux
+    else if (SystemInfo.isMac) {
+      return new File(new File(path, "bin"), "jython"); // TODO: maybe use a smarter way
+    }
+    else if (SystemInfo.isLinux) {
+      File jy_binary = new File(path, "jython"); // probably /usr/bin/jython
+      if (jy_binary.exists()) {
+        return jy_binary;
+      }
+    }
     return null;
   }
 
@@ -161,7 +170,7 @@ public class PythonSdkType extends SdkType {
       File py_binary;
       if (m.matches()) {
         String py_name = m.group(1); // $1
-        py_binary = new File("/usr/bin/"+py_name);
+        py_binary = new File("/usr/bin/"+py_name); // XXX broken logic! can't match the lib to the bin
       }
       else py_binary = new File("/usr/bin/python"); // TODO: search in $PATH
       if (py_binary.exists()) return py_binary;
