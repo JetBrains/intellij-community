@@ -36,4 +36,17 @@ public class CollectionListModel extends AbstractListModel {
   public Object getElementAt(int index) {
     return myItems.get(index);
   }
+
+  public void add(Object element) {
+    int i = myItems.size();
+    myItems.add(element);
+    fireIntervalAdded(this, i, i);
+  }
+
+  public void remove(Object element) {
+    int i = myItems.indexOf(element);
+    myItems.remove(element);
+    fireIntervalRemoved(this, i, i);
+  }
+
 }
