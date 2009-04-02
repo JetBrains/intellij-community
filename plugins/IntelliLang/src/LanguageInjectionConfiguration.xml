@@ -668,6 +668,18 @@
         <SIGNATURES name="find(java.lang.String, java.lang.Object[], net.sf.hibernate.type.Type[])" value="true,false,false"/>
       </MethodParameterInjection>
     </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="RegExp" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="VALUE_PATTERN" value="[^:]*:[\s]*([^\}]*)" />
+        <setting name="SINGLE_FILE" value="false" />
+        <setting name="CLASS" value="javax.ws.rs.Path" />
+        <setting name="APPLY_IN_HIERARCHY" value="true" />
+        <SIGNATURES name="value()" value="true:" />
+      </MethodParameterInjection>
+    </entry>    
   </PARAMETERS>
   <option name="INSTRUMENTATION" value="ASSERT"/>
   <option name="LANGUAGE_ANNOTATION" value="org.intellij.lang.annotations.Language"/>
