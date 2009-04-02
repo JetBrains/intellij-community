@@ -264,9 +264,6 @@
     <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction">
       <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="OnlineDocAction"/>
     </action>
-    <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction">
-      <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="About"/>
-    </action>
 
     <!-- Toolbar -->
 
