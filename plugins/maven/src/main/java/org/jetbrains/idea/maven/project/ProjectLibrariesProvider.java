@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
@@ -20,7 +21,10 @@ public class ProjectLibrariesProvider {
     myProject = project;
 
     // todo hack to support addition of modules from GUI
-    ProjectLibrariesConfigurable configurable = ProjectLibrariesConfigurable.getInstance(myProject);
+    ProjectLibrariesConfigurable configurable = null;
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      configurable = ProjectLibrariesConfigurable.getInstance(myProject);
+    }
     LibraryTableModifiableModelProvider modelProvider = configurable != null ? configurable.getModelProvider(true) : null;
     if (modelProvider != null) {
       myModifiableModel = (LibrariesModifiableModel)modelProvider.getModifiableModel();
