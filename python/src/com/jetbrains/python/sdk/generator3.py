@@ -256,9 +256,9 @@ class ModuleRedeclarator(object):
   # {("class", "method"): ("signature_string")}
   PREDEFINED_BUILTIN_SIGS = {
     ("object", "__init__"): "(self)",
-    ("str", "__init__"): "(self, x)",
+    ("str", "__init__"): "(self, x)", # overrides a fake
     ("type", "__init__"): "(self, name, bases=None, dict=None)", # overrides a fake
-    ("int", "__init__"): "(self, x, base=10)",
+    ("int", "__init__"): "(self, x, base=10)", # overrides a fake
     ("list", "__init__"): "(self, seq=())",
     ("tuple", "__init__"): "(self, seq=())", # overrides a fake
     ("set", "__init__"): "(self, seq=())",
@@ -279,7 +279,7 @@ class ModuleRedeclarator(object):
   fake_builtin_init.__doc__ = object.__init__.__doc__ # this forces class's doc to be used instead
 
   # This is a list of builtin classes to use fake init
-  FAKE_BUILTIN_INITS = (tuple, type)
+  FAKE_BUILTIN_INITS = (tuple, type, int, str)
 
   # Some builtin methods are decorated, but this is hard to detect.
   # {("class_name", "method_name"): "@decorator"}
@@ -418,6 +418,8 @@ class ModuleRedeclarator(object):
       deco = self.KNOWN_DECORATORS.get((classname, p_name), None)
       if deco:
         self.out(deco + " # known case", indent);
+    if p_name == "__new__":
+      self.out("@staticmethod # known case of __new__", indent);
     if inspect and inspect.isfunction(p_func):
       args, varg, kwarg, defaults = inspect.getargspec(p_func)
       spec = []
