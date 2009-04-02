@@ -87,6 +87,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static Thread ourTestThread;
   private static ModuleType ourModuleType;
   private final Map<String, InspectionTool> myAvailableInspectionTools = new THashMap<String, InspectionTool>();
+  private static boolean ourHaveShutdownHook;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -167,6 +168,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
         ourProject = ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+        if (!ourHaveShutdownHook) {
+          ourHaveShutdownHook = true;
+          registerShutdownHook();
+        }
         ourPsiManager = null;
         ourModuleType = moduleType;
         ourModule = createMainModule(moduleType);
@@ -546,8 +551,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   static {
     System.setProperty("jbdt.test.fixture", "com.intellij.designer.dt.IJTestFixture");
+  }
 
-    ShutDownTracker.getInstance().registerShutdownThread(0, new Thread(new Runnable() {
+  private static void registerShutdownHook() {
+    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
@@ -563,6 +570,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           e.printStackTrace();
         }
       }
-    }));
+    });
   }
 }
