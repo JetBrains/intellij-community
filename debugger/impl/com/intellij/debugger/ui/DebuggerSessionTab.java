@@ -249,11 +249,20 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
 
     myUi.removeContent(myUi.findContent(DebuggerContentInfo.CONSOLE_CONTENT), true);
 
-    Content console = myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
-                                         XDebuggerBundle.message("debugger.session.tab.console.content.name"),
-                                         XDebuggerUIConstants.CONSOLE_TAB_ICON, myConsole.getPreferredFocusableComponent());
+    Content console;
+    if (myConsole instanceof ExecutionConsoleEx) {
+      ((ExecutionConsoleEx)myConsole).buildUi(myUi);
+      console = myUi.findContent(DebuggerContentInfo.CONSOLE_CONTENT);
+      LOG.assertTrue(console != null, "Console content was not created");
+    }
+    else {
+      console = myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
+                                           XDebuggerBundle.message("debugger.session.tab.console.content.name"),
+                                           XDebuggerUIConstants.CONSOLE_TAB_ICON, myConsole.getPreferredFocusableComponent());
 
-    console.setCloseable(false);
+      console.setCloseable(false);
+      myUi.addContent(console, 1, PlaceInGrid.bottom, false);
+    }
     attachNotificationTo(console);
 
     if (myConsole != null) {
@@ -267,11 +276,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
         consoleActions.add(goaction);
       }
     }
-
-
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
-
-    myUi.addContent(console, 1, PlaceInGrid.bottom, false);
 
     if (myConfiguration instanceof RunConfigurationBase && ((RunConfigurationBase)myConfiguration).needAdditionalConsole()) {
       myManager.initLogConsoles((RunConfigurationBase)myConfiguration, myRunContentDescriptor.getProcessHandler());
