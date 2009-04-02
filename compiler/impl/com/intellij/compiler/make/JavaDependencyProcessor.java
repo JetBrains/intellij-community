@@ -643,7 +643,6 @@ class JavaDependencyProcessor {
           }
         }
 
-        final int subclassDeclarationId = subclassQName;
         // process added members
         for (final MemberInfo member : myAddedMembers) {
           if (member instanceof MethodInfo) {
@@ -659,7 +658,7 @@ class JavaDependencyProcessor {
               return true;
             }
             if (!method.isPrivate()) {
-              MethodInfo derivedMethod = oldCache.findMethodsBySignature(subclassDeclarationId, method.getDescriptor(symbolTable), symbolTable);
+              final MethodInfo derivedMethod = oldCache.findMethodsBySignature(subclassQName, method.getDescriptor(symbolTable), symbolTable);
               if (derivedMethod != null) {
                 if (!method.getReturnTypeDescriptor(symbolTable).equals(derivedMethod.getReturnTypeDescriptor(symbolTable))) {
                   if (myDependencyCache.markClass(subclassQName)) {
@@ -675,6 +674,24 @@ class JavaDependencyProcessor {
                     if (LOG.isDebugEnabled()) {
                       LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the method " + method +
                                 " in derived class is less accessible than in base class");
+                    }
+                  }
+                  return true;
+                }
+                if (!method.isStatic() && derivedMethod.isStatic()) {
+                  if (myDependencyCache.markClass(subclassQName)) {
+                    if (LOG.isDebugEnabled()) {
+                      LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the method " + method +
+                                " in derived class is static, but added method in the base class is not");
+                    }
+                  }
+                  return true;
+                }
+                if (method.isFinal() && !derivedMethod.isFinal()) {
+                  if (myDependencyCache.markClass(subclassQName)) {
+                    if (LOG.isDebugEnabled()) {
+                      LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the method " + method +
+                                " in base class is final, but in derived class is not");
                     }
                   }
                   return true;
@@ -701,7 +718,7 @@ class JavaDependencyProcessor {
             }
           }
           else if (member instanceof FieldInfo) {
-            if (oldCache.findFieldByName(subclassDeclarationId, member.getName()) != null) {
+            if (oldCache.findFieldByName(subclassQName, member.getName()) != null) {
               if (myDependencyCache.markClass(subclassQName)) {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: added field " + member +
@@ -732,7 +749,7 @@ class JavaDependencyProcessor {
             
             final String oldMethodDescriptor = oldMethod.getDescriptor(symbolTable);
             
-            final MethodInfo derivedMethod = oldCache.findMethodsBySignature(subclassDeclarationId, oldMethodDescriptor, symbolTable);
+            final MethodInfo derivedMethod = oldCache.findMethodsBySignature(subclassQName, oldMethodDescriptor, symbolTable);
             if (derivedMethod != null) {
               if (myDependencyCache.markClass(subclassQName)) {
                 if (LOG.isDebugEnabled()) {
