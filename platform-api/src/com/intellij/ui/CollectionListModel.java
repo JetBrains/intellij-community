@@ -49,4 +49,8 @@ public class CollectionListModel extends AbstractListModel {
     fireIntervalRemoved(this, i, i);
   }
 
+  public void contentsChanged(Object element) {
+    int i = myItems.indexOf(element);
+    fireContentsChanged(this, i, i);
+  }
 }
