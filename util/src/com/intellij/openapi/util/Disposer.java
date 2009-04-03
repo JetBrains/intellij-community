@@ -23,7 +23,6 @@ import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -99,8 +98,7 @@ public class Disposer {
     ourTree.executeChildAndReplace(toDipose, toReplace, true, ourDisposeAction);
   }
 
-  @TestOnly
-  static ObjectTree<Disposable> getTree() {
+  public static ObjectTree<Disposable> getTree() {
     return ourTree;
   }
 

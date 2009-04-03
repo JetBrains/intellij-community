@@ -139,6 +139,10 @@ public class JBTabsImpl extends JComponent
     this(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), parent);
   }
 
+  public JBTabsImpl(@Nullable Project project, IdeFocusManager focusManager, Disposable parent) {
+    this(project, ActionManager.getInstance(), focusManager, parent);    
+  }
+
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
     myActionManager = actionManager;
@@ -570,6 +574,11 @@ public class JBTabsImpl extends JComponent
       updateHiding();
     }
 
+    if (getTabCount() == 1) {
+      fireBeforeSelectionChanged(null, info);
+      fireSelectionChanged(null, info);
+    }
+
     return info;
   }
 
@@ -655,22 +664,11 @@ public class JBTabsImpl extends JComponent
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
 
-    if (oldInfo != newInfo) {
-      for (TabsListener eachListener : myTabListeners) {
-        eachListener.beforeSelectionChanged(oldInfo, newInfo);
-      }
-    }
-
+    fireBeforeSelectionChanged(oldInfo, newInfo);
 
     updateContainer(false, true);
 
-    if (oldInfo != newInfo) {
-      for (TabsListener eachListener : myTabListeners) {
-        if (eachListener != null) {
-          eachListener.selectionChanged(oldInfo, newInfo);
-        }
-      }
-    }
+    fireSelectionChanged(oldInfo, newInfo);
 
     if (requestFocus) {
       final JComponent toFocus = getToFocus();
@@ -695,6 +693,24 @@ public class JBTabsImpl extends JComponent
     }
     else {
       return removeDeferred();
+    }
+  }
+
+  private void fireBeforeSelectionChanged(TabInfo oldInfo, TabInfo newInfo) {
+    if (oldInfo != newInfo) {
+      for (TabsListener eachListener : myTabListeners) {
+        eachListener.beforeSelectionChanged(oldInfo, newInfo);
+      }
+    }
+  }
+
+  private void fireSelectionChanged(TabInfo oldInfo, TabInfo newInfo) {
+    if (oldInfo != newInfo) {
+      for (TabsListener eachListener : myTabListeners) {
+        if (eachListener != null) {
+          eachListener.selectionChanged(oldInfo, newInfo);
+        }
+      }
     }
   }
 

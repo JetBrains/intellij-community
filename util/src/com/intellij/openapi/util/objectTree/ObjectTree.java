@@ -27,9 +27,16 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Collections;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
+
+  final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
+  final Collection<ObjectNode<T>> EMPTY_COLLECTION = Collections.unmodifiableCollection(new ArrayList<ObjectNode<T>>());
+
+  private CopyOnWriteArraySet<ObjectTreeListener> myListeners = new CopyOnWriteArraySet<ObjectTreeListener>();
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final THashSet<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY) {
@@ -85,6 +92,8 @@ public final class ObjectTree<T> {
       else {
         parentNode.addChild(child);
       }
+
+      fireRegistered(childNode.getObject());
     }
   }
 
@@ -235,5 +244,29 @@ public final class ObjectTree<T> {
     myExecutedNodes.clear();
     myExecutedUnregisteredNodes.clear();
     myObject2NodeMap.clear();
+  }
+
+  public THashSet<T> getRootObjects() {
+    return myRootObjects;
+  }
+
+  public void addListener(ObjectTreeListener listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeListener(ObjectTreeListener listener) {
+    myListeners.remove(listener);
+  }
+
+  void fireRegistered(Object object) {
+    for (ObjectTreeListener each : myListeners) {
+      each.objectRegistered(object);
+    }
+  }
+
+  void fireExecuted(Object object) {
+    for (ObjectTreeListener each : myListeners) {
+      each.objectExecuted(object);
+    }
   }
 }

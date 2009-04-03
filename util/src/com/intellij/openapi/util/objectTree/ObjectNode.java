@@ -21,10 +21,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 
 public final class ObjectNode<T> {
-  private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
 
@@ -46,7 +47,7 @@ public final class ObjectNode<T> {
 
   private ObjectNode<T>[] getChildrenArray() {
     synchronized (myTree.treeLock) {
-      if (myChildren == null) return EMPTY_ARRAY;
+      if (myChildren == null) return myTree.EMPTY_ARRAY;
       return myChildren.toArray(new ObjectNode[myChildren.size()]);
     }
   }
@@ -83,6 +84,13 @@ public final class ObjectNode<T> {
     return myParent;
   }
 
+  public Collection<ObjectNode<T>> getChildren() {
+    synchronized (myTree.treeLock) {
+      if (myChildren == null) return myTree.EMPTY_COLLECTION;
+      return Collections.unmodifiableCollection(myChildren);
+    }
+  }
+
   private void ensureChildArray() {
     if (myChildren == null) {
       myChildren = new LinkedHashSet<ObjectNode<T>>();
@@ -109,6 +117,7 @@ public final class ObjectNode<T> {
 
         try {
           action.execute(myObject);
+          myTree.fireExecuted(myObject);
         }
         catch (Throwable e) {
           LOG.error(e);
@@ -156,5 +165,9 @@ public final class ObjectNode<T> {
         node.assertNoReferencesKept(aDisposable);
       }
     }
+  }
+
+  public Throwable getAllocation() {
+    return myTrace;
   }
 }

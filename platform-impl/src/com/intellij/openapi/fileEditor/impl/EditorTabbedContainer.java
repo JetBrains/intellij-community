@@ -69,7 +69,7 @@ final class EditorTabbedContainer implements Disposable {
       .addListener(new TabsListener.Adapter() {
         public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
           final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-          final FileEditor oldEditor = editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject());
+          final FileEditor oldEditor = oldSelection != null ? editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject()) : null;
           if (oldEditor != null) {
             oldEditor.deselectNotify();
           }
