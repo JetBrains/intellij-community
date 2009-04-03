@@ -980,6 +980,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     };
   }
 
+  public void setEditorEnabled(boolean enabled) {
+    myEditor.getContentComponent().setEnabled(enabled);
+  }
+
   private void fireChange() {
     if (myDeferredTypes.isEmpty()) return;
     Collection<ConsoleViewContentType> types = Collections.unmodifiableCollection(myDeferredTypes);
