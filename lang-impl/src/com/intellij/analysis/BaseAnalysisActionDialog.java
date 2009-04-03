@@ -3,6 +3,7 @@ package com.intellij.analysis;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -98,7 +99,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       myModuleButton.setSelected(myRememberScope && useModuleScope);
     }
 
-    myModuleButton.setVisible(myModuleName != null);
+    myModuleButton.setVisible(myModuleName != null && ModuleManager.getInstance(myProject).getModules().length > 1);
 
     boolean useUncommitedFiles = false;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);

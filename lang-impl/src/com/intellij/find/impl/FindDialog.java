@@ -613,6 +613,11 @@ final class FindDialog extends DialogWrapper {
     myModuleComboBox = new ComboBox(names, -1);
     scopePanel.add(myModuleComboBox, gbConstraints);
 
+    if (modules.length == 1) {
+      myModuleComboBox.setVisible(false);
+      myRbModule.setVisible(false);
+    }
+
     gbConstraints.gridx = 0;
     gbConstraints.gridy++;
     gbConstraints.weightx = 0;
@@ -907,6 +912,10 @@ final class FindDialog extends DialogWrapper {
         myModuleComboBox.setEnabled(true);
         myModuleComboBox.setSelectedItem(myModel.getModuleName());
         myScopeCombo.setEnabled(false);
+
+        // force showing even if we have only one module
+        myRbModule.setVisible(true);
+        myModuleComboBox.setVisible(true);
       }
       else if (myModel.getCustomScopeName() != null) {
         myRbCustomScope.setSelected(true);
