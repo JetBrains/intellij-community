@@ -267,7 +267,8 @@ public class ClasspathPanel extends JPanel {
         upButton.setEnabled(minRow > 0 && minRow < myEntryTable.getRowCount());
         downButton.setEnabled(maxRow >= 0 && maxRow < myEntryTable.getRowCount() - 1);
         removeButton.setEnabled(removeButtonEnabled);
-        myEditButton.setEnabled(selectedRows.length == 1 && myModel.getItemAt(selectedRows[0]) instanceof LibItem);
+        TableItem selectedItem = selectedRows.length == 1 ? myModel.getItemAt(selectedRows[0]) : null;
+        myEditButton.setEnabled(selectedItem instanceof LibItem && selectedItem.isEditable());
       }
     });
 
