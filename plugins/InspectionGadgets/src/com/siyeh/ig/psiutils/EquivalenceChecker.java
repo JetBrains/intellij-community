@@ -17,7 +17,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +25,7 @@ import java.util.List;
 
 public class EquivalenceChecker{
 
-    private EquivalenceChecker(){
-        super();
-    }
+    private EquivalenceChecker(){}
 
     public static boolean modifierListsAreEquivalent(
             @Nullable PsiModifierList list1, @Nullable PsiModifierList list2) {
@@ -307,13 +304,7 @@ public class EquivalenceChecker{
         }
         final String name1 = var1.getName();
         final String name2 = var2.getName();
-        if(name1 == null){
-            if (name2 != null) {
-                return false;
-            }
-        } else if (name2 == null) {
-            return false;
-        } else if (!name1.equals(name2)) {
+        if (!name1.equals(name2)) {
             return false;
         }
         final PsiExpression initializer1 = var1.getInitializer();
@@ -370,9 +361,6 @@ public class EquivalenceChecker{
         }
         final String name1 = parameter1.getName();
         final String name2 = parameter2.getName();
-        if(name1 == null){
-            return name2 == null;
-        }
         return name1.equals(name2);
     }
 
@@ -435,13 +423,7 @@ public class EquivalenceChecker{
         final PsiParameter parameter2 = statement1.getIterationParameter();
         final String name1 = parameter1.getName();
         final String name2 = parameter2.getName();
-        if(name1 == null) {
-            if(name2 != null){
-                return false;
-            }
-        } else if (name2 == null) {
-            return false;
-        } else if (!name1.equals(name2)){
+        if (!name1.equals(name2)){
             return false;
         }
         final PsiType type1 = parameter1.getType();
@@ -640,18 +622,10 @@ public class EquivalenceChecker{
         if(exp1 == null || exp2 == null){
             return false;
         }
-        PsiExpression expToCompare1 = exp1;
-        while(expToCompare1 instanceof PsiParenthesizedExpression){
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression)expToCompare1;
-            expToCompare1 = parenthesizedExpression.getExpression();
-        }
-        PsiExpression expToCompare2 = exp2;
-        while(expToCompare2 instanceof PsiParenthesizedExpression){
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression)expToCompare2;
-            expToCompare2 = parenthesizedExpression.getExpression();
-        }
+        final PsiExpression expToCompare1 =
+                ParenthesesUtils.stripParentheses(exp1);
+        final PsiExpression expToCompare2 =
+                ParenthesesUtils.stripParentheses(exp2);
         if (expToCompare1 == null && expToCompare2 == null){
             return true;
         }
