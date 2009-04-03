@@ -16,7 +16,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.pom.PomModel;
@@ -47,8 +46,8 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import net.sf.cglib.proxy.InvocationHandler;
 import net.sf.cglib.proxy.AdvancedProxy;
+import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,9 +79,9 @@ public final class DomManagerImpl extends DomManager {
       return new StaticGenericInfo(rawType, DomManagerImpl.this);
     }
   };
-  private final ConcurrentFactoryMap<Pair<Type, Type>, InvocationCache> myInvocationCaches = new ConcurrentFactoryMap<Pair<Type, Type>, InvocationCache>() {
+  private final ConcurrentFactoryMap<Type, InvocationCache> myInvocationCaches = new ConcurrentFactoryMap<Type, InvocationCache>() {
     @NotNull
-    protected InvocationCache create(final Pair<Type, Type> key) {
+    protected InvocationCache create(final Type key) {
       return new InvocationCache();
     }
   };
@@ -305,7 +304,7 @@ public final class DomManagerImpl extends DomManager {
     return myGenericInfos.get(type);
   }
 
-  final InvocationCache getInvocationCache(final Pair<Type, Type> type) {
+  final InvocationCache getInvocationCache(final Type type) {
     return myInvocationCaches.get(type);
   }
 
