@@ -107,7 +107,7 @@ public class CodeCompletionPanel {
     hideOption(myCbXmlAutocompletion, OptionId.COMPLETION_AUTO_POPUP_XML);
     hideOption(myXmlAutocompletionDelayField, OptionId.COMPLETION_AUTO_POPUP_XML);
     hideOption(myCbJavadocAutocompletion, OptionId.COMPLETION_AUTO_POPUP_DOC_COMMENT);
-    hideOption(myAutopopupJavaDocField, OptionId.COMPLETION_AUTO_POPUP_DOC_COMMENT);
+    hideOption(myFldJavadocAutocompletionDelayField, OptionId.COMPLETION_AUTO_POPUP_DOC_COMMENT);
     hideOption(myCbInsertBothParenthesWhenNoArgs, OptionId.COMPLETION_DOUBLE_PAREN_NO_ARGS);
 
     reset();
