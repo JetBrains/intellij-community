@@ -19,6 +19,8 @@ package com.intellij.openapi.options.binding;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 
+import javax.swing.*;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -28,6 +30,18 @@ public abstract class BindableConfigurable implements UnnamedConfigurable {
 
   protected BindableConfigurable(ControlBinder binder) {
     myBinder = binder;
+  }
+  
+  protected void bindAnnotations() {
+    myBinder.bindAnnotations(this);
+  }
+
+  protected void bindControl(JComponent control, String propertyName) {
+    myBinder.bindControl(control, propertyName);
+  }
+
+  protected void bindControl(ValueAccessor controlAccessor, String propertyName) {
+    myBinder.bindControl(controlAccessor, propertyName);
   }
 
   public boolean isModified() {

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.reflect.Field;
 
 /**
  * @author Dmitry Avdeev
@@ -116,5 +117,25 @@ public class ControlBinder {
       }
     }
     return value;
+  }
+
+  public void bindAnnotations(Object form) {
+    Field[] fields = form.getClass().getDeclaredFields();
+    for (Field field : fields) {
+      BindControl annotation = field.getAnnotation(BindControl.class);
+      if (annotation != null) {
+        String name = annotation.value();
+        if (name.length() == 0) {
+          name = field.getName();
+        }
+        try {
+          field.setAccessible(true);
+          bindControl((JComponent)field.get(form), name);
+        }
+        catch (IllegalAccessException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
   }
 }
