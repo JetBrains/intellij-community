@@ -47,15 +47,21 @@ public class NonExceptionNameEndsWithExceptionInspection
     @Override @NotNull
     protected InspectionGadgetsFix[] buildFixes(Object... infos) {
         final String name = (String) infos[0];
-        return new InspectionGadgetsFix[] {new RenameFix(),
-                new ExtendExceptionFix(name)};
+        final Boolean onTheFly = (Boolean)infos[1];
+        if (onTheFly.booleanValue()) {
+            return new InspectionGadgetsFix[] {new RenameFix(),
+                                               new ExtendExceptionFix(name)};
+        } else {
+            return new InspectionGadgetsFix[] {
+                    new ExtendExceptionFix(name)};
+        }
     }
 
     private static class ExtendExceptionFix extends InspectionGadgetsFix {
 
         private final String name;
 
-        public ExtendExceptionFix(String name) {
+        ExtendExceptionFix(String name) {
             this.name = name;
         }
 
@@ -120,7 +126,7 @@ public class NonExceptionNameEndsWithExceptionInspection
             if (ClassUtils.isSubclass(aClass, "java.lang.Exception")) {
                 return;
             }
-            registerClassError(aClass, className);
+            registerClassError(aClass, className, Boolean.valueOf(isOnTheFly()));
         }
     }
 }

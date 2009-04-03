@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,27 +25,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class EnumAsNameInspection extends BaseInspection{
 
+    @Override
     @NotNull
     public String getID(){
         return "EnumAsIdentifier";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "use.enum.as.identifier.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "use.enum.as.identifier.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos){
         return new RenameFix();
     }
 
+    @Override
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
+        return true;
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new EnumAsNameVisitor();
     }

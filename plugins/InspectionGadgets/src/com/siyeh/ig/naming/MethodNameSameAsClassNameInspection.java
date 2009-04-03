@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,24 +31,35 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodNameSameAsClassNameInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "method.name.same.as.class.name.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "method.name.same.as.class.name.problem.descriptor");
     }
 
+    @Override
     @NotNull
     protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-        return new InspectionGadgetsFix[]{
-                new RenameFix(), new MethodNameSameAsClassNameFix()};
+        final Boolean onTheFly = (Boolean)infos[0];
+        if (onTheFly.booleanValue()) {
+            return new InspectionGadgetsFix[]{
+                    new RenameFix(), new MethodNameSameAsClassNameFix()};
+        } else {
+            return new InspectionGadgetsFix[]{
+                    new MethodNameSameAsClassNameFix()
+            };
+        }
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
@@ -61,6 +72,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
             return InspectionGadgetsBundle.message("make.method.ctr.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -78,6 +90,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new MethodNameSameAsClassNameVisitor();
     }
@@ -102,7 +115,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
             if (!methodName.equals(className)) {
                 return;
             }
-            registerMethodError(method);
+            registerMethodError(method, Boolean.valueOf(isOnTheFly()));
         }
     }
 }

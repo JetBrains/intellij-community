@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,10 @@ public class RenameFix extends InspectionGadgetsFix {
     private final String m_targetName;
 
     public RenameFix() {
-        super();
         m_targetName = null;
     }
 
     public RenameFix(@NonNls String targetName) {
-        super();
         m_targetName = targetName;
     }
 
@@ -53,6 +51,7 @@ public class RenameFix extends InspectionGadgetsFix {
         }
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiElement nameIdentifier = descriptor.getPsiElement();
         final PsiElement elementToRename = nameIdentifier.getParent();
