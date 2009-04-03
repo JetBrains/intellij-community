@@ -60,7 +60,7 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
         @Override public void visitThrowStatement(PsiThrowStatement statement) {
           super.visitThrowStatement(statement);
           PsiClassType actualType = ExceptionUtil.getUnhandledException(statement, myPlace);
-          if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+          if (actualType != null && type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
             PsiExpression psiExpression = statement.getException();
             if (psiExpression instanceof PsiReferenceExpression) {
               addOccurrence(psiExpression);
