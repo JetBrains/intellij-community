@@ -8,6 +8,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
@@ -286,6 +287,16 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   public List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
     buildMethodMaps();
     return new ArrayList<AttributeChildDescriptionImpl>(myAttributeChildrenMethods.values());
+  }
+
+  @Override
+  public boolean processAttributeChildrenDescriptions(Processor<AttributeChildDescriptionImpl> processor) {
+    for (final AttributeChildDescriptionImpl description : getAttributeChildrenDescriptions()) {
+      if (!processor.process(description)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable

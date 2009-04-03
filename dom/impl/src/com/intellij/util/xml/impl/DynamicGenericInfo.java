@@ -7,11 +7,13 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.*;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +22,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -28,7 +31,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
   private final Project myProject;
-  private static final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
+  private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
   private volatile boolean myInitialized;
   private ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
@@ -51,9 +54,10 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
   public final boolean checkInitialized() {
     if (myInitialized) return true;
+    myStaticGenericInfo.buildMethodMaps();
+
     if (myComputing.get() == Boolean.TRUE) return false;
 
-    myStaticGenericInfo.buildMethodMaps();
     final XmlElement element = myInvocationHandler.getXmlElement();
     if (element == null) return true;
 
@@ -208,6 +212,25 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   public List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
     checkInitialized();
     return myAttributes.getDescriptions();
+  }
+
+  @Override
+  public boolean processAttributeChildrenDescriptions(final Processor<AttributeChildDescriptionImpl> processor) {
+    final Set<AttributeChildDescriptionImpl> visited = new THashSet<AttributeChildDescriptionImpl>();
+    if (!myStaticGenericInfo.processAttributeChildrenDescriptions(new Processor<AttributeChildDescriptionImpl>() {
+      public boolean process(AttributeChildDescriptionImpl attributeChildDescription) {
+        visited.add(attributeChildDescription);
+        return processor.process(attributeChildDescription);
+      }
+    })) {
+      return false;
+    }
+    for (final AttributeChildDescriptionImpl description : getAttributeChildrenDescriptions()) {
+      if (!visited.contains(description) && !processor.process(description)) {
+        return false;
+      }
+    }
+    return true;
   }
 
 }

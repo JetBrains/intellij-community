@@ -4,9 +4,10 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.XmlName;
-import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
@@ -43,4 +44,6 @@ public abstract class DomGenericInfoEx implements DomGenericInfo {
     }
     return attribute ? null : getCustomNameChildrenDescription();
   }
+
+  public abstract boolean processAttributeChildrenDescriptions(Processor<AttributeChildDescriptionImpl> processor);
 }

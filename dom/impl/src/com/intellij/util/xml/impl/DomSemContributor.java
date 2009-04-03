@@ -4,6 +4,8 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.XmlPatterns.*;
 import com.intellij.psi.PsiElement;
@@ -15,6 +17,7 @@ import com.intellij.semantic.SemContributor;
 import com.intellij.semantic.SemRegistrar;
 import com.intellij.semantic.SemService;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.XmlName;
@@ -22,7 +25,6 @@ import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -152,29 +154,35 @@ public class DomSemContributor extends SemContributor {
     });
 
     registrar.registerSemElementProvider(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, xmlAttribute(), new NullableFunction<XmlAttribute, AttributeChildInvocationHandler>() {
-      public AttributeChildInvocationHandler fun(XmlAttribute attribute) {
+      public AttributeChildInvocationHandler fun(final XmlAttribute attribute) {
         final XmlTag tag = PhysicalDomParentStrategy.getParentTag(attribute);
         final DomInvocationHandler handler = mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, tag);
         if (handler == null) return null;
 
         final String localName = attribute.getLocalName();
-        for (final AttributeChildDescriptionImpl description : handler.getGenericInfo().getAttributeChildrenDescriptions()) {
-          if (description.getXmlName().getLocalName().equals(localName)) {
-            final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(description.getXmlName());
+        final Ref<AttributeChildInvocationHandler> result = Ref.create(null);
+        handler.getGenericInfo().processAttributeChildrenDescriptions(new Processor<AttributeChildDescriptionImpl>() {
+          public boolean process(AttributeChildDescriptionImpl description) {
+            if (description.getXmlName().getLocalName().equals(localName)) {
+              final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(description.getXmlName());
 
-            String ns = evaluatedXmlName.getNamespace(tag, handler.getFile());
-            //see XmlTagImpl.getAttribute(localName, namespace)
-            if (ns.equals(tag.getNamespace()) && localName.equals(attribute.getName()) ||
-                ns.equals(attribute.getNamespace())) {
-              final AttributeChildInvocationHandler attributeHandler =
-                new AttributeChildInvocationHandler(evaluatedXmlName, description, myDomManager,
-                                                    new PhysicalDomParentStrategy(attribute));
-              attribute.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, attributeHandler);
-              return attributeHandler;
+              final String ns = evaluatedXmlName.getNamespace(tag, handler.getFile());
+              //see XmlTagImpl.getAttribute(localName, namespace)
+              if (ns.equals(tag.getNamespace()) && localName.equals(attribute.getName()) ||
+                  ns.equals(attribute.getNamespace())) {
+                final AttributeChildInvocationHandler attributeHandler =
+                  new AttributeChildInvocationHandler(evaluatedXmlName, description, myDomManager,
+                                                      new PhysicalDomParentStrategy(attribute));
+                attribute.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, attributeHandler);
+                result.set(attributeHandler);
+                return false;
+              }
             }
+            return true;
           }
-        }
-        return null;
+        });
+
+        return result.get();
       }
     });
 
