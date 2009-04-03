@@ -133,7 +133,7 @@ public class EditorWindow {
           }
 
           if (unsplit && getTabCount() == 0) {
-            unsplit ();
+            unsplit (true);
           }
           myPanel.revalidate ();
           if (myTabbedPane == null) {
@@ -517,7 +517,7 @@ public class EditorWindow {
     return result;
   }
 
-  public void unsplit() {
+  public void unsplit(boolean setCurrent) {
     checkConsistency();
     final Container splitter = myPanel.getParent();
 
@@ -558,7 +558,9 @@ public class EditorWindow {
     if (editorToSelect != null) {
       setSelectedEditor(editorToSelect, true);
     }
-    myOwner.setCurrentWindow(this, false);
+    if (setCurrent) {
+      myOwner.setCurrentWindow(this, false);
+    }
   }
 
   private void processSiblingEditor(final EditorWithProviderComposite siblingEditor) {
@@ -576,7 +578,7 @@ public class EditorWindow {
   public void unsplitAll() {
     checkConsistency();
     while (inSplitter()) {
-      unsplit();
+      unsplit(true);
     }
   }
 

@@ -111,7 +111,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return myPanels;
   }
 
-  private EditorsSplitters getSplitters() {
+  public EditorsSplitters getSplitters() {
     initUI();
     return mySplitters;
   }
@@ -223,7 +223,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public void unsplitWindow() {
     final EditorWindow currentWindow = getSplitters().getCurrentWindow();
     if (currentWindow != null) {
-      currentWindow.unsplit();
+      currentWindow.unsplit(true);
     }
   }
 
@@ -398,7 +398,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
               continue;
             }
             if (window.getTabCount() == 0) {
-              window.unsplit();
+              window.unsplit(false);
             }
           }
         }
@@ -1293,14 +1293,9 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     }
   }
 
-
   @NotNull
   public VirtualFile[] getSiblings(VirtualFile file) {
     return getOpenFiles();
-  }
-
-  public void openFiles() {
-    getSplitters().openFiles();
   }
 
   protected void queueUpdateFile(final VirtualFile file) {

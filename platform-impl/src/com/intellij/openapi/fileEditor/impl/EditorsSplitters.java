@@ -55,7 +55,7 @@ public final class EditorsSplitters extends JPanel {
     return myManager;
   }
 
-  private void clear() {
+  public void clear() {
     removeAll();
     myWindows.clear();
     setCurrentWindow(null);
@@ -169,8 +169,7 @@ public final class EditorsSplitters extends JPanel {
 
   public void openFiles() {
     if (mySplittersElement != null) {
-      LOG.assertTrue(myCurrentWindow == null);
-      final JPanel comp = readExternalPanel(mySplittersElement);
+      final JPanel comp = readExternalPanel(mySplittersElement, getTopPanel());
       if (comp != null) {
         removeAll();
         add(comp, BorderLayout.CENTER);
@@ -190,24 +189,40 @@ public final class EditorsSplitters extends JPanel {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private JPanel readExternalPanel(final Element element) {
+  public JPanel readExternalPanel(final Element element, @Nullable JPanel panel) {
     final Element splitterElement = element.getChild("splitter");
     if (splitterElement != null) {
       LOG.info("splitter");
-      final JPanel res = new JPanel(new BorderLayout());
       final boolean orientation = "vertical".equals(splitterElement.getAttributeValue("split-orientation"));
       final float proportion = Float.valueOf(splitterElement.getAttributeValue("split-proportion")).floatValue();
       final Element first = splitterElement.getChild("split-first");
       final Element second = splitterElement.getChild("split-second");
-      final Splitter splitter = new Splitter(orientation, proportion, 0.1f, 0.9f);
-      splitter.setFirstComponent(readExternalPanel(first));
-      splitter.setSecondComponent(readExternalPanel(second));
-      res.add(splitter, BorderLayout.CENTER);
-      return res;
+
+      Splitter splitter;
+      if (panel == null) {
+        panel = new JPanel(new BorderLayout());
+        splitter = new Splitter(orientation, proportion, 0.1f, 0.9f);
+        panel.add(splitter, BorderLayout.CENTER);
+        splitter.setFirstComponent(readExternalPanel(first, null));
+        splitter.setSecondComponent(readExternalPanel(second, null));
+      } else if (panel.getComponent(0) instanceof Splitter) {
+        splitter = (Splitter)panel.getComponent(0);
+        readExternalPanel(first, (JPanel)splitter.getFirstComponent());
+        readExternalPanel(second, (JPanel)splitter.getSecondComponent());
+      } else {
+        readExternalPanel(first, panel);
+        readExternalPanel(second, panel);
+      }
+      return panel;
     }
     final Element leaf = element.getChild("leaf");
     if (leaf != null) {
-      final EditorWindow window = new EditorWindow(this);
+      EditorWindow window;
+      if (panel == null) {
+        window = new EditorWindow(this);
+      } else {
+        window = findWindowWith(panel);
+      }
       try {
         //noinspection unchecked
         final List<Element> children = leaf.getChildren("file");
@@ -375,6 +390,11 @@ public final class EditorsSplitters extends JPanel {
         return IdeFocusTraversalPolicy.getPreferredFocusedComponent(EditorsSplitters.this, this);
       }
     }
+  }
+
+  @Nullable
+  public JPanel getTopPanel() {
+    return getComponentCount() > 0 ? (JPanel)getComponent(0) : null;
   }
 
   public EditorWindow getCurrentWindow() {
