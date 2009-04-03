@@ -46,6 +46,9 @@ import java.util.*;
  * @author ven
  */
 public class ExpectedTypesProvider {
+  private static final ExpectedTypeInfo VOID_EXPECTED = new ExpectedTypeInfoImpl(PsiType.VOID, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, PsiType.VOID,
+                                                                                 TailType.SEMICOLON);
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypesProvider");
   public static ExpectedTypesProvider getInstance(Project project) {
     return ServiceManager.getService(project, ExpectedTypesProvider.class);
@@ -82,19 +85,28 @@ public class ExpectedTypesProvider {
   }
 
   public ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion) {
-    return getExpectedTypes(expr, forCompletion, ourGlobalScopeClassProvider);
+    return getExpectedTypes(expr, forCompletion, false);
+  }
+
+  public ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, final boolean voidable) {
+    return getExpectedTypes(expr, forCompletion, ourGlobalScopeClassProvider, voidable);
   }
 
   public ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr,
                                              boolean forCompletion,
                                              ExpectedClassProvider classProvider) {
+    return getExpectedTypes(expr, forCompletion, classProvider, false);
+  }
+
+  public ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider,
+                                             final boolean voidable) {
     if (expr == null) return null;
     PsiElement parent = expr.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
       expr = (PsiExpression)parent;
       parent = parent.getParent();
     }
-    MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider);
+    MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider, voidable);
     parent.accept(visitor);
     return visitor.getResult();
   }
@@ -185,13 +197,15 @@ public class ExpectedTypesProvider {
     private PsiExpression myExpr;
     private final boolean myForCompletion;
     private final ExpectedClassProvider myClassProvider;
+    private boolean myVoidable;
     private ExpectedTypeInfo[] myResult = ExpectedTypeInfo.EMPTY_ARRAY;
     @NonNls private static final String LENGTH_SYNTHETIC_ARRAY_FIELD = "length";
 
-    private MyParentVisitor(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider) {
+    private MyParentVisitor(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider, boolean voidable) {
       myExpr = expr;
       myForCompletion = forCompletion;
       myClassProvider = classProvider;
+      myVoidable = voidable;
     }
 
     public ExpectedTypeInfo[] getResult() {
@@ -208,9 +222,10 @@ public class ExpectedTypesProvider {
       }
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       if (myForCompletion) {
-        final MyParentVisitor visitor = new MyParentVisitor(expression, myForCompletion, myClassProvider);
+        final MyParentVisitor visitor = new MyParentVisitor(expression, myForCompletion, myClassProvider, myVoidable);
         expression.getParent().accept(visitor);
         myResult = visitor.getResult();
         return;
@@ -231,6 +246,13 @@ public class ExpectedTypesProvider {
             myResult = findClassesWithDeclaredField(expression);
           }
         }
+      }
+    }
+
+    @Override
+    public void visitExpressionStatement(PsiExpressionStatement statement) {
+      if (myVoidable) {
+        myResult = new ExpectedTypeInfo[]{VOID_EXPECTED};
       }
     }
 
@@ -518,7 +540,7 @@ public class ExpectedTypesProvider {
       PsiExpression op2 = expr.getROperand();
       PsiJavaToken sign = expr.getOperationSign();
       if (myForCompletion && op1.equals(myExpr)) {
-        final MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider);
+        final MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider, myVoidable);
         myExpr = (PsiExpression)myExpr.getParent();
         expr.getParent().accept(visitor);
         myResult = visitor.getResult();
@@ -717,7 +739,7 @@ public class ExpectedTypesProvider {
         }
 
         PsiElement parent = expr.getParent();
-        MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider);
+        MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider, myVoidable);
         myExpr = (PsiExpression)myExpr.getParent();
         parent.accept(visitor);
         ExpectedTypeInfo[] componentTypeInfo = visitor.getResult();

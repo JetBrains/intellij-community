@@ -4,7 +4,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
@@ -287,9 +286,9 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       }
 
-      final ExpectedTypeInfo[] expectedTypes = JavaCompletionUtil.getExpectedTypes(parameters);
+      final Set<PsiType> expectedTypes = JavaCompletionUtil.getExpectedTypes(parameters);
       if (expectedTypes != null) {
-        PsiType type = expectedTypes.length == 1 ? expectedTypes[0].getType() : null;
+        PsiType type = expectedTypes.size() == 1 ? expectedTypes.iterator().next() : null;
         if (type != null) {
           final PsiType deepComponentType = type.getDeepComponentType();
           if (deepComponentType instanceof PsiClassType) {

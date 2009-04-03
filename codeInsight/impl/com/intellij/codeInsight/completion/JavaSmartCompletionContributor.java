@@ -35,10 +35,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +106,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   public JavaSmartCompletionContributor() {
     extend(CompletionType.SMART, psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTypeCastExpression.class)), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-        for (final ExpectedTypeInfo type : getExpectedTypes(parameters.getPosition())) {
+        for (final ExpectedTypeInfo type : getExpectedTypes(parameters)) {
           final LookupItem item = PsiTypeLookupItem.createLookupItem(type.getDefaultType()).setTailType(TailTypes.CAST_RPARENTH)
             .setAutoCompletionPolicy(AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE);
           item.putUserData(TYPE_CAST, Boolean.TRUE);
@@ -151,9 +148,26 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, INSIDE_EXPRESSION, new ExpectedTypeBasedCompletionProvider(true) {
       protected void addCompletions(final CompletionParameters params, final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
         final PsiElement position = params.getPosition();
-        for (final ExpectedTypeInfo type : infos) {
-          final JavaSmartCompletionParameters parameters = new JavaSmartCompletionParameters(params, type);
-          final ElementFilter filter = new ReturnTypeFilter(new AssignableFromFilter(type.getType()));
+        for (final ExpectedTypeInfo info : infos) {
+          final JavaSmartCompletionParameters parameters = new JavaSmartCompletionParameters(params, info);
+          final PsiType type = info.getType();
+          final boolean isVoid = type == PsiType.VOID;
+          final AssignableFromFilter assignableFromFilter = new AssignableFromFilter(type);
+          final ElementFilter filter = new ReturnTypeFilter(new ElementFilter() {
+            public boolean isAcceptable(Object element, PsiElement context) {
+              if (isVoid) {
+                return element instanceof PsiMethod;
+              }
+              return assignableFromFilter.isAcceptable(element, context);
+            }
+
+            public boolean isClassAcceptable(Class hintClass) {
+              if (isVoid && !ReflectionCache.isAssignable(PsiMethod.class, hintClass)) {
+                return false;
+              }
+              return true;
+            }
+          });
 
           CompletionService.getCompletionService().getVariantsFromContributors(
               ExpressionSmartCompletionContributor.CONTRIBUTORS, parameters, null,
@@ -439,7 +453,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     }
   }
 
-  public static ExpectedTypeInfo[] getExpectedTypes(final PsiElement position) {
+  public static ExpectedTypeInfo[] getExpectedTypes(final CompletionParameters parameters) {
+    final PsiElement position = parameters.getPosition();
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(position)) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(position.getProject()).getElementFactory();
       final PsiClassType classType = factory
@@ -458,7 +473,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     PsiExpression expression = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
     if (expression == null) return ExpectedTypeInfo.EMPTY_ARRAY;
 
-    return ExpectedTypesProvider.getInstance(position.getProject()).getExpectedTypes(expression, true);
+    return ExpectedTypesProvider.getInstance(position.getProject()).getExpectedTypes(expression, true, parameters.getCompletionType() == CompletionType.SMART);
   }
 
   private static void addExpectedType(final CompletionResultSet result, final PsiType type, final CompletionParameters parameters) {

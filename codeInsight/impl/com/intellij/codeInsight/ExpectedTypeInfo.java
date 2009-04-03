@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,6 +34,7 @@ public interface ExpectedTypeInfo {
 
   PsiMethod getCalledMethod();
 
+  @NotNull
   PsiType getType ();
 
   PsiType getDefaultType ();

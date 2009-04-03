@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -39,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import gnu.trove.THashSet;
+
 public class JavaCompletionUtil {
   static final Key<SmartPsiElementPointer> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
   @NonNls
@@ -54,25 +55,23 @@ public class JavaCompletionUtil {
   static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes", new NullableFunction<CompletionLocation, ExpectedTypeInfo[]>() {
     @Nullable
     public ExpectedTypeInfo[] fun(final CompletionLocation location) {
-      return getExpectedTypes(location.getCompletionParameters());
+      return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
     }
   });
   private static final PsiElementPattern.Capture<PsiElement> LEFT_PAREN = psiElement(JavaTokenType.LPARENTH).andOr(psiElement().withParent(
       PsiExpressionList.class), psiElement().afterLeaf(".", PsiKeyword.NEW));
 
   @Nullable
-  public static ExpectedTypeInfo[] getExpectedTypes(final CompletionParameters parameters) {
+  public static Set<PsiType> getExpectedTypes(final CompletionParameters parameters) {
     final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
     if (expr != null) {
-      final ExpectedTypeInfo[] expectedInfos = ExpectedTypesProvider.getInstance(parameters.getPosition().getProject()).getExpectedTypes(expr, true);
+      final ExpectedTypeInfo[] expectedInfos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
       if(expectedInfos != null){
-        final Map<PsiType, ExpectedTypeInfo> map = new HashMap<PsiType, ExpectedTypeInfo>(expectedInfos.length);
+        final Set<PsiType> set = new THashSet<PsiType>();
         for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
-          if (!map.containsKey(expectedInfo.getType())) {
-            map.put(expectedInfo.getType(), expectedInfo);
-          }
+          set.add(expectedInfo.getType());
         }
-        return map.values().toArray(new ExpectedTypeInfo[map.size()]);
+        return set;
       }
     }
     return null;

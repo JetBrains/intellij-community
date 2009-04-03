@@ -41,7 +41,7 @@ public abstract class ExpectedTypeBasedCompletionProvider extends CompletionProv
     final THashSet<ExpectedTypeInfo> infos = new THashSet<ExpectedTypeInfo>(EXPECTED_TYPE_INFO_STRATEGY);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        infos.addAll(Arrays.asList(JavaSmartCompletionContributor.getExpectedTypes(position)));
+        infos.addAll(Arrays.asList(JavaSmartCompletionContributor.getExpectedTypes(params)));
       }
     });
     addCompletions(params, result, infos);
