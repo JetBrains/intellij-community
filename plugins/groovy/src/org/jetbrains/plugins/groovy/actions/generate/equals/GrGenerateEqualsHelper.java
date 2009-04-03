@@ -153,28 +153,12 @@ public class GrGenerateEqualsHelper {
     DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
   }
 
-  private static final
-  @NonNls
-  MessageFormat ARRAY_COMPARER_MF =
-      new MessageFormat("if (!java.util.Arrays.equals({1}, {0}.{1})) return false;\n");
-
-  private static final
-  @NonNls
-  MessageFormat FIELD_COMPARER_MF =
-      new MessageFormat("if ({1} ? !{1}.equals({0}.{1}) : {0}.{1} != null) return false;\n");
-
-  private static final
-  @NonNls
-  MessageFormat NON_NULL_FIELD_COMPARER_MF = new MessageFormat("if (!{1}.equals({0}.{1})) return false;\n");
-
-  private static final
-  @NonNls
-  MessageFormat PRIMITIVE_FIELD_COMPARER_MF = new MessageFormat("if ({1} != {0}.{1}) return false;\n");
-
-  private static final
-  @NonNls
-  MessageFormat DOUBLE_FIELD_COMPARER_MF =
-      new MessageFormat("if ({0}.compare({1}.{2}, {2}) != 0) return false;\n");
+  @NonNls private static final MessageFormat ARRAY_COMPARER_MF = new MessageFormat("if (!java.util.Arrays.equals({1}, {0}.{1})) return false;\n");
+  @NonNls private static final MessageFormat FIELD_COMPARER_MF = new MessageFormat("if ({1} ? !{1}.equals({0}.{1}) : {0}.{1} != null) return false;\n");
+  @NonNls private static final MessageFormat BOOLEAN_FIELD_COMPARER_MF = new MessageFormat("if ({1} != null ? !{1}.equals({0}.{1}) : {0}.{1} != null) return false;\n");
+  @NonNls private static final MessageFormat NON_NULL_FIELD_COMPARER_MF = new MessageFormat("if (!{1}.equals({0}.{1})) return false;\n");
+  @NonNls private static final MessageFormat PRIMITIVE_FIELD_COMPARER_MF = new MessageFormat("if ({1} != {0}.{1}) return false;\n");
+  @NonNls private static final MessageFormat DOUBLE_FIELD_COMPARER_MF = new MessageFormat("if ({0}.compare({1}.{2}, {2}) != 0) return false;\n");
 
   private void addArrayEquals(StringBuffer buffer, PsiField field) {
     final PsiType fieldType = field.getType();
@@ -200,7 +184,11 @@ public class GrGenerateEqualsHelper {
   private void addFieldComparison(StringBuffer buffer, PsiField field) {
     boolean canBeNull = !myNonNullSet.contains(field);
     if (canBeNull) {
-      FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
+      if (PsiType.BOOLEAN == TypesUtil.unboxPrimitiveTypeWrapper(field.getType())) {
+        BOOLEAN_FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
+      } else {
+        FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
+      }
     } else {
       NON_NULL_FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
     }
