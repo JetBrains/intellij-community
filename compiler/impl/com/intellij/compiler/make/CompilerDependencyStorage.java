@@ -122,13 +122,13 @@ public class CompilerDependencyStorage<Key> implements Flushable, Disposable {
       flush();
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
     try {
       myMap.close();
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
   }
 
