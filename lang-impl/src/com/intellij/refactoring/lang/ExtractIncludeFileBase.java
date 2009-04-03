@@ -9,10 +9,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -95,7 +95,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
     if (duplicates.size() > 0) {
       final String message = RefactoringBundle.message("idea.has.found.fragments.that.can.be.replaced.with.include.directive",
                                                   ApplicationNamesInfo.getInstance().getProductName());
-      final int exitCode = Messages.showYesNoDialog(project, message, REFACTORING_NAME, Messages.getInformationIcon());
+      final int exitCode = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getInformationIcon());
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
@@ -165,7 +165,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
     myIncludingFile = file;
     if (!editor.getSelectionModel().hasSelection()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("no.selection"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
       return;
     }
     final int start = editor.getSelectionModel().getSelectionStart();
@@ -174,20 +174,20 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
     final Pair<T, T> children = findPairToExtract(start, end);
     if (children == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selection.does.not.form.a.fragment.for.extraction"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
       return;
     }
 
     if (!verifyChildRange(children.getFirst(), children.getSecond())) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.extract.selected.elements.into.include.file"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
       return;
     }
 
     final FileType fileType = getFileType(getLanguageForExtract(children.getFirst()));
     if (!(fileType instanceof LanguageFileType)) {
       String message = RefactoringBundle.message("the.language.for.selected.elements.has.no.associated.file.type");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
       return;
     }
 
@@ -221,14 +221,14 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
                 });
               }
               catch (IncorrectOperationException e) {
-                CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), null, project);
+                CommonRefactoringUtil.showErrorMessage(getRefactoringName(), e.getMessage(), null, project);
               }
 
               editor.getSelectionModel().removeSelection();
             }
           });
         }
-      }, REFACTORING_NAME, null);
+      }, getRefactoringName(), null);
 
     }
   }
@@ -263,5 +263,9 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
 
   public String getActionTitle() {
     return "Extract Include File...";
+  }
+
+  protected String getRefactoringName() {
+    return REFACTORING_NAME;
   }
 }

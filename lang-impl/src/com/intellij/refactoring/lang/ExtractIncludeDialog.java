@@ -74,7 +74,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
       }
     });
     panel.add(myNameField);
-    nameLabel.setText(RefactoringBundle.message("name.for.extracted.include.file"));
+    nameLabel.setText(getNameLabel());
 
     myTargetDirLabel = new JLabel();
     panel.add(myTargetDirLabel);
@@ -97,6 +97,10 @@ public class ExtractIncludeDialog extends DialogWrapper {
     validateOKButton();
 
     return panel;
+  }
+
+  protected String getNameLabel() {
+    return RefactoringBundle.message("name.for.extracted.include.file");
   }
 
   private void validateOKButton() {
