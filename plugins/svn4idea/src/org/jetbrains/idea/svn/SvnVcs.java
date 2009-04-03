@@ -851,26 +851,46 @@ public class SvnVcs extends AbstractVcs {
 
   @Override
   public List<VirtualFile> filterUniqueRoots(final List<VirtualFile> in) {
-    final List<RootUrlInfo> infos = new ArrayList<RootUrlInfo>(in.size());
+    if (in.size() <= 1) return in;
+    
+    final List<RootUrlPair> infos = new ArrayList<RootUrlPair>(in.size());
     final SvnFileUrlMappingImpl mapping = myMapping;
     for (VirtualFile vf : in) {
       final File ioFile = new File(vf.getPath());
-      final RootUrlInfo info = mapping.getWcRootForFilePath(ioFile);
-      if (info == null) continue;
+      final SVNURL url = mapping.getUrlForFile(ioFile);
+      if (url == null) continue;
       /*if ((info == null) || (! ioFile.getAbsolutePath().equals(info.getIoFile().getAbsolutePath()))) {
         // we get one of roots there, there shouldn't be other paths
         continue;
       }*/
-      infos.add(info);
+      infos.add(new MyPair(vf, url.toString()));
     }
-    final List<RootUrlInfo> filtered = new ArrayList<RootUrlInfo>(infos.size());
+    final List<RootUrlPair> filtered = new ArrayList<RootUrlPair>(infos.size());
     ForNestedRootChecker.filterOutSuperfluousChildren(this, infos, filtered);
 
-    return ObjectsConvertor.convert(filtered, new Convertor<RootUrlInfo, VirtualFile>() {
-      public VirtualFile convert(RootUrlInfo o) {
+    return ObjectsConvertor.convert(filtered, new Convertor<RootUrlPair, VirtualFile>() {
+      public VirtualFile convert(RootUrlPair o) {
         return o.getVirtualFile();
       }
     });
+  }
+
+  private static class MyPair implements RootUrlPair {
+    private final VirtualFile myFile;
+    private final String myUrl;
+
+    private MyPair(VirtualFile file, String url) {
+      myFile = file;
+      myUrl = url;
+    }
+
+    public VirtualFile getVirtualFile() {
+      return myFile;
+    }
+
+    public String getUrl() {
+      return myUrl;
+    }
   }
 
   private static class MyFrameStateListener implements FrameStateListener {
