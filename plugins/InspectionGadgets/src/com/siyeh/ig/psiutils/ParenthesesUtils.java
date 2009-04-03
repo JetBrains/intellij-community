@@ -530,6 +530,10 @@ public class ParenthesesUtils{
                     return true;
                 }
             }
+        } else if (parentExpression instanceof PsiPrefixExpression) {
+            if (expression instanceof PsiBinaryExpression) {
+                return true;
+            }
         }
         return false;
     }
