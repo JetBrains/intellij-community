@@ -234,12 +234,6 @@ public class PyBlock implements Block {
       
       PyBlock insertAfterBlock = (PyBlock)_subBlocks.get(newChildIndex - 1);
 
-      System.out.println( // XXX debug
-        "getChildAttributes(" + newChildIndex + "): " + ((PyBlock)insertAfterBlock).getNode().getPsi().toString() +
-        " " + insertAfterBlock.getTextRange().getStartOffset()
-        + ":" + insertAfterBlock.getTextRange().getLength()
-      );
-
       ASTNode prevNode = insertAfterBlock.getNode();
       PsiElement prevElt = prevNode.getPsi();
 
@@ -305,12 +299,6 @@ public class PyBlock implements Block {
 
       PyBlock insertAfterBlock = (PyBlock)_subBlocks.get(newChildIndex - 1);
       ASTNode afterNode = insertAfterBlock.getNode();
-
-      System.out.println( // XXX debug
-        "getChildIndent(" + newChildIndex + "): " + ((PyBlock)insertAfterBlock).getNode().getPsi().toString() +
-        " " + insertAfterBlock.getTextRange().getStartOffset()
-        + ":" + insertAfterBlock.getTextRange().getLength()
-      );
 
 
       // handle pressing Enter after colon and before first statement in
