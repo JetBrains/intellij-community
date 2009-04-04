@@ -31,11 +31,13 @@ public class PythonRunConfigurationEditor extends SettingsEditor<PythonRunConfig
   private TextFieldWithBrowseButton _workingDirectoryTextField;
   private EnvironmentVariablesComponent _envsComponent;
   private JComboBox myInterpreterComboBox;
+  private JTextField myInterpreterOptionsField;
 
   protected void resetEditorFrom(PythonRunConfiguration s) {
     _scriptTextField.setText(s.SCRIPT_NAME);
     _parametersTextField.setText(s.PARAMETERS);
     _workingDirectoryTextField.setText(s.WORKING_DIRECTORY);
+    myInterpreterOptionsField.setText(s.INTERPRETER_OPTIONS);
     FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         return file.isDirectory() || Comparing.equal(file.getExtension(), "py");
@@ -79,6 +81,7 @@ public class PythonRunConfigurationEditor extends SettingsEditor<PythonRunConfig
   protected void applyEditorTo(PythonRunConfiguration s) throws ConfigurationException {
     s.SCRIPT_NAME = _scriptTextField.getText();
     s.PARAMETERS = _parametersTextField.getText();
+    s.INTERPRETER_OPTIONS = myInterpreterOptionsField.getText();
     s.WORKING_DIRECTORY = _workingDirectoryTextField.getText();
     s.setEnvs(_envsComponent.getEnvs());
     s.PASS_PARENT_ENVS = _envsComponent.isPassParentEnvs();

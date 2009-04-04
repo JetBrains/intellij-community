@@ -13,7 +13,7 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="Script:"/>
+          <text value="&amp;Script:"/>
         </properties>
       </component>
       <component id="ae354" class="javax.swing.JLabel">
@@ -23,22 +23,22 @@
         </constraints>
         <properties>
           <labelFor value="9c0aa"/>
-          <text value="Parameters:"/>
+          <text value="&amp;Parameters:"/>
         </properties>
       </component>
       <component id="522b3" class="javax.swing.JLabel">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
           <labelFor value="2e008"/>
-          <text value="Working directory:"/>
+          <text value="&amp;Working directory:"/>
         </properties>
       </component>
       <vspacer id="e7814">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="1.0"/>
         </constraints>
       </vspacer>
@@ -62,7 +62,7 @@
       </component>
       <component id="2e008" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="_workingDirectoryTextField">
         <constraints>
-          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="-1"/>
           </grid>
           <gridbag weightx="0.0" weighty="0.0"/>
@@ -83,7 +83,7 @@
         </constraints>
         <properties>
           <labelFor value="72905"/>
-          <text value="Interpreter:"/>
+          <text value="&amp;Interpreter:"/>
         </properties>
       </component>
       <component id="72905" class="javax.swing.JComboBox" binding="myInterpreterComboBox" default-binding="true">
@@ -92,6 +92,28 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties/>
+      </component>
+      <component id="95d6c" class="javax.swing.JTextField" binding="myInterpreterOptionsField">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties/>
+        <clientProperties>
+          <caretAspectRatio class="java.lang.Float" value="0.04"/>
+        </clientProperties>
+      </component>
+      <component id="7e166" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <labelFor value="95d6c"/>
+          <text value="&amp;Options"/>
+        </properties>
       </component>
     </children>
   </grid>

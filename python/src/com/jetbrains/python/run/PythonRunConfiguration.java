@@ -33,6 +33,7 @@ public class PythonRunConfiguration extends RunConfigurationBase implements Loca
   public String SDK_HOME;
   public boolean PASS_PARENT_ENVS;
   private Map<String, String> myEnvs = new HashMap<String, String>();
+  public String INTERPRETER_OPTIONS;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory, String name) {
     super(project, configurationFactory, name);
@@ -64,6 +65,7 @@ public class PythonRunConfiguration extends RunConfigurationBase implements Loca
 
         commandLine.setExePath(PythonSdkType.getInterpreterPath(sdkHome));
 
+        commandLine.addParameter(INTERPRETER_OPTIONS);
         commandLine.addParameter(SCRIPT_NAME);
         commandLine.getParametersList().addParametersString(PARAMETERS);
         if (WORKING_DIRECTORY != null && WORKING_DIRECTORY.length() > 0) {
