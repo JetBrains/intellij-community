@@ -2,7 +2,6 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
@@ -49,13 +48,5 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
     }
 
     return el;
-  }
-
-  private PsiElement findTopmostParentOfType(PsiElement el, Class clazz) {
-    while (true) {
-      PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz, true, PsiAnonymousClass.class);
-      if (temp == null || temp instanceof PsiFile) return el;
-      el = temp;
-    }
   }
 }

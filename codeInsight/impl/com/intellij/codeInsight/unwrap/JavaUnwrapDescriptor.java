@@ -13,6 +13,7 @@ import java.util.Set;
 
 public class JavaUnwrapDescriptor implements UnwrapDescriptor {
   private static final Unwrapper[] UNWRAPPERS = new Unwrapper[] {
+    new JavaMethodParameterUnwrapper(),
     new JavaElseUnwrapper(),
     new JavaElseRemover(),
     new JavaIfUnwrapper(),

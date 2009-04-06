@@ -2,6 +2,7 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -75,6 +76,10 @@ public abstract class JavaUnwrapper implements Unwrapper {
       extract(block.getFirstBodyElement(), block.getLastBodyElement(), from);
     }
 
+    public void extractElement(PsiElement element, PsiElement from) throws IncorrectOperationException {
+      extract(element, element, from);
+    }
+
     private void extract(PsiElement first, PsiElement last, PsiElement from) throws IncorrectOperationException {
       if (first == null) return;
 
@@ -126,10 +131,18 @@ public abstract class JavaUnwrapper implements Unwrapper {
     }
 
     private PsiStatement copyElement(PsiStatement e) throws IncorrectOperationException {
-      // We can not call el.copy() for 'else' since it sets context to parent 'if'.
+      // We cannot call el.copy() for 'else' since it sets context to parent 'if'.
       // This causes copy to be invalidated after parent 'if' is removed by setElseBranch method.
       PsiElementFactory factory = JavaPsiFacade.getInstance(e.getProject()).getElementFactory();
       return factory.createStatementFromText(e.getText(), null);
+    }
+  }
+
+  protected PsiElement findTopmostParentOfType(PsiElement el, Class clazz) {
+    while (true) {
+      PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz, true, PsiAnonymousClass.class);
+      if (temp == null || temp instanceof PsiFile) return el;
+      el = temp;
     }
   }
 }
