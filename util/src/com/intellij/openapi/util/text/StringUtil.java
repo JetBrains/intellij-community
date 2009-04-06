@@ -146,7 +146,7 @@ public class StringUtil {
     return stringLength >= suffixLength && str.regionMatches(true, stringLength - suffixLength, suffix, 0, suffixLength);
   }
 
-  public static boolean startsWithIgnoreCase(String str, String prefix) {
+  public static boolean startsWithIgnoreCase(@NonNls String str, @NonNls String prefix) {
     final int stringLength = str.length();
     final int prefixLength = prefix.length();
     return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);

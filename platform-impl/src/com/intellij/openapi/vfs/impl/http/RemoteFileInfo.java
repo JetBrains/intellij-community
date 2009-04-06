@@ -125,9 +125,14 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
 
     VirtualFile localFile = new WriteAction<VirtualFile>() {
       protected void run(final Result<VirtualFile> result) {
-        result.setResult(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localIOFile));
+        final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localIOFile);
+        if (file != null) {
+          file.refresh(false, false);
+        }
+        result.setResult(file);
       }
     }.execute().getResultObject();
+    LOG.assertTrue(localFile != null, "Virtual local file not found for " + localIOFile.getAbsolutePath());
     LOG.debug("Virtual local file: " + localFile + ", size = " + localFile.getLength());
     FileDownloadingListener[] listeners;
     synchronized (myLock) {

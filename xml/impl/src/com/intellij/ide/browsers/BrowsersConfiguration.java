@@ -1,6 +1,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.browsers.actions.WebOpenInAction;
+import com.intellij.ide.browsers.firefox.FirefoxSettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -10,13 +11,13 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xml.XmlBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -33,14 +34,16 @@ import java.util.Map;
  */
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(id = "other", file = "$APP_CONFIG$/browsers.xml")})
 public class BrowsersConfiguration implements ApplicationComponent, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.BrowsersConfiguration");
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static enum BrowserFamily {
     EXPLORER(XmlBundle.message("browsers.explorer"), "iexplore", null, null, IconLoader.getIcon("/xml/browsers/explorer16.png")),
     SAFARI(XmlBundle.message("browsers.safari"), "safari", "safari", "Safari", IconLoader.getIcon("/xml/browsers/safari16.png")),
     OPERA(XmlBundle.message("browsers.opera"), "opera", "opera", "Opera", IconLoader.getIcon("/xml/browsers/opera16.png")),
-    FIREFOX(XmlBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox", IconLoader.getIcon("/xml/browsers/firefox16.png")),
+    FIREFOX(XmlBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox", IconLoader.getIcon("/xml/browsers/firefox16.png")) {
+      @Override
+      public BrowserSpecificSettings createBrowserSpecificSettings() {
+        return new FirefoxSettings();
+      }
+    },
     CHROME(XmlBundle.message("browsers.chrome"), "chrome", null, null, IconLoader.getIcon("/xml/browsers/chrome16.png"));
 
     private final String myName;
@@ -49,12 +52,17 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
     private final String myMacPath;
     private final Icon myIcon;
 
-    BrowserFamily(final String name, final String windowsPath, final String linuxPath, final String macPath, final Icon icon) {
+    BrowserFamily(final String name, @NonNls final String windowsPath, @NonNls final String linuxPath, @NonNls final String macPath, final Icon icon) {
       myName = name;
       myWindowsPath = windowsPath;
       myLinuxPath = linuxPath;
       myMacPath = macPath;
       myIcon = icon;
+    }
+
+    @Nullable
+    public BrowserSpecificSettings createBrowserSpecificSettings() {
+      return null;
     }
 
     @Nullable
@@ -81,18 +89,23 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
     }
   }
 
-  private final Map<BrowserFamily, Pair<String, Boolean>> myBrowserToPathMap = new HashMap<BrowserFamily, Pair<String, Boolean>>();
+  private final Map<BrowserFamily, WebBrowserSettings> myBrowserToSettingsMap = new HashMap<BrowserFamily, WebBrowserSettings>();
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState() {
     @NonNls Element element = new Element("WebBrowsersConfiguration");
-    for (BrowserFamily browserFamily : myBrowserToPathMap.keySet()) {
+    for (BrowserFamily browserFamily : myBrowserToSettingsMap.keySet()) {
       final Element browser = new Element("browser");
       browser.setAttribute("family", browserFamily.toString());
-      final Pair<String, Boolean> value = myBrowserToPathMap.get(browserFamily);
-      browser.setAttribute("path", value.first);
-      browser.setAttribute("active", value.second.toString());
-
+      final WebBrowserSettings value = myBrowserToSettingsMap.get(browserFamily);
+      browser.setAttribute("path", value.getPath());
+      browser.setAttribute("active", Boolean.toString(value.isActive()));
+      final BrowserSpecificSettings specificSettings = value.getBrowserSpecificSettings();
+      if (specificSettings != null) {
+        final Element settingsElement = new Element("settings");
+        XmlSerializer.serializeInto(specificSettings, settingsElement, new SkipDefaultValuesSerializationFilters());
+        browser.addContent(settingsElement);
+      }
       element.addContent(browser);
     }
 
@@ -106,10 +119,16 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
       final String path = child.getAttributeValue("path");
       final String active = child.getAttributeValue("active");
       final BrowserFamily browserFamily;
+      Element settingsElement = child.getChild("settings");
 
       try {
         browserFamily = BrowserFamily.valueOf(family);
-        myBrowserToPathMap.put(browserFamily, new Pair<String, Boolean>(path, Boolean.parseBoolean(active)));
+        BrowserSpecificSettings specificSettings = null;
+        if (settingsElement != null) {
+          specificSettings = browserFamily.createBrowserSpecificSettings();
+          XmlSerializer.deserializeInto(specificSettings, settingsElement);
+        }
+        myBrowserToSettingsMap.put(browserFamily, new WebBrowserSettings(path, Boolean.parseBoolean(active), specificSettings));
       }
       catch (IllegalArgumentException e) {
         // skip
@@ -117,17 +136,23 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
     }
   }
 
-  void updateBrowserValue(final BrowserFamily family, final Pair<String, Boolean> stringBooleanPair) {
-    myBrowserToPathMap.put(family, stringBooleanPair);
+  void updateBrowserValue(final BrowserFamily family, final String path, boolean isActive) {
+    final WebBrowserSettings settings = getBrowserSettings(family);
+    myBrowserToSettingsMap.put(family, new WebBrowserSettings(path, isActive, settings.getBrowserSpecificSettings()));
+  }
+
+  void updateBrowserSpecificSettings(BrowserFamily family, BrowserSpecificSettings specificSettings) {
+    final WebBrowserSettings settings = getBrowserSettings(family);
+    myBrowserToSettingsMap.put(family, new WebBrowserSettings(settings.getPath(), settings.isActive(), specificSettings));
   }
 
   @NotNull
-  public Pair<String, Boolean> suggestBrowserPath(@NotNull final BrowserFamily browserFamily) {
-    Pair<String, Boolean> result = myBrowserToPathMap.get(browserFamily);
+  public WebBrowserSettings getBrowserSettings(@NotNull final BrowserFamily browserFamily) {
+    WebBrowserSettings result = myBrowserToSettingsMap.get(browserFamily);
     if (result == null) {
       final String path = browserFamily.getExecutionPath();
-      result = new Pair<String, Boolean>(path == null ? "" : path, path != null);
-      myBrowserToPathMap.put(browserFamily, result);
+      result = new WebBrowserSettings(path == null ? "" : path, path != null, null);
+      myBrowserToSettingsMap.put(browserFamily, result);
     }
 
     return result;
@@ -154,11 +179,19 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
   }
 
   private void _launchBrowser(final BrowserFamily family, @NotNull final String url) {
-    final Pair<String, Boolean> pair = suggestBrowserPath(family);
-    final String path = pair.first;
+    final WebBrowserSettings settings = getBrowserSettings(family);
+    final String path = settings.getPath();
     if (path != null && path.length() > 0) {
       try {
-        launchBrowser(path, url);
+        final BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
+        String[] parameters;
+        if (specificSettings != null) {
+          parameters = ArrayUtil.append(specificSettings.getAdditionalParameters(), url);
+        }
+        else {
+          parameters = new String[]{url};
+        }
+        launchBrowser(path, parameters);
       }
       catch (IOException e) {
         Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));

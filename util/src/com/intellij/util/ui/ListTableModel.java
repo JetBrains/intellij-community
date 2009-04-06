@@ -181,6 +181,11 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     fireTableRowsDeleted(idx, idx);
   }
 
+  public void addRow(Item item) {
+    myItems.add(item);
+    fireTableRowsInserted(myItems.size() - 1, myItems.size() - 1);
+  }
+
   public Object getItem(final int rowIndex) {
     return getItems().get(rowIndex);
   }

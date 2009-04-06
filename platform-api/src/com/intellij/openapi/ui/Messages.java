@@ -277,7 +277,7 @@ public class Messages {
                                        @Nls String message,
                                        @Nls String title,
                                        Icon icon,
-                                       String initialValue,
+                                       @NonNls String initialValue,
                                        @Nullable InputValidator validator) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
@@ -295,7 +295,7 @@ public class Messages {
                                        String message,
                                        String title,
                                        Icon icon,
-                                       String initialValue,
+                                       @NonNls String initialValue,
                                        InputValidator validator) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
@@ -316,7 +316,7 @@ public class Messages {
    * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
    */
   @Nullable
-  public static String showInputDialog(String message, String title, Icon icon, String initialValue, InputValidator validator) {
+  public static String showInputDialog(String message, String title, Icon icon, @NonNls String initialValue, InputValidator validator) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       return ourTestInputImplementation.show(message);
