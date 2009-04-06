@@ -1,11 +1,16 @@
 package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationImpl;
 import com.intellij.notification.impl.NotificationModel;
 import com.intellij.notification.impl.NotificationModelListener;
 import com.intellij.notification.impl.NotificationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,10 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -28,6 +31,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.ui.NotificationsListPanel");
   private static final String REMOVE_KEY = "REMOVE";
 
+  private WeakReference<JBPopup> myPopupRef;
+
   private JList myList;
   private NotificationModel myNotificationsModel;
   private NotificationsListModel myDataModel;
@@ -36,14 +41,17 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   private JComponent myInactiveContentComponent;
 
   private Wrapper myContentPane = new Wrapper();
+  private NotificationComponent myNotificationComponent;
 
-  public NotificationsListPanel(@NotNull final NotificationModel notificationsModel) {
+  public NotificationsListPanel(@NotNull final NotificationComponent component) {
     setLayout(new BorderLayout());
 
-    myNotificationsModel = notificationsModel;
+    myNotificationComponent = component;
+
+    myNotificationsModel = component.getModel();
     myDataModel = new NotificationsListModel(myNotificationsModel);
 
-    notificationsModel.addListener(this);
+    myNotificationsModel.addListener(this);
 
     myList = new JList(myDataModel) {
       @Override
@@ -59,6 +67,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
         return null;
       }
     };
+
+    myList.setBackground(myContentPane.getBackground());
     myList.setCellRenderer(new NotificationsListRenderer());
     myList.getSelectionModel().setSelectionInterval(0, 0);
     myList.addMouseListener(new MouseAdapter() {
@@ -87,7 +97,13 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 //    scrollPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
 //    scrollPane.setBackground(Color.WHITE);
 
-    myActiveContentComponent = scrollPane;
+    final JPanel wrapperPane = new JPanel();
+    wrapperPane.setLayout(new BorderLayout());
+
+    wrapperPane.add(scrollPane, BorderLayout.CENTER);
+    wrapperPane.add(buildFilterBar(myDataModel), BorderLayout.NORTH);
+
+    myActiveContentComponent = wrapperPane;
 
     myInactiveContentComponent = new JLabel("No notifications.", JLabel.CENTER) {
       @Override
@@ -103,11 +119,57 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     add(myContentPane, BorderLayout.CENTER);
   }
 
-  @Override
-  public void removeNotify() {
-    myNotificationsModel.removeListener(this);
+  private JComponent buildFilterBar(@NotNull final NotificationsListModel listModel) {
+    final JPanel box = new JPanel();
+    box.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+    box.setLayout(new BoxLayout(box, BoxLayout.X_AXIS));
 
-    super.removeNotify();
+    final ButtonGroup buttonGroup = new ButtonGroup();
+
+    createFilterButton(box, buttonGroup, "All", new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        listModel.filter(null);
+        resetSelection();
+      }
+    }, true);
+
+    createFilterButton(box, buttonGroup, "Error", new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        listModel.filter(NotificationType.ERROR);
+        resetSelection();
+      }
+    }, false);
+
+    createFilterButton(box, buttonGroup, "Warning", new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        listModel.filter(NotificationType.WARNING);
+        resetSelection();
+      }
+    }, false);
+
+    createFilterButton(box, buttonGroup, "Information", new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        listModel.filter(NotificationType.INFORMATION);
+        resetSelection();
+      }
+    }, false);
+
+    box.add(Box.createHorizontalGlue());
+
+    return box;
+  }
+
+  private void resetSelection() {
+    if (myDataModel.getSize() > 0) {
+      myList.getSelectionModel().setSelectionInterval(0, 0);
+    }
+  }
+
+  private static void createFilterButton(final JPanel parent, final ButtonGroup group, final String title, final ActionListener listener, final boolean active) {
+    final StickyButton b = new StickyButton(title, listener);
+    parent.add(b);
+    group.add(b);
+    b.setSelected(active);
   }
 
   public void notificationsAdded(@NotNull final NotificationImpl... notification) {
@@ -160,7 +222,15 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     return size;
   }
 
-  public void dispose() {
+  public void clear() {
+    if (myPopupRef != null) {
+      final JBPopup jbPopup = myPopupRef.get();
+      if (jbPopup != null) {
+        jbPopup.cancel();
+      }
+
+      myPopupRef = null;
+    }
   }
 
   private void revalidateAll() {
@@ -177,7 +247,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       final List<NotificationImpl> tbr = new ArrayList<NotificationImpl>();
       for (int i = min; i <= max; i++) {
         if (model.isSelectedIndex(i)) {
-          final NotificationImpl notification = myNotificationsModel.get(i);
+          final NotificationImpl notification = (NotificationImpl) myDataModel.getElementAt(i);
           if (notification != null) {
             final NotificationListener.Continue onRemove = notification.getListener().onRemove();
             if (onRemove == NotificationListener.Continue.REMOVE) {
@@ -190,7 +260,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       if (tbr.size() > 0) {
         myNotificationsModel.remove(tbr.toArray(new NotificationImpl[tbr.size()]));
 
-        final int toSelect = Math.min(min, myNotificationsModel.getCount() - 1);
+        final int toSelect = Math.min(min, myDataModel.getSize() - 1);
         model.clearSelection();
         if (toSelect >= 0) {
           model.setSelectionInterval(toSelect, toSelect);
@@ -204,6 +274,44 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
   public JComponent getPreferredFocusedComponent() {
     return myContentPane.getTargetComponent() == myActiveContentComponent ? myList : myInactiveContentComponent;
+  }
+
+  public void showOrHide() {
+    if (myPopupRef != null) {
+      final JBPopup popup = myPopupRef.get();
+      if (popup != null) {
+        popup.cancel();
+      }
+
+      myPopupRef = null;
+      return;
+    }
+
+    if (myNotificationsModel.getCount() == 1) {
+      final NotificationImpl notification = myNotificationsModel.getFirst();
+      if (notification != null) {
+        performNotificationAction(notification);
+        return;
+      }
+    }
+
+    assert myPopupRef == null;
+
+    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(this, getPreferredFocusedComponent());
+    final JBPopup popup =
+        builder.setResizable(true)
+            .setMinSize(NotificationsListPanel.getMinSize())
+            .setDimensionServiceKey(null, "NotificationsPopup", true)
+            .setCancelOnClickOutside(false)
+            .setBelongsToGlobalPopupStack(false)
+            .setCancelButton(new MinimizeButton("Hide"))
+            .setMovable(true)
+            .setRequestFocus(true)
+            .setTitle("Notifications")
+            .createPopup();
+
+    myPopupRef = new WeakReference<JBPopup>(popup);
+    popup.showInCenterOf(SwingUtilities.getRootPane(myNotificationComponent));
   }
 
   private static class NotificationsListRenderer extends JPanel implements ListCellRenderer {
@@ -265,6 +373,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   private static class NotificationsListModel extends AbstractListModel {
     private NotificationModel myNotificationsModel;
     private List<NotificationImpl> myNotifications = new ArrayList<NotificationImpl>();
+    private NotificationType myType;
 
     private NotificationsListModel(@NotNull final NotificationModel notificationsModel) {
       myNotificationsModel = notificationsModel;
@@ -282,9 +391,14 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
     private void rebuildList() {
       myNotifications.clear();
-      myNotifications.addAll(myNotificationsModel.getAll(null));
+      myNotifications.addAll(myNotificationsModel.getByType(myType));
 
       fireContentsChanged(this, 0, myNotifications.size() - 1);
+    }
+
+    public void filter(final NotificationType type) {
+      myType = type;
+      rebuildList();
     }
   }
 }

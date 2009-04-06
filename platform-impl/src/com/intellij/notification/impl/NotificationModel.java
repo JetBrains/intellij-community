@@ -1,6 +1,7 @@
 package com.intellij.notification.impl;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.notification.NotificationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,6 +125,23 @@ public class NotificationModel {
 
       for (NotificationImpl notification : myNotifications) {
         if (id.equals(notification.getId())) {
+          result.add(notification);
+        }
+      }
+
+      return result;
+    }
+  }
+
+
+  public List<NotificationImpl> getByType(@Nullable final NotificationType type) {
+    if (type == null) {
+      return Collections.unmodifiableList(myNotifications);
+    } else {
+      final List<NotificationImpl> result = new ArrayList<NotificationImpl>();
+
+      for (NotificationImpl notification : myNotifications) {
+        if (type == notification.getType()) {
           result.add(notification);
         }
       }
