@@ -42,4 +42,20 @@ public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, Ps
     return ObjectUtils.assertNotNull(psiAnnotation.findDeclaredAttributeValue(myAttributeName));
   }
 
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final AnnotationAttributeChildLink link = (AnnotationAttributeChildLink)o;
+
+    if (!myAttributeName.equals(link.myAttributeName)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myAttributeName.hashCode();
+  }
 }
