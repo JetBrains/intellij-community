@@ -128,7 +128,8 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         final String fullTestName = getFullTestName(testName);
         final SMTestProxy testProxy = getProxyByFullTestName(fullTestName);
         if (testProxy == null) {
-          LOG.error("Test wasn't started! TestFinished event: name = {" + testName + "}");
+          LOG.warn("Test wasn't started! TestFinished event: name = {" + testName + "}. " +
+                   cannotFindFullTestNameMsg(fullTestName));
           return;
         }
 
@@ -188,7 +189,10 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         final String fullTestName = getFullTestName(testName);
         final SMTestProxy testProxy = getProxyByFullTestName(fullTestName);
         if (testProxy == null) {
-          LOG.error("Test wasn't started! TestFailure event: name = {" + testName + "}, message = {" + localizedMessage + "}, stackTrace = {" + stackTrace + "}");
+          LOG.warn("Test wasn't started! TestFailure event: name = {" + testName + "}" +
+                   ", message = {" + localizedMessage + "}" +
+                   ", stackTrace = {" + stackTrace + "}. " +
+                   cannotFindFullTestNameMsg(fullTestName));
           return;
         }
         // if wasn't processed
@@ -215,7 +219,10 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         final String fullTestName = getFullTestName(testName);
         final SMTestProxy testProxy = getProxyByFullTestName(fullTestName);
         if (testProxy == null) {
-          LOG.error("Test wasn't started! TestIgnored event: name = {" + testName + "}, message = {" + ignoreComment + "}");
+          LOG.warn("Test wasn't started! " +
+                   "TestIgnored event: name = {" + testName + "}, " +
+                   "message = {" + ignoreComment + "}. " +
+                   cannotFindFullTestNameMsg(fullTestName));
           return;
         }
 
@@ -234,7 +241,10 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         final String fullTestName = getFullTestName(testName);
         final SMTestProxy testProxy = getProxyByFullTestName(fullTestName);
         if (testProxy == null) {
-          LOG.error("Test wasn't started! TestOutput event: name = {" + testName + "}, isStdOut = " + stdOut + ", text = {" + text + "}");
+          LOG.warn("Test wasn't started! TestOutput event: name = {" + testName + "}, " +
+                   "isStdOut = " + stdOut + ", " +
+                   "text = {" + text + "}. " +
+                   cannotFindFullTestNameMsg(fullTestName));
           return;
         }
 
@@ -278,14 +288,14 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
 
   @Nullable
   protected SMTestProxy getProxyByFullTestName(final String fullTestName) {
-    final SMTestProxy testProxy = myRunningTestsFullNameToProxy.get(fullTestName);
-    if (testProxy == null) {
-      LOG.error("Cant find running test for ["
-                + fullTestName
-                + "]. Current running tests: {"
-                + dumpRunningTestsNames() + "}");
-    }
-    return testProxy;
+    return myRunningTestsFullNameToProxy.get(fullTestName);
+  }
+
+  private String cannotFindFullTestNameMsg(String fullTestName) {
+    return "Cant find running test for ["
+              + fullTestName
+              + "]. Current running tests: {"
+              + dumpRunningTestsNames() + "}";
   }
 
   private StringBuilder dumpRunningTestsNames() {
