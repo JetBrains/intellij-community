@@ -1,28 +1,34 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.JavaStatisticsManager;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddImportAction");
@@ -66,22 +72,69 @@ public class AddImportAction implements QuestionAction {
 
   private void chooseClassAndImport() {
     Arrays.sort(myTargetClasses, new PsiProximityComparator(myReference.getElement()));
-    final JList list = new JList(myTargetClasses);
-    list.setCellRenderer(new FQNameCellRenderer());
-    Runnable runnable = new Runnable() {
-      public void run() {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        addImport(myReference, myTargetClasses[index]);
-      }
-    };
 
-    new PopupChooserBuilder(list).
-      setTitle(QuickFixBundle.message("class.to.import.chooser.title")).
-      setItemChoosenCallback(runnable).
-      createPopup().
-      showInBestPositionFor(myEditor);
+    final BaseListPopupStep<PsiClass> step =
+      new BaseListPopupStep<PsiClass>(QuickFixBundle.message("class.to.import.chooser.title"), myTargetClasses) {
+
+        @Override
+        public PopupStep onChosen(PsiClass selectedValue, boolean finalChoice) {
+          if (selectedValue == null) {
+            return FINAL_CHOICE;
+          }
+
+          if (finalChoice) {
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+            addImport(myReference, selectedValue);
+            return FINAL_CHOICE;
+          }
+
+          String qname = selectedValue.getQualifiedName();
+          List<String> toExclude = new ArrayList<String>();
+          while (true) {
+            toExclude.add(qname);
+            final int i = qname.lastIndexOf('.');
+            if (i < 0 || i == qname.indexOf('.')) break;
+            qname = qname.substring(0, i);
+          }
+
+          return new BaseListPopupStep<String>(null, toExclude) {
+            @NotNull
+            @Override
+            public String getTextFor(String value) {
+              return "Exclude '" + value + "' from auto-import";
+            }
+
+            @Override
+            public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+              if (finalChoice) {
+                final LinkedHashSet<String> strings =
+                  new LinkedHashSet<String>(Arrays.asList(CodeInsightSettings.getInstance().EXCLUDED_PACKAGES));
+                strings.add(selectedValue);
+                CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = strings.toArray(new String[strings.size()]);
+              }
+
+              return super.onChosen(selectedValue, finalChoice);
+            }
+          };
+        }
+
+        @Override
+        public boolean hasSubstep(PsiClass selectedValue) {
+          return true;
+        }
+
+        @NotNull
+        @Override
+        public String getTextFor(PsiClass value) {
+          return ObjectUtils.assertNotNull(value.getQualifiedName());
+        }
+
+        @Override
+        public Icon getIconFor(PsiClass aValue) {
+          return aValue.getIcon(0);
+        }
+      };
+    JBPopupFactory.getInstance().createListPopup(step).showInBestPositionFor(myEditor);
   }
 
   private void addImport(final PsiReference ref, final PsiClass targetClass) {
