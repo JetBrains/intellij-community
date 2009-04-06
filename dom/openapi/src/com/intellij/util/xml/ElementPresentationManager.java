@@ -123,7 +123,13 @@ public abstract class ElementPresentationManager {
       }
     }
     Object o = invokeNameValueMethod(element);
-    return o == null || o instanceof String ? (String)o : ((GenericValue)o).getStringValue();
+    if (o == null || o instanceof String) return (String)o;
+    if (o instanceof GenericValue) {
+      final GenericValue gv = (GenericValue)o;
+      final String s = gv.getStringValue();
+      return s == null ? String.valueOf(gv.getValue()) : s;
+    }
+    return null;
   }
 
   @Nullable
