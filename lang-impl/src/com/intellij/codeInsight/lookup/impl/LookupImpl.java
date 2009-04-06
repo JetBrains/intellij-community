@@ -27,9 +27,11 @@ import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.AsyncProcessIcon;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -53,6 +55,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final Editor myEditor;
   private final SortedList<LookupElement> myItems;
   private final SortedMap<LookupItemWeightComparable, SortedList<LookupElement>> myItemsMap;
+  private final Map<LookupElement, Collection<LookupElementAction>> myItemActions = new THashMap<LookupElement, Collection<LookupElementAction>>();
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
   private int myInitialOffset;
@@ -189,9 +192,22 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     synchronized (myItems) {
       myItems.add(item);
       addItemWeight(item);
+
+      final CollectConsumer<LookupElementAction> consumer = new CollectConsumer<LookupElementAction>();
+      for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
+        provider.fillActions(item, this, consumer);
+      }
+      myItemActions.put(item, consumer.getResult());
     }
     int maxWidth = myCellRenderer.updateMaximumWidth(item);
     myLookupWidth = Math.max(maxWidth, myLookupWidth);
+  }
+
+  public Collection<LookupElementAction> getActionsFor(LookupElement element) {
+    synchronized (myItems) {
+      final Collection<LookupElementAction> collection = myItemActions.get(element);
+      return collection == null ? Collections.<LookupElementAction>emptyList() : collection;
+    }
   }
 
   private void addItemWeight(final LookupElement item) {
@@ -582,15 +598,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (itmBounds == null){
       return null;
     }
-    Rectangle listBounds=myList.getBounds();
-    final JRootPane pane = myList.getRootPane();
-    if (pane == null) {
-      synchronized (myItems) {
-        LOG.assertTrue(false, myItems);
-      }
-    }
-    JLayeredPane layeredPane= pane.getLayeredPane();
-    Point layeredPanePoint=SwingUtilities.convertPoint(myList,listBounds.x,listBounds.y,layeredPane);
+    Point layeredPanePoint=SwingUtilities.convertPoint(myList,itmBounds.x,itmBounds.y,getComponent());
     itmBounds.x = layeredPanePoint.x;
     itmBounds.y = layeredPanePoint.y;
     return itmBounds;

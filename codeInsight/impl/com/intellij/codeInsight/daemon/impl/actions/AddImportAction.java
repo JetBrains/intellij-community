@@ -89,13 +89,7 @@ public class AddImportAction implements QuestionAction {
           }
 
           String qname = selectedValue.getQualifiedName();
-          List<String> toExclude = new ArrayList<String>();
-          while (true) {
-            toExclude.add(qname);
-            final int i = qname.lastIndexOf('.');
-            if (i < 0 || i == qname.indexOf('.')) break;
-            qname = qname.substring(0, i);
-          }
+          List<String> toExclude = getAllExcludableStrings(qname);
 
           return new BaseListPopupStep<String>(null, toExclude) {
             @NotNull
@@ -107,10 +101,7 @@ public class AddImportAction implements QuestionAction {
             @Override
             public PopupStep onChosen(String selectedValue, boolean finalChoice) {
               if (finalChoice) {
-                final LinkedHashSet<String> strings =
-                  new LinkedHashSet<String>(Arrays.asList(CodeInsightSettings.getInstance().EXCLUDED_PACKAGES));
-                strings.add(selectedValue);
-                CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = strings.toArray(new String[strings.size()]);
+                excludeFromImport(selectedValue);
               }
 
               return super.onChosen(selectedValue, finalChoice);
@@ -135,6 +126,24 @@ public class AddImportAction implements QuestionAction {
         }
       };
     JBPopupFactory.getInstance().createListPopup(step).showInBestPositionFor(myEditor);
+  }
+
+  public static void excludeFromImport(String prefix) {
+    final CodeInsightSettings cis = CodeInsightSettings.getInstance();
+    final LinkedHashSet<String> strings = new LinkedHashSet<String>(Arrays.asList(cis.EXCLUDED_PACKAGES));
+    strings.add(prefix);
+    cis.EXCLUDED_PACKAGES = strings.toArray(new String[strings.size()]);
+  }
+
+  public static List<String> getAllExcludableStrings(@NotNull String qname) {
+    List<String> toExclude = new ArrayList<String>();
+    while (true) {
+      toExclude.add(qname);
+      final int i = qname.lastIndexOf('.');
+      if (i < 0 || i == qname.indexOf('.')) break;
+      qname = qname.substring(0, i);
+    }
+    return toExclude;
   }
 
   private void addImport(final PsiReference ref, final PsiClass targetClass) {

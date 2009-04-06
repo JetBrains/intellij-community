@@ -72,7 +72,9 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
             }
           });
           for (final PsiClass psiClass : classes) {
-            result.addElement(AllClassesGetter.createLookupItem(psiClass));
+            if (!JavaCompletionUtil.isInExcludedPackage(psiClass)) {
+              result.addElement(AllClassesGetter.createLookupItem(psiClass));
+            }
           }
         }
 

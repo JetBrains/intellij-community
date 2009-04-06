@@ -75,6 +75,10 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     return Comparing.equal(myQualifiedName, that.myQualifiedName);
   }
 
+  public String getQualifiedName() {
+    return myQualifiedName;
+  }
+
   @Override
   public int hashCode() {
     final String s = myQualifiedName;
