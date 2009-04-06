@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,31 +114,38 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
                 return false;
             }
             final PsiElement target = referenceExpression.resolve();
-            if (target == null) {
-                return false;
-            }
-            if (!(target instanceof PsiField)) {
+            if (target == null || !(target instanceof PsiField)) {
                 return false;
             }
             final PsiField superField = (PsiField)target;
-            final String name = superField.getName();
-            final PsiField field = parentClass.findFieldByName(name, false);
-            return field == null;
+            final PsiReferenceExpression copy = (PsiReferenceExpression)
+                    referenceExpression.copy();
+            final PsiElement qualifier = copy.getQualifier();
+            if (qualifier ==  null) {
+                return false;
+            }
+            qualifier.delete(); // remove super
+            return superField == copy.resolve();
         }
 
-        private static boolean hasUnnecessarySuperQualifier(PsiMethodCallExpression methodCallExpression) {
+        private static boolean hasUnnecessarySuperQualifier(
+                PsiMethodCallExpression methodCallExpression) {
             final PsiMethod superMethod =
                     methodCallExpression.resolveMethod();
             if (superMethod == null) {
                 return false;
             }
-          // check that super.m() and m() resolve to the same method
-          PsiMethodCallExpression copy = (PsiMethodCallExpression)methodCallExpression.copy();
-          copy.getMethodExpression().getQualifier().delete(); //remove super
-          PsiExpression expression = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory()
-            .createExpressionFromText(copy.getText(), methodCallExpression);
-          PsiMethod noSuper = ((PsiMethodCallExpression)expression).resolveMethod();
-            return superMethod == noSuper;
+            // check that super.m() and m() resolve to the same method
+            final PsiMethodCallExpression copy =
+                    (PsiMethodCallExpression)methodCallExpression.copy();
+            final PsiReferenceExpression methodExpression =
+                    copy.getMethodExpression();
+            final PsiElement qualifier = methodExpression.getQualifier();
+            if (qualifier == null) {
+                return false;
+            }
+            qualifier.delete(); //remove super
+            return superMethod == copy.resolveMethod();
         }
     }
 }

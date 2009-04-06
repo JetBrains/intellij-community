@@ -24,4 +24,14 @@ public class UnnecessarySuperQualifier {
             System.out.println(super.field);
         }
     }
+
+    class Father {
+        protected int prot;
+    }
+
+    class Son extends Father {
+        public void context(int prot) {
+            super.prot = prot;
+        }
+    }
 }
