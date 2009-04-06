@@ -401,7 +401,6 @@ public class JDOMUtil {
     XMLOutputter xmlOutputter = createOutputter(lineSeparator);
     try {
       xmlOutputter.output(document, writer);
-      writer.close();
     }
     catch (NullPointerException ex) {
       getLogger().error(ex);

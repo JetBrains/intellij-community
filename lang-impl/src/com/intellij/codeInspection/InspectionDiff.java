@@ -85,6 +85,9 @@ public class InspectionDiff {
 
       Document delta = createDelta(oldDoc, newDoc);
       JDOMUtil.writeDocument(delta, outStream, "\n");
+      if (outStream != System.out) {
+        outStream.close();
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
