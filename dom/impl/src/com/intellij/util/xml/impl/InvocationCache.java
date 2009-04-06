@@ -41,6 +41,22 @@ public class InvocationCache {
           return handler.getXmlTag();
         }
       });
+      ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("getParent")), new Invocation() {
+        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+          return handler.getParent();
+        }
+      });
+      ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("getRoot")), new Invocation() {
+        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+          return handler.getRoot();
+        }
+      });
+      ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("accept", DomElementVisitor.class)), new Invocation() {
+        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+          handler.accept((DomElementVisitor)args[0]);
+          return null;
+        }
+      });
       ourCoreInvocations.put(JavaMethodSignature.getSignature(AnnotatedElement.class.getMethod("getAnnotation", Class.class)), new Invocation() {
         public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
           return handler.getAnnotation((Class<Annotation>)args[0]);
