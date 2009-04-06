@@ -15,13 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -119,11 +119,12 @@ public class GroovyPsiManager implements ProjectComponent {
 
     myTypeInferenceHelper = new TypeInferenceHelper(myProject);
 
-    ProjectRootManager.getInstance(myProject).addModuleRootListener(new ModuleRootListener() {
+    myProject.getMessageBus().connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
       public void rootsChanged(ModuleRootEvent event) {
+        dropTypesCache();
         myRebuildGdkPending = true;
       }
     });
