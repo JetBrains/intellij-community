@@ -4,6 +4,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 
 public class NavigatableRule implements GetDataRule {
@@ -16,6 +17,11 @@ public class NavigatableRule implements GetDataRule {
     final PsiElement element = (PsiElement)dataProvider.getData(DataConstants.PSI_ELEMENT);
     if (element != null) {
       return EditSourceUtil.getDescriptor(element);
+    }
+
+    final Object selection = dataProvider.getData(DataConstants.SELECTED_ITEM);
+    if (selection instanceof Navigatable) {
+      return selection;
     }
 
     return null;
