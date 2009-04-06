@@ -4,10 +4,12 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.*;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.ref.WeakReference;
 
 /**
  * @author spleaner
@@ -26,6 +29,8 @@ import java.awt.event.MouseEvent;
 public class NotificationComponent extends JLabel implements NotificationModelListener {
   private static final Icon EMPTY_ICON = IconLoader.getIcon("/ide/notifications.png");
   private NotificationModel myModel;
+
+  private WeakReference<JBPopup> myPopupRef;
 
   public NotificationComponent(@NotNull final IdeNotificationArea area) {
     myModel = area.getModel();
@@ -60,6 +65,15 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   }
 
   private void showList() {
+    if (myPopupRef != null) {
+      final JBPopup popup = myPopupRef.get();
+      if (popup != null) {
+        popup.cancel();
+      }
+
+      myPopupRef = null;
+    }
+
     if (myModel.getCount() == 1) {
       final NotificationImpl notification = myModel.getFirst();
       if (notification != null) {
@@ -68,11 +82,25 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
       }
     }
 
-    final JRootPane pane = SwingUtilities.getRootPane(this);
-    final Component glassPane = pane.getGlassPane();
-    if (glassPane instanceof IdeGlassPaneEx) {
-      ((IdeGlassPaneEx) glassPane).add(new NotificationsListPanelWrapper(this, (Container) glassPane, pane));
-    }
+    assert myPopupRef == null;
+
+    final NotificationsListPanel listPanel = new NotificationsListPanel(myModel);
+
+    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(listPanel, listPanel.getPreferredFocusedComponent());
+    final JBPopup popup =
+        builder.setResizable(true)
+            .setMinSize(NotificationsListPanel.getMinSize())
+            .setDimensionServiceKey(null, "NotificationsPopup", true)
+            .setCancelOnClickOutside(false)
+            .setBelongsToGlobalPopupStack(false)
+            .setCancelButton(new MinimizeButton("Hide"))
+            .setMovable(true)
+            .setRequestFocus(true)
+            .setTitle("Notifications")
+            .createPopup();
+
+    myPopupRef = new WeakReference<JBPopup>(popup);
+    popup.showInCenterOf(SwingUtilities.getRootPane(this));
   }
 
   public void update(@Nullable final NotificationImpl notification, final int size, final boolean add) {
@@ -153,8 +181,8 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   }
 
   private void performNotificationAction(final NotificationImpl notification) {
-    final NotificationListener.OnClose onClose = notification.getListener().perform();
-    if (onClose == NotificationListener.OnClose.REMOVE) {
+    final NotificationListener.Continue onClose = notification.getListener().perform();
+    if (onClose == NotificationListener.Continue.REMOVE) {
       myModel.remove(notification);
     }
   }

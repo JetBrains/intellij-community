@@ -7,12 +7,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface NotificationListener {
 
-  enum OnClose {
+  enum Continue {
     REMOVE,
     LEAVE
   }
 
   @NotNull
-  OnClose perform();
+  Continue perform();
 
+  Continue onRemove();  
 }

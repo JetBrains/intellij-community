@@ -6,12 +6,15 @@ import com.intellij.notification.impl.NotificationModel;
 import com.intellij.notification.impl.NotificationModelListener;
 import com.intellij.notification.impl.NotificationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -23,19 +26,19 @@ import java.util.List;
  */
 public class NotificationsListPanel extends JPanel implements NotificationModelListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.ui.NotificationsListPanel");
+  private static final String REMOVE_KEY = "REMOVE";
+
   private JList myList;
   private NotificationModel myNotificationsModel;
   private NotificationsListModel myDataModel;
-  private JScrollPane myScrollPane;
-  private JLabel myLabel;
-  private JPanel myInnerPanel;
-  private static final String EMPTY_CARD = "EMPTY";
-  private static final String LIST_CARD = "LIST";
+
+  private JComponent myActiveContentComponent;
+  private JComponent myInactiveContentComponent;
+
+  private Wrapper myContentPane = new Wrapper();
 
   public NotificationsListPanel(@NotNull final NotificationModel notificationsModel) {
     setLayout(new BorderLayout());
-
-    setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 1));
 
     myNotificationsModel = notificationsModel;
     myDataModel = new NotificationsListModel(myNotificationsModel);
@@ -70,42 +73,40 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
         }
       }
     });
-    
-    myScrollPane = new JScrollPane(myList);
-    myScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    myScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    myScrollPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-    myScrollPane.setBackground(Color.WHITE);
 
-    myLabel = new JLabel("Notifications");
-    myLabel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-    myLabel.setOpaque(true);
-    myLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10));
-    myLabel.setHorizontalAlignment(JLabel.CENTER);
-    myLabel.setBackground(new Color(171, 200, 226));
-    myLabel.setForeground(Color.BLACK);
-    add(myLabel, BorderLayout.NORTH);
+    myList.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), REMOVE_KEY);
+    myList.getActionMap().put(REMOVE_KEY, new AbstractAction() {
+      public void actionPerformed(final ActionEvent e) {
+        removeSelected();
+      }
+    });
 
+    final JScrollPane scrollPane = new JScrollPane(myList);
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+//    scrollPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+//    scrollPane.setBackground(Color.WHITE);
 
-    myInnerPanel = new JPanel(new CardLayout()) {{
-      add(new JPanel() {{
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        setBackground(Color.WHITE);
-        add(new JLabel("No notifications."));
-      }}, EMPTY_CARD);
-      
-      add(myScrollPane, LIST_CARD);
-    }};
+    myActiveContentComponent = scrollPane;
+
+    myInactiveContentComponent = new JLabel("No notifications.", JLabel.CENTER) {
+      @Override
+      public Dimension getPreferredSize() {
+        return getEmptyPreferredSize();
+      }
+    };
+
+    myInactiveContentComponent.setFocusable(true);
 
     switchLayout();
 
-    add(myInnerPanel, BorderLayout.CENTER);
+    add(myContentPane, BorderLayout.CENTER);
   }
 
   @Override
   public void removeNotify() {
     myNotificationsModel.removeListener(this);
-    
+
     super.removeNotify();
   }
 
@@ -122,54 +123,49 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   private void switchLayout() {
     final int count = myNotificationsModel.getCount();
 
-    final CardLayout layout = (CardLayout) myInnerPanel.getLayout();
-
     if (count > 0) {
-      layout.show(myInnerPanel, LIST_CARD);
+      if (myActiveContentComponent.getParent() == null) {
+        myContentPane.removeAll();
+        myContentPane.setContent(myActiveContentComponent);
+      }
     } else {
-      layout.show(myInnerPanel, EMPTY_CARD);
+      if (myInactiveContentComponent.getParent() == null) {
+        myContentPane.removeAll();
+        myContentPane.setContent(myInactiveContentComponent);
+      }
     }
+
+    revalidateAll();
   }
 
   private void performNotificationAction(final NotificationImpl notification) {
-    final NotificationListener.OnClose onClose = notification.getListener().perform();
-    if (onClose == NotificationListener.OnClose.REMOVE) {
+    final NotificationListener.Continue onClose = notification.getListener().perform();
+    if (onClose == NotificationListener.Continue.REMOVE) {
       myNotificationsModel.remove(notification);
+      revalidateAll();
     }
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    final int width = 400;
-
-    int count = myDataModel.getSize();
-    if (count > 0) {
-      final int h = myLabel.getPreferredSize().height;
-      final Insets i0 = getInsets();
-      final Insets i = myList.getInsets();
-      final Insets i2 = myScrollPane.getInsets();
-      final Rectangle r = myList.getCellBounds(0, 0);
-      final int vInsets = i.top + i.bottom + i2.top + i2.bottom + i0.top + i0.bottom;
-      count = count < 3 ? 3 : count;
-      if (count < 6) {
-        return new Dimension(width, count * r.height + vInsets + h);
-      } else {
-        return new Dimension(width, 6 * r.height + vInsets + h);
-      }
-    } else {
-      return new Dimension(width, 60);
-    }
+  private static Dimension getEmptyPreferredSize() {
+    final Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+    size.width *= 0.3d;
+    size.height *= 0.3d;
+    return size;
   }
 
-  public NotificationModel getNotificationsModel() {
-    return myNotificationsModel;
-  }
-
-  public JComponent getPreferredFocusedComponent() {
-    return myList;
+  static Dimension getMinSize() {
+    final Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+    size.width *= 0.1d;
+    size.height *= 0.1d;
+    return size;
   }
 
   public void dispose() {
+  }
+
+  private void revalidateAll() {
+    myContentPane.revalidate();
+    myContentPane.repaint();
   }
 
   public void removeSelected() {
@@ -181,7 +177,13 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       final List<NotificationImpl> tbr = new ArrayList<NotificationImpl>();
       for (int i = min; i <= max; i++) {
         if (model.isSelectedIndex(i)) {
-          tbr.add(myNotificationsModel.get(i));
+          final NotificationImpl notification = myNotificationsModel.get(i);
+          if (notification != null) {
+            final NotificationListener.Continue onRemove = notification.getListener().onRemove();
+            if (onRemove == NotificationListener.Continue.REMOVE) {
+              tbr.add(notification);
+            }
+          }
         }
       }
 
@@ -196,6 +198,12 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
         }
       }
     }
+
+    revalidateAll();
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myContentPane.getTargetComponent() == myActiveContentComponent ? myList : myInactiveContentComponent;
   }
 
   private static class NotificationsListRenderer extends JPanel implements ListCellRenderer {

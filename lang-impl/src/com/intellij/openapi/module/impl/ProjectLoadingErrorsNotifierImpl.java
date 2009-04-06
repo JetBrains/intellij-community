@@ -70,11 +70,15 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
     myProject.getMessageBus().syncPublisher(Notifications.TOPIC).notify("project-configuration-error", errorText, "",
                                                                         NotificationType.ERROR, new NotificationListener() {
       @NotNull
-      public OnClose perform() {
+      public Continue perform() {
         RemoveInvalidElementsDialog.showDialog(myProject, CommonBundle.getErrorTitle(), invalidElements, descriptions);
-        return OnClose.REMOVE;
+        return Continue.REMOVE;
       }
-    });
+
+          public Continue onRemove() {
+            return Continue.LEAVE;
+          }
+        });
   }
 
   private static String getInvalidElementsString(ConfigurationErrorDescription[] descriptions) {

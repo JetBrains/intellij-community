@@ -354,11 +354,15 @@ public class DetectedFacetManager implements Disposable {
     }
 
     @NotNull
-    public OnClose perform() {
+    public Continue perform() {
       if (showImplicitFacetsDialog()) {
-        return OnClose.REMOVE;
+        return Continue.REMOVE;
       }
-      return OnClose.LEAVE;
+      return Continue.LEAVE;
+    }
+
+    public Continue onRemove() {
+      return Continue.REMOVE;
     }
   }
 }

@@ -24,9 +24,13 @@ public class NotificationTestAction extends AnAction {
     messageBus.syncPublisher(Notifications.TOPIC).notify("Idea.Test", "Test Notification", "Test Notification Description", NotificationType.INFORMATION,
         new NotificationListener() {
           @NotNull
-          public OnClose perform() {
+          public Continue perform() {
             final int i = Messages.showChooseDialog("Notification message", "Test", new String[]{"Leave", "Remove"}, "Remove", null);
-            return i == 1 ? OnClose.REMOVE : OnClose.LEAVE;
+            return i == 1 ? Continue.REMOVE : Continue.LEAVE;
+          }
+
+          public Continue onRemove() {
+            return Continue.REMOVE;
           }
         });
   }
