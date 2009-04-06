@@ -33,10 +33,10 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   private final Project myProject;
   private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
   private volatile boolean myInitialized;
-  private ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
-  private ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
-  private ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
-  private CustomDomChildrenDescriptionImpl myCustomChildren;
+  private volatile ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
+  private volatile ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
+  private volatile ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
+  private volatile CustomDomChildrenDescriptionImpl myCustomChildren;
 
   public DynamicGenericInfo(@NotNull final DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo, final Project project) {
     myInvocationHandler = handler;
@@ -74,22 +74,25 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
           final List<DomExtensionImpl> collections = registrar.getCollections();
           final List<DomExtensionImpl> attributes = registrar.getAttributes();
           if (!attributes.isEmpty()) {
-            myAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>(myStaticGenericInfo.getAttributes());
+            ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> newAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>(myStaticGenericInfo.getAttributes());
             for (final DomExtensionImpl extension : attributes) {
-              myAttributes.addDescription(extension.addAnnotations(new AttributeChildDescriptionImpl(extension.getXmlName(), extension.getType())));
+              newAttributes.addDescription(extension.addAnnotations(new AttributeChildDescriptionImpl(extension.getXmlName(), extension.getType())));
             }
+            myAttributes = newAttributes;
           }
           if (!fixeds.isEmpty()) {
-            myFixeds = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>(myStaticGenericInfo.getFixed());
+            ChildrenDescriptionsHolder<FixedChildDescriptionImpl> newFixeds = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>(myStaticGenericInfo.getFixed());
             for (final DomExtensionImpl extension : fixeds) {
-              myFixeds.addDescription(extension.addAnnotations(new FixedChildDescriptionImpl(extension.getXmlName(), extension.getType(), extension.getCount(), ArrayUtil.EMPTY_COLLECTION_ARRAY)));
+              newFixeds.addDescription(extension.addAnnotations(new FixedChildDescriptionImpl(extension.getXmlName(), extension.getType(), extension.getCount(), ArrayUtil.EMPTY_COLLECTION_ARRAY)));
             }
+            myFixeds = newFixeds;
           }
           if (!collections.isEmpty()) {
-            myCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>(myStaticGenericInfo.getCollections());
+            ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> newCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>(myStaticGenericInfo.getCollections());
             for (final DomExtensionImpl extension : collections) {
-              myCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(), Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST)));
+              newCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(), Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST)));
             }
+            myCollections = newCollections;
           }
 
           final DomExtensionImpl extension = registrar.getCustomChildrenType();
