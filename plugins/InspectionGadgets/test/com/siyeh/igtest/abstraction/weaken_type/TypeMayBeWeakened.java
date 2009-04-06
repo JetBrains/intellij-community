@@ -102,4 +102,22 @@ public class TypeMayBeWeakened {
             method(p);
         }
     }
+
+    void simpleIf(Boolean condition) {
+        if (condition);
+    }
+
+    void simpleFor(Boolean condition) {
+        for (;condition;);
+    }
+
+    void simpleSwitch(Integer value) {
+        switch (value) {
+
+        }
+    }
+
+    Integer simpleConditional(Boolean condition, Integer value1, Integer value2) {
+        return condition ? value1 : value2;
+    }
 }

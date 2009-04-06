@@ -176,6 +176,11 @@ public class WeakestTypeFinder {
             } else if (referenceParent instanceof PsiConditionalExpression) {
                 final PsiConditionalExpression conditionalExpression =
                         (PsiConditionalExpression)referenceParent;
+                final PsiExpression condition =
+                        conditionalExpression.getCondition();
+                if (referenceElement.equals(condition)) {
+                    return Collections.EMPTY_LIST;
+                }
                 final PsiType type = ExpectedTypeUtils.findExpectedType(
                         conditionalExpression, true);
                 if (!checkType(type, weakestTypeClasses)) {
@@ -201,6 +206,14 @@ public class WeakestTypeFinder {
             } else if (referenceParent instanceof PsiPostfixExpression) {
                 // only primitives and boxed types are the target of a postfix
                 // expression
+                return Collections.EMPTY_LIST;
+            } else if (referenceParent instanceof PsiIfStatement) {
+                // only booleans and boxed Booleans are the condition of an if
+                // statement
+                return Collections.EMPTY_LIST;
+            } else if (referenceParent instanceof PsiForStatement) {
+                // only booleans and boxed Booleans are the condition of an
+                // for statement
                 return Collections.EMPTY_LIST;
             } else if (referenceParent instanceof PsiNewExpression) {
                 final PsiNewExpression newExpression =
