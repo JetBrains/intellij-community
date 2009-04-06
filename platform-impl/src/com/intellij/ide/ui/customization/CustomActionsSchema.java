@@ -26,10 +26,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * User: anna
@@ -70,6 +68,7 @@ public class CustomActionsSchema implements ExportableApplicationComponent, Name
 
   public void addAction(ActionUrl url) {
     myActions.add(url);
+    resortActions();
   }
 
   public ArrayList<ActionUrl> getActions() {
@@ -78,6 +77,7 @@ public class CustomActionsSchema implements ExportableApplicationComponent, Name
 
   public void setActions(final ArrayList<ActionUrl> actions) {
     myActions = actions;
+    resortActions();
   }
 
   public void copyFrom(CustomActionsSchema result) {
@@ -89,10 +89,15 @@ public class CustomActionsSchema implements ExportableApplicationComponent, Name
       final ActionUrl url = new ActionUrl(new ArrayList<String>(actionUrl.getGroupPath()), actionUrl.getComponent(),
                                           actionUrl.getActionType(), actionUrl.getAbsolutePosition());
       url.setInitialPosition(actionUrl.getInitialPosition());
-      addAction(url);
+      myActions.add(url);
     }
+    resortActions();
 
     myIconCustomizations.putAll(result.myIconCustomizations);
+  }
+
+  private void resortActions() {
+    Collections.sort(myActions, ActionUrlComparator.INSTANCE);
   }
 
   public boolean isModified(CustomActionsSchema schema) {
@@ -350,4 +355,28 @@ public void removeIconCustomization(String actionId) {
     }
   }
 
+  private static class ActionUrlComparator implements Comparator<ActionUrl> {
+    public static ActionUrlComparator INSTANCE = new ActionUrlComparator();
+    private static final int DELETED = 1;
+    private static final int ADDED = 2;
+    public int compare(ActionUrl u1, ActionUrl u2) {
+      final int w1 = getEquivalenceClass(u1);
+      final int w2 = getEquivalenceClass(u2);
+      if (w1 != w2) {
+        return w1 - w2; // deleted < added < others
+      }
+      if (w1 == DELETED) {
+        return u2.getAbsolutePosition() - u1.getAbsolutePosition(); // within DELETED equivalence class urls with greater position go first
+      }
+      return u1.getAbsolutePosition() - u2.getAbsolutePosition(); // within ADDED equivalence class: urls with lower position go first
+    }
+
+    private static int getEquivalenceClass(ActionUrl url) {
+      switch (url.getActionType()) {
+        case ActionUrl.DELETED: return 1;
+        case ActionUrl.ADDED: return 2;
+        default: return 3;
+      }
+    }
+  }
 }

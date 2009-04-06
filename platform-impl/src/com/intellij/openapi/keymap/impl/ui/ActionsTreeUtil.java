@@ -130,9 +130,9 @@ public class ActionsTreeUtil {
         }
       }
       else if (action instanceof Separator) {
-        if (group.getSize() > 0 && i < children.length - 1 && !(group.getChildren().get(group.getSize() - 1)instanceof Separator)) {
+        //if (group.getSize() > 0 && i < children.length - 1 && !(group.getChildren().get(group.getSize() - 1)instanceof Separator)) {
           group.addSeparator();
-        }
+        //}
       }
       else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
@@ -144,7 +144,7 @@ public class ActionsTreeUtil {
         }
       }
     }
-    group.normalizeSeparators();
+    //group.normalizeSeparators();
     return group;
   }
 

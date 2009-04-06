@@ -163,7 +163,7 @@ public class CustomizationUtil {
         final int idx = change.line0 + i;
         ActionUrl currentUserObject = defaultUserObjects[idx];
         currentUserObject.setActionType(ActionUrl.DELETED);
-        currentUserObject.setAbsolutePosition(change.line1);
+        currentUserObject.setAbsolutePosition(idx);
         actions.add(currentUserObject);
       }
       for (int i = 0; i < change.inserted; i++) {
