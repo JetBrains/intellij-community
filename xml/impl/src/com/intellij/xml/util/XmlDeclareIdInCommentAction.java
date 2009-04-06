@@ -102,7 +102,7 @@ public class XmlDeclareIdInCommentAction implements LocalQuickFix {
             if (psi != null) {
               final PsiElement element = psi.findElementAt(1);
               if (element instanceof PsiComment) {
-                parent.addBefore(element, tags[0]);
+                parent.getNode().addChild(element.getNode(), tags[0].getNode());
               }
             }
           }
