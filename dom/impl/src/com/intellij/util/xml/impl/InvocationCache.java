@@ -13,6 +13,7 @@ import com.intellij.util.xml.ui.DomUIFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +31,21 @@ public class InvocationCache {
     addCoreInvocations(UserDataHolder.class);
     addCoreInvocations(Object.class);
     try {
+      ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("getXmlElement")), new Invocation() {
+        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+          return handler.getXmlElement();
+        }
+      });
+      ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("getXmlTag")), new Invocation() {
+        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+          return handler.getXmlTag();
+        }
+      });
+      ourCoreInvocations.put(JavaMethodSignature.getSignature(AnnotatedElement.class.getMethod("getAnnotation", Class.class)), new Invocation() {
+        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+          return handler.getAnnotation((Class<Annotation>)args[0]);
+        }
+      });
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttribute")), new Invocation() {
         public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
           return handler.getXmlElement();

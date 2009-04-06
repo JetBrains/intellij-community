@@ -32,8 +32,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
-
 /**
  * @author peter
  */
@@ -74,10 +72,10 @@ public abstract class DomManager implements ModificationTracker {
   public abstract void addDomEventListener(DomEventListener listener, Disposable parentDisposable);
 
   /**
-   * @param type Type. Only {@link Class} and {@link java.lang.reflect.ParameterizedType} are allowed
+   * @param type Class
    * @return {@link com.intellij.util.xml.reflect.DomGenericInfo} instance for the desired type
    */
-  public abstract DomGenericInfo getGenericInfo(Type type);
+  public abstract DomGenericInfo getGenericInfo(Class type);
 
   /**
    * @param element tag

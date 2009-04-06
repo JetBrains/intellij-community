@@ -78,7 +78,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       if (converter == null) {
         converter =  myManager.getConverterManager().getConverterByClass(parameter);
       }
-      LOG.assertTrue(converter != null, "No converter specified: String<->" + parameter.getName());
+      if (converter == null) {
+        LOG.assertTrue(false, "No converter specified: String<->" + parameter.getName());
+      }
       return converter;
     }
   };
@@ -110,8 +112,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myAbstractType = type;
     myType = narrowType(type);
 
-    myInvocationCache = manager.getInvocationCache(myType);
     final Class<?> rawType = getRawType();
+    myInvocationCache = manager.getInvocationCache(rawType);
     Class<? extends DomElement> implementation = manager.getImplementation(rawType);
     final boolean isInterface = ReflectionCache.isInterface(rawType);
     if (implementation == null && !isInterface) {
@@ -636,7 +638,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   private void refreshGenericInfo(final boolean dynamic) {
-    final StaticGenericInfo staticInfo = myManager.getStaticGenericInfo(myType);
+    final StaticGenericInfo staticInfo = myManager.getStaticGenericInfo(getRawType());
     myGenericInfo = dynamic ? new DynamicGenericInfo(this, staticInfo, myManager.getProject()) : staticInfo;
   }
 

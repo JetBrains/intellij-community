@@ -33,7 +33,6 @@ import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.*;
@@ -52,7 +51,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -71,17 +69,15 @@ public final class DomManagerImpl extends DomManager {
   static final SemKey<CollectionElementInvocationHandler> DOM_CUSTOM_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_CUSTOM_HANDLER_KEY");
   static final SemKey<AttributeChildInvocationHandler> DOM_ATTRIBUTE_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_ATTRIBUTE_HANDLER_KEY");
 
-  private final ConcurrentFactoryMap<Type, StaticGenericInfo> myGenericInfos = new ConcurrentFactoryMap<Type, StaticGenericInfo>() {
+  private final ConcurrentFactoryMap<Class, StaticGenericInfo> myGenericInfos = new ConcurrentFactoryMap<Class, StaticGenericInfo>() {
     @NotNull
-    protected StaticGenericInfo create(final Type type) {
-      final Class<?> rawType = ReflectionUtil.getRawType(type);
-      assert rawType != null : "Type not supported: " + type;
-      return new StaticGenericInfo(rawType, DomManagerImpl.this);
+    protected StaticGenericInfo create(final Class type) {
+      return new StaticGenericInfo(type, DomManagerImpl.this);
     }
   };
-  private final ConcurrentFactoryMap<Type, InvocationCache> myInvocationCaches = new ConcurrentFactoryMap<Type, InvocationCache>() {
+  private final ConcurrentFactoryMap<Class, InvocationCache> myInvocationCaches = new ConcurrentFactoryMap<Class, InvocationCache>() {
     @NotNull
-    protected InvocationCache create(final Type key) {
+    protected InvocationCache create(final Class key) {
       return new InvocationCache();
     }
   };
@@ -296,15 +292,15 @@ public final class DomManagerImpl extends DomManager {
     myListeners.getMulticaster().eventOccured(event);
   }
 
-  public final DomGenericInfo getGenericInfo(final Type type) {
+  public final DomGenericInfo getGenericInfo(final Class type) {
     return getStaticGenericInfo(type);
   }
 
-  public final StaticGenericInfo getStaticGenericInfo(final Type type) {
+  public final StaticGenericInfo getStaticGenericInfo(final Class type) {
     return myGenericInfos.get(type);
   }
 
-  final InvocationCache getInvocationCache(final Type type) {
+  final InvocationCache getInvocationCache(final Class type) {
     return myInvocationCaches.get(type);
   }
 

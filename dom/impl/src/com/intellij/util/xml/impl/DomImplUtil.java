@@ -62,14 +62,19 @@ public class DomImplUtil {
 
   public static boolean isGetter(final JavaMethod method) {
     @NonNls final String name = method.getName();
+    final boolean isGet = name.startsWith("get");
+    final boolean isIs = !isGet && name.startsWith("is");
+    if (!isGet && !isIs) {
+      return false;
+    }
     if (method.getGenericParameterTypes().length != 0) {
       return false;
     }
     final Type returnType = method.getGenericReturnType();
-    if (name.startsWith("get")) {
+    if (isGet) {
       return returnType != void.class;
     }
-    return name.startsWith("is") && DomReflectionUtil.canHaveIsPropertyGetterPrefix(returnType);
+    return DomReflectionUtil.canHaveIsPropertyGetterPrefix(returnType);
   }
 
 
