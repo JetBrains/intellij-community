@@ -384,11 +384,12 @@ public final class EditorsSplitters extends JPanel {
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
     public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
       if (myCurrentWindow != null) {
-        return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myCurrentWindow.getSelectedEditor().getComponent(), this);
+        final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
+        if (selectedEditor != null) {
+          return IdeFocusTraversalPolicy.getPreferredFocusedComponent(selectedEditor.getComponent(), this);
+        }
       }
-      else {
-        return IdeFocusTraversalPolicy.getPreferredFocusedComponent(EditorsSplitters.this, this);
-      }
+      return IdeFocusTraversalPolicy.getPreferredFocusedComponent(EditorsSplitters.this, this);
     }
   }
 
