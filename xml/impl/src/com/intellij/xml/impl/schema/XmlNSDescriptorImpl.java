@@ -506,10 +506,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
 
                     final XmlTag rTag = document.getRootTag();
 
-                    final TypeDescriptor complexTypeDescriptor =
-                      (nsDescriptor != XmlNSDescriptorImpl.this)?
-                      nsDescriptor.findTypeDescriptor(name, namespace):
-                      nsDescriptor.findTypeDescriptorImpl(rTag, name, namespace, visited1);
+                    final TypeDescriptor complexTypeDescriptor = nsDescriptor.findTypeDescriptorImpl(rTag, name, namespace, visited1);
                     return new Result<TypeDescriptor>(complexTypeDescriptor, rTag);
                   }
                 }, false
