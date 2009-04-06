@@ -373,7 +373,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         if (!myRunningTestsFullNameToProxy.isEmpty()) {
           final Application application = ApplicationManager.getApplication();
           if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
-            LOG.error("Not all events were processed! " + dumpRunningTestsNames());
+            LOG.warn("Not all events were processed! " + dumpRunningTestsNames());
           }
         }
         myRunningTestsFullNameToProxy.clear();
