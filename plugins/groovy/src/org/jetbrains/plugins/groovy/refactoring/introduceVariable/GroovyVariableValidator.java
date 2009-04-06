@@ -53,7 +53,6 @@ public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Vali
   private ArrayList<String> isOKImpl(String varName, boolean replaceAllOccurrences) {
     if (replaceAllOccurrences) {
       GroovyRefactoringUtil.sortOccurrences(myOccurrences);
-      assert myOccurrences != null && myOccurrences.length > 0 && myOccurrences[0] instanceof GrExpression;
       myExpression = ((GrExpression) myOccurrences[0]);
     }
     final ArrayList<String> conflicts = new ArrayList<String>();
