@@ -4044,12 +4044,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class EditorSizeContainer {
     private TIntArrayList myLineWidths;
-    private boolean myIsDirty;
+    private volatile boolean myIsDirty;
     private int myOldEndLine;
     private Dimension mySize;
     private int myMaxWidth = -1;
 
-    public void reset() {
+    public synchronized void reset() {
       int visLinesCount = getVisibleLineCount();
       myLineWidths = new TIntArrayList(visLinesCount + 300);
       int[] values = new int[visLinesCount];
@@ -4058,10 +4058,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myIsDirty = true;
     }
 
-    public void beforeChange(DocumentEvent e) {
+    public synchronized void beforeChange(DocumentEvent e) {
       if (myDocument.isInBulkUpdate()) {
         myMaxWidth = mySize != null ? mySize.width : -1;
-
       }
 
       myOldEndLine = getVisualPositionLine(e.getOffset() + e.getOldLength());
@@ -4074,7 +4073,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return offsetToVisualPosition(startLineOffset).line;
     }
 
-    public void changedUpdate(DocumentEvent e) {
+    public synchronized void changedUpdate(DocumentEvent e) {
       int startLine = e.getOldLength() == 0 ? myOldEndLine : getVisualPositionLine(e.getOffset());
       int newEndLine = e.getNewLength() == 0 ? startLine : getVisualPositionLine(e.getOffset() + e.getNewLength());
       int oldEndLine = myOldEndLine;
@@ -4108,84 +4107,87 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void validateSizes() {
       if (!myIsDirty) return;
 
-      int lineCount = myLineWidths.size();
+      synchronized (this) {
+        if (!myIsDirty) return;
+        int lineCount = myLineWidths.size();
 
-      if (myMaxWidth != -1 && myDocument.isInBulkUpdate()) {
-        mySize = new Dimension(myMaxWidth, getLineHeight() * lineCount);
-        myIsDirty = false;
-        return;
-      }
-
-      final CharSequence text = myDocument.getCharsNoThreadCheck();
-      int end = myDocument.getTextLength();
-      int x = 0;
-      final int fontSize = myScheme.getEditorFontSize();
-      final String fontName = myScheme.getEditorFontName();
-
-      for (int line = 0; line < lineCount; line++) {
-        if (myLineWidths.getQuick(line) != -1) continue;
-        x = 0;
-        int offset = logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(line, 0)));
-
-        if (offset >= myDocument.getTextLength()) {
-          myLineWidths.set(line, 0);
-          break;
+        if (myMaxWidth != -1 && myDocument.isInBulkUpdate()) {
+          mySize = new Dimension(myMaxWidth, getLineHeight() * lineCount);
+          myIsDirty = false;
+          return;
         }
 
-        IterationState state = new IterationState(EditorImpl.this, offset, false);
-        int fontType = state.getMergedAttributes().getFontType();
+        final CharSequence text = myDocument.getCharsNoThreadCheck();
+        int end = myDocument.getTextLength();
+        int x = 0;
+        final int fontSize = myScheme.getEditorFontSize();
+        final String fontName = myScheme.getEditorFontName();
 
-        while (offset < end && line < lineCount) {
-          char c = text.charAt(offset);
-          if (offset >= state.getEndOffset()) {
-            state.advance();
-            fontType = state.getMergedAttributes().getFontType();
+        for (int line = 0; line < lineCount; line++) {
+          if (myLineWidths.getQuick(line) != -1) continue;
+          x = 0;
+          int offset = logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(line, 0)));
+
+          if (offset >= myDocument.getTextLength()) {
+            myLineWidths.set(line, 0);
+            break;
           }
 
-          FoldRegion collapsed = state.getCurrentFold();
-          if (collapsed != null) {
-            String placeholder = collapsed.getPlaceholderText();
-            for (int i = 0; i < placeholder.length(); i++) {
-              x += charWidth(placeholder.charAt(i), fontType);
+          IterationState state = new IterationState(EditorImpl.this, offset, false);
+          int fontType = state.getMergedAttributes().getFontType();
+
+          while (offset < end && line < lineCount) {
+            char c = text.charAt(offset);
+            if (offset >= state.getEndOffset()) {
+              state.advance();
+              fontType = state.getMergedAttributes().getFontType();
             }
-            offset = collapsed.getEndOffset();
-          }
-          else {
-            if (c == '\t') {
-              x = nextTabStop(x);
-              offset++;
+
+            FoldRegion collapsed = state.getCurrentFold();
+            if (collapsed != null) {
+              String placeholder = collapsed.getPlaceholderText();
+              for (int i = 0; i < placeholder.length(); i++) {
+                x += charWidth(placeholder.charAt(i), fontType);
+              }
+              offset = collapsed.getEndOffset();
             }
             else {
-              if (c == '\n') {
-                myLineWidths.set(line, x);
-                if (line + 1 >= lineCount || myLineWidths.getQuick(line + 1) != -1) break;
+              if (c == '\t') {
+                x = nextTabStop(x);
                 offset++;
-                x = 0;
-                //noinspection AssignmentToForLoopParameter
-                line++;
               }
               else {
-                x += ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName).charWidth(c, myEditorComponent);
-                offset++;
+                if (c == '\n') {
+                  myLineWidths.set(line, x);
+                  if (line + 1 >= lineCount || myLineWidths.getQuick(line + 1) != -1) break;
+                  offset++;
+                  x = 0;
+                  //noinspection AssignmentToForLoopParameter
+                  line++;
+                }
+                else {
+                  x += ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName).charWidth(c, myEditorComponent);
+                  offset++;
+                }
               }
             }
           }
         }
+
+        if (lineCount > 0) {
+          myLineWidths.set(lineCount - 1,
+                           x);    // Last line can be non-zero length and won't be caught by in-loop procedure since latter only react on \n's
+        }
+
+        int maxWidth = 0;
+        for (int i = 0; i < lineCount; i++) {
+          maxWidth = Math.max(maxWidth, myLineWidths.getQuick(i));
+        }
+
+        mySize = new Dimension(maxWidth, getLineHeight() * lineCount);
+
+        myIsDirty = false;
       }
-
-      if (lineCount > 0) {
-        myLineWidths.set(lineCount - 1,
-                         x);    // Last line can be non-zero length and won't be caught by in-loop procedure since latter only react on \n's
-      }
-
-      int maxWidth = 0;
-      for (int i = 0; i < lineCount; i++) {
-        maxWidth = Math.max(maxWidth, myLineWidths.getQuick(i));
-      }
-
-      mySize = new Dimension(maxWidth, getLineHeight() * lineCount);
-
-      myIsDirty = false;
     }
 
     public Dimension getContentSize() {
