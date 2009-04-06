@@ -60,7 +60,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
 
   private boolean mySomeSchemesDeleted = false;
-  private Map<NewColorAndFontPanel, SearchableConfigurable> mySubPanels;
   private Map<ColorAndFontPanelFactory, InnerSearchableConfigurable> mySubPanelFactories;
 
   private SchemesPanel myRootSchemesPanel;
@@ -944,7 +943,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   @Nullable
   public InnerSearchableConfigurable findSubConfigurable(final Class pageClass) {
-    if (mySubPanels == null) {
+    if (mySubPanelFactories == null) {
       buildConfigurables();
     }
     for (Map.Entry<ColorAndFontPanelFactory, InnerSearchableConfigurable> entry : mySubPanelFactories.entrySet()) {
@@ -956,9 +955,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   @Nullable
-  public ColorSettingsPage findPage(Class pageClass) {
-    InnerSearchableConfigurable searchableConfigurable = findSubConfigurable(pageClass);
-    return searchableConfigurable != null ? searchableConfigurable.createPanel().getSettingsPage() : null;
+  public NewColorAndFontPanel findPage(String pageName) {
+    if (mySubPanelFactories == null) {
+      buildConfigurables();
+    }
+    for (InnerSearchableConfigurable configurable : mySubPanelFactories.values()) {
+      if (configurable.getDisplayName().equals(pageName)) {
+        return configurable.createPanel();
+      }
+    }
+    return null;
   }
 
   private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable {
