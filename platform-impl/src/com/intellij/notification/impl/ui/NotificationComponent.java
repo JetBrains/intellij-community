@@ -45,7 +45,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
       }
     });
 
-    setText(" ");
+    setText("");
     setIcon(EMPTY_ICON);
   }
 
@@ -70,7 +70,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   public void update(@Nullable final NotificationImpl notification, final int size, final boolean add) {
     if (notification != null) {
       final NotificationSettings settings = NotificationsConfiguration.getSettings(notification);
-      setIcon(NotificationUtil.getIcon(notification));
+      setIcon(notification.getIcon());
 
       if (add) {
         notifyByBaloon(notification, settings);
@@ -81,7 +81,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
 
     if (size == 0) {
       setForeground(getBackground());
-      setText("0");
+      setText("");
     } else {
       setForeground(Color.BLACK);
       setText(String.format("%d", size));
@@ -112,8 +112,8 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     if (NotificationDisplayType.BALOON.equals(settings.getDisplayType())) {
       final String html = String.format("%s", notification.getName());
 
-      final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(html, NotificationUtil.getIcon(notification),
-          NotificationUtil.getColor(notification), null)
+      final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(html, notification.getIcon(),
+          notification.getBackgroundColor(), null)
           .setCloseButtonEnabled(true).setShowCallout(false).setFadeoutTime(3000).setHideOnClickOutside(false).setHideOnKeyOutside(false).setHideOnFrameResize(false)
           .setClickHandler(new ActionListener() {
             public void actionPerformed(final ActionEvent e) {

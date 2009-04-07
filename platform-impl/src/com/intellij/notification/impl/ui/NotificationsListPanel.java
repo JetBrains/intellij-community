@@ -5,7 +5,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationImpl;
 import com.intellij.notification.impl.NotificationModel;
 import com.intellij.notification.impl.NotificationModelListener;
-import com.intellij.notification.impl.NotificationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -340,7 +339,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       LOG.assertTrue(value instanceof NotificationImpl);
       final NotificationImpl notification = (NotificationImpl) value;
 
-      setIcon(NotificationUtil.getIcon(notification));
+      setIcon(notification.getIcon());
       final Color color = list.getSelectionBackground();
       setBackground(isSelected ? new Color(color.getRed(), color.getGreen(), color.getBlue(), 80) : list.getBackground());
 
