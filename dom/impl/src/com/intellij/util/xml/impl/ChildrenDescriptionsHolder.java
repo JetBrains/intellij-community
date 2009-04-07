@@ -16,6 +16,7 @@ import java.util.*;
 public class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
   private final Map<XmlName, T> myMap = new THashMap<XmlName, T>();
   private final ChildrenDescriptionsHolder<T> myDelegate;
+  private volatile List<T> myCached = null;
 
   public ChildrenDescriptionsHolder(@Nullable final ChildrenDescriptionsHolder<T> delegate) {
     myDelegate = delegate;
@@ -27,6 +28,7 @@ public class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
 
   final T addDescription(@NotNull T t) {
     myMap.put(t.getXmlName(), t);
+    myCached = null;
     return t;
   }
 
@@ -58,16 +60,18 @@ public class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
 
   @NotNull
   final List<T> getDescriptions() {
-    final TreeSet<T> set = new TreeSet<T>(myMap.values());
-    if (myDelegate != null) {
-      set.addAll(myDelegate.myMap.values());
+    List<T> cached = myCached;
+    if (cached != null) {
+      return cached;
     }
-    return new ArrayList<T>(set);
-  }
 
-  final void clear() {
-    myMap.clear();
+    cached = new ArrayList<T>(myMap.values());
+    if (myDelegate != null) {
+      cached.addAll(myDelegate.myMap.values());
+    }
+    Collections.sort(cached);
+    myCached = cached;
+    return cached;
   }
-
 
 }

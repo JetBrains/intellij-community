@@ -199,9 +199,11 @@ public class DomSemContributor extends SemContributor {
     for (final T description : descriptions) {
       final XmlName xmlName = description.getXmlName();
 
-      final EvaluatedXmlName evaluatedXmlName = parent.createEvaluatedXmlName(xmlName);
-      if (DomImplUtil.isNameSuitable(evaluatedXmlName, localName, qName, namespace, file)) {
-        return description;
+      if (localName.equals(xmlName.getLocalName()) || qName.equals(xmlName.getLocalName())) {
+        final EvaluatedXmlName evaluatedXmlName = parent.createEvaluatedXmlName(xmlName);
+        if (DomImplUtil.isNameSuitable(evaluatedXmlName, localName, qName, namespace, file)) {
+          return description;
+        }
       }
     }
     return null;

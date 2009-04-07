@@ -18,6 +18,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,14 +30,17 @@ import java.util.concurrent.ConcurrentMap;
  */
 @SuppressWarnings({"unchecked"})
 public class SemServiceImpl extends SemService{
-  private final ConcurrentMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>> myCache = new ConcurrentHashMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>>();
-  private final SortedMap<SemKey, Collection<NullableFunction<PsiElement, ? extends SemElement>>> myProducers = new TreeMap<SemKey, Collection<NullableFunction<PsiElement,? extends SemElement>>>(new Comparator<SemKey>() {
+  private static final Comparator<SemKey> KEY_COMPARATOR = new Comparator<SemKey>() {
     public int compare(SemKey o1, SemKey o2) {
       return o2.getUniqueId() - o1.getUniqueId();
     }
-  });
-  private volatile boolean myInitialized = false;
+  };
+  private final ConcurrentMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>> myCache = new ConcurrentHashMap<PsiElement, ConcurrentMap<SemKey, List<SemElement>>>();
+  private final Map<SemKey, Collection<NullableFunction<PsiElement, ? extends SemElement>>> myProducers = new THashMap<SemKey, Collection<NullableFunction<PsiElement,? extends SemElement>>>();
+  private final MultiMap<SemKey, SemKey> myInheritors = new MultiMap<SemKey, SemKey>();
   private final Project myProject;
+
+  private volatile boolean myInitialized = false;
   private boolean myBulkChange = false;
 
   public SemServiceImpl(Project project, PsiManager psiManager) {
@@ -110,9 +114,24 @@ public class SemServiceImpl extends SemService{
       if (myInitialized) return;
 
       assert myProducers.isEmpty();
-      for (final SemKey key : map.keySet()) {
+      assert myInheritors.isEmpty();
+
+      SemKey[] allKeys = map.keySet().toArray(new SemKey[map.size()]);
+      for (final SemKey key : allKeys) {
         myProducers.put(key, map.get(key));
+        for (final SemKey concrete : allKeys) {
+          if (concrete.isKindOf(key)) {
+            myInheritors.putValue(key, concrete);
+          }
+        }
       }
+
+      for (final SemKey each : myInheritors.keySet()) {
+        final List<SemKey> inheritors = new ArrayList<SemKey>(myInheritors.get(each));
+        Collections.sort(inheritors, KEY_COMPARATOR);
+        myInheritors.put(each, inheritors);
+      }
+
       myInitialized = true;
     }
   }
@@ -128,13 +147,11 @@ public class SemServiceImpl extends SemService{
 
     final ConcurrentMap<SemKey, List<SemElement>> map = cacheOrGetMap(psi);
     LinkedHashSet<T> result = null;
-    for (final SemKey each : myProducers.keySet()) {
-      if (each.isKindOf(key)) {
-        List<SemElement> list = ConcurrencyUtil.cacheOrGet(map, each, createSemElements(each, psi));
-        if (!list.isEmpty()) {
-          if (result == null) result = new LinkedHashSet<T>();
-          result.addAll((List<T>)list);
-        }
+    for (final SemKey each : myInheritors.get(key)) {
+      List<SemElement> list = ConcurrencyUtil.cacheOrGet(map, each, createSemElements(each, psi));
+      if (!list.isEmpty()) {
+        if (result == null) result = new LinkedHashSet<T>();
+        result.addAll((List<T>)list);
       }
     }
     return result == null ? Collections.<T>emptyList() : new ArrayList<T>(result);
@@ -153,7 +170,7 @@ public class SemServiceImpl extends SemService{
         }  
       }
     }
-    return result == null ? Collections.<SemElement>emptyList() : result;
+    return result == null ? Collections.<SemElement>emptyList() : Collections.unmodifiableList(result);
   }
 
   @Nullable
@@ -168,25 +185,36 @@ public class SemServiceImpl extends SemService{
     final ConcurrentMap<SemKey, List<SemElement>> map = myCache.get(psi);
     if (map == null) return null;
 
+    List<T> singleList = null;
     LinkedHashSet<T> result = null;
-    boolean allComputed = true;
-    for (final SemKey each : myProducers.keySet()) {
-      if (each.isKindOf(key)) {
-        List<T> cached = (List<T>)map.get(each);
-        allComputed &= cached != null;
-        if (cached != null && !cached.isEmpty()) {
-          if (result == null) result = new LinkedHashSet<T>();
-          result.addAll(cached);
+    final List<SemKey> inheritors = (List<SemKey>)myInheritors.get(key);
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < inheritors.size(); i++) {
+      List<T> cached = (List<T>)map.get(inheritors.get(i));
+
+      if (cached == null && paranoid) {
+        return null;
+      }
+
+      if (cached != null && cached != Collections.EMPTY_LIST) {
+        if (singleList == null) {
+          singleList = cached;
+          continue;
         }
+
+        if (result == null) {
+          result = new LinkedHashSet<T>(singleList);
+        }
+        result.addAll(cached);
       }
     }
 
 
-    if (!allComputed && paranoid) {
-      return null;
-    }
-
     if (result == null) {
+      if (singleList != null) {
+        return singleList;
+      }
+
       return Collections.emptyList();
     }
 
