@@ -38,6 +38,7 @@ import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * This is the main part of the injection code. The component registers a language injector, the reference provider that
@@ -60,7 +61,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
   private final Configuration myInjectionConfiguration;
 
   @SuppressWarnings({"unchecked"})
-  private final List<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> myTempPlaces = new ArrayList();
+  private final List<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> myTempPlaces = new CopyOnWriteArrayList<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>>();
   static final Key<Boolean> HAS_UNPARSABLE_FRAGMENTS = Key.create("HAS_UNPARSABLE_FRAGMENTS");
 
   public CustomLanguageInjector(Project project, Configuration configuration) {
@@ -77,18 +78,16 @@ public final class CustomLanguageInjector implements ProjectComponent {
   private void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     // optimization
     if (place instanceof PsiLiteralExpression && !isStringLiteral(place)) return;
-    
-    synchronized (myTempPlaces) {
-      for (Iterator<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> it = myTempPlaces.iterator(); it.hasNext();) {
-        final Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage> pair = it.next();
-        final PsiLanguageInjectionHost element = pair.first.getElement();
-        if (element == null) {
-          it.remove();
-        }
-        else if (element == place) {
-          processor.process(pair.second.getLanguage(), Collections.singletonList(Trinity.create(element, pair.second, ElementManipulators.getManipulator(element).getRangeInElement(element))));
-          return;
-        }
+
+    for (Iterator<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> it = myTempPlaces.iterator(); it.hasNext();) {
+      final Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage> pair = it.next();
+      final PsiLanguageInjectionHost element = pair.first.getElement();
+      if (element == null) {
+        it.remove();
+      }
+      else if (element == place) {
+        processor.process(pair.second.getLanguage(), Collections.singletonList(Trinity.create(element, pair.second, ElementManipulators.getManipulator(element).getRangeInElement(element))));
+        return;
       }
     }
 
@@ -220,9 +219,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
     final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
     final SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = manager.createSmartPsiElementPointer(host);
 
-    synchronized (myTempPlaces) {
-      myTempPlaces.add(Pair.create(pointer, selectedValue));
-    }
+    myTempPlaces.add(Pair.create(pointer, selectedValue));
   }
 
   private static class MyLanguageInjector implements MultiHostInjector {
