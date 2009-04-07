@@ -19,7 +19,15 @@ import java.lang.reflect.Modifier;
 public class InstanceofCheckerGeneratorImpl extends InstanceofCheckerGenerator {
   private final ConcurrentFactoryMap<Class, Condition<Object>> myCache = new ConcurrentFactoryMap<Class, Condition<Object>>() {
     @Override
-    protected Condition<Object> create(Class key) {
+    protected Condition<Object> create(final Class key) {
+      if (key.isAnonymousClass() || Modifier.isPrivate(key.getModifiers())) {
+        return new Condition<Object>() {
+          public boolean value(Object o) {
+            return key.isInstance(o);
+          }
+        };
+      }
+
       return new InstanceofClassGenerator(key).createClass();
     }
   };
