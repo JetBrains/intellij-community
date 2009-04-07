@@ -49,6 +49,10 @@ public class DomPatterns {
   }
 
   public static XmlTagPattern.Capture tagWithDom(String tagName, Class<? extends DomElement> aClass) {
-    return XmlPatterns.xmlTag().withName(tagName).and(withDom(domElement(aClass)));
+    return tagWithDom(tagName, domElement(aClass));
+  }
+
+  public static XmlTagPattern.Capture tagWithDom(String tagName, ElementPattern<? extends DomElement> domPattern) {
+    return XmlPatterns.xmlTag().withLocalName(tagName).and(withDom(domPattern));
   }
 }
