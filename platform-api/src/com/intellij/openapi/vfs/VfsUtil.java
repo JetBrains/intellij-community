@@ -279,7 +279,7 @@ public class VfsUtil {
         break;
       }
     }
-    return lastEqualIdx != -1 ? minLengthPath[lastEqualIdx] : null;
+    return lastEqualIdx == -1 ? null : minLengthPath[lastEqualIdx];
   }
 
   /**
@@ -330,7 +330,7 @@ public class VfsUtil {
     if (uri.startsWith("jar:file:/")) {
       uri = uri.substring("jar:file:/".length());
       if (!SystemInfo.isWindows) uri = "/" + uri;
-      file = VirtualFileManager.getInstance().findFileByUrl(JarFileSystem.PROTOCOL + ":" + "//" + uri);
+      file = VirtualFileManager.getInstance().findFileByUrl(JarFileSystem.PROTOCOL_PREFIX + uri);
     }
     else {
       if (!SystemInfo.isWindows && StringUtil.startsWithChar(uri, '/')) {
@@ -341,7 +341,7 @@ public class VfsUtil {
       }
     }
 
-    if (file == null && uri.indexOf(JarFileSystem.JAR_SEPARATOR) != -1) {
+    if (file == null && uri.contains(JarFileSystem.JAR_SEPARATOR)) {
       file = JarFileSystem.getInstance().findFileByPath(uri);
     }
 
@@ -505,7 +505,7 @@ public class VfsUtil {
 
   public static String fixURLforIDEA( String url ) {
     int idx = url.indexOf(":/");
-    if( idx >= 0 && (idx+2) < url.length() && url.charAt(idx+2) != '/' ) {
+    if( idx >= 0 && idx+2 < url.length() && url.charAt(idx+2) != '/' ) {
       String prefix = url.substring(0, idx);
       String suffix = url.substring(idx+2);
 
@@ -665,7 +665,7 @@ public class VfsUtil {
   }
 
   @Nullable
-  public static <T> T processInputStream(final @NotNull VirtualFile file, final Function<InputStream, T> function) {
+  public static <T> T processInputStream(@NotNull final VirtualFile file, final Function<InputStream, T> function) {
     InputStream stream = null;
     try {
       stream = file.getInputStream();

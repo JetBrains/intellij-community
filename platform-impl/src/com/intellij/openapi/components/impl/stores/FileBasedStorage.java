@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
@@ -99,10 +98,9 @@ public class FileBasedStorage extends XmlElementStorage {
 
     if (virtualFileTracker != null && messageBus != null) {
       final String path = myFile.getAbsolutePath();
-      final String fileUrl = LocalFileSystem.PROTOCOL + "://" + path.replace(File.separatorChar, '/');
+      final String fileUrl = LocalFileSystem.PROTOCOL_PREFIX + path.replace(File.separatorChar, '/');
 
-
-      final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
+      final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
       virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
         public void contentsChanged(final VirtualFileEvent event) {
           listener.storageFileChanged(event, FileBasedStorage.this);
@@ -128,7 +126,7 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
-  protected MySaveSession createSaveSession(final XmlElementStorage.MyExternalizationSession externalizationSession) {
+  protected MySaveSession createSaveSession(final MyExternalizationSession externalizationSession) {
     return new FileSaveSession(externalizationSession);
   }
 
@@ -139,7 +137,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
 
   protected class FileSaveSession extends MySaveSession {
-    public FileSaveSession(MyExternalizationSession externalizationSession) {
+    protected FileSaveSession(MyExternalizationSession externalizationSession) {
       super(externalizationSession);
     }
 
@@ -295,7 +293,7 @@ VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
   }
 
   @Nullable
-  protected Document loadDocument() throws StateStorage.StateStorageException {
+  protected Document loadDocument() throws StateStorageException {
     myBlockSavingTheContent = false;
     try {
       VirtualFile file = getVirtualFile();
@@ -364,11 +362,11 @@ VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
     }
   }
 
-  private int skipBom(final VirtualFile virtualFile) {
+  private static int skipBom(final VirtualFile virtualFile) {
     synchronized (BUFFER) {
-      final int read;
       try {
         InputStream input = virtualFile.getInputStream();
+        final int read;
         try {
           read = input.read(BUFFER);
         }

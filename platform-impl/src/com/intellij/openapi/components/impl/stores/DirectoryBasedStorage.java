@@ -65,7 +65,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
     if (virtualFileTracker != null && messageBus != null) {
       final String path = myDir.getAbsolutePath();
-      final String fileUrl = LocalFileSystem.PROTOCOL + "://" + path.replace(File.separatorChar, '/');
+      final String fileUrl = LocalFileSystem.PROTOCOL_PREFIX + path.replace(File.separatorChar, '/');
 
 
       final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);

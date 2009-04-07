@@ -256,7 +256,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       }
     }
 
-    return LocalFileSystem.PROTOCOL + "://" + path.replace(File.separatorChar, '/');
+    return LocalFileSystem.PROTOCOL_PREFIX + path.replace(File.separatorChar, '/');
   }
 
   private static class LoggingListener implements VirtualFileListener {

@@ -331,7 +331,7 @@ public class JavaSdkImpl extends JavaSdk {
 
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (File child : childrenList) {
-      String url = JarFileSystem.PROTOCOL + "://" + child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+      String url = JarFileSystem.PROTOCOL_PREFIX + child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null) {
         result.add(vFile);
@@ -340,7 +340,8 @@ public class JavaSdkImpl extends JavaSdk {
 
     @NonNls File classesZipFile = new File(new File(file, "lib"), "classes.zip");
     if(!classesZipFile.isDirectory() && classesZipFile.exists()){
-      String url = JarFileSystem.PROTOCOL + "://" + classesZipFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+      String url =
+        JarFileSystem.PROTOCOL_PREFIX + classesZipFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null){
         result.add(vFile);
@@ -391,7 +392,8 @@ public class JavaSdkImpl extends JavaSdk {
   @Nullable
   private static VirtualFile findInJar(File jarFile, String relativePath) {
     if (!jarFile.exists()) return null;
-    String url = JarFileSystem.PROTOCOL + "://" + jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + relativePath;
+    String url = JarFileSystem.PROTOCOL_PREFIX +
+                 jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + relativePath;
     return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 

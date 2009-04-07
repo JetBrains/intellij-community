@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 
 public class JavacOutputParser extends OutputParser {
   private final int myTabSize;
-  private @NonNls String WARNING_PREFIX = "warning:"; // default value
+  @NonNls private String WARNING_PREFIX = "warning:"; // default value
 
   public JavacOutputParser(Project project) {
     myTabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(StdFileTypes.JAVA);

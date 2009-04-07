@@ -31,7 +31,7 @@ import java.util.Set;
 
 public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = "file";
-  @NonNls public static final String PROTOCOL_PREFIX = "file://";
+  @NonNls public static final String PROTOCOL_PREFIX = PROTOCOL + "://";
 
   private static LocalFileSystem ourInstance = CachedSingletonsRegistry.markCachedField(LocalFileSystem.class);
 
@@ -89,14 +89,14 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * @return request handle or null if rootFile does not belong to this file system
    */
   @Nullable
-  public abstract WatchRequest addRootToWatch(final @NotNull String rootPath, final boolean toWatchRecursively);
+  public abstract WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively);
 
   @NotNull
-  public abstract Set<WatchRequest> addRootsToWatch(final @NotNull Collection<String> rootPaths, final boolean toWatchRecursively);
+  public abstract Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively);
 
-  public abstract void removeWatchedRoots(final @NotNull Collection<WatchRequest> rootsToWatch);
+  public abstract void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch);
 
-  public abstract void removeWatchedRoot(final @NotNull WatchRequest watchRequest);
+  public abstract void removeWatchedRoot(@NotNull final WatchRequest watchRequest);
 
   public abstract void registerAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler);
   public abstract void unregisterAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler);

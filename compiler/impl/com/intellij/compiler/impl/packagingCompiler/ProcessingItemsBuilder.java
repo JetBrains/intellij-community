@@ -123,7 +123,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     return true;
   }
 
-  private void checkRecursiveCopying(final @NotNull VirtualFile sourceFile, @NotNull final String outputPath) {
+  private void checkRecursiveCopying(@NotNull final VirtualFile sourceFile, @NotNull final String outputPath) {
     File fromFile = VfsUtil.virtualToIoFile(sourceFile);
     File toFile = new File(FileUtil.toSystemDependentName(outputPath));
     try {
@@ -131,7 +131,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
         DeploymentUtil.reportRecursiveCopying(myContext.getCompileContext(), fromFile.getAbsolutePath(), toFile.getAbsolutePath(), "", "");
       }
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
   }
 
@@ -143,7 +143,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
   }
 
   @Nullable
-  private static NestedJarInfo getNestedJar(final @NotNull Stack<NestedJarInfo> nestedJarInfos,
+  private static NestedJarInfo getNestedJar(@NotNull final Stack<NestedJarInfo> nestedJarInfos,
                                                            final boolean externalDependencyInstruction) {
     if (!externalDependencyInstruction) {
       return nestedJarInfos.peek();
@@ -191,7 +191,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     return true;
   }
 
-  private void addItemsToJar(final VirtualFile sourceFile, final DestinationInfo destination, final @Nullable PackagingFileFilter fileFilter) {
+  private void addItemsToJar(final VirtualFile sourceFile, final DestinationInfo destination, @Nullable final PackagingFileFilter fileFilter) {
     JarInfo jarInfo = myContext.getCachedJar(sourceFile);
     boolean addToJarInfo = jarInfo == null;
     if (jarInfo == null) {
@@ -232,7 +232,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     }
   }
 
-  private void addItemsToExplodedRecursively(final VirtualFile sourceFile, final String outputPath, final @Nullable VirtualFile outputFile,
+  private void addItemsToExplodedRecursively(final VirtualFile sourceFile, final String outputPath, @Nullable final VirtualFile outputFile,
                                              @Nullable PackagingFileFilter fileFilter) {
     if (fileFilter != null && !fileFilter.accept(sourceFile, myContext.getCompileContext())) {
       return;
@@ -267,10 +267,10 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     BuildRecipe childInstructions = instruction.getChildInstructions(myContext.getCompileContext());
     NestedJarInfo oldNestedJar = null;
     if (myNestedJars != null) {
-      DestinationInfo destinationInfo;
       if (instruction.isExternalDependencyInstruction()) {
         oldNestedJar = myNestedJars.pop();
       }
+      DestinationInfo destinationInfo;
       if (!myNestedJars.isEmpty()) {
         NestedJarInfo nestedJar = myNestedJars.peek();
         destinationInfo = new JarDestinationInfo(trimParentPrefix(instruction.getOutputRelativePath()), nestedJar.myJarInfo, nestedJar.myDestination);

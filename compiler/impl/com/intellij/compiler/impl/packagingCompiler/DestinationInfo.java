@@ -13,7 +13,7 @@ public abstract class DestinationInfo {
   private final String myOutputPath;
   private final String myOutputFilePath;
 
-  protected DestinationInfo(final @NotNull String outputPath, final @Nullable VirtualFile outputFile, @NotNull String outputFilePath) {
+  protected DestinationInfo(@NotNull final String outputPath, @Nullable final VirtualFile outputFile, @NotNull String outputFilePath) {
     myOutputFilePath = outputFilePath;
     myOutputFile = outputFile;
     myOutputPath = outputPath;

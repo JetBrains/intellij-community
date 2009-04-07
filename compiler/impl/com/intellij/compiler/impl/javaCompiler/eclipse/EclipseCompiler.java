@@ -27,7 +27,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-
+                                        
 public class EclipseCompiler extends ExternalCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler");
 
@@ -88,12 +88,12 @@ public class EclipseCompiler extends ExternalCompiler {
     return new EclipseCompilerConfigurable(EclipseCompilerSettings.getInstance(myProject));
   }
 
-  public OutputParser createErrorParser(final String outputDir) {
+  public OutputParser createErrorParser(@NotNull final String outputDir) {
     return new EclipseCompilerErrorParser();
   }
 
   @Nullable
-  public OutputParser createOutputParser(final String outputDir) {
+  public OutputParser createOutputParser(@NotNull final String outputDir) {
     return new EclipseCompilerOutputParser(outputDir);
   }
 
@@ -139,10 +139,10 @@ public class EclipseCompiler extends ExternalCompiler {
     addCommandLineOptions(commandLine, chunk, outputPath, compilerSettings, useTempFile, true);
   }
 
-  public void addCommandLineOptions(@NonNls final ArrayList<String> commandLine,
-                                    final ModuleChunk chunk,
-                                    final String outputPath,
-                                    final EclipseCompilerSettings compilerSettings,
+  public void addCommandLineOptions(@NotNull @NonNls final List<String> commandLine,
+                                    @NotNull final ModuleChunk chunk,
+                                    @NotNull final String outputPath,
+                                    @NotNull final EclipseCompilerSettings compilerSettings,
                                     final boolean useTempFile,
                                     boolean quoteBootClasspath) throws IOException {
     final Sdk jdk = chunk.getJdk();
@@ -199,10 +199,7 @@ public class EclipseCompiler extends ExternalCompiler {
   }
 
   public void compileFinished() {
-    for (final File myTempFile : myTempFiles) {
-      FileUtil.delete(myTempFile);
-    }
+    FileUtil.asyncDelete(myTempFiles);
     myTempFiles.clear();
   }
-
 }

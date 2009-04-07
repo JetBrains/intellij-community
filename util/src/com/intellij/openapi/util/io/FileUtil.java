@@ -464,7 +464,7 @@ public class FileUtil {
       try {
         Thread.sleep(10);
       }
-      catch (InterruptedException e) {
+      catch (InterruptedException ignored) {
 
       }
     }
@@ -843,7 +843,7 @@ public class FileUtil {
     try {
       process.waitFor();
     }
-    catch (InterruptedException e) {
+    catch (InterruptedException ignored) {
     }
   }
 
@@ -888,7 +888,7 @@ public class FileUtil {
       try {
         process.waitFor();
       }
-      catch (InterruptedException e) {
+      catch (InterruptedException ignored) {
       }
     }
   }

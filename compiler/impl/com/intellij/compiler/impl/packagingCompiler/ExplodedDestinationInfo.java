@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class ExplodedDestinationInfo extends DestinationInfo {
-  public ExplodedDestinationInfo(final String outputPath, final @Nullable VirtualFile outputFile) {
+  public ExplodedDestinationInfo(final String outputPath, @Nullable final VirtualFile outputFile) {
     super(outputPath, outputFile, outputPath);
   }
 

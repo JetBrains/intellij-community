@@ -13,7 +13,7 @@ import java.util.List;
 public class CachedSingletonsRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.CachedSingletonsRegistry");
 
-  private final static Object LOCK = new CachedSingletonsRegistry();
+  private static final Object LOCK = new CachedSingletonsRegistry();
   private static final List<Class<?>> ourRegisteredClasses = new ArrayList<Class<?>>();
 
   private CachedSingletonsRegistry() {}
