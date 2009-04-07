@@ -517,98 +517,106 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public void readExternal(final Element parentNode) throws InvalidDataException {
-    myStartupManager.registerPostStartupActivity(new Runnable() {
-      @SuppressWarnings({"HardCodedStringLiteral"}) public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @SuppressWarnings({"HardCodedStringLiteral"})
-          public void run() {
-            final Map<String, Breakpoint> nameToBreakpointMap = new java.util.HashMap<String, Breakpoint>();
-            try {
-              final List groups = parentNode.getChildren();
-              for (final Object group1 : groups) {
-                final Element group = (Element)group1;
-                final String categoryName = group.getName();
-                final Key<Breakpoint> breakpointCategory = BreakpointCategory.lookup(categoryName);
-                setDefaultSuspendPolicy(breakpointCategory, group.getAttributeValue(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME));
-                Element anyExceptionBreakpointGroup;
-                if (!AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.equals(breakpointCategory)) {
-                  // for compatibility with previous format
-                  anyExceptionBreakpointGroup = group.getChild(AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.toString());
-                  final BreakpointFactory factory = BreakpointFactory.getInstance(breakpointCategory);
-                  if (factory != null) {
-                    for (final Object o : group.getChildren("breakpoint")) {
-                      Element breakpointNode = (Element)o;
-                      Breakpoint breakpoint = factory.createBreakpoint(myProject, breakpointNode);
-                      breakpoint.readExternal(breakpointNode);
-                      addBreakpoint(breakpoint);
-                      nameToBreakpointMap.put(breakpoint.getDisplayName(), breakpoint);
-                    }
-                  }
-                }
-                else {
-                  anyExceptionBreakpointGroup = group;
-                }
+    if (myProject.isOpen()) {
+      doRead(parentNode);
+    } else {
+      myStartupManager.registerPostStartupActivity(new Runnable() {
+        public void run() {
+          doRead(parentNode);
+        }
+      });
+    }
+  }
 
-                if (anyExceptionBreakpointGroup != null) {
-                  final Element breakpointElement = group.getChild("breakpoint");
-                  if (breakpointElement != null) {
-                    getAnyExceptionBreakpoint().readExternal(breakpointElement);
-                  }
+  private void doRead(final Element parentNode) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
+      public void run() {
+        final Map<String, Breakpoint> nameToBreakpointMap = new java.util.HashMap<String, Breakpoint>();
+        try {
+          final List groups = parentNode.getChildren();
+          for (final Object group1 : groups) {
+            final Element group = (Element)group1;
+            final String categoryName = group.getName();
+            final Key<Breakpoint> breakpointCategory = BreakpointCategory.lookup(categoryName);
+            setDefaultSuspendPolicy(breakpointCategory, group.getAttributeValue(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME));
+            Element anyExceptionBreakpointGroup;
+            if (!AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.equals(breakpointCategory)) {
+              // for compatibility with previous format
+              anyExceptionBreakpointGroup = group.getChild(AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.toString());
+              final BreakpointFactory factory = BreakpointFactory.getInstance(breakpointCategory);
+              if (factory != null) {
+                for (final Object o : group.getChildren("breakpoint")) {
+                  Element breakpointNode = (Element)o;
+                  Breakpoint breakpoint = factory.createBreakpoint(myProject, breakpointNode);
+                  breakpoint.readExternal(breakpointNode);
+                  addBreakpoint(breakpoint);
+                  nameToBreakpointMap.put(breakpoint.getDisplayName(), breakpoint);
                 }
-
               }
             }
-            catch (InvalidDataException e) {
+            else {
+              anyExceptionBreakpointGroup = group;
             }
 
-            final Element rulesGroup = parentNode.getChild(RULES_GROUP_NAME);
-            if (rulesGroup != null) {
-              final List rules = rulesGroup.getChildren("rule");
-              for (final Object rule1 : rules) {
-                final Element rule = (Element)rule1;
-                final Element master = rule.getChild(MASTER_BREAKPOINT_TAGNAME);
-                if (master == null) {
-                  continue;
-                }
-                final Element slave = rule.getChild(SLAVE_BREAKPOINT_TAGNAME);
-                if (slave == null) {
-                  continue;
-                }
-                final Breakpoint masterBreakpoint = nameToBreakpointMap.get(master.getAttributeValue("name"));
-                if (masterBreakpoint == null) {
-                  continue;
-                }
-                final Breakpoint slaveBreakpoint = nameToBreakpointMap.get(slave.getAttributeValue("name"));
-                if (slaveBreakpoint == null) {
-                  continue;
-                }
-                addBreakpointRule(new EnableBreakpointRule(BreakpointManager.this, masterBreakpoint, slaveBreakpoint, "true".equalsIgnoreCase(rule.getAttributeValue("leaveEnabled"))));
+            if (anyExceptionBreakpointGroup != null) {
+              final Element breakpointElement = group.getChild("breakpoint");
+              if (breakpointElement != null) {
+                getAnyExceptionBreakpoint().readExternal(breakpointElement);
               }
             }
 
-            DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
-              public void run() {
-                updateBreakpointsUI();
-              }
-            });
-          }
-        });
-
-        myUIProperties.clear();
-        final Element props = parentNode.getChild("ui_properties");
-        if (props != null) {
-          final List children = props.getChildren("property");
-          for (Object child : children) {
-            Element property = (Element)child;
-            final String name = property.getAttributeValue("name");
-            final String value = property.getAttributeValue("value");
-            if (name != null && value != null) {
-              myUIProperties.put(name, value);
-            }
           }
         }
+        catch (InvalidDataException e) {
+        }
+
+        final Element rulesGroup = parentNode.getChild(RULES_GROUP_NAME);
+        if (rulesGroup != null) {
+          final List rules = rulesGroup.getChildren("rule");
+          for (final Object rule1 : rules) {
+            final Element rule = (Element)rule1;
+            final Element master = rule.getChild(MASTER_BREAKPOINT_TAGNAME);
+            if (master == null) {
+              continue;
+            }
+            final Element slave = rule.getChild(SLAVE_BREAKPOINT_TAGNAME);
+            if (slave == null) {
+              continue;
+            }
+            final Breakpoint masterBreakpoint = nameToBreakpointMap.get(master.getAttributeValue("name"));
+            if (masterBreakpoint == null) {
+              continue;
+            }
+            final Breakpoint slaveBreakpoint = nameToBreakpointMap.get(slave.getAttributeValue("name"));
+            if (slaveBreakpoint == null) {
+              continue;
+            }
+            addBreakpointRule(new EnableBreakpointRule(BreakpointManager.this, masterBreakpoint, slaveBreakpoint, "true".equalsIgnoreCase(rule.getAttributeValue("leaveEnabled"))));
+          }
+        }
+
+        DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+          public void run() {
+            updateBreakpointsUI();
+          }
+        });
       }
     });
+
+    myUIProperties.clear();
+    final Element props = parentNode.getChild("ui_properties");
+    if (props != null) {
+      final List children = props.getChildren("property");
+      for (Object child : children) {
+        Element property = (Element)child;
+        final String name = property.getAttributeValue("name");
+        final String value = property.getAttributeValue("value");
+        if (name != null && value != null) {
+          myUIProperties.put(name, value);
+        }
+      }
+    }
   }
 
   //used in Fabrique
