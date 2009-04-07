@@ -12,7 +12,7 @@ import java.io.IOException;
 public class RecentChangeDialogTest extends IntegrationTestCase {
   public void testDialogWork() throws IOException {
     getVcs().beginChangeSet();
-    root.createChildData(null, "f.java");
+    root.createChildData(null, "f.txt");
     getVcs().endChangeSet("change");
 
     RecentChange c = getVcs().getRecentChanges().get(0);
@@ -28,11 +28,11 @@ public class RecentChangeDialogTest extends IntegrationTestCase {
 
   public void testRevertChange() throws IOException {
     getVcs().beginChangeSet();
-    VirtualFile f = root.createChildData(null, "f1.java");
+    VirtualFile f = root.createChildData(null, "f1.txt");
     getVcs().endChangeSet("change");
 
     getVcs().beginChangeSet();
-    f.rename(null, "f2.java");
+    f.rename(null, "f2.txt");
     getVcs().endChangeSet("another change");
 
     RecentChange c = getVcs().getRecentChanges().get(1);
@@ -41,7 +41,7 @@ public class RecentChangeDialogTest extends IntegrationTestCase {
     Reverter r = m.createReverter();
     r.revert();
 
-    assertNull(root.findChild("f1.java"));
-    assertNull(root.findChild("f2.java"));
+    assertNull(root.findChild("f1.txt"));
+    assertNull(root.findChild("f2.txt"));
   }
 }

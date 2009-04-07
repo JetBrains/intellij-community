@@ -27,7 +27,7 @@ public class LocalHistoryActionsTest extends IntegrationTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    f = root.createChildData(null, "f.java");
+    f = root.createChildData(null, "f.txt");
 
     document = FileDocumentManager.getInstance().getDocument(f);
     document.setText("foo");

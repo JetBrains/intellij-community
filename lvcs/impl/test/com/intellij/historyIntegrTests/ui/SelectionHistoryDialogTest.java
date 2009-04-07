@@ -25,7 +25,7 @@ public class SelectionHistoryDialogTest extends IntegrationTestCase {
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
 
-    f = root.createChildData(null, "f.java");
+    f = root.createChildData(null, "f.txt");
     f.setBinaryContent("a\nb\nc\n".getBytes(), -1, 123);
     f.setBinaryContent("a\nbc\nd\n".getBytes(), -1, 456);
     f.setBinaryContent("a\nbcd\ne\n".getBytes(), -1, 789);
@@ -37,14 +37,14 @@ public class SelectionHistoryDialogTest extends IntegrationTestCase {
   }
   
   public void testTitles() throws IOException {
-    f.rename(null, "ff.java");
+    f.rename(null, "ff.txt");
     f.setBinaryContent(new byte[0]);
 
     initModelOnSecondLineAndSelectRevisions(1, 2);
 
     assertEquals(f.getPath(), dm.getTitle());
-    assertTrue(dm.getLeftTitle(new NullRevisionsProgress()), dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f.java"));
-    assertTrue(dm.getRightTitle(new NullRevisionsProgress()), dm.getRightTitle(new NullRevisionsProgress()).endsWith(" - ff.java"));
+    assertTrue(dm.getLeftTitle(new NullRevisionsProgress()), dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f.txt"));
+    assertTrue(dm.getRightTitle(new NullRevisionsProgress()), dm.getRightTitle(new NullRevisionsProgress()).endsWith(" - ff.txt"));
   }
 
   public void testCalculationProgress() {
@@ -112,9 +112,9 @@ public class SelectionHistoryDialogTest extends IntegrationTestCase {
     initModelOnSecondLineAndSelectRevisions(1, 4);
 
     assertTrue(dm.getLeftTitle(new NullRevisionsProgress()),
-               dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f.java - File content is not available"));
+               dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f.txt - File content is not available"));
     assertTrue(dm.getRightTitle(new NullRevisionsProgress()),
-               dm.getRightTitle(new NullRevisionsProgress()).endsWith(" - f.java"));
+               dm.getRightTitle(new NullRevisionsProgress()).endsWith(" - f.txt"));
 
     DiffContent left = dm.getLeftDiffContent(new NullRevisionsProgress());
     assertEquals("", new String(left.getBytes()));

@@ -21,7 +21,7 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
   }
 
   public void testFileDifference() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent("old".getBytes());
     f.setBinaryContent("new".getBytes());
     f.setBinaryContent("current".getBytes());
@@ -46,10 +46,10 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
 
   @Test
   public void testFileDifferenceModelWhenOneOfTheEntryIsNull() throws IOException {
-    root.createChildData(null, "dummy.java");
+    root.createChildData(null, "dummy.txt");
 
     getVcs().beginChangeSet();
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent("content".getBytes(), -1, 123);
     getVcs().endChangeSet(null);
 
@@ -58,17 +58,17 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
     HistoryDialogModel dm = createModelAndSelectRevisions(0, 1);
     FileDifferenceModel m = ((DirectoryChange)dm.getChanges().get(0)).getFileDifferenceModel();
 
-    assertTrue(m.getTitle(), m.getTitle().endsWith("f.java"));
-    assertTrue(m.getLeftTitle(new NullRevisionsProgress()).endsWith("f.java"));
+    assertTrue(m.getTitle(), m.getTitle().endsWith("f.txt"));
+    assertTrue(m.getLeftTitle(new NullRevisionsProgress()).endsWith("f.txt"));
     assertEquals("File does not exist", m.getRightTitle(new NullRevisionsProgress()));
     assertContents(m, "content", "");
 
     dm.selectRevisions(1, 2);
     m = ((DirectoryChange)dm.getChanges().get(0)).getFileDifferenceModel();
 
-    assertTrue(m.getTitle(), m.getTitle().endsWith("f.java"));
+    assertTrue(m.getTitle(), m.getTitle().endsWith("f.txt"));
     assertEquals("File does not exist", m.getLeftTitle(new NullRevisionsProgress()));
-    assertTrue(m.getRightTitle(new NullRevisionsProgress()).endsWith("f.java"));
+    assertTrue(m.getRightTitle(new NullRevisionsProgress()).endsWith("f.txt"));
     assertContents(m, "", "content");
   }
 
@@ -78,29 +78,29 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
   }
 
   public void testRevertion() throws Exception {
-    root.createChildData(null, "f.java");
+    root.createChildData(null, "f.txt");
 
     HistoryDialogModel m = createModelAndSelectRevision(1);
     m.createReverter().revert();
 
-    assertNull(root.findChild("f.java"));
+    assertNull(root.findChild("f.txt"));
   }
 
   public void testSelectionRevertion() throws Exception {
-    root.createChildData(null, "f1.java");
-    root.createChildData(null, "f2.java");
+    root.createChildData(null, "f1.txt");
+    root.createChildData(null, "f2.txt");
 
     DirectoryHistoryDialogModel m = createModelAndSelectRevision(2);
     DirectoryChange c = (DirectoryChange)m.getChanges().get(0);
     m.createRevisionReverter(c.getModel()).revert();
 
-    assertNull(root.findChild("f1.java"));
-    assertNotNull(root.findChild("f2.java"));
+    assertNull(root.findChild("f1.txt"));
+    assertNotNull(root.findChild("f2.txt"));
   }
 
   public void testChangeRevertion() throws Exception {
     VirtualFile dir = root.createChildDirectory(null, "oldDir");
-    VirtualFile f = dir.createChildData(null, "f.java");
+    VirtualFile f = dir.createChildData(null, "f.txt");
     dir.rename(null, "newDir");
     f.move(null, root);
 
@@ -113,9 +113,9 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
   }
 
   public void testPatchCreation() throws Exception {
-    root.createChildData(null, "f1.java");
-    root.createChildData(null, "f2.java");
-    root.createChildData(null, "f3.java");
+    root.createChildData(null, "f1.txt");
+    root.createChildData(null, "f2.txt");
+    root.createChildData(null, "f3.txt");
 
     HistoryDialogModel m = createModelAndSelectRevisions(1, 3);
     m.createPatch(patchFilePath, false);
@@ -123,9 +123,9 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
 
     applyPatch();
 
-    assertNotNull(root.findChild("f1.java"));
-    assertNotNull(root.findChild("f2.java"));
-    assertNull(root.findChild("f3.java"));
+    assertNotNull(root.findChild("f1.txt"));
+    assertNotNull(root.findChild("f2.txt"));
+    assertNull(root.findChild("f3.txt"));
   }
 
   private DirectoryHistoryDialogModel createModelAndSelectRevision(int rev) {

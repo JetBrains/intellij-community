@@ -17,7 +17,7 @@ import java.util.Date;
 
 public class FileHistoryDialogTest extends IntegrationTestCase {
   public void testDialogWorks() throws IOException {
-    VirtualFile file = root.createChildData(null, "f.java");
+    VirtualFile file = root.createChildData(null, "f.txt");
 
     FileHistoryDialog d = new FileHistoryDialog(gateway, file);
     d.close(0);
@@ -27,10 +27,10 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
     long leftTime = new Date(2001, 01, 03, 12, 0).getTime();
     long rightTime = new Date(2002, 02, 04, 14, 0).getTime();
 
-    VirtualFile f = root.createChildData(null, "old.java");
+    VirtualFile f = root.createChildData(null, "old.txt");
     f.setBinaryContent("old".getBytes(), -1, leftTime);
 
-    f.rename(null, "new.java");
+    f.rename(null, "new.txt");
     f.setBinaryContent("new".getBytes(), -1, rightTime);
 
     f.setBinaryContent(new byte[0]); // to create current content to skip.
@@ -38,15 +38,15 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 3);
     assertEquals(f.getPath(), m.getDifferenceModel().getTitle());
 
-    assertEquals("03.02.01 12:00 - old.java", m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
-    assertEquals("04.03.02 14:00 - new.java", m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
+    assertEquals("03.02.01 12:00 - old.txt", m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
+    assertEquals("04.03.02 14:00 - new.txt", m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
   }
 
   public void testTitlesForAnavailableContent() throws IOException {
     long leftTime = new Date(2001, 01, 03, 12, 0).getTime();
     long rightTime = new Date(2002, 02, 04, 14, 0).getTime();
 
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1], -1, leftTime);
     f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1], -1, rightTime);
 
@@ -54,12 +54,12 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
 
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 2);
 
-    assertEquals("03.02.01 12:00 - f.java - File content is not available", m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
-    assertEquals("04.03.02 14:00 - f.java - File content is not available", m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
+    assertEquals("03.02.01 12:00 - f.txt - File content is not available", m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
+    assertEquals("04.03.02 14:00 - f.txt - File content is not available", m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
   }
 
   public void testContent() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent("old".getBytes());
     f.setBinaryContent("new".getBytes());
     f.setBinaryContent("current".getBytes());
@@ -70,7 +70,7 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
   }
 
   public void testContentWhenOnlyOneRevisionSelected() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent("old".getBytes());
     f.setBinaryContent("new".getBytes());
 
@@ -80,7 +80,7 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
   }
 
   public void testContentForCurrentRevision() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent("old".getBytes());
     f.setBinaryContent("current".getBytes());
 
@@ -91,7 +91,7 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
   }
 
   public void testDiffContentIsEmptyForUnavailableCurrent() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
     f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
 
@@ -104,42 +104,42 @@ public class FileHistoryDialogTest extends IntegrationTestCase {
 
   public void testRevertion() throws Exception {
     VirtualFile dir = root.createChildDirectory(null, "oldDir");
-    VirtualFile f = dir.createChildData(null, "old.java");
-    f.rename(null, "new.java");
+    VirtualFile f = dir.createChildData(null, "old.txt");
+    f.rename(null, "new.txt");
     dir.rename(null, "newDir");
 
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 2, 2);
     m.createReverter().revert();
 
-    assertEquals("old.java", f.getName());
+    assertEquals("old.txt", f.getName());
     assertEquals(f.getParent(), root.findChild("oldDir"));
     assertEquals("newDir", dir.getName());
   }
 
   public void testChangeRevertion() throws Exception {
     VirtualFile dir = root.createChildDirectory(null, "oldDir");
-    VirtualFile f = dir.createChildData(null, "old.java");
-    f.rename(null, "new.java");
+    VirtualFile f = dir.createChildData(null, "old.txt");
+    f.rename(null, "new.txt");
     dir.rename(null, "newDir");
 
     FileHistoryDialogModel m = createFileModel(f);
     m.selectChanges(1, 1);
     m.createReverter().revert();
 
-    assertEquals("old.java", f.getName());
+    assertEquals("old.txt", f.getName());
     assertEquals("oldDir", dir.getName());
     assertNull(root.findChild("newDir"));
   }
 
   public void testRevertLabelChange() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, "f.java");
+    VirtualFile f = root.createChildDirectory(null, "f.txt");
     getVcs().putUserLabel("abc");
 
     FileHistoryDialogModel m = createFileModel(f);
     m.selectChanges(0, 0);
     m.createReverter().revert();
 
-    assertNotNull(root.findChild("f.java"));
+    assertNotNull(root.findChild("f.txt"));
   }
 
   private void assertDiffContents(String leftContent, String rightContent, FileHistoryDialogModel m) throws IOException {
