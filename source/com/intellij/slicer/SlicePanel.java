@@ -18,7 +18,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;

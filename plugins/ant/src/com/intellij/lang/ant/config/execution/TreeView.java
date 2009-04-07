@@ -25,7 +25,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;

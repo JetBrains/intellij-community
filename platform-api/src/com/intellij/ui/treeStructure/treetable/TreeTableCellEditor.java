@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui.treetable;
+package com.intellij.ui.treeStructure.treetable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;

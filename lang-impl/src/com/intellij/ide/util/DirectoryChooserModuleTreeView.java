@@ -13,12 +13,12 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.Tree;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

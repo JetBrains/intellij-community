@@ -18,9 +18,9 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
-import com.intellij.util.ui.treetable.TreeTable;
-import com.intellij.util.ui.treetable.TreeTableModel;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;

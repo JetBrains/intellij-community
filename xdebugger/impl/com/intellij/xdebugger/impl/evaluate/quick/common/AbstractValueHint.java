@@ -14,7 +14,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import org.jetbrains.annotations.NonNls;

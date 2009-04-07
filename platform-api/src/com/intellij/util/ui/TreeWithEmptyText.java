@@ -18,6 +18,7 @@ package com.intellij.util.ui;
 
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeModel;

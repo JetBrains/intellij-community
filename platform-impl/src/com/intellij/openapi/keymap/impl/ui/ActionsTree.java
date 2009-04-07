@@ -18,7 +18,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.treetable.TreeTableModel;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 

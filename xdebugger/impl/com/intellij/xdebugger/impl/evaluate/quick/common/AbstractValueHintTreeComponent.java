@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.xdebugger.XDebuggerBundle;
 
 import javax.swing.*;

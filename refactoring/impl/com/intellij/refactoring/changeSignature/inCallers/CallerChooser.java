@@ -21,9 +21,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.Tree;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

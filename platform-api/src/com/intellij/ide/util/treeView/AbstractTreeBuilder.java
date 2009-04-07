@@ -329,4 +329,37 @@ public class AbstractTreeBuilder implements Disposable {
     final WeakReference ref = (WeakReference)tree.getClientProperty(TREE_BUILDER);
     return ref != null ? (AbstractTreeBuilder)ref.get() : null;
   }
+
+  @Nullable
+  public final <T> Object accept(Class nodeClass, TreeVisitor<T> visitor) {
+    return accept(nodeClass, getTreeStructure().getRootElement(), visitor);
+  }
+
+  @Nullable
+  private <T> Object accept(Class nodeClass, Object element, TreeVisitor<T> visitor) {
+    if (element == null) return null;
+
+    if (nodeClass.isAssignableFrom(element.getClass())) {
+      if (visitor.visit((T)element)) return element;
+    }
+
+    final Object[] children = getTreeStructure().getChildElements(element);
+    for (Object each : children) {
+      final Object childObject = accept(nodeClass, each, visitor);
+      if (childObject != null) return childObject;
+    }
+
+    return null;
+  }
+
+  public <T> boolean select(Class nodeClass, TreeVisitor<T> visitor, @Nullable Runnable onDone, boolean addToSelection) {
+    final Object element = accept(nodeClass, visitor);
+    if (element != null) {
+      getUi().select(element, onDone, addToSelection);
+      return true;
+    }
+
+    return false;
+  }
+
 }

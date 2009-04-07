@@ -26,7 +26,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.SimpleNodeRenderer;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 

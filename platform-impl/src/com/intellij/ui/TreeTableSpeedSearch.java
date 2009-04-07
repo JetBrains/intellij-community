@@ -5,7 +5,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;

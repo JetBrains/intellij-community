@@ -22,7 +22,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

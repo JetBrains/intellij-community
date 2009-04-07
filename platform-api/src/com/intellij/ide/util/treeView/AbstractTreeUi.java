@@ -988,7 +988,7 @@ class AbstractTreeUi {
     }
   }
 
-  private boolean isLoadingChildrenFor(final Object nodeObject) {
+  public boolean isLoadingChildrenFor(final Object nodeObject) {
     if (!(nodeObject instanceof DefaultMutableTreeNode)) return false;
 
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodeObject;
@@ -2016,5 +2016,11 @@ class AbstractTreeUi {
 
   public Set<TreeUpdatePass> getYeildingPasses() {
     return myYeildingPasses;
+  }
+
+  public boolean isBuilt(Object element) {
+    if (!myElementToNodeMap.containsKey(element)) return false;
+    final Object node = myElementToNodeMap.get(element);
+    return !myUnbuiltNodes.contains(node);
   }
 }

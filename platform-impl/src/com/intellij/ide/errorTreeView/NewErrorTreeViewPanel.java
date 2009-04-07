@@ -18,7 +18,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.ErrorTreeView;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;

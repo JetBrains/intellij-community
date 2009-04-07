@@ -28,7 +28,7 @@ import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.Table;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;

@@ -17,10 +17,10 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.treetable.ListTreeTableModel;
-import com.intellij.util.ui.treetable.TreeTable;
-import com.intellij.util.ui.treetable.TreeTableCellRenderer;
-import com.intellij.util.ui.treetable.TreeTableModel;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

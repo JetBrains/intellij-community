@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui.treetable;
+package com.intellij.ui.treeStructure.treetable;
 
+import com.intellij.util.ui.ClientPropertyHolder;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -27,7 +28,7 @@ import java.awt.*;
 /**
  * A TreeCellRenderer that displays a JTree.
  */
-public class TreeTableCellRenderer implements TableCellRenderer {
+public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyHolder {
   private final TreeTable myTreeTable;
   private final TreeTableTree myTree;
   private TreeCellRenderer myTreeCellRenderer;
@@ -73,8 +74,13 @@ public class TreeTableCellRenderer implements TableCellRenderer {
   public void setDefaultBorder(Border border) {
     myDefaultBorder = border;
   }
+
+  public void putClientProperty(String key, Object value) {
+    myTree.putClientProperty(key, value);
+  }
+
   public void putClientProperty(String s, String s1) {
-    myTree.putClientProperty(s, s1);
+    putClientProperty(s, (Object)s1);
   }
 
   public void setRootVisible(boolean b) {

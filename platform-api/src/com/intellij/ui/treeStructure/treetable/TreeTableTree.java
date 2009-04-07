@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui.treetable;
+package com.intellij.ui.treeStructure.treetable;
 
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -29,7 +29,7 @@ import java.awt.event.KeyEvent;
 /**
  * author: lesya
  */
-public class TreeTableTree extends Tree{
+public class TreeTableTree extends Tree {
   private Border myBorder;
   private final TreeTable myTreeTable;
   private int myVisibleRow;

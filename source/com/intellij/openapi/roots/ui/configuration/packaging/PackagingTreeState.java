@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.packaging;
 
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

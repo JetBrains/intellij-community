@@ -3,7 +3,7 @@ package com.intellij.ui;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;

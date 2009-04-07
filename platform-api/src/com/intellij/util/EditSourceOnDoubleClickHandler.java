@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.Table;
-import com.intellij.util.ui.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;

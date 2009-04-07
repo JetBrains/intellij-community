@@ -3,7 +3,7 @@ package com.intellij.ide.actions.tree;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.util.ui.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
 
 import javax.swing.*;
 

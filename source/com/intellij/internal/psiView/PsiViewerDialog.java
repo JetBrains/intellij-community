@@ -29,7 +29,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 

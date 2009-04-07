@@ -1,6 +1,6 @@
 package com.intellij.slicer;
 
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

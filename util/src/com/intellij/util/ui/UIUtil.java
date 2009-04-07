@@ -22,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -384,7 +383,7 @@ public class UIUtil {
     return UIManager.getBorder("Table.focusCellHighlightBorder");
   }
 
-  public static void setLineStyleAngled(final TreeTableCellRenderer component) {
+  public static void setLineStyleAngled(final ClientPropertyHolder component) {
     component.putClientProperty("JTree.lineStyle", "Angled");
   }
 

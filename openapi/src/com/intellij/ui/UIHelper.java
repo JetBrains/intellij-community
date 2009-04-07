@@ -23,7 +23,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Table;
-import com.intellij.util.ui.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;

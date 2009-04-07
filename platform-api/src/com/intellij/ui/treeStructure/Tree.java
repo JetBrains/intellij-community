@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui;
+package com.intellij.ui.treeStructure;
 
 import com.intellij.Patches;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -186,4 +187,5 @@ public class Tree extends JTree implements Autoscroll  {
   public static interface NodeFilter<T> {
     boolean accept(T node);
   }
+
 }

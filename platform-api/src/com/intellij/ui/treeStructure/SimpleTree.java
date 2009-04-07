@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
@@ -41,7 +42,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SimpleTree extends JTree implements CellEditorListener {
+public class SimpleTree extends Tree implements CellEditorListener {
 
   private final MouseListener myMouseListener = new MyMouseListener();
 
@@ -119,9 +120,12 @@ public class SimpleTree extends JTree implements CellEditorListener {
     return null;
   }
 
-  public boolean accept(AbstractTreeBuilder builder, SimpleNodeVisitor visitor) {
-    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)getModel().getRoot();
-    return visitDown(builder, (SimpleNode)root.getUserObject(), visitor);
+  public boolean accept(AbstractTreeBuilder builder, final SimpleNodeVisitor visitor) {
+    return builder.accept(SimpleNode.class, new TreeVisitor<SimpleNode>() {
+      public boolean visit(SimpleNode node) {
+        return visitor.accept(node);
+      }
+    }) != null;
   }
 
   public void setPopupGroup(ActionGroup aPopupGroup, String aPlace) {
@@ -196,36 +200,7 @@ public class SimpleTree extends JTree implements CellEditorListener {
   }
 
   public void setSelectedNode(AbstractTreeBuilder builder, SimpleNode node, boolean expand) {
-    final TreePath selected = getSelectionPath();
-    if (selected != null) {
-      final SimpleNode selectedNode = getNodeFor(selected);
-      if (selectedNode.equals(node)) {
-        return;
-      }
-    }
-
-    if (expand) {
-      builder.buildNodeForElement(node);
-    }
-
-    final TreePath path = getPathFor(node);
-    setSelectionPath(path);
-    scrollPathToVisible(path);
-  }
-
-  private static boolean visitDown(AbstractTreeBuilder builder, final SimpleNode node, SimpleNodeVisitor visitor) {
-    if (visitor.accept(node)) {
-      return true;
-    }
-
-    final Object[] children = builder.getTreeStructure().getChildElements(node);
-
-    for (Object aChildren : children) {
-      if (visitDown(builder, (SimpleNode)aChildren, visitor)) {
-        return true;
-      }
-    }
-    return false;
+    builder.select(node.getElement(), null, false);
   }
 
   protected void paintChildren(Graphics g) {
@@ -502,26 +477,11 @@ public class SimpleTree extends JTree implements CellEditorListener {
   }
 
   public boolean select(AbstractTreeBuilder aBuilder, final SimpleNodeVisitor aVisitor, boolean shouldExpand) {
-    final SimpleNode[] found = new SimpleNode[1];
-    boolean wasFound = accept(aBuilder, new SimpleNodeVisitor() {
-      public boolean accept(SimpleNode simpleNode) {
-        if (aVisitor.accept(simpleNode)) {
-          found[0] = simpleNode;
-          return true;
-        }
-
-        return false;
+    return aBuilder.select(SimpleNode.class, new TreeVisitor<SimpleNode>() {
+      public boolean visit(SimpleNode node) {
+        return aVisitor.accept(node);
       }
-    });
-
-    if (wasFound) {
-
-      //debugTree(aBuilder);
-
-      setSelectedNode(aBuilder, found[0], shouldExpand);
-    }
-
-    return wasFound;
+    }, null, false);
   }
 
   private void debugTree(AbstractTreeBuilder aBuilder) {

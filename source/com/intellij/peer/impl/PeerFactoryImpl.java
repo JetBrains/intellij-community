@@ -44,7 +44,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
 import org.apache.xmlrpc.IdeaAwareWebServer;
 import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
 import org.apache.xmlrpc.WebServer;
