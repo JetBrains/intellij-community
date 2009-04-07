@@ -38,8 +38,8 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   private void doTestRefreshing(boolean async) throws Exception {
-    String path1 = createFileExternally("f1.java");
-    String path2 = createFileExternally("f2.java");
+    String path1 = createFileExternally("f1.txt");
+    String path2 = createFileExternally("f2.txt");
 
     assertFalse(hasVcsEntry(path1));
     assertFalse(hasVcsEntry(path2));
@@ -53,7 +53,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   public void testChangeSetName() throws Exception {
-    createFileExternally("f.java");
+    createFileExternally("f.txt");
     refreshVFS();
     Revision r = getVcsRevisionsFor(root).get(0);
     assertEquals("External change", r.getCauseChangeName());
@@ -69,8 +69,8 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   public void testRefreshingSpecifiedFiles() throws Exception {
-    String f1 = createFileExternally("f1.java");
-    String f2 = createFileExternally("f2.java");
+    String f1 = createFileExternally("f1.txt");
+    String f2 = createFileExternally("f2.txt");
 
     LocalFileSystem.getInstance().refreshIoFiles(list(new File(f1), new File(f2)));
 
@@ -79,7 +79,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   public void testCommandDuringRefresh() throws Exception {
-    createFileExternally("f.java");
+    createFileExternally("f.txt");
 
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
@@ -104,7 +104,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   public void testContentOfFileChangedDuringRefresh() throws Exception {
-    final VirtualFile f = root.createChildData(null, "file.java");
+    final VirtualFile f = root.createChildData(null, "file.txt");
     f.setBinaryContent("before".getBytes());
 
     performAllPendingJobs();
@@ -128,7 +128,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   public void testFileCreationDuringRefresh() throws Exception {
-    final String path = createFileExternally("f.java");
+    final String path = createFileExternally("f.txt");
     changeFileExternally(path, "content");
 
     final String[] content = new String[1];

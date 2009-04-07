@@ -15,7 +15,7 @@ import java.io.OutputStream;
 
 public class FileListeningTest extends IntegrationTestCase {
   public void testCreatingFiles() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.java");
+    VirtualFile f = root.createChildData(null, "file.txt");
 
     Entry e = getVcs().findEntry(f.getPath());
     assertNotNull(e);
@@ -31,8 +31,8 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testCreationOfROFile() throws Exception {
-    File newFile1 = new File(createFileExternally("f1.java"));
-    File newFile2 = new File(createFileExternally("f2.java"));
+    File newFile1 = new File(createFileExternally("f1.txt"));
+    File newFile2 = new File(createFileExternally("f2.txt"));
     newFile1.setReadOnly();
 
     VirtualFile f1 = getFS().refreshAndFindFileByIoFile(newFile1);
@@ -76,7 +76,7 @@ public class FileListeningTest extends IntegrationTestCase {
 
   public void ignoreTestChangingContentOfDeletedFileDoesNotThrowException() throws Exception {
     // todo try to write reliable test for exception handling during file events and update
-    final VirtualFile f = root.createChildData(null, "f.java");
+    final VirtualFile f = root.createChildData(null, "f.txt");
 
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
@@ -96,7 +96,7 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testChangingFileContent() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.java");
+    VirtualFile f = root.createChildData(null, "file.txt");
 
     f.setBinaryContent(new byte[]{1});
     assertEquals(1, getVcsContentOf(f)[0]);
@@ -106,7 +106,7 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testChangingFileContentOnlyAfterContentChangedEvent() throws Exception {
-    final VirtualFile f = root.createChildData(null, "file.java");
+    final VirtualFile f = root.createChildData(null, "file.txt");
     f.setBinaryContent("before".getBytes());
 
     ContentChangesListener l = new ContentChangesListener(f);
@@ -122,18 +122,18 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testRenamingFile() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.java");
-    f.rename(null, "file2.java");
+    VirtualFile f = root.createChildData(null, "file.txt");
+    f.rename(null, "file2.txt");
 
-    assertFalse(hasVcsEntry(Paths.renamed(f.getPath(), "file.java")));
+    assertFalse(hasVcsEntry(Paths.renamed(f.getPath(), "file.txt")));
     assertTrue(hasVcsEntry(f));
   }
 
   public void testRenamingFileOnlyAfterRenamedEvent() throws Exception {
-    final VirtualFile f = root.createChildData(null, "old.java");
+    final VirtualFile f = root.createChildData(null, "old.txt");
     final boolean[] log = new boolean[4];
-    final String oldPath = Paths.appended(root.getPath(), "old.java");
-    final String newPath = Paths.appended(root.getPath(), "new.java");
+    final String oldPath = Paths.appended(root.getPath(), "old.txt");
+    final String newPath = Paths.appended(root.getPath(), "new.txt");
 
     VirtualFileListener l = new VirtualFileAdapter() {
       public void beforePropertyChange(VirtualFilePropertyEvent e) {
@@ -150,7 +150,7 @@ public class FileListeningTest extends IntegrationTestCase {
     addFileListenerDuring(l, new RunnableAdapter() {
       @Override
       public void doRun() throws IOException {
-        f.rename(null, "new.java");
+        f.rename(null, "new.txt");
       }
     });
 
@@ -163,7 +163,7 @@ public class FileListeningTest extends IntegrationTestCase {
   public void testRenamingFilteredFiles() throws Exception {
     VirtualFile f = root.createChildData(null, "file.class");
     assertFalse(hasVcsEntry(f));
-    f.rename(null, "file.java");
+    f.rename(null, "file.txt");
     assertTrue(hasVcsEntry(f));
   }
 
@@ -194,7 +194,7 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testChangingROStatusForFile() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     assertFalse(getVcsEntry(f).isReadOnly());
 
     ReadOnlyAttributeUtil.setReadOnlyAttribute(f, true);
@@ -218,7 +218,7 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testDeletion() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, "f.java");
+    VirtualFile f = root.createChildDirectory(null, "f.txt");
 
     String path = f.getPath();
     assertTrue(hasVcsEntry(path));
@@ -240,7 +240,7 @@ public class FileListeningTest extends IntegrationTestCase {
 
   public void testDeletingBigFiles() throws Exception {
     File tempDir = createTempDir("temp");
-    File tempFile = new File(tempDir, "bigFile.java");
+    File tempFile = new File(tempDir, "bigFile.txt");
     OutputStream s = new FileOutputStream(tempFile);
     s.write(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
     s.close();

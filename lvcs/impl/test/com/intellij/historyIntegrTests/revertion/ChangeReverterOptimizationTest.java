@@ -10,7 +10,7 @@ import java.io.IOException;
 
 public class ChangeReverterOptimizationTest extends ChangeReverterTestCase {
   public void testApplyingOnlyLastContent() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[]{1}, -1, 11);
     f.setBinaryContent(new byte[]{2}, -1, 22);
     f.setBinaryContent(new byte[]{3}, -1, 33);
@@ -31,7 +31,7 @@ public class ChangeReverterOptimizationTest extends ChangeReverterTestCase {
 
   public void testApplyingRightContentEvenIfFileWasMoved() throws Exception {
     VirtualFile dir = root.createChildDirectory(null, "dir");
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
 
     f.setBinaryContent(new byte[]{1});
     f.setBinaryContent(new byte[]{2});
@@ -51,7 +51,7 @@ public class ChangeReverterOptimizationTest extends ChangeReverterTestCase {
   }
 
   public void testDoesNotSetContentIfFileIsToBeDeleted() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[]{1});
 
     LoggingVirtualFileAdapter a = new LoggingVirtualFileAdapter();

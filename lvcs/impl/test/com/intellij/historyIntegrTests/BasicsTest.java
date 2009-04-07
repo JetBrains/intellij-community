@@ -23,7 +23,7 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
   public void testSaving() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.java");
+    VirtualFile f = root.createChildData(null, "file.txt");
     myProject.save();
     getVcsComponent().closeVcs();
 
@@ -40,7 +40,7 @@ public class BasicsTest extends IntegrationTestCase {
     CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
       @Override
       public void doRun() throws IOException {
-        f[0] = root.createChildData(null, "f1.java");
+        f[0] = root.createChildData(null, "f1.txt");
         f[0].setBinaryContent(new byte[]{1});
         f[0].setBinaryContent(new byte[]{2});
       }
@@ -65,7 +65,7 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
   public void testPuttingUserLabel() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
 
     LocalHistory.putUserLabel(myProject, "global");
 
@@ -88,7 +88,7 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
   public void testPuttingSystemLabel() throws IOException {
-    VirtualFile f = root.createChildData(null, "file.java");
+    VirtualFile f = root.createChildData(null, "file.txt");
 
     assertEquals(1, getVcsRevisionsFor(f).size());
     assertEquals(2, getVcsRevisionsFor(root).size());
@@ -107,7 +107,7 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
   public void testPuttingLabelWithUnsavedDocuments() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[]{1});
 
     setDocumentTextFor(f, new byte[] {2});
@@ -127,7 +127,7 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
   public void testIsUnderControl() throws Exception {
-    VirtualFile f1 = root.createChildData(null, "file.java");
+    VirtualFile f1 = root.createChildData(null, "file.txt");
     VirtualFile f2 = root.createChildData(null, "file.xxx");
 
     assertTrue(LocalHistory.isUnderControl(myProject, f1));
@@ -135,7 +135,7 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
   public void testHasUnavailableContent() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.java");
+    VirtualFile f = root.createChildData(null, "file.txt");
     assertFalse(LocalHistory.hasUnavailableContent(myProject, f));
 
     f.setBinaryContent(new byte[2 * 1024 * 1024]);
@@ -153,7 +153,7 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
   public void testContentAtDate() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[]{1}, -1, 10);
     f.setBinaryContent(new byte[]{2}, -1, 20);
 
@@ -171,9 +171,9 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
   public void testRevisionsIfThereWasFileThatBecameUnversioned() throws IOException {
-    FileTypeManager.getInstance().registerFileType(StdFileTypes.JAVA, "jjj");
+    FileTypeManager.getInstance().registerFileType(StdFileTypes.PLAIN_TEXT, "jjj");
     VirtualFile f = root.createChildData(null, "f.jjj");
-    FileTypeManager.getInstance().removeAssociatedExtension(StdFileTypes.JAVA, "jjj");
+    FileTypeManager.getInstance().removeAssociatedExtension(StdFileTypes.PLAIN_TEXT, "jjj");
 
     List<Revision> rr = getVcsRevisionsFor(root);
     assertEquals(3, rr.size());

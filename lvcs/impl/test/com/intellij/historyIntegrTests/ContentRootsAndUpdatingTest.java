@@ -31,19 +31,19 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
   }
 
   public void testUpdatingFilesOnRootsChanges() throws Exception {
-    VirtualFile root = addContentRootWithFiles("file1.java", "file2.java");
+    VirtualFile root = addContentRootWithFiles("file1.txt", "file2.txt");
 
-    assertTrue(hasVcsEntry(root.getPath() + "/file1.java"));
-    assertTrue(hasVcsEntry(root.getPath() + "/file2.java"));
+    assertTrue(hasVcsEntry(root.getPath() + "/file1.txt"));
+    assertTrue(hasVcsEntry(root.getPath() + "/file2.txt"));
   }
 
   public void testTreatingAllChangesDuringUpdateAsOne() {
-    VirtualFile root = addContentRootWithFiles("file1.java", "file2.java");
+    VirtualFile root = addContentRootWithFiles("file1.txt", "file2.txt");
     assertEquals(1, getVcsRevisionsFor(root).size());
   }
 
   public void testDeletingContentRoot() throws Exception {
-    VirtualFile newRoot = addContentRootWithFiles("file.java");
+    VirtualFile newRoot = addContentRootWithFiles("file.txt");
     String path = newRoot.getPath();
 
     newRoot.delete(null);
@@ -54,7 +54,7 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
 
   public void testDeletingContentRootWithFileDoesNotCauseException() throws Exception {
     VirtualFile newRoot = addContentRoot();
-    VirtualFile f = newRoot.createChildData(null, "file.java");
+    VirtualFile f = newRoot.createChildData(null, "file.txt");
 
     String p = f.getPath();
     assertTrue(hasVcsEntry(p));
@@ -66,7 +66,7 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
 
   public void testDeletingSourceRootWithFileDoesNotCauseException() throws Exception {
     VirtualFile src = root.createChildDirectory(null, "src");
-    VirtualFile f = src.createChildData(null, "file.java");
+    VirtualFile f = src.createChildData(null, "file.txt");
 
     PsiTestUtil.addSourceRoot(myModule, src);
 
@@ -95,9 +95,9 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
     LocalHistory.putSystemLabel(myProject, "a");
     LocalHistory.putSystemLabel(myProject, "b");
 
-    VirtualFile newRoot = addContentRootWithFiles("f.java");
+    VirtualFile newRoot = addContentRootWithFiles("f.txt");
     assertEquals(1, getVcsRevisionsFor(newRoot).size());
-    assertEquals(1, getVcsRevisionsFor(newRoot.findChild("f.java")).size());
+    assertEquals(1, getVcsRevisionsFor(newRoot.findChild("f.txt")).size());
   }
 
   public void testDeletionOfOuterContentRootWhichIncludesIprFileSoIsImplicit() throws Exception {
@@ -173,7 +173,7 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
     OutputStream fs = new FileOutputStream(f);
     JarOutputStream s = new JarOutputStream(fs);
 
-    s.putNextEntry(new ZipEntry("file.java"));
+    s.putNextEntry(new ZipEntry("file.txt"));
     s.write(new byte[]{2});
     s.close();
 

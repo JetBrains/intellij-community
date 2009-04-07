@@ -9,14 +9,14 @@ import java.util.List;
 
 public class ChangeReverterCanRevertTest extends ChangeReverterTestCase {
   public void testDoesNotAskIfThereIsNoSubsequentalChanges() throws IOException {
-    root.createChildData(null, "f.java");
+    root.createChildData(null, "f.txt");
 
     Reverter r = createReverter(root, 0);
     assertTrue(r.askUserForProceeding().isEmpty());
   }
 
   public void testAskingForRevertSubsequentalChanges() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[1]);
 
     Reverter r = createReverter(f, 1);
@@ -27,37 +27,37 @@ public class ChangeReverterCanRevertTest extends ChangeReverterTestCase {
   }
 
   public void testCanNotRevertRenameIfSomeFilesAlreadyExist() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
 
-    f.rename(null, "ff.java");
+    f.rename(null, "ff.txt");
     assertCanRevert(f, 0);
 
-    root.createChildData(null, "f.java");
+    root.createChildData(null, "f.txt");
     assertCanNotRevert(f, 0, "some files already exist");
   }
 
   public void testCanNotRevertMovementIfSomeFilesAlreadyExist() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     VirtualFile dir = root.createChildDirectory(null, "dir");
 
     f.move(null, dir);
     assertCanRevert(f, 0);
 
-    root.createChildData(null, "f.java");
+    root.createChildData(null, "f.txt");
     assertCanNotRevert(f, 0, "some files already exist");
   }
 
   public void testIncludeOnlyOnlyErrorMessage() throws IOException {
-    VirtualFile f1 = root.createChildData(null, "f1.java");
-    VirtualFile f2 = root.createChildData(null, "f2.java");
+    VirtualFile f1 = root.createChildData(null, "f1.txt");
+    VirtualFile f2 = root.createChildData(null, "f2.txt");
     VirtualFile dir = root.createChildDirectory(null, "dir");
 
     f1.move(null, dir);
     f2.move(null, dir);
     assertCanRevert(dir, 1);
 
-    root.createChildData(null, "f1.java");
-    root.createChildData(null, "f2.java");
+    root.createChildData(null, "f1.txt");
+    root.createChildData(null, "f2.txt");
 
     List<String> ee = getCanRevertErrors(dir, 1);
     assertEquals(1, ee.size());
@@ -65,22 +65,22 @@ public class ChangeReverterCanRevertTest extends ChangeReverterTestCase {
   }
 
   public void testDoesNotConsiderUnaffectedFiles() throws IOException {
-    VirtualFile f1 = root.createChildData(null, "f1.java");
-    VirtualFile f2 = root.createChildData(null, "f2.java");
+    VirtualFile f1 = root.createChildData(null, "f1.txt");
+    VirtualFile f2 = root.createChildData(null, "f2.txt");
 
-    f1.rename(null, "f11.java");
-    f2.rename(null, "f22.java");
-    root.createChildData(null, "f2.java");
+    f1.rename(null, "f11.txt");
+    f2.rename(null, "f22.txt");
+    root.createChildData(null, "f2.txt");
 
     assertCanRevert(f1, 0);
   }
 
   public void testDoesNotConsiderPreviousChanges() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
 
-    f.rename(null, "ff.java");
-    f.rename(null, "fff.java");
-    root.createChildData(null, "f.java");
+    f.rename(null, "ff.txt");
+    f.rename(null, "fff.txt");
+    root.createChildData(null, "f.txt");
 
     assertCanRevert(f, 0);
   }

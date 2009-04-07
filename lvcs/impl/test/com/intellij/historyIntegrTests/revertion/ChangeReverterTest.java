@@ -14,10 +14,10 @@ import java.util.Date;
 
 public class ChangeReverterTest extends ChangeReverterTestCase {
   public void testRevertCreation() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
 
     revertLastChange(f);
-    assertNull(root.findChild("f.java"));
+    assertNull(root.findChild("f.txt"));
   }
 
   public void testRevertChangeSetWithSeveralChanges() throws IOException {
@@ -25,40 +25,40 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
     CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
       @Override
       public void doRun() throws IOException {
-        ff[0] = root.createChildData(null, "f1.java");
-        ff[1] = root.createChildData(null, "f2.java");
+        ff[0] = root.createChildData(null, "f1.txt");
+        ff[1] = root.createChildData(null, "f2.txt");
       }
     }, "", null);
 
     revertLastChange(ff[0]);
-    assertNull(root.findChild("f1.java"));
-    assertNull(root.findChild("f2.java"));
+    assertNull(root.findChild("f1.txt"));
+    assertNull(root.findChild("f2.txt"));
   }
 
   public void testDoesNotRevertAnotherChanges() throws IOException {
-    VirtualFile f1 = root.createChildData(null, "f1.java");
-    root.createChildData(null, "f2.java");
+    VirtualFile f1 = root.createChildData(null, "f1.txt");
+    root.createChildData(null, "f2.txt");
 
     revertLastChange(f1);
 
-    assertNull(root.findChild("f1.java"));
-    assertNotNull(root.findChild("f2.java"));
+    assertNull(root.findChild("f1.txt"));
+    assertNotNull(root.findChild("f2.txt"));
   }
 
   public void testRevertSubsequentChanges() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[]{1}, -1, 123);
-    f.rename(null, "ff.java");
+    f.rename(null, "ff.txt");
     f.setBinaryContent(new byte[]{2}, -1, 456);
 
     revertChange(f, 1); // rename
 
-    assertEquals("f.java", f.getName());
+    assertEquals("f.txt", f.getName());
     assertEquals(1, f.contentsToByteArray()[0]);
   }
 
   public void testRevertSubsequentMovements() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     VirtualFile dir = root.createChildDirectory(null, "dir");
 
     f.setBinaryContent(new byte[]{1}, -1, 123);
@@ -74,7 +74,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
   public void testRevertSubsequentParentMovement() throws IOException {
     VirtualFile dir1 = root.createChildDirectory(null, "dir1");
     VirtualFile dir2 = root.createChildDirectory(null, "dir2");
-    VirtualFile f = dir1.createChildData(null, "f.java");
+    VirtualFile f = dir1.createChildData(null, "f.txt");
 
     f.setBinaryContent(new byte[]{1}, -1, 123);
     dir1.move(null, dir2);
@@ -89,7 +89,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
   public void testRevertCreationOfParentInWhichFileWasMoved() throws IOException {
     VirtualFile dir1 = root.createChildDirectory(null, "dir1");
 
-    VirtualFile f = dir1.createChildData(null, "f.java");
+    VirtualFile f = dir1.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[]{1}, -1, 123);
 
     VirtualFile dir2 = root.createChildDirectory(null, "dir2");
@@ -103,7 +103,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
   }
 
   public void testRevertDeletionOfContentRootWithFiles() throws Exception {
-    VirtualFile newRoot = addContentRootWithFiles("f.java");
+    VirtualFile newRoot = addContentRootWithFiles("f.txt");
     String path = newRoot.getPath();
 
     newRoot.delete(null);
@@ -113,7 +113,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
     VirtualFile restoredRoot = findFile(path);
     assertNotNull(restoredRoot);
 
-    VirtualFile restoredFile = restoredRoot.findChild("f.java");
+    VirtualFile restoredFile = restoredRoot.findChild("f.txt");
     assertNotNull(restoredFile);
 
     // should keep history, but due to order of events, in which RootsChanged
@@ -134,12 +134,12 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
   }
 
   public void testRevertDeletion() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.delete(null);
 
     revertLastChange(root);
 
-    f = root.findChild("f.java");
+    f = root.findChild("f.txt");
     assertNotNull(f);
     assertEquals(2, getVcsRevisionsFor(f).size());
   }
@@ -147,7 +147,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
   public void testRevertMovementAfterDeletion() throws Exception {
     VirtualFile dir1 = root.createChildDirectory(null, "dir1");
     VirtualFile dir2 = root.createChildDirectory(null, "dir2");
-    VirtualFile f = dir1.createChildData(null, "f.java");
+    VirtualFile f = dir1.createChildData(null, "f.txt");
 
     f.delete(null);
     dir1.move(null, dir2);
@@ -155,13 +155,13 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
     revertChange(dir1, 1); // deletion
 
     assertEquals(root, dir1.getParent());
-    assertNotNull(dir1.findChild("f.java"));
+    assertNotNull(dir1.findChild("f.txt"));
   }
 
   public void testRevertDeletionOnPreviousParentAfterMovement() throws Exception {
     VirtualFile dir1 = root.createChildDirectory(null, "dir1");
     VirtualFile dir2 = root.createChildDirectory(null, "dir2");
-    VirtualFile f = dir1.createChildData(null, "f.java");
+    VirtualFile f = dir1.createChildData(null, "f.txt");
 
     f.move(null, dir2);
     dir1.delete(null);
@@ -177,7 +177,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
     VirtualFile dir1 = root.createChildDirectory(null, "dir1");
     VirtualFile dir2 = root.createChildDirectory(null, "dir2");
     VirtualFile dir3 = root.createChildDirectory(null, "dir3");
-    VirtualFile f = dir2.createChildData(null, "f.java");
+    VirtualFile f = dir2.createChildData(null, "f.txt");
 
     dir1.move(null, dir3);
     f.move(null, dir1);
@@ -195,7 +195,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
   public void testRevertSubsequentalFileMovementFromDir() throws IOException {
     VirtualFile dir1 = root.createChildDirectory(null, "dir1");
     VirtualFile dir2 = root.createChildDirectory(null, "dir2");
-    VirtualFile f = dir1.createChildData(null, "f.java");
+    VirtualFile f = dir1.createChildData(null, "f.txt");
 
     dir1.move(null, dir2);
     f.move(null, dir2);
@@ -210,7 +210,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
     VirtualFile dir1 = root.createChildDirectory(null, "dir1");
     VirtualFile dir2 = root.createChildDirectory(null, "dir2");
     VirtualFile dir3 = root.createChildDirectory(null, "dir3");
-    VirtualFile f = dir1.createChildData(null, "f.java");
+    VirtualFile f = dir1.createChildData(null, "f.txt");
 
     dir1.move(null, dir2);
     f.move(null, dir2);
@@ -224,57 +224,57 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
 
   public void testRevertFullChangeSet() throws IOException {
     getVcs().beginChangeSet();
-    VirtualFile f1 = root.createChildData(null, "f1.java");
-    root.createChildData(null, "f2.java");
+    VirtualFile f1 = root.createChildData(null, "f1.txt");
+    root.createChildData(null, "f2.txt");
     getVcs().endChangeSet(null);
 
     revertLastChange(f1);
 
-    assertNull(root.findChild("f1.java"));
-    assertNull(root.findChild("f2.java"));
+    assertNull(root.findChild("f1.txt"));
+    assertNull(root.findChild("f2.txt"));
   }
 
   public void testRevertFullSubsequentChangeSet() throws IOException {
     VirtualFile dir = root.createChildDirectory(null, "dir");
-    VirtualFile f1 = root.createChildData(null, "f1.java");
+    VirtualFile f1 = root.createChildData(null, "f1.txt");
 
     getVcs().beginChangeSet();
     f1.move(null, dir);
-    dir.createChildData(null, "f2.java");
+    dir.createChildData(null, "f2.txt");
     getVcs().endChangeSet(null);
 
     revertChange(f1, 1);
 
     assertNotNull(root.findChild("dir"));
-    assertNull(root.findChild("f1.java"));
-    assertNull(dir.findChild("f1.java"));
-    assertNull(dir.findChild("f2.java"));
+    assertNull(root.findChild("f1.txt"));
+    assertNull(dir.findChild("f1.txt"));
+    assertNull(dir.findChild("f2.txt"));
   }
 
   public void testDoesNotRevertPrecedingChanges() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[]{1}, -1, 123);
     f.setBinaryContent(new byte[]{2}, -1, 456);
 
     revertLastChange(f);
-    assertEquals(f, root.findChild("f.java"));
+    assertEquals(f, root.findChild("f.txt"));
     assertEquals(1, f.contentsToByteArray()[0]);
   }
 
   public void testRevertLabelChange() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     getVcs().putUserLabel("abc");
-    f.rename(null, "ff.java");
+    f.rename(null, "ff.txt");
 
     revertChange(f, 1);
 
-    assertEquals(f, root.findChild("f.java"));
-    assertNull(root.findChild("ff.java"));
+    assertEquals(f, root.findChild("f.txt"));
+    assertNull(root.findChild("ff.txt"));
   }
 
   public void testChangeSetNameAfterRevert() throws IOException {
     getVcs().beginChangeSet();
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     getVcs().endChangeSet("file changed");
 
     revertLastChange(f);
@@ -286,7 +286,7 @@ public class ChangeReverterTest extends ChangeReverterTestCase {
   public void testChangeSetNameAfterRevertUnnamedChange() throws IOException {
     Clock.setCurrentTimestamp(new Date(2003, 00, 01, 12, 30).getTime());
     getVcs().beginChangeSet();
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     getVcs().endChangeSet(null);
 
     revertLastChange(f);

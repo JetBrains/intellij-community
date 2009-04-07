@@ -14,7 +14,7 @@ import java.util.List;
 
 public class ActionsTest extends IntegrationTestCase {
   public void testActions() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
 
     f.setBinaryContent(new byte[]{0});
     assertEquals(0, getVcsContentOf(f)[0]);
@@ -40,7 +40,7 @@ public class ActionsTest extends IntegrationTestCase {
     // This is very important test. Mostly all actions are performed
     // inside surrounding command. Therefore we have to correctly
     // handle such situation.
-    final VirtualFile f = root.createChildData(null, "f.java");
+    final VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[]{0});
     setDocumentTextFor(f, new byte[]{1});
 
@@ -64,7 +64,7 @@ public class ActionsTest extends IntegrationTestCase {
 
   public void testActionInsideCommandSurroundedWithSomeChanges() throws Exception {
     // see testActionInsideCommand comment
-    final VirtualFile f = root.createChildData(null, "f.java");
+    final VirtualFile f = root.createChildData(null, "f.txt");
 
     CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
       @Override

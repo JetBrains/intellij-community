@@ -11,8 +11,8 @@ import java.util.List;
 public class ChangeReverterROStatusClearingTest extends ChangeReverterTestCase {
   public void testClearingROStatus() throws Exception {
     getVcs().beginChangeSet();
-    VirtualFile f1 = root.createChildData(null, "f1.java");
-    VirtualFile f2 = root.createChildData(null, "f2.java");
+    VirtualFile f1 = root.createChildData(null, "f1.txt");
+    VirtualFile f2 = root.createChildData(null, "f2.txt");
     getVcs().endChangeSet(null);
 
     List<VirtualFile> files = checkCanRevertAndGetFilesToClearROStatus(root, 0);
@@ -23,8 +23,8 @@ public class ChangeReverterROStatusClearingTest extends ChangeReverterTestCase {
 
   public void testClearingROStatusOnlyFromExistedFiles() throws Exception {
     getVcs().beginChangeSet();
-    VirtualFile f1 = root.createChildData(null, "f1.java");
-    VirtualFile f2 = root.createChildData(null, "f2.java");
+    VirtualFile f1 = root.createChildData(null, "f1.txt");
+    VirtualFile f2 = root.createChildData(null, "f2.txt");
     getVcs().endChangeSet(null);
 
     f2.delete(null);
@@ -35,8 +35,8 @@ public class ChangeReverterROStatusClearingTest extends ChangeReverterTestCase {
   }
 
   public void testClearingROStatusOnlyFromAffectedFiles() throws Exception {
-    VirtualFile f1 = root.createChildData(null, "f1.java");
-    root.createChildData(null, "f2.java");
+    VirtualFile f1 = root.createChildData(null, "f1.txt");
+    root.createChildData(null, "f2.txt");
 
     List<VirtualFile> files = checkCanRevertAndGetFilesToClearROStatus(f1, 0);
     assertEquals(1, files.size());
@@ -45,7 +45,7 @@ public class ChangeReverterROStatusClearingTest extends ChangeReverterTestCase {
 
   public void testClearingROStatusOnlyFromMovedFiles() throws Exception {
     VirtualFile dir = root.createChildDirectory(null, "dir");
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
 
     f.move(null, dir);
 
@@ -56,8 +56,8 @@ public class ChangeReverterROStatusClearingTest extends ChangeReverterTestCase {
 
   public void testClearingROStatusFromFilesUnderDirectory() throws Exception {
     VirtualFile dir = root.createChildDirectory(null, "dir");
-    VirtualFile f1 = dir.createChildData(null, "f1.java");
-    VirtualFile f2 = dir.createChildData(null, "f2.java");
+    VirtualFile f1 = dir.createChildData(null, "f1.txt");
+    VirtualFile f2 = dir.createChildData(null, "f2.txt");
 
     dir.rename(null, "newName");
 
@@ -68,7 +68,7 @@ public class ChangeReverterROStatusClearingTest extends ChangeReverterTestCase {
   }
 
   public void testClearingROStatusFromSameFileOnlyOnce() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
 
     f.setBinaryContent(new byte[]{1});
     f.setBinaryContent(new byte[]{2});
@@ -81,8 +81,8 @@ public class ChangeReverterROStatusClearingTest extends ChangeReverterTestCase {
 
   public void testClearingROStatusFromAllFilesInTheChain() throws Exception {
     VirtualFile dir = root.createChildDirectory(null, "dir");
-    VirtualFile f1 = root.createChildData(null, "f1.java");
-    VirtualFile f2 = root.createChildData(null, "f2.java");
+    VirtualFile f1 = root.createChildData(null, "f1.txt");
+    VirtualFile f2 = root.createChildData(null, "f2.txt");
 
     f1.move(null, dir);
     dir.rename(null, "newName");
@@ -96,7 +96,7 @@ public class ChangeReverterROStatusClearingTest extends ChangeReverterTestCase {
 
   public void testDoesNotClearROStatusFromPrevioulsyChangedFiles() throws Exception {
     VirtualFile dir = root.createChildDirectory(null, "dir");
-    VirtualFile f = dir.createChildData(null, "f.java");
+    VirtualFile f = dir.createChildData(null, "f.txt");
 
     f.move(null, root);
     dir.rename(null, "newName");
@@ -105,7 +105,7 @@ public class ChangeReverterROStatusClearingTest extends ChangeReverterTestCase {
   }
 
   public void testCanNotRevertIfUserDidNotClearROStatus() throws Exception {
-    VirtualFile f = root.createChildData(null, "f.java");
+    VirtualFile f = root.createChildData(null, "f.txt");
     f.setBinaryContent(new byte[1]);
 
     gateway = new IdeaGateway(myProject) {
