@@ -5,7 +5,9 @@
 package com.intellij.patterns;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.InstanceofCheckerGenerator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +28,10 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   protected ObjectPattern(final Class<T> aClass) {
+    final Condition<Object> checker = InstanceofCheckerGenerator.getInstance().getInstanceofChecker(aClass);
     myCondition = new ElementPatternCondition<T>(new InitialPatternCondition<T>(aClass) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return aClass.isInstance(o);
+        return checker.value(o);
       }
     });
   }
