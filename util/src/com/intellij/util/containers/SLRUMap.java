@@ -19,10 +19,11 @@ public class SLRUMap<K,V> {
   private int probationalHits = 0;
   private int protectedHits = 0;
   private int misses = 0;
+  private static final int FACTOR = Integer.getInteger("idea.slru.factor", 1);
 
   public SLRUMap(final int protectedQueueSize, final int probationalQueueSize) {
-    myProtectedQueueSize = protectedQueueSize;
-    myProbationalQueueSize = probationalQueueSize;
+    myProtectedQueueSize = protectedQueueSize * FACTOR;
+    myProbationalQueueSize = probationalQueueSize * FACTOR;
 
     myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f) {
       protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
