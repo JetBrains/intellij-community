@@ -52,9 +52,19 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     final XmlTag tag = parent.getXmlTag();
     if (tag == null) return null;
 
-    // TODO: this seems ugly
+    return tag.getAttribute(getXmlElementName(), getXmlApiCompatibleNamespace(parent));
+  }
+
+  @Nullable
+  private String getXmlApiCompatibleNamespace(DomInvocationHandler parent) {
+    final XmlTag tag = parent.getXmlTag();
+    if (tag == null) {
+      return null;
+    }
+
     String ns = getXmlName().getNamespace(tag, parent.getFile());
-    return tag.getAttribute(getXmlElementName(), tag.getNamespace().equals(ns)? null:ns);
+    // TODO: this seems ugly
+    return tag.getNamespace().equals(ns) ? null : ns;
   }
 
   public final XmlAttribute ensureXmlElementExists() {
@@ -64,7 +74,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     final DomManagerImpl manager = getManager();
     final boolean b = manager.setChanging(true);
     try {
-      attribute = ensureTagExists().setAttribute(getXmlElementName(), "", "");
+      attribute = ensureTagExists().setAttribute(getXmlElementName(), getXmlApiCompatibleNamespace(getParentHandler()), "");
       setXmlElement(attribute);
       getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, this);
       manager.fireEvent(new ElementDefinedEvent(getProxy()));
@@ -137,7 +147,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   protected void setValue(@Nullable final String value) {
     final XmlTag tag = ensureTagExists();
     final String attributeName = getXmlElementName();
-    final String namespace = getXmlElementNamespace();
+    final String namespace = getXmlApiCompatibleNamespace(getParentHandler());
     final String oldValue = StringUtil.unescapeXml(tag.getAttributeValue(attributeName, namespace));
     final String newValue = XmlStringUtil.escapeString(value);
     if (Comparing.equal(oldValue, newValue, true)) return;
@@ -145,7 +155,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     getManager().runChange(new Runnable() {
       public void run() {
         try {
-          XmlAttribute attribute = tag.setAttribute(attributeName, "", newValue);
+          XmlAttribute attribute = tag.setAttribute(attributeName, namespace, newValue);
           setXmlElement(attribute);
           getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, AttributeChildInvocationHandler.this);
         }

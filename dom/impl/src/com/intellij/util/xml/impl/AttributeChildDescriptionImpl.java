@@ -42,6 +42,11 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     return myGetterMethod;
   }
 
+  @Override
+  public String toString() {
+    return "Attribute:" + getXmlName();
+  }
+
   @Nullable
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     final JavaMethod method = getGetterMethod();

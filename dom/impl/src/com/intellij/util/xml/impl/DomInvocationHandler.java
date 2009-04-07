@@ -465,7 +465,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @NotNull
-  protected final XmlFile getFile() {
+  public final XmlFile getFile() {
     if (myFile == null) {
       myFile = _getRoot().getFile();
     }

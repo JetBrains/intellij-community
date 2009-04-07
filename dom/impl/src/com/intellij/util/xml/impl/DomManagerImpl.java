@@ -436,7 +436,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Nullable
-  DomInvocationHandler getDomHandler(final XmlTag tag) {
+  public DomInvocationHandler getDomHandler(final XmlTag tag) {
     if (tag == null) return null;
 
     return mySemService.getSemElement(DOM_HANDLER_KEY, tag);
