@@ -28,7 +28,7 @@ public class DomPatterns {
     return new GenericDomValuePattern();
   }
 
-  public static <T> GenericDomValuePattern<T> genericDomValue(ElementPattern valuePattern) {
+  public static <T> GenericDomValuePattern<T> genericDomValue(ElementPattern<?> valuePattern) {
     return ((GenericDomValuePattern)genericDomValue()).withValue(valuePattern);
   }
 
@@ -36,7 +36,7 @@ public class DomPatterns {
     return new GenericDomValuePattern<T>(aClass);
   }
 
-  public static XmlElementPattern.Capture withDom(final ElementPattern pattern) {
+  public static XmlElementPattern.Capture withDom(final ElementPattern<? extends DomElement> pattern) {
     return new XmlElementPattern.Capture().with(new PatternCondition<XmlElement>("tagWithDom") {
       public boolean accepts(@NotNull final XmlElement xmlElement, final ProcessingContext context) {
         final DomManager manager = DomManager.getDomManager(xmlElement.getProject());
