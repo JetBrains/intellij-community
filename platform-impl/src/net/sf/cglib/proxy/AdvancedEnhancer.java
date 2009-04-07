@@ -305,7 +305,12 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
     this.argumentTypes = argumentTypes;
     this.arguments = arguments;
-    return createHelper();
+    try {
+      return createHelper();
+    }
+    finally {
+      this.arguments = null;
+    }
   }
 
   /**
