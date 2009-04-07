@@ -1,16 +1,23 @@
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.CodeInsightBundle;
 
 import java.util.List;
 
 public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
   public JavaMethodParameterUnwrapper() {
-    super(CodeInsightBundle.message("unwrap.method.parameter"));
+    super("");
+  }
+
+  @Override
+  public String getDescription(PsiElement e) {
+    String text = e.getText();
+    if (text.length() > 20) text = text.substring(0, 17) + "...";
+    return CodeInsightBundle.message("unwrap.method.parameter", text);
   }
 
   public boolean isApplicableTo(PsiElement e) {
