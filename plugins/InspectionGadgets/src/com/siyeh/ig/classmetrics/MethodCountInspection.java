@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,30 +18,84 @@ package com.siyeh.ig.classmetrics;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodCountInspection extends ClassMetricInspection {
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Component;
+
+public class MethodCountInspection extends BaseInspection {
 
     private static final int DEFAULT_METHOD_COUNT_LIMIT = 20;
 
+    @SuppressWarnings({"PublicField"})
+    public int m_limit = DEFAULT_METHOD_COUNT_LIMIT;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreGettersAndSetters = false;
+
+    @Override
     @NotNull
     public String getID(){
         return "ClassWithTooManyMethods";
     }
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("too.many.methods.display.name");
     }
 
-    protected int getDefaultLimit() {
-        return DEFAULT_METHOD_COUNT_LIMIT;
+    @Override
+    public JComponent createOptionsPanel() {
+        final JComponent panel = new JPanel(new GridBagLayout());
+        final Component label = new JLabel(
+                InspectionGadgetsBundle.message("method.count.limit.option"));
+        final JFormattedTextField valueField = prepareNumberEditor("m_limit");
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.insets.left = 4;
+        constraints.insets.right = 4;
+        constraints.anchor = GridBagConstraints.WEST;
+        panel.add(label, constraints);
+        constraints.gridx = 1;
+        constraints.weightx = 1.0;
+        constraints.insets.left = 0;
+        constraints.insets.right = 0;
+        panel.add(valueField, constraints);
+
+        final JCheckBox gettersSettersCheckBox = new JCheckBox(
+                InspectionGadgetsBundle.message(
+                        "method.count.ignore.getters.setters.option"),
+                ignoreGettersAndSetters);
+        final ButtonModel arrayModel = gettersSettersCheckBox.getModel();
+        arrayModel.addChangeListener(new ChangeListener() {
+
+            public void stateChanged(ChangeEvent e) {
+                ignoreGettersAndSetters = arrayModel.isSelected();
+            }
+        });
+
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.weighty = 1.0;
+        constraints.gridwidth = 2;
+        constraints.anchor = GridBagConstraints.NORTHWEST;
+        panel.add(gettersSettersCheckBox, constraints);
+
+        return panel;
     }
 
-    protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message("method.count.limit.option");
-    }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final Integer count = (Integer)infos[0];
@@ -49,6 +103,7 @@ public class MethodCountInspection extends ClassMetricInspection {
                 "too.many.methods.problem.descriptor", count);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new MethodCountVisitor();
     }
@@ -58,7 +113,7 @@ public class MethodCountInspection extends ClassMetricInspection {
         @Override public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int methodCount = calculateTotalMethodCount(aClass);
-            if (methodCount <= getLimit()) {
+            if (methodCount <= m_limit) {
                 return;
             }
             registerClassError(aClass, Integer.valueOf(methodCount));
@@ -68,9 +123,16 @@ public class MethodCountInspection extends ClassMetricInspection {
             final PsiMethod[] methods = aClass.getMethods();
             int totalCount = 0;
             for(final PsiMethod method : methods){
-                if(!method.isConstructor()){
-                    totalCount++;
+                if (method.isConstructor()) {
+                    continue;
                 }
+                if (ignoreGettersAndSetters) {
+                    if (MethodUtils.isSimpleGetter(method) ||
+                            MethodUtils.isSimpleSetter(method)) {
+                        continue;
+                    }
+                }
+                totalCount++;
             }
             return totalCount;
         }
