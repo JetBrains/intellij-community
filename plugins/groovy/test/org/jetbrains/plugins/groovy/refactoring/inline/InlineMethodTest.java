@@ -127,7 +127,6 @@ public class InlineMethodTest extends CommonRefactoringTestCase {
       myEditor = null;
     }
 
-    System.out.println(result);
     return result;
   }
 
