@@ -49,7 +49,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;

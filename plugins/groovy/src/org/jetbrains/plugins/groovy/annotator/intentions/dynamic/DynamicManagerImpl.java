@@ -28,7 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;

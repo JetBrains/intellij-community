@@ -71,7 +71,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="b890d" class="com.intellij.util.ui.Tree" binding="myTree">
+                  <component id="b890d" class="com.intellij.ui.treeStructure.Tree" binding="myTree">
                     <constraints/>
                     <properties>
                       <rootVisible value="false"/>
