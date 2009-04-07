@@ -94,10 +94,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     synchronized (myProblems) {
       old = myProblems.remove(problemFile);
     }
+    synchronized (myCheckingQueue) {
+      myCheckingQueue.remove(problemFile);
+    }
     if (old != null) {
-      synchronized (myCheckingQueue) {
-        myCheckingQueue.remove(problemFile);
-      }
       // firing outside lock
       fireProblemListeners.problemsDisappeared(problemFile);
     }
@@ -221,27 +221,18 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (!myProject.isOpen()) return;
 
     int size;
+    List<VirtualFile> files;
     synchronized (myCheckingQueue) {
-      size = myCheckingQueue.size();
+      files = new ArrayList<VirtualFile>(myCheckingQueue);
+      size = files.size();
     }
     pass.setProgressLimit(size);
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     String oldInfo = saveStatusBarInfo(statusBar);
     try {
-      while (true) {
-        final VirtualFile virtualFile;
-        synchronized (myCheckingQueue) {
-          Iterator<VirtualFile> iterator = myCheckingQueue.iterator();
-          if (iterator.hasNext()) {
-            virtualFile = iterator.next();
-            iterator.remove();
-          }
-          else {
-            virtualFile = null;
-          }
-        }
-        if (virtualFile == null) break;
+      for (final VirtualFile virtualFile : files) {
         progress.checkCanceled();
+        if (virtualFile == null) break;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             statusBar.setInfo("Checking '" + virtualFile.getPresentableUrl() + "'");
@@ -433,28 +424,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return false;
   }
 
-  public void weHaveGotProblem(Problem problem) {
-    VirtualFile virtualFile = problem == null ? null : problem.getVirtualFile();
-    if (!isToBeHighlighted(virtualFile)) return;
-    boolean fireListener = false;
-    synchronized (myProblems) {
-      ProblemFileInfo storedProblems = myProblems.get(virtualFile);
-      if (storedProblems == null) {
-        storedProblems = new ProblemFileInfo();
-
-        myProblems.put(virtualFile, storedProblems);
-        fireListener = true;
-      }
-      storedProblems.problems.add(problem);
-      synchronized (myCheckingQueue) {
-        myCheckingQueue.add(virtualFile);
-      }
-    }
-    if (fireListener) {
-      fireProblemListeners.problemsAppeared(virtualFile);
-    }
-  }
-
   public void weHaveGotProblems(@NotNull final VirtualFile virtualFile, @NotNull List<Problem> problems) {
     if (problems.isEmpty()) return;
     if (!isToBeHighlighted(virtualFile)) return;
@@ -468,9 +437,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         fireListener = true;
       }
       storedProblems.problems.addAll(problems);
-      synchronized (myCheckingQueue) {
-        myCheckingQueue.add(virtualFile);
-      }
+    }
+    synchronized (myCheckingQueue) {
+      myCheckingQueue.add(virtualFile);
     }
     if (fireListener) {
       fireProblemListeners.problemsAppeared(virtualFile);
@@ -521,10 +490,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         newInfo.problems.add(problem);
         newInfo.hasSyntaxErrors |= ((ProblemImpl)problem).isSyntaxOnly();
       }
-      synchronized (myCheckingQueue) {
-        myCheckingQueue.add(file);
-      }
       fireChanged = hasProblemsBefore && !oldInfo.equals(newInfo);
+    }
+    synchronized (myCheckingQueue) {
+      myCheckingQueue.add(file);
     }
     if (!hasProblemsBefore) {
       fireProblemListeners.problemsAppeared(file);
