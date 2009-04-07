@@ -123,7 +123,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     settings.MOVE_MOUSE_ON_DEFAULT_BUTTON = myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected();
 
-    update |= settings.DISABLE_MNEMONICS = myComponent.myDisableMnemonics.isSelected();
+    update |= settings.DISABLE_MNEMONICS != myComponent.myDisableMnemonics.isSelected();
+    settings.DISABLE_MNEMONICS = myComponent.myDisableMnemonics.isSelected();
 
     update |= settings.SHOW_ICONS_IN_QUICK_NAVIGATION != myComponent.myHideIconsInQuickNavigation.isSelected();
     settings.SHOW_ICONS_IN_QUICK_NAVIGATION = myComponent.myHideIconsInQuickNavigation.isSelected();

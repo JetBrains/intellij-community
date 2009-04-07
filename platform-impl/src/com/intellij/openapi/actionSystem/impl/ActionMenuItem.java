@@ -34,12 +34,14 @@ public class ActionMenuItem extends JMenuItem {
   private final DataContext myContext;
   private final AnActionEvent myEvent;
   private MenuItemSynchronizer myMenuItemSynchronizer;
+  private boolean myEnableMnemonics;
 
-  public ActionMenuItem(AnAction action, Presentation presentation, String place, DataContext context) {
+  public ActionMenuItem(AnAction action, Presentation presentation, String place, DataContext context, final boolean enableMnemonics) {
     myAction = action;
     myPresentation = presentation;
     myPlace = place;
     myContext = context;
+    myEnableMnemonics = enableMnemonics;
     myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0);
     addActionListener(new ActionTransmitter());
     setBorderPainted(false);
@@ -85,9 +87,9 @@ public class ActionMenuItem extends JMenuItem {
   private void init() {
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
-    setMnemonic(myPresentation.getMnemonic());
+    setMnemonic(myEnableMnemonics ? myPresentation.getMnemonic() : 0);
     setText(myPresentation.getText());
-    final int mnemonicIndex = myPresentation.getDisplayedMnemonicIndex();
+    final int mnemonicIndex = myEnableMnemonics ? myPresentation.getDisplayedMnemonicIndex() : -1;
 
     if (getText() != null && mnemonicIndex >= 0 && mnemonicIndex < getText().length()) {
       setDisplayedMnemonicIndex(mnemonicIndex);

@@ -85,7 +85,7 @@ public class IdeMenuBar extends JMenuBar{
       removeAll();
       Color background = null;
       for (final AnAction action : myVisibleActions) {
-        final ActionMenu menu = new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory);
+        final ActionMenu menu = new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, !UISettings.getInstance().DISABLE_MNEMONICS);
         add(menu);
         background = menu.getBackground();
       }

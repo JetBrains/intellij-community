@@ -39,12 +39,14 @@ public final class ActionMenu extends JMenu {
    */
   private StubItem myStubItem;
 
-  public ActionMenu(DataContext context, String place, ActionGroup group, PresentationFactory presentationFactory) {
+  public ActionMenu(DataContext context, String place, ActionGroup group, PresentationFactory presentationFactory, final boolean enableMnemonics) {
     myContext = context;
     myPlace = place;
     myGroup = group;
     myPresentationFactory = presentationFactory;
     myPresentation = myPresentationFactory.getPresentation(group);
+    myMnemonicEnabled = enableMnemonics;
+
     init();
 
     // addNotify won't be called for menus in MacOS system menu
@@ -90,7 +92,6 @@ public final class ActionMenu extends JMenu {
   }
 
   private void init() {
-    myMnemonicEnabled = true;
     boolean macSystemMenu = SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU;
 
     myStubItem = macSystemMenu ? null : new StubItem();
@@ -100,11 +101,10 @@ public final class ActionMenu extends JMenu {
 
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
-    setMnemonic(myPresentation.getMnemonic());
     setText(myPresentation.getText());
     updateIcon();
-    setMnemonic(myPresentation.getMnemonic());
-    setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
+
+    setMnemonicEnabled(myMnemonicEnabled);
   }
 
   private void addStubItem() {
@@ -119,13 +119,13 @@ public final class ActionMenu extends JMenu {
     setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
   }
 
+  @Override
+  public void setDisplayedMnemonicIndex(final int index) throws IllegalArgumentException {
+    super.setDisplayedMnemonicIndex(myMnemonicEnabled ? index : -1);
+  }
+
   public void setMnemonic(int mnemonic) {
-    if (myMnemonicEnabled) {
-      super.setMnemonic(mnemonic);
-    }
-    else {
-      super.setMnemonic(0);
-    }
+    super.setMnemonic(myMnemonicEnabled ? mnemonic : 0);
   }
 
   private void updateIcon() {
@@ -194,7 +194,7 @@ public final class ActionMenu extends JMenu {
 
   private void fillMenu() {
     DataContext context = myContext != null ? myContext : DataManager.getInstance().getDataContext();
-    Utils.fillMenu(myGroup, this, myPresentationFactory, context, myPlace);
+    Utils.fillMenu(myGroup, this, myMnemonicEnabled, myPresentationFactory, context, myPlace);
   }
 
   private class MenuItemSynchronizer implements PropertyChangeListener {

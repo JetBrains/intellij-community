@@ -156,7 +156,7 @@ public class Utils{
   }
 
 
-  public static void fillMenu(@NotNull ActionGroup group,JComponent component, PresentationFactory presentationFactory, DataContext context, String place){
+  public static void fillMenu(@NotNull ActionGroup group,JComponent component, boolean enableMnemonics, PresentationFactory presentationFactory, DataContext context, String place){
     ArrayList<AnAction> list = new ArrayList<AnAction>();
     expandActionGroup(group, list, presentationFactory, context, place, ActionManager.getInstance());
 
@@ -168,10 +168,10 @@ public class Utils{
         }
       }
       else if (action instanceof ActionGroup) {
-        component.add(new ActionMenu(context, place, (ActionGroup)action, presentationFactory));
+        component.add(new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics));
       }
       else {
-        component.add(new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context));
+        component.add(new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics));
       }
     }
   }
