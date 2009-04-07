@@ -331,6 +331,13 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals(0, children.get(1).getChildren().size());
   }
 
+  public void test3212() {
+    // let's make
+    myEventsProcessor.clearInternalSuitesStack();
+
+    assertEquals(myResultsViewer.getTestsRootNode(), myEventsProcessor.getCurrentSuite());
+  }
+
   private void onTestStarted(final String testName) {
     onTestStarted(testName, null);
   }

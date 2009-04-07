@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -23,6 +24,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, SMTestProxy>();
 
   private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
+
   private final TestSuiteStack mySuitesStack = new TestSuiteStack();
   private final List<SMTRunnerEventsListener> myEventsListeners = new ArrayList<SMTRunnerEventsListener>();
   private final SMTestProxy myTestsRootNode;
@@ -268,9 +270,16 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   @NotNull
   protected final SMTestProxy getCurrentSuite() {
     final SMTestProxy currentSuite = mySuitesStack.getCurrentSuite();
-    assert currentSuite != null;
 
-    return currentSuite;
+    if (currentSuite != null) {
+      return currentSuite;
+    }
+
+    // current suite shouldn't be null otherwise test runner isn't correct
+    // or may be we are in debug mode
+    LOG.warn("Current suite is undefined. Root suite will be used.");
+    return myTestsRootNode;
+
   }
  
   protected String getFullTestName(final String testName) {
@@ -289,6 +298,11 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   @Nullable
   protected SMTestProxy getProxyByFullTestName(final String fullTestName) {
     return myRunningTestsFullNameToProxy.get(fullTestName);
+  }
+
+  @TestOnly
+  protected void clearInternalSuitesStack() {
+    mySuitesStack.clear();
   }
 
   private String cannotFindFullTestNameMsg(String fullTestName) {
