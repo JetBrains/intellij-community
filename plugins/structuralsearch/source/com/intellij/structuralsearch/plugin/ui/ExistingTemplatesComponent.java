@@ -9,7 +9,7 @@ import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.Tree;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
