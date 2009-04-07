@@ -1,17 +1,17 @@
 package com.intellij.platform;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.ide.GeneralSettings;
 
 import java.io.File;
 
@@ -49,7 +49,7 @@ public class NewDirectoryProjectAction extends AnAction {
     }
     GeneralSettings.getInstance().setLastProjectLocation(location.getParent());
     Project newProject = PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
-    if (generator != null) {
+    if (generator != null && newProject != null) {
       //noinspection unchecked
       generator.generateProject(newProject, baseDir, settings);
     }
