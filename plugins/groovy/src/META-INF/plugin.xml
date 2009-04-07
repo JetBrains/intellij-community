@@ -53,7 +53,6 @@
     <lang.commenter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyCommenter"/>
     <lang.foldingBuilder language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder"/>
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
-    <lang.substitutor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.GroovyLanguageSubstitutor"/>
 
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.GroovyTemplateContextType"/>
     <liveTemplateContext implementation="org.jetbrains.plugins.grails.GspTemplateContextType"/>
