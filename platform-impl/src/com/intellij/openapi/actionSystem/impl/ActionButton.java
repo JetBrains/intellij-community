@@ -181,7 +181,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   }
 
   void updateToolTipText() {
-    setToolTipText(myPresentation.getText());
+    String text = myPresentation.getText();
+    setToolTipText(text == null ? myPresentation.getDescription() : text);
   }
 
   public void paintComponent(Graphics g) {
