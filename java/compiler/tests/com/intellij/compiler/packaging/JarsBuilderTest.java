@@ -40,7 +40,7 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
   public void testWarAndEar() throws Exception {
     doTest(true, true, false, start()
       .copy("lib/b.jar", "/b.jar")
-      .inner("w.war", true, true, false)
+      .inner("w.war", true, true)
         .jar("dir", "/a.jar", "a.jsp")
         .up()
     );
@@ -48,7 +48,7 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
 
   public void testCopyExternalDepsToEar() throws Exception {
     doTest(false, true, false, start()
-      .inner("w.war", false, false, false)
+      .inner("w.war", false, false)
         .copy("a.jsp", "/a.jsp")
         .copy("b.jar", "../b.jar")
         .up()
@@ -57,7 +57,7 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
 
   public void testJarExternalDepsToEar() throws Exception {
     doTest(true, true, false, start()
-      .inner("w.war", false, false, false)
+      .inner("w.war", false, false)
         .jar("dir", "../d.jar", "b.jsp", "c.jsp")
         .up()
       .copy("lib/e.jar", "/e.jar"));
@@ -65,7 +65,7 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
 
   private void doTest(final boolean explodedEnabled, final boolean jarEnabled, final boolean buildExternalDependencies,
                       final BuildRecipeInfo info) throws Exception {
-    final MockBuildConfiguration configuration = new MockBuildConfiguration(explodedEnabled, jarEnabled, buildExternalDependencies);
+    final MockBuildConfiguration configuration = new MockBuildConfiguration(explodedEnabled, jarEnabled);
     final PackagingProcessingItem[] processingItems = buildItems(info.myBuildRecipe, configuration);
 
     List<Pair<JarInfo,String>> list = getJarsContent(processingItems);

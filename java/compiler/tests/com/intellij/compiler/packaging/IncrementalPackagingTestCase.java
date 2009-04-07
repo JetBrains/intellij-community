@@ -41,7 +41,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     return new BuildRecipeInfo(null);
   }
 
-  protected PackagingProcessingItem[] buildItems(final BuildRecipe buildRecipe, final MockBuildConfiguration mockBuildConfiguration) {
+  protected static PackagingProcessingItem[] buildItems(final BuildRecipe buildRecipe, final MockBuildConfiguration mockBuildConfiguration) {
     final MockBuildParticipant participant = new MockBuildParticipant(mockBuildConfiguration, buildRecipe);
     final DummyCompileContext compileContext = new MyDummyCompileContext();
     final ProcessingItemsBuilderContext context = new ProcessingItemsBuilderContext(compileContext);
@@ -57,7 +57,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     return context.getProcessingItems();
   }
 
-  protected Map<JarInfo, Integer> fillAllJars(final PackagingProcessingItem[] items, final Set<JarInfo> jars) {
+  protected static Map<JarInfo, Integer> fillAllJars(final PackagingProcessingItem[] items, final Set<JarInfo> jars) {
     final Map<JarInfo, Integer> deps = new HashMap<JarInfo, Integer>();
     for (PackagingProcessingItem item : items) {
       for (DestinationInfo destinationInfo : item.getDestinations()) {
@@ -73,7 +73,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     return deps;
   }
 
-  private void addJars(final JarInfo jarInfo, final Set<JarInfo> jars, final Map<JarInfo, Integer> deps) {
+  private static void addJars(final JarInfo jarInfo, final Set<JarInfo> jars, final Map<JarInfo, Integer> deps) {
     if (!jars.add(jarInfo)) return;
     for (JarDestinationInfo destination : jarInfo.getJarDestinations()) {
       final JarInfo info = destination.getJarInfo();
@@ -82,11 +82,11 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     }
   }
 
-  protected String loadText(final File file) throws IOException {
+  protected static String loadText(final File file) throws IOException {
     return StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(file)));
   }
 
-  protected List<Pair<JarInfo, String>> getJarsContent(final PackagingProcessingItem[] items) {
+  protected static List<Pair<JarInfo, String>> getJarsContent(final PackagingProcessingItem[] items) {
     Set<JarInfo> jars = new HashSet<JarInfo>();
     final Map<JarInfo, Integer> deps = fillAllJars(items, jars);
 
@@ -122,7 +122,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     private final BuildConfiguration myBuildConfiguration;
     private final BuildRecipe myBuildRecipe;
 
-    public MockBuildParticipant(final BuildConfiguration buildConfiguration, final BuildRecipe buildRecipe) {
+    protected MockBuildParticipant(final BuildConfiguration buildConfiguration, final BuildRecipe buildRecipe) {
       myBuildConfiguration = buildConfiguration;
       myBuildRecipe = buildRecipe;
     }
@@ -146,12 +146,11 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     private final String myExplodedPath;
     private final String myJarPath;
 
-    public MockBuildConfiguration(final boolean explodedEnabled, final boolean jarEnabled, final boolean buildExternalDependencies) {
-      this(explodedEnabled, jarEnabled, buildExternalDependencies, "/out/exploded", "/out/my.jar");
+    protected MockBuildConfiguration(final boolean explodedEnabled, final boolean jarEnabled) {
+      this(explodedEnabled, jarEnabled, "/out/exploded", "/out/my.jar");
     }
 
-    public MockBuildConfiguration(final boolean explodedEnabled, final boolean jarEnabled, final boolean buildExternalDependencies,
-                                  final String explodedPath, String jarPath) {
+    protected MockBuildConfiguration(final boolean explodedEnabled, final boolean jarEnabled, @NonNls final String explodedPath, @NonNls String jarPath) {
       myExplodedPath = explodedPath;
       myJarPath = jarPath;
       myJarEnabled = jarEnabled;
@@ -189,14 +188,15 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     private int myCount = 2;
     @NonNls private static final String PROJECT_DIR = "project/";
 
-    public BuildRecipeInfo(final ProcessingItemsBuilderTest.BuildRecipeInfo parent) {
+    protected BuildRecipeInfo(final ProcessingItemsBuilderTest.BuildRecipeInfo parent) {
       myParent = parent;
     }
 
     protected ProcessingItemsBuilderTest.BuildRecipeInfo copy(String sourceDir, final String outputRelativePath, String... files) {
       final String path = PROJECT_DIR + sourceDir;
       for (String file : files) {
-        LocalFileSystem.getInstance().findFileByPath(path + "/" + file);
+        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path + "/" + file);
+        assertNotNull(virtualFile);
       }
       return add(new FileCopyInstructionImpl(new File(path), true, null, outputRelativePath, null));
     }
@@ -204,7 +204,8 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
     protected ProcessingItemsBuilderTest.BuildRecipeInfo jar(String sourceDir, final String outputRelativePath, String... files) {
       final String path = PROJECT_DIR + sourceDir;
       for (String file : files) {
-        LocalFileSystem.getInstance().findFileByPath(path + "/" + file);
+        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path + "/" + file);
+        assertNotNull(virtualFile);
       }
       return add(new JarAndCopyBuildInstructionImpl(null, new File(path), outputRelativePath));
     }
@@ -218,10 +219,9 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
       return add(new FileCopyInstructionImpl(new File(PROJECT_DIR + sourceFile), false, null, outputRelativePath, null));
     }
 
-    protected ProcessingItemsBuilderTest.BuildRecipeInfo inner(String relativeOutput, boolean explodedEnabled, boolean jarEnabled, boolean buildExternalDependencies) {
+    protected ProcessingItemsBuilderTest.BuildRecipeInfo inner(String relativeOutput, boolean explodedEnabled, boolean jarEnabled) {
       final ProcessingItemsBuilderTest.BuildRecipeInfo inner = new ProcessingItemsBuilderTest.BuildRecipeInfo(this);
-      final MockBuildConfiguration configuration = new MockBuildConfiguration(explodedEnabled, jarEnabled, buildExternalDependencies,
-                                                                              "/out" + myCount + "/exploded", "/out" + myCount + "/my.jar");
+      final MockBuildConfiguration configuration = new MockBuildConfiguration(explodedEnabled, jarEnabled, "/out" + myCount + "/exploded", "/out" + myCount + "/my.jar");
       myCount++;
       final MockBuildParticipant participant = new MockBuildParticipant(configuration, inner.myBuildRecipe);
       add(new CompoundBuildInstructionImpl(participant, relativeOutput));
