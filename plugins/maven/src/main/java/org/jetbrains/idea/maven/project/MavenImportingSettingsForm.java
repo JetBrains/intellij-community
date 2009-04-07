@@ -49,6 +49,8 @@ public class MavenImportingSettingsForm {
     } else {
       myUseExhaustiveSearchCheckBox.setVisible(false);
     }
+
+    myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
   }
 
   private void enableControls() {

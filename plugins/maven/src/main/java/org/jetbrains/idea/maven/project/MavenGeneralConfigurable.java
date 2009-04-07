@@ -47,6 +47,13 @@ public abstract class MavenGeneralConfigurable implements Configurable {
 
   protected abstract MavenGeneralSettings getState();
 
+  protected MavenGeneralConfigurable() {
+    fillComboboxOutputLevel();
+    fillComboboxChecksumPolicy();
+    fillComboboxFailureBehavior();
+    fillComboboxPluginUpdatePolicy();
+  }
+
   private void fillComboboxFailureBehavior() {
     ComboBoxUtil.setModel(comboboxMultiprojectBuildFailPolicy, comboboxModelMultiprojectBuildFailPolicy,
                           new Object[][]{{MavenExecutionRequest.REACTOR_FAIL_FAST, "Stop at first failure"},
@@ -74,11 +81,6 @@ public abstract class MavenGeneralConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
-    fillComboboxOutputLevel();
-    fillComboboxChecksumPolicy();
-    fillComboboxFailureBehavior();
-    fillComboboxPluginUpdatePolicy();
-
     return panel;
   }
 
