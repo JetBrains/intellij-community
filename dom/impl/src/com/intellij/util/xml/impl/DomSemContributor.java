@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.XmlPatterns.*;
 import com.intellij.psi.PsiElement;
@@ -44,6 +45,7 @@ public class DomSemContributor extends SemContributor {
   public void registerSemProviders(SemRegistrar registrar) {
     registrar.registerSemElementProvider(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlFile(), new NullableFunction<XmlFile, FileDescriptionCachedValueProvider>() {
       public FileDescriptionCachedValueProvider fun(XmlFile xmlFile) {
+        ApplicationManager.getApplication().assertReadAccessAllowed();
         return new FileDescriptionCachedValueProvider(myDomManager, xmlFile);
       }
     });
@@ -103,7 +105,7 @@ public class DomSemContributor extends SemContributor {
 
           final IndexedElementInvocationHandler handler =
             new IndexedElementInvocationHandler(parent.createEvaluatedXmlName(description.getXmlName()), (FixedChildDescriptionImpl)description, index,
-                                                new PhysicalDomParentStrategy(tag), myDomManager, namespace);
+                                                new PhysicalDomParentStrategy(tag, myDomManager), myDomManager, namespace);
           tag.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, handler);
           return handler;
         }
@@ -172,7 +174,7 @@ public class DomSemContributor extends SemContributor {
                   ns.equals(attribute.getNamespace())) {
                 final AttributeChildInvocationHandler attributeHandler =
                   new AttributeChildInvocationHandler(evaluatedXmlName, description, myDomManager,
-                                                      new PhysicalDomParentStrategy(attribute));
+                                                      new PhysicalDomParentStrategy(attribute, myDomManager));
                 attribute.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, attributeHandler);
                 result.set(attributeHandler);
                 return false;

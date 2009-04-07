@@ -23,7 +23,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
   public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,
                                             final AbstractCollectionChildDescription description,
                                             final DomInvocationHandler parent) {
-    super(type, new PhysicalDomParentStrategy(tag), description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager(), true);
+    super(type, new PhysicalDomParentStrategy(tag, parent.getManager()), description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager(), true);
     myTagQName = tag.getName();
   }
 

@@ -180,8 +180,6 @@ public class SemServiceImpl extends SemService{
 
   @Nullable
   private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, PsiElement psi, boolean paranoid) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
     final ConcurrentMap<SemKey, List<SemElement>> map = myCache.get(psi);
     if (map == null) return null;
 

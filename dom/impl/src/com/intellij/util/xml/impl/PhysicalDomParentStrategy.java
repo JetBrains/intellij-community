@@ -15,15 +15,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PhysicalDomParentStrategy implements DomParentStrategy {
   private XmlElement myElement;
+  private DomManagerImpl myDomManager;
 
-  public PhysicalDomParentStrategy(@NotNull final XmlElement element) {
+  public PhysicalDomParentStrategy(@NotNull final XmlElement element, DomManagerImpl domManager) {
     myElement = element;
+    myDomManager = domManager;
   }
 
   public DomInvocationHandler getParentHandler() {
     final XmlTag parentTag = getParentTag(myElement);
     assert parentTag != null;
-    return DomManagerImpl.getDomManager(myElement.getProject()).getDomHandler(parentTag);
+    return myDomManager.getDomHandler(parentTag);
   }
 
   public static XmlTag getParentTag(final XmlElement xmlElement) {

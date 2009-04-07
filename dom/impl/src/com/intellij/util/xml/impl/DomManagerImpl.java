@@ -34,6 +34,7 @@ import com.intellij.semantic.SemService;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
+import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
@@ -68,6 +69,8 @@ public final class DomManagerImpl extends DomManager {
   static final SemKey<CollectionElementInvocationHandler> DOM_COLLECTION_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_COLLECTION_HANDLER_KEY");
   static final SemKey<CollectionElementInvocationHandler> DOM_CUSTOM_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_CUSTOM_HANDLER_KEY");
   static final SemKey<AttributeChildInvocationHandler> DOM_ATTRIBUTE_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_ATTRIBUTE_HANDLER_KEY");
+
+  private final ReflectionAssignabilityCache myAssignabilityCache = new ReflectionAssignabilityCache();
 
   private final ConcurrentFactoryMap<Class, StaticGenericInfo> myGenericInfos = new ConcurrentFactoryMap<Class, StaticGenericInfo>() {
     @NotNull
@@ -350,7 +353,6 @@ public final class DomManagerImpl extends DomManager {
   @SuppressWarnings({"unchecked"})
   @NotNull
   final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(final XmlFile xmlFile) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     return mySemService.getSemElement(FILE_DESCRIPTION_KEY, xmlFile);
   }
 
@@ -413,7 +415,7 @@ public final class DomManagerImpl extends DomManager {
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
     final DomFileDescription description = getDomFileDescription(file);
-    if (description != null && ReflectionCache.isAssignable(domClass, description.getRootElementClass())) {
+    if (description != null && myAssignabilityCache.isAssignable(domClass, description.getRootElementClass())) {
       return getFileElement(file);
     }
     return null;

@@ -44,7 +44,7 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
     if (modCount != myModCount) {
       final XmlElement xmlElement = handler.recomputeXmlElement(myParentHandler);
       if (xmlElement != null) {
-        return new PhysicalDomParentStrategy(xmlElement);
+        return new PhysicalDomParentStrategy(xmlElement, DomManagerImpl.getDomManager(xmlElement.getProject()));
       }
       myModCount = modCount;
     }
@@ -53,7 +53,7 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
 
   @NotNull
   public DomParentStrategy setXmlElement(@NotNull final XmlElement element) {
-    return new PhysicalDomParentStrategy(element);
+    return new PhysicalDomParentStrategy(element, DomManagerImpl.getDomManager(element.getProject()));
   }
 
   @NotNull
