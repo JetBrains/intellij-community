@@ -196,7 +196,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     tmp.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
     StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);
 
-    params.getProgramParametersList().add("\"" + workDir + File.pathSeparator + buffer.toString() + "\"");
+    params.getProgramParametersList().add("\"" + buffer.toString() + "\"");
     if (isDebugEnabled) {
       params.getProgramParametersList().add("--debug");
     }
