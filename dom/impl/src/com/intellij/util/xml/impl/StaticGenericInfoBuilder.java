@@ -30,7 +30,8 @@ import java.util.*;
  */
 public class StaticGenericInfoBuilder {
   private static final Set ADDER_PARAMETER_TYPES = new THashSet<Class>(Arrays.asList(Class.class, int.class));
-  private final Class<? extends DomElement> myClass;
+  private final Class myClass;
+  private final Type myType;
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<XmlName, JavaMethod>();
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionAdders = new MultiValuesMap<XmlName, JavaMethod>();
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionClassAdders = new MultiValuesMap<XmlName, JavaMethod>();
@@ -51,9 +52,9 @@ public class StaticGenericInfoBuilder {
   private JavaMethod myNameValueGetter;
   private JavaMethod myCustomChildrenGetter;
 
-  public StaticGenericInfoBuilder(final DomManagerImpl domManager, final Class<? extends DomElement> aClass) {
-    final DomManagerImpl domManager1 = domManager;
+  public StaticGenericInfoBuilder(final DomManagerImpl domManager, final Class aClass, Type type) {
     myClass = aClass;
+    myType = type;
 
     final Set<JavaMethod> methods = new THashSet<JavaMethod>();
     for (final Method method : ReflectionCache.getMethods(myClass)) {
@@ -67,7 +68,7 @@ public class StaticGenericInfoBuilder {
     }
 
     {
-      final Class implClass = domManager1.getImplementation(myClass);
+      final Class implClass = domManager.getImplementation(myClass);
       if (implClass != null) {
         for (Method method : ReflectionCache.getMethods(implClass)) {
           final int modifiers = method.getModifiers();

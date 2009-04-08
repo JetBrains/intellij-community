@@ -638,7 +638,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   private void refreshGenericInfo(final boolean dynamic) {
-    final StaticGenericInfo staticInfo = myManager.getStaticGenericInfo(getRawType());
+    final StaticGenericInfo staticInfo = myManager.getStaticGenericInfo(myType);
     myGenericInfo = dynamic ? new DynamicGenericInfo(this, staticInfo, myManager.getProject()) : staticInfo;
   }
 

@@ -5,7 +5,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -32,9 +31,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.SmartList;
 import com.intellij.util.ReflectionAssignabilityCache;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
@@ -52,6 +50,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -72,9 +71,9 @@ public final class DomManagerImpl extends DomManager {
 
   private final ReflectionAssignabilityCache myAssignabilityCache = new ReflectionAssignabilityCache();
 
-  private final ConcurrentFactoryMap<Class, StaticGenericInfo> myGenericInfos = new ConcurrentFactoryMap<Class, StaticGenericInfo>() {
+  private final ConcurrentFactoryMap<Type, StaticGenericInfo> myGenericInfos = new ConcurrentFactoryMap<Type, StaticGenericInfo>() {
     @NotNull
-    protected StaticGenericInfo create(final Class type) {
+    protected StaticGenericInfo create(final Type type) {
       return new StaticGenericInfo(type, DomManagerImpl.this);
     }
   };
@@ -295,11 +294,11 @@ public final class DomManagerImpl extends DomManager {
     myListeners.getMulticaster().eventOccured(event);
   }
 
-  public final DomGenericInfo getGenericInfo(final Class type) {
+  public final DomGenericInfo getGenericInfo(final Type type) {
     return getStaticGenericInfo(type);
   }
 
-  public final StaticGenericInfo getStaticGenericInfo(final Class type) {
+  public final StaticGenericInfo getStaticGenericInfo(final Type type) {
     return myGenericInfos.get(type);
   }
 

@@ -5,10 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
@@ -24,7 +21,8 @@ import java.util.*;
  * @author peter
  */
 public class StaticGenericInfo extends DomGenericInfoEx {
-  private final Class<? extends DomElement> myClass;
+  private final Class myClass;
+  private final Type myType;
   private final DomManagerImpl myDomManager;
 
   private final ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>();
@@ -44,14 +42,15 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   private boolean myInitialized;
   private CustomDomChildrenDescriptionImpl myCustomDescription;
 
-  public StaticGenericInfo(final Class aClass, final DomManagerImpl domManager) {
-    myClass = aClass;
+  public StaticGenericInfo(final Type type, final DomManagerImpl domManager) {
+    myType = type;
+    myClass = ReflectionUtil.getRawType(type);
     myDomManager = domManager;
   }
 
   public final synchronized boolean buildMethodMaps() {
     if (!myInitialized) {
-      final StaticGenericInfoBuilder builder = new StaticGenericInfoBuilder(myDomManager, myClass);
+      final StaticGenericInfoBuilder builder = new StaticGenericInfoBuilder(myDomManager, myClass, myType);
       final JavaMethod customChildrenGetter = builder.getCustomChildrenGetter();
       if (customChildrenGetter != null) {
         myCustomDescription = new CustomDomChildrenDescriptionImpl(customChildrenGetter);

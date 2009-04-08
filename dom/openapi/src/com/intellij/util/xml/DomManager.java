@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
+
 /**
  * @author peter
  */
@@ -72,10 +74,10 @@ public abstract class DomManager implements ModificationTracker {
   public abstract void addDomEventListener(DomEventListener listener, Disposable parentDisposable);
 
   /**
-   * @param type Class
+   * @param type Type. Only {@link Class} and {@link java.lang.reflect.ParameterizedType} are allowed
    * @return {@link com.intellij.util.xml.reflect.DomGenericInfo} instance for the desired type
    */
-  public abstract DomGenericInfo getGenericInfo(Class type);
+  public abstract DomGenericInfo getGenericInfo(Type type);
 
   /**
    * @param element tag
@@ -96,7 +98,7 @@ public abstract class DomManager implements ModificationTracker {
    * @param module One may wish the result to think that it is in a particular module
    * @param physical see {@link com.intellij.psi.PsiFile#isPhysical()}
    * @return DOM element which doesn't have any real file under itself. A mock file is created for it. See
-   * {@link com.intellij.psi.PsiElementFactory#createFileFromText(String, com.intellij.openapi.fileTypes.FileType, CharSequence, long, boolean, boolean)}
+   * {@link com.intellij.psi.PsiFileFactory#createFileFromText(String, com.intellij.openapi.fileTypes.FileType, CharSequence, long, boolean, boolean)}
    */
   public abstract <T extends DomElement> T createMockElement(Class<T> aClass, final Module module, final boolean physical);
 
