@@ -68,7 +68,7 @@ public class CompilationClasspathTest extends CompilerTestCase{
       public void run() {
         //long start = System.currentTimeMillis();
         try {
-          setup("anonymous"); // reuse existing test data
+          doSetup("anonymous"); // reuse existing test data
           if (setupTestOutput) {
             setupTestsOutput(differentOutputRoots, removeProductionOutputRoot);
           }

@@ -24,7 +24,7 @@ public class ChangeNameTest extends CompilerTestCase{
   protected void doCompile(final CompileStatusNotification notification, int pass) {
     final CompilerManager compileManager = CompilerManager.getInstance(myProject);
     if (pass == 1) {
-      compileManager.rebuild(/*null, null, notification*/notification);
+      compileManager.rebuild(notification);
     }
     else if (pass == 2){
       final VirtualFile classA = mySourceDir.findChild("A.java");
@@ -38,7 +38,7 @@ public class ChangeNameTest extends CompilerTestCase{
         }
       });
 
-      compileManager.make(/*null, null, notification*/notification);
+      compileManager.make(notification);
     }
   }
 }

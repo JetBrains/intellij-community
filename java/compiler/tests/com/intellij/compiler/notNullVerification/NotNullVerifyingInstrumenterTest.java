@@ -65,12 +65,13 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     assertEquals(expectedError, exceptionText);
   }
 
-  private Class prepareTest() throws IOException, InstantiationException, IllegalAccessException {
-    String path = PathManagerEx.getTestDataPath() + "/compiler/notNullVerification/" + getTestName(false);
+  private Class prepareTest() throws IOException {
+    String base = PathManagerEx.getTestDataPath() + "/compiler/notNullVerification/";
+    String path = base + getTestName(false);
     String javaPath = path + ".java";
     String classPath = path + ".class";
     try {
-      com.sun.tools.javac.Main.compile(new String[] { javaPath } );
+      com.sun.tools.javac.Main.compile(new String[] { "-classpath", base+"annotations.jar", javaPath } );
       FileInputStream stream = new FileInputStream(classPath);
       byte[] content = FileUtil.adaptiveLoadBytes(stream);
       stream.close();

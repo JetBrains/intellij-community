@@ -20,20 +20,20 @@ public class CompilerTestData implements JDOMExternalizable {
 
     // read paths to be deleted
     myPathsToDelete.clear();
-    for (Iterator it = element.getChildren("delete").iterator(); it.hasNext();) {
-      Element elem = (Element)it.next();
-      for (Iterator pathIt = elem.getChildren().iterator(); pathIt.hasNext();) {
-        Element pathElement = (Element)pathIt.next();
+    for (Object o3 : element.getChildren("delete")) {
+      Element elem = (Element)o3;
+      for (Object o : elem.getChildren()) {
+        Element pathElement = (Element)o;
         myPathsToDelete.add(pathElement.getAttributeValue("path"));
       }
     }
 
     // read paths that are expected to be deleted
     List<String> data = new ArrayList<String>();
-    for (Iterator it = element.getChildren("deleted_by_make").iterator(); it.hasNext();) {
-      Element elem = (Element)it.next();
-      for (Iterator pathIt = elem.getChildren().iterator(); pathIt.hasNext();) {
-        Element pathElement = (Element)pathIt.next();
+    for (Object o2 : element.getChildren("deleted_by_make")) {
+      Element elem = (Element)o2;
+      for (Object o : elem.getChildren()) {
+        Element pathElement = (Element)o;
         data.add(pathElement.getAttributeValue("path"));
       }
     }
@@ -41,10 +41,10 @@ public class CompilerTestData implements JDOMExternalizable {
 
     // read paths that are expected to be found by dependencies
     data.clear();
-    for (Iterator it = element.getChildren("recompile").iterator(); it.hasNext();) {
-      Element elem = (Element)it.next();
-      for (Iterator pathIt = elem.getChildren().iterator(); pathIt.hasNext();) {
-        Element pathElement = (Element)pathIt.next();
+    for (Object o1 : element.getChildren("recompile")) {
+      Element elem = (Element)o1;
+      for (Object o : elem.getChildren()) {
+        Element pathElement = (Element)o;
         data.add(pathElement.getAttributeValue("path"));
       }
     }

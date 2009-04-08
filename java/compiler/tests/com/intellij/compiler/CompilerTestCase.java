@@ -1,6 +1,7 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -13,7 +14,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.AssertionFailedError;
@@ -60,7 +61,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
   protected void setUp() throws Exception {
     mySemaphore = new Semaphore();
-    final Exception[] ex = new Exception[]{null};
+    final Exception[] ex = {null};
     SwingUtilities.invokeAndWait(new Runnable() {
       public void run() {
         try {
@@ -82,14 +83,10 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     compilerConfiguration.projectOpened();
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
-  }
 
-  /*
-  protected void tearDown() throws Exception {
-    // wait until all caches are saved
-    super.tearDown();
+    JavacSettings javacSettings = JavacSettings.getInstance(myProject);
+    javacSettings.setTestsUseExternalCompiler(true);
   }
-  */
 
   //------------------------------------------------------------------------------------------
 
@@ -100,7 +97,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       public void run() {
         //long start = System.currentTimeMillis();
         try {
-          setup(name);
+          doSetup(name);
           mySemaphore.down();
           doCompile(new CompileStatusNotification() {
             public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
@@ -141,7 +138,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       public void run() {
         //long start = System.currentTimeMillis();
         try {
-          final Exception[] ex = new Exception[]{null};
+          final Exception[] ex = {null};
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
@@ -264,7 +261,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       extraRecompiled.addAll(myRecompiledPaths);
       extraRecompiled.removeAll(Arrays.asList(recompiled));
       for (String path : extraRecompiled) {
-        assertTrue("file \"" + path + "\" should NOT be recompiled", false);
+        fail("file \"" + path + "\" should NOT be recompiled");
       }
     }
     //assertEquals(recompiled.length, getRecompiledCount());
@@ -294,7 +291,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     return myRecompiledPaths.contains(path);
   }
 
-  protected void setup(final String testName) throws Exception {
+  protected void doSetup(final String testName) throws Exception {
     Logger.getInstance("#com.intellij.compiler").setLevel(Level.ERROR); // disable debug output from ordinary category
 
     CompilerManagerImpl.testSetup();
@@ -363,7 +360,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     final VirtualFile libDir = myDataDir.findChild("lib");
     if (libDir != null) {
       if (!libDir.isDirectory()) {
-        assertTrue(libDir.getPath() + " is expected to be a directory", false);
+        fail(libDir.getPath() + " is expected to be a directory");
       }
       final VirtualFile[] children = libDir.getChildren();
       final List<VirtualFile> jars = new ArrayList<VirtualFile>();
@@ -376,7 +373,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           }
         }
       }
-      if (jars.size() > 0) {
+      if (!jars.isEmpty()) {
         final LibraryTable libraryTable = rootModel.getModuleLibraryTable();
         final Library library = libraryTable.createLibrary("projectlib");
         final Library.ModifiableModel libraryModifiableModel = library.getModifiableModel();
@@ -439,7 +436,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           VirtualFile destChild = destDir.findChild(name);
           if (destChild != null && destChild.isValid()) {
 //            System.out.println("Replacing " + destChild.getPath() + " with " + name + "; current timestamp is " + destChild.getPhysicalTimeStamp());
-            currentTimeStamp = ((NewVirtualFileSystem)destChild.getFileSystem()).getTimeStamp(destChild);
+            currentTimeStamp = ((FileSystemInterface)destChild.getFileSystem()).getTimeStamp(destChild);
             final String destChildPath = destChild.getPath().replace('/', File.separatorChar);
             destChild.delete(this);
             assertTrue("File " + destChildPath + " should be deleted in order for the test to work properly!",
@@ -456,7 +453,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 //        System.out.println("time before copying= " + System.currentTimeMillis());
         VirtualFile newChild = VfsUtil.copyFile(this, child, destDir, name);
         assertTrue("Timestamps of test data files must differ in order for the test to work properly!\n " + child.getPath(),
-                   currentTimeStamp != ((NewVirtualFileSystem)newChild.getFileSystem()).getTimeStamp(newChild));
+                   currentTimeStamp != ((FileSystemInterface)newChild.getFileSystem()).getTimeStamp(newChild));
 //        System.out.println("time after copying= " + System.currentTimeMillis());
 //        System.out.println("{TestCase:} copied " + child.getPath() + "origin timestamp is " + child.getPhysicalTimeStamp() + "; new timestamp is "+newChild.getPhysicalTimeStamp());
       }
@@ -485,7 +482,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   protected void tearDown() throws Exception {
-    final Exception[] exceptions = new Exception[]{null};
+    final Exception[] exceptions = {null};
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         try {
