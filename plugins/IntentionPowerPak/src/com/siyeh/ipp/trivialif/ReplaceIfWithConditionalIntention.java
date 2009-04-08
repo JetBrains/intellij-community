@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,16 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceIfWithConditionalIntention extends Intention {
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new ReplaceIfWithConditionalPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    @Override
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiJavaToken token = (PsiJavaToken)element;
-        final PsiIfStatement ifStatement = (PsiIfStatement)token.getParent();
+        final PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
         if (ifStatement == null) {
             return;
         }
@@ -64,36 +65,16 @@ public class ReplaceIfWithConditionalIntention extends Intention {
             if (thenRhs == null) {
                 return;
             }
-            final String thenValue;
-            if (ParenthesesUtils.getPrecedence(thenRhs)
-                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-                thenValue = thenRhs.getText();
-            } else {
-                thenValue = '(' + thenRhs.getText() + ')';
-            }
             final PsiExpression elseRhs = elseAssign.getRExpression();
             if (elseRhs == null) {
                 return;
             }
-            final String elseValue;
-            if (ParenthesesUtils.getPrecedence(elseRhs)
-                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-                elseValue = elseRhs.getText();
-            } else {
-                elseValue = '(' + elseRhs.getText() + ')';
-            }
-            final String conditionText;
-            if (ParenthesesUtils.getPrecedence(condition)
-                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-                conditionText = condition.getText();
-            } else {
-                conditionText = '(' + condition.getText() + ')';
-            }
-
-            replaceStatement(lhsText + operator + conditionText + '?' +
-                    thenValue + ':' + elseValue + ';',
+            final String conditional = getConditionalText(condition, thenRhs,
+                    elseRhs, thenAssign.getType());
+            replaceStatement(lhsText + operator + conditional + ';',
                     ifStatement);
-        } else if (ReplaceIfWithConditionalPredicate.isReplaceableReturn(ifStatement)) {
+        } else if (ReplaceIfWithConditionalPredicate.isReplaceableReturn(
+                ifStatement)) {
             final PsiExpression condition = ifStatement.getCondition();
             if (condition == null) {
                 return;
@@ -104,39 +85,23 @@ public class ReplaceIfWithConditionalIntention extends Intention {
             final PsiStatement elseBranch = ifStatement.getElseBranch();
             final PsiReturnStatement elseReturn =
                     (PsiReturnStatement)ConditionalUtils.stripBraces(elseBranch);
-
             final PsiExpression thenReturnValue = thenReturn.getReturnValue();
             if (thenReturnValue == null) {
                 return;
-            }
-            final String thenValue;
-            if (ParenthesesUtils.getPrecedence(thenReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-                thenValue = thenReturnValue.getText();
-            } else {
-                thenValue = '(' + thenReturnValue.getText() + ')';
             }
             final PsiExpression elseReturnValue = elseReturn.getReturnValue();
             if (elseReturnValue == null) {
                 return;
             }
-            final String elseValue;
-            if (ParenthesesUtils.getPrecedence(elseReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-                elseValue = elseReturnValue.getText();
-            } else {
-                elseValue = '(' + elseReturnValue.getText() + ')';
+            final PsiMethod method =
+                    PsiTreeUtil.getParentOfType(thenReturn, PsiMethod.class);
+            if (method == null) {
+                return;
             }
-            final String conditionText;
-            if (ParenthesesUtils.getPrecedence(condition)
-                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-                conditionText = condition.getText();
-            } else {
-                conditionText = '(' + condition.getText() + ')';
-            }
-
-            replaceStatement("return " + conditionText + '?' + thenValue + ':' +
-                    elseValue + ';', ifStatement);
+            final PsiType returnType = method.getReturnType();
+            final String conditional = getConditionalText(condition,
+                    thenReturnValue, elseReturnValue, returnType);
+            replaceStatement("return " + conditional + ';', ifStatement);
         } else if (ReplaceIfWithConditionalPredicate.isReplaceableImplicitReturn(
                 ifStatement)) {
             final PsiExpression condition = ifStatement.getCondition();
@@ -145,21 +110,15 @@ public class ReplaceIfWithConditionalIntention extends Intention {
             }
             final PsiStatement rawThenBranch = ifStatement.getThenBranch();
             final PsiReturnStatement thenBranch =
-                    (PsiReturnStatement)ConditionalUtils.stripBraces(rawThenBranch);
-            final PsiReturnStatement elseBranch =
-                    PsiTreeUtil.getNextSiblingOfType(ifStatement, PsiReturnStatement.class);
-
+                    (PsiReturnStatement)ConditionalUtils.stripBraces(
+                            rawThenBranch);
             final PsiExpression thenReturnValue = thenBranch.getReturnValue();
             if (thenReturnValue == null) {
                 return;
             }
-            final String thenValue;
-            if (ParenthesesUtils.getPrecedence(thenReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-                thenValue = thenReturnValue.getText();
-            } else {
-                thenValue = '(' + thenReturnValue.getText() + ')';
-            }
+            final PsiReturnStatement elseBranch =
+                    PsiTreeUtil.getNextSiblingOfType(ifStatement,
+                            PsiReturnStatement.class);
             if (elseBranch == null) {
                 return;
             }
@@ -167,25 +126,77 @@ public class ReplaceIfWithConditionalIntention extends Intention {
             if (elseReturnValue == null) {
                 return;
             }
-            final String elseValue;
-            if (ParenthesesUtils.getPrecedence(elseReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-                elseValue = elseReturnValue.getText();
-            } else {
-                elseValue = '(' + elseReturnValue.getText() + ')';
+            final PsiMethod method =
+                    PsiTreeUtil.getParentOfType(thenBranch, PsiMethod.class);
+            if (method == null) {
+                return;
             }
-            final String conditionText;
-            if (ParenthesesUtils.getPrecedence(condition)
-                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-                conditionText = condition.getText();
-            } else {
-                conditionText = '(' + condition.getText() + ')';
+            final PsiType methodType = method.getReturnType();
+            final String conditional =
+                    getConditionalText(condition, thenReturnValue,
+                            elseReturnValue, methodType);
+            if (conditional == null) {
+                return;
             }
-
-            replaceStatement("return " + conditionText + '?' + thenValue + ':' +
-                    elseValue + ';',
-                    ifStatement);
+            replaceStatement("return " + conditional + ';', ifStatement);
             elseBranch.delete();
+        }
+    }
+
+    private static String getConditionalText(PsiExpression condition,
+                                             PsiExpression thenValue,
+                                             PsiExpression elseValue,
+                                             PsiType requiredType) {
+        condition = ParenthesesUtils.stripParentheses(condition);
+        thenValue = ParenthesesUtils.stripParentheses(thenValue);
+        if (thenValue == null) {
+            return null;
+        }
+        elseValue = ParenthesesUtils.stripParentheses(elseValue);
+        if (elseValue ==  null) {
+            return null;
+        }
+        final StringBuilder conditional = new StringBuilder();
+        final String conditionText = getExpressionText(condition);
+        conditional.append(conditionText);
+        conditional.append('?');
+        final PsiType thenType = thenValue.getType();
+        final PsiType elseType = elseValue.getType();
+        if (thenType instanceof PsiPrimitiveType &&
+                !(elseType instanceof PsiPrimitiveType) &&
+                !(requiredType instanceof PsiPrimitiveType)) {
+            // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
+            final PsiPrimitiveType primitiveType = (PsiPrimitiveType) thenType;
+            conditional.append(primitiveType.getBoxedTypeName());
+            conditional.append(".valueOf(");
+            conditional.append(thenValue.getText());
+            conditional.append("):");
+            conditional.append(getExpressionText(elseValue));
+        } else if (elseType instanceof PsiPrimitiveType &&
+                !(thenType instanceof PsiPrimitiveType &&
+                        !(requiredType instanceof PsiPrimitiveType))) {
+            // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
+            conditional.append(getExpressionText(thenValue));
+            conditional.append(':');
+            final PsiPrimitiveType primitiveType = (PsiPrimitiveType) elseType;
+            conditional.append(primitiveType.getBoxedTypeName());
+            conditional.append(".valueOf(");
+            conditional.append(elseValue.getText());
+            conditional.append(')');
+        } else {
+            conditional.append(getExpressionText(thenValue));
+            conditional.append(':');
+            conditional.append(getExpressionText(elseValue));
+        }
+        return conditional.toString();
+    }
+
+    private static String getExpressionText(PsiExpression expression) {
+        if (ParenthesesUtils.getPrecedence(expression) <=
+                ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
+            return expression.getText();
+        } else {
+            return '(' + expression.getText() + ')';
         }
     }
 }

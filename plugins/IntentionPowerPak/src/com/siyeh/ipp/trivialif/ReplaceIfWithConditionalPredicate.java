@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,10 +146,10 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
                         ((PsiExpressionStatement) elseBranch).getExpression();
         final PsiJavaToken thenSign = thenExpression.getOperationSign();
         final PsiJavaToken elseSign = elseExpression.getOperationSign();
-	    final IElementType tokenType = thenSign.getTokenType();
-	    if(!tokenType.equals(elseSign.getTokenType())){
-	        return false;
-	    }
+        final IElementType tokenType = thenSign.getTokenType();
+        if(!tokenType.equals(elseSign.getTokenType())){
+            return false;
+        }
         final PsiExpression thenLhs = thenExpression.getLExpression();
         if(thenExpression.getRExpression() == null){
             return false;
@@ -164,9 +164,9 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression elseRhs = elseExpression.getRExpression();
-	    if(elseRhs == null) {
-		    return false;
-	    }
+        if(elseRhs == null) {
+            return false;
+        }
         final PsiType elseType = elseRhs.getType();
         if(elseType == null){
             return false;
