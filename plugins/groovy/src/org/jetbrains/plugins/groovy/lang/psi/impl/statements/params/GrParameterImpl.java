@@ -201,6 +201,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
 
   @Nullable
   private static PsiType findTypeForCollection(PsiType iterType, PsiElementFactory factory, PsiElement context) {
+    if (iterType == null) return null;
     if (iterType instanceof PsiArrayType) {
       return ((PsiArrayType)iterType).getComponentType();
     }
