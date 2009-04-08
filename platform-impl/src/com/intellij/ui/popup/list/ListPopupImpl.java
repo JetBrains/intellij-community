@@ -13,6 +13,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.popup.ClosableByLeftArrow;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -200,7 +201,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     registerAction("goBack2", KeyEvent.VK_LEFT, 0, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        if (getParent() != null) {
+        if (isClosableByLeftArrow()) {
           goBack();
         }
       }
@@ -210,6 +211,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     return myList;
+  }
+
+  private boolean isClosableByLeftArrow() {
+    return getParent() != null || myStep instanceof ClosableByLeftArrow;
   }
 
   protected ActionMap getActionMap() {
