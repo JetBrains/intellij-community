@@ -125,6 +125,11 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
     return false;
   }
 
+  @Override
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    return myFile.add(element);
+  }
+
   public PsiReferenceList getExtendsList() {
     return null;
   }
