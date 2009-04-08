@@ -203,6 +203,13 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
 
   private <C extends FacetConfiguration> void addFacet(final FacetType<?, C> type, final FacetState state, final Facet underlyingFacet,
                                                        final ModifiableFacetModel model) throws InvalidDataException {
+    if (type.isOnlyOneFacetAllowed() &&
+        (underlyingFacet == null && !model.getFacetsByType(type.getId()).isEmpty() ||
+         underlyingFacet != null && !model.getFacetsByType(underlyingFacet, type.getId()).isEmpty())) {
+      LOG.info("'" + state.getName() + "' facet removed from module " + myModule.getName() + ", because only one " 
+               + type.getPresentableName() + " facet allowed");
+      return;
+    }
     final C configuration = type.createDefaultConfiguration();
     final Element config = state.getConfiguration();
     FacetUtil.loadFacetConfiguration(configuration, config);
@@ -355,10 +362,22 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       }
     }
     for (Facet facet : toAdd) {
-      if (facet.getType().isOnlyOneFacetAllowed()) {
-        final Collection<?> facets = getFacetsByType(facet.getTypeId());
-        if (facets.size() > 1) {
-          LOG.error("Only one " + facet.getType().getPresentableName() + " facet per module allowed, but " + facets.size() + " facets found in module " + myModule.getName());
+      final FacetType<?,?> type = facet.getType();
+      if (type.isOnlyOneFacetAllowed()) {
+        if (type.getUnderlyingFacetType() == null) {
+          final Collection<?> facets = getFacetsByType(type.getId());
+          if (facets.size() > 1) {
+            LOG.error("Only one '" + type.getPresentableName() + "' facet per module allowed, but " + facets.size() + " facets found in module '" +
+                      myModule.getName() + "'");
+          }
+        }
+        else {
+          final Facet underlyingFacet = facet.getUnderlyingFacet();
+          LOG.assertTrue(underlyingFacet != null, "Underlying facet is not specifed for '" + facet.getName() + "'");
+          final Collection<?> facets = getFacetsByType(underlyingFacet, type.getId());
+          if (facets.size() > 1) {
+            LOG.error("Only one '" + type.getPresentableName() + "' facet per parent facet allowed, but " + facets.size() + " sub-facets found in facet " + underlyingFacet.getName());
+          }
         }
       }
     }
