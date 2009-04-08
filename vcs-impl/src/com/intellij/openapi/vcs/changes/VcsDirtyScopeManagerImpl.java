@@ -63,16 +63,32 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  public void suspendMe() {
+    myLife.suspendMe();
+  }
+
+  public void reanimate() {
+    final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
+    myLife.releaseMe(new Runnable() {
+      public void run() {
+        wasNotEmptyRef.set(! myDirtBuilder.isEmpty());
+      }
+    });
+    if (Boolean.TRUE.equals(wasNotEmptyRef.get())) {
+      myChangeListManager.scheduleUpdate();
+    }
+  }
+
   public void markEverythingDirty() {
     if (myProject.isDisposed()) return;
 
-    final boolean done = myLife.doIfAlive(new Runnable() {
+    final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
       public void run() {
         myDirtBuilder.everythingDirty();
       }
     });
 
-    if (done) {
+    if (lifeDrop.isDone() && (! lifeDrop.isSuspened())) {
       myChangeListManager.scheduleUpdate();
     }
   }
@@ -112,17 +128,20 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   private boolean takeDirt(final Consumer<DirtBuilder> filler) {
-    final boolean done = myLife.doIfAlive(new Runnable() {
+    final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
+    final Runnable runnable = new Runnable() {
       public void run() {
         filler.consume(myDirtBuilder);
+        wasNotEmptyRef.set(!myDirtBuilder.isEmpty());
       }
-    });
+    };
+    final LifeDrop lifeDrop = myLife.doIfAlive(runnable);
 
-    if (done && (! myDirtBuilder.isEmpty())) {
+    if (lifeDrop.isDone() && (! lifeDrop.isSuspened()) && (Boolean.TRUE.equals(wasNotEmptyRef.get()))) {
       myChangeListManager.scheduleUpdate();
     }
     // no sence in checking correct here any more: vcs is searched for asynchronously
-    return (! done);
+    return (! lifeDrop.isDone());
   }
 
   public boolean filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
@@ -182,14 +201,14 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   public VcsInvalidated retrieveScopes() {
     final Ref<DirtBuilder> dirtCopyRef = new Ref<DirtBuilder>();
 
-    final boolean done = myLife.doIfAlive(new Runnable() {
+    final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
       public void run() {
         dirtCopyRef.set(new DirtBuilder(myDirtBuilder));
         myDirtBuilder.reset();
       }
     });
-    
-    if (done && (! dirtCopyRef.isNull())) {
+
+    if (lifeDrop.isDone() && (! dirtCopyRef.isNull())) {
       return ApplicationManager.getApplication().runReadAction(new Computable<VcsInvalidated>() {
         public VcsInvalidated compute() {
           final Scopes scopes = new Scopes(myProject, myGuess);
@@ -199,6 +218,23 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       });
     }
     return null;
+  }
+
+  private String toStringScopes(final VcsInvalidated vcsInvalidated) {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("is everything dirty: ").append(vcsInvalidated.isEverythingDirty()).append(";\n");
+    for (VcsDirtyScope scope : vcsInvalidated.getScopes()) {
+      sb.append("|\nFiles: ");
+      for (FilePath path : scope.getDirtyFiles()) {
+        sb.append(path).append('\n');
+      }
+      sb.append("\nDirs: ");
+      for (FilePath filePath : scope.getRecursivelyDirtyDirectories()) {
+        sb.append(filePath).append('\n');
+      }
+    }
+    sb.append("-------------");
+    return sb.toString();
   }
 
   private class MyVfsListener extends VirtualFileAdapter {
@@ -267,9 +303,28 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  private static class LifeDrop {
+    private final boolean myDone;
+    private final boolean mySuspened;
+
+    private LifeDrop(boolean done, boolean suspened) {
+      myDone = done;
+      mySuspened = suspened;
+    }
+
+    public boolean isDone() {
+      return myDone;
+    }
+
+    public boolean isSuspened() {
+      return mySuspened;
+    }
+  }
+
   private static class SynchronizedLife {
     private LifeStages myStage;
     private final Object myLock;
+    private boolean mySuspended;
 
     private SynchronizedLife() {
       myStage = LifeStages.NOT_BORN;
@@ -288,15 +343,44 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     }
 
+    public void suspendMe() {
+      synchronized (myLock) {
+        if (LifeStages.ALIVE.equals(myStage)) {
+          mySuspended = true;
+        }
+      }
+    }
+
+    public void releaseMe(final Runnable runnable) {
+      synchronized (myLock) {
+        if (LifeStages.ALIVE.equals(myStage)) {
+          mySuspended = false;
+          runnable.run();
+        }
+      }
+    }
+
+    public LifeDrop doIfAliveAndNotSuspended(final Runnable runnable) {
+      synchronized (myLock) {
+        synchronized (myLock) {
+          if (LifeStages.ALIVE.equals(myStage) && (! mySuspended)) {
+            runnable.run();
+            return new LifeDrop(true, mySuspended);
+          }
+          return new LifeDrop(false, mySuspended);
+        }
+      }
+    }
+
     // allow work under inner lock: inner class, not wide scope
-    public boolean doIfAlive(final Runnable runnable) {
+    public LifeDrop doIfAlive(final Runnable runnable) {
       synchronized (myLock) {
         if (LifeStages.ALIVE.equals(myStage)) {
           runnable.run();
-          return true;
+          return new LifeDrop(true, mySuspended);
         }
+        return new LifeDrop(false, mySuspended);
       }
-      return false;
     }
 
     private static enum LifeStages {

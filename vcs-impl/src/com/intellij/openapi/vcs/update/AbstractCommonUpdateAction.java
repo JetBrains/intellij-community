@@ -50,6 +50,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
@@ -305,11 +306,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     // vcs name, context object
     private final Map<String, SequentialUpdatesContext> myContextInfo;
+    private VcsDirtyScopeManager myDirtyScopeManager;
 
     public Updater(final Project project, final FilePath[] roots, final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles) {
       super(project, getTemplatePresentation().getText(), true, VcsConfiguration.getInstance(project).getUpdateOption());
       myProject = project;
       myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
+      myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
       myRoots = roots;
       myVcsToVirtualFiles = vcsToVirtualFiles;
 
@@ -329,7 +332,36 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       ++ myUpdateNumber;
     }
 
+    private void suspendIfNeeded() {
+      if (! myActionInfo.canChangeFileStatus()) {
+        // i.e. for update but not for integrate or status
+        ((VcsDirtyScopeManagerImpl) myDirtyScopeManager).suspendMe();
+      }
+    }
+
+    private void releaseIfNeeded() {
+      if (! myActionInfo.canChangeFileStatus()) {
+        // i.e. for update but not for integrate or status
+        ((VcsDirtyScopeManagerImpl) myDirtyScopeManager).reanimate();
+      }
+    }
+
     public void run(@NotNull final ProgressIndicator indicator) {
+      suspendIfNeeded();
+      try {
+        runImpl(indicator);
+      } catch (Throwable t) {
+        releaseIfNeeded();
+        if (t instanceof Error) {
+          throw ((Error) t);
+        } else if (t instanceof RuntimeException) {
+          throw ((RuntimeException) t);
+        }
+        throw new RuntimeException(t);
+      }
+    }
+
+    private void runImpl(@NotNull final ProgressIndicator indicator) {
       ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
       myProjectLevelVcsManager.startBackgroundVcsOperation();
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -405,6 +437,14 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     public void onSuccess() {
+      try {
+        onSuccessImpl();
+      } finally {
+        releaseIfNeeded();
+      }
+    }
+
+    private void onSuccessImpl() {
       if (myProject.isDisposed()) {
         ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
         return;
@@ -423,7 +463,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
 
       if (myActionInfo.canChangeFileStatus()) {
-        final VcsDirtyScopeManager myManager = VcsDirtyScopeManager.getInstance(myProject);
         final List<VirtualFile> files = new ArrayList<VirtualFile>();
         UpdateFilesHelper.iterateFileGroupFiles(myUpdatedFiles, new UpdateFilesHelper.Callback() {
           public void onFile(final String filePath, final String groupId) {
@@ -434,7 +473,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             }
           }
         });
-        myManager.filesDirty(files, null);
+        myDirtyScopeManager.filesDirty(files, null);
       }
 
       final boolean updateSuccess = (! someSessionWasCancelled) && (myVcsExceptions.isEmpty());
