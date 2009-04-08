@@ -18,7 +18,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    f = root.createChildData(null, "f.java");
+    f = root.createChildData(null, "f.txt");
   }
 
   public void testFoo() throws IOException {
