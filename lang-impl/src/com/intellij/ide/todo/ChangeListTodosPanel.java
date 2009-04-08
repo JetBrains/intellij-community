@@ -12,16 +12,19 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListAdapter;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.ui.content.Content;
+import com.intellij.util.Alarm;
 
 import java.util.Collection;
 
 public abstract class ChangeListTodosPanel extends TodoPanel{
   private final MyChangeListManagerListener myChangeListManagerListener = new MyChangeListManagerListener();
+  private final Alarm myAlarm;
 
   public ChangeListTodosPanel(Project project,TodoPanelSettings settings, Content content){
     super(project,settings,false,content);
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     changeListManager.addChangeListListener(myChangeListManagerListener);
+    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
   }
 
   void dispose(){
@@ -44,12 +47,17 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
     }
 
     private void rebuild() {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(new Runnable() {
         public void run() {
-          myTodoTreeBuilder.rebuildCache();
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              myTodoTreeBuilder.rebuildCache();
+            }
+          });
+          updateTree();
         }
-      });
-      updateTree();
+      }, 300);
     }
   }
 }
