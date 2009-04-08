@@ -18,6 +18,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -319,12 +320,44 @@ public class JavaFoldingBuilder implements FoldingBuilder {
       }
 
       @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        addMethodGenericParametersFolding(expression, foldElements, document);
+
+        super.visitMethodCallExpression(expression);
+      }
+
+      @Override
       public void visitNewExpression(PsiNewExpression expression) {
         addGenericParametersFolding(expression, foldElements, document);
 
         super.visitNewExpression(expression);
       }
     });
+  }
+
+  private void addMethodGenericParametersFolding(PsiMethodCallExpression expression, List<FoldingDescriptor> foldElements, Document document) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    PsiMethodCallExpression element = expression;
+    while (true) {
+      if (!resolvesCorrectly(element.getMethodExpression())) return;
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiExpressionList) || !(parent.getParent() instanceof PsiMethodCallExpression)) break;
+      element = (PsiMethodCallExpression)parent.getParent();
+    }
+
+    final PsiReferenceParameterList list = methodExpression.getParameterList();
+    if (list != null) {
+      addTypeParametersFolding(foldElements, document, list, 3);
+    }
+  }
+
+  private static boolean resolvesCorrectly(PsiReferenceExpression expression) {
+    for (final JavaResolveResult result : expression.multiResolve(true)) {
+  if (!result.isValidResult()) {
+    return false;
+  }
+}
+    return true;
   }
 
   private void addGenericParametersFolding(PsiNewExpression expression, List<FoldingDescriptor> foldElements, Document document) {
@@ -364,12 +397,28 @@ public class JavaFoldingBuilder implements FoldingBuilder {
           return;
         }
 
-        final String text = list.getText();
-        if (text.startsWith("<") && text.endsWith(">") && text.length() > 5) { //5 seems reasonable
-          final TextRange range = list.getTextRange();
-          addFoldRegion(foldElements, list, document, true, new TextRange(range.getStartOffset(), range.getEndOffset()));
+        addTypeParametersFolding(foldElements, document, list, 5);
+      }
+    }
+  }
+
+  private void addTypeParametersFolding(List<FoldingDescriptor> foldElements, Document document, PsiReferenceParameterList list,
+                                        final int ifLongerThan) {
+    for (final PsiType type : list.getTypeArguments()) {
+      if (!type.isValid()) {
+        return;
+      }
+      if (type instanceof PsiClassType || type instanceof PsiArrayType) {
+        if (PsiUtil.resolveClassInType(type) == null) {
+          return;
         }
       }
+    }
+
+    final String text = list.getText();
+    if (text.startsWith("<") && text.endsWith(">") && text.length() > ifLongerThan) {
+      final TextRange range = list.getTextRange();
+      addFoldRegion(foldElements, list, document, true, new TextRange(range.getStartOffset(), range.getEndOffset()));
     }
   }
 
@@ -488,7 +537,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
     return isClosure;
   }
 
-  private PsiType removeGenerics(PsiType type) {
+  private static PsiType removeGenerics(PsiType type) {
     if (type instanceof PsiArrayType) {
       return removeGenerics(((PsiArrayType)type).getComponentType()).createArrayType();
     }
