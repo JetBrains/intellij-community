@@ -433,6 +433,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @Override
+  public LocalChangeList getChangeList(String id) {
+    synchronized (myDataLock) {
+      return myWorker.getChangeList(id);
+    }
+  }
+
   public LocalChangeList addChangeList(@NotNull String name, final String comment) {
     synchronized (myDataLock) {
       final LocalChangeList changeList = myModifier.addChangeList(name, comment);

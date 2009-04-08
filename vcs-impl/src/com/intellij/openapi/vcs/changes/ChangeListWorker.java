@@ -84,6 +84,16 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myMap.get(name);
   }
 
+  @Nullable
+  public LocalChangeList getChangeList(String id) {
+    for (LocalChangeList changeList : myMap.values()) {
+      if (changeList.getId().equals(id)) {
+        return changeList;
+      }
+    }
+    return null;
+  }
+
   /**
    * @return if list with name exists, return previous default list name or null of there wasn't previous
    */
