@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.compiler.ParserAction;
 import com.intellij.compiler.OutputParser;
+import com.intellij.compiler.impl.javaCompiler.FileObject;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -81,7 +82,7 @@ public class ParserActionJikes extends ParserAction {
       callback.setProgressText(CompilerBundle.message("progress.parsing.file", name));
     }
     else if (StdFileTypes.CLASS.equals(fileType)) {
-      callback.fileGenerated(filePath);
+      callback.fileGenerated(new FileObject(new File(filePath)));
     }
   }
 }

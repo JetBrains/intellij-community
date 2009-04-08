@@ -16,17 +16,16 @@ public interface BackendCompiler {
   @NotNull @NonNls String getId(); // used for externalization
   @NotNull String getPresentableName();
   @NotNull Configurable createConfigurable();
-  @NotNull
-  Set<FileType> getCompilableFileTypes();
-  @Nullable OutputParser createErrorParser(final String outputDir);
-  @Nullable OutputParser createOutputParser(final String outputDir);
+  @NotNull Set<FileType> getCompilableFileTypes();
+  @Nullable OutputParser createErrorParser(@NotNull String outputDir);
+  @Nullable OutputParser createOutputParser(@NotNull String outputDir);
 
   boolean checkCompiler(final CompileScope scope);
 
   @NotNull Process launchProcess(
-    final ModuleChunk chunk,
-    final String outputDir,
-    final CompileContext compileContext) throws IOException;
+    @NotNull ModuleChunk chunk,
+    @NotNull String outputDir,
+    @NotNull CompileContext compileContext) throws IOException;
 
   void compileFinished();
 

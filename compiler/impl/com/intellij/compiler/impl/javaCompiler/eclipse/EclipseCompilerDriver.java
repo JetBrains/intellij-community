@@ -19,6 +19,7 @@
 package com.intellij.compiler.impl.javaCompiler.eclipse;
               
 import com.intellij.compiler.OutputParser;
+import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -55,7 +56,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;    
 
-public class EclipseCompilerDriver implements IEclipseCompilerDriver {
+public class EclipseCompilerDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerDriver");
 
   private String[] sourceFilePaths;
@@ -183,17 +184,11 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
       String filePath = String.valueOf(classFile.fileName());
       String relativePath = FileUtil.toSystemDependentName(filePath + ".class");
       String path = FileUtil.toSystemDependentName(outputDir) + File.separatorChar + relativePath;
-                                                    
-      try {
-        File out = new File(path);
-        FileUtil.createParentDirs(out);
-        FileUtil.writeToFile(out, classFile.getBytes());
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
 
-      callback.fileGenerated(path);
+      byte[] bytes = classFile.getBytes();
+      File out = new File(path);
+
+      callback.fileGenerated(new FileObject(out,bytes));
     }
     IProblem[] problems = result.getProblems();
     if (problems != null) {

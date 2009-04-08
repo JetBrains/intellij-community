@@ -24,6 +24,15 @@
     <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/dev/compilerapi.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="copyright">
     <Base>

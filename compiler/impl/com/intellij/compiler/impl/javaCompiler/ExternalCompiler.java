@@ -31,7 +31,7 @@ public abstract class ExternalCompiler implements BackendCompiler {
   }
 
   @NotNull
-  public Process launchProcess(final ModuleChunk chunk, final String outputDir, final CompileContext compileContext) throws IOException {
+  public Process launchProcess(@NotNull final ModuleChunk chunk, @NotNull final String outputDir, @NotNull final CompileContext compileContext) throws IOException {
     final String[] commands = createStartupCommand(chunk, compileContext, outputDir);
 
     if (LOG.isDebugEnabled()) {

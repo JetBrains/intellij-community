@@ -153,7 +153,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
       }
     });
 
-    return items.toArray(new FileProcessingCompiler.ProcessingItem[items.size()]);
+    return items.toArray(new ProcessingItem[items.size()]);
   }
 
   private static boolean belongsToCompileScope(final CompileContext context, final VirtualFile formFile, final String classToBind) {
@@ -184,7 +184,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     return module2formFiles;
   }
 
-  private HashMap<Module, ArrayList<MyInstrumentationItem>> sortByModules(final FileProcessingCompiler.ProcessingItem[] items) {
+  private HashMap<Module, ArrayList<MyInstrumentationItem>> sortByModules(final ProcessingItem[] items) {
     final HashMap<Module, ArrayList<MyInstrumentationItem>> module2formFiles = new HashMap<Module,ArrayList<MyInstrumentationItem>>();
     for (ProcessingItem item1 : items) {
       final MyInstrumentationItem item = (MyInstrumentationItem)item1;
@@ -282,7 +282,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
       final ArrayList<MyInstrumentationItem> list = module2itemsList.get(module);
 
       for (final MyInstrumentationItem item : list) {
-        context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
+        context.getProgressIndicator().setFraction((double)++formsProcessed / (double)items.length);
         
         final VirtualFile formFile = item.getFormFile();
 

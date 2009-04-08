@@ -2,6 +2,7 @@ package com.intellij.compiler;
 
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.compiler.impl.javaCompiler.FileObject;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ public abstract class OutputParser {
     @NonNls String getCurrentLine();
     void setProgressText(String text);
     void fileProcessed(@NonNls String path);
-    void fileGenerated(@NonNls String path);
+    void fileGenerated(@NonNls FileObject path);
     void message(CompilerMessageCategory category, String message, @NonNls String url, int lineNum, int columnNum);
   }
 

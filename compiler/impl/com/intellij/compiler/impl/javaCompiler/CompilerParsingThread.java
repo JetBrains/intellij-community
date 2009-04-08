@@ -24,10 +24,9 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
   private boolean mySkipLF = false;
   private Throwable myError = null;
   private final boolean myIsUnitTestMode;
-  private String myClassFileToProcess = null;
+  private FileObject myClassFileToProcess = null;
   private String myLastReadLine = null;
-  private boolean myProcessExited = false;
-
+  private volatile boolean myProcessExited = false;
 
   public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream, boolean trimLines) {
     myProcess = process;
@@ -44,7 +43,7 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
         if (!myIsUnitTestMode && myProcess == null) {
           break;
         }
-        if (isCanceled()) {
+        if (myProcessExited || isCanceled()) {
           break;
         }
         if (!myOutputParser.processMessageLine(this)) {
@@ -57,6 +56,7 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
       }
     }
     catch (Throwable e) {
+      e.printStackTrace();
       myError = e;
       LOG.info(e);
     }
@@ -92,8 +92,8 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
     return myLastReadLine;
   }
 
-  public final void fileGenerated(String path) {
-    String previousPath = myClassFileToProcess;
+  public final void fileGenerated(FileObject path) {
+    FileObject previousPath = myClassFileToProcess;
     myClassFileToProcess = path;
     if (previousPath != null) {
       try {
@@ -108,8 +108,7 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
 
   protected abstract boolean isCanceled();
 
-  protected abstract void processCompiledClass(final String classFileToProcess) throws CacheCorruptedException;
-
+  protected abstract void processCompiledClass(final FileObject classFileToProcess) throws CacheCorruptedException;
 
   private String readLine(final Reader reader) {
     StringBuilder buffer;
@@ -176,11 +175,11 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
     }
   }
 
-  private synchronized boolean isProcessTerminated() {
+  private boolean isProcessTerminated() {
     return myProcessExited;
   }
 
-  public synchronized void setProcessTerminated(final boolean procesExited) {
+  public void setProcessTerminated(final boolean procesExited) {
     myProcessExited = procesExited;
   }
 }

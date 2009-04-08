@@ -57,7 +57,7 @@ public class ResourceCompiler implements TranslatingCompiler {
     return !StdFileTypes.JAVA.equals(FILE_TYPE_MANAGER.getFileTypeByFile(file)) && myConfiguration.isResourceFile(file.getName());
   }
 
-  public TranslatingCompiler.ExitStatus compile(final CompileContext context, final VirtualFile[] files) {
+  public ExitStatus compile(final CompileContext context, final VirtualFile[] files) {
     context.getProgressIndicator().pushState();
     context.getProgressIndicator().setText(CompilerBundle.message("progress.copying.resources"));
 
@@ -116,6 +116,7 @@ public class ResourceCompiler implements TranslatingCompiler {
         break;
       }
       context.getProgressIndicator().setFraction(i * 1.0 / copyCommands.size());
+      context.getProgressIndicator().setText2("Copying "+command.getToPath()+"...");
       try {
         final MyOutputItem outputItem = command.copy(filesToRefresh);
         processed.add(outputItem);
@@ -128,7 +129,7 @@ public class ResourceCompiler implements TranslatingCompiler {
         );
       }
     }
-    if (filesToRefresh.size() > 0) {
+    if (!filesToRefresh.isEmpty()) {
       CompilerUtil.refreshIOFiles(filesToRefresh);
     }
 
@@ -145,7 +146,7 @@ public class ResourceCompiler implements TranslatingCompiler {
     private final String myToPath;
     private final VirtualFile mySourceFile;
 
-    public CopyCommand(String outputPath, String fromPath, String toPath, VirtualFile sourceFile) {
+    private CopyCommand(String outputPath, String fromPath, String toPath, VirtualFile sourceFile) {
       myOutputPath = outputPath;
       myFromPath = fromPath;
       myToPath = toPath;
@@ -181,7 +182,7 @@ public class ResourceCompiler implements TranslatingCompiler {
     private final String myTargetPath;
     private final VirtualFile myFile;
 
-    public MyOutputItem(String outputPath, String targetPath, VirtualFile file) {
+    private MyOutputItem(String outputPath, String targetPath, VirtualFile file) {
       myOutputPath = outputPath;
       myTargetPath = targetPath;
       myFile = file;
@@ -202,7 +203,7 @@ public class ResourceCompiler implements TranslatingCompiler {
   private static class MyExitStatus implements ExitStatus {
     private final OutputItem[] myItemsArray;
 
-    public MyExitStatus(OutputItem[] itemsArray) {
+    private MyExitStatus(OutputItem[] itemsArray) {
       myItemsArray = itemsArray;
     }
 

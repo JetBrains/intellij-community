@@ -30,13 +30,13 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   private final Project myProject;
   private final EclipseCompiler myEclipseExternalCompiler;
   private int myExitCode;
-  private IEclipseCompilerDriver myEclipseCompilerDriver;
+  private final EclipseCompilerDriver myEclipseCompilerDriver;
   private static final Set<FileType> COMPILABLE_TYPES = Collections.<FileType>singleton(StdFileTypes.JAVA);
 
   public EclipseEmbeddedCompiler(Project project) {
     myProject = project;
     myEclipseExternalCompiler = new EclipseCompiler(project);
-    createCompileDriver();
+    myEclipseCompilerDriver = new EclipseCompilerDriver();
   }
 
   public DependencyProcessor getDependencyProcessor() {
@@ -49,8 +49,8 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
 
   @NotNull
   @NonNls
-  public String getId() // used for externalization
-  {
+  public String getId() {
+    // used for externalization
     return "EclipseEmbedded";
   }
 
@@ -70,7 +70,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   }
 
   @Nullable
-  public OutputParser createErrorParser(final String outputDir) {
+  public OutputParser createErrorParser(@NotNull final String outputDir) {
     return new OutputParser() {
       public boolean processMessageLine(Callback callback) {
         return myEclipseCompilerDriver.processMessageLine(callback, outputDir, myProject);
@@ -79,7 +79,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   }
 
   @Nullable
-  public OutputParser createOutputParser(final String outputDir) {
+  public OutputParser createOutputParser(@NotNull final String outputDir) {
     return null;
   }
 
@@ -88,9 +88,9 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
 
 
   @NotNull
-  public Process launchProcess(final ModuleChunk chunk, final String outputDir, final CompileContext compileContext) throws IOException {
+  public Process launchProcess(@NotNull final ModuleChunk chunk, @NotNull final String outputDir, @NotNull final CompileContext compileContext) throws IOException {
     @NonNls final ArrayList<String> commandLine = new ArrayList<String>();
-    final IOException[] ex = new IOException[]{null};
+    final IOException[] ex = {null};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
@@ -140,9 +140,5 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
         return myExitCode;
       }
     };
-  }
-
-  private void createCompileDriver() {
-    myEclipseCompilerDriver = new EclipseCompilerDriver();
   }
 }

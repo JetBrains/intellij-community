@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -112,61 +113,54 @@ public class JavacCompiler extends ExternalCompiler {
     return new JavacConfigurable(JavacSettings.getInstance(myProject));
   }
 
-  public OutputParser createErrorParser(final String outputDir) {
+  public OutputParser createErrorParser(@NotNull final String outputDir) {
     return new JavacOutputParser(myProject);
   }
 
-  public OutputParser createOutputParser(final String outputDir) {
+  public OutputParser createOutputParser(@NotNull final String outputDir) {
     return null;
+  }
+
+  private static class MyException extends RuntimeException {
+    private MyException(Throwable cause) {
+      super(cause);
+    }
   }
 
   @NotNull
   public String[] createStartupCommand(final ModuleChunk chunk, final CompileContext context, final String outputPath)
     throws IOException, IllegalArgumentException {
 
-    final ArrayList<String> commandLine = new ArrayList<String>();
-
-    final Exception[] ex = new Exception[]{null};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        try {
-          createStartupCommand(chunk, commandLine, outputPath);
+    try {
+      return ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
+        public String[] compute() {
+          try {
+            final List<String> commandLine = new ArrayList<String>();
+            createStartupCommand(chunk, commandLine, outputPath, JavacSettings.getInstance(myProject));
+            return ArrayUtil.toStringArray(commandLine);
+          }
+          catch (IOException e) {
+            throw new MyException(e);
+          }
         }
-        catch (IllegalArgumentException e) {
-          ex[0] = e;
-        }
-        catch (IOException e) {
-          ex[0] = e;
-        }
-      }
-    });
-    if (ex[0] != null) {
-      if (ex[0] instanceof IOException) {
-        throw (IOException)ex[0];
-      }
-      else if (ex[0] instanceof IllegalArgumentException) {
-        throw (IllegalArgumentException)ex[0];
-      }
-      else {
-        LOG.error(ex[0]);
-      }
+      });
     }
-    return ArrayUtil.toStringArray(commandLine);
+    catch (MyException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
+      }
+      throw e;
+    }
   }
 
-  private void createStartupCommand(final ModuleChunk chunk, @NonNls final List<String> commandLine, final String outputPath) throws IOException {
+  private void createStartupCommand(final ModuleChunk chunk, @NonNls final List<String> commandLine, final String outputPath,
+                                    JavacSettings javacSettings) throws IOException {
     final Sdk jdk = getJdkForStartupCommand(chunk);
     final String versionString = jdk.getVersionString();
     if (versionString == null || "".equals(versionString) || !(jdk.getSdkType() instanceof JavaSdkType)) {
       throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
     }
-
-    final JavaSdkType sdkType = (JavaSdkType)jdk.getSdkType();
-    final String toolsJarPath = sdkType.getToolsPath(jdk);
-    if (toolsJarPath == null) {
-      throw new IllegalArgumentException(CompilerBundle.message("javac.error.tools.jar.missing", jdk.getName()));
-    }
-
     final boolean isVersion1_0 = CompilerUtil.isOfVersion(versionString, "1.0");
     final boolean isVersion1_1 = CompilerUtil.isOfVersion(versionString, "1.1");
     final boolean isVersion1_2 = CompilerUtil.isOfVersion(versionString, "1.2");
@@ -175,11 +169,18 @@ public class JavacCompiler extends ExternalCompiler {
     final boolean isVersion1_5 = CompilerUtil.isOfVersion(versionString, "1.5") || CompilerUtil.isOfVersion(versionString, "5.0");
     final boolean isVersion1_5_or_higher = isVersion1_5 || !(isVersion1_0 || isVersion1_1 || isVersion1_2 || isVersion1_3 || isVersion1_4);
 
-    final JavacSettings javacSettings = JavacSettings.getInstance(myProject);
+
+    JavaSdkType sdkType = (JavaSdkType)jdk.getSdkType();
+
+    final String toolsJarPath = sdkType.getToolsPath(jdk);
+    if (toolsJarPath == null) {
+      throw new IllegalArgumentException(CompilerBundle.message("javac.error.tools.jar.missing", jdk.getName()));
+    }
 
     final String vmExePath = sdkType.getVMExecutablePath(jdk);
 
     commandLine.add(vmExePath);
+
     if (isVersion1_1 || isVersion1_0) {
       commandLine.add("-mx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
     }
@@ -187,27 +188,8 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add("-Xmx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
     }
 
-    final List<String> additionalOptions = new ArrayList<String>();
-    StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(), " ");
-    while (tokenizer.hasMoreTokens()) {
-      @NonNls String token = tokenizer.nextToken();
-      if (isVersion1_0) {
-        if ("-deprecation".equals(token)) {
-          continue; // not supported for this version
-        }
-      }
-      if (isVersion1_0 || isVersion1_1 || isVersion1_2 || isVersion1_3 || isVersion1_4) {
-        if ("-Xlint".equals(token)) {
-          continue; // not supported in these versions
-        }
-      }
-      if (token.startsWith("-J-")) {
-        commandLine.add(token.substring("-J".length()));
-      }
-      else {
-        additionalOptions.add(token);
-      }
-    }
+    final List<String> additionalOptions =
+      addAdditionalSettings(commandLine, javacSettings, isVersion1_0, isVersion1_1, isVersion1_2, isVersion1_3, isVersion1_4);
 
     CompilerUtil.addLocaleOptions(commandLine, false);
 
@@ -229,40 +211,9 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add(JAVAC_MAIN_CLASS);
     }
 
-    LanguageLevel languageLevel = chunk.getLanguageLevel();
-    CompilerUtil.addSourceCommandLineSwitch(jdk, languageLevel, commandLine);
+    addCommandLineOptions(chunk, commandLine, outputPath, jdk, isVersion1_0, isVersion1_1, myTempFiles, true, true);
 
-    commandLine.add("-verbose");
-
-    final String cp = chunk.getCompilationClasspath();
-    final String bootCp = chunk.getCompilationBootClasspath();
-
-    final String classPath;
-    if (isVersion1_0 || isVersion1_1) {
-      classPath = bootCp + File.pathSeparator + cp;
-    }
-    else {
-      classPath = cp;
-      commandLine.add("-bootclasspath");
-      addClassPathValue(jdk, false, commandLine, bootCp, "javac_bootcp");
-    }
-
-    commandLine.add("-classpath");
-    addClassPathValue(jdk, isVersion1_0, commandLine, classPath, "javac_cp");
-
-    if (!isVersion1_1 && !isVersion1_0) {
-      commandLine.add("-sourcepath");
-      // this way we tell the compiler that the sourcepath is "empty". However, javac thinks that sourcepath is 'new File("")'
-      // this may cause problems if we have java code in IDEA working directory
-      commandLine.add("\"\"");
-    }
-
-    commandLine.add("-d");
-    commandLine.add(outputPath.replace('/', File.separatorChar));
-
-    for (String option : additionalOptions) {
-      commandLine.add(option);
-    }
+    commandLine.addAll(additionalOptions);
 
     final VirtualFile[] files = chunk.getFilesToCompile();
 
@@ -298,11 +249,80 @@ public class JavacCompiler extends ExternalCompiler {
     }
   }
 
-  private void addClassPathValue(final Sdk jdk,
-                                 final boolean isVersion1_0,
-                                 final List<String> commandLine,
-                                 final String cpString,
-                                 @NonNls final String tempFileName) throws IOException {
+  public static List<String> addAdditionalSettings(List<String> commandLine, JavacSettings javacSettings,
+                                             boolean version1_0,
+                                             boolean version1_1,
+                                             boolean version1_2,
+                                             boolean version1_3,
+                                             boolean version1_4) {
+    final List<String> additionalOptions = new ArrayList<String>();
+    StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(), " ");
+    while (tokenizer.hasMoreTokens()) {
+      @NonNls String token = tokenizer.nextToken();
+      if (version1_0) {
+        if ("-deprecation".equals(token)) {
+          continue; // not supported for this version
+        }
+      }
+      if (version1_0 || version1_1 || version1_2 || version1_3 || version1_4) {
+        if ("-Xlint".equals(token)) {
+          continue; // not supported in these versions
+        }
+      }
+      if (token.startsWith("-J-")) {
+        commandLine.add(token.substring("-J".length()));
+      }
+      else {
+        additionalOptions.add(token);
+      }
+    }
+    return additionalOptions;
+  }
+
+  public static void addCommandLineOptions(ModuleChunk chunk, @NonNls List<String> commandLine, String outputPath, Sdk jdk,
+                                           boolean version1_0,
+                                           boolean version1_1,
+                                           List<File> tempFiles, boolean addSourcePath, boolean useTempFile) throws IOException {
+
+    LanguageLevel languageLevel = chunk.getLanguageLevel();
+    CompilerUtil.addSourceCommandLineSwitch(jdk, languageLevel, commandLine);
+
+    commandLine.add("-verbose");
+
+    final String cp = chunk.getCompilationClasspath();
+    final String bootCp = chunk.getCompilationBootClasspath();
+
+    final String classPath;
+    if (version1_0 || version1_1) {
+      classPath = bootCp + File.pathSeparator + cp;
+    }
+    else {
+      classPath = cp;
+      commandLine.add("-bootclasspath");
+      addClassPathValue(jdk, false, commandLine, bootCp, "javac_bootcp", tempFiles, useTempFile);
+    }
+
+    commandLine.add("-classpath");
+    addClassPathValue(jdk, version1_0, commandLine, classPath, "javac_cp", tempFiles, useTempFile);
+
+    if (!version1_1 && !version1_0 && addSourcePath) {
+      commandLine.add("-sourcepath");
+      // this way we tell the compiler that the sourcepath is "empty". However, javac thinks that sourcepath is 'new File("")'
+      // this may cause problems if we have java code in IDEA working directory
+      commandLine.add("\"\"");
+    }
+
+    commandLine.add("-d");
+    commandLine.add(outputPath.replace('/', File.separatorChar));
+  }
+
+  private static void addClassPathValue(final Sdk jdk, final boolean isVersion1_0, final List<String> commandLine, final String cpString, @NonNls final String tempFileName,
+                                        List<File> tempFiles,
+                                        boolean useTempFile) throws IOException {
+    if (!useTempFile) {
+      commandLine.add(cpString);
+      return;
+    }
     // must include output path to classpath, otherwise javac will compile all dependent files no matter were they compiled before or not
     if (isVersion1_0) {
       commandLine.add(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk) + File.pathSeparator + cpString);
@@ -310,7 +330,7 @@ public class JavacCompiler extends ExternalCompiler {
     else {
       File cpFile = FileUtil.createTempFile(tempFileName, ".tmp");
       cpFile.deleteOnExit();
-      myTempFiles.add(cpFile);
+      tempFiles.add(cpFile);
       final DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(cpFile)));
       try {
         CompilerIOUtil.writeString(cpString, out);
@@ -337,5 +357,6 @@ public class JavacCompiler extends ExternalCompiler {
 
   public void compileFinished() {
     FileUtil.asyncDelete(myTempFiles);
+    myTempFiles.clear();
   }
 }

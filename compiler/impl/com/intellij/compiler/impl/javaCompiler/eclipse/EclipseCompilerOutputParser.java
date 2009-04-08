@@ -1,11 +1,13 @@
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
 import com.intellij.compiler.OutputParser;
+import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,7 +63,7 @@ public class EclipseCompilerOutputParser extends OutputParser {
       String path = matcher.group(1);
       String absPath = FileUtil.toSystemDependentName(myOutputDir + '/' + path);
       //callback.setProgressText(CompilerBundle.message("eclipse.compiler.writing", absPath));
-      callback.fileGenerated(absPath);
+      callback.fileGenerated(new FileObject(new File(absPath)));
       return true;
     }
     if (COMPILED_PATTERN.matcher(line).matches() || GENERATED_PATTERN.matcher(line).matches()) {

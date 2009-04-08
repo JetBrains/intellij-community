@@ -99,12 +99,12 @@ public class JikesCompiler extends ExternalCompiler {
     return new JikesConfigurable(JikesSettings.getInstance(myProject));
   }
 
-  public OutputParser createErrorParser(final String outputDir) {
+  public OutputParser createErrorParser(@NotNull final String outputDir) {
     return new JikesOutputParser(myProject);
   }
 
   @Nullable
-  public OutputParser createOutputParser(final String outputDir) {
+  public OutputParser createOutputParser(@NotNull final String outputDir) {
     return null;
   }
 

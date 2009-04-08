@@ -35,17 +35,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsFormatException;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -64,35 +64,36 @@ public class BackendCompilerWrapper {
   private final List<TranslatingCompiler.OutputItem> myOutputItems;
 
   private final CompileContextEx myCompileContext;
-  private final VirtualFile[] myFilesToCompile;
+  private final List<VirtualFile> myFilesToCompile;
   private final Project myProject;
   private final Set<VirtualFile> myFilesToRecompile;
   private final Map<Module, VirtualFile> myModuleToTempDirMap = new HashMap<Module, VirtualFile>();
   private final ProjectFileIndex myProjectFileIndex;
   @NonNls private static final String PACKAGE_ANNOTATION_FILE_NAME = "package-info.java";
+  private static final FileObject myStopThreadToken = new FileObject(null,null);
 
-  public BackendCompilerWrapper(final Project project,
-                                VirtualFile[] filesToCompile,
-                                CompileContextEx compileContext,
-                                BackendCompiler compiler) {
+  public BackendCompilerWrapper(@NotNull final Project project,
+                                @NotNull List<VirtualFile> filesToCompile,
+                                @NotNull CompileContextEx compileContext,
+                                @NotNull BackendCompiler compiler) {
     myProject = project;
     myCompiler = compiler;
     myCompileContext = compileContext;
     myFilesToCompile = filesToCompile;
-    myFilesToRecompile = new HashSet<VirtualFile>(Arrays.asList(filesToCompile));
+    myFilesToRecompile = new HashSet<VirtualFile>(filesToCompile);
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    mySuccesfullyCompiledJavaFiles = new HashSet<VirtualFile>(filesToCompile.length);
-    myOutputItems = new ArrayList<TranslatingCompiler.OutputItem>(filesToCompile.length);
-    myFileNameToSourceMap = new HashMap<String, Set<CompiledClass>>(filesToCompile.length);
-    myFilesToRefresh = new ArrayList<File>(filesToCompile.length);
+    mySuccesfullyCompiledJavaFiles = new HashSet<VirtualFile>(filesToCompile.size());
+    myOutputItems = new ArrayList<TranslatingCompiler.OutputItem>(filesToCompile.size());
+    myFileNameToSourceMap = new HashMap<String, Set<CompiledClass>>(filesToCompile.size());
+    myFilesToRefresh = new ArrayList<File>(filesToCompile.size());
   }
 
-  public TranslatingCompiler.OutputItem[] compile() throws CompilerException, CacheCorruptedException {
+  public List<TranslatingCompiler.OutputItem> compile() throws CompilerException, CacheCorruptedException {
     Application application = ApplicationManager.getApplication();
     final Set<VirtualFile> allDependent = new HashSet<VirtualFile>();
     COMPILE:
     try {
-      if (myFilesToCompile.length > 0) {
+      if (!myFilesToCompile.isEmpty()) {
         if (application.isUnitTestMode()) {
           saveTestData();
         }
@@ -101,20 +102,18 @@ public class BackendCompilerWrapper {
         compileModules(moduleToFilesMap);
       }
 
-
-      VirtualFile[] dependentFiles;
+      Collection<VirtualFile> dependentFiles;
       do {
         dependentFiles = findDependentFiles();
 
-        if (dependentFiles.length > 0) {
-          final List<VirtualFile> deps = Arrays.asList(dependentFiles);
-          myFilesToRecompile.addAll(deps);
-          allDependent.addAll(deps);
+        if (!dependentFiles.isEmpty()) {
+          myFilesToRecompile.addAll(dependentFiles);
+          allDependent.addAll(dependentFiles);
           if (myCompileContext.getProgressIndicator().isCanceled() || myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
             break COMPILE;
           }
-          final VirtualFile[] filesInScope = getFilesInScope(dependentFiles);
-          if (filesInScope.length == 0) {
+          final List<VirtualFile> filesInScope = getFilesInScope(dependentFiles);
+          if (filesInScope.isEmpty()) {
             break;
           }
           final Map<Module, Set<VirtualFile>> moduleToFilesMap = buildModuleToFilesMap(myCompileContext, filesInScope);
@@ -122,7 +121,7 @@ public class BackendCompilerWrapper {
           compileModules(moduleToFilesMap);
         }
       }
-      while (dependentFiles.length > 0 && myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) == 0);
+      while (!dependentFiles.isEmpty() && myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) == 0);
     }
     catch (IOException e) {
       throw new CompilerException(CompilerBundle.message("error.compiler.process.not.started", e.getMessage()), e);
@@ -151,7 +150,7 @@ public class BackendCompilerWrapper {
     if (myCompileContext.getProgressIndicator().isCanceled()) {
       myFilesToRecompile.clear();
       // when cancelled pretend nothing was compiled and next compile will compile everything from the scratch
-      return TranslatingCompiler.EMPTY_OUTPUT_ITEM_ARRAY;
+      return Collections.emptyList();
     }
     
     // do not update caches if cancelled because there is a chance that they will be incomplete
@@ -163,7 +162,7 @@ public class BackendCompilerWrapper {
       myFilesToRecompile.addAll(allDependent);
     }
     processPackageInfoFiles();
-    return myOutputItems.toArray(new TranslatingCompiler.OutputItem[myOutputItems.size()]);
+    return myOutputItems;
   }
 
   // package-info.java hack
@@ -192,8 +191,8 @@ public class BackendCompilerWrapper {
     });
   }
 
-  private VirtualFile[] getFilesInScope(final VirtualFile[] dependentFiles) {
-    final List<VirtualFile> filesInScope = new ArrayList<VirtualFile>(dependentFiles.length);
+  private List<VirtualFile> getFilesInScope(final Collection<VirtualFile> dependentFiles) {
+    final List<VirtualFile> filesInScope = new ArrayList<VirtualFile>(dependentFiles.size());
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         for (VirtualFile dependentFile : dependentFiles) {
@@ -203,7 +202,7 @@ public class BackendCompilerWrapper {
         }
       }
     });
-    return filesInScope.toArray(new VirtualFile[filesInScope.size()]);
+    return filesInScope;
   }
 
   private void compileModules(final Map<Module, Set<VirtualFile>> moduleToFilesMap) throws IOException {
@@ -328,7 +327,7 @@ public class BackendCompilerWrapper {
   private final TIntHashSet myProcessedNames = new TIntHashSet();
   private final Set<VirtualFile> myProcessedFiles = new HashSet<VirtualFile>();
 
-  private VirtualFile[] findDependentFiles() throws CacheCorruptedException {
+  private Collection<VirtualFile> findDependentFiles() throws CacheCorruptedException {
     myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.checking.dependencies"));
 
     final DependencyCache dependencyCache = myCompileContext.getDependencyCache();
@@ -388,7 +387,7 @@ public class BackendCompilerWrapper {
     }
     myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.found.dependent.files", dependentFiles.size()));
 
-    return dependentFiles.toArray(new VirtualFile[dependentFiles.size()]);
+    return dependentFiles;
   }
 
   private final Object lock = new Object();
@@ -424,14 +423,14 @@ public class BackendCompilerWrapper {
       }
     }
 
-    protected void processCompiledClass(final String classFileToProcess) throws CacheCorruptedException {
+    protected void processCompiledClass(final FileObject classFileToProcess) throws CacheCorruptedException {
       synchronized (lock) {
         myClassParsingThread.addPath(classFileToProcess);
       }
     }
   }
 
-  private void doCompile(final ModuleChunk chunk, String outputDir, int sourcesFilter) throws IOException {
+  private void doCompile(@NotNull final ModuleChunk chunk, @NotNull String outputDir, int sourcesFilter) throws IOException {
     myCompileContext.getProgressIndicator().checkCanceled();
     chunk.setSourcesFilter(sourcesFilter);
 
@@ -866,7 +865,7 @@ public class BackendCompilerWrapper {
     myCompileContext.getProgressIndicator().setText2(msg);
   }
 
-  private static Map<Module, Set<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final VirtualFile[] files) {
+  private static Map<Module, Set<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final List<VirtualFile> files) {
     final Map<Module, Set<VirtualFile>> map = new HashMap<Module, Set<VirtualFile>>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -890,9 +889,8 @@ public class BackendCompilerWrapper {
   }
 
   private class ClassParsingThread implements Runnable {
-    private final BlockingQueue<String> myPaths = new ArrayBlockingQueue<String>(50000);
+    private final BlockingQueue<FileObject> myPaths = new ArrayBlockingQueue<FileObject>(50000);
     private CacheCorruptedException myError = null;
-    private final String myStopThreadToken = new String();
     private final boolean myAddNotNullAssertions;
     private final boolean myIsJdk16;
 
@@ -903,10 +901,11 @@ public class BackendCompilerWrapper {
 
     public void run() {
       try {
-        //noinspection StringEquality
-        String path;
-        while ((path = getNextPath()) != myStopThreadToken) {
-          processPath(path.replace('/', File.separatorChar));
+        while (true) {
+          FileObject path = myPaths.take();
+
+          if (path == myStopThreadToken) break;
+          processPath(path);
         }
       }
       catch (InterruptedException e) {
@@ -917,30 +916,23 @@ public class BackendCompilerWrapper {
       }
     }
 
-    public void addPath(String path) throws CacheCorruptedException {
+    public void addPath(FileObject path) throws CacheCorruptedException {
       if (myError != null) {
         throw myError;
       }
       myPaths.offer(path);
     }
 
-    private String getNextPath() throws InterruptedException {
-      return myPaths.take();
-    }
-
     public void stopParsing() {
       myPaths.offer(myStopThreadToken);
     }
 
-    private void processPath(final String path) throws CacheCorruptedException {
+    private void processPath(FileObject fileObject) throws CacheCorruptedException {
+      File file = fileObject.getFile();
+      byte[] fileContent = fileObject.getContent();
+      String path = file.getPath();
       try {
-        final File file = new File(path); // the file is assumed to exist!
-        byte[] fileContent = ArrayUtil.EMPTY_BYTE_ARRAY;
-        try{
-          fileContent = FileUtil.loadFileBytes(file);
-        }
-        catch(IOException ignored){
-        }
+        // the file is assumed to exist!
 
         final DependencyCache dependencyCache = myCompileContext.getDependencyCache();
         final int newClassQName = dependencyCache.reparseClassFile(file, fileContent);
@@ -949,7 +941,8 @@ public class BackendCompilerWrapper {
         final String qName = dependencyCache.resolve(newClassQName);
         String relativePathToSource = "/" + MakeUtil.createRelativePathToSource(qName, sourceFileName);
         putName(sourceFileName, newClassQName, relativePathToSource, path);
-        
+
+        boolean fileContentChanged = false;
         if (myAddNotNullAssertions && hasNotNullAnnotations(newClassesCache, dependencyCache.getSymbolTable(), newClassQName)) {
           try {
             ClassReader reader = new ClassReader(fileContent, 0, fileContent.length);
@@ -958,18 +951,17 @@ public class BackendCompilerWrapper {
             final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
             reader.accept(instrumenter, 0);
             if (instrumenter.isModification()) {
-              final FileOutputStream output = new FileOutputStream(file);
-              try {
-                output.write(writer.toByteArray());
-              }
-              finally {
-                output.close();
-              }
+              fileContent = writer.toByteArray();
+              fileContentChanged = true;
             }
           }
           catch (Exception ignored) {
             LOG.info(ignored);
           }
+        }
+
+        if (fileContentChanged || !fileObject.isSaved()) {
+          writeFile(file, fileContent);
         }
       }
       catch (ClsFormatException e) {
@@ -983,9 +975,22 @@ public class BackendCompilerWrapper {
         }
         myCompileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
       }
+      catch (IOException e) {
+        myCompileContext.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+      }
       finally {
         myClassesCount += 1;
         updateStatistics();
+      }
+    }
+
+    private void writeFile(File file, byte[] fileContent) throws IOException {
+      try {
+        FileUtil.writeToFile(file, fileContent);
+      }
+      catch (FileNotFoundException e) {
+        FileUtil.createParentDirs(file);
+        FileUtil.writeToFile(file, fileContent);
       }
     }
   }
@@ -1025,11 +1030,12 @@ public class BackendCompilerWrapper {
     private final String myPath;
     private final int myKind;
 
-    private OutputDir(String path, int kind) {
+    private OutputDir(@NotNull String path, int kind) {
       myPath = path;
       myKind = kind;
     }
 
+    @NotNull
     public String getPath() {
       return myPath;
     }

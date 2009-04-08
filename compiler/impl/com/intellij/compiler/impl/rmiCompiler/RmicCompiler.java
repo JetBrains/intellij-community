@@ -5,6 +5,7 @@ import com.intellij.compiler.RmicSettings;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.CompilerParsingThread;
 import com.intellij.compiler.impl.javaCompiler.CompilerParsingThreadImpl;
+import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.compiler.make.Cache;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.DependencyCache;
@@ -230,8 +231,9 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     final Process process = Runtime.getRuntime().exec(cmdLine);
     final Set<RmicProcessingItem> successfullyCompiledItems = new HashSet<RmicProcessingItem>();
     final CompilerParsingThread parsingThread = new CompilerParsingThreadImpl(process, context, outputParser, false, true) {
-      protected void processCompiledClass(String classFileToProcess) {
-        final RmicProcessingItem item = pathToItemMap.get(classFileToProcess.replace(File.separatorChar, '/'));
+      protected void processCompiledClass(FileObject classFileToProcess) {
+        String key = classFileToProcess.getFile().getPath().replace(File.separatorChar, '/');
+        final RmicProcessingItem item = pathToItemMap.get(key);
         if (item != null) {
           successfullyCompiledItems.add(item);
         }
@@ -251,9 +253,9 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     try {
       parsingThreadFuture.get();
     }
-    catch (InterruptedException e) {
+    catch (InterruptedException ignored) {
     }
-    catch (ExecutionException e) {
+    catch (ExecutionException ignored) {
     }
     return successfullyCompiledItems.toArray(new RmicProcessingItem[successfullyCompiledItems.size()]);
   }
@@ -407,7 +409,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     private final long mySkelTimestamp;
     private final long myTieTimestamp;
 
-    public RemoteClassValidityState(long remoteClassTimestamp, long stubTimestamp, long skelTimestamp, long tieTimestamp) {
+    private RemoteClassValidityState(long remoteClassTimestamp, long stubTimestamp, long skelTimestamp, long tieTimestamp) {
       myRemoteClassTimestamp = remoteClassTimestamp;
       myStubTimestamp = stubTimestamp;
       mySkelTimestamp = skelTimestamp;
@@ -443,7 +445,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     private final File myTie;
     private boolean myIsRemoteObject = false;
 
-    public RmicProcessingItem(Module module, final VirtualFile outputClassFile, File outputDir, String qName) {
+    private RmicProcessingItem(Module module, final VirtualFile outputClassFile, File outputDir, String qName) {
       myModule = module;
       myOutputClassFile = outputClassFile;
       myOutputDir = outputDir;

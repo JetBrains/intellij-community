@@ -10,13 +10,15 @@ package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
+import com.intellij.compiler.impl.javaCompiler.api.CompilerAPICompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
+import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.compiler.impl.javaCompiler.jikes.JikesCompiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.components.*;
@@ -65,7 +67,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
   private BackendCompiler JAVAC_EXTERNAL_BACKEND;
-  private BackendCompiler JAVAC_EMBEDDED_BACKEND;
   private final Perl5Matcher myPatternMatcher = new Perl5Matcher();
 
   {
@@ -178,8 +179,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private void createCompilers() {
     JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
     myRegisteredCompilers.add(JAVAC_EXTERNAL_BACKEND);
-    JAVAC_EMBEDDED_BACKEND = new JavacEmbeddedCompiler(myProject);
-    //myRegisteredCompilers.add(JAVAC_EMBEDDED_BACKEND);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       final BackendCompiler JIKES_BACKEND = new JikesCompiler(myProject);
@@ -189,13 +188,26 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         final EclipseCompiler eclipse = new EclipseCompiler(myProject);
         myRegisteredCompilers.add(eclipse);
       }
-      //try {
-      //  final EclipseEmbeddedCompiler eclipseEmbedded = new EclipseEmbeddedCompiler(myProject);
-      //  myRegisteredCompilers.add(eclipseEmbedded);
-      //}
-      //catch (NoClassDefFoundError e) {
-      //  // eclipse jar must be not in the classpath
-      //}
+
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        try {
+          final EclipseEmbeddedCompiler eclipseEmbedded = new EclipseEmbeddedCompiler(myProject);
+          myRegisteredCompilers.add(eclipseEmbedded);
+        }
+        catch (NoClassDefFoundError e) {
+          // eclipse jar must be not in the classpath
+        }
+      }
+
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        try {
+          CompilerAPICompiler compiler = new CompilerAPICompiler(myProject);
+          myRegisteredCompilers.add(compiler);
+        }
+        catch (NoClassDefFoundError e) {
+          // wrong JDK
+        }
+      }
     }
 
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
@@ -394,11 +406,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (JAVAC_EXTERNAL_BACKEND == null) {
       createCompilers();
     }
-    if (myDefaultJavaCompiler != JAVAC_EXTERNAL_BACKEND) return myDefaultJavaCompiler;
-    boolean runEmbedded = ApplicationManager.getApplication().isUnitTestMode()
-                          ? !JavacSettings.getInstance(myProject).isTestsUseExternalCompiler()
-                          : Boolean.parseBoolean(System.getProperty(PROPERTY_IDEA_USE_EMBEDDED_JAVAC));
-    return runEmbedded ? JAVAC_EMBEDDED_BACKEND : JAVAC_EXTERNAL_BACKEND;
+    return myDefaultJavaCompiler;
   }
 
   public void setDefaultCompiler(BackendCompiler defaultCompiler) {

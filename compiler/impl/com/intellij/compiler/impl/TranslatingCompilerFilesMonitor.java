@@ -172,7 +172,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     final Project project = context.getProject();
     final int projectId = getProjectId(project);
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final IOException[] _ex = new IOException[] {null};
+    final IOException[] _ex = {null};
 
     // need read action here to ensure that no modifications were made to VFS while updating file attributes
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -1032,7 +1032,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     private final String mySrcUrl;
     private final LocalFileSystem myFileSystem;
 
-    public ScheduleOutputsForDeletionProc(final String srcUrl) {
+    private ScheduleOutputsForDeletionProc(final String srcUrl) {
       mySrcUrl = srcUrl;
       myFileSystem = LocalFileSystem.getInstance();
     }

@@ -2,6 +2,7 @@ package com.intellij.lang.ant.config.execution;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
 import com.intellij.compiler.impl.javaCompiler.jikes.JikesOutputParser;
+import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -263,7 +264,7 @@ public class OutputParser{
       public void fileProcessed(String path) {
       }
 
-      public void fileGenerated(String path) {
+      public void fileGenerated(FileObject path) {
       }
     };
     try {
