@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,8 @@ import java.util.List;
  */
 public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes {
 
-  public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
+  @NotNull
+  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     appendDescriptors(node.getPsi(), document, descriptors);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
@@ -114,7 +116,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
     return text.contains("\n") || text.contains("\r") || text.contains("\r\n");
   }
 
-  public String getPlaceholderText(ASTNode node) {
+  public String getPlaceholderText(@NotNull ASTNode node) {
     final IElementType elemType = node.getElementType();
     if (BLOCK_SET.contains(elemType) || elemType == CLOSABLE_BLOCK) {
       return "{...}";
@@ -131,7 +133,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
     return null;
   }
 
-  public boolean isCollapsedByDefault(ASTNode node) {
+  public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return node.getElementType() == IMPORT_STATEMENT;
   }
 }

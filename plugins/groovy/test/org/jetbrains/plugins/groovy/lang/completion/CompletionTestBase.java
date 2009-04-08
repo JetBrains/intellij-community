@@ -84,7 +84,6 @@ public abstract class CompletionTestBase extends ActionTestCase {
       myFileEditorManager.closeFile(virtualFile);
       myEditor = null;
     }
-    System.out.println(result);
     return result;
   }
 
