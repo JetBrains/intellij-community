@@ -1,7 +1,6 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -430,15 +429,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private static void refreshProjectFiles(final String filePath) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isDispatchThread()) {
-      String ipr = ProjectFileType.DOT_DEFAULT_EXTENSION;
-      if (filePath.endsWith(ipr)) {
+      final File file = new File(filePath);
+      if (file.isFile()) {
         VirtualFile projectFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
         if (projectFile != null) {
           projectFile.refresh(false, false);
         }
 
-        String iwsPath = filePath.substring(0, filePath.length() - ipr.length()) + WorkspaceFileType.DOT_DEFAULT_EXTENSION;
-        VirtualFile wsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(iwsPath);
+        File iwsFile = new File(file.getParentFile(), FileUtil.getNameWithoutExtension(file) + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
+        VirtualFile wsFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iwsFile);
         if (wsFile != null) {
           wsFile.refresh(false, false);
         }
