@@ -33,6 +33,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   private boolean myRollover;
   private static boolean ourGlobalMouseDown = false;
 
+  private Icon myDropdownIcon = IconLoader.getIcon("/general/dropdown.png");
+
+  private boolean myNoIconsInPopup = false;
+
   public ActionButton(
     final AnAction action,
     final Presentation presentation,
@@ -48,6 +52,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     setFocusable(false);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
     myMinimumButtonSize = minimumSize;
+  }
+
+  public void setNoIconsInPopup(boolean noIconsInPopup) {
+    myNoIconsInPopup = noIconsInPopup;
   }
 
   public void setMinimumButtonSize(@NotNull Dimension size) {
@@ -103,7 +111,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
 
   private void actionPerfomed(final AnActionEvent event) {
     if (myAction instanceof ActionGroup && !(myAction instanceof CustomComponentAction) && ((ActionGroup)myAction).isPopup()) {
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(event.getPlace(), (ActionGroup)myAction);
+      final ActionManagerImpl am = (ActionManagerImpl)ActionManager.getInstance();
+      ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), (ActionGroup)myAction, new PresentationFactory() {
+        @Override
+        protected Presentation processPresentation(Presentation presentation) {
+          if (myNoIconsInPopup) {
+            presentation.setIcon(null);
+            presentation.setHoveredIcon(null);
+          }
+          return presentation;
+        }
+      });
       popupMenu.getComponent().show(this, getWidth(), 0);
     } else {
       myAction.actionPerformed(event);
@@ -187,6 +205,24 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
 
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
+
+    paintButtonLook(g);
+
+    if (myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
+
+      int x = 5;
+      int y = 4;
+
+      if (getPopState() == PUSHED) {
+        x++;
+        y++;
+      }
+
+      myDropdownIcon.paintIcon(this, g, x, y);
+    }
+  }
+
+  protected void paintButtonLook(Graphics g) {
     ActionButtonLook look = getButtonLook();
     look.paintBackground(g, this);
     look.paintIcon(g, this, getIcon());

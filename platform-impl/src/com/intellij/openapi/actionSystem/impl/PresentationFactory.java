@@ -17,8 +17,12 @@ public class PresentationFactory {
     Presentation presentation = myAction2Presentation.get(action);
     if (presentation == null){
       presentation = (Presentation)action.getTemplatePresentation().clone();
-      myAction2Presentation.put(action, presentation);
+      myAction2Presentation.put(action, processPresentation(presentation));
     }
+    return presentation;
+  }
+
+  protected Presentation processPresentation(Presentation presentation) {
     return presentation;
   }
 

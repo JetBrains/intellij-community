@@ -641,13 +641,13 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         }
       }
     });
-    myActionGroup.add(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
+    myActionGroup.addAction(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
                                            IdeBundle.message("action.show.hide.members"),
-                                           IconLoader.getIcon("/objectBrowser/showMembers.png"), ourShowMembersDefaults));
+                                           IconLoader.getIcon("/objectBrowser/showMembers.png"), ourShowMembersDefaults)).setAsSecondary(true);
     myActionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     myActionGroup.add(myAutoScrollFromSourceHandler.createToggleAction());
-    myActionGroup.add(new ShowStructureAction());
-    myActionGroup.add(new SortByTypeAction());
+    myActionGroup.addAction(new ShowStructureAction()).setAsSecondary(true);
+    myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
 
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       public void expandAll() {

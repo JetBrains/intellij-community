@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -20,9 +21,9 @@ final class ActionPopupMenuImpl implements ActionPopupMenu {
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
 
-  public ActionPopupMenuImpl(String place, @NotNull ActionGroup group, ActionManagerImpl actionManager) {
+  public ActionPopupMenuImpl(String place, @NotNull ActionGroup group, ActionManagerImpl actionManager, @Nullable PresentationFactory factory) {
     myManager = actionManager;
-    myMenu = new MyMenu(place, group);
+    myMenu = new MyMenu(place, group, factory);
   }
 
   public JPopupMenu getComponent() {
@@ -35,10 +36,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu {
     private DataContext myContext;
     private final PresentationFactory myPresentationFactory;
 
-    public MyMenu(String place, @NotNull ActionGroup group) {
+    public MyMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
       myPlace = place;
       myGroup = group;
-      myPresentationFactory = new PresentationFactory();
+      myPresentationFactory = factory != null ? factory : new PresentationFactory();
       addPopupMenuListener(new MyPopupMenuListener());
     }
 

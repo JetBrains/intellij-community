@@ -67,7 +67,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   protected final ActionManagerEx myActionManager;
 
   private Rectangle myAutoPopupRec;
+
   private final Icon myAutoPopupIcon = IconLoader.getIcon("/ide/link.png");
+  private final Icon mySecondaryGroupIcon = IconLoader.getIcon("/general/secondaryGroup.png");
+  private DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
+  private ActionButton mySecondaryActionsButton;
+
   private final KeymapManagerEx myKeymapManager;
   private int myFirstOusideIndex = -1;
 
@@ -99,6 +104,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
+
+    mySecondaryActions.getTemplatePresentation().setIcon(mySecondaryGroupIcon);
+    mySecondaryActions.setPopup(true);
 
     updateActions();
 
@@ -158,9 +166,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
-  private void fillToolBar(final ArrayList<AnAction> actions) {
+  private void fillToolBar(final ArrayList<AnAction> actions, boolean layoutSecondaries) {
     for (int i = 0; i < actions.size(); i++) {
       final AnAction action = actions.get(i);
+
+      if (layoutSecondaries) {
+        if (!myActionGroup.isPrimary(action)) {
+          mySecondaryActions.add(action);
+          continue;
+        }
+      }
+
       if (action instanceof Separator) {
         if (i > 0 && i < actions.size() - 1) {
           add(new MySeparator());
@@ -173,6 +189,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         final ActionButton button = createToolbarButton(action);
         add(button);
       }
+    }
+
+    if (mySecondaryActions.getChildrenCount() > 0) {
+      mySecondaryActionsButton = new SecondaryButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, DEFAULT_MINIMUM_BUTTON_SIZE);
+      mySecondaryActionsButton.setNoIconsInPopup(true);
+      add(mySecondaryActionsButton);
     }
   }
 
@@ -310,20 +332,28 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       int eachX = 0;
       int eachY = 0;
       for (int i = 0; i < componentCount; i++) {
-        final Rectangle eachBound = new Rectangle(getComponent(i).getPreferredSize());
+        final Component eachComp = getComponent(i);
+        final boolean isLast = i == componentCount - 1;
+
+        final Rectangle eachBound = new Rectangle(eachComp.getPreferredSize());
         if (!full) {
-          boolean outside;
-          if (i < componentCount - 1) {
-            outside = eachX + eachBound.width + autoButtonSize <= sizeToFit.width;
-          }
-          else {
-            outside = eachX + eachBound.width <= sizeToFit.width;
+          boolean inside;
+          if (isLast) {
+            inside = eachX + eachBound.width <= sizeToFit.width;
+          } else {
+            inside = eachX + eachBound.width + autoButtonSize <= sizeToFit.width;
           }
 
-          if (outside) {
-            eachBound.x = eachX;
+          if (inside) {
+            if (eachComp == mySecondaryActionsButton) {
+              assert isLast;
+              eachBound.x = sizeToFit.width - eachBound.width;
+              eachX = (int)eachBound.getMaxX();
+            } else {
+              eachBound.x = eachX;
+              eachX += eachBound.width;
+            }
             eachBound.y = eachY;
-            eachX += eachBound.width;
           }
           else {
             full = true;
@@ -684,7 +714,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       myNewVisibleActions = temp;
 
       removeAll();
-      fillToolBar(myVisibleActions);
+      mySecondaryActions.removeAll();
+      mySecondaryActionsButton = null;
+      fillToolBar(myVisibleActions, getLayoutPolicy() == AUTO_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL);
 
       if (changeBarVisibility) {
         revalidate();
@@ -883,5 +915,26 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void setReservePlaceAutoPopupIcon(final boolean reserve) {
     myReservePlaceAutoPopupIcon = reserve;
+  }
+
+  private class SecondaryButton extends ActionButton {
+    private SecondaryButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
+      super(action, presentation, place, minimumSize);
+    }
+
+    @Override
+    protected void paintButtonLook(Graphics g) {
+      final Color bright = new Color(255, 255, 255, 200);
+      final Color dark = new Color(64, 64, 64, 110);
+
+      int padding = 3;
+
+      g.setColor(bright);
+      g.drawLine(0, padding, 0, getHeight() - padding - 1);
+      g.setColor(dark);
+      g.drawLine(1, padding, 1, getHeight() - padding - 1);
+
+      super.paintButtonLook(g);
+    }
   }
 }

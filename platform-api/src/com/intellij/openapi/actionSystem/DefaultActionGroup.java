@@ -61,7 +61,11 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public final void add(@NotNull AnAction action){
-    add(action, new Constraints(Anchor.LAST, null));
+    addAction(action, new Constraints(Anchor.LAST, null));
+  }
+
+  public final ActionInGroup addAction(@NotNull AnAction action){
+    return addAction(action, new Constraints(Anchor.LAST, null));
   }
 
   /**
@@ -85,7 +89,15 @@ public class DefaultActionGroup extends ActionGroup {
     add(action, constraint, ActionManager.getInstance());
   }
 
+  public final ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint){
+    return addAction(action, constraint, ActionManager.getInstance());
+  }
+
   public final void add(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
+    addAction(action, constraint, actionManager);
+  }
+
+  public final ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
     if (action == this) {
       throw new IllegalArgumentException("Cannot add a group to itself");
     }
@@ -117,6 +129,8 @@ public class DefaultActionGroup extends ActionGroup {
         myPairs.add(new Pair<AnAction, Constraints>(action, constraint));
       }
     }
+
+    return new ActionInGroup(this, action);
   }
 
   private void actionAdded(AnAction addedAction, ActionManager actionManager){
@@ -226,6 +240,8 @@ public class DefaultActionGroup extends ActionGroup {
       // resolve action
              ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
              AnAction actualAction = actionManager.getAction(stub.getId());
+
+      replace(stub, actualAction);
 
       // Find in sorted children first
       int index=mySortedChildren.indexOf(stub);

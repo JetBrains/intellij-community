@@ -85,6 +85,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   @NonNls public static final String LAST = "last";
   @NonNls public static final String BEFORE = "before";
   @NonNls public static final String AFTER = "after";
+  @NonNls public static final String SECONDARY = "secondary";
   @NonNls public static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
   @NonNls public static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
   @NonNls public static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
@@ -136,8 +137,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     myTimer.removeTimerListener(listener);
   }
 
+  public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory presentationFactory) {
+    return new ActionPopupMenuImpl(place, group, this, presentationFactory);
+  }
+
   public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group) {
-    return new ActionPopupMenuImpl(place, group, this);
+    return new ActionPopupMenuImpl(place, group, this, null);
   }
 
   public ActionToolbar createActionToolbar(final String place, final ActionGroup group, final boolean horizontal) {
@@ -342,7 +347,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     for (final Object o : element.getChildren()) {
       Element e = (Element)o;
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(e.getName())) {
-        processAddToGroupNode(stub, e, pluginId);
+        processAddToGroupNode(stub, e, pluginId, isSecondary(e));
       }
       else if (SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
         processKeyboardShortcutNode(e, id, pluginId);
@@ -362,6 +367,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     // register action
     registerAction(id, stub, pluginId);
     return stub;
+  }
+
+  private static boolean isSecondary(Element element) {
+    return "true".equalsIgnoreCase(element.getAttributeValue(SECONDARY));
   }
 
   private static void setIcon(@Nullable final String iconPath, final String className, final ClassLoader loader, final Presentation presentation,
@@ -479,7 +488,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
           AnAction action = processActionElement(child, loader, pluginId);
           if (action != null) {
             assertActionIsGroupOrStub(action);
-            ((DefaultActionGroup)group).add(action, this);
+            ((DefaultActionGroup)group).addAction(action, Constraints.LAST, this).setAsSecondary(isSecondary(child));
           }
         }
         else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
@@ -492,12 +501,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
           }
         }
         else if (ADD_TO_GROUP_ELEMENT_NAME.equals(name)) {
-          processAddToGroupNode(group, child, pluginId);
+          processAddToGroupNode(group, child, pluginId, isSecondary(child));
         }
         else if (REFERENCE_ELEMENT_NAME.equals(name)) {
           AnAction action = processReferenceElement(child, pluginId);
           if (action != null) {
-            ((DefaultActionGroup)group).add(action, this);
+            ((DefaultActionGroup)group).addAction(action, Constraints.LAST, this).setAsSecondary(isSecondary(child));
           }
         }
         else {
@@ -537,7 +546,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
-        processAddToGroupNode(action, child, pluginId);
+        processAddToGroupNode(action, child, pluginId, isSecondary(child));
       }
     }
   }
@@ -560,8 +569,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   /**
    * @param element description of link
    * @param pluginId
+   * @param primary
    */
-  private void processAddToGroupNode(AnAction action, Element element, final PluginId pluginId) {
+  private void processAddToGroupNode(AnAction action, Element element, final PluginId pluginId, boolean secondary) {
     // Real subclasses of AnAction should not be here
     if (!(action instanceof Separator)) {
       assertActionIsGroupOrStub(action);
@@ -615,7 +625,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       reportActionError(pluginId, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
       return;
     }
-    ((DefaultActionGroup)parentGroup).add(action, new Constraints(anchor, relativeToActionId), this);
+    final DefaultActionGroup group = (DefaultActionGroup)parentGroup;
+    group.addAction(action, new Constraints(anchor, relativeToActionId), this).setAsSecondary(secondary);
   }
 
   /**
@@ -636,7 +647,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
-        processAddToGroupNode(separator, child, pluginId);
+        processAddToGroupNode(separator, child, pluginId, isSecondary(child));
       }
     }
   }

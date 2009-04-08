@@ -21,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Represents a group of actions.
@@ -28,6 +30,8 @@ import java.beans.PropertyChangeSupport;
 public abstract class ActionGroup extends AnAction {
   private boolean myPopup;
   private final PropertyChangeSupport myChangeSupport;
+
+  private Set<AnAction> mySecondaryActions;
 
   /**
    * The actual value is a Boolean.
@@ -102,4 +106,31 @@ public abstract class ActionGroup extends AnAction {
    */
   @NotNull
   public abstract AnAction[] getChildren(@Nullable AnActionEvent e);
+
+  final void setAsPrimary(AnAction action, boolean isPrimary) {
+    if (isPrimary) {
+      if (mySecondaryActions != null) {
+        mySecondaryActions.remove(action);
+      }
+    } else {
+      if (mySecondaryActions == null) {
+        mySecondaryActions = new HashSet<AnAction>();
+      }
+
+      mySecondaryActions.add(action);
+    }
+  }
+
+  public final boolean isPrimary(AnAction action) {
+    return mySecondaryActions == null || !mySecondaryActions.contains(action);
+  }
+
+  protected final void replace(AnAction originalAction, AnAction newAction) {
+    if (mySecondaryActions != null) {
+      if (mySecondaryActions.contains(originalAction)) {
+        mySecondaryActions.remove(originalAction);
+        mySecondaryActions.add(newAction);
+      }
+    }
+  }
 }
