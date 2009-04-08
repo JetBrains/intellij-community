@@ -56,16 +56,42 @@ public class SvnChangeProvider implements ChangeProvider {
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
+    final SvnScopeZipper zipper = new SvnScopeZipper(dirtyScope);
+    zipper.run();
+
+    final Map<String, SvnScopeZipper.MyDirNonRecursive> nonRecursiveMap = zipper.getNonRecursiveDirs();
+    // translate into terms of File.getAbsolutePath()
+    final Map<String, Map> preparedMap = new HashMap<String, Map>();
+    for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
+      final Map result = new HashMap();
+      for (FilePath path : item.getChildrenList()) {
+        result.put(path.getName(), path.getIOFile());
+      }
+      preparedMap.put(item.getDir().getIOFile().getAbsolutePath(), result);
+    }
+    final ISVNStatusFileProvider fileProvider = new ISVNStatusFileProvider() {
+      public Map getChildrenFiles(File parent) {
+        return preparedMap.get(parent.getAbsolutePath());
+      }
+    };
+
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
-      for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
-        processFile(path, context, null, true, context.getClient());
+
+      for (FilePath path : zipper.getRecursiveDirs()) {
+        processFile(path, context, null, SVNDepth.INFINITY, context.getClient());
       }
 
-      for (FilePath path : dirtyScope.getDirtyFiles()) {
+      context.getClient().setFilesProvider(fileProvider);
+      for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
+        processFile(item.getDir(), context, null, SVNDepth.FILES, context.getClient());
+      }
+
+      // they are taken under non recursive: ENTRIES file is read anyway, so we get to know parent status also for free
+      /*for (FilePath path : zipper.getSingleFiles()) {
         FileStatus status = getParentStatus(context, path);
         processFile(path, context, status, false, context.getClient());
-      }
+      }*/
 
       for(SvnChangedFile copiedFile: context.getCopiedFiles()) {
         if (context.isCanceled()) {
@@ -87,7 +113,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder) throws SVNException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
-    processFile(path, context, null, recursive, context.getClient());
+    processFile(path, context, null, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, context.getClient());
   }
 
   private String changeListNameFromStatus(final SVNStatus status) {
@@ -272,14 +298,14 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private void processFile(FilePath path, final SvnChangeProviderContext context,
-                           final FileStatus parentStatus, final boolean recursively,
+                           final FileStatus parentStatus, final SVNDepth depth,
                            final SVNStatusClient statusClient) throws SVNException {
     if (context.isCanceled()) {
       throw new ProcessCanceledException();
     }
     try {
       if (path.isDirectory()) {
-        statusClient.doStatus(path.getIOFile(), SVNRevision.WORKING, recursively ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES,
+        statusClient.doStatus(path.getIOFile(), SVNRevision.WORKING, depth,
                               false, true, true, false, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) throws SVNException {
             if (context.isCanceled()) {
@@ -298,11 +324,12 @@ public class SvnChangeProvider implements ChangeProvider {
               } else {
                 // process children of this file with another client.
                 SVNStatusClient client = myVcs.createStatusClient();
-                if (recursively && path.isDirectory()) {
+                // todo take care, maybe also allow to query with other depth values
+                if (SVNDepth.INFINITY.equals(depth) && path.isDirectory()) {
                   VirtualFile[] children = vFile.getChildren();
                   for (VirtualFile aChildren : children) {
                     FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
-                    processFile(filePath, context, parentStatus, recursively, client);
+                    processFile(filePath, context, parentStatus, depth, client);
                   }
                 }
               }
@@ -324,11 +351,11 @@ public class SvnChangeProvider implements ChangeProvider {
           }
         }
         // process children recursively!
-        if (recursively && path.isDirectory() && virtualFile != null) {
+        if ((! SVNDepth.EMPTY.equals(depth)) && path.isDirectory() && virtualFile != null) {
           VirtualFile[] children = virtualFile.getChildren();
           for (VirtualFile child : children) {
             FilePath filePath = VcsUtil.getFilePath(child.getPath(), child.isDirectory());
-            processFile(filePath, context, parentStatus, recursively, statusClient);
+            processFile(filePath, context, parentStatus, SVNDepth.INFINITY.equals(depth) ? SVNDepth.INFINITY : SVNDepth.EMPTY, statusClient);
           }
         }
       }
