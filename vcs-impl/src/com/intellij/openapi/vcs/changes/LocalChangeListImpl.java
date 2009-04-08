@@ -25,6 +25,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   private final Project myProject;
   private Collection<Change> myChanges = new HashSet<Change>();
   private Collection<Change> myReadChangesCache = null;
+  private String myId;
   @NotNull private String myName;
   private String myComment = "";
 
@@ -42,6 +43,13 @@ public class LocalChangeListImpl extends LocalChangeList {
   private LocalChangeListImpl(Project project, final String name) {
     myProject = project;
     myName = name;
+    myId = UUID.randomUUID().toString();
+  }
+
+  private LocalChangeListImpl(LocalChangeListImpl origin) {
+    myId = origin.myId;
+    myName = origin.myName;
+    myProject = origin.myProject;
   }
 
   public synchronized Collection<Change> getChanges() {
@@ -57,6 +65,12 @@ public class LocalChangeListImpl extends LocalChangeList {
       }
       myReadChangesCache = Collections.unmodifiableCollection(changes);
     }
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myId;
   }
 
   @NotNull
@@ -254,7 +268,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   public synchronized LocalChangeList copy() {
-    final LocalChangeListImpl copy = new LocalChangeListImpl(myProject, myName);
+    final LocalChangeListImpl copy = new LocalChangeListImpl(this);
     copy.myComment = myComment;
     copy.myIsDefault = myIsDefault;
     copy.myIsInUpdate = myIsInUpdate;
@@ -286,6 +300,10 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   public void setEditHandler(final ChangeListEditHandler editHandler) {
     myEditHandler = editHandler;
+  }
+
+  public void setId(String id) {
+    myId = id;
   }
 
   private static class ChangeHashSet extends THashSet<Change> {
