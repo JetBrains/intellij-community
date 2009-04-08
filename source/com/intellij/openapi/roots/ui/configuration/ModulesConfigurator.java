@@ -212,6 +212,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
+          myFacetsConfigurator.applyEditors();
           final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
           for (final ModuleEditor moduleEditor : myModuleEditors) {
             final ModifiableRootModel model = moduleEditor.applyAndDispose();
@@ -219,7 +220,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               models.add(model);
             }
           }
-          myFacetsConfigurator.applyEditors();
 
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
           projectRootManager.multiCommit(myModuleModel, rootModels);
