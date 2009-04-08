@@ -209,6 +209,7 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void disposeUIResources() {
     if (myLibraryListener != null) {
+      ProjectLibraryTable.getInstance(myModule.getProject()).removeListener(myLibraryListener);
       LibraryTablesRegistrar.getInstance().getLibraryTable().removeListener(myLibraryListener);
     }
   }
