@@ -16,6 +16,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -269,6 +271,11 @@ public class XDebugSessionImpl implements XDebugSession {
   public void stepOut() {
     doResume();
     myDebugProcess.startStepOut();
+  }
+
+  public <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant) {
+    doResume();
+    handler.startStepInto(variant);
   }
 
   public void forceStepInto() {

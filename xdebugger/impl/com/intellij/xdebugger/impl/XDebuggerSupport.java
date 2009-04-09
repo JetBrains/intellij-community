@@ -64,15 +64,7 @@ public class XDebuggerSupport extends DebuggerSupport {
         session.forceStepInto();
       }
     };
-    mySmartStepIntoHandler = new XDebuggerSuspendedActionHandler() {
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
-        //todo[nik] implement
-      }
-
-      protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
-        return false;
-      }
-    };
+    mySmartStepIntoHandler = new XDebuggerSmartStepIntoHandler();
     myRunToCursorHandler = new XDebuggerRunToCursorActionHandler(false);
     myForceRunToCursor = new XDebuggerRunToCursorActionHandler(true);
     myResumeHandler = new XDebuggerActionHandler() {

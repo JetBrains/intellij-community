@@ -22,6 +22,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +87,15 @@ public abstract class XDebugProcess {
    * after returning from current method/function
    */
   public abstract void startStepOut();
+
+  /**
+   * Implement {@link com.intellij.xdebugger.stepping.XSmartStepIntoHandler} and return its instance from this method to enable Smart Step Into action
+   * @return {@link com.intellij.xdebugger.stepping.XSmartStepIntoHandler} instance
+   */
+  @Nullable
+  public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
+    return null;
+  }
 
   /**
    * Stop debugging and dispose resources

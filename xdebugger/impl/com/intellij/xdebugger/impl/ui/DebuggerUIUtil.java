@@ -1,10 +1,14 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.*;
 
 /**
  * User: lex
@@ -51,5 +55,15 @@ public class DebuggerUIUtil {
     else {
       ApplicationManager.getApplication().invokeLater(runnable);
     }
+  }
+
+  public static RelativePoint calcPopupLocation(Editor editor, final int line) {
+    Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
+
+    final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    if (!visibleArea.contains(p)) {
+      p = new Point((visibleArea.x + visibleArea.width) / 2, (visibleArea.y + visibleArea.height) / 2);
+    }
+    return new RelativePoint(editor.getContentComponent(), p);
   }
 }

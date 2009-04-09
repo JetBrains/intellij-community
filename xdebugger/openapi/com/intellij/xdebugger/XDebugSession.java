@@ -23,6 +23,8 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,4 +124,6 @@ public interface XDebugSession {
   void setPauseActionSupported(boolean isSupported);
 
   void rebuildViews();
+
+  <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant);
 }

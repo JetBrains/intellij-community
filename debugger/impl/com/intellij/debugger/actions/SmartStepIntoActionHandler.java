@@ -12,8 +12,6 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -28,11 +26,11 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -59,7 +57,7 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
             }
           });
           final ListPopup popup = JBPopupFactory.getInstance().createListPopup(popupStep);
-          final RelativePoint point = calcPopupLocation(((TextEditor)fileEditor).getEditor(), position);
+          final RelativePoint point = DebuggerUIUtil.calcPopupLocation(((TextEditor)fileEditor).getEditor(), position.getLine());
           popup.show(point);
         }
         return;
@@ -73,16 +71,6 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
     return new RequestHint.SmartStepFilter(method);
   }
 
-
-  private static RelativePoint calcPopupLocation(Editor editor, SourcePosition position) {
-    Point p = editor.logicalPositionToXY(new LogicalPosition(position.getLine() + 1, 0));
-
-    final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    if (!visibleArea.contains(p)) {
-      p = new Point((visibleArea.x + visibleArea.width) / 2, (visibleArea.y + visibleArea.height) / 2);
-    }
-    return new RelativePoint(editor.getContentComponent(), p);
-  }
 
   private static List<PsiMethod> findReferencedMethods(final SourcePosition position) {
     final int line = position.getLine();
