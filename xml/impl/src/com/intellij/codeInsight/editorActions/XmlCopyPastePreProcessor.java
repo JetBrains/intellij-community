@@ -13,6 +13,7 @@ import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -21,8 +22,9 @@ public class XmlCopyPastePreProcessor implements CopyPastePreProcessor {
 
   private static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
 
+  @Nullable
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
-    return text;
+    return null;
   }
 
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
