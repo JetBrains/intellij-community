@@ -72,7 +72,12 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
             }
           });
           for (final PsiClass psiClass : classes) {
-            if (!JavaCompletionUtil.isInExcludedPackage(psiClass)) {
+            final boolean isExcluded = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+              public Boolean compute() {
+                return JavaCompletionUtil.isInExcludedPackage(psiClass);
+              }
+            }).booleanValue();
+            if (!isExcluded) {
               result.addElement(AllClassesGetter.createLookupItem(psiClass));
             }
           }
