@@ -25,9 +25,11 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +107,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return XDebuggerSettingsManager.getInstance().getSettings(aClass);
   }
 
-  @Nullable 
+  @Override
+  public XValueContainer getValueContainer(DataContext dataContext) {
+    return XDebuggerTreeActionBase.getSelectedValue(dataContext);
+  }
+
+  @Nullable
   public XSourcePosition createPosition(@NotNull final VirtualFile file, final int line) {
     return XSourcePositionImpl.create(file, line);
   }
