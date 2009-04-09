@@ -261,4 +261,55 @@ public class PyUtil {
       return s.substring(0, Math.min(cut_pos, s.length()));
     }
   }
+
+  @Nullable
+  public static PyElement getCoveringPyElement(PsiElement element) {
+    while (element != null) {
+      if (element instanceof PyElement) return (PyElement)element;
+
+      element = element.getParent();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static <T extends PyElement> T getElementOrParent(final PyElement element, final Class<T> requiredElementType) {
+    if (element == null) return null;
+    if (requiredElementType.isInstance(element)) {
+      //noinspection unchecked
+      return (T)element;
+    }
+
+    final PsiElement parent = element.getParent();
+    if (parent != null && requiredElementType.isInstance(parent)) {
+      //noinspection unchecked
+      return (T)parent;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static <T extends PyElement> T getElementOrContaining(final PyElement element, final Class<T> requiredElementType) {
+    if (element == null) return null;
+    if (requiredElementType.isInstance(element)) {
+      //noinspection unchecked
+      return (T)element;
+    }
+
+    final PsiElement parent = element.getContainingElement(requiredElementType);
+    if (parent != null) {
+      //noinspection unchecked
+      return (T)parent;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static PyFile getContainingPyFile(PyElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+    return containingFile instanceof PyFile ? (PyFile)containingFile : null;
+  }
 }

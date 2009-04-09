@@ -142,15 +142,39 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
   public String suggestedName() {
     switch (myTestType) {
       case TEST_CLASS:
-        return "Tests in " + myClassName + " from " + myScriptName;
+        return "Tests in " + myClassName;
       case TEST_METHOD:
-        return "Tests in " + myClassName + "." + myMethodName + " from " + myScriptName;
+        return "Tests in " + myClassName + "." + myMethodName;
       case TEST_SCRIPT:
         return "Tests in " + myScriptName;
       case TEST_FOLDER:
         return "Tests in " + myFolderName;
       default:
         throw new IllegalStateException("Unknown test type: " + myTestType);
+    }
+  }
+
+  public boolean compareSettings(PythonUnitTestRunConfiguration cfg) {
+    if (cfg == null) return false;
+
+    if (getTestType() != cfg.getTestType()) return false;
+
+    switch (getTestType()) {
+      case TEST_FOLDER:
+        return getFolderName().equals(cfg.getFolderName());
+      case TEST_SCRIPT:
+        return getScriptName().equals(cfg.getScriptName()) && getWorkingDirectory().equals(cfg.getWorkingDirectory());
+      case TEST_CLASS:
+        return getScriptName().equals(cfg.getScriptName()) &&
+               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+               getClassName().equals(cfg.getClassName());
+      case TEST_METHOD:
+        return getScriptName().equals(cfg.getScriptName()) &&
+               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+               getClassName().equals(cfg.getClassName()) &&
+               getMethodName().equals(cfg.getMethodName());
+      default:
+        throw new IllegalStateException("Unknown test type: " + getTestType());
     }
   }
 

@@ -10,19 +10,21 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.options.SettingsEditor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AbstractPythonRunConfiguration extends RuntimeConfiguration
   implements LocatableConfiguration, AbstractPythonRunConfigurationParams {
-  private String myInterpreterOptions;
-  private String myWorkingDirectory;
-  private String mySdkHome;
+  private String myInterpreterOptions = "";
+  private String myWorkingDirectory = "";
+  private String mySdkHome = "";
   private boolean myPassParentEnvs;
   private Map<String, String> myEnvs = new HashMap<String, String>();
 
@@ -30,6 +32,7 @@ public abstract class AbstractPythonRunConfiguration extends RuntimeConfiguratio
     super(name, project, factory);
   }
 
+  @Nullable
   public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider configurationInfoProvider) {
     return null;
   }
@@ -42,7 +45,7 @@ public abstract class AbstractPythonRunConfiguration extends RuntimeConfiguratio
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
 
-    if (getSdkHome() == null) {
+    if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
       final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
       if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
         throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_sdk"));
@@ -55,7 +58,7 @@ public abstract class AbstractPythonRunConfiguration extends RuntimeConfiguratio
 
   public String getSdkHome() {
     String sdkHome = mySdkHome;
-    if (sdkHome == null) {
+    if (StringUtil.isEmptyOrSpaces(mySdkHome)) {
       final Sdk projectJdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
       assert projectJdk != null;
       sdkHome = projectJdk.getHomePath();

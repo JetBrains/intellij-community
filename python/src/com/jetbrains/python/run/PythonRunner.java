@@ -16,7 +16,7 @@ public class PythonRunner extends DefaultProgramRunner {
   }
 
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
-    return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) && profile instanceof PythonRunConfiguration;
+    return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) && profile instanceof AbstractPythonRunConfiguration;
   }
 
 }
