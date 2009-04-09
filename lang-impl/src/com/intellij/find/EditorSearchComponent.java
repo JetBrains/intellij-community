@@ -321,6 +321,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       myEditor.getCaretModel().moveToOffset(myEditor.getSelectionModel().getSelectionStart());
       myEditor.getSelectionModel().removeSelection();
     }
+    IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), false);
 
     myEditor.setHeaderComponent(null);
     addCurrentTextToRecents();
