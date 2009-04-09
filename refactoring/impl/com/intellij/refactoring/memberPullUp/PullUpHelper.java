@@ -96,8 +96,10 @@ public class PullUpHelper {
 
           final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(methodCopy);
           CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(method.getProject());
-          if (styleSettings.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(mySourceClass)) {
-            new AddAnnotationFix("java.lang.Override", method).invoke(method.getProject(), null, mySourceClass.getContainingFile());
+          if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
+            if ((PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myTargetSuperClass.isInterface()) || PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
+              new AddAnnotationFix("java.lang.Override", method).invoke(method.getProject(), null, mySourceClass.getContainingFile());
+            }
           }
           myMembersAfterMove.add(movedElement);
           if (isOriginalMethodAbstract) {
