@@ -127,7 +127,13 @@ public abstract class ElementPresentationManager {
     if (o instanceof GenericValue) {
       final GenericValue gv = (GenericValue)o;
       final String s = gv.getStringValue();
-      return s == null ? String.valueOf(gv.getValue()) : s;
+      if (s == null) {
+        final Object value = gv.getValue();
+        if (value != null) {
+          return String.valueOf(value);
+        }
+      }
+      return s;
     }
     return null;
   }
