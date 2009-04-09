@@ -4,7 +4,10 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.AbstractIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -18,19 +21,19 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.IntentionFilterOwner;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -188,12 +191,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         final AnAction action = renderer.getClickAction();
         if (action != null) {
           final String text = renderer.getTooltipText();
-          final IntentionAction actionAdapter;
           if (text != null) {
-            actionAdapter = new AbstractIntentionAction() {
+            final IntentionAction actionAdapter = new AbstractIntentionAction() {
               public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-                final RelativePoint relativePoint = PopupFactoryImpl.getInstance().guessBestPopupLocation(editor);
-                action.actionPerformed(new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(), ActionManager.getInstance(), 0));
+                final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+                action.actionPerformed(
+                  new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(),
+                                    ActionManager.getInstance(), 0));
               }
 
               @NotNull

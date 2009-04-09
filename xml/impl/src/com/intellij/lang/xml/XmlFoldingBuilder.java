@@ -15,9 +15,11 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlTagUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,14 +32,16 @@ public class XmlFoldingBuilder implements FoldingBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.xml.XmlFoldingBuilder");
   private static final TokenSet XML_ATTRIBUTE_SET = TokenSet.create(XmlElementType.XML_ATTRIBUTE);
 
-  public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
+  @NotNull
+  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     final PsiElement psiElement = node.getPsi();
     XmlDocument xmlDocument = null;
     
     if (psiElement instanceof XmlFile) { 
-      XmlFile file = ((XmlFile)psiElement);
+      XmlFile file = (XmlFile)psiElement;
       xmlDocument = file.getDocument();
-    } else if (psiElement instanceof XmlDocument) {
+    }
+    else if (psiElement instanceof XmlDocument) {
       xmlDocument = (XmlDocument)psiElement;
     }
     
@@ -54,11 +58,13 @@ public class XmlFoldingBuilder implements FoldingBuilder {
         addElementsToFold(foldings, rootTag, document);
 
         // HTML tags in JSP
-        for(PsiElement sibling = rootTag.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
-          if (sibling instanceof XmlTag) addElementsToFold(foldings, (XmlElement) sibling, document);
+        for (PsiElement sibling = rootTag.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
+          if (sibling instanceof XmlTag) addElementsToFold(foldings, (XmlElement)sibling, document);
         }
       }
-      else doAddForChildren(xmlDocument, foldings, document);
+      else {
+        doAddForChildren(xmlDocument, foldings, document);
+      }
     }
 
     return foldings != null ? foldings.toArray(new FoldingDescriptor[foldings.size()]):FoldingDescriptor.EMPTY;
@@ -76,24 +82,24 @@ public class XmlFoldingBuilder implements FoldingBuilder {
     for (PsiElement child : children) {
       ProgressManager.getInstance().checkCanceled();
 
-      if (child instanceof XmlTag ||
-          child instanceof XmlConditionalSection
-         ) {
+      if (child instanceof XmlTag || child instanceof XmlConditionalSection) {
         addElementsToFold(foldings, (XmlElement)child, document);
       }
-      else if(child instanceof XmlComment) {
-        addToFold(foldings, (PsiElement)child, document);
-      } else if (child instanceof XmlText) {
+      else if (child instanceof XmlComment) {
+        addToFold(foldings, child, document);
+      }
+      else if (child instanceof XmlText) {
         final PsiElement[] grandChildren = child.getChildren();
 
-        for(PsiElement grandChild:grandChildren) {
+        for (PsiElement grandChild : grandChildren) {
           ProgressManager.getInstance().checkCanceled();
 
           if (grandChild instanceof XmlComment) {
             addToFold(foldings, grandChild, document);
           }
         }
-      } else {
+      }
+      else {
         final Language language = child.getLanguage();
         if (!(language instanceof XMLLanguage) && language != Language.ANY) {
           final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
@@ -101,11 +107,7 @@ public class XmlFoldingBuilder implements FoldingBuilder {
           if (foldingBuilder != null) {
             final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(child.getNode(), document);
 
-            if (foldingDescriptors != null) {
-              for (FoldingDescriptor descriptor : foldingDescriptors) {
-                foldings.add(descriptor);
-              }
-            }
+            foldings.addAll(Arrays.asList(foldingDescriptors));
           }
         }
       }
@@ -149,10 +151,12 @@ public class XmlFoldingBuilder implements FoldingBuilder {
 
       if (textRange.getEndOffset() - textRange.getStartOffset() > commentStartOffset + commentEndOffset) {
         return new TextRange(textRange.getStartOffset() + commentStartOffset, textRange.getEndOffset() - commentEndOffset);
-      } else {
+      }
+      else {
         return null;
       }
-    } else if (element instanceof XmlConditionalSection) {
+    }
+    else if (element instanceof XmlConditionalSection) {
       final XmlConditionalSection conditionalSection = (XmlConditionalSection)element;
       final TextRange textRange = element.getTextRange();
       final PsiElement bodyStart = conditionalSection.getBodyStart();
@@ -161,10 +165,12 @@ public class XmlFoldingBuilder implements FoldingBuilder {
 
       if (textRange.getEndOffset() - textRange.getStartOffset() > startOffset + endOffset) {
         return new TextRange(textRange.getStartOffset() + startOffset, textRange.getEndOffset() - endOffset);
-      } else {
+      }
+      else {
         return null;
       }
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -198,7 +204,7 @@ public class XmlFoldingBuilder implements FoldingBuilder {
     return false;
   }
 
-  public String getPlaceholderText(ASTNode node) {
+  public String getPlaceholderText(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
     if (psi instanceof XmlTag ||
         psi instanceof XmlComment ||
@@ -207,11 +213,8 @@ public class XmlFoldingBuilder implements FoldingBuilder {
     return null;
   }
 
-  public boolean isCollapsedByDefault(ASTNode node) {
+  public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
-    if (psi instanceof XmlTag) {
-      return XmlFoldingSettings.getInstance().isCollapseXmlTags();
-    }
-    return false;
+    return psi instanceof XmlTag && XmlFoldingSettings.getInstance().isCollapseXmlTags();
   }
 }

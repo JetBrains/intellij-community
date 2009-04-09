@@ -202,6 +202,11 @@ public class MyTestInjector {
             placesToInject.addPlace(gwt, textRange, header, "}");
             return;
           }
+          PsiElement parent = host.getParent();
+          if (parent instanceof PsiMethod && ((PsiMethod)parent).getName().equals("xml")) {
+            placesToInject.addPlace(StdLanguages.XML, new TextRange(2,host.getTextLength()-2), null,null);
+            return;
+          }
         }
         // inject to all string literal initializers of variables named 'ql'
         if (host instanceof PsiLiteralExpression && ((PsiLiteralExpression)host).getValue() instanceof String) {

@@ -23,6 +23,8 @@ import com.intellij.openapi.util.Key;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Used by LanguageFolding class if more than one FoldingBuilder were specified
  * for a particular language.
@@ -39,7 +41,8 @@ class CompositeFoldingBuilder implements FoldingBuilder {
     myBuilders = builders;
   }
 
-  public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
+  @NotNull
+  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     final List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
 
     for (FoldingBuilder builder : myBuilders) {
@@ -52,12 +55,12 @@ class CompositeFoldingBuilder implements FoldingBuilder {
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
-  public String getPlaceholderText(ASTNode node) {
+  public String getPlaceholderText(@NotNull ASTNode node) {
     final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
     return builder == null ? node.getText() : builder.getPlaceholderText(node);
   }
 
-  public boolean isCollapsedByDefault(ASTNode node) {
+  public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
     return builder == null ? false : builder.isCollapsedByDefault(node);
   }

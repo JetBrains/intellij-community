@@ -18,6 +18,7 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,7 +38,8 @@ public interface FoldingBuilder {
    *                 numbers for folding regions.
    * @return the array of folding descriptors.
    */
-  FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document);
+  @NotNull
+  FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document);
 
   /**
    * Returns the text which is displayed in the editor for the folding region related to the
@@ -47,7 +49,7 @@ public interface FoldingBuilder {
    * @return the placeholder text.
    */
   @Nullable
-  String getPlaceholderText(ASTNode node);
+  String getPlaceholderText(@NotNull ASTNode node);
 
   /**
    * Returns the default collapsed state for the folding region related to the specified node.
@@ -55,5 +57,5 @@ public interface FoldingBuilder {
    * @param node the node for which the collapsed state is requested.
    * @return true if the region is collapsed by default, false otherwise.
    */
-  boolean isCollapsedByDefault(ASTNode node);
+  boolean isCollapsedByDefault(@NotNull ASTNode node);
 }

@@ -1,21 +1,26 @@
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.HashMap;
+import com.intellij.psi.PsiFile;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 class EditorFoldingInfo {
   private static final Key<EditorFoldingInfo> KEY = Key.create("EditorFoldingInfo.KEY");
 
-  private Map<FoldRegion, PsiElement> myFoldRegionToSmartPointerMap = new HashMap<FoldRegion, PsiElement>();
+  private final Map<FoldRegion, PsiElement> myFoldRegionToSmartPointerMap = new THashMap<FoldRegion, PsiElement>();
 
-  public static EditorFoldingInfo get(Editor editor) {
+  public static EditorFoldingInfo get(@NotNull Editor editor) {
     EditorFoldingInfo info = editor.getUserData(KEY);
     if (info == null){
       info = new EditorFoldingInfo();
@@ -24,20 +29,32 @@ class EditorFoldingInfo {
     return info;
   }
 
-  public PsiElement getPsiElement(FoldRegion region) {
+  public PsiElement getPsiElement(@NotNull FoldRegion region) {
     final PsiElement element = myFoldRegionToSmartPointerMap.get(region);
     return element != null && element.isValid() ? element:null;
   }
+  public TextRange getPsiElementRange(@NotNull FoldRegion region) {
+    PsiElement element = getPsiElement(region);
+    if (element == null) return null;
+    PsiFile containingFile = element.getContainingFile();
+    InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(containingFile.getProject());
+    boolean isInjected = injectedManager.isInjectedFragment(containingFile);
+    TextRange range = element.getTextRange();
+    if (isInjected) {
+      range = injectedManager.injectedToHost(element, range);
+    }
+    return range;
+  }
 
-  public boolean isLightRegion(FoldRegion region) {
+  public boolean isLightRegion(@NotNull FoldRegion region) {
     return myFoldRegionToSmartPointerMap.get(region) == null;
   }
 
-  public void addRegion(FoldRegion region, PsiElement element){
-    myFoldRegionToSmartPointerMap.put(region, element);
+  public void addRegion(@NotNull FoldRegion region, @NotNull FoldingDescriptor element){
+    myFoldRegionToSmartPointerMap.put(region, element.getElement().getPsi());
   }
 
-  public void removeRegion(FoldRegion region){
+  public void removeRegion(@NotNull FoldRegion region){
     myFoldRegionToSmartPointerMap.remove(region);
   }
 

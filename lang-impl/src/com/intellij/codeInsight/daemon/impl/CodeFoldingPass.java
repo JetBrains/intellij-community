@@ -17,12 +17,19 @@ class CodeFoldingPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    myRunnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor);
+    Runnable runnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor);
+    synchronized (this) {
+      myRunnable = runnable;
+    }
   }
 
   public void doApplyInformationToEditor() {
-    if (myRunnable != null){
-      myRunnable.run();
+    Runnable runnable;
+    synchronized (this) {
+      runnable = myRunnable;
+    }
+    if (runnable != null){
+      runnable.run();
     }
   }
 }

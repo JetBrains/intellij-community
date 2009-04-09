@@ -45,10 +45,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     myProject = project;
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       public void updateStarted(final Document doc) {
-        resetFoldingInfo(doc);
-      }
-
-      public void updateFinished(final Document doc) {
+        resetFoldingInfo(doc); //TODO RangeMarkers tree convert
       }
     });
   }
@@ -152,10 +149,10 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
             return;
           }
 
-          PsiElement psiElement = EditorFoldingInfo.get(editor).getPsiElement(fold);
-          if (psiElement == null) return;
+          TextRange psiElementRange = EditorFoldingInfo.get(editor).getPsiElementRange(fold);
+          if (psiElementRange == null) return;
 
-          int textOffset = psiElement.getTextOffset();
+          int textOffset = psiElementRange.getStartOffset();
           Point foldStartXY = editor.visualPositionToXY(editor.offsetToVisualPosition(textOffset));
           Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
           if (visibleArea.y > foldStartXY.y) {
@@ -194,15 +191,15 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     EditorFactory.getInstance().getEventMulticaster().removeEditorMouseMotionListener(myMouseMotionListener);
   }
 
-  public FoldRegion findFoldRegion(Editor editor, int startOffset, int endOffset) {
+  public FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
     return FoldingUtil.findFoldRegion(editor, startOffset, endOffset);
   }
 
-  public FoldRegion[] getFoldRegionsAtOffset(Editor editor, int offset) {
+  public FoldRegion[] getFoldRegionsAtOffset(@NotNull Editor editor, int offset) {
     return FoldingUtil.getFoldRegionsAtOffset(editor, offset);
   }
 
-  public void updateFoldRegions(Editor editor) {
+  public void updateFoldRegions(@NotNull Editor editor) {
     PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
     Runnable runnable = updateFoldRegions(editor, false);
     if (runnable != null) {
@@ -211,7 +208,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   @Override
-  public void forceDefaultState(final Editor editor) {
+  public void forceDefaultState(@NotNull final Editor editor) {
     PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
     Runnable runnable = updateFoldRegions(editor, true);
     if (runnable != null) {
@@ -232,7 +229,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   @Nullable
-  public Runnable updateFoldRegionsAsync(Editor editor) {
+  public Runnable updateFoldRegionsAsync(@NotNull Editor editor) {
     return updateFoldRegions(editor, false);
   }
 
@@ -248,21 +245,21 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     }
   }
 
-  public CodeFoldingState saveFoldingState(Editor editor) {
+  public CodeFoldingState saveFoldingState(@NotNull Editor editor) {
     DocumentFoldingInfo info = getDocumentFoldingInfo(editor.getDocument());
     info.loadFromEditor(editor);
     return info;
   }
 
-  public void restoreFoldingState(Editor editor, CodeFoldingState state) {
+  public void restoreFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state) {
     ((DocumentFoldingInfo)state).setToEditor(editor);
   }
 
-  public void writeFoldingState(CodeFoldingState state, Element element) throws WriteExternalException {
+  public void writeFoldingState(@NotNull CodeFoldingState state, @NotNull Element element) throws WriteExternalException {
     ((DocumentFoldingInfo)state).writeExternal(element);
   }
 
-  public CodeFoldingState readFoldingState(Element element, Document document) {
+  public CodeFoldingState readFoldingState(@NotNull Element element, @NotNull Document document) {
     DocumentFoldingInfo info = getDocumentFoldingInfo(document);
     info.readExternal(element);
     return info;
@@ -278,7 +275,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     return info;
   }
 
-  public static void resetFoldingInfo(@NotNull final Document document) {
+  private static void resetFoldingInfo(@NotNull final Document document) {
     final Boolean foldingInfoStatus = document.getUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY);
     if (Boolean.TRUE.equals(foldingInfoStatus)) {
       final Editor[] editors = EditorFactory.getInstance().getEditors(document);

@@ -20,13 +20,12 @@ public class CollapseRegionHandler implements CodeInsightActionHandler {
         if (region != null && region.isExpanded()){
           region.setExpanded(false);
         }
-        else{
+        else {
           int offset = editor.getCaretModel().getOffset();
           FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, offset);
-          for(int i = 0; i < regions.length; i++){
-            region = regions[i];
-            if (region.isExpanded()){
-              region.setExpanded(false);
+          for (FoldRegion region1 : regions) {
+            if (region1.isExpanded()) {
+              region1.setExpanded(false);
               break;
             }
           }

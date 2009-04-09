@@ -44,6 +44,7 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   @Nullable
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element);
 
+  @NotNull
   public abstract TextRange injectedToHost(@NotNull PsiElement element, @NotNull TextRange textRange);
   public abstract int injectedToHost(@NotNull PsiElement element, int offset);
 

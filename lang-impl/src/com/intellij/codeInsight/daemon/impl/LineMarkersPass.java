@@ -64,7 +64,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
       }
       final List<LineMarkerProvider> providers = LineMarkerProviders.INSTANCE.allForLanguage(language);
       addLineMarkers(elements, providers, lineMarkers);
-      collectLineMarkersForInjected(lineMarkers, InjectedLanguageManager.getInstance(myProject), elements, this, myFile);
+      collectLineMarkersForInjected(lineMarkers, elements, this, myFile);
     }
 
     myMarkers = lineMarkers;
@@ -85,19 +85,20 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     }
   }
 
-  public static void collectLineMarkersForInjected(final List<LineMarkerInfo> result, final InjectedLanguageManager manager, List<PsiElement> elements,
+  public static void collectLineMarkersForInjected(final List<LineMarkerInfo> result, List<PsiElement> elements,
                                                    final LineMarkersProcessor processor,
                                                    PsiFile file) {
+    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
     final List<LineMarkerInfo> injectedMarkers = new ArrayList<LineMarkerInfo>();
 
     for (PsiElement element : elements) {
       InjectedLanguageUtil.enumerate(element, file, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull final PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+          Document document = PsiDocumentManager.getInstance(injectedPsi.getProject()).getCachedDocument(injectedPsi);
+          if (!(document instanceof DocumentWindow)) return;
           List<PsiElement> injElements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
           final List<LineMarkerProvider> providers = LineMarkerProviders.INSTANCE.allForLanguage(injectedPsi.getLanguage());
           processor.addLineMarkers(injElements, providers, injectedMarkers);
-          Document document = PsiDocumentManager.getInstance(injectedPsi.getProject()).getCachedDocument(injectedPsi);
-          if (!(document instanceof DocumentWindow)) return;
           for (final LineMarkerInfo injectedMarker : injectedMarkers) {
             GutterIconRenderer gutterRenderer = injectedMarker.createGutterRenderer();
             TextRange injectedRange = new TextRange(injectedMarker.startOffset, injectedMarker.endOffset);

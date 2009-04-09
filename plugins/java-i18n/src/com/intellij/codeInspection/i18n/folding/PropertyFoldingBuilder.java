@@ -17,11 +17,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Konstantin Bulenkov
  */
 public class PropertyFoldingBuilder implements FoldingBuilder {
-  public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
+  @NotNull
+  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     final PsiElement element = node.getPsi();
     if (!(element instanceof PsiJavaFile)) {
       return FoldingDescriptor.EMPTY;
@@ -70,7 +73,7 @@ public class PropertyFoldingBuilder implements FoldingBuilder {
 
 
 
-  public String getPlaceholderText(ASTNode node) {
+  public String getPlaceholderText(@NotNull ASTNode node) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     if (element instanceof PsiLiteralExpression) {
       return getI18nMessage((PsiLiteralExpression)element);
@@ -126,7 +129,7 @@ public class PropertyFoldingBuilder implements FoldingBuilder {
     return literal.getText();
   }
 
-  public boolean isCollapsedByDefault(ASTNode node) {
+  public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return JavaCodeFoldingSettings.getInstance().isCollapseI18nMessages();
   }
 

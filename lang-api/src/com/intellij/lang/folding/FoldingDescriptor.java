@@ -17,10 +17,13 @@ package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author max
  * @see FoldingBuilder
- */
+ */                                                    
 public class FoldingDescriptor {
   public static final FoldingDescriptor[] EMPTY = new FoldingDescriptor[0];
 
@@ -44,7 +47,7 @@ public class FoldingDescriptor {
    *              {@link FoldingBuilder#isCollapsedByDefault(com.intellij.lang.ASTNode)}.
    * @param range The folded text range.
    */
-  public FoldingDescriptor(final ASTNode node, final TextRange range) {
+  public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range) {
     this(node, range, null);
   }
 
@@ -57,17 +60,18 @@ public class FoldingDescriptor {
    * @param range The folded text range.
    * @param group Regions with the same group instance expand and collapse together.
    */
-  public FoldingDescriptor(ASTNode element, TextRange range, @Nullable FoldingGroup group) {
-    myElement = element;
+  public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group) {
+    assert range.getStartOffset() + 1 < range.getEndOffset() : range;
+    myElement = node;
     ProperTextRange.assertProperRange(range);
     myRange = range;
     myGroup = group;
   }
 
   /**
-   * Returns the node to which the folding region is related.
    * @return the node to which the folding region is related.
    */
+  @NotNull 
   public ASTNode getElement() {
     return myElement;
   }
@@ -77,7 +81,15 @@ public class FoldingDescriptor {
    * @return the folded text range.
    */
   public TextRange getRange() {
-    return myRange;
+    PsiElement element = myElement.getPsi();
+    PsiFile containingFile = element.getContainingFile();
+    InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(containingFile.getProject());
+    boolean isInjected = injectedManager.isInjectedFragment(containingFile);
+    TextRange range = myRange;
+    if (isInjected) {
+      range = injectedManager.injectedToHost(element, range);
+    }
+    return range;
   }
 
   @Nullable

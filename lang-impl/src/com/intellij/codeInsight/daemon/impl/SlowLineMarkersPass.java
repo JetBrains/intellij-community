@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -41,14 +40,13 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getLanguages();
     List<LineMarkerInfo> markers = new SmartList<LineMarkerInfo>();
-    InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(myProject);
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
       if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       final List<LineMarkerProvider> providers = LineMarkerProviders.INSTANCE.allForLanguage(language);
       addLineMarkers(elements, providers, markers);
-      LineMarkersPass.collectLineMarkersForInjected(markers, injectedManager, elements, this, myFile);
+      LineMarkersPass.collectLineMarkersForInjected(markers, elements, this, myFile);
     }
 
     myMarkers = markers;

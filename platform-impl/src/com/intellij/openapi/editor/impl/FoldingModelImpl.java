@@ -49,6 +49,16 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       return o1.getStartOffset() - o2.getStartOffset();
     }
   };
+  private static final Comparator<FoldRegion> BY_END_OFFSET = new Comparator<FoldRegion>() {
+    public int compare(FoldRegion r1, FoldRegion r2) {
+      int end1 = r1.getEndOffset();
+      int end2 = r2.getEndOffset();
+      if (end1 < end2) return -1;
+      if (end1 > end2) return 1;
+      return 0;
+    }
+  };
+  private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
   public FoldingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -137,7 +147,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return false;
   }
 
-  public void runBatchFoldingOperation(Runnable operation) {
+  public void runBatchFoldingOperation(@NotNull Runnable operation) {
     runBatchFoldingOperation(operation, false);
   }
 
@@ -165,7 +175,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myDoNotCollapseCaret = oldDontCollapseCaret;
   }
 
-  public void runBatchFoldingOperationDoNotCollapseCaret(final Runnable operation) {
+  public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull final Runnable operation) {
     runBatchFoldingOperation(operation, true);
   }
 
@@ -417,15 +427,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
       myCachedTopLevelRegions = topLevels.isEmpty() ? FoldRegion.EMPTY_ARRAY : topLevels.toArray(new FoldRegion[topLevels.size()]);
 
-      Arrays.sort(myCachedTopLevelRegions, new Comparator<FoldRegion>() {
-        public int compare(FoldRegion r1, FoldRegion r2) {
-          int end1 = r1.getEndOffset();
-          int end2 = r2.getEndOffset();
-          if (end1 < end2) return -1;
-          if (end1 > end2) return 1;
-          return 0;
-        }
-      });
+      Arrays.sort(myCachedTopLevelRegions, BY_END_OFFSET);
 
       FoldRegion[] visibleArrayed = visible.toArray(new FoldRegion[visible.size()]);
       for (FoldRegion visibleRegion : visibleArrayed) {
@@ -439,15 +441,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
       myCachedVisible = visible.toArray(new FoldRegion[visible.size()]);
 
-      Arrays.sort(myCachedVisible, new Comparator<FoldRegion>() {
-        public int compare(FoldRegion r1, FoldRegion r2) {
-          int end1 = r1.getEndOffset();
-          int end2 = r2.getEndOffset();
-          if (end1 < end2) return 1;
-          if (end1 > end2) return -1;
-          return 0;
-        }
-      });
+      Arrays.sort(myCachedVisible, BY_END_OFFSET_REVERSE);
 
       updateCachedOffsets();
     }
@@ -555,7 +549,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
 
     FoldRegion[] fetchVisible() {
-      if (!isFoldingEnabled()) return new FoldRegion[0];
+      if (!isFoldingEnabled()) return FoldRegion.EMPTY_ARRAY;
       return myCachedVisible;
     }
 
@@ -573,9 +567,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       final int s2 = r2.getStartOffset();
       final int e1 = r1.getEndOffset();
       final int e2 = r2.getEndOffset();
-      return (s1 == s2 && e1 == e2) ||
-             (s1 < s2 && s2 < e1 && e1 < e2) ||
-             (s2 < s1 && s1 < e2 && e2 < e1);
+      return s1 == s2 && e1 == e2 || s1 < s2 && s2 < e1 && e1 < e2 || s2 < s1 && s1 < e2 && e2 < e1;
     }
 
     private boolean contains(FoldRegion region, int offset) {
@@ -583,7 +575,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
 
     public FoldRegion[] fetchCollapsedAt(int offset) {
-      if (!isFoldingEnabled()) return new FoldRegion[0];
+      if (!isFoldingEnabled()) return FoldRegion.EMPTY_ARRAY;
       ArrayList<FoldRegion> allCollapsed = new ArrayList<FoldRegion>();
       for (FoldRegion region : myRegions) {
         if (!region.isExpanded() && contains(region, offset)) {
@@ -607,7 +599,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
 
     FoldRegion[] fetchAllRegions() {
-      if (!isFoldingEnabled()) return new FoldRegion[0];
+      if (!isFoldingEnabled()) return FoldRegion.EMPTY_ARRAY;
 
       return myRegions.toArray(new FoldRegion[myRegions.size()]);
     }
@@ -653,7 +645,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
 
     public FoldRegion[] fetchAllRegionsIncludingInvalid() {
-      if (!FoldingModelImpl.this.isFoldingEnabled()) return new FoldRegion[0];
+      if (!FoldingModelImpl.this.isFoldingEnabled()) return FoldRegion.EMPTY_ARRAY;
 
       return myRegions.toArray(new FoldRegion[myRegions.size()]);
     }

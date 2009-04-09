@@ -102,6 +102,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return null;
   }
 
+  @NotNull
   public TextRange injectedToHost(@NotNull PsiElement element, @NotNull TextRange textRange) {
     ProperTextRange.assertProperRange(textRange);
     PsiFile file = element.getContainingFile();
@@ -192,6 +193,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
    *  @param rangeToEdit range in encoded(raw) PSI
    *  @return list of ranges in encoded (raw) PSI
    */
+  @SuppressWarnings({"ConstantConditions"})
   @NotNull
   public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
     Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);

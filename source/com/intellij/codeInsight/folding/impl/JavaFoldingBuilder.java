@@ -23,6 +23,7 @@ import com.intellij.util.Function;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +33,8 @@ public class JavaFoldingBuilder implements FoldingBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaFoldingBuilder");
   private static final String SMILEY = "<~>";
 
-  public FoldingDescriptor[] buildFoldRegions(final ASTNode node, final Document document) {
+  @NotNull
+  public FoldingDescriptor[] buildFoldRegions(@NotNull final ASTNode node, @NotNull final Document document) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     if (!(element instanceof PsiJavaFile)) {
       return FoldingDescriptor.EMPTY;
@@ -127,7 +129,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
     }
   }
 
-  public String getPlaceholderText(final ASTNode node) {
+  public String getPlaceholderText(@NotNull final ASTNode node) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     if (element instanceof PsiImportList) {
       return "...";
@@ -150,7 +152,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
     return "...";
   }
 
-  public boolean isCollapsedByDefault(final ASTNode node) {
+  public boolean isCollapsedByDefault(@NotNull final ASTNode node) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
     if (element instanceof PsiNewExpression || element instanceof PsiJavaToken) {
