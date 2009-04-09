@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -136,6 +138,15 @@ public abstract class AnAction {
         actionList.add(this);
       }
     }
+  }
+
+  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @NotNull final JComponent component, @NotNull Disposable parentDisposable) {
+    registerCustomShortcutSet(shortcutSet, component);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        unregisterCustomShortcutSet(component);
+      }
+    });
   }
 
   public final void unregisterCustomShortcutSet(JComponent component){

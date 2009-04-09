@@ -35,6 +35,7 @@ public abstract class XDebuggerEditorBase {
 
   public abstract String getText();
 
+  @Nullable
   public abstract JComponent getPreferredFocusedComponent();
 
   public abstract void selectAll();

@@ -600,6 +600,7 @@ public abstract class DialogWrapper {
    * @return component which should be focused when the dialog appears
    *         on the screen.
    */
+  @Nullable
   public JComponent getPreferredFocusedComponent() {
     return null;
   }

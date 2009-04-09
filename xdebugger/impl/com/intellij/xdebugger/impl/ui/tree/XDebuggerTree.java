@@ -36,7 +36,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
   private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createEmptyCOWList();
   private final XDebugSession mySession;
 
-  public XDebuggerTree(final @NotNull XDebugSession session, final XDebuggerEditorsProvider editorsProvider, final XSourcePosition sourcePosition) {
+  public XDebuggerTree(final @NotNull XDebugSession session, final @NotNull XDebuggerEditorsProvider editorsProvider, final @Nullable XSourcePosition sourcePosition) {
     mySession = session;
     myProject = session.getProject();
     myEditorsProvider = editorsProvider;
