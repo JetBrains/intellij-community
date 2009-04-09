@@ -37,7 +37,7 @@ public class AlienDirtyScope extends VcsDirtyScope {
   }
 
   public Set<FilePath> getDirtyFilesNoExpand() {
-    return null;
+    return myFiles;
   }
 
   public Set<FilePath> getRecursivelyDirtyDirectories() {
