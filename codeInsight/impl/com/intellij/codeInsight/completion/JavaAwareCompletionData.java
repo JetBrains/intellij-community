@@ -274,4 +274,6 @@ public class JavaAwareCompletionData extends CompletionData{
     return ret;
   }
 
+  public void fillCompletions(CompletionParameters parameters, CompletionResultSet result) {
+  }
 }

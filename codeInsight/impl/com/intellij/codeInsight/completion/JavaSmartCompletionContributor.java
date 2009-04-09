@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
@@ -62,8 +61,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   private static final OrFilter THROWABLE_TYPE_FILTER = new OrFilter(
       new GeneratorFilter(AssignableGroupFilter.class, new ThrowsListGetter()),
       new AssignableFromFilter("java.lang.RuntimeException"));
-  public static final ElementPattern<PsiElement> INSIDE_EXPRESSION = PlatformPatterns.or(
-        psiElement().withParent(PsiExpression.class),
+  public static final ElementPattern<PsiElement> INSIDE_EXPRESSION = or(
+        psiElement().withParent(PsiExpression.class).andNot(psiElement().withParent(PsiLiteralExpression.class)),
         psiElement().inside(PsiClassObjectAccessExpression.class),
         psiElement().inside(PsiThisExpression.class),
         psiElement().inside(PsiSuperExpression.class)

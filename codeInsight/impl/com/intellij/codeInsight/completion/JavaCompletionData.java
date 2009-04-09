@@ -2,8 +2,12 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.patterns.StandardPatterns.not;
@@ -16,18 +20,19 @@ import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.element.ReferenceOnFilter;
-import com.intellij.psi.filters.getters.UpWalkGetter;
 import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class JavaCompletionData extends JavaAwareCompletionData{
 
   private static final @NonNls String[] ourBlockFinalizers = {"{", "}", ";", ":", "else"};
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
 
   public JavaCompletionData(){
     declareCompletionSpaces();
@@ -375,16 +380,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       registerVariant(variant);
     }
 
-    {
-// Keyword completion in start of declaration
-      final CompletionVariant variant = new CompletionVariant(PsiMethod.class,
-                                                              or(new FilterPattern(END_OF_BLOCK),
-                                                                 psiElement().withParent(
-                                                                     psiElement(PsiReferenceExpression.class).withParent(PsiTypeCastExpression.class))));
-      variant.addCompletion(PsiKeyword.THIS, TailType.NONE);
-      variant.addCompletion(PsiKeyword.SUPER, TailType.NONE);
-      registerVariant(variant);
-    }
 
     {
 // Keyword completion in start of declaration
@@ -396,8 +391,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     {
 // Keyword completion in returns  !!!!
       final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new LeftNeighbour(new TextFilter(PsiKeyword.RETURN)));
-      variant.addCompletion(PsiKeyword.THIS, TailType.NONE);
-      variant.addCompletion(PsiKeyword.SUPER, TailType.NONE);
       variant.addCompletion(PsiKeyword.TRUE, TailType.NONE);
       variant.addCompletion(PsiKeyword.FALSE, TailType.NONE);
       registerVariant(variant);
@@ -468,21 +461,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     {
-// Super/This keyword completion
-      final ElementFilter position =
-        new LeftNeighbour(
-          new AndFilter(
-            new TextFilter("."),
-            new LeftNeighbour(
-              new ReferenceOnFilter(new GeneratorFilter(EqualsFilter.class, new UpWalkGetter(new ClassFilter(PsiClass.class))))
-            )));
-      final CompletionVariant variant = new CompletionVariant(PsiMethod.class, position);
-      variant.includeScopeClass(PsiVariable.class);
-      variant.addCompletion(PsiKeyword.SUPER, TailType.NONE);
-      variant.addCompletion(PsiKeyword.THIS, TailType.NONE);
-      registerVariant(variant);
-    }
-    {
 // Class field completion
 
       final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new LeftNeighbour(
@@ -526,13 +504,11 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       registerVariant(variant);
     }
 
-    final AndFilter startSwitch = new AndFilter(END_OF_BLOCK, new LeftNeighbour(
-          new AndFilter(new TextFilter("{"), new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2))));
     {
       final CompletionVariant variant = new CompletionVariant(
         new AndFilter(
           END_OF_BLOCK,
-          new NotFilter(startSwitch),
+          new NotFilter(START_SWITCH),
           new OrFilter(
             new ParentElementFilter(new ClassFilter(PsiSwitchLabelStatement.class)),
             new LeftNeighbour(new OrFilter(
@@ -547,7 +523,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     {
-      final CompletionVariant variant = new CompletionVariant(startSwitch);
+      final CompletionVariant variant = new CompletionVariant(START_SWITCH);
       variant.includeScopeClass(PsiElement.class, true);
       variant.addCompletion(PsiKeyword.CASE, TailType.SPACE);
       variant.addCompletion(PsiKeyword.DEFAULT, TailType.CASE_COLON);
@@ -705,6 +681,16 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     START_OF_CODE_FRAGMENT
   );
 
+  private static final AndFilter START_SWITCH = new AndFilter(END_OF_BLOCK, new LeftNeighbour(
+        new AndFilter(new TextFilter("{"), new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2))));
+
+  private static final ElementPattern<Object> SUPER_OR_THIS_PATTERN =
+    and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
+        not(psiElement().afterLeaf(PsiKeyword.CASE)),
+        not(psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.THIS, PsiKeyword.SUPER))),
+        not(new FilterPattern(START_SWITCH)));
+
+
   protected static final AndFilter CLASS_START = new AndFilter(
     new OrFilter(
       END_OF_BLOCK,
@@ -725,4 +711,75 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   private final static ElementFilter CLASS_BODY = new OrFilter(
     new AfterElementFilter(new TextFilter("{")),
     new ScopeFilter(new ClassFilter(JspClassLevelDeclarationStatement.class)));
+
+  @Override
+  public void fillCompletions(CompletionParameters parameters, CompletionResultSet result) {
+    final PsiElement position = parameters.getPosition();
+    if (SUPER_OR_THIS_PATTERN.accepts(position)) {
+      if (AFTER_DOT.accepts(position) && !isInsideQualifierClass(position)) return;
+
+      result.addElement(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.THIS));
+
+      final LookupItem superItem = BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.SUPER);
+      if (psiElement().afterLeaf(psiElement().withText("{").withSuperParent(2, psiMethod().constructor(true))).accepts(position)) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class, false, PsiClass.class);
+        assert method != null;
+        final boolean hasParams = superConstructorHasParameters(method);
+        superItem.setInsertHandler(new ParenthesesInsertHandler<LookupElement>() {
+          @Override
+          protected boolean placeCaretInsideParentheses(InsertionContext context, LookupElement item) {
+            return hasParams;
+          }
+
+          @Override
+          public void handleInsert(InsertionContext context, LookupElement item) {
+            super.handleInsert(context, item);
+            TailType.insertChar(context.getEditor(), context.getTailOffset(), ';');
+          }
+        });
+      }
+      else if (!AFTER_DOT.accepts(position)) {
+        superItem.setTailType(TailType.DOT);
+      }
+
+      result.addElement(superItem);
+    }
+  }
+
+  private static boolean isInsideQualifierClass(PsiElement position) {
+    if (position.getParent() instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement qualifier = ((PsiJavaCodeReferenceElement)position.getParent()).getQualifier();
+      if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        final PsiElement qualifierClass = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+        if (qualifierClass instanceof PsiClass) {
+          PsiElement parent = position;
+          final PsiManager psiManager = position.getManager();
+          while ((parent = PsiTreeUtil.getParentOfType(parent, PsiClass.class, true)) != null) {
+            if (psiManager.areElementsEquivalent(parent, qualifierClass)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean superConstructorHasParameters(PsiMethod method) {
+    final PsiClass psiClass = method.getContainingClass();
+    if (psiClass == null) {
+      return false;
+    }
+
+    final PsiClass superClass = psiClass.getSuperClass();
+    if (superClass != null) {
+      for (final PsiMethod psiMethod : superClass.getConstructors()) {
+        final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
+        if (resolveHelper.isAccessible(psiMethod, method, null) && psiMethod.getParameterList().getParameters().length > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
