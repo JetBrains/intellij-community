@@ -1329,7 +1329,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int start = myDocument.getLineStartOffset(startLineNumber);
 
-    IterationState iterationState = new IterationState(this, start, true);
+    IterationState iterationState = new IterationState(this, start, paintSelection());
 
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
@@ -1507,7 +1507,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int start = myDocument.getLineStartOffset(startLineNumber);
 
-    IterationState iterationState = new IterationState(this, start, true);
+    IterationState iterationState = new IterationState(this, start, paintSelection());
 
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
@@ -1589,6 +1589,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     flushCachedChars(g);
+  }
+
+  private boolean paintSelection() {
+    if (!isOneLineMode()) return true;
+    return IJSwingUtilities.hasFocus(getContentComponent());
   }
 
   private class CachedFontContent {

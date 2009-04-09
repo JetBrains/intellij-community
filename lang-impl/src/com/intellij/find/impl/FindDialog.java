@@ -17,9 +17,12 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -318,9 +321,7 @@ final class FindDialog extends DialogWrapper {
       optionsPanel.add(createFilterPanel(),gbConstraints);
 
       if (!myModel.isReplaceState()) {
-        myCbToSkipResultsWhenOneUsage = new StateRestoringCheckBox(
-          FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"),
-          FindSettings.getInstance().isSkipResultsWithOneUsage());
+        myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"));
         optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
       }
     }
@@ -345,7 +346,7 @@ final class FindDialog extends DialogWrapper {
 
     myFileFilter = new ComboBox(100);
     initCombobox(myFileFilter);
-    filterPanel.add(useFileFilter = new StateRestoringCheckBox(FindBundle.message("find.filter.file.mask.checkbox")),BorderLayout.WEST);
+    filterPanel.add(useFileFilter = createCheckbox(FindBundle.message("find.filter.file.mask.checkbox")),BorderLayout.WEST);
     filterPanel.add(myFileFilter,BorderLayout.CENTER);
     myFileFilter.setEditable(true);
     String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
@@ -476,17 +477,17 @@ final class FindDialog extends DialogWrapper {
     findOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.options.group")));
     findOptionsPanel.setLayout(new BoxLayout(findOptionsPanel, BoxLayout.Y_AXIS));
 
-    myCbCaseSensitive = new StateRestoringCheckBox(FindBundle.message("find.options.case.sensitive"));
+    myCbCaseSensitive = createCheckbox(FindBundle.message("find.options.case.sensitive"));
     findOptionsPanel.add(myCbCaseSensitive);
     if (myModel.isReplaceState()) {
-      myCbPreserveCase = new StateRestoringCheckBox(FindBundle.message("find.options.replace.preserve.case"));
+      myCbPreserveCase = createCheckbox(FindBundle.message("find.options.replace.preserve.case"));
       findOptionsPanel.add(myCbPreserveCase);
     }
-    myCbWholeWordsOnly = new StateRestoringCheckBox(FindBundle.message("find.options.whole.words.only"));
+    myCbWholeWordsOnly = createCheckbox(FindBundle.message("find.options.whole.words.only"));
 
     findOptionsPanel.add(myCbWholeWordsOnly);
 
-    myCbRegularExpressions = new StateRestoringCheckBox(FindBundle.message("find.options.regular.expressions"));
+    myCbRegularExpressions = createCheckbox(FindBundle.message("find.options.regular.expressions"));
     findOptionsPanel.add(myCbRegularExpressions);
 
     ActionListener actionListener = new ActionListener() {
@@ -650,7 +651,7 @@ final class FindDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 2;
     gbConstraints.insets = new Insets(0, 16, 0, 0);
-    myCbWithSubdirectories = new StateRestoringCheckBox(FindBundle.message("find.scope.directory.recursive.checkbox"), true);
+    myCbWithSubdirectories = createCheckbox(true, FindBundle.message("find.scope.directory.recursive.checkbox"));
     myCbWithSubdirectories.setSelected(true);
     scopePanel.add(myCbWithSubdirectories, gbConstraints);
 
@@ -716,6 +717,18 @@ final class FindDialog extends DialogWrapper {
     });
 
     return scopePanel;
+  }
+
+  private static StateRestoringCheckBox createCheckbox(String message) {
+    final StateRestoringCheckBox cb = new StateRestoringCheckBox(message);
+    cb.setFocusable(false);
+    return cb;
+  }
+
+  private static StateRestoringCheckBox createCheckbox(boolean selected, String message) {
+    final StateRestoringCheckBox cb = new StateRestoringCheckBox(message, selected);
+    cb.setFocusable(false);
+    return cb;
   }
 
   private void validateScopeControls() {
@@ -885,7 +898,19 @@ final class FindDialog extends DialogWrapper {
     myCbRegularExpressions.setSelected(myModel.isRegularExpressions());
 
     if (myModel.isMultipleFiles()) {
-      setDirectories(FindSettings.getInstance().getRecentDirectories(), myModel.getDirectoryName());
+      final String dirName = myModel.getDirectoryName();
+      setDirectories(FindSettings.getInstance().getRecentDirectories(), dirName);
+
+      if (!StringUtil.isEmptyOrSpaces(dirName)) {
+        VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(dirName);
+        if (dir != null) {
+          Module module = ModuleUtil.findModuleForFile(dir, myProject);
+          if (module != null) {
+            myModuleComboBox.setSelectedItem(module.getName());
+          }
+        }
+      }
+
       if (myModel.isProjectScope()) {
         myRbProject.setSelected(true);
 
@@ -895,7 +920,7 @@ final class FindDialog extends DialogWrapper {
         myModuleComboBox.setEnabled(false);
         myScopeCombo.setEnabled(false);
       }
-      else if (myModel.getDirectoryName() != null) {
+      else if (dirName != null) {
         myRbDirectory.setSelected(true);
         myCbWithSubdirectories.setEnabled(true);
         myDirectoryComboBox.setEnabled(true);
