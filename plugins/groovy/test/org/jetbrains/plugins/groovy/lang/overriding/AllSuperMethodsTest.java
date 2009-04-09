@@ -1,25 +1,26 @@
 package org.jetbrains.plugins.groovy.lang.overriding;
 
 import com.intellij.psi.PsiMethod;
-import junit.framework.Test;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 02.08.2007
  */
 public class AllSuperMethodsTest extends OverridingTester {
-  private static final String DATA_PATH = TestUtils.getTestDataPath() + "/overriding/allSuperMethods/";
 
-  public AllSuperMethodsTest() {
-    super(System.getProperty("path") != null ?
-        System.getProperty("path") :
-        DATA_PATH
-    );
+  @Override
+  protected String getBasePath() {
+    return super.getBasePath() + "allSuperMethods";
   }
-  public static Test suite() {
-    return new AllSuperMethodsTest();
-  }
+
+  public void testExtendsAndImplements() throws Throwable { doTest(); }
+  public void testExtendsClass() throws Throwable { doTest(); }
+  public void testImplementsImplements() throws Throwable { doTest(); }
+  public void testImplementsInterface() throws Throwable { doTest(); }
+  public void testManyOverrMethods2() throws Throwable { doTest(); }
+  public void testManySuperMethods() throws Throwable { doTest(); }
+  public void testMethodWithoutParameters() throws Throwable { doTest(); }
+  public void testMethodWithParameters() throws Throwable { doTest(); }
 
   PsiMethod[] findMethod(PsiMethod method) {
     return method.findSuperMethods();

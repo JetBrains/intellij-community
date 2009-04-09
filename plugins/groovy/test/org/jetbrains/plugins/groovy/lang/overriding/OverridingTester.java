@@ -1,25 +1,28 @@
 package org.jetbrains.plugins.groovy.lang.overriding;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 31.07.2007
  */
-public abstract class OverridingTester extends SimpleGroovyFileSetTestCase {
-  protected OverridingTester(String path) {
-    super(path);
+public abstract class OverridingTester extends CodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testData/overriding/";
   }
 
-  public String transform(String testName, String[] data) throws Exception {
-    String fileText = data[0];
-    GroovyFileBase psiFile = (GroovyFileBase) TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
+  public void doTest() throws Throwable {
+    final String testFile = getTestName(true) + ".test";
+    final List<String> strings = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + testFile);
+    GroovyFileBase psiFile = (GroovyFileBase) myFixture.addFileToProject("foo.groovy", strings.get(0));
 
     StringBuffer buffer = new StringBuffer();
 
@@ -40,9 +43,7 @@ public abstract class OverridingTester extends SimpleGroovyFileSetTestCase {
     }
     buffer.append("\n");  //metween class definitions
 
-
-    //System.out.println(buffer);
-    return buffer.toString();
+    assertEquals(strings.get(1), buffer.toString().trim());
   }
 
   private String[] sortUseContaingClass(PsiMethod[] psiMethods) {
