@@ -359,9 +359,9 @@ public class Cache {
     }
   }
 
-  public MethodInfo[] getMethods(int classDeclarationId) throws CacheCorruptedException{
+  public MethodInfo[] getMethods(int classQName) throws CacheCorruptedException{
     try {
-      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classDeclarationId));
+      final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classQName));
       return classInfo != null? classInfo.getMethods() : MethodInfo.EMPTY_ARRAY;
     }
     catch (Throwable e) {
@@ -370,9 +370,9 @@ public class Cache {
   }
 
   @Nullable
-  public MethodInfo findMethod(final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException{
+  public MethodInfo findMethod(final int classQName, final int name, final int descriptor) throws CacheCorruptedException{
     try {
-      for (MethodInfo methodInfo : getMethods(classDeclarationId)) {
+      for (MethodInfo methodInfo : getMethods(classQName)) {
         if (methodInfo.getName() == name && methodInfo.getDescriptor() == descriptor) {
           return methodInfo;
         }
