@@ -73,7 +73,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myGuardsSuppressed = false;
   private boolean myEventsHandling = false;
   private boolean myAssertWriteAccess = true;
-  private static final Key<Boolean> DOING_BULK_UPDATE = Key.create("DoingBulkRefromat");
+  private boolean myDoingBulkUpdate = false;
   private static final Key<WeakReference<EditorHighlighter>> ourSomeEditorSyntaxHighlighter = Key.create("some editor highlighter");
   private boolean myAcceptSlashR = false;
 
@@ -690,16 +690,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public final boolean isInBulkUpdate() {
-    return getUserData(DOING_BULK_UPDATE) != null;
+    return myDoingBulkUpdate;
   }
 
   public final void setInBulkUpdate(boolean value) {
     if (value) {
-      putUserData(DOING_BULK_UPDATE, Boolean.TRUE);
+      myDoingBulkUpdate = true;
       getPublisher().updateStarted(this);
     }
     else {
-      putUserData(DOING_BULK_UPDATE, null);
+      myDoingBulkUpdate = false;
       getPublisher().updateFinished(this);
     }
   }
