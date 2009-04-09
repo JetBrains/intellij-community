@@ -639,6 +639,7 @@ public class DependencyCache {
         final FieldInfo fieldId = cache.findField(classQName, myMemberName, myMemberDescriptor);
         if (fieldId != null) {
           myDeclaringClass = classQName;
+          return false;
         }
       }
       else {
