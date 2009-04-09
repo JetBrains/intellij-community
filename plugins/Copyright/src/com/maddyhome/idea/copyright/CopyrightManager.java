@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
     if (myProject != null) {
       myListener = new FileEditorManagerAdapter() {
         public void fileOpened(FileEditorManager fileEditorManager, VirtualFile virtualFile) {
-          if (NewFileTracker.getInstance().contains(virtualFile)) {
+          if (virtualFile.isWritable() && NewFileTracker.getInstance().contains(virtualFile)) {
             NewFileTracker.getInstance().remove(virtualFile);
             if (FileTypeUtil.getInstance().isSupportedFile(virtualFile)) {
               final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(virtualFile);
@@ -100,7 +100,7 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
                 if (file != null) {
                   ApplicationManager.getApplication().invokeLater(new Runnable(){
                     public void run() {
-                      if (file.isValid()) {
+                      if (file.isValid() && file.isWritable()) {
                         new UpdateCopyrightProcessor(myProject, module, file).run();
                       }
                     }
