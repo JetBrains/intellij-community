@@ -147,7 +147,11 @@ public class ExtractIncludeDialog extends DialogWrapper {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(ExtractIncludeFileBase.HELP_ID);
+    HelpManager.getInstance().invokeHelp(getHelpTopic());
+  }
+
+  protected String getHelpTopic() {
+    return ExtractIncludeFileBase.HELP_ID;
   }
 
   protected Action[] createActions() {
