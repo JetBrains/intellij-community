@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatus;
@@ -40,7 +41,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
                                StartupManager startupManager) {
     myProject = project;
 
-    startupManager.registerPostStartupActivity(new Runnable() {
+    startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         fileStatusesChanged();
       }

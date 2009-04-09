@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -178,7 +179,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       }
     };
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
         EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(myMouseMotionListener);

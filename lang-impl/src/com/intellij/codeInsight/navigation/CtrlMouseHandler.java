@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
@@ -159,7 +160,7 @@ public class CtrlMouseHandler implements ProjectComponent {
   public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager,
                           FileEditorManager fileEditorManager) {
     myProject = project;
-    startupManager.registerPostStartupActivity(new Runnable(){
+    startupManager.registerPostStartupActivity(new DumbAwareRunnable(){
       public void run() {
         EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
         eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);

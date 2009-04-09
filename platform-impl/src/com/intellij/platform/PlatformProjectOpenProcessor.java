@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
@@ -86,7 +87,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   private static void openFileFromCommandLine(final Project project, final VirtualFile virtualFile) {
-    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
           public void run() {

@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.startup.StartupManager;
@@ -930,7 +931,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
     UISettings.getInstance().addUISettingsListener(myUISettingsListener);
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         ToolWindowManager.getInstance(myProject).invokeLater(new Runnable() {
           public void run() {

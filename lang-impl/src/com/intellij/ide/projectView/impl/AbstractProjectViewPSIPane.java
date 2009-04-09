@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -188,7 +189,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   protected abstract ProjectViewTree createTree(DefaultTreeModel treeModel);
 
   public void projectOpened() {
-    final Runnable runnable = new Runnable() {
+    final Runnable runnable = new DumbAwareRunnable() {
       public void run() {
         final ProjectView projectView = ProjectView.getInstance(myProject);
         projectView.addProjectPane(AbstractProjectViewPSIPane.this);

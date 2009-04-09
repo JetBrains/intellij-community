@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
@@ -40,7 +41,7 @@ public class BraceHighlighter implements ProjectComponent {
   }
 
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 

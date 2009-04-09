@@ -3,6 +3,7 @@ package com.intellij.ide;
 import com.intellij.ide.util.TipDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -39,7 +40,7 @@ public class TipOfTheDayManager extends ProjectManagerAdapter implements Applica
 
     myVeryFirstProjectOpening = false;
 
-    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         if (myDoNotShowThisTime) return;
         ToolWindowManager.getInstance(project).invokeLater(new Runnable() {

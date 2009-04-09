@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -127,7 +128,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     if (model == null) moduleModel.commit();
 
     if (runFromProjectWizard) {
-      StartupManager.getInstance(module.getProject()).registerPostStartupActivity(new Runnable() {
+      StartupManager.getInstance(module.getProject()).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {

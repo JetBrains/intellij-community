@@ -2,6 +2,7 @@ package com.intellij.platform;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -20,7 +21,7 @@ public class FilesystemToolwindowOpener implements ProjectComponent {
   public void projectOpened() {
     final VirtualFile baseDir = ProjectBaseDirectory.getInstance(myProject).getBaseDir();
     if (baseDir == null || !baseDir.isDirectory()) return;
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         ToolWindowManager.getInstance(myProject).invokeLater(new Runnable() {
           public void run() {
