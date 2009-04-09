@@ -62,5 +62,9 @@ public abstract class StatisticsManager implements SettingsSavingComponent {
     }
   }
 
+  /**
+   * @param context
+   * @return infos by this context ordered by usage time: recent first
+   */
   public abstract StatisticsInfo[] getAllValues(@NonNls String context);
 }

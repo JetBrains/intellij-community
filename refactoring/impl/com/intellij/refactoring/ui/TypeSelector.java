@@ -3,6 +3,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ItemListener;
@@ -102,6 +103,12 @@ public class TypeSelector {
     }
   }
 
+  public void selectType(@NotNull PsiType type) {
+    if (myComponent instanceof JComboBox) {
+      ((JComboBox)myComponent).setSelectedItem(new PsiTypeItem(type));
+    }
+  }
+
   private static class MyComboBoxModel extends DefaultComboBoxModel {
     private PsiTypeItem[] mySuggestions;
 
@@ -135,6 +142,23 @@ public class TypeSelector {
 
     public PsiType getType() {
       return myType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      PsiTypeItem that = (PsiTypeItem)o;
+
+      if (!myType.equals(that.myType)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myType.hashCode();
     }
 
     @Override

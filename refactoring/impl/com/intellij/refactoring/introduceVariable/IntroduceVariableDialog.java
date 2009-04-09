@@ -250,6 +250,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   protected void doOKAction() {
     if (!myValidator.isOK(this)) return;
     myNameSuggestionsManager.nameSelected();
+    myTypeSelectorManager.typeSelected(getSelectedType());
     if (myCbFinal.isEnabled()) {
       JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbFinalState;
     }

@@ -5,16 +5,14 @@ import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 class StatisticsUnit {
   private static final int FORMAT_VERSION_NUMBER = 5;
 
   private final int myNumber;
 
-  private final THashMap<String, List<String>> myDataMap = new THashMap<String, List<String>>();
+  private final THashMap<String, LinkedList<String>> myDataMap = new THashMap<String, LinkedList<String>>();
 
   public StatisticsUnit(int number) {
     myNumber = number;
@@ -32,13 +30,13 @@ class StatisticsUnit {
   }
 
   public void incData(String key1, String key2) {
-    List<String> list = myDataMap.get(key1);
+    LinkedList<String> list = myDataMap.get(key1);
     if (list == null) {
-      myDataMap.put(key1, list = new ArrayList<String>());
+      myDataMap.put(key1, list = new LinkedList<String>());
     }
-    list.add(key2);
+    list.addFirst(key2);
     if (list.size() > StatisticsManager.OBLIVION_THRESHOLD) {
-      list.remove(0);
+      list.removeLast();
     }
   }
 
@@ -46,8 +44,7 @@ class StatisticsUnit {
     final List<String> list = myDataMap.get(key1);
     if (list == null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    final HashSet<String> keys = new HashSet<String>(list);
-    return ArrayUtil.toStringArray(keys);
+    return ArrayUtil.toStringArray(new LinkedHashSet<String>(list));
   }
 
   public int getNumber() {
@@ -83,7 +80,7 @@ class StatisticsUnit {
     for(int i = 0; i < size; i++){
       String context = dataIn.readUTF();
       int len = dataIn.readInt();
-      List<String> list = new ArrayList<String>(len);
+      LinkedList<String> list = new LinkedList<String>();
       for (int j = 0; j < len; j++) {
         list.add(dataIn.readUTF());
       }

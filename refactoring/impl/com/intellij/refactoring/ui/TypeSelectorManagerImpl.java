@@ -6,13 +6,15 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author dsl
@@ -49,6 +51,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     else {
       myTypeSelector = new TypeSelector();
     }
+
+
   }
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences) {
@@ -71,7 +75,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
     else {
       myTypeSelector = new TypeSelector();
-      myTypeSelector.setTypes(myTypesForAll);
+      setTypesAndPreselect(myTypesForAll);
     }
   }
 
@@ -189,11 +193,23 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
   public void setAllOccurences(boolean allOccurences) {
     if (myIsOneSuggestion) return;
-    if (allOccurences) {
-      myTypeSelector.setTypes(myTypesForAll);
+    setTypesAndPreselect(allOccurences ? myTypesForAll : myTypesForMain);
+  }
+
+  private void setTypesAndPreselect(PsiType[] types) {
+    myTypeSelector.setTypes(types);
+
+    Map<String, PsiType> map = new THashMap<String, PsiType>();
+    for (final PsiType type : types) {
+      map.put(serialize(type), type);
     }
-    else {
-      myTypeSelector.setTypes(myTypesForMain);
+
+    for (StatisticsInfo info : StatisticsManager.getInstance().getAllValues(getStatsKey())) {
+      final PsiType candidate = map.get(info.getValue());
+      if (candidate != null && StatisticsManager.getInstance().getUseCount(info) > 0) {
+        myTypeSelector.selectType(candidate);
+        return;
+      }
     }
   }
 
@@ -211,6 +227,18 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
 
     return false;
+  }
+
+  public void typeSelected(@NotNull PsiType type) {
+    StatisticsManager.getInstance().incUseCount(new StatisticsInfo(getStatsKey(), serialize(type)));
+  }
+
+  private String getStatsKey() {
+    return "IntroduceVariable##" + serialize(myDefaultType);
+  }
+
+  private String serialize(PsiType type) {
+    return TypeConversionUtil.erasure(type).getCanonicalText();
   }
 
   public TypeSelector getTypeSelector() {
