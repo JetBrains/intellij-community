@@ -11,13 +11,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -134,7 +133,7 @@ public class PropertyFoldingBuilder implements FoldingBuilder {
   }
 
 
-  private static boolean isI18nProperty(PsiLiteralExpression expr) {
+  public static boolean isI18nProperty(PsiLiteralExpression expr) {
     final Map<String, Object> annotationParams = new HashMap<String, Object>();
     annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
     return JavaI18nUtil.mustBePropertyKey(expr, annotationParams);

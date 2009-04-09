@@ -114,11 +114,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Nullable
   public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
-    int flags = TargetElementUtilBase.getInstance().getAllAccepted() & ~TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
-    PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
-
-    if (element != null) return element;
-
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       return null;
@@ -132,6 +127,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
     }
 
-    return null;
+    int flags = TargetElementUtilBase.getInstance().getAllAccepted() & ~TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
+    return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
   }
 }

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-class EditorFoldingInfo {
+public class EditorFoldingInfo {
   private static final Key<EditorFoldingInfo> KEY = Key.create("EditorFoldingInfo.KEY");
 
   private final Map<FoldRegion, PsiElement> myFoldRegionToSmartPointerMap = new THashMap<FoldRegion, PsiElement>();

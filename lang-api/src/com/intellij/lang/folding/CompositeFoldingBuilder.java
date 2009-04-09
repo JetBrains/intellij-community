@@ -19,11 +19,10 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Used by LanguageFolding class if more than one FoldingBuilder were specified
@@ -33,8 +32,8 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.lang.folding.LanguageFolding
  * @since 9.0
  */
-class CompositeFoldingBuilder implements FoldingBuilder {
-  private static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<FoldingBuilder>("FOLDING_BUILDER");
+public class CompositeFoldingBuilder implements FoldingBuilder {
+  public static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<FoldingBuilder>("FOLDING_BUILDER");
   private final List<FoldingBuilder> myBuilders;
 
   CompositeFoldingBuilder(List<FoldingBuilder> builders) {    
