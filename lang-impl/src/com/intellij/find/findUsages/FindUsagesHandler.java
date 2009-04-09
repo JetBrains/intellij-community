@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -25,6 +26,9 @@ import java.util.Collection;
  * @author peter
  */
 public abstract class FindUsagesHandler {
+  // return this handler if you want to cancel the search
+  public static final FindUsagesHandler NULL_HANDLER = new FindUsagesHandler(PsiUtilBase.NULL_PSI_ELEMENT){};
+
   private final PsiElement myPsiElement;
 
   protected FindUsagesHandler(@NotNull PsiElement psiElement) {
@@ -32,10 +36,8 @@ public abstract class FindUsagesHandler {
   }
 
   @NotNull
-  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab,
-                                                      FindUsagesHandler handler) {
-    return new CommonFindUsagesDialog(myPsiElement, getProject(), getFindUsagesOptions(), toShowInNewTab, mustOpenInNewTab, isSingleFile,
-                                      handler);
+  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab, FindUsagesHandler handler) {
+    return new CommonFindUsagesDialog(myPsiElement, getProject(), getFindUsagesOptions(), toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
   public final PsiElement getPsiElement() {
@@ -129,5 +131,4 @@ public abstract class FindUsagesHandler {
   public Collection<PsiReference> findReferencesToHighlight(PsiElement target, SearchScope searchScope) {
     return ReferencesSearch.search(target, searchScope, false).findAll();
   }
-
 }

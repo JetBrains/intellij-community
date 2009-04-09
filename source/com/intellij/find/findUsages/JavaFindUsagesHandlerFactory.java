@@ -66,7 +66,7 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
         return new JavaFindUsagesHandler(methods[0], myFindClassOptions, myFindMethodOptions, myFindPackageOptions, myFindThrowOptions,
                                          myFindVariableOptions);
       }
-      return null;
+      return FindUsagesHandler.NULL_HANDLER;
     }
 
     return new JavaFindUsagesHandler(element, myFindClassOptions, myFindMethodOptions, myFindPackageOptions, myFindThrowOptions,

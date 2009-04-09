@@ -4,19 +4,15 @@ import com.intellij.find.impl.HelpID;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.xml.TypeNameManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,7 +23,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
 
   public boolean canFindUsagesFor(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
-      PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+      PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
       return psiPackage != null && psiPackage.getQualifiedName().length() != 0;
     }
 
@@ -37,7 +33,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
            element instanceof PsiPackage ||
            element instanceof PsiLabeledStatement ||
            ThrowSearchUtil.isSearchable(element) ||
-           (element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() != null);
+           element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() != null;
   }
 
   public String getHelpId(@NotNull PsiElement element) {
@@ -340,23 +336,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
   }
 
-  private static class Inner {
-    private static final TokenSet COMMENT_BIT_SET = TokenSet.create(JavaDocTokenType.DOC_COMMENT_DATA, JavaDocTokenType.DOC_TAG_VALUE_TOKEN,
-                                                                    JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT);
-  }
-
   public WordsScanner getWordsScanner() {
     return null;
-  }
-
-  public static boolean mayHaveReferencesImpl(final IElementType token, final short searchContext) {
-    if ((searchContext & UsageSearchContext.IN_STRINGS) != 0 && token == JavaElementType.LITERAL_EXPRESSION) return true;
-    if ((searchContext & UsageSearchContext.IN_COMMENTS) != 0 && Inner.COMMENT_BIT_SET.contains(token)) return true;
-    if ((searchContext & UsageSearchContext.IN_CODE) != 0 && (token == JavaTokenType.IDENTIFIER || token == JavaDocTokenType
-      .DOC_TAG_VALUE_TOKEN)) {
-      return true;
-    }
-    // Java string literal to properties file
-    return (searchContext & UsageSearchContext.IN_FOREIGN_LANGUAGES) != 0 && token == JavaElementType.LITERAL_EXPRESSION;
   }
 }

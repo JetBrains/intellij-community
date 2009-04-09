@@ -197,6 +197,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     for (FindUsagesHandlerFactory factory : myHandlers) {
       if (factory.canFindUsages(element)) {
         final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
+        if (handler == FindUsagesHandler.NULL_HANDLER) return null;
         if (handler != null) {
           return handler;
         }
@@ -205,6 +206,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       if (factory.canFindUsages(element)) {
         final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
+        if (handler == FindUsagesHandler.NULL_HANDLER) return null;
         if (handler != null) {
           return handler;
         }
