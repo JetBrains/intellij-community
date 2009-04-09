@@ -228,7 +228,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
         PsiType paramType = parameter == null ? null : substitutor.substitute(parameter.getType());
         boolean parameterAssignable = paramType != null && (expression == null || TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression));
         if (parameterAssignable) {
-          result.add(new ParameterInfoImpl(pi, parameter.getName(), paramType));
+          result.add(new ParameterInfoImpl(pi, parameter.getName(), parameter.getType()));
           pi++;
           ei++;
         }
