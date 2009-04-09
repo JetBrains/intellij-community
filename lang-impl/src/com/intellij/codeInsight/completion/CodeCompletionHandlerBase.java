@@ -101,7 +101,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 
-        EditorUtil.fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
+        EditorUtil.fillVirtualSpaceUntilCaret(editor);
         documentManager.commitAllDocuments();
         final CompletionInitializationContext initializationContext = new CompletionInitializationContext(editor, psiFile, myCompletionType);
         result.setResult(initializationContext);

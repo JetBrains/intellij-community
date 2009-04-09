@@ -24,7 +24,7 @@ import java.util.ArrayList;
 public class ListTemplatesHandler implements CodeInsightActionHandler{
   public void invoke(final Project project, final Editor editor, PsiFile file) {
     if (!file.isWritable()) return;
-    EditorUtil.fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
+    EditorUtil.fillVirtualSpaceUntilCaret(editor);
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     int offset = editor.getCaretModel().getOffset();

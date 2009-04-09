@@ -52,6 +52,11 @@ public class EditorUtil {
     editor.getScrollingModel().scrollVertically(yPos);
   }
 
+  public static void fillVirtualSpaceUntilCaret(final Editor editor) {
+    final LogicalPosition position = editor.getCaretModel().getLogicalPosition();
+    fillVirtualSpaceUntil(editor, position.column, position.line);
+  }
+
   public static void fillVirtualSpaceUntil(final Editor editor, int columnNumber, int lineNumber) {
     final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
     final String filler = EditorModificationUtil.calcStringToFillVitualSpace(editor);

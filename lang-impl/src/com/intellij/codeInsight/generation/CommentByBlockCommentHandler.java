@@ -106,8 +106,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         commentRange(selectionStart, selectionEnd, prefix, suffix, commenter);
       }
       else {
-        final LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
-        EditorUtil.fillVirtualSpaceUntil(editor, caretPosition.column, caretPosition.line);
+        EditorUtil.fillVirtualSpaceUntilCaret(editor);
         int caretOffset = myEditor.getCaretModel().getOffset();
         myDocument.insertString(caretOffset, prefix + suffix);
         myEditor.getCaretModel().moveToOffset(caretOffset + prefix.length());

@@ -333,6 +333,7 @@
   <cutElementMarker implementation="com.intellij.ide.PsiCutElementMarker"/>
 
   <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.PlainTextLineSelectioner"/>
+  <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.NaturalLanguageTextSelectioner"/>
   <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.WordSelectioner"/>
 
   <syntaxHighlighter factoryClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeHighlighterProvider"/>

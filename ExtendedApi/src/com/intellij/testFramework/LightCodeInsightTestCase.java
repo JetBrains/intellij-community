@@ -237,7 +237,9 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
 
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
-      ((DocumentEx) myEditor.getDocument()).stripTrailingSpaces(false);
+      final Editor editor = myEditor;
+      ((DocumentEx) editor.getDocument()).stripTrailingSpaces(false);
+      EditorUtil.fillVirtualSpaceUntilCaret(editor);
     }
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -287,6 +289,10 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
                                      ? document.createRangeMarker(selEndIndex, selEndIndex)
                                      : null;
 
+    if (ignoreTrailingSpaces) {
+      ((DocumentEx) document).stripTrailingSpaces(false);
+    }
+
     if (caretMarker != null) {
       document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
     }
@@ -299,17 +305,12 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
                             selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
     }
 
-    String newFileText = document.getText();
-    String newFileText1 = newFileText;
-    if (ignoreTrailingSpaces) {
-      Document document1 = EditorFactory.getInstance().createDocument(newFileText);
-      ((DocumentEx) document1).stripTrailingSpaces(false);
-      newFileText1 = document1.getText();
-    }
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    String newFileText = document.getText();
+
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    assertEquals(getMessage("Text mismatch", message), newFileText1, myFile.getText());
+    assertEquals(getMessage("Text mismatch", message), newFileText, myFile.getText());
 
     checkCaretPosition(caretMarker, newFileText, message);
     checkSelection(selStartMarker, selEndMarker, newFileText, message);
