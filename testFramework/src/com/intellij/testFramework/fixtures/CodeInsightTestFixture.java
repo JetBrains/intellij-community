@@ -304,4 +304,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @Nullable
   List<String> getLookupElementStrings();
+
+  void renameElementAtCaret(String newName) throws Throwable;
 }

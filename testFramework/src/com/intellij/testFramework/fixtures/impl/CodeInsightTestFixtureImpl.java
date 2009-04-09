@@ -101,6 +101,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
+@SuppressWarnings({"TestMethodWithIncorrectSignature"})
 public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsightTestFixture {
 
   @NonNls private static final String PROFILE = "Configurable";
@@ -396,6 +397,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void testRename(final String fileAfter, final String newName) throws Throwable {
+    renameElementAtCaret(newName);
+    checkResultByFile(fileAfter);
+  }
+
+  public void renameElementAtCaret(final String newName) throws Throwable {
     assertInitialized();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Throwable {
@@ -403,8 +409,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         assert element != null: "element not found in file " + myFile.getName() + " at caret position, offset " + myEditor.getCaretModel().getOffset();
         final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
         new RenameProcessor(myProjectFixture.getProject(), substitution, newName, false, false).run();
-        checkResultByFile(fileAfter, myFile, false);
-      }
+     }
     }.execute().throwException();
   }
 
@@ -1070,8 +1075,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                  @NotNull PsiFile originalFile,
                                  boolean stripTrailingSpaces) throws IOException {
     if (!stripTrailingSpaces) {
-      final LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
-      EditorUtil.fillVirtualSpaceUntil(myEditor, position.column, position.line);
+      EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
     }
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(getTestDataPath() + "/" + expectedFile, getProject()), originalFile.getText());
