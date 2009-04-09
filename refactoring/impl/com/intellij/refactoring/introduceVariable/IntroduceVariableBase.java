@@ -218,6 +218,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   public static PsiExpression getSelectedExpression(final Project project, final PsiFile file, final int startOffset, final int endOffset) {
     PsiExpression tempExpr;
     final PsiElement elementAt = PsiTreeUtil.findCommonParent(file.findElementAt(startOffset), file.findElementAt(endOffset - 1));
+    if (PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false) == null) return null;
     final PsiLiteralExpression literalExpression = PsiTreeUtil.getParentOfType(elementAt, PsiLiteralExpression.class);
 
     final PsiLiteralExpression startLiteralExpression = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiLiteralExpression.class);
