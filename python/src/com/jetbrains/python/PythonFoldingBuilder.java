@@ -26,6 +26,8 @@ import com.intellij.psi.tree.IElementType;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by IntelliJ IDEA.
  * User: yole
@@ -34,7 +36,8 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class PythonFoldingBuilder implements FoldingBuilder {
-    public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
+    @NotNull
+    public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
         List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
         appendDescriptors(node, descriptors);
         return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
@@ -63,11 +66,11 @@ public class PythonFoldingBuilder implements FoldingBuilder {
         }
     }
 
-    public String getPlaceholderText(ASTNode node) {
+    public String getPlaceholderText(@NotNull ASTNode node) {
         return "...";
     }
 
-    public boolean isCollapsedByDefault(ASTNode node) {
+    public boolean isCollapsedByDefault(@NotNull ASTNode node) {
         return false;
     }
 }
