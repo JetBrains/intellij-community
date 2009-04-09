@@ -2,82 +2,41 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author yole
  */
-public class PythonRunConfiguration extends RunConfigurationBase implements LocatableConfiguration {
-  public String SCRIPT_NAME;
-  public String PARAMETERS;
-  public String WORKING_DIRECTORY;
-  public String SDK_HOME;
-  public boolean PASS_PARENT_ENVS;
-  private Map<String, String> myEnvs = new HashMap<String, String>();
-  public String INTERPRETER_OPTIONS;
+public class PythonRunConfiguration extends AbstractPythonRunConfiguration implements PythonRunConfigurationParams {
+  private String myScriptName;
+  private String myScriptParameters;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory, String name) {
-    super(project, configurationFactory, name);
+    super(name, project, configurationFactory);
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new PythonRunConfigurationEditor();
-  }
-
-  public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider configurationInfoProvider) {
-    return null;
-  }
-
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(final ProgramRunner runner) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return new PythonRunConfigurationEditor(this);
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    CommandLineState state = new CommandLineState(env) {
-      protected OSProcessHandler startProcess() throws ExecutionException {
-        GeneralCommandLine commandLine = new GeneralCommandLine();
-
-        String sdkHome = SDK_HOME;
-        if (sdkHome == null) {
-          final Sdk projectJdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
-          assert projectJdk != null;
-          sdkHome = projectJdk.getHomePath();
-        }
-
-        commandLine.setExePath(PythonSdkType.getInterpreterPath(sdkHome));
-
-        commandLine.addParameter(INTERPRETER_OPTIONS);
-        commandLine.addParameter(SCRIPT_NAME);
-        commandLine.getParametersList().addParametersString(PARAMETERS);
-        if (WORKING_DIRECTORY != null && WORKING_DIRECTORY.length() > 0) {
-          commandLine.setWorkDirectory(WORKING_DIRECTORY);
-        }
-        commandLine.setEnvParams(getEnvs());
-        commandLine.setPassParentEnvs(PASS_PARENT_ENVS);
-        final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
-        ProcessTerminatedListener.attach(processHandler);
-        return processHandler;
-      }
-    };
+    CommandLineState state = new PythonCommandLineState(this, env);
+    
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getProject());
     consoleBuilder.addFilter(new PythonTracebackFilter(getProject()));
     state.setConsoleBuilder(consoleBuilder);
@@ -85,35 +44,11 @@ public class PythonRunConfiguration extends RunConfigurationBase implements Loca
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (SDK_HOME == null) {
-      final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
-      if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
-        throw new RuntimeConfigurationException("Please, specify Python SDK");
-      }
+    super.checkConfiguration();
+
+    if (StringUtil.isEmptyOrSpaces(myScriptName)) {
+      throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_script_name"));
     }
-    else if (!PythonSdkType.getInstance().isValidSdkHome(SDK_HOME)) {
-      throw new RuntimeConfigurationException("Please select a valid Python interpeter");
-    }
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    super.readExternal(element);
-    DefaultJDOMExternalizer.readExternal(this, element);
-    EnvironmentVariablesComponent.readExternal(element, getEnvs());
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    super.writeExternal(element);
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    EnvironmentVariablesComponent.writeExternal(element, getEnvs());
-  }
-
-  public Map<String, String> getEnvs() {
-    return myEnvs;
-  }
-
-  public void setEnvs(final Map<String, String> envs) {
-    myEnvs = envs;
   }
 
   public boolean isGeneratedName() {
@@ -121,10 +56,44 @@ public class PythonRunConfiguration extends RunConfigurationBase implements Loca
   }
 
   public String suggestedName() {
-    String name = new File(SCRIPT_NAME).getName();
+    String name = new File(getScriptName()).getName();
     if (name.endsWith(".py")) {
-      return name.substring(0, name.length()-3);
+      return name.substring(0, name.length() - 3);
     }
     return name;
+  }
+
+  public String getScriptName() {
+    return myScriptName;
+  }
+
+  public void setScriptName(String scriptName) {
+    myScriptName = scriptName;
+  }
+
+  public String getScriptParameters() {
+    return myScriptParameters;
+  }
+
+  public void setScriptParameters(String scriptParameters) {
+    myScriptParameters = scriptParameters;
+  }
+
+  public void readExternal(Element element) throws InvalidDataException {
+    super.readExternal(element);
+    myScriptName = JDOMExternalizerUtil.readField(element, "SCRIPT_NAME");
+    myScriptParameters = JDOMExternalizerUtil.readField(element, "PARAMETERS");
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    super.writeExternal(element);
+    JDOMExternalizerUtil.writeField(element, "SCRIPT_NAME", myScriptName);
+    JDOMExternalizerUtil.writeField(element, "PARAMETERS", myScriptParameters);
+  }
+
+  public static void copyParams(PythonRunConfigurationParams source, PythonRunConfigurationParams target) {
+    AbstractPythonRunConfiguration.copyParams(source, target);
+    target.setScriptName(source.getScriptName());
+    target.setScriptParameters(source.getScriptParameters());
   }
 }

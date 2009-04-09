@@ -40,6 +40,9 @@
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
 
+    <configurationType implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationType"/>
+    <configurationProducer implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationProducer"/>
+
     <applicationService serviceInterface="com.jetbrains.python.JythonManager"
                         serviceImplementation="com.jetbrains.python.JythonManager"/>
     <projectService serviceInterface="com.jetbrains.python.psi.impl.PyBuiltinCache"

@@ -32,7 +32,7 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
     final Project project = mySourceFile.getProject();
     RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
     PythonRunConfiguration configuration = (PythonRunConfiguration) settings.getConfiguration();
-    configuration.SCRIPT_NAME = mySourceFile.getVirtualFile().getPath();
+    configuration.setScriptName(mySourceFile.getVirtualFile().getPath());
     configuration.setName(configuration.suggestedName());
     copyStepsBeforeRun(project, configuration);
     return settings;
