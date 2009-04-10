@@ -9,6 +9,7 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -17,6 +18,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Chunk;
@@ -26,6 +28,7 @@ import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -33,6 +36,7 @@ import java.util.*;
  *         Date: Sep 29, 2004
  */
 public class ModuleChunk extends Chunk<Module> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.ModuleChunk");
   private final CompileContextEx myContext;
   private final Map<Module, VirtualFile[]> myModuleToFilesMap = new HashMap<Module, VirtualFile[]>();
   private final Map<VirtualFile, VirtualFile> myTransformedToOriginalMap = new HashMap<VirtualFile, VirtualFile>();
@@ -206,11 +210,18 @@ public class ModuleChunk extends Chunk<Module> {
     return convertToStringPath(cpFiles);
   }
 
-  private static String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
+  private String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
     final StringBuilder classpathBuffer = StringBuilderSpinAllocator.alloc();
     try {
       for (final VirtualFile file : cpFiles) {
-        final String path = PathUtil.getLocalPath(file);
+        final String path;
+        if (file.getFileSystem() instanceof LocalFileSystem && file.isDirectory()) {
+          path = tryZipFor(file.getPath());
+        }
+        else {
+          path = PathUtil.getLocalPath(file);
+        }
+
         if (path == null) {
           continue;
         }
@@ -225,6 +236,20 @@ public class ModuleChunk extends Chunk<Module> {
     finally {
       StringBuilderSpinAllocator.dispose(classpathBuffer);
     }
+  }
+
+  private String tryZipFor(String outputDir) {
+    final File zip = CompilerPathsEx.getZippedOutputPath(myContext.getProject(), outputDir);
+    if (zip.exists()) {
+      try {
+        myContext.commitZip(outputDir); // flush unsaved data if any
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+      return zip.getPath();
+    }
+    return outputDir;
   }
 
   public int getModuleCount() {
