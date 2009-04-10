@@ -91,7 +91,7 @@ public class PluginInstaller {
           buf.append(depend.getName()).append(",");
         }
         try {
-          GuiUtils.invokeAndWait(new Runnable() {
+          GuiUtils.runOrInvokeAndWait(new Runnable() {
             public void run() {
               proceed[0] = Messages.showYesNoDialog(IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), buf.substring(0, buf.length() - 1)),
                                                     IdeBundle.message("plugin.manager.dependencies.detected.title"), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE;
@@ -117,7 +117,7 @@ public class PluginInstaller {
         }
         final boolean [] proceed = new boolean[1];
         try {
-          GuiUtils.invokeAndWait(new Runnable() {
+          GuiUtils.runOrInvokeAndWait(new Runnable() {
             public void run() {
               proceed[0] = Messages.showYesNoDialog(IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(),
                                                                       buf.substring(0, buf.length() - 1)), IdeBundle.message("plugin.manager.dependencies.detected.title"),
