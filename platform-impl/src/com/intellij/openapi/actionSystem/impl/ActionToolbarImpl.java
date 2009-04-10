@@ -347,8 +347,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
           if (inside) {
             if (eachComp == mySecondaryActionsButton) {
               assert isLast;
-              eachBound.x = sizeToFit.width - eachBound.width;
-              eachX = (int)eachBound.getMaxX();
+              if (sizeToFit.width != Integer.MAX_VALUE) {
+                eachBound.x = sizeToFit.width - eachBound.width;
+                eachX = (int)eachBound.getMaxX();
+              }
+              else {
+                eachBound.x = eachX;
+              }
             } else {
               eachBound.x = eachX;
               eachX += eachBound.width;
