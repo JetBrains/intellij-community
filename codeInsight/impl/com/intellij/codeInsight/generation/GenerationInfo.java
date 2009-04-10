@@ -35,13 +35,14 @@ public abstract class GenerationInfo {
     if (lBrace == null) {
       return null;
     }
-    else {
-      PsiJavaToken rBrace = aClass.getRBrace();
-      if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
-        return null;
-      }
+    PsiJavaToken rBrace = aClass.getRBrace();
+    if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
+      return null;
+    }
+    PsiElement prev = leaf.getPrevSibling();
+    if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
+      element = leaf.getNextSibling();
     }
     return element;
   }
-
 }
