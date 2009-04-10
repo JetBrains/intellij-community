@@ -85,6 +85,10 @@ public class SimpleColoredComponent extends JComponent {
     setOpaque(true);
   }
 
+  public final void append(@NotNull String fragment) {
+    append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
   /**
    * Appends string fragments to existing ones. Appended string
    * will have specified <code>attributes</code>.
