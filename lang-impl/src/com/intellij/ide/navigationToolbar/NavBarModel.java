@@ -138,7 +138,9 @@ public class NavBarModel {
     else {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       roots.addAll(Arrays.asList(moduleRootManager.getContentRoots()));
-      addElement(module);
+      if (ModuleManager.getInstance(myProject).getModules().length > 1) {
+        addElement(module);
+      }
     }
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -158,22 +160,7 @@ public class NavBarModel {
 
   public void updateModel(final Object object) {
     if (object instanceof PsiElement) {
-      final Object rootElement = size() > 1 ? getElement(1) : null;
-      if (rootElement instanceof Module) {
-        final Module module = (Module)rootElement;
-        removeAllElements();
-        addElement(myProject);
-        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        addElement(module);
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            traverseToRoot((PsiElement)object, new HashSet<VirtualFile>(Arrays.asList(moduleRootManager.getContentRoots())));
-          }
-        });
-      }
-      else {
-        updateModel((PsiElement)object);
-      }
+      updateModel((PsiElement)object);
     }
     else if (object instanceof Module) {
       removeAllElements();
