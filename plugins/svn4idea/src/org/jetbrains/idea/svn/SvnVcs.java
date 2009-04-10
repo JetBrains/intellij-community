@@ -41,6 +41,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -204,7 +205,7 @@ public class SvnVcs extends AbstractVcs {
     }
 
     // do one time after project loaded
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         postStartup();
 
