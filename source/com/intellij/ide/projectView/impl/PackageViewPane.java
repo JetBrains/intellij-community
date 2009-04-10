@@ -146,8 +146,8 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   public void addToolbarActions(DefaultActionGroup actionGroup) {
-    actionGroup.add(new ShowModulesAction());
-    actionGroup.add(new ShowLibraryContentsAction());
+    actionGroup.addAction(new ShowModulesAction()).setAsSecondary(true);
+    actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
   }
 
   protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
