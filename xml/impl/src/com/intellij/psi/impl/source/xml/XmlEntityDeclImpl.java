@@ -138,6 +138,14 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
           return setOriginalElement(generated, originalElement);
         }
 
+      case CONTEXT_ATTR_VALUE:
+        {
+          parsingContext.getXmlParsing().parseAttrValue(element, lexer);
+          final PsiElement generated = SourceTreeToPsiMap.treeElementToPsi(element).getFirstChild();
+          setDependsOnElement(generated, dependsOnElement);
+          return setOriginalElement(generated, originalElement);
+        }
+
       case CONTEXT_ENTITY_DECL_CONTENT:
         {
           parsingContext.getXmlParsing().parseEntityDeclContent(element, lexer);
@@ -210,6 +218,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
           break;
         }
 
+      case CONTEXT_ATTR_VALUE:
       case CONTEXT_GENERIC_XML: {
         break;
       }

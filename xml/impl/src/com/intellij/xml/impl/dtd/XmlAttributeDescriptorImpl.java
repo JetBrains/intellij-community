@@ -4,7 +4,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.xml.XmlAttributeDecl;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -70,10 +69,8 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
   }
 
   public String getDefaultValue() {
-    XmlAttributeValue value = myDecl.getDefaultValue();
-    if (value != null) {
-      String text = value.getText();
-
+    String text = myDecl.getDefaultValueText();
+    if (text != null) {
       return text.substring(1, text.length() - 1);
     }
 

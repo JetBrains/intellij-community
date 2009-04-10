@@ -24,6 +24,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 public interface XmlAttributeDecl extends XmlElement, PsiMetaOwner, PsiNamedElement {
   XmlElement getNameElement();
   XmlAttributeValue getDefaultValue();
+  String getDefaultValueText();
 
   boolean isAttributeRequired();
   boolean isAttributeFixed();

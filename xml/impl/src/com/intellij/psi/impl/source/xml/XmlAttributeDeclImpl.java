@@ -8,6 +8,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
@@ -74,6 +75,22 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
 
   public XmlAttributeValue getDefaultValue() {
     return (XmlAttributeValue)findElementByTokenType(XML_ATTRIBUTE_VALUE);
+  }
+
+  public String getDefaultValueText() {
+    XmlAttributeValue value = getDefaultValue();
+    if (value == null) return null;
+    String text = value.getText();
+    if (text.indexOf('%') == -1 && text.indexOf('&') == -1) return text;
+
+    final StringBuilder builder = new StringBuilder();
+    value.processElements(new PsiElementProcessor() {
+      public boolean execute(PsiElement element) {
+        builder.append(element.getText());
+        return true;
+      }
+    }, null);
+    return builder.toString();
   }
 
   public boolean isEnumerated() {

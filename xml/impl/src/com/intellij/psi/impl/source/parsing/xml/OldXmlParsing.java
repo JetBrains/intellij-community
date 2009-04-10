@@ -923,6 +923,12 @@ public class OldXmlParsing implements XmlElementType {
 
   }
 
+  public void parseAttrValue(CompositeElement element, Lexer lexer) {
+    while(lexer.getTokenType() != null) {
+      addToken(element, lexer);
+    }
+  }
+
   public static class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
     public static final TokenProcessor INSTANCE = new WhiteSpaceAndCommentsProcessor();
 

@@ -88,6 +88,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd","xhtml1-strict.dtd");
     addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd","xhtml1-transitional.dtd");
     addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd","xhtml1-frameset.dtd");
+    addInternalResource("http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd","xhtml11/xhtml11.dtd");
 
     // Plugins DTDs // stathik
     addInternalResource("http://plugins.intellij.net/plugin.dtd", "plugin.dtd");

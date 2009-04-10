@@ -708,6 +708,9 @@ public class XmlUtil {
       else if (temp instanceof XmlEnumeratedType) {
         type = XmlEntityDecl.CONTEXT_ENUMERATED_TYPE;
       }
+      else if (temp instanceof XmlAttributeValue) {
+        type = XmlEntityDecl.CONTEXT_ATTR_VALUE;
+      }
       else {
         temp = temp.getContext();
         continue;
