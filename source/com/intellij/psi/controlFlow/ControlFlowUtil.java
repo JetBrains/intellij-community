@@ -2,6 +2,7 @@ package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -334,7 +335,8 @@ public class ControlFlowUtil {
     while (parent != null) {
       if (parent instanceof PsiDirectory
           || parent instanceof PsiMethod
-          || parent instanceof PsiField || parent instanceof PsiClassInitializer) {
+          || parent instanceof PsiField || parent instanceof PsiClassInitializer
+          || parent instanceof DummyHolder) {
         break;
       }
       codeFragment = parent;

@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
@@ -204,7 +205,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);
-    myCodeFragmentMember = codeFragment.getParent();
+    myCodeFragmentMember = codeFragment.getUserData(ElementToWorkOn.PARENT);
+    if (myCodeFragmentMember == null) {
+      myCodeFragmentMember = codeFragment.getParent();
+    }
     if (myCodeFragmentMember == null) {
       myCodeFragmentMember = ControlFlowUtil.findCodeFragment(codeFragment.getContext()).getParent();
     }
@@ -563,7 +567,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     PsiElement codeFragmentMember = myCodeFragmentMember;
     while (codeFragmentMember != null && PsiTreeUtil.isAncestor(myTargetClass, codeFragmentMember, true)) {
-      if (((PsiModifierListOwner)codeFragmentMember).hasModifierProperty(PsiModifier.STATIC)) {
+      if (codeFragmentMember instanceof PsiModifierListOwner && ((PsiModifierListOwner)codeFragmentMember).hasModifierProperty(PsiModifier.STATIC)) {
         return true;
       }
       codeFragmentMember = PsiTreeUtil.getParentOfType(codeFragmentMember, PsiModifierListOwner.class, true);
@@ -1189,7 +1193,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myNeedChangeContext = false;
     myTargetClass = myCodeFragmentMember instanceof PsiMember
                     ? ((PsiMember)myCodeFragmentMember).getContainingClass()
-                    : (PsiClass)myCodeFragmentMember.getParent();
+                    : PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiClass.class);
     if (myTargetClass instanceof PsiAnonymousClass) {
       PsiElement target = myTargetClass.getParent();
       PsiElement targetMember = myTargetClass;
