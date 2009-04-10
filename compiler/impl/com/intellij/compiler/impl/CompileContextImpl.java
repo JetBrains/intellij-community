@@ -13,6 +13,7 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,18 +30,20 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.io.zip.JBZipFile;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileContextImpl");
   private final Project myProject;
   private final CompilerTask myTask;
   private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new HashMap<CompilerMessageCategory, Collection<CompilerMessage>>();
@@ -59,6 +62,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
+  private final Map<String, JBZipFile> myOpenZipFiles = new java.util.HashMap<String, JBZipFile>();
 
   public CompileContextImpl(Project project,
                             CompilerTask indicator,
@@ -116,6 +120,87 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   public boolean isGenerated(VirtualFile file) {
     return myGeneratedSources.contains(FileBasedIndex.getFileId(file));
+  }
+
+  public void updateZippedOuput(String outputDir, String relativePath) throws IOException {
+    /*
+    final File file = new File(outputDir, relativePath);
+    final JBZipFile zip = lookupZip(outputDir);
+    final long fileStamp = file.lastModified();
+    if (fileStamp <= 0L) { // does not exist
+      final JBZipEntry entry = zip.getEntry(relativePath);
+      if (entry != null) {
+        entry.erase();
+      }
+    }
+    else {
+      final JBZipEntry entry = zip.getOrCreateEntry(relativePath);
+      if (entry.getTime() != fileStamp) {
+        entry.setData(FileUtil.loadFileBytes(file), fileStamp);
+      }
+    }
+    */
+  }
+
+  /*
+  private JBZipFile lookupZip(String outputDir) {
+    synchronized (myOpenZipFiles) {
+      JBZipFile zip = myOpenZipFiles.get(outputDir);
+      if (zip == null) {
+        final File zipFile = CompilerPathsEx.getZippedOutputPath(myProject, outputDir);
+        try {
+          try {
+            zip = new JBZipFile(zipFile);
+          }
+          catch (FileNotFoundException e) {
+            try {
+              zipFile.createNewFile();
+              zip = new JBZipFile(zipFile);
+            }
+            catch (IOException e1) {
+              zipFile.getParentFile().mkdirs();
+              zipFile.createNewFile();
+              zip = new JBZipFile(zipFile);
+            }
+          }
+          myOpenZipFiles.put(outputDir, zip);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          addMessage(CompilerMessageCategory.ERROR, "Cannot create zip file " + zipFile.getPath() + ": " + e.getMessage(), null, -1, -1);
+        }
+      }
+      return zip;
+    }
+  }
+  */
+
+  public void commitZipFiles() {
+    /*
+    synchronized (myOpenZipFiles) {
+      for (JBZipFile zipFile : myOpenZipFiles.values()) {
+        try {
+          zipFile.close();
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          addMessage(CompilerMessageCategory.ERROR, "Cannot save zip files: " + e.getMessage(), null, -1, -1);
+        }
+      }
+      myOpenZipFiles.clear();
+    }
+    */
+  }
+
+  public void commitZip(String outputDir) throws IOException {
+    /*
+    synchronized (myOpenZipFiles) {
+      JBZipFile zip = myOpenZipFiles.remove(outputDir);
+      if (zip != null) {
+        zip.close();
+      }
+    }
+    */
   }
 
   public Project getProject() {

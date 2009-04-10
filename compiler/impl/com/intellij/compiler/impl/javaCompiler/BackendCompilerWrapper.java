@@ -748,8 +748,16 @@ public class BackendCompilerWrapper {
           final String outputPath = cc.pathToClass.replace(File.separatorChar, '/');
           final Pair<String, String> realLocation = moveToRealLocation(outputDir, outputPath, srcFile);
           if (realLocation != null) {
-            myOutputItems.add(new OutputItemImpl(realLocation.getFirst(), new String(realLocation.getSecond().substring(realLocation.first.length() + 1)), srcFile));
+            final String realOutputDir = realLocation.getFirst();
+            final String relativeOutputPath = new String(realLocation.getSecond().substring(realLocation.first.length() + 1));
+            myOutputItems.add(new OutputItemImpl(realOutputDir, relativeOutputPath, srcFile));
             newCache.setPath(cc.qName, realLocation.getSecond());
+            try {
+              myCompileContext.updateZippedOuput(realOutputDir, relativeOutputPath);
+            }
+            catch (IOException e) {
+              LOG.info(e); // todo
+            }
             if (LOG.isDebugEnabled()) {
               LOG.debug("Added output item: [outputDir; outputPath; sourceFile]  = [" + realLocation.getFirst() + "; " +
                         realLocation.getSecond() + "; " + srcFile.getPresentableUrl() + "]");

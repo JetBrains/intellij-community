@@ -14,6 +14,7 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
@@ -147,5 +148,17 @@ public class CompileContextExProxy implements CompileContextEx {
 
   public long getStartCompilationStamp() {
     return myDelegate.getStartCompilationStamp();
+  }
+
+  public void updateZippedOuput(String outputDir, String relativePath) throws IOException {
+    myDelegate.updateZippedOuput(outputDir, relativePath);
+  }
+
+  public void commitZipFiles() {
+    myDelegate.commitZipFiles();
+  }
+
+  public void commitZip(String outputDir) throws IOException {
+    myDelegate.commitZip(outputDir);
   }
 }

@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
@@ -18,6 +19,16 @@ import java.io.File;
 import java.util.Set;
 
 public class CompilerPathsEx extends CompilerPaths {
+
+  public static File getZippedOutputPath(Project project, String outputDirectoryPath) {
+    final File outputDir = new File(outputDirectoryPath);
+    return new File(getZipStoreDirectory(project), "_" + outputDir.getName() + Integer.toHexString(outputDirectoryPath.hashCode()) + ".zip");
+  }
+
+  public static File getZipStoreDirectory(Project project) {
+    return new File(getCompilerSystemDirectory(project), ".zip");
+  }
+
   public static class FileVisitor {
     protected void accept(final VirtualFile file, final String fileRoot, final String filePath) {
       if (file.isDirectory()) {
