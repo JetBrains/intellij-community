@@ -165,7 +165,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
   private final MessageBusConnection myConnection;
-  private boolean myToolbarVisible = true;
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
@@ -233,8 +232,13 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private void constructUi() {
-    myActionGroupPanel = new JPanel();
-    myActionGroupPanel.setVisible(myToolbarVisible);
+    myActionGroupPanel = new JPanel() {
+      @Override
+      public Dimension getPreferredSize() {
+        // HACK: I couldn't get the panel to size correctly otherwise
+        return new Dimension(60, super.getPreferredSize().height);
+      }
+    };
 
     myLabel = new JLabel("View as:");
     myLabel.setDisplayedMnemonic('a');
@@ -247,10 +251,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     combo.add(myCombo, BorderLayout.CENTER);
 
 
-    final JPanel top = new JPanel(new BorderLayout());
-    top.add(myActionGroupPanel, BorderLayout.NORTH);
-    top.add(combo, BorderLayout.CENTER);
-
+    final JPanel top = new JPanel(new GridBagLayout());
+    top.add(combo, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    top.add(myActionGroupPanel, new GridBagConstraints(1, 0, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     myStructureViewPanel = new JPanel() {
       {
@@ -303,13 +306,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         }, ModalityState.NON_MODAL);
       }
     });
-  }
-
-  public void setToolbarVisible(boolean visible) {
-    myToolbarVisible = visible;
-    if (myActionGroupPanel != null) {
-      myActionGroupPanel.setVisible(myToolbarVisible);
-    }
   }
 
   public synchronized void addProjectPane(final AbstractProjectViewPane pane) {
@@ -596,7 +592,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void createToolbarActions() {
     myActionGroup.removeAll();
-    myActionGroup.add(new PaneOptionAction(myFlattenPackages, IdeBundle.message("action.flatten.packages"),
+    myActionGroup.addAction(new PaneOptionAction(myFlattenPackages, IdeBundle.message("action.flatten.packages"),
                                            IdeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON,
                                            ourFlattenPackagesDefaults) {
       public void setSelected(AnActionEvent event, boolean flag) {
@@ -607,7 +603,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
         selectionInfo.apply(viewPane);
       }
-    });
+    }).setAsSecondary(true);
 
     class FlattenPackagesDependableAction extends PaneOptionAction {
       public FlattenPackagesDependableAction(Map<String, Boolean> optionsMap,
@@ -624,8 +620,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         presentation.setEnabled(isFlattenPackages(myCurrentViewId));
       }
     }
-    myActionGroup.add(new HideEmptyMiddlePackagesAction());
-    myActionGroup.add(new FlattenPackagesDependableAction(myAbbreviatePackageNames,
+    myActionGroup.addAction(new HideEmptyMiddlePackagesAction()).setAsSecondary(true);
+    myActionGroup.addAction(new FlattenPackagesDependableAction(myAbbreviatePackageNames,
                                                           IdeBundle.message("action.abbreviate.qualified.package.names"),
                                                           IdeBundle.message("action.abbreviate.qualified.package.names"),
                                                           IconLoader.getIcon("/objectBrowser/abbreviatePackageNames.png"),
@@ -641,12 +637,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           e.getPresentation().setEnabled(false);
         }
       }
-    });
+    }).setAsSecondary(true);
     myActionGroup.addAction(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
                                            IdeBundle.message("action.show.hide.members"),
                                            IconLoader.getIcon("/objectBrowser/showMembers.png"), ourShowMembersDefaults)).setAsSecondary(true);
-    myActionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
-    myActionGroup.add(myAutoScrollFromSourceHandler.createToggleAction());
+    myActionGroup.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
+    myActionGroup.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(new ShowStructureAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
 
