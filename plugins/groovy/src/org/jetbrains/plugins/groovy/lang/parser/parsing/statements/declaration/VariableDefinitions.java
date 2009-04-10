@@ -157,6 +157,7 @@ public class VariableDefinitions implements GroovyElementTypes {
         varAssMarker.drop();
         if (!wasAssingment && !hasModifiers) {
           builder.error(GroovyBundle.message("assignment.expected"));
+          return WRONGWAY;
         }
       }
       else if (isInClass) { // a = b, c = d

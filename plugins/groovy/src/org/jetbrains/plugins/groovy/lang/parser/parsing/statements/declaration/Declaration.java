@@ -151,7 +151,7 @@ public class Declaration implements GroovyElementTypes {
         }
       }
 
-      IElementType varDef = VariableDefinitions.parse(builder, isInClass, typeParsed);
+      IElementType varDef = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, false, typeParsed, false);
       if (varDef != WRONGWAY) {
         declMarker.done(varDef);
         return true;
