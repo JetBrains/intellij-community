@@ -47,9 +47,17 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
 
     }
 
-    if (!TypeConversionUtil.isAssignable(element.getType(), newType)) {
+    PsiType type = element.getType();
+    if (type == null) {
+      appendConflict("Type is unknown");
+      return;
+    } else {
+      type = type.getDeepComponentType();
+    }
+
+    if (!TypeConversionUtil.isAssignable(type, newType)) {
       final String conflict = "Type parameters do not agree in " + element.getText() + ". " +
-                              "Expected " + newType.getPresentableText() + " but found " + element.getType().getPresentableText();
+                              "Expected " + newType.getPresentableText() + " but found " + type.getPresentableText();
       appendConflict(conflict);
     }
 
@@ -74,9 +82,41 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
   public void fixUsage() throws IncorrectOperationException {
     final PsiNewExpression newExpression = (PsiNewExpression)getElement();
     if (newExpression != null) {
-      final PsiExpression expr =
-        JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory().createExpressionFromText("new " + myNewType.getCanonicalText() + newExpression.getArgumentList().getText(), newExpression);
-      newExpression.replace(expr);
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
+
+      final StringBuffer buf = new StringBuffer();
+      buf.append("new ").append(myNewType.getCanonicalText());
+      final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
+      final PsiType newExpressionType = newExpression.getType();
+      assert newExpressionType != null;
+      if (arrayInitializer != null) {
+        for (int i = 0; i < newExpressionType.getArrayDimensions(); i++) {
+          buf.append("[]");
+        }
+        buf.append(arrayInitializer.getText());
+      }
+      else {
+        final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
+        if (arrayDimensions.length > 0) {
+          buf.append("[");
+          buf.append(StringUtil.join(arrayDimensions, new Function<PsiExpression, String>() {
+            public String fun(PsiExpression psiExpression) {
+              return psiExpression.getText();
+            }
+          }, "]["));
+          buf.append("]");
+          for (int i = 0; i < newExpressionType.getArrayDimensions() - arrayDimensions.length; i++) {
+            buf.append("[]");
+          }
+        } else {
+          final PsiExpressionList list = newExpression.getArgumentList();
+          if (list != null) {
+            buf.append(list.getText());
+          }
+        }
+      }
+
+      newExpression.replace(elementFactory.createExpressionFromText(buf.toString(), newExpression));
     }
   }
 

@@ -114,6 +114,19 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     doTest();
   }
 
+  public void testNewArrayInitializerExpr() throws Exception {
+    doTest();
+  }
+  
+  public void testNewArrayDimensionsExpr() throws Exception {
+    doTest();
+  }
+
+  public void testNewArrayComplexDimensionsExpr() throws Exception {
+    doTest();
+  }
+
+
   public void testMultipleSubclasses() throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
