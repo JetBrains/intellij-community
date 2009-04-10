@@ -119,7 +119,8 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     private static class UnnecessaryBoxingVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
             if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
                 return;
             }
@@ -231,6 +232,8 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
                         false)) {
                     final PsiType type = thenExpression.getType();
                     return type instanceof PsiPrimitiveType;
+                } else {
+                    return true;
                 }
             }
             final PsiMethodCallExpression containingMethodCallExpression =

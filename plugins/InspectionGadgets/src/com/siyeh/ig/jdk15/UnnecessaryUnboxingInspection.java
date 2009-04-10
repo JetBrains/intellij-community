@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -51,26 +52,31 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
         s_unboxingMethods.put("java.lang.Character", "charValue");
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.unboxing.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.unboxing.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryUnboxingVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryUnboxingFix();
     }
@@ -83,6 +89,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
                     "unnecessary.unboxing.remove.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiMethodCallExpression methodCall =
@@ -103,6 +110,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
                 if (element instanceof PsiField) {
                     final PsiField field = (PsiField)element;
                     final PsiClass containingClass = field.getContainingClass();
+                    if (containingClass == null) {
+                        return;
+                    }
                     final String classname = containingClass.getQualifiedName();
                     if ("java.lang.Boolean".equals(classname)) {
                         @NonNls final String name = field.getName();
@@ -140,6 +150,32 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
             }
             if (isPossibleObjectComparison(expression, containingExpression)) {
                 return;
+            }
+            if (containingExpression instanceof PsiConditionalExpression) {
+                final PsiConditionalExpression conditionalExpression =
+                        (PsiConditionalExpression)containingExpression;
+                final PsiExpression thenExpression =
+                        conditionalExpression.getThenExpression();
+                if (thenExpression == null) {
+                    return;
+                }
+                final PsiExpression elseExpression =
+                        conditionalExpression.getElseExpression();
+                if (elseExpression == null) {
+                    return;
+                }
+                if (PsiTreeUtil.isAncestor(thenExpression, expression, false)) {
+                    final PsiType type = elseExpression.getType();
+                    if (!(type instanceof PsiPrimitiveType)) {
+                        return;
+                    }
+                } else if (PsiTreeUtil.isAncestor(elseExpression, expression,
+                        false)) {
+                    final PsiType type = thenExpression.getType();
+                    if (!(type instanceof PsiPrimitiveType)) {
+                        return;
+                    }
+                }
             }
             if (containingExpression instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression methodCallExpression =
@@ -227,6 +263,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
             final String name = originalMethod.getName();
             final PsiClass containingClass =
                     originalMethod.getContainingClass();
+            if (containingClass == null) {
+                return false;
+            }
             final PsiType[] types = new PsiType[expressions.length];
             for (int i = 0; i < expressions.length; i++) {
                 final PsiExpression expression = expressions[i];
@@ -266,7 +305,6 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
                 return null;
             }
             if (parent instanceof PsiParenthesizedExpression ||
-                    parent instanceof PsiConditionalExpression ||
                     parent instanceof PsiExpressionList) {
                 return getContainingExpression(parent);
             } else {
