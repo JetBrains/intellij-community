@@ -185,7 +185,7 @@ public class CustomActionsSchema implements ExportableApplicationComponent, Name
     for (Pair pair : myIdToNameList) {
       final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(pair.first);
       if (actionGroup != null) { //J2EE/Commander plugin was disabled
-        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, pair.second, null, null, true, null)));
+        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, pair.second, null, null, true, null, false)));
       }
     }
   }

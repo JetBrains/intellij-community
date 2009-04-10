@@ -96,8 +96,13 @@ public class ActionsTreeUtil {
   }
 
   public static Group createGroup(ActionGroup actionGroup, boolean ignore, Condition<AnAction> filtered) {
-    final String name = actionGroup.getTemplatePresentation().getText();
-    return createGroup(actionGroup, name != null ? name : ActionManager.getInstance().getId(actionGroup), null, null, ignore, filtered);
+
+    return createGroup(actionGroup, getName(actionGroup), null, null, ignore, filtered);
+  }
+
+  private static String getName(AnAction action) {
+    final String name = action.getTemplatePresentation().getText();
+    return name != null ? name : ActionManager.getInstance().getId(action);
   }
 
   public static Group createGroup(ActionGroup actionGroup,
@@ -106,6 +111,11 @@ public class ActionsTreeUtil {
                                   Icon openIcon,
                                   boolean ignore,
                                   Condition<AnAction> filtered) {
+    return createGroup(actionGroup, groupName, icon, openIcon, ignore, filtered, true);
+  }
+
+  public static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore, Condition<AnAction> filtered,
+                                  boolean normalizeSeparators) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon, openIcon);
     AnAction[] children = actionGroup instanceof DefaultActionGroup
@@ -116,7 +126,7 @@ public class ActionsTreeUtil {
       AnAction action = children[i];
 
       if (action instanceof ActionGroup) {
-        Group subGroup = createGroup((ActionGroup)action, ignore, filtered);
+        Group subGroup = createGroup((ActionGroup)action, getName(action), null, null, ignore, filtered, normalizeSeparators);
         if (subGroup.getSize() > 0) {
           if (!ignore && !((ActionGroup)action).isPopup()) {
             group.addAll(subGroup);
@@ -130,9 +140,7 @@ public class ActionsTreeUtil {
         }
       }
       else if (action instanceof Separator) {
-        //if (group.getSize() > 0 && i < children.length - 1 && !(group.getChildren().get(group.getSize() - 1)instanceof Separator)) {
-          group.addSeparator();
-        //}
+        group.addSeparator();
       }
       else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
@@ -144,7 +152,7 @@ public class ActionsTreeUtil {
         }
       }
     }
-    //group.normalizeSeparators();
+    if (normalizeSeparators) group.normalizeSeparators();
     return group;
   }
 
