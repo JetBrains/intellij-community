@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.siyeh.ig.jdk15;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -50,26 +50,26 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         s_boxingArgs.put("java.lang.Character", "char");
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.boxing.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.boxing.problem.descriptor");
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryBoxingVisitor();
-    }
-
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryBoxingFix();
     }
@@ -82,6 +82,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
                     "unnecessary.boxing.remove.quickfix");
         }
 
+        @Override
         public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiCallExpression expression =
@@ -108,6 +109,11 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
                 return '(' + unboxedType + ')';
             }
         }
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryBoxingVisitor();
     }
 
     private static class UnnecessaryBoxingVisitor
@@ -197,8 +203,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
             if (parent instanceof PsiExpressionStatement ||
                     parent instanceof PsiReferenceExpression) {
                 return false;
-            }
-            if (parent instanceof PsiTypeCastExpression) {
+            } else if (parent instanceof PsiTypeCastExpression) {
                 final PsiTypeCastExpression castExpression =
                         (PsiTypeCastExpression)parent;
                 final PsiType castType = castExpression.getType();
@@ -208,6 +213,24 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
                     if (aClass instanceof PsiTypeParameter) {
                         return false;
                     }
+                }
+            } else if (parent instanceof PsiConditionalExpression) {
+                final PsiConditionalExpression conditionalExpression =
+                        (PsiConditionalExpression)parent;
+                final PsiExpression thenExpression =
+                        conditionalExpression.getThenExpression();
+                final PsiExpression elseExpression =
+                        conditionalExpression.getElseExpression();
+                if (elseExpression == null || thenExpression == null) {
+                    return false;
+                }
+                if (PsiTreeUtil.isAncestor(thenExpression, expression, false)) {
+                    final PsiType type = elseExpression.getType();
+                    return type instanceof PsiPrimitiveType;
+                } else if (PsiTreeUtil.isAncestor(elseExpression, expression,
+                        false)) {
+                    final PsiType type = thenExpression.getType();
+                    return type instanceof PsiPrimitiveType;
                 }
             }
             final PsiMethodCallExpression containingMethodCallExpression =
@@ -247,6 +270,9 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
             final String name = originalMethod.getName();
             final PsiClass containingClass =
                     originalMethod.getContainingClass();
+            if (containingClass == null) {
+                return false;
+            }
             final PsiType[] types = new PsiType[expressions.length];
             for (int i = 0; i < expressions.length; i++) {
                 final PsiExpression expression = expressions[i];
