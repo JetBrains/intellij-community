@@ -20,5 +20,5 @@ public abstract class EvaluationInputComponent {
 
   protected abstract XDebuggerEditorBase getInputEditor();
 
-  public abstract JComponent getComponent();
+  public abstract void addComponent(JPanel contentPanel, JPanel resultPanel);
 }

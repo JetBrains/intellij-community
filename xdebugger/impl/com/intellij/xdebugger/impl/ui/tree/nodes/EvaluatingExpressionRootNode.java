@@ -4,7 +4,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueContainer;
-import com.intellij.xdebugger.impl.evaluate.EvaluationDialog;
+import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +14,7 @@ import java.util.Collections;
  * @author nik
  */
 public class EvaluatingExpressionRootNode extends XValueContainerNode<EvaluatingExpressionRootNode.EvaluatingResultContainer> {
-  public EvaluatingExpressionRootNode(EvaluationDialog evaluationDialog, final XDebuggerTree tree) {
+  public EvaluatingExpressionRootNode(XDebuggerEvaluationDialog evaluationDialog, final XDebuggerTree tree) {
     super(tree, null, new EvaluatingResultContainer(evaluationDialog));
     setLeaf(false);
   }
@@ -24,9 +24,9 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
   }
 
   public static class EvaluatingResultContainer extends XValueContainer {
-    private final EvaluationDialog myDialog;
+    private final XDebuggerEvaluationDialog myDialog;
 
-    public EvaluatingResultContainer(final EvaluationDialog dialog) {
+    public EvaluatingResultContainer(final XDebuggerEvaluationDialog dialog) {
       myDialog = dialog;
     }
 

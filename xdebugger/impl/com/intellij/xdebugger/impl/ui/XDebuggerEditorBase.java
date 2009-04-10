@@ -20,6 +20,7 @@ public abstract class XDebuggerEditorBase {
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
   @Nullable private final String myHistoryId;
   private final XSourcePosition mySourcePosition;
+  private int myHistoryIndex;
 
   protected XDebuggerEditorBase(final Project project, XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
                                 final @Nullable XSourcePosition sourcePosition) {
@@ -31,7 +32,12 @@ public abstract class XDebuggerEditorBase {
 
   public abstract JComponent getComponent();
 
-  public abstract void setText(String text);
+  protected abstract void doSetText(String text);
+
+  public void setText(String text) {
+    saveTextInHistory(text);
+    doSetText(null);
+  }
 
   public abstract String getText();
 
@@ -54,9 +60,10 @@ public abstract class XDebuggerEditorBase {
     saveTextInHistory(getText());
   }
 
-  public void saveTextInHistory(final String text) {
+  private void saveTextInHistory(final String text) {
     if (myHistoryId != null) {
       XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(myHistoryId, text);
+      myHistoryIndex = 0;
       onHistoryChanged();
     }
   }
@@ -73,4 +80,27 @@ public abstract class XDebuggerEditorBase {
     return getEditorsProvider().createDocument(getProject(), text, mySourcePosition);
   }
 
+  public boolean canGoBackward() {
+    return myHistoryIndex < getRecentExpressions().size()-1;
+  }
+
+  public boolean canGoForward() {
+    return myHistoryIndex > 0;
+  }
+
+  public void goBackward() {
+    final List<String> expressions = getRecentExpressions();
+    if (myHistoryIndex < expressions.size() - 1) {
+      myHistoryIndex++;
+      doSetText(expressions.get(myHistoryIndex));
+    }
+  }
+
+  public void goForward() {
+    final List<String> expressions = getRecentExpressions();
+    if (myHistoryIndex > 0) {
+      myHistoryIndex--;
+      doSetText(expressions.get(myHistoryIndex));
+    }
+  }
 }

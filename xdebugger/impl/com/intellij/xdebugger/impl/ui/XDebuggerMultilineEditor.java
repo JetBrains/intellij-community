@@ -38,7 +38,7 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
     return myEditorTextField;
   }
 
-  public void setText(String text) {
+  protected void doSetText(String text) {
     myEditorTextField.setText(text);
   }
 

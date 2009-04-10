@@ -34,8 +34,9 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
   }
 
   @Override
-  public JComponent getComponent() {
-    return myMainPanel;
+  public void addComponent(JPanel contentPanel, JPanel resultPanel) {
+    contentPanel.add(resultPanel, BorderLayout.CENTER);
+    contentPanel.add(myMainPanel, BorderLayout.NORTH);
   }
 
   protected XDebuggerEditorBase getInputEditor() {

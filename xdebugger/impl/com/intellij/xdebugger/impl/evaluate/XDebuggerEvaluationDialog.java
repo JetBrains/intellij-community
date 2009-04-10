@@ -1,8 +1,8 @@
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -26,10 +26,9 @@ import java.awt.event.KeyEvent;
 /**
  * @author nik
  */
-public class EvaluationDialog extends DialogWrapper {
-  private JPanel myMainPanel;
-  private JPanel myResultPanel;
-  private JPanel myInputPanel;
+public class XDebuggerEvaluationDialog extends DialogWrapper {
+  private final JPanel myMainPanel;
+  private final JPanel myResultPanel;
   private final XDebuggerTreePanel myTreePanel;
   private EvaluationInputComponent myInputComponent;
   private final XDebuggerEvaluator myEvaluator;
@@ -39,7 +38,7 @@ public class EvaluationDialog extends DialogWrapper {
   private final XSourcePosition mySourcePosition;
   private final SwitchModeAction mySwitchModeAction;
 
-  public EvaluationDialog(@NotNull XDebugSession session, final @NotNull XDebuggerEditorsProvider editorsProvider, @NotNull XDebuggerEvaluator evaluator,
+  public XDebuggerEvaluationDialog(@NotNull XDebugSession session, final @NotNull XDebuggerEditorsProvider editorsProvider, @NotNull XDebuggerEvaluator evaluator,
                           @NotNull String text, EvaluationDialogMode mode, final XSourcePosition sourcePosition) {
     super(session.getProject(), true);
     mySession = session;
@@ -48,9 +47,14 @@ public class EvaluationDialog extends DialogWrapper {
     setModal(false);
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
+
     myTreePanel = new XDebuggerTreePanel(session, editorsProvider, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP);
+    myResultPanel = new JPanel(new BorderLayout());
+    myResultPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.result")), BorderLayout.NORTH);
     myResultPanel.add(myTreePanel.getMainPanel(), BorderLayout.CENTER);
     myEvaluator = evaluator;
+    myMainPanel = new JPanel(new BorderLayout());
+
     mySwitchModeAction = new SwitchModeAction();
 
     new AnAction(){
@@ -77,16 +81,35 @@ public class EvaluationDialog extends DialogWrapper {
     return new Action[] {getOKAction(), mySwitchModeAction, getCancelAction()};
   }
 
+  @Override
+  protected JButton createJButtonForAction(Action action) {
+    final JButton button = super.createJButtonForAction(action);
+    if (action == mySwitchModeAction) {
+      int width1 = new JButton(getSwitchButtonText(EvaluationDialogMode.EXPRESSION)).getPreferredSize().width;
+      int width2 = new JButton(getSwitchButtonText(EvaluationDialogMode.CODE_FRAGMENT)).getPreferredSize().width;
+      final Dimension size = new Dimension(Math.max(width1, width2), button.getPreferredSize().height);
+      button.setMinimumSize(size);
+      button.setPreferredSize(size);
+    }
+    return button;
+  }
+
+  private static String getSwitchButtonText(EvaluationDialogMode mode) {
+    return mode != EvaluationDialogMode.EXPRESSION
+           ? XDebuggerBundle.message("button.text.expression.mode")
+           : XDebuggerBundle.message("button.text.code.fragment.mode");
+  }
+
   private void switchToMode(EvaluationDialogMode mode, String text) {
     if (myMode == mode) return;
     myMode = mode;
 
     myInputComponent = createInputComponent(mode, text);
-    myInputPanel.removeAll();
-    myInputPanel.add(myInputComponent.getComponent(), BorderLayout.CENTER);
-    myInputPanel.invalidate();
+    myMainPanel.removeAll();
+    myInputComponent.addComponent(myMainPanel, myResultPanel);
+
     setTitle(myInputComponent.getTitle());
-    mySwitchModeAction.putValue(Action.NAME, myMode == EvaluationDialogMode.EXPRESSION ? XDebuggerBundle.message("button.text.code.fragment.mode") : XDebuggerBundle.message("button.text.expression.mode"));
+    mySwitchModeAction.putValue(Action.NAME, getSwitchButtonText(mode));
     final JComponent preferredFocusedComponent = myInputComponent.getInputEditor().getPreferredFocusedComponent();
     if (preferredFocusedComponent != null) {
       IdeFocusManager.getInstance(mySession.getProject()).requestFocus(preferredFocusedComponent, true);
@@ -99,7 +122,7 @@ public class EvaluationDialog extends DialogWrapper {
       return new ExpressionInputComponent(project, myEditorsProvider, mySourcePosition, text);
     }
     else {
-      return new CodeFragmentInputComponent(project, myEditorsProvider, mySourcePosition, text);
+      return new CodeFragmentInputComponent(project, myEditorsProvider, mySourcePosition, text, myDisposable);
     }
   }
 

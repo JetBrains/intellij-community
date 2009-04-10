@@ -102,8 +102,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     }
   }
 
-  public void setText(final String text) {
-    saveTextInHistory(text);
+  protected void doSetText(String text) {
     if (myComboBox.getItemCount() > 0) {
       myComboBox.setSelectedIndex(0);
     }
