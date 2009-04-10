@@ -124,9 +124,7 @@ public class OutputPathFinder {
     public Node getChild(String childName) {
       if (myChildren instanceof Node) {
         final Node childNode = (Node)myChildren;
-        if (childName.equals(childNode.getName())) {
-          return childNode;
-        }
+        return childName.equals(childNode.getName())? childNode : null;
       }
 
       return isLeaf()? null : ((Map<String, Node>)myChildren).get(childName);
