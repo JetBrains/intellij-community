@@ -57,11 +57,15 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
           myValueChildren.add(node);
           newChildren.add(node);
         }
-        if (last) {
-          myMessageChildren = null;
-        }
         myCachedAllChildren = null;
-        fireNodeChildrenChanged();
+        fireNodesInserted(newChildren);
+        if (last) {
+          final int[] ints = getNodesIndices(myMessageChildren);
+          final TreeNode[] removed = getChildNodes(ints);
+          myCachedAllChildren = null;
+          myMessageChildren = null;
+          fireNodesRemoved(ints, removed);
+        }
         myTree.childrenLoaded(XValueContainerNode.this, newChildren, last);
       }
     });
@@ -99,8 +103,12 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   protected void setMessageNode(final MessageTreeNode messageNode) {
     myCachedAllChildren = null;
+    final int[] indices = getNodesIndices(myMessageChildren);
+    final TreeNode[] nodes = getChildNodes(indices);
+    myMessageChildren = Collections.emptyList();
+    fireNodesRemoved(indices, nodes);
     myMessageChildren = Collections.singletonList(messageNode);
-    fireNodeChildrenChanged();
+    fireNodesInserted(myMessageChildren);
   }
 
   protected List<? extends TreeNode> getChildren() {

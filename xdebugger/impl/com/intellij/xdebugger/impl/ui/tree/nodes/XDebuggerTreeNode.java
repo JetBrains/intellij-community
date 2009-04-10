@@ -9,9 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -85,6 +83,32 @@ public abstract class XDebuggerTreeNode implements TreeNode {
 
   protected void fireNodeChanged() {
     myTree.getTreeModel().nodeChanged(this);
+  }
+
+  protected void fireNodesRemoved(int[] indices, TreeNode[] nodes) {
+    myTree.getTreeModel().nodesWereRemoved(this, indices, nodes);
+  }
+
+  protected void fireNodesInserted(Collection<? extends TreeNode> added) {
+    myTree.getTreeModel().nodesWereInserted(this, getNodesIndices(added));
+  }
+
+  protected TreeNode[] getChildNodes(int[] indices) {
+    final TreeNode[] children = new TreeNode[indices.length];
+    for (int i = 0; i < indices.length; i++) {
+      children[i] = getChildAt(indices[i]);
+    }
+    return children;
+  }
+
+  protected int[] getNodesIndices(Collection<? extends TreeNode> children) {
+    final int[] ints = new int[children.size()];
+    int i = 0;
+    for (TreeNode node : children) {
+      ints[i++] = getIndex(node);
+    }
+    Arrays.sort(ints);
+    return ints;
   }
 
   protected void fireNodeChildrenChanged() {
