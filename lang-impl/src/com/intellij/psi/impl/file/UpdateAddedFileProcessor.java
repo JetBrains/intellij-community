@@ -20,7 +20,7 @@ public abstract class UpdateAddedFileProcessor {
     return false;
   }
 
-  public abstract void update(PsiFile element) throws IncorrectOperationException;
+  public abstract void update(PsiFile element, @Nullable PsiFile originalElement) throws IncorrectOperationException;
 
   @Nullable
   public static UpdateAddedFileProcessor forElement(PsiFile element) {

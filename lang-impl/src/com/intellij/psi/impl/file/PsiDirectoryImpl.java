@@ -343,7 +343,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       if (copyPsi == null) {
         LOG.error("Could not find file '"+copyVFile+"' after copying '"+vFile+"'");
       }
-      updateAddedFile(copyPsi);
+      updateAddedFile(copyPsi, originalFile);
       return copyPsi;
     }
     catch (IOException e) {
@@ -352,10 +352,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   }
 
-  private static void updateAddedFile(PsiFile copyPsi) throws IncorrectOperationException {
+  private static void updateAddedFile(PsiFile copyPsi, PsiFile originalFile) throws IncorrectOperationException {
     final UpdateAddedFileProcessor processor = UpdateAddedFileProcessor.forElement(copyPsi);
     if (processor != null) {
-      processor.update(copyPsi);
+      processor.update(copyPsi, null);
     }
   }
 
@@ -417,7 +417,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
         psiDocumentManager.commitAllDocuments();
 
         PsiFile newFile = myManager.findFile(newVFile);
-        updateAddedFile(newFile);
+        updateAddedFile(newFile, null);
 
         return newFile;
       }

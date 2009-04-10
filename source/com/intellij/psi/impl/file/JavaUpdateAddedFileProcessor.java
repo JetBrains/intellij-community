@@ -22,7 +22,7 @@ public class JavaUpdateAddedFileProcessor extends UpdateAddedFileProcessor {
     return true;
   }
 
-  public void update(final PsiFile element) throws IncorrectOperationException {
+  public void update(final PsiFile element, PsiFile originalElement) throws IncorrectOperationException {
     final TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(element);
     if (tree == null) return;
 
