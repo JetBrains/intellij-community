@@ -32,6 +32,7 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectReloadState;
 import com.intellij.openapi.startup.StartupManager;
@@ -39,8 +40,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -55,7 +56,7 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
   }
 
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(myProject).isAfterAutomaticReload()) {
           ActionInfo actionInfo = myUpdateInfo.getActionInfo();

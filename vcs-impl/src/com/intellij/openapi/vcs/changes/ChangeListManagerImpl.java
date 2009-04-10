@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -107,7 +108,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
     }
     else {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
         public void run() {
           myWorker.initialized();
           myUpdater.initialized();

@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
@@ -54,7 +55,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     }
     else {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
         public void run() {
           myLife.born();
           markEverythingDirty();
