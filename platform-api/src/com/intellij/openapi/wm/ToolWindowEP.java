@@ -47,6 +47,9 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
   @Attribute("conditionClass")
   public String conditionClass;
 
+  @Attribute("secondary")
+  public boolean secondary;
+
   private ToolWindowFactory myFactory;
 
   public ToolWindowFactory getToolWindowFactory() {

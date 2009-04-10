@@ -6,7 +6,6 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
-import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -36,7 +35,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -109,7 +111,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private static final boolean ourAutoscrollToSourceDefaults = false;
   private final Map<String, Boolean> myAutoscrollFromSource = new THashMap<String, Boolean>();
   private static final boolean ourAutoscrollFromSourceDefaults = false;
-  private final Map<String, Boolean> myShowStructure = new THashMap<String, Boolean>();
   private static final boolean ourShowStructureDefaults = false;
 
   private String myCurrentViewId;
@@ -122,9 +123,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private final IdeView myIdeView = new MyIdeView();
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
-
-  private JPanel myStructureViewPanel;
-  private MyStructureViewWrapperImpl myStructureViewWrapper;
 
   private SimpleToolWindowPanel myPanel;
   private final Map<String, AbstractProjectViewPane> myId2Pane = new LinkedHashMap<String, AbstractProjectViewPane>();
@@ -146,7 +144,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   @NonNls private static final String ELEMENT_SHOW_LIBRARY_CONTENTS = "showLibraryContents";
   @NonNls private static final String ELEMENT_HIDE_EMPTY_PACKAGES = "hideEmptyPackages";
   @NonNls private static final String ELEMENT_ABBREVIATE_PACKAGE_NAMES = "abbreviatePackageNames";
-  @NonNls private static final String ELEMENT_SHOW_STRUCTURE = "showStructure";
   @NonNls private static final String ELEMENT_AUTOSCROLL_TO_SOURCE = "autoscrollToSource";
   @NonNls private static final String ELEMENT_AUTOSCROLL_FROM_SOURCE = "autoscrollFromSource";
   @NonNls private static final String ELEMENT_SORT_BY_TYPE = "sortByType";
@@ -243,10 +240,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myLabel = new JLabel("View as:");
     myLabel.setDisplayedMnemonic('a');
     myCombo = new ComboBox();
+    myCombo.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     myLabel.setLabelFor(myCombo);
 
     final JPanel combo = new JPanel(new BorderLayout());
-    combo.setBorder(new EmptyBorder(2, 4, 2, 4));
+    combo.setBorder(new EmptyBorder(4, 4, 4, 4));
     combo.add(myLabel, BorderLayout.WEST);
     combo.add(myCombo, BorderLayout.CENTER);
 
@@ -255,27 +253,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     top.add(combo, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     top.add(myActionGroupPanel, new GridBagConstraints(1, 0, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
-    myStructureViewPanel = new JPanel() {
-      {
-        setBorder(new EmptyBorder(1, 0, 0, 0));
-      }
-
-      @Override
-      protected void paintComponent(final Graphics g) {
-        super.paintComponent(g);
-        g.setColor(UIUtil.getBorderSeparatorColor());
-        g.drawRect(0, 0, getWidth(), 0);
-      }
-    };
     myViewContentPanel = new JPanel();
-
-    final Splitter splitter = new Splitter(true);
-    splitter.setFirstComponent(myViewContentPanel);
-    splitter.setSecondComponent(myStructureViewPanel);
-
     myPanel = new SimpleToolWindowPanel(true);
     myPanel.setToolbar(top);
-    myPanel.setContent(splitter);
+    myPanel.setContent(myViewContentPanel);
 
     myPanel.setBorder(new ToolWindow.Border(true, false, false, false));
   }
@@ -433,7 +414,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     newPane.getComponentToFocus().requestFocus();
     updateToolWindowTitle();
-    showOrHideStructureView(isShowStructure());
 
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null) {
@@ -482,12 +462,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     });
     myCombo.setMinimumAndPreferredWidth(10);
 
-    myStructureViewWrapper = new MyStructureViewWrapperImpl();
-    Disposer.register(this, myStructureViewWrapper);
-    myStructureViewWrapper.setFileEditor(null);
-    myStructureViewPanel.setLayout(new BorderLayout());
-    myStructureViewPanel.add(myStructureViewWrapper.getComponent(), BorderLayout.CENTER);
-
     myActionGroup = new DefaultActionGroup();
 
     myAutoScrollFromSourceHandler.install();
@@ -496,8 +470,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     JComponent toolbarComponent = toolBar.getComponent();
     myActionGroupPanel.setLayout(new BorderLayout());
     myActionGroupPanel.add(toolbarComponent, BorderLayout.NORTH);
-
-    myStructureViewPanel.setVisible(isShowStructure());
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
@@ -643,7 +615,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
                                            IconLoader.getIcon("/objectBrowser/showMembers.png"), ourShowMembersDefaults)).setAsSecondary(true);
     myActionGroup.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
-    myActionGroup.addAction(new ShowStructureAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
 
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
@@ -705,12 +676,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   public void dispose() {
     myConnection.disconnect();
-  }
-
-  public void rebuildStructureViewPane() {
-    if (myStructureViewWrapper != null) {
-      myStructureViewWrapper.rebuild();
-    }
   }
 
   private JComponent getComponent() {
@@ -812,41 +777,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     public void setSelected(AnActionEvent event, boolean flag) {
       setPaneOption(myOptionsMap, flag, myCurrentViewId, true);
-    }
-  }
-
-  private final class ShowStructureAction extends ToggleAction {
-    ShowStructureAction() {
-      super(IdeBundle.message("action.show.structure"), IdeBundle.message("action.description.show.structure"),
-            IconLoader.getIcon("/objectBrowser/showStructure.png"));
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return isShowStructure();
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      showOrHideStructureView(flag);
-    }
-  }
-
-  private void showOrHideStructureView(boolean toShow) {
-    boolean hadFocus = IJSwingUtilities.hasFocus2(getComponent());
-
-    myStructureViewPanel.setVisible(toShow);
-    setShowStructure(toShow, myCurrentViewId);
-
-    if (hadFocus) {
-      final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      if (viewPane != null) {
-        viewPane.getComponentToFocus().requestFocus();
-      }
-    }
-
-    if (toShow) {
-      VirtualFile[] files = myFileEditorManager.getSelectedFiles();
-      FileEditor editor = files.length == 0 ? null : myFileEditorManager.getSelectedEditor(files[0]);
-      myStructureViewWrapper.setFileEditor(editor);
     }
   }
 
@@ -964,16 +894,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   @NotNull
   public String getComponentName() {
     return "ProjectView";
-  }
-
-  private final class MyStructureViewWrapperImpl extends StructureViewWrapperImpl {
-    MyStructureViewWrapperImpl() {
-      super(myProject);
-    }
-
-    protected boolean isStructureViewShowing() {
-      return myStructureViewPanel.isVisible();
-    }
   }
 
   private final class MyPanel extends JPanel implements DataProvider {
@@ -1289,7 +1209,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       readOption(navigatorElement.getChild(ELEMENT_SHOW_LIBRARY_CONTENTS), myShowLibraryContents);
       readOption(navigatorElement.getChild(ELEMENT_HIDE_EMPTY_PACKAGES), myHideEmptyPackages);
       readOption(navigatorElement.getChild(ELEMENT_ABBREVIATE_PACKAGE_NAMES), myAbbreviatePackageNames);
-      readOption(navigatorElement.getChild(ELEMENT_SHOW_STRUCTURE), myShowStructure);
       readOption(navigatorElement.getChild(ELEMENT_AUTOSCROLL_TO_SOURCE), myAutoscrollToSource);
       readOption(navigatorElement.getChild(ELEMENT_AUTOSCROLL_FROM_SOURCE), myAutoscrollFromSource);
       readOption(navigatorElement.getChild(ELEMENT_SORT_BY_TYPE), mySortByType);
@@ -1314,7 +1233,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     writeOption(navigatorElement, myShowLibraryContents, ELEMENT_SHOW_LIBRARY_CONTENTS);
     writeOption(navigatorElement, myHideEmptyPackages, ELEMENT_HIDE_EMPTY_PACKAGES);
     writeOption(navigatorElement, myAbbreviatePackageNames, ELEMENT_ABBREVIATE_PACKAGE_NAMES);
-    writeOption(navigatorElement, myShowStructure, ELEMENT_SHOW_STRUCTURE);
     writeOption(navigatorElement, myAutoscrollToSource, ELEMENT_AUTOSCROLL_TO_SOURCE);
     writeOption(navigatorElement, myAutoscrollFromSource, ELEMENT_AUTOSCROLL_FROM_SOURCE);
     writeOption(navigatorElement, mySortByType, ELEMENT_SORT_BY_TYPE);
@@ -1406,15 +1324,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private static boolean getPaneOptionValue(Map<String, Boolean> optionsMap, String paneId, boolean defaultValue) {
     final Boolean value = optionsMap.get(paneId);
     return value == null ? defaultValue : value.booleanValue();
-  }
-
-  private boolean isShowStructure() {
-    Boolean status = myShowStructure.get(getCurrentViewId());
-    return status == null ? ourShowStructureDefaults : status.booleanValue();
-  }
-
-  private void setShowStructure(boolean showStructure, String paneId) {
-    myShowStructure.put(paneId, showStructure ? Boolean.TRUE : Boolean.FALSE);
   }
 
   private class HideEmptyMiddlePackagesAction extends PaneOptionAction {

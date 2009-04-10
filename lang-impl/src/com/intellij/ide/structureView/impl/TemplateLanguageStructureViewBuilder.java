@@ -6,8 +6,6 @@ package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
-import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
@@ -93,7 +91,6 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
                   myTemplateDataLanguage = baseLanguage;
                   StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
                   ((StructureViewWrapperImpl)structureViewWrapper).rebuild();
-                  ((ProjectViewImpl)ProjectView.getInstance(myProject)).rebuildStructureViewPane();
                 }
               }
             });

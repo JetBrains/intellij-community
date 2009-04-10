@@ -225,6 +225,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (bean.icon != null) {
         toolWindow.setIcon(IconLoader.getIcon(bean.icon));
       }
+      toolWindow.setSplitMode(bean.secondary, null);
       UiNotifyConnector.doWhenFirstShown(label, new Runnable() {
         public void run() {
           ApplicationManager.getApplication().invokeLater(new Runnable() {

@@ -443,6 +443,6 @@
 
   <toolWindow id="TODO" anchor="bottom" icon="/general/toolWindowTodo.png"
               factoryClass="com.intellij.ide.todo.TodoToolWindowFactory"/>
-  <toolWindow id="Structure" anchor="left" icon="/general/toolWindowStructure.png"
+  <toolWindow id="Structure" anchor="left" icon="/general/toolWindowStructure.png" secondary="true"
               factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
 </extensions>
