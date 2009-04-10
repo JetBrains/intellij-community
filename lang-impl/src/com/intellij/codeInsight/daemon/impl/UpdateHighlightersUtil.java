@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -343,7 +345,7 @@ public class UpdateHighlightersUtil {
       for (LineMarkerInfo info : oldMarkers) {
         RangeHighlighter highlighter = info.highlighter;
         boolean toRemove = !highlighter.isValid() || info.updatePass == group
-                           && startOffset <= highlighter.getStartOffset() && highlighter.getStartOffset() <= endOffset;
+                           && startOffset <= highlighter.getStartOffset() && highlighter.getEndOffset() < endOffset;
 
         if (toRemove) {
           markupModel.removeHighlighter(highlighter);
@@ -356,7 +358,9 @@ public class UpdateHighlightersUtil {
 
     final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme(); // TODO: editor color scheme
     for (LineMarkerInfo info : markers) {
-      if (startOffset > info.startOffset || info.startOffset > endOffset) continue;
+      PsiElement element = info.getElement();
+      TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, element.getTextRange());
+      if (startOffset > elementRange.getEndOffset() || elementRange.getStartOffset() > endOffset) continue;
       RangeHighlighter marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                 info.textAttributesKey != null ? colorsScheme.getAttributes(info.textAttributesKey) : null, HighlighterTargetArea.EXACT_RANGE);
       marker.setGutterIconRenderer(info.createGutterRenderer());
