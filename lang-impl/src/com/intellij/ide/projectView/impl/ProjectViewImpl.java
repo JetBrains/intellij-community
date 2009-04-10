@@ -162,6 +162,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
   private final MessageBusConnection myConnection;
+  private JPanel myTopPanel;
+  private ActionToolbar myToolBar;
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
@@ -229,13 +231,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private void constructUi() {
-    myActionGroupPanel = new JPanel() {
-      @Override
-      public Dimension getPreferredSize() {
-        // HACK: I couldn't get the panel to size correctly otherwise
-        return new Dimension(60, super.getPreferredSize().height);
-      }
-    };
+    myActionGroupPanel = new JPanel(new BorderLayout());
 
     myLabel = new JLabel("View as:");
     myLabel.setDisplayedMnemonic('a');
@@ -249,13 +245,13 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     combo.add(myCombo, BorderLayout.CENTER);
 
 
-    final JPanel top = new JPanel(new GridBagLayout());
-    top.add(combo, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    top.add(myActionGroupPanel, new GridBagConstraints(1, 0, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    myTopPanel = new JPanel(new GridBagLayout());
+    myTopPanel.add(combo, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    myTopPanel.add(myActionGroupPanel, new GridBagConstraints(1, 0, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     myViewContentPanel = new JPanel();
     myPanel = new SimpleToolWindowPanel(true);
-    myPanel.setToolbar(top);
+    myPanel.setToolbar(myTopPanel);
     myPanel.setContent(myViewContentPanel);
 
     myPanel.setBorder(new ToolWindow.Border(true, false, false, false));
@@ -408,6 +404,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myViewContentPanel.revalidate();
     myViewContentPanel.repaint();
     createToolbarActions();
+    myToolBar.updateActionsImmediately();
+    myTopPanel.revalidate();
 
     newPane.setTreeChangeListener(myTreeChangeListener);
     myAutoScrollToSourceHandler.install(newPane.myTree);
@@ -466,10 +464,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     myAutoScrollFromSourceHandler.install();
 
-    final ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, myActionGroup, true);
-    JComponent toolbarComponent = toolBar.getComponent();
+    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, myActionGroup, true);
+    JComponent toolbarComponent = myToolBar.getComponent();
     myActionGroupPanel.setLayout(new BorderLayout());
-    myActionGroupPanel.add(toolbarComponent, BorderLayout.NORTH);
+    myActionGroupPanel.add(toolbarComponent, BorderLayout.CENTER);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
@@ -589,7 +587,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       public void update(AnActionEvent e) {
         super.update(e);
         final Presentation presentation = e.getPresentation();
-        presentation.setEnabled(isFlattenPackages(myCurrentViewId));
+        presentation.setVisible(isFlattenPackages(myCurrentViewId));
       }
     }
     myActionGroup.addAction(new HideEmptyMiddlePackagesAction()).setAsSecondary(true);
