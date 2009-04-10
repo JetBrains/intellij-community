@@ -434,7 +434,7 @@ public class FSRecords implements Disposable, Forceable {
           return free;
         }
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -447,7 +447,7 @@ public class FSRecords implements Disposable, Forceable {
         incModCount(id);
         doDeleteRecursively(id);
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -480,7 +480,7 @@ public class FSRecords implements Disposable, Forceable {
         DbConnection.cleanRecord(id);
         addToFreeRecordsList(id);
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -628,7 +628,7 @@ public class FSRecords implements Disposable, Forceable {
         input.close();
         return result;
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -642,7 +642,7 @@ public class FSRecords implements Disposable, Forceable {
         return att != 0;
       }
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       throw DbConnection.handleError(e);
     }
   }
@@ -663,7 +663,7 @@ public class FSRecords implements Disposable, Forceable {
         }
         record.close();
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -720,7 +720,7 @@ public class FSRecords implements Disposable, Forceable {
         incModCount(id);
         getRecords().putInt(id * RECORD_SIZE + PARENT_OFFSET, parent);
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -732,7 +732,7 @@ public class FSRecords implements Disposable, Forceable {
         final int nameId = getRecords().getInt(id * RECORD_SIZE + NAME_OFFSET);
         return nameId != 0 ? getNames().valueOf(nameId) : "";
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -745,7 +745,7 @@ public class FSRecords implements Disposable, Forceable {
         incModCount(id);
         getRecords().putInt(id * RECORD_SIZE + NAME_OFFSET, getNames().enumerate(name));
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -766,7 +766,7 @@ public class FSRecords implements Disposable, Forceable {
         }
         getRecords().putInt(id * RECORD_SIZE + FLAGS_OFFSET, flags);
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -785,7 +785,7 @@ public class FSRecords implements Disposable, Forceable {
         incModCount(id);
         getRecords().putLong(id * RECORD_SIZE + LENGTH_OFFSET, len);
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -804,7 +804,7 @@ public class FSRecords implements Disposable, Forceable {
         incModCount(id);
         getRecords().putLong(id * RECORD_SIZE + TIMESTAMP_OFFSET, value);
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -838,7 +838,7 @@ public class FSRecords implements Disposable, Forceable {
         return getAttributes().readStream(att);
       }
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       throw DbConnection.handleError(e);
     }
   }
@@ -915,7 +915,7 @@ public class FSRecords implements Disposable, Forceable {
           sinkStream.close();
         }
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -932,7 +932,7 @@ public class FSRecords implements Disposable, Forceable {
         DbConnection.force();
         DbConnection.closeFiles();
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
