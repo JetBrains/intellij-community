@@ -562,18 +562,20 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void createToolbarActions() {
     myActionGroup.removeAll();
-    myActionGroup.addAction(new PaneOptionAction(myFlattenPackages, IdeBundle.message("action.flatten.packages"),
-                                           IdeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON,
-                                           ourFlattenPackagesDefaults) {
-      public void setSelected(AnActionEvent event, boolean flag) {
-        final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-        final SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
+    if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
+      myActionGroup.addAction(new PaneOptionAction(myFlattenPackages, IdeBundle.message("action.flatten.packages"),
+                                             IdeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON,
+                                             ourFlattenPackagesDefaults) {
+        public void setSelected(AnActionEvent event, boolean flag) {
+          final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
+          final SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
 
-        super.setSelected(event, flag);
+          super.setSelected(event, flag);
 
-        selectionInfo.apply(viewPane);
-      }
-    }).setAsSecondary(true);
+          selectionInfo.apply(viewPane);
+        }
+      }).setAsSecondary(true);
+    }
 
     class FlattenPackagesDependableAction extends PaneOptionAction {
       public FlattenPackagesDependableAction(Map<String, Boolean> optionsMap,
@@ -590,24 +592,28 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         presentation.setVisible(isFlattenPackages(myCurrentViewId));
       }
     }
-    myActionGroup.addAction(new HideEmptyMiddlePackagesAction()).setAsSecondary(true);
-    myActionGroup.addAction(new FlattenPackagesDependableAction(myAbbreviatePackageNames,
-                                                          IdeBundle.message("action.abbreviate.qualified.package.names"),
-                                                          IdeBundle.message("action.abbreviate.qualified.package.names"),
-                                                          IconLoader.getIcon("/objectBrowser/abbreviatePackageNames.png"),
-                                                          ourAbbreviatePackagesDefaults) {
-      public boolean isSelected(AnActionEvent event) {
-        return super.isSelected(event) && isAbbreviatePackageNames(myCurrentViewId);
-      }
-
-
-      public void update(AnActionEvent e) {
-        super.update(e);
-        if (ScopeViewPane.ID.equals(myCurrentViewId)) {
-          e.getPresentation().setEnabled(false);
+    if (ProjectViewDirectoryHelper.getInstance(myProject).supportsHideEmptyMiddlePackages()) {
+      myActionGroup.addAction(new HideEmptyMiddlePackagesAction()).setAsSecondary(true);
+    }
+    if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
+      myActionGroup.addAction(new FlattenPackagesDependableAction(myAbbreviatePackageNames,
+                                                            IdeBundle.message("action.abbreviate.qualified.package.names"),
+                                                            IdeBundle.message("action.abbreviate.qualified.package.names"),
+                                                            IconLoader.getIcon("/objectBrowser/abbreviatePackageNames.png"),
+                                                            ourAbbreviatePackagesDefaults) {
+        public boolean isSelected(AnActionEvent event) {
+          return super.isSelected(event) && isAbbreviatePackageNames(myCurrentViewId);
         }
-      }
-    }).setAsSecondary(true);
+
+
+        public void update(AnActionEvent e) {
+          super.update(e);
+          if (ScopeViewPane.ID.equals(myCurrentViewId)) {
+            e.getPresentation().setEnabled(false);
+          }
+        }
+      }).setAsSecondary(true);
+    }
     myActionGroup.addAction(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
                                            IdeBundle.message("action.show.hide.members"),
                                            IconLoader.getIcon("/objectBrowser/showMembers.png"), ourShowMembersDefaults)).setAsSecondary(true);

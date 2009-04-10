@@ -96,6 +96,16 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   }
 
   @Override
+  public boolean supportsFlattenPackages() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsHideEmptyMiddlePackages() {
+    return true;
+  }
+
+  @Override
   public boolean canRepresent(final Object element, final PsiDirectory directory) {
     if (super.canRepresent(element, directory)) return true;
     if (element instanceof PackageElement) {

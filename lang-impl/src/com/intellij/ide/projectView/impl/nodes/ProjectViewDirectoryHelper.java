@@ -79,6 +79,14 @@ public class ProjectViewDirectoryHelper {
     return false;
   }
 
+  public boolean supportsFlattenPackages() {
+    return false;
+  }
+
+  public boolean supportsHideEmptyMiddlePackages() {
+    return false;
+  }
+
   public boolean canRepresent(Object element, PsiDirectory directory) {
     if (element instanceof VirtualFile) {
       VirtualFile vFile = (VirtualFile) element;
