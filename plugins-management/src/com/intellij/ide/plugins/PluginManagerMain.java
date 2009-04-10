@@ -223,10 +223,12 @@ public class PluginManagerMain implements Disposable {
     myVendorEmailLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myVendorEmailLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
+        if (e.isConsumed()) return;
         IdeaPluginDescriptor pluginDescriptor = getPluginTable().getSelectedObject();
         if (pluginDescriptor != null) {
           //noinspection HardCodedStringLiteral
           launchBrowserAction(pluginDescriptor.getVendorEmail(), "mailto:");
+          e.consume();
         }
       }
     });
@@ -234,9 +236,11 @@ public class PluginManagerMain implements Disposable {
     myVendorUrlLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myVendorUrlLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
+        if (e.isConsumed()) return;
         IdeaPluginDescriptor pluginDescriptor = getPluginTable().getSelectedObject();
         if (pluginDescriptor != null) {
           launchBrowserAction(pluginDescriptor.getVendorUrl(), "");
+          e.consume();
         }
       }
     });
