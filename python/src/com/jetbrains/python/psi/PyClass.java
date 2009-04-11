@@ -53,6 +53,11 @@ public interface PyClass extends PsiNamedElement, PyElement, NameDefiner, PyDocS
   PyTargetExpression[] getInstanceAttributes();
 
   /**
+   * @return true if the class is new-style and descends from 'object'.
+   */
+  boolean isNewStyleClass();
+
+  /**
    * A lazy way to list ancestor classes.
    * @return an iterable of ancerstor classes, presumably width first.
    */

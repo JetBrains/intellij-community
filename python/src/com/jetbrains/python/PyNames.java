@@ -115,5 +115,8 @@ public class PyNames {
   /**
    * Contains all known predefined names of "__foo__" form.
    */
-  public static Set<String> UnderscoredNames = Collections.unmodifiableSet(_UnderscoredNames); 
+  public static Set<String> UnderscoredNames = Collections.unmodifiableSet(_UnderscoredNames);
+
+  // canonical names, not forced by interpreter
+  public static final String CANONICAL_SELF = "self";
 }

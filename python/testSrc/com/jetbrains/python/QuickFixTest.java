@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Test the "add import" action that Unresolved References inspection adds.
+ * Test action that various inspections add.
  * User: dcheryasov
  * Date: Nov 29, 2008 12:47:08 AM
  */
@@ -35,6 +35,46 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
 
   public void testRenameToSelf() throws Exception {
     doInspectionTest("RenameToSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.rename.parameter.to.self"), true, true);
+  }
+
+  public void testAddFieldFromMethod() throws Exception {
+    doInspectionTest(
+      "AddFieldFromMethod.py",
+      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"), 
+      true, true
+    );
+  }
+
+  public void testAddFieldFromInstance() throws Exception {
+    doInspectionTest(
+      "AddFieldFromInstance.py",
+      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"),
+      true, true
+    );
+  }
+
+  public void testAddFieldAddConstructor() throws Exception {
+    doInspectionTest(
+      "AddFieldAddConstructor.py",
+      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"),
+      true, true
+    );
+  }
+
+  public void testAddMethodFromInstance() throws Exception {
+    doInspectionTest(
+      "AddMethodFromInstance.py",
+      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
+      true, true
+    );
+  }
+
+  public void testAddMethodFromMethod() throws Exception {
+    doInspectionTest(
+      "AddMethodFromMethod.py",
+      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
+      true, true
+    );
   }
 
   protected VirtualFile[] loadFiles(String[] names) {

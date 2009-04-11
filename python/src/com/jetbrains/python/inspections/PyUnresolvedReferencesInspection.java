@@ -8,17 +8,19 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.actions.AddFieldQuickFix;
+import com.jetbrains.python.actions.AddImportAction;
+import com.jetbrains.python.actions.AddMethodQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.actions.AddImportAction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -124,6 +126,19 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
                   if (qtype instanceof PyNoneType) {
                     // this almost always means that we don't know the type, so don't show an error in this case
                     continue;
+                  }
+                  /*
+                  PyReferenceExpression qref = (PyReferenceExpression)qexpr;
+                  PsiElement qual_resolved = qref.resolve();
+                  */
+                  if (/*qual_resolved instanceof PyClass*/ qtype != null && qtype instanceof PyClassType) {
+                    PyClass cls = ((PyClassType)qtype).getPyClass();
+                    if (cls != null) {
+                      if (reference.getElement().getParent() instanceof PyCallExpression) {
+                        action = new AddMethodQuickFix(ref_text, cls);
+                      }
+                      else action = new AddFieldQuickFix(ref_text, cls);
+                    }
                   }
                   description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
                   marked_for_class = true;

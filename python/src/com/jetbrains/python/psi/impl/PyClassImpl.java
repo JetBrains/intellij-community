@@ -292,7 +292,16 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return result.toArray(new PyTargetExpression[result.size()]);
   }
 
-  @Override        
+  public boolean isNewStyleClass() {
+    PyClass objclass = PyBuiltinCache.getInstance(getProject()).getClass("object");
+    if (this == objclass) return true; // a rare but possible case
+    for (PyClass ancestor : iterateAncestors()) {
+      if (ancestor == objclass) return true;
+    }
+    return false;
+  }
+
+  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState substitutor,
                                      PsiElement lastParent,

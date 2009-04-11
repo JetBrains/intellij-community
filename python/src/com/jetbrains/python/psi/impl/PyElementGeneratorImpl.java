@@ -241,6 +241,13 @@ public class PyElementGeneratorImpl implements PyElementGenerator {
     return (PyImportStatement)dummyFile.getFirstChild();
   }
 
+  static final int[] FROM_ROOT = new int[]{0};
+
+  public <T> T createFromText(final Project project, Class<T> aClass, final String text) {
+    return createFromText(project, aClass, text, FROM_ROOT);
+  }
+
+
   // TODO: use to generate most other things
   public <T> T createFromText(final Project project, Class<T> aClass, final String text, final int[] path) {
     final PsiFile dummyFile = createDummyFile(project, text);

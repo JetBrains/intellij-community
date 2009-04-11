@@ -20,16 +20,23 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -243,6 +250,29 @@ public class PyUtil {
     return false;
   }
 
+  /**
+   * Appends elements of array to a string buffer, interspersing them with a separator: {@code ['a', 'b', 'c'] -> "a, b, c"}.
+   * @param what array to join
+   * @param from index of first element to include (may safely be bigger than array length)
+   * @param upto index of last element to include (may safely be bigger than array length)
+   * @param separator string to put between elements
+   * @param target buffer to collect the result
+   * @return target (for easy chaining)
+   */
+  @NotNull
+  public static StringBuffer joinSubarray(@NotNull String[] what, int from, int upto, @NotNull String separator, @NotNull StringBuffer target) {
+    boolean made_step = false;
+    for (int i = from; i <= upto; i+=1) {
+      if (i >= what.length) break; // safety
+      if (made_step) {
+        target.append(separator);
+      }
+      else made_step = true;
+      target.append(what[i]);
+    }
+    return target;
+  }
+
   @NotNull @NonNls
   public static String getReadableRepr(PsiElement elt, final boolean cutAtEOL) {
     if (elt == null) return "null!";
@@ -311,5 +341,21 @@ public class PyUtil {
   public static PyFile getContainingPyFile(PyElement element) {
     final PsiFile containingFile = element.getContainingFile();
     return containingFile instanceof PyFile ? (PyFile)containingFile : null;
+  }
+
+    public static void showBalloon(Project project, String message, MessageType messageType) {
+    // ripped from com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier
+    final JFrame frame = WindowManager.getInstance().getFrame(project.isDefault() ? null : project);
+    if (frame == null) return;
+    final JComponent component = frame.getRootPane();
+    if (component == null) return;
+    final Rectangle rect = component.getVisibleRect();
+    final Point p = new Point(rect.x + 30, rect.y + rect.height - 10);
+    final RelativePoint point = new RelativePoint(component, p);
+
+    JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
+      message, messageType.getDefaultIcon(), messageType.getPopupBackground(), null).createBalloon().show(
+        point, Balloon.Position.above
+    );
   }
 }
