@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+/**
+ * @author Leonid Shalupov
+ */
 public class PythonUnitTestConfigurationType implements LocatableConfigurationType {
   private final PythonUnitTestConfigurationFactory myConfigurationFactory = new PythonUnitTestConfigurationFactory(this);
 

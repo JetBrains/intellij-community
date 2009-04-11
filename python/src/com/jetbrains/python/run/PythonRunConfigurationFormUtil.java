@@ -13,6 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * @author Leonid Shalupov
+ */
 public class PythonRunConfigurationFormUtil {
   private PythonRunConfigurationFormUtil() {
   }

@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * @author Leonid Shalupov
+ */
 public class PythonRunConfigurationEditor  extends SettingsEditor<PythonRunConfiguration> {
   private PythonRunConfigurationForm myForm;
 

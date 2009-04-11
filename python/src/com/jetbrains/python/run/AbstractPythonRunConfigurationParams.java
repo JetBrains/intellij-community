@@ -4,6 +4,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/**
+ * @author Leonid Shalupov
+ */
 public interface AbstractPythonRunConfigurationParams {
   String getInterpreterOptions();
 

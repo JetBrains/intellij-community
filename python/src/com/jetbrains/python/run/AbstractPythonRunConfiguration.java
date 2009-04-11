@@ -20,6 +20,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author Leonid Shalupov
+ */
 public abstract class AbstractPythonRunConfiguration extends RuntimeConfiguration
   implements LocatableConfiguration, AbstractPythonRunConfigurationParams {
   private String myInterpreterOptions = "";

@@ -18,6 +18,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author Leonid Shalupov
+ */
 public class PythonUnitTestCommandLineState extends CommandLineState {
   private PythonUnitTestRunConfiguration myConfig;
 

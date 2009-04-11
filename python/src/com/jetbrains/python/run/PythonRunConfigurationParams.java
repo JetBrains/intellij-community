@@ -1,5 +1,8 @@
 package com.jetbrains.python.run;
 
+/**
+ * @author Leonid Shalupov
+ */
 public interface PythonRunConfigurationParams extends AbstractPythonRunConfigurationParams {
   String getScriptName();
 

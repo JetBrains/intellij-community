@@ -8,6 +8,9 @@ import com.jetbrains.python.psi.PyFunction;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Leonid Shalupov
+ */
 public class PythonUnitTestUtil {
   private static final String TESTCASE_CLASS_NAME = "TestCase";
   private static final String UNITTEST_FILE_NAME = "unittest.py";

@@ -19,6 +19,9 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author Leonid Shalupov
+ */
 public class PythonCommandLineState extends CommandLineState {
   private PythonRunConfiguration myConfig;
 

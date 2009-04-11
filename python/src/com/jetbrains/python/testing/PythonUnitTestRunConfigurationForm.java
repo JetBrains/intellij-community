@@ -24,6 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author Leonid Shalupov
+ */
 public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConfigurationParams {
   private JPanel myRootPanel;
   private TextFieldWithBrowseButton myWorkingDirectoryTextField;

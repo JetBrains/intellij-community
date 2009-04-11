@@ -2,6 +2,9 @@ package com.jetbrains.python.testing;
 
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 
+/**
+ * @author Leonid Shalupov
+ */
 public interface PythonUnitTestRunConfigurationParams extends AbstractPythonRunConfigurationParams {
   String getClassName();
   void setClassName(String className);
