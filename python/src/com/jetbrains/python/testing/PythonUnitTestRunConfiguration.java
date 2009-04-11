@@ -163,7 +163,8 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
       case TEST_FOLDER:
         return getFolderName().equals(cfg.getFolderName());
       case TEST_SCRIPT:
-        return getScriptName().equals(cfg.getScriptName()) && getWorkingDirectory().equals(cfg.getWorkingDirectory());
+        return getScriptName().equals(cfg.getScriptName()) &&
+               getWorkingDirectory().equals(cfg.getWorkingDirectory());
       case TEST_CLASS:
         return getScriptName().equals(cfg.getScriptName()) &&
                getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiDirectory;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestType;
@@ -96,6 +97,28 @@ public class PythonUnitTestConfigurationType implements LocatableConfigurationTy
   }
 
   @Nullable
+  private RunnerAndConfigurationSettings createConfigurationFromFolder(Location location) {
+    final PsiElement element = location.getPsiElement();
+
+    if (!(element instanceof PsiDirectory)) return null;
+
+    PsiDirectory dir = (PsiDirectory)element;
+    final VirtualFile file = dir.getVirtualFile();
+    final String path = file.getPath();
+
+    final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from class");
+    final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
+
+    configuration.setTestType(TestType.TEST_FOLDER);
+    configuration.setFolderName(path);
+    configuration.setWorkingDirectory(path);
+
+    configuration.setName(configuration.suggestedName());
+
+    return settings;
+  }
+
+  @Nullable
   private RunnerAndConfigurationSettings createConfigurationFromFile(Location location, PyElement element) {
     PsiElement file = element.getContainingFile();
     if (file == null || !(file instanceof PyFile)) return null;
@@ -116,10 +139,13 @@ public class PythonUnitTestConfigurationType implements LocatableConfigurationTy
   }
 
   public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
+    RunnerAndConfigurationSettings settings;
+
+    settings = createConfigurationFromFolder(location);
+    if (settings != null) return settings;
+
     final PyElement pyElement = PyUtil.getCoveringPyElement(location.getPsiElement());
     if (pyElement == null) return null;
-
-    RunnerAndConfigurationSettings settings;
 
     settings = createConfigurationFromFunction(location, pyElement);
     if (settings != null) return settings;
