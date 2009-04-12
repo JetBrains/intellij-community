@@ -131,7 +131,7 @@ public class CompleteReferenceExpression {
       PsiClass contextClass = PsiUtil.getContextClass(refExpr);
       if (contextClass != null) {
         PsiClassType classType = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(contextClass);
-        ResolveUtil.processNonCodeMethods(classType, processor, refExpr.getProject(), refExpr);
+        ResolveUtil.processNonCodeMethods(classType, processor, refExpr.getProject(), refExpr, true);
       }
       qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);
       if (qualifier != null) {
@@ -268,7 +268,7 @@ public class CompleteReferenceExpression {
               javaLangClass.processDeclarations(processor, ResolveState.initial(), null, refExpr);
               PsiType javaLangClassType =
                 JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(javaLangClass, substitutor);
-              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject(), refExpr);
+              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject(), refExpr, true);
             }
           }
         }
@@ -329,6 +329,6 @@ public class CompleteReferenceExpression {
       return;
     }
 
-    ResolveUtil.processNonCodeMethods(qualifierType, processor, project, refExpr);
+    ResolveUtil.processNonCodeMethods(qualifierType, processor, project, refExpr, true);
   }
 }

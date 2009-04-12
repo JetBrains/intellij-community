@@ -415,7 +415,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         PsiClass contextClass = PsiUtil.getContextClass(refExpr);
         if (contextClass != null) {
           PsiClassType classType = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(contextClass);
-          if (!ResolveUtil.processNonCodeMethods(classType, processor, refExpr.getProject(), refExpr)) return;
+          if (!ResolveUtil.processNonCodeMethods(classType, processor, refExpr.getProject(), refExpr, false)) return;
         }
         if (!processor.hasCandidates()) {
           qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);
@@ -485,7 +485,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
                 }
                 if (!javaLangClass.processDeclarations(processor, state, null, refExpr)) return;
                 PsiType javaLangClassType = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(javaLangClass, substitutor);
-                ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject(), refExpr);
+                ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject(), refExpr, false);
               }
             }
           }
@@ -514,7 +514,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         return;
       }
 
-      ResolveUtil.processNonCodeMethods(qualifierType, processor, project, refExpr);
+      ResolveUtil.processNonCodeMethods(qualifierType, processor, project, refExpr, false);
     }
   }
 

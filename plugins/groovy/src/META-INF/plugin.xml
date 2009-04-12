@@ -29,7 +29,12 @@
 
   <extensionPoints>
     <extensionPoint name="grails.facetProvider" interface="org.jetbrains.plugins.grails.util.GrailsFacetProvider"/>
+    <extensionPoint name="nonCodeProcessor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <nonCodeProcessor implementation="org.jetbrains.plugins.grails.references.domain.GrailsNonCodeMembersProcessor"/>
+  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -84,6 +89,7 @@
     <codeInsight.gotoSuper language="Groovy" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
     <completion.contributor implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"/>
+    <completion.contributor implementation="org.jetbrains.plugins.grails.GrailsCompletionContributor"/>
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
     <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyIndentOptionsProvider"/>

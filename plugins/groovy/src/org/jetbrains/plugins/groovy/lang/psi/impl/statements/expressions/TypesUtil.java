@@ -6,7 +6,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.openapi.project.Project;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -68,7 +67,7 @@ public class TypesUtil {
         }
       }
 
-      ResolveUtil.processNonCodeMethods(thisType, processor, place.getProject(), place);
+      ResolveUtil.processNonCodeMethods(thisType, processor, place.getProject(), place, false);
       final GroovyResolveResult[] candidates = processor.getCandidates();
       if (candidates.length == 1) {
         final PsiElement element = candidates[0].getElement();

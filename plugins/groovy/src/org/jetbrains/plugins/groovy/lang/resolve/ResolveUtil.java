@@ -45,8 +45,10 @@ import java.util.*;
 /**
  * @author ven
  */
+@SuppressWarnings({"StringBufferReplaceableByString"})
 public class ResolveUtil {
-  public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
+  public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {
+  };
 
   public static boolean treeWalkUp(PsiElement place, PsiScopeProcessor processor) {
     PsiElement lastParent = null;
@@ -60,8 +62,11 @@ public class ResolveUtil {
     return true;
   }
 
-  public static boolean processChildren(PsiElement element, PsiScopeProcessor processor,
-                                        ResolveState substitutor, PsiElement lastParent, PsiElement place) {
+  public static boolean processChildren(PsiElement element,
+                                        PsiScopeProcessor processor,
+                                        ResolveState substitutor,
+                                        PsiElement lastParent,
+                                        PsiElement place) {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
       if (!run.processDeclarations(processor, substitutor, null, place)) return false;
@@ -82,11 +87,20 @@ public class ResolveUtil {
     return true;
   }
 
-  public static boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, Project project, PsiElement place) {
-    return processNonCodeMethods(type, processor, project, new HashSet<String>(), place);
+  public static boolean processNonCodeMethods(PsiType type,
+                                              PsiScopeProcessor processor,
+                                              Project project,
+                                              PsiElement place,
+                                              boolean forCompletion) {
+    return processNonCodeMethods(type, processor, project, new HashSet<String>(), place, forCompletion);
   }
 
-  private static boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, Project project, Set<String> visited, PsiElement place) {
+  private static boolean processNonCodeMethods(PsiType type,
+                                               PsiScopeProcessor processor,
+                                               Project project,
+                                               Set<String> visited,
+                                               PsiElement place,
+                                               boolean forCompletion) {
     String qName = rawCanonicalText(type);
 
     if (qName != null) {
@@ -104,19 +118,30 @@ public class ResolveUtil {
         if (!processElement(processor, var)) return false;
       }
 
+      for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
+        if (!membersProcessor.processNonCodeMethods(type, processor, project, place, forCompletion)) return false;
+      }
+      /*
+      for (PsiMethod method : getDomainClassMethods(type, project)) {
+        if (!processElement(processor, method)) return false;
+      }
+      */
 
       if (type instanceof PsiArrayType) {
         //implicit super types
         PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
         PsiClassType t = factory.createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project));
-        if (!processNonCodeMethods(t, processor, project, visited, place)) return false;
+        if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
         t = factory.createTypeByFQClassName("java.lang.Comparable", GlobalSearchScope.allScope(project));
-        if (!processNonCodeMethods(t, processor, project, visited, place)) return false;
+        if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
         t = factory.createTypeByFQClassName("java.io.Serializable", GlobalSearchScope.allScope(project));
-        if (!processNonCodeMethods(t, processor, project, visited, place)) return false;
-      } else {
+        if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
+      }
+      else {
         for (PsiType superType : type.getSuperTypes()) {
-          if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited, place)) return false;
+          if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited, place, forCompletion)) {
+            return false;
+          }
         }
       }
     }
@@ -124,6 +149,102 @@ public class ResolveUtil {
     return true;
   }
 
+  /*
+  private static List<PsiMethod> getDomainClassMethods(PsiType type, Project project) {
+    if (!(type instanceof PsiClassType)) {
+      return Collections.emptyList();
+    }
+
+    final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(type.getCanonicalText(), GlobalSearchScope.allScope(project));
+    if (psiClass == null || !DomainClassUtils.isDomainClass(psiClass)) {
+      return Collections.emptyList();
+    }
+
+    List<PsiMethod> res = new ArrayList<PsiMethod>();
+
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+
+    final PsiField[] fields = DomainClassUtils.getDomainFields(psiClass);
+
+    for (PsiField field : fields) {
+      res.add(factory.createMethodFromText("List " + DOMAIN_LIST_ORDER + capitalize(field.getName()) + "()", null));
+    }
+
+    List<PsiMethod> start = new ArrayList<PsiMethod>(FINDER_PREFICES.length);
+    for (String prefix : FINDER_PREFICES) {
+      start.add(factory.createMethodFromText("List " + prefix + "()", null));
+    }
+
+    for (int i = 0; i < fields.length; i++) {
+
+      res.addAll(getNewMethods(start, fields, factory));
+    }
+
+    return res;
+  }
+
+
+  private static List<PsiMethod> getNewMethods(List<PsiMethod> methods, PsiField[] fields, PsiElementFactory factory) {
+    List<PsiMethod> res = new ArrayList<PsiMethod>(methods.size());
+    for (PsiMethod method : methods) {
+      for (PsiField field : fields) {
+        if (isUsed(method, field)) continue;
+        for (String connective : DOMAIN_CONNECTIVES) {
+          //with One-Parameter-Postfix
+          for (String expr : DOMAIN_FINDER_EXPRESSIONS_WITH_ONE_PARAMETER) {
+            StringBuffer methodText = getMethodName(method, field, connective).append(expr).append('(');
+            addExistingParameter(method, methodText);
+            addParameter(methodText, field, field.getName());
+            methodText.delete(methodText.length() - 1, methodText.length()).append(')');
+
+            res.add(factory.createMethodFromText(methodText.toString(), null));
+          }
+
+          {
+            //without postfix
+            StringBuffer methodText = getMethodName(method, field, connective).append('(');
+            addExistingParameter(method, methodText);
+            methodText.delete(methodText.length() - 1, methodText.length()).append(')');
+
+            res.add(factory.createMethodFromText(methodText.toString(), null));
+          }
+
+          {
+            //with Two-Paramter-Postfix
+            StringBuffer methodText = getMethodName(method, field, connective).append("Between").append('(');
+            addExistingParameter(method, methodText);
+            addParameter(methodText, field, "lower" + capitalize(field.getName()));
+            addParameter(methodText, field, "upper" + capitalize(field.getName()));
+            methodText.delete(methodText.length() - 1, methodText.length()).append(')');
+
+            res.add(factory.createMethodFromText(methodText.toString(), null));
+          }
+        }
+      }
+    }
+    return res;
+  }
+
+  private static void addExistingParameter(PsiMethod method, StringBuffer methodText) {
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      addParameter(methodText, parameter, parameter.getName());
+    }
+    if (method.getParameterList().getParameters().length==0) methodText.append(',');
+  }
+
+  private static void addParameter(StringBuffer methodText, PsiVariable parameter, String parameterName) {
+    methodText.append(parameter.getType().getCanonicalText()).append(' ').append(parameter.getName()).append(",");
+  }
+
+  private static StringBuffer getMethodName(PsiMethod method, PsiField field, String connective) {
+    return new StringBuffer("List ").append(method.getName()).append(connective).append(capitalize(field.getName()));
+  }
+
+  private static boolean isUsed(PsiMethod method, PsiField field) {
+    return (method.getName().contains(capitalize(field.getName())));
+  }
+
+  */
   private static String rawCanonicalText(PsiType type) {
     final String result = type.getCanonicalText();
     if (result == null) return null;
@@ -166,7 +287,7 @@ public class ResolveUtil {
       final PsiElement element = candidate.getElement();
       if (element == place) continue;
       for (Class<? extends T> clazz : classes) {
-        if (clazz.isInstance(element)) return (T) element;
+        if (clazz.isInstance(element)) return (T)element;
       }
     }
 
@@ -177,8 +298,7 @@ public class ResolveUtil {
     while (place != null) {
       PsiElement run = place;
       while (run != null) {
-        if (run instanceof GrLabeledStatement && label.equals(((GrLabeledStatement) run).getLabel()))
-          return (GrLabeledStatement) run;
+        if (run instanceof GrLabeledStatement && label.equals(((GrLabeledStatement)run).getLabel())) return (GrLabeledStatement)run;
 
         run = run.getPrevSibling();
       }
@@ -196,9 +316,9 @@ public class ResolveUtil {
       if (place instanceof GrMember) break;
 
       if (place instanceof GrMethodCallExpression) {
-        final GrMethodCallExpression call = (GrMethodCallExpression) place;
+        final GrMethodCallExpression call = (GrMethodCallExpression)place;
         final GrExpression invoked = call.getInvokedExpression();
-        if (invoked instanceof GrReferenceExpression && "use".equals(((GrReferenceExpression) invoked).getReferenceName())) {
+        if (invoked instanceof GrReferenceExpression && "use".equals(((GrReferenceExpression)invoked).getReferenceName())) {
           final GrClosableBlock[] closures = call.getClosureArguments();
           if (closures.length == 1 && closures[0].equals(prev)) {
             if (useCategoryClass(call)) {
@@ -206,12 +326,13 @@ public class ResolveUtil {
               if (argList != null) {
                 final GrExpression[] args = argList.getExpressionArguments();
                 if (args.length == 1 && args[0] instanceof GrReferenceExpression) {
-                  final PsiElement resolved = ((GrReferenceExpression) args[0]).resolve();
+                  final PsiElement resolved = ((GrReferenceExpression)args[0]).resolve();
                   if (resolved instanceof PsiClass) {
                     try {
                       processor.setCurrentFileResolveContext(call);
                       if (!resolved.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
-                    } finally {
+                    }
+                    finally {
                       processor.setCurrentFileResolveContext(null);
                     }
                   }
@@ -235,11 +356,10 @@ public class ResolveUtil {
     if (resolved instanceof GrGdkMethod) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(call.getProject()).getElementFactory();
       final GlobalSearchScope scope = call.getResolveScope();
-      final PsiType[] parametersType = {
-          factory.createTypeByFQClassName("java.lang.Class", scope),
-          factory.createTypeByFQClassName("groovy.lang.Closure", scope)
-      };
-      final MethodSignature pattern = MethodSignatureUtil.createMethodSignature("use", parametersType, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+      final PsiType[] parametersType =
+        {factory.createTypeByFQClassName("java.lang.Class", scope), factory.createTypeByFQClassName("groovy.lang.Closure", scope)};
+      final MethodSignature pattern =
+        MethodSignatureUtil.createMethodSignature("use", parametersType, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       return resolved.getSignature(PsiSubstitutor.EMPTY).equals(pattern);
     }
 
@@ -266,16 +386,16 @@ public class ResolveUtil {
     for (int i = 1; i < array.length; i++) {
       PsiElement currentElement = array[i].getElement();
       if (currentElement instanceof PsiMethod) {
-        PsiMethod currentMethod = (PsiMethod) currentElement;
+        PsiMethod currentMethod = (PsiMethod)currentElement;
         for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
           final GroovyResolveResult otherResolveResult = iterator.next();
           PsiElement element = otherResolveResult.getElement();
           if (element instanceof PsiMethod) {
-            PsiMethod method = (PsiMethod) element;
+            PsiMethod method = (PsiMethod)element;
             if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor())) {
               continue Outer;
-            } else
-            if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor())) {
+            }
+            else if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor())) {
               iterator.remove();
             }
           }
@@ -288,7 +408,10 @@ public class ResolveUtil {
     return result.toArray(new GroovyResolveResult[result.size()]);
   }
 
-  public static boolean dominated(PsiMethod method1, PsiSubstitutor substitutor1, PsiMethod method2, PsiSubstitutor substitutor2) {  //method1 has more general parameter types thn method2
+  public static boolean dominated(PsiMethod method1,
+                                  PsiSubstitutor substitutor1,
+                                  PsiMethod method2,
+                                  PsiSubstitutor substitutor2) {  //method1 has more general parameter types thn method2
     if (!method1.getName().equals(method2.getName())) return false;
 
     PsiParameter[] params1 = method1.getParameterList().getParameters();
