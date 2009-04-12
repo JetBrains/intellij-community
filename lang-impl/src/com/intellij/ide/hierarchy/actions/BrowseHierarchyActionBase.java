@@ -78,8 +78,14 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
       e.getPresentation().setVisible(false);
     }
     else {
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(isEnabled(e));
+      final boolean enabled = isEnabled(e);
+      if (ActionPlaces.isPopupPlace(e.getPlace())) {
+        e.getPresentation().setVisible(enabled);
+      }
+      else {
+        e.getPresentation().setVisible(true);
+      }
+      e.getPresentation().setEnabled(enabled);
     }
   }
 
