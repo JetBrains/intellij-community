@@ -14,4 +14,8 @@ public class ActionInGroup {
     myGroup.setAsPrimary(myAction, !isSecondary);
     return this;
   }
+
+  public ActionGroup getGroup() {
+    return myGroup;
+  }
 }

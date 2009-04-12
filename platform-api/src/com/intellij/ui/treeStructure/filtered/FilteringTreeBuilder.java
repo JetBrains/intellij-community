@@ -25,7 +25,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   private MergingUpdateQueue myRefilterQueue;
 
   public FilteringTreeBuilder(Project project,
-                              SimpleTree tree,
+                              Tree tree,
                               ElementFilter filter,
                               AbstractTreeStructure structure,
                               Comparator<NodeDescriptor> comparator) {
@@ -191,7 +191,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return ((FilteringTreeStructure)getTreeStructure()).getVisibleNodeFor(nodeObject);
   }
 
-  public Object getOriginalNode(SimpleNode node) {
+  public Object getOriginalNode(Object node) {
     return ((FilteringTreeStructure.Node)node).getDelegate();
   }
 

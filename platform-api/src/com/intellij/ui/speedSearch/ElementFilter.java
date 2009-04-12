@@ -14,6 +14,12 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public interface ElementFilter<T> {
 
+  ElementFilter PASS_THROUGH = new ElementFilter() {
+    public boolean shouldBeShowing(Object value) {
+      return true;
+    }
+  };
+
   boolean shouldBeShowing(T value);
 
   interface Active<T> extends ElementFilter<T> {

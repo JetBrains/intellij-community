@@ -116,7 +116,6 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
 
         setIcons(node.getClosedIcon(), node.getOpenIcon());
       } else if (myDelegate != null) {
-        setPlainText(myDelegate.toString());
         NodeDescriptor descriptor = getStructure().createDescriptor(myDelegate, getParentDescriptor());
         Icon closedIcon = null;
         Icon openIcon = null;
@@ -126,6 +125,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
           openIcon = descriptor.getOpenIcon();
         }
         setIcons(closedIcon, openIcon);
+        setPlainText(myDelegate.toString());
       }
     }
 

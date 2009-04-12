@@ -14,11 +14,13 @@ import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeListener;
 import com.intellij.openapi.vcs.history.TextTransferrable;
 import com.intellij.ui.debugger.UiDebuggerExtension;
+import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +43,8 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.DisposerDebugger");
 
-
   private JBTabsImpl myTreeTabs;
+  private AddNewWatchAction myAddNewWatchAction = new AddNewWatchAction();
 
   public DisposerDebugger() {
     myTreeTabs = new JBTabsImpl(null, null, this);
@@ -51,8 +53,7 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
 
     final JBTabsImpl bottom = new JBTabsImpl(null, null, this);
     final AllocationPanel allocations = new AllocationPanel(myTreeTabs);
-    bottom.addTab(new TabInfo(allocations).setText("Allocation"))
-      .setActions(allocations.getActions(), ActionPlaces.UNKNOWN);
+    bottom.addTab(new TabInfo(allocations).setText("Allocation")).setActions(allocations.getActions(), ActionPlaces.UNKNOWN);
 
 
     splitter.setFirstComponent(myTreeTabs);
@@ -61,11 +62,54 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
     setLayout(new BorderLayout());
     add(splitter, BorderLayout.CENTER);
 
-    addTree(new DisposerTree(this), "All");
+    addTree(new DisposerTree(this, ElementFilter.PASS_THROUGH), "All", false);
   }
 
-  private void addTree(DisposerTree tree, String name) {
-    myTreeTabs.addTab(new TabInfo(tree).setText(name).setObject(tree));
+  private void addTree(DisposerTree tree, String name, boolean canBeRemoved) {
+
+
+    final TabInfo tab = myTreeTabs.addTab(
+      new TabInfo(tree).setText(name).setObject(tree).setActions(new DefaultActionGroup().addAction(myAddNewWatchAction).getGroup(),
+                                                                 ActionPlaces.UNKNOWN));
+
+    if (canBeRemoved) {
+      tab.setTabLabelActions(new DefaultActionGroup().addAction(new RemoveTreeAction(tab)).getGroup(), ActionPlaces.UNKNOWN);
+    }
+  }
+
+  private void removeTree(TabInfo tab) {
+    final DisposerTree tree = (DisposerTree)tab.getObject();
+    myTreeTabs.removeTab(tab);
+    Disposer.dispose(tree);
+  }
+
+  private class RemoveTreeAction extends AnAction {
+    private TabInfo myTab;
+
+    private RemoveTreeAction(TabInfo tab) {
+      super("Remove");
+      myTab = tab;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setIcon(IconLoader.getIcon("/actions/close.png"));
+      e.getPresentation().setHoveredIcon(IconLoader.getIcon("/actions/closeHovered.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      removeTree(myTab);
+    }
+  }
+
+  private class AddNewWatchAction extends AnAction {
+
+    private AddNewWatchAction() {
+      super("Add New Watch Tree", "Monitor activity starting this moment", IconLoader.getIcon("/general/add.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+    }
   }
 
   private static class AllocationPanel extends JPanel implements TreeSelectionListener {
@@ -166,14 +210,14 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
 
   }
 
-  private static class DisposerTree extends JPanel implements Disposable, ObjectTreeListener, Runnable  {
+  private static class DisposerTree extends JPanel implements Disposable, ObjectTreeListener, Runnable {
 
-    private AbstractTreeBuilder myTreeBuilder;
+    private FilteringTreeBuilder myTreeBuilder;
     private Tree myTree;
 
     private Alarm myUpdateAlarm = new Alarm();
 
-    private DisposerTree(Disposable parent) {
+    private DisposerTree(Disposable parent, ElementFilter filter) {
       Disposer.register(parent, this);
 
       final DisposerStructure structure = new DisposerStructure();
@@ -181,17 +225,11 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
       final Tree tree = new Tree(model);
       tree.setRootVisible(false);
       tree.setShowsRootHandles(true);
-      tree.setCellRenderer(new NodeRenderer());
       tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-      myTreeBuilder = new AbstractTreeBuilder(tree, model, structure, AlphaComparator.INSTANCE) {
+      myTreeBuilder = new FilteringTreeBuilder(null, tree, filter, structure, AlphaComparator.INSTANCE) {
         @Override
-        protected Object getTreeStructureElement(NodeDescriptor nodeDescriptor) {
-          return nodeDescriptor;
-        }
-
-        @Override
-        protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-          return structure.getRootElement() == nodeDescriptor;
+        public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
+          return structure.getRootElement() == getOriginalNode(nodeDescriptor);
         }
       };
       Disposer.register(this, myTreeBuilder);
