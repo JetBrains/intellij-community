@@ -11,7 +11,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public abstract class ProcessWaiter<T extends Runnable> {
+public abstract class ProcessWaiter<T extends CancellableRunnable> {
   protected T myInStreamListener;
   protected T myErrStreamListener;
 
@@ -38,6 +38,7 @@ public abstract class ProcessWaiter<T extends Runnable> {
         outputStreamReadingFuture.get(timeout, TimeUnit.MILLISECONDS);
       }
     } finally {
+      cancelListeners();
       if (errorStreamReadingFuture != null) {
         errorStreamReadingFuture.cancel(true);
       }
@@ -47,6 +48,11 @@ public abstract class ProcessWaiter<T extends Runnable> {
     }
 
     return rc;
+  }
+
+  public void cancelListeners() {
+    myErrStreamListener.cancel();
+    myInStreamListener.cancel();
   }
 
   public T getInStreamListener() {
