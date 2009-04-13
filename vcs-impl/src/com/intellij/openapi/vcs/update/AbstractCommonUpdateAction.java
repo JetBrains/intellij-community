@@ -197,7 +197,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     for (Map.Entry<AbstractVcs, Collection<FilePath>> entry : resultPrep.entrySet()) {
       final AbstractVcs vcs = entry.getKey();
       final List<FilePath> paths = new ArrayList<FilePath>(entry.getValue());
-      final List<VirtualFile> files = ObjectsConvertor.fp2vf(paths);
+      final List<VirtualFile> files = ObjectsConvertor.convert(paths, ObjectsConvertor.FILEPATH_TO_VIRTUAL, ObjectsConvertor.NOT_NULL);
       result.put(vcs, ObjectsConvertor.vf2fp(vcs.filterUniqueRoots(files)));
     }
 
