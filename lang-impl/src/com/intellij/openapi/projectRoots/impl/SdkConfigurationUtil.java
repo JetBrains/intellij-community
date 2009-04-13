@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -126,6 +127,15 @@ public class SdkConfigurationUtil {
 
   @Nullable
   public static Sdk findOrCreateSdk(final SdkType... sdkTypes) {
+    final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectJdk();
+    if (sdk != null) {
+      for (SdkType type : sdkTypes) {
+        if (sdk.getSdkType() == type) {
+          return sdk;
+        }
+      }
+    }
     for (SdkType type : sdkTypes) {
       List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(type);
       if (sdks.size() > 0) {
