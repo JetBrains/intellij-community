@@ -2,11 +2,13 @@ package com.intellij.compiler.make;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -65,17 +67,31 @@ public class CompilerDependencyStorage<Key> implements Flushable, Disposable {
           }
           else {
             myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
-              public void append(DataOutput out) throws IOException {
-                final int[] removed = set.getRemovedValued();
-                out.writeInt(-removed.length);
-                for (int value : removed) {
-                  out.writeInt(value);
+              public void append(final DataOutput out) throws IOException {
+                final Ref<IOException> exception = new Ref<IOException>(null);
+                final TIntProcedure saveProc = new TIntProcedure() {
+                  public boolean execute(int value) {
+                    try {
+                      out.writeInt(value);
+                      return true;
+                    }
+                    catch (IOException e) {
+                      exception.set(e);
+                      return false;
+                    }
+                  }
+                };
+
+                out.writeInt(-set.getRemovedCount());
+                set.processRemovedValues(saveProc);
+                if (exception.get() != null) {
+                  throw exception.get();
                 }
 
-                final int[] added = set.getAddedValues();
-                out.writeInt(added.length);
-                for (int value : added) {
-                  out.writeInt(value);
+                out.writeInt(set.getAddedCount());
+                set.processAddedValues(saveProc);
+                if (exception.get() != null) {
+                  throw exception.get();
                 }
               }
             });
@@ -100,11 +116,20 @@ public class CompilerDependencyStorage<Key> implements Flushable, Disposable {
   }
 
   public synchronized void removeValue(Key key, int value) throws IOException {
-    myCache.get(key).remove(value);
+    final IntSet set = myCache.get(key);
+    set.remove(value);
+    if (set.needsFlushing()) {
+      flush(key);
+    }
   }
 
+
   public synchronized void addValue(Key key, int value) throws IOException {
-    myCache.get(key).add(value);
+    final IntSet set = myCache.get(key);
+    set.add(value);
+    if (set.needsFlushing()) {
+      flush(key);
+    }
   }
 
   public synchronized int[] getValues(Key key) throws IOException {
@@ -115,6 +140,11 @@ public class CompilerDependencyStorage<Key> implements Flushable, Disposable {
   public synchronized void flush() throws IOException {
     myCache.clear();
     myMap.force();
+  }
+
+  private void flush(Key key) {
+    myCache.remove(key); // makes changes into PersistentHashMap
+    myMap.force(); // flushes internal caches (which consume memory) and writes unsaved data to disk
   }
 
   public synchronized void dispose() {
@@ -138,7 +168,7 @@ public class CompilerDependencyStorage<Key> implements Flushable, Disposable {
     private TIntHashSet myMerged = null;
     private final Key myKey;
 
-    private IntSet(Key key) {
+    public IntSet(Key key) {
       myKey = key;
     }
 
@@ -168,12 +198,24 @@ public class CompilerDependencyStorage<Key> implements Flushable, Disposable {
       return myMerged != null;
     }
 
-    public int[] getAddedValues() {
-      return myAdded.toArray();
+    public boolean needsFlushing() {
+      return myAdded.size() > 3000 || myRemoved.size() > 3000;
     }
 
-    public int[] getRemovedValued() {
-      return myRemoved.toArray();
+    public int getAddedCount() {
+      return myAdded.size();
+    }
+
+    public void processAddedValues(final TIntProcedure procedure) {
+      myAdded.forEach(procedure);
+    }
+
+    public int getRemovedCount() {
+      return myRemoved.size();
+    }
+
+    public void processRemovedValues(final TIntProcedure procedure) {
+      myRemoved.forEach(procedure);
     }
 
     public int[] getValues() throws IOException {

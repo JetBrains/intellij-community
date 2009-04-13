@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.containers.ByteTrie;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,7 @@ public class BackendCompilerWrapper {
   private final List<File> myFilesToRefresh;
   private final Set<VirtualFile> mySuccesfullyCompiledJavaFiles; // VirtualFile
   private final List<TranslatingCompiler.OutputItem> myOutputItems;
+  private final ByteTrie myTrie = new ByteTrie(); // to store OutputItems' paths more compactly
 
   private final CompileContextEx myCompileContext;
   private final List<VirtualFile> myFilesToCompile;
@@ -182,7 +184,7 @@ public class BackendCompilerWrapper {
           final Set<VirtualFile> badFiles = getFilesCompiledWithErrors();
           for (final VirtualFile packageInfoFile : packageInfoFiles) {
             if (!badFiles.contains(packageInfoFile)) {
-              myOutputItems.add(new OutputItemImpl(null, null, packageInfoFile));
+              myOutputItems.add(new OutputItemImpl(packageInfoFile));
               myFilesToRecompile.remove(packageInfoFile);
             }
           }
@@ -750,7 +752,7 @@ public class BackendCompilerWrapper {
           if (realLocation != null) {
             final String realOutputDir = realLocation.getFirst();
             final String relativeOutputPath = new String(realLocation.getSecond().substring(realLocation.first.length() + 1));
-            myOutputItems.add(new OutputItemImpl(realOutputDir, relativeOutputPath, srcFile));
+            myOutputItems.add(new OutputItemImpl(myTrie, realOutputDir, relativeOutputPath, srcFile));
             newCache.setPath(cc.qName, realLocation.getSecond());
             try {
               myCompileContext.updateZippedOuput(realOutputDir, relativeOutputPath);

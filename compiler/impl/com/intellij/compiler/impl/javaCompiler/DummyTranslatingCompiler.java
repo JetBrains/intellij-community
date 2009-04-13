@@ -6,6 +6,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ByteTrie;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +22,7 @@ import java.util.List;
 public class DummyTranslatingCompiler implements TranslatingCompiler, IntermediateOutputCompiler{
   @NonNls private static final String DESCRIPTION = "DUMMY TRANSLATOR";
   @NonNls private static final String FILETYPE_EXTENSION = ".dummy";
+  private final ByteTrie myTrie = new ByteTrie();
 
   public boolean isCompilableFile(final VirtualFile file, final CompileContext context) {
     return file.getName().endsWith(FILETYPE_EXTENSION);
@@ -39,7 +41,7 @@ public class DummyTranslatingCompiler implements TranslatingCompiler, Intermedia
               final File compiledFile = doCompile(outputDir, file);
               filesToRefresh.add(compiledFile);
               String outputDirPath = outputDir.getPath();
-              items.add(new OutputItemImpl(outputDirPath, new String(FileUtil.toSystemIndependentName(compiledFile.getPath()).substring(outputDirPath.length() + 1)), file));
+              items.add(new OutputItemImpl(myTrie, outputDirPath, new String(FileUtil.toSystemIndependentName(compiledFile.getPath()).substring(outputDirPath.length() + 1)), file));
             }
           }
           catch (IOException e) {

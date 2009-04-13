@@ -38,14 +38,14 @@ public class Cache {
   public Cache(@NonNls final String storePath, final int cacheSize) throws IOException {
     myStorePath = storePath;
     new File(storePath).mkdirs();
-    myQNameToClassInfoMap = new PersistentHashMap<StorageClassId, ClassInfo>(getOrCreateFile("classes"), ClassIdKeyDescriptor.INSTANCE, new DataExternalizer<ClassInfo>() {
+    myQNameToClassInfoMap = new CachedPersistentHashMap<StorageClassId, ClassInfo>(getOrCreateFile("classes"), ClassIdKeyDescriptor.INSTANCE, new DataExternalizer<ClassInfo>() {
       public void save(DataOutput out, ClassInfo value) throws IOException {
         value.save(out);
       }
       public ClassInfo read(DataInput in) throws IOException {
         return new ClassInfo(in);
       }
-    }, cacheSize);
+    }, cacheSize * 2);
 
     myQNameToReferencersMap = new CompilerDependencyStorage<StorageClassId>(getOrCreateFile("bdeps"), GenericIdKeyDescriptor.INSTANCE, cacheSize);
     myQNameToReferencedClassesMap = new CompilerDependencyStorage<StorageClassId>(getOrCreateFile("fdeps"), ClassIdKeyDescriptor.INSTANCE, cacheSize);
@@ -59,12 +59,7 @@ public class Cache {
       public Boolean read(DataInput in) throws IOException {
         return in.readBoolean();
       }
-    }, cacheSize) {
-      public synchronized Boolean get(StorageClassId storageClassId) throws IOException {
-        final Boolean value = super.get(storageClassId);
-        return value != null? value : Boolean.FALSE;
-      }
-    };
+    }, cacheSize);
   }
 
   private File getOrCreateFile(final String fileName) throws IOException {
@@ -223,7 +218,7 @@ public class Cache {
 
   public boolean isRemote(int classId) throws CacheCorruptedException {
     try {
-      return myRemoteQNames.get(new StorageClassId(classId)).booleanValue();
+      return myRemoteQNames.containsMapping(new StorageClassId(classId));
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -232,7 +227,13 @@ public class Cache {
 
   public void setRemote(int classId, boolean remote) throws CacheCorruptedException {
     try {
-      myRemoteQNames.put(new StorageClassId(classId), remote);
+      final StorageClassId key = new StorageClassId(classId);
+      if (remote) {
+        myRemoteQNames.put(key, Boolean.TRUE);
+      }
+      else {
+        myRemoteQNames.remove(key);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
