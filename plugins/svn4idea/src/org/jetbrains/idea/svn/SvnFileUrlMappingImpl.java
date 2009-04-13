@@ -47,12 +47,10 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
 
   private final MyRootsHelper myHelper;
 
-  private static class MyRootsHelper extends ThreadLocalDefendedInvoker<VirtualFile[]> {
+  private class MyRootsHelper extends ThreadLocalDefendedInvoker<VirtualFile[]> {
     private final ProjectLevelVcsManager myPlVcsManager;
-    private final SvnVcs myVcs;
 
-    private MyRootsHelper(final Project project, final SvnVcs vcs) {
-      myVcs = vcs;
+    private MyRootsHelper(final Project project) {
       myPlVcsManager = ProjectLevelVcsManager.getInstance(project);
     }
 
@@ -68,7 +66,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
   private SvnFileUrlMappingImpl(final Project project) {
     myMapping = new SvnMapping();
     myMoreRealMapping = new SvnMapping();
-    myHelper = new MyRootsHelper(project, myVcs);
+    myHelper = new MyRootsHelper(project);
   }
 
   public void setVcs(SvnVcs vcs) {
@@ -79,7 +77,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
     myVcs = vcs;
     myMapping = new SvnMapping();
     myMoreRealMapping = new SvnMapping();
-    myHelper = new MyRootsHelper(project, myVcs);
+    myHelper = new MyRootsHelper(project);
   }
 
   @Nullable
