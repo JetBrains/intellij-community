@@ -36,7 +36,7 @@ import java.util.List;
 class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileUrlMappingImpl");
 
-  private final SvnVcs myVcs;
+  private SvnVcs myVcs;
 
   private final Object myMonitor = new Object();
 
@@ -66,7 +66,17 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
   }
 
   private SvnFileUrlMappingImpl(final Project project) {
-    myVcs = SvnVcs.getInstance(project);
+    myMapping = new SvnMapping();
+    myMoreRealMapping = new SvnMapping();
+    myHelper = new MyRootsHelper(project, myVcs);
+  }
+
+  public void setVcs(SvnVcs vcs) {
+    myVcs = vcs;
+  }
+
+  private SvnFileUrlMappingImpl(final Project project, final SvnVcs vcs) {
+    myVcs = vcs;
     myMapping = new SvnMapping();
     myMoreRealMapping = new SvnMapping();
     myHelper = new MyRootsHelper(project, myVcs);
