@@ -4,6 +4,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
@@ -613,8 +614,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                   initComponent(componentInstance);
                   long endTime = System.nanoTime();
                   long ms = (endTime - startTime) / 1000000;
-                  if (ms > 10 && LOG.isDebugEnabled()) {
-                    LOG.debug(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
+                  if (ms > 10) {
+                    if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+                      LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
+                    }
+                    else if (LOG.isDebugEnabled()) {
+                      LOG.debug(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
+                    }
                   }
                   myInitializing = false;
                   myInitialized = true;
