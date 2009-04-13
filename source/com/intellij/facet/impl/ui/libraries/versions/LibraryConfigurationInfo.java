@@ -34,11 +34,14 @@ public class LibraryConfigurationInfo {
   @Attribute("download-url")
   public String myDownloadUrl;
 
- @Attribute("presentation-url")
+  @Attribute("presentation-url")
   public String myPresentationdUrl;
 
- @Attribute("required-classes")
- public String myRequiredClasses;
+  @Attribute("required-classes")
+  public String myRequiredClasses;
+
+  @Attribute("jar-version")
+  public String myJarVersion;
 
   public String getRI() {
     return myRI;
@@ -62,5 +65,9 @@ public class LibraryConfigurationInfo {
 
   public String getRequiredClasses() {
     return myRequiredClasses;
+  }
+
+  public String getJarVersion() {
+    return myJarVersion;
   }
 }

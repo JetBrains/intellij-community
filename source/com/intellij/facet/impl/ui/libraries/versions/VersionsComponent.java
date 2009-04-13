@@ -12,6 +12,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,6 +34,8 @@ public abstract class VersionsComponent {
 
   private Map<String, Pair<JRadioButton, JComboBox>> myButtons = new HashMap<String, Pair<JRadioButton, JComboBox>>();
 
+  private LibraryVersionInfo myCurrentVersion = null;
+
   public VersionsComponent(@Nullable final Module module, FacetLibrariesValidator validator) {
     myModule = module;
     myValidator = validator;
@@ -45,6 +48,11 @@ public abstract class VersionsComponent {
     return myMainPanel;
   }
 
+  @Nullable
+  public LibraryVersionInfo getCurrentLibraryVersionInfo() {
+    return myCurrentVersion;
+  }
+
   private void init() {
     myMainPanel = new JPanel(new GridBagLayout());
 
@@ -55,25 +63,21 @@ public abstract class VersionsComponent {
       addSingletonReferenceImplementationUI(ri);
     }
     else {
-      LibraryVersionInfo currentVersion = null;
-
       for (String ri : referenceImplementations) {
         addMultipleReferenceImplementationUI(ri);
 
-        if (currentVersion == null) {
-          currentVersion = getCurrentVersion(ri);
+        if (myCurrentVersion == null) {
+          myCurrentVersion = getCurrentVersion(ri);
         }
       }
 
-      if (currentVersion != null) {
-        Pair<JRadioButton, JComboBox> currentPair = myButtons.get(currentVersion.getRI());
+      if (myCurrentVersion != null) {
+        Pair<JRadioButton, JComboBox> currentPair = myButtons.get(myCurrentVersion.getRI());
         if (currentPair != null) {
           currentPair.first.setSelected(true);
-          currentPair.second.setSelectedItem(currentVersion);
+          currentPair.second.setSelectedItem(myCurrentVersion);
           for (Pair<JRadioButton, JComboBox> buttonsPair : myButtons.values()) {
-            if (buttonsPair != currentPair) {
-              buttonsPair.second.setEnabled(false);
-            }
+            buttonsPair.second.setEnabled(buttonsPair == currentPair);
           }
         }
       }
@@ -94,11 +98,16 @@ public abstract class VersionsComponent {
     if (detectionClass != null && myModule != null) {
       final String version = JarVersionDetectionUtil.detectJarVersion(detectionClass, myModule);
       if (version != null) {
+        LibraryVersionInfo approximatedVersion = null;
         for (LibraryVersionInfo info : getLibraries().keySet()) {
           if (version.equals(info.getVersion())) {
             return info;
           }
+          if (version.startsWith(info.getVersion())) {
+            approximatedVersion = info;
+          }
         }
+        return approximatedVersion;
       }
     }
 
@@ -129,6 +138,8 @@ public abstract class VersionsComponent {
     final JRadioButton radioButton = createRadioButton(ri);
     final JComboBox comboBox = createComboBox(ri);
 
+    comboBox.setEnabled(false);
+
     addToPanel(radioButton, comboBox);
 
     myButtons.put(ri, new Pair<JRadioButton, JComboBox>(radioButton, comboBox));
@@ -157,7 +168,12 @@ public abstract class VersionsComponent {
               comboBox.setSelectedItem(currentVersion);
             }
             else {
-              comboBox.setSelectedItem(getLastElement(getSupportedVersions(ri)));
+              if (comboBox.getSelectedIndex() < 0) {
+                comboBox.setSelectedItem(getAppropriateVersion(getSupportedVersions(ri)));
+              }
+              else {
+                updateCurrentVersion(comboBox); // activate already selected
+              }
             }
           }
           else {
@@ -177,21 +193,42 @@ public abstract class VersionsComponent {
 
     comboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final LibraryVersionInfo versionInfo = getSelectedVersion(comboBox);
-
-        if (versionInfo != null) {
-          myValidator.setDescription(new FacetLibrariesValidatorDescription(versionInfo.getVersion()));
-          myValidator.setRequiredLibraries(getRequiredLibraries(versionInfo));
-        }
+        updateCurrentVersion(comboBox);
       }
     });
 
     return comboBox;
   }
 
+  private void updateCurrentVersion(JComboBox comboBox) {
+    final LibraryVersionInfo versionInfo = getSelectedVersion(comboBox);
+
+    if (versionInfo != null) {
+      myCurrentVersion = versionInfo;
+      myValidator.setDescription(getFacetLibrariesValidatorDescription(versionInfo));
+      myValidator.setRequiredLibraries(getRequiredLibraries(versionInfo));
+    }
+  }
+
+  protected FacetLibrariesValidatorDescription getFacetLibrariesValidatorDescription(LibraryVersionInfo versionInfo) {
+    return new FacetLibrariesValidatorDescription(versionInfo.getVersion()) {
+      @NonNls
+      public String getDefaultLibraryName() {
+        if (myCurrentVersion != null) {
+          String ri = myCurrentVersion.getRI();
+          String version = myCurrentVersion.getVersion();
+
+          return StringUtil.isEmptyOrSpaces(ri) ? version : ri + "." + version;
+        }
+
+        return super.getDefaultLibraryName();
+      }
+    };
+  }
+
   @Nullable
-  private static LibraryVersionInfo getLastElement(List<LibraryVersionInfo> versions) {
-    return versions.size() > 0 ? versions.get(versions.size() - 1) : null;
+  private static LibraryVersionInfo getAppropriateVersion(List<LibraryVersionInfo> versions) {
+    return versions.size() > 0 ? versions.get(0) : null;
   }
 
   private LibraryInfo[] getRequiredLibraries(LibraryVersionInfo versionInfo) {

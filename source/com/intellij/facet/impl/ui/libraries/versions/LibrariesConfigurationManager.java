@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class LibrariesConfigurationManager implements Disposable {
 
-  private static final String REQUIRED_CLASSES_DELIMITER = ",";
+  private static final String STRING_DELIMITER = ",";
   private static final String RI_TEMPLATE = "$RI$";
   private static final String VERSION_TEMPLATE = "$VERSION$";
 
@@ -37,24 +37,42 @@ public class LibrariesConfigurationManager implements Disposable {
 
 
       for (LibraryConfigurationInfo libInfo : libs.getLibraryConfigurationInfos()) {
-        final String version = choose(libInfo.getVersion(), defaultVersion);
+        String[] libInfoVersions = getSplitted(libInfo.getVersion());
 
-        assert !StringUtil.isEmptyOrSpaces(version);
-
-        final String ri = choose(libInfo.getRI(), defaultRI);
-        final String downloadUrl = choose(libInfo.getDownloadUrl(), defaultDownloadUrl);
-        final String presentationdUrl = choose(libInfo.getPresentationdUrl(), defaultPresentationUrl);
-
-
-        final LibraryVersionInfo versionInfo = new LibraryVersionInfo(version, ri);
-        final LibraryInfo info = createLibraryInfo(downloadUrl, presentationdUrl, version, ri, libInfo);
-
-        if (versionLibs.get(versionInfo) == null) versionLibs.put(versionInfo, new ArrayList<LibraryInfo>());
-
-        versionLibs.get(versionInfo).add(info);
+        if (libInfoVersions.length == 0) {
+             addVersionLibrary(null, versionLibs, defaultVersion, defaultRI, defaultDownloadUrl, defaultPresentationUrl, libInfo);
+        } else {
+          for (String infoVersion : libInfoVersions) {
+            addVersionLibrary(infoVersion.trim(), versionLibs, defaultVersion, defaultRI, defaultDownloadUrl, defaultPresentationUrl, libInfo);
+          }
+        }
       }
     }
     return versionLibs;
+  }
+
+  private static void addVersionLibrary(@Nullable String infoVersion,
+                                        Map<LibraryVersionInfo, List<LibraryInfo>> versionLibs,
+                                        String defaultVersion,
+                                        String defaultRI,
+                                        String defaultDownloadUrl,
+                                        String defaultPresentationUrl,
+                                        LibraryConfigurationInfo libInfo) {
+    final String version = choose(infoVersion, defaultVersion);
+
+    assert !StringUtil.isEmptyOrSpaces(version);
+
+    final String ri = choose(libInfo.getRI(), defaultRI);
+    final String downloadUrl = choose(libInfo.getDownloadUrl(), defaultDownloadUrl);
+    final String presentationdUrl = choose(libInfo.getPresentationdUrl(), defaultPresentationUrl);
+
+
+    final LibraryVersionInfo versionInfo = new LibraryVersionInfo(version, ri);
+    final LibraryInfo info = createLibraryInfo(downloadUrl, presentationdUrl, version, ri, libInfo);
+
+    if (versionLibs.get(versionInfo) == null) versionLibs.put(versionInfo, new ArrayList<LibraryInfo>());
+
+    versionLibs.get(versionInfo).add(info);
   }
 
   @Nullable
@@ -62,7 +80,10 @@ public class LibrariesConfigurationManager implements Disposable {
     return StringUtil.isEmptyOrSpaces(str) ? defaultStr : str;
   }
 
-  private static LibraryInfo createLibraryInfo(String downloadUrl, String presentationdUrl, String version, String ri,
+  private static LibraryInfo createLibraryInfo(String downloadUrl,
+                                               String presentationdUrl,
+                                               String version,
+                                               String ri,
                                                LibraryConfigurationInfo libInfo) {
 
     downloadUrl = downloadUrl.replace(VERSION_TEMPLATE, version);
@@ -71,13 +92,14 @@ public class LibrariesConfigurationManager implements Disposable {
     }
 
     String jarName = libInfo.getJarName();
-    return new LibraryInfo(jarName, version, downloadUrl + jarName, presentationdUrl,
-                           getRequredClasses(libInfo.getRequiredClasses()));
+    String jarVersion = libInfo.getJarVersion();
+    return new LibraryInfo(jarName, jarVersion == null ? version : jarVersion, downloadUrl + jarName, presentationdUrl, getSplitted(libInfo.getRequiredClasses()));
   }
 
-  private static String[] getRequredClasses(final String requiredClasses) {
-    final List<String> strings = StringUtil.split(requiredClasses, REQUIRED_CLASSES_DELIMITER);
-    return ArrayUtil.toStringArray(strings);
+  private static String[] getSplitted(@Nullable final String s) {
+    if (StringUtil.isEmptyOrSpaces(s)) return new String[0];
+
+    return ArrayUtil.toStringArray(StringUtil.split(s, STRING_DELIMITER));
   }
 
   public void dispose() {
