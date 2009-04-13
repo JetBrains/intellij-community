@@ -14,14 +14,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -179,7 +183,7 @@ public class IdeEventQueue extends EventQueue {
    */
 
   private void exitSuspendMode() {
-    if (peekEvent(WindowEvent.WINDOW_OPENED) != null) {
+    if (shallEnterSuspendMode()) {
 
       // We have to exit from suspend mode (focus owner changes or alarm is triggered) but
 
@@ -394,7 +398,7 @@ public class IdeEventQueue extends EventQueue {
 
       // Enter to suspend mode if necessary. Suspend will cancel processing of actions mapped to the keyboard shortcuts.
       if (e instanceof KeyEvent) {
-        if (!mySuspendMode && peekEvent(WindowEvent.WINDOW_OPENED) != null) {
+        if (!mySuspendMode && shallEnterSuspendMode()) {
           enterSuspendMode();
         }
       }
@@ -469,6 +473,28 @@ public class IdeEventQueue extends EventQueue {
     else {
       defaultDispatchEvent(e);
     }
+  }
+
+  private boolean shallEnterSuspendMode() {
+    if (peekEvent(WindowEvent.WINDOW_OPENED) != null) return true; // Active window is being changed
+
+    Window currentWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    if (currentWindow != null) {
+      Component topLevel = UIUtil.findUltimateParent(currentWindow);
+      if (topLevel instanceof IdeFrameImpl) {
+        IdeFrameImpl frame = (IdeFrameImpl)topLevel;
+        Project project = frame.getProject();
+
+        if (project != null) {
+          boolean res = IdeFocusManager.getInstance(project).isFocusTransferInProgress();
+          if (res) {
+            return res;
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   private boolean processAppActivationEvents(AWTEvent e) {

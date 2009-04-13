@@ -60,4 +60,6 @@ public abstract class IdeFocusManager {
 
   @Nullable
   public abstract Component getFocusedDescendantFor(final Component comp);
+
+  public abstract boolean isFocusTransferInProgress();
 }

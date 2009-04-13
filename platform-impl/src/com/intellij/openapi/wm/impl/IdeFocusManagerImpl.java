@@ -1,10 +1,10 @@
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.wm.FocusCommand;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.FocusTrackback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,5 +49,10 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
     if (popup != null && popup.isFocused()) return focused;
 
     return null;
+  }
+
+  @Override
+  public boolean isFocusTransferInProgress() {
+    return myToolWindowManager.isFocusTranferInProgress();
   }
 }

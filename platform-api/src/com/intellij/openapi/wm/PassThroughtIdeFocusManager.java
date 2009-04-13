@@ -1,7 +1,7 @@
 package com.intellij.openapi.wm;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,4 +42,7 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
     return null;
   }
 
+  public boolean isFocusTransferInProgress() {
+    return false;
+  }
 }

@@ -1437,6 +1437,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
+  public boolean isFocusTranferInProgress() {
+    return myRequestFocusCmd != null;
+  }
+
 
   /**
    * This command creates and shows <code>FloatingDecorator</code>.

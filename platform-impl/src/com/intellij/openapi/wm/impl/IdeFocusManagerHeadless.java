@@ -1,8 +1,8 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.FocusCommand;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,5 +32,9 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
 
   public Component getFocusedDescendantFor(final Component c) {
     return null;
+  }
+
+  public boolean isFocusTransferInProgress() {
+    return false;
   }
 }
