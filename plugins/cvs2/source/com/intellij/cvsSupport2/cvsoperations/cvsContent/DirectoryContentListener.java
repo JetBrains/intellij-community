@@ -1,12 +1,11 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.regex.Pattern;
-
-import com.intellij.openapi.util.text.StringUtil;
 
 
 class DirectoryContentListener {
@@ -26,7 +25,7 @@ class DirectoryContentListener {
     }
     else if (fileMessage(message)) {
       String fileName = fileNameFromMessage(message);
-      if (StringUtil.startsWithConcatenationOf(fileName, myModuleName, "/")) {
+      if ((myModuleName != null) && StringUtil.startsWithConcatenationOf(fileName, myModuleName, "/")) {
         fileName = fileName.substring(myModuleName.length() + 1);
       }
 
