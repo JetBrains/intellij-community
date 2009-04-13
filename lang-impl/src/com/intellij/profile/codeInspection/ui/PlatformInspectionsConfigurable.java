@@ -1,11 +1,11 @@
 package com.intellij.profile.codeInspection.ui;
 
-import com.intellij.psi.PsiFile;
+import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -65,7 +65,7 @@ public class PlatformInspectionsConfigurable implements ErrorsConfigurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "preferences.inspections.ruby";
   }
 
   public SingleInspectionProfilePanel getPanel() {
