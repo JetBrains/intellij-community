@@ -73,7 +73,7 @@ public class SvnRootAboveTest extends SvnTestCase {
     myProjectLevelVcsManager.updateActiveVcss();
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh();
+    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(myRefreshCopiesStub);
 
     myClManager = ChangeListManager.getInstance(myProject);
   }

@@ -1,8 +1,12 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.lifecycle.AtomicSectionsAware;
+import com.intellij.lifecycle.SlowlyClosingAlarm;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 
 public class SvnCopiesRefreshManager {
@@ -12,10 +16,15 @@ public class SvnCopiesRefreshManager {
     myCopiesRefresh = new MyVeryRefresh();
     //myCopiesRefreshProxy = new DefendedCopiesRefreshProxy(veryRefresh);
 
-    final Runnable refresher = new MyRefresher(project, mapping);
+    final SlowlyClosingAlarm alarm = new SlowlyClosingAlarm(project, "Subversion working copies refresher");
+    final Runnable refresher = new MyRefresher(project, mapping, alarm);
     //final Runnable proxiedRefresher = myCopiesRefreshProxy.proxyRefresher(refresher);
 
-    final RequestsMerger requestsMerger = new RequestsMerger(refresher, project);
+    final RequestsMerger requestsMerger = new RequestsMerger(refresher, new Consumer<Runnable>() {
+      public void consume(final Runnable runnable) {
+        alarm.addRequest(runnable);
+      }
+    });
     ((MyVeryRefresh) myCopiesRefresh).setRequestMerger(requestsMerger);
   }
 
@@ -73,15 +82,22 @@ public class SvnCopiesRefreshManager {
   private static class MyRefresher implements Runnable {
     private final Project myProject;
     private final SvnFileUrlMappingImpl myMapping;
+    private final AtomicSectionsAware myAtomicSectionsAware;
 
-    private MyRefresher(final Project project, final SvnFileUrlMappingImpl mapping) {
+    private MyRefresher(final Project project, final SvnFileUrlMappingImpl mapping, final AtomicSectionsAware atomicSectionsAware) {
       myProject = project;
       myMapping = mapping;
+      myAtomicSectionsAware = atomicSectionsAware;
     }
 
     public void run() {
-      myMapping.realRefresh();
-      myProject.getMessageBus().syncPublisher(SvnVcs.ROOTS_RELOADED).run();
+      try {
+        myMapping.realRefresh(myAtomicSectionsAware);
+        myProject.getMessageBus().syncPublisher(SvnVcs.ROOTS_RELOADED).run();
+      }
+      catch (ProcessCanceledException e) {
+        //
+      }
     }
   }
 }

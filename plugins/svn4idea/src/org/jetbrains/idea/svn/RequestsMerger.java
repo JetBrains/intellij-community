@@ -3,8 +3,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.Disposable;
-import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,20 +30,19 @@ public class RequestsMerger {
   private final Object myLock = new Object();
 
   private MyState myState;
-  private final Alarm myAlarm;
+  private final Consumer<Runnable> myAlarm;
   
   private final List<Runnable> myWaitingStartListeners;
   private final List<Runnable> myWaitingFinishListeners;
 
-  public RequestsMerger(final Runnable runnable, Disposable parent) {
+  public RequestsMerger(final Runnable runnable, final Consumer<Runnable> alarm) {
+    myAlarm = alarm;
     myWorker = new MyWorker(runnable);
 
     myState = MyState.empty;
 
     myWaitingStartListeners = new ArrayList<Runnable>();
     myWaitingFinishListeners = new ArrayList<Runnable>();
-
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, parent);
   }
 
   public void request() {
@@ -133,7 +131,8 @@ public class RequestsMerger {
     if (exitActions != null) {
       for (MyExitAction exitAction : exitActions) {
         if (MyExitAction.submitRequestToExecutor.equals(exitAction)) {
-          myAlarm.addRequest(myWorker, ourDelay);
+          myAlarm.consume(myWorker);
+          //myAlarm.addRequest(myWorker, ourDelay);
           //ApplicationManager.getApplication().executeOnPooledThread(myWorker);
         }
       }

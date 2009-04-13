@@ -16,6 +16,7 @@ import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
+import com.intellij.lifecycle.AtomicSectionsAware;
 import org.junit.After;
 import org.junit.Before;
 
@@ -31,6 +32,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
   private File myWcRoot;
   protected String myRepoUrl;
   private ChangeListManagerGate myGate;
+  protected AtomicSectionsAware myRefreshCopiesStub;
 
   @Before
   public void setUp() throws Exception {
@@ -63,9 +65,19 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
 
     myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
 
+    myRefreshCopiesStub = new AtomicSectionsAware() {
+      public void enter() {
+      }
+      public void exit() {
+      }
+      public boolean shouldExitAsap() {
+        return false;
+      }
+    };
+
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     vcs.postStartup();
-    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh();
+    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(myRefreshCopiesStub);
   }
 
   @After

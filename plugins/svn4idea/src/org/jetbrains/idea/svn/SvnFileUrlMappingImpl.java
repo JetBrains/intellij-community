@@ -7,12 +7,14 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.StringLenComparator;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.lifecycle.AtomicSectionsAware;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -175,7 +177,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
     }
   }
 
-  public void realRefresh() {
+  public void realRefresh(final AtomicSectionsAware atomicSectionsAware) {
     final boolean goIntoNested = SvnConfiguration.getInstance(myVcs.getProject()).DETECT_NESTED_COPIES;
 
     final VirtualFile[] roots = myHelper.executeDefended();
@@ -184,7 +186,11 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
 
     final List<Real> allRoots = new ArrayList<Real>();
     for (VirtualFile root : roots) {
-      final List<Real> foundRoots = ForNestedRootChecker.getAllNestedWorkingCopies(root, myVcs, goIntoNested);
+      final List<Real> foundRoots = ForNestedRootChecker.getAllNestedWorkingCopies(root, myVcs, goIntoNested, new Getter<Boolean>() {
+        public Boolean get() {
+          return atomicSectionsAware.shouldExitAsap();
+        }
+      });
       allRoots.addAll(foundRoots);
       
       for (Real foundRoot : foundRoots) {
@@ -200,9 +206,14 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
       addRoot(groupedMapping, copy);
     }
 
-    synchronized (myMonitor) {
-      myMapping.copyFrom(mapping);
-      myMoreRealMapping.copyFrom(groupedMapping);
+    try {
+      atomicSectionsAware.enter();
+      synchronized (myMonitor) {
+        myMapping.copyFrom(mapping);
+        myMoreRealMapping.copyFrom(groupedMapping);
+      }
+    } finally {
+      atomicSectionsAware.exit();
     }
   }
 

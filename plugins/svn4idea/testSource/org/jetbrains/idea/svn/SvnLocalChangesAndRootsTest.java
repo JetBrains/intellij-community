@@ -101,7 +101,7 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
     tmpVf.refresh(false, true);
     
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh();
+    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(myRefreshCopiesStub);
 
     Assert.assertEquals(2, vcs.getSvnFileUrlMapping().getAllWcInfos().size());
 

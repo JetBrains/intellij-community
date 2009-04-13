@@ -1,9 +1,10 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.vcs.FilterDescendantVirtualFiles;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -128,7 +129,7 @@ public class ForNestedRootChecker {
     return result;
   }
 
-  public static List<Real> getAllNestedWorkingCopies(final VirtualFile[] roots, final SvnVcs vcs, final boolean goIntoNested) {
+  /*public static List<Real> getAllNestedWorkingCopies(final VirtualFile[] roots, final SvnVcs vcs, final boolean goIntoNested) {
     if (goIntoNested) {
       FilterDescendantVirtualFiles.filter(Arrays.asList(roots));
     }
@@ -146,15 +147,15 @@ public class ForNestedRootChecker {
     }
 
     return result;
-  }
+  }*/
 
-  public static List<Real> getAllNestedWorkingCopies(final VirtualFile root, final SvnVcs vcs, final boolean goIntoNested) {
+  public static List<Real> getAllNestedWorkingCopies(final VirtualFile root, final SvnVcs vcs, final boolean goIntoNested, final Getter<Boolean> cancelledGetter) {
     final VcsRootIterator rootIterator = new VcsRootIterator(vcs.getProject(), vcs);
-    return getForOne(root, vcs, goIntoNested, rootIterator);
+    return getForOne(root, vcs, goIntoNested, rootIterator, cancelledGetter);
   }
 
   private static List<Real> getForOne(final VirtualFile root, final SvnVcs vcs, final boolean goIntoNested,
-                                      final VcsRootIterator rootIterator) {
+                                      final VcsRootIterator rootIterator, final Getter<Boolean> cancelledGetter) {
     final UrlConstructor constructor = new UrlConstructor(vcs);
     final LinkedList<Node> queue = new LinkedList<Node>();
     final LinkedList<Real> result = new LinkedList<Real>();
@@ -176,6 +177,7 @@ public class ForNestedRootChecker {
       final VirtualFile file = node.getFile();
       if (file.isDirectory() && (! SvnUtil.isAdminDirectory(file))) {
         for (VirtualFile child : file.getChildren()) {
+          if (Boolean.TRUE.equals(cancelledGetter.get())) throw new ProcessCanceledException();
           if (rootIterator.acceptFolderUnderVcs(root, child)) {
             if (real == null) {
               queue.add(constructor.createReplaceable(child));
