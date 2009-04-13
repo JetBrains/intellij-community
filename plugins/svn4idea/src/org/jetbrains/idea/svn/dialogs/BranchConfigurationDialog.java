@@ -27,6 +27,7 @@ import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.tmatesoft.svn.core.SVNException;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -56,10 +57,15 @@ public class BranchConfigurationDialog extends DialogWrapper {
     myTrunkLocationTextField.setText(configuration.getTrunkUrl());
     myTrunkLocationTextField.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        SelectLocationDialog dlg = new SelectLocationDialog(project, myTrunkLocationTextField.getText());
-        dlg.show();
-        if (dlg.isOK()) {
-          myTrunkLocationTextField.setText(dlg.getSelectedURL());
+        try {
+          SelectLocationDialog dlg = new SelectLocationDialog(project, myTrunkLocationTextField.getText());
+          dlg.show();
+          if (dlg.isOK()) {
+            myTrunkLocationTextField.setText(dlg.getSelectedURL());
+          }
+        }
+        catch (SVNException e1) {
+          // can not parse url, do not know repository 
         }
       }
     });
@@ -72,14 +78,20 @@ public class BranchConfigurationDialog extends DialogWrapper {
     myLocationList.setModel(listModel);
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        SelectLocationDialog dlg = new SelectLocationDialog(project, rootUrl);
-        dlg.show();
-        if (dlg.isOK()) {
-          if (!configuration.getBranchUrls().contains(dlg.getSelectedURL())) {
-            configuration.getBranchUrls().add(dlg.getSelectedURL());
-            listModel.fireItemAdded();
-            myLocationList.setSelectedIndex(listModel.getSize()-1);
+        try {
+          SelectLocationDialog dlg = new SelectLocationDialog(project, rootUrl);
+          dlg.show();
+          if (dlg.isOK()) {
+            if (!configuration.getBranchUrls().contains(dlg.getSelectedURL())) {
+              configuration.getBranchUrls().add(dlg.getSelectedURL());
+              listModel.fireItemAdded();
+              myLocationList.setSelectedIndex(listModel.getSize()-1);
+            }
           }
+        }
+        catch (SVNException e1) {
+          Messages.showErrorDialog(project, SvnBundle.message("select.location.invalid.url.message", rootUrl),
+                                   SvnBundle.message("dialog.title.select.repository.location"));
         }
       }
     });

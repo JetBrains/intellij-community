@@ -59,32 +59,28 @@ public class SelectLocationDialog extends DialogWrapper {
   public static String selectLocation(Project project, String url) {
     try {
       SVNURL.parseURIEncoded(url);
+      SelectLocationDialog dialog = new SelectLocationDialog(project, url);
+      dialog.show();
+      if (!dialog.isOK()) return null;
+      return dialog.getSelectedURL();
     } catch (SVNException e) {
       Messages.showErrorDialog(project, SvnBundle.message("select.location.invalid.url.message", url),
                                SvnBundle.message("dialog.title.select.repository.location"));
       return null;
     }
-    SelectLocationDialog dialog = new SelectLocationDialog(project, url);
-    dialog.show();
-    if (!dialog.isOK()) return null;
-    return dialog.getSelectedURL();
   }
 
-  public SelectLocationDialog(Project project, String url) {
+  public SelectLocationDialog(Project project, String url) throws SVNException {
     this(project, url, null, null, true);
   }
 
   public SelectLocationDialog(Project project, String url,
-                              String dstLabel, String dstName, boolean showFiles) {
+                              String dstLabel, String dstName, boolean showFiles) throws SVNException {
     super(project, true);
     myProject = project;
     myDstLabel = dstLabel;
     myDstName = dstName;
-    try {
-      myURL = SVNURL.parseURIEncoded(url);
-    } catch (SVNException e) {
-      //
-    }
+    myURL = SVNURL.parseURIEncoded(url);
     myIsShowFiles = showFiles;
     setTitle(SvnBundle.message("dialog.title.select.repository.location"));
     getHelpAction().setEnabled(true);
