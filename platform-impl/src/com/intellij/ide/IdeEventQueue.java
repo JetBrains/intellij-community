@@ -486,10 +486,7 @@ public class IdeEventQueue extends EventQueue {
         Project project = frame.getProject();
 
         if (project != null) {
-          boolean res = IdeFocusManager.getInstance(project).isFocusTransferInProgress();
-          if (res) {
-            return res;
-          }
+          return IdeFocusManager.getInstance(project).isFocusTransferInProgress();
         }
       }
     }
