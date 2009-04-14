@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.actions.ContentChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -35,7 +36,7 @@ import java.util.List;
  * @author lesya
  * @since 5.1
  */
-public class ShowMessageHistoryAction extends AnAction {
+public class ShowMessageHistoryAction extends AnAction implements DumbAware {
   public ShowMessageHistoryAction() {
     setEnabledInModalContext(true);
   }

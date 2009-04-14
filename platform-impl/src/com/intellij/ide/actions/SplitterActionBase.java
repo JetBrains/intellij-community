@@ -2,12 +2,13 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 
 /**
  * @author yole
  */
-public abstract class SplitterActionBase extends AnAction {
+public abstract class SplitterActionBase extends AnAction implements DumbAware {
   public void update(final AnActionEvent event) {
     final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     final Presentation presentation = event.getPresentation();

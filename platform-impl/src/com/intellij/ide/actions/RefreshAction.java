@@ -5,6 +5,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
 
@@ -13,7 +14,7 @@ import javax.swing.*;
  * It also serves as a base action for 'refresh' actions (to make dependencies more clear) and
  * provides a convenience method to register its shortcut on a component
  */
-public class RefreshAction extends AnAction{
+public class RefreshAction extends AnAction implements DumbAware {
   public RefreshAction() {
   }
 

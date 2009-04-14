@@ -3,11 +3,12 @@ package com.intellij.ide.actions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * @author max
  */
-public class QuickChangeSchemesAction extends QuickSwitchSchemeAction {
+public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware {
   protected void fillActions(Project project, DefaultActionGroup group) {
     final AnAction[] actions = getGroup().getChildren(null);
     for (AnAction action : actions) {

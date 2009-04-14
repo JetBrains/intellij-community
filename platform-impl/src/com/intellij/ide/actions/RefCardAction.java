@@ -37,12 +37,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Vladimir Kondratyev
  */
-public class RefCardAction extends AnAction{
+public class RefCardAction extends AnAction implements DumbAware {
   @NonNls private static final String KEYMAP_URL = PathManager.getHomePath() + "/help/" + (SystemInfo.isMac ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
 
   public void actionPerformed(AnActionEvent e) {

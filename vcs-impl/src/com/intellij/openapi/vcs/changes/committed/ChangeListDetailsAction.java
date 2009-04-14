@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.*;
@@ -25,7 +26,7 @@ import java.text.DateFormat;
 /**
  * @author yole
  */
-public class ChangeListDetailsAction extends AnAction {
+public class ChangeListDetailsAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);

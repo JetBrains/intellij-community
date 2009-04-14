@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.project.DumbAware;
 
 import java.awt.*;
 import java.awt.event.WindowEvent;
@@ -10,7 +11,7 @@ import java.awt.event.WindowEvent;
 /**
  * @author Vladimir Kondratyev
  */
-public class CloseWindowAction extends AnAction{
+public class CloseWindowAction extends AnAction implements DumbAware {
   public CloseWindowAction(){
     setEnabledInModalContext(true);
   }

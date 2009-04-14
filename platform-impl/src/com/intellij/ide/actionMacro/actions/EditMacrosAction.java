@@ -6,6 +6,7 @@ import com.intellij.ide.actionMacro.EditMacrosDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,7 +15,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
  * Time: 3:33:04 PM
  * To change this template use Options | File Templates.
  */
-public class EditMacrosAction extends AnAction {
+public class EditMacrosAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     EditMacrosDialog dialog = new EditMacrosDialog(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
     dialog.show();

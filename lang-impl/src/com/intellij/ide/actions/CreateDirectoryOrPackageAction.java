@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
@@ -22,7 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
 
-public class CreateDirectoryOrPackageAction extends AnAction {
+public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
   public CreateDirectoryOrPackageAction() {
     super(IdeBundle.message("action.create.new.directory.or.package"), IdeBundle.message("action.create.new.directory.or.package"), null);
   }

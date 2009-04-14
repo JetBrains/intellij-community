@@ -5,11 +5,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 
-public class ToggleSideModeAction extends ToggleAction{
+public class ToggleSideModeAction extends ToggleAction implements DumbAware {
   public boolean isSelected(AnActionEvent event){
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {

@@ -9,12 +9,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * User: anna
  * Date: Feb 23, 2005
  */
-public class DeleteFromFavoritesAction extends AnAction {
+public class DeleteFromFavoritesAction extends AnAction implements DumbAware {
   public DeleteFromFavoritesAction() {
     super(IdeBundle.message("action.remove.from.current.favorites"));
   }

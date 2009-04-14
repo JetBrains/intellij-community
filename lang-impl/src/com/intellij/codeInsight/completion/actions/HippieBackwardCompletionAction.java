@@ -3,12 +3,13 @@ package com.intellij.codeInsight.completion.actions;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class HippieBackwardCompletionAction extends BaseCodeInsightAction {
+public class HippieBackwardCompletionAction extends BaseCodeInsightAction implements DumbAware {
   public HippieBackwardCompletionAction() {
     setEnabledInModalContext(true);
   }

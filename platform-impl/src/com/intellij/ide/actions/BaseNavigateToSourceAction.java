@@ -1,11 +1,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseNavigateToSourceAction extends AnAction {
+public abstract class BaseNavigateToSourceAction extends AnAction implements DumbAware {
   private final boolean myFocusEditor;
 
   protected BaseNavigateToSourceAction(boolean focusEditor) {

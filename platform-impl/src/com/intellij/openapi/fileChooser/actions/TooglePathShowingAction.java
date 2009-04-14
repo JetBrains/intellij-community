@@ -4,11 +4,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class TooglePathShowingAction extends AnAction {
+public class TooglePathShowingAction extends AnAction implements DumbAware {
 
   {
     setEnabledInModalContext(true);

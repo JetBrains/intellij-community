@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -23,7 +24,7 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 
 import java.util.Arrays;
 
-public class CommitAction extends AnAction {
+public class CommitAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     boolean enabled = false;

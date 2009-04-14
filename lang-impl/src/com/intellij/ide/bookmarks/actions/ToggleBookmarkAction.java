@@ -8,11 +8,12 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 
-public class ToggleBookmarkAction extends AnAction {
+public class ToggleBookmarkAction extends AnAction implements DumbAware {
   public ToggleBookmarkAction() {
     super(IdeBundle.message("action.toggle.bookmark"));
   }

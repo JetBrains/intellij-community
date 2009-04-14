@@ -3,10 +3,11 @@ package com.intellij.openapi.fileChooser.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
 
-public abstract class FileChooserAction extends AnAction {
+public abstract class FileChooserAction extends AnAction implements DumbAware {
   protected FileChooserAction() {
   }
 

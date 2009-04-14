@@ -4,12 +4,13 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ContextHelpAction extends AnAction {
+public class ContextHelpAction extends AnAction implements DumbAware {
   private static final Icon myIcon=IconLoader.getIcon("/actions/help.png");
   private final String myHelpID;
 

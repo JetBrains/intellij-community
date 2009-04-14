@@ -5,8 +5,9 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
-public class UndoAction extends AnAction {
+public class UndoAction extends AnAction implements DumbAware {
   public UndoAction() {
     setEnabledInModalContext(true);
   }

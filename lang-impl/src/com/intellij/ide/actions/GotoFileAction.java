@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -34,7 +35,7 @@ import java.util.List;
  * @author Eugene Belyaev
  * @author Constantine.Plotnikov
  */
-public class GotoFileAction extends GotoActionBase {
+public class GotoFileAction extends GotoActionBase implements DumbAware {
 
   @Override
   public void gotoActionPerformed(AnActionEvent e) {

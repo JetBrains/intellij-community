@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
@@ -17,7 +18,7 @@ import com.intellij.util.ArrayUtil;
  * User: anna
  * Date: Feb 23, 2005
  */
-public class RenameFavoritesListAction extends AnAction {
+public class RenameFavoritesListAction extends AnAction implements DumbAware {
   public RenameFavoritesListAction() {
     super(IdeBundle.message("action.rename.favorites.list"),
           IdeBundle.message("action.rename.favorites.list"), IconLoader.getIcon("/actions/menu-replace.png"));

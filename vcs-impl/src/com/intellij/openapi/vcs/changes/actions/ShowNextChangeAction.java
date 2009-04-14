@@ -6,13 +6,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeRequestChain;
 
 /**
  * @author yole
 */
-public class ShowNextChangeAction extends AnAction {
+public class ShowNextChangeAction extends AnAction implements DumbAware {
   public ShowNextChangeAction() {
     setEnabledInModalContext(true);
   }

@@ -6,11 +6,12 @@ import com.intellij.ide.bookmarks.EditorBookmark;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 
-abstract class GotoBookmarkActionBase extends BaseCodeInsightAction implements CodeInsightActionHandler{
+abstract class GotoBookmarkActionBase extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
   protected GotoBookmarkActionBase() {
     super(false);
   }

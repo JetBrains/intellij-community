@@ -4,13 +4,14 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * User: anna
  * Date: Apr 18, 2005
  */
-public class MoveEditorToOppositeTabGroupAction extends AnAction{
+public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
 
   public void actionPerformed(final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();

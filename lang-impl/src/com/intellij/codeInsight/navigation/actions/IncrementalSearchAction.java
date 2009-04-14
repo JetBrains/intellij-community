@@ -4,8 +4,9 @@ import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
-public class IncrementalSearchAction extends AnAction{
+public class IncrementalSearchAction extends AnAction implements DumbAware {
   public IncrementalSearchAction() {
     setEnabledInModalContext(true);
   }

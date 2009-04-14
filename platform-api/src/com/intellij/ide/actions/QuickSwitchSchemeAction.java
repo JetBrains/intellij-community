@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
@@ -31,7 +32,7 @@ import javax.swing.*;
 /**
  * @author max
  */
-public abstract class QuickSwitchSchemeAction extends AnAction {
+public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
   protected static final Icon ourCurrentAction = IconLoader.getIcon("/diff/currentLine.png");
   protected static final Icon ourNotCurrentAction = new EmptyIcon(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
 

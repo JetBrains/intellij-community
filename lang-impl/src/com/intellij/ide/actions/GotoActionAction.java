@@ -12,11 +12,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
 import java.awt.*;
 import java.util.Map;
 
-public class GotoActionAction extends GotoActionBase {
+public class GotoActionAction extends GotoActionBase implements DumbAware {
   public void gotoActionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);

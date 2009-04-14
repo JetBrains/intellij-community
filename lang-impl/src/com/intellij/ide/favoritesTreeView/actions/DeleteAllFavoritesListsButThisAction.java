@@ -8,12 +8,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * User: anna
  * Date: Feb 23, 2005
  */
-public class DeleteAllFavoritesListsButThisAction extends AnAction {
+public class DeleteAllFavoritesListsButThisAction extends AnAction implements DumbAware {
   public DeleteAllFavoritesListsButThisAction() {
     super(IdeBundle.message("action.delete.all.favorites.lists.but.this",""));
   }

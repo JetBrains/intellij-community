@@ -6,11 +6,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * @author max
  */
-public class StartStopMacroRecordingAction extends AnAction {
+public class StartStopMacroRecordingAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(e.getDataContext().getData(DataConstants.EDITOR) != null);
     e.getPresentation().setText(ActionMacroManager.getInstance().isRecording()

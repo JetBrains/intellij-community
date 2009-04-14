@@ -5,8 +5,9 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 
-public class RunGcAction extends AnAction{
+public class RunGcAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e){
     /*
     DataContext dataContext = e.getDataContext();

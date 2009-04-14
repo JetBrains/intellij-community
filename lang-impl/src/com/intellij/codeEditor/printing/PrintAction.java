@@ -2,11 +2,12 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
-public class PrintAction extends AnAction{
+public class PrintAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();

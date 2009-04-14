@@ -8,9 +8,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public abstract class LocalHistoryAction extends AnAction {
+public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     Presentation p = e.getPresentation();

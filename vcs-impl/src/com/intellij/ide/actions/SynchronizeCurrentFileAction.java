@@ -10,11 +10,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 
-public class SynchronizeCurrentFileAction extends AnAction {
+public class SynchronizeCurrentFileAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     VirtualFile[] files = getFiles(e);
 

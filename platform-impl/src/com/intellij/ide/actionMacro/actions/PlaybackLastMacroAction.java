@@ -4,11 +4,12 @@ import com.intellij.ide.actionMacro.ActionMacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * @author max
  */
-public class PlaybackLastMacroAction extends AnAction {
+public class PlaybackLastMacroAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     ActionMacroManager.getInstance().playbackLastMacro();
   }

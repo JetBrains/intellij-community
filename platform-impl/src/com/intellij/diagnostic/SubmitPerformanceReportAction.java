@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ZipUtil;
@@ -28,7 +29,7 @@ import java.util.zip.ZipOutputStream;
 /**
  * @author yole
  */
-public class SubmitPerformanceReportAction extends AnAction {
+public class SubmitPerformanceReportAction extends AnAction implements DumbAware {
   private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
   public void actionPerformed(final AnActionEvent e) {

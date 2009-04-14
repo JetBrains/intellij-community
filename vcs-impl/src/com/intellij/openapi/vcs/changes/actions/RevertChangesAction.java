@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchBuilder;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -24,7 +25,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class RevertChangesAction extends AnAction {
+public class RevertChangesAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getRequiredData(PlatformDataKeys.PROJECT);
     final VirtualFile baseDir = project.getBaseDir();

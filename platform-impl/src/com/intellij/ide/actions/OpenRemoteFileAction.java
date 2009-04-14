@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -14,7 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
  * internal action
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class OpenRemoteFileAction extends AnAction {
+public class OpenRemoteFileAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT)!=null);

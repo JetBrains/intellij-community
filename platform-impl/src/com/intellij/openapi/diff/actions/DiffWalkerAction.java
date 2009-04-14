@@ -8,8 +8,9 @@ import com.intellij.openapi.diff.impl.util.FocusDiffSide;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbAware;
 
-abstract class DiffWalkerAction extends AnAction {
+abstract class DiffWalkerAction extends AnAction implements DumbAware {
   protected DiffWalkerAction() {
     setEnabledInModalContext(true);
   }

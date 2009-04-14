@@ -15,6 +15,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.io.ZipUtil;
 
 import java.awt.*;
@@ -26,7 +27,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-public class ImportSettingsAction extends AnAction {
+public class ImportSettingsAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);

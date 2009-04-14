@@ -36,6 +36,7 @@ import com.intellij.openapi.actionSystem.AsyncUpdateAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -45,7 +46,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> {
+public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> implements DumbAware {
   public static Collection<AbstractVcs> getActiveVcses(VcsContext dataContext) {
     Collection<AbstractVcs> result = new HashSet<AbstractVcs>();
     final Project project = dataContext.getProject();

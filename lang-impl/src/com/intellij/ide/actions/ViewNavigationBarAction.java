@@ -5,9 +5,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.ide.ui.UISettings;
 
-public class ViewNavigationBarAction extends ToggleAction {
+public class ViewNavigationBarAction extends ToggleAction implements DumbAware {
   public boolean isSelected(AnActionEvent e){
     return UISettings.getInstance().SHOW_NAVIGATION_BAR;
   }

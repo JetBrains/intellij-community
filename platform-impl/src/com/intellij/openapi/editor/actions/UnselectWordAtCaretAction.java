@@ -12,8 +12,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.DumbAware;
 
-public class UnselectWordAtCaretAction extends EditorAction {
+public class UnselectWordAtCaretAction extends EditorAction implements DumbAware {
   public UnselectWordAtCaretAction() {
     super(new Handler());
     setInjectedContext(true);

@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +12,7 @@ import java.nio.charset.Charset;
 /**
  * @author cdr
 */
-class ChangeFileEncodingTo extends AnAction {
+class ChangeFileEncodingTo extends AnAction implements DumbAware {
   private final VirtualFile myFile;
   private final Charset myCharset;
 

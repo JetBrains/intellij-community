@@ -15,8 +15,9 @@ import com.intellij.ide.license.LicenseManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.project.DumbAware;
 
-public class SendFeedbackAction extends AnAction {
+public class SendFeedbackAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     launchBrowser();
   }

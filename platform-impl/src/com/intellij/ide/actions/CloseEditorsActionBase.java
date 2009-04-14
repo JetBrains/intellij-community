@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.ide.IdeBundle;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author yole
  */
-public abstract class CloseEditorsActionBase extends AnAction {
+public abstract class CloseEditorsActionBase extends AnAction implements DumbAware {
   protected ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
     final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<Pair<EditorComposite, EditorWindow>>();
     final DataContext dataContext = event.getDataContext();

@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-public class CopyPathsAction extends AnAction {
+public class CopyPathsAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Collection<VirtualFile> files = getFiles(e);
     if (files.isEmpty()) {

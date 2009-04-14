@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -26,7 +27,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class MoveChangesToAnotherListAction extends AnAction {
+public class MoveChangesToAnotherListAction extends AnAction implements DumbAware {
   public MoveChangesToAnotherListAction() {
     super(ActionsBundle.actionText("ChangesView.Move"),
           ActionsBundle.actionDescription("ChangesView.Move"),

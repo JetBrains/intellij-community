@@ -4,11 +4,12 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class ShowProcessWindowAction extends ToggleAction {
+public class ShowProcessWindowAction extends ToggleAction implements DumbAware {
 
   public ShowProcessWindowAction() {
     super(ActionsBundle.message("action.ShowProcessWindow.text"), ActionsBundle.message("action.ShowProcessWindow.description"), null);

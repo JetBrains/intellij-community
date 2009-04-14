@@ -16,6 +16,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.AnimatingSurface;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.UIUtil;
@@ -29,7 +30,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Properties;
 
-public class AboutAction extends AnAction {
+public class AboutAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu);
     e.getPresentation().setDescription("Show information about " + ApplicationNamesInfo.getInstance().getFullProductName());

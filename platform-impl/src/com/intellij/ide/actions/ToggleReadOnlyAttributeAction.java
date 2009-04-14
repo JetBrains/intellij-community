@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
@@ -18,7 +19,7 @@ import com.intellij.util.io.ReadOnlyAttributeUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class ToggleReadOnlyAttributeAction extends AnAction{
+public class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware {
   static VirtualFile[] getFiles(DataContext dataContext){
     ArrayList<VirtualFile> filesList = new ArrayList<VirtualFile>();
     VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);

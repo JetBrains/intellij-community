@@ -9,6 +9,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 
-public class IgnoreWhiteSpacesAction extends ComboBoxAction {
+public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware {
   private final Map<ComparisonPolicy, AnAction> myActions = new HashMap<ComparisonPolicy, AnAction>();
   private static final ComparisonPolicy[] ourActionOrder = new ComparisonPolicy[]{
     ComparisonPolicy.DEFAULT,

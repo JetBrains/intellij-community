@@ -9,12 +9,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 
 /**
  * @author mike
  */
-public class ReloadProjectAction extends AnAction {
+public class ReloadProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     ((ProjectManagerImpl)ProjectManager.getInstance()).reloadProject(project, true);

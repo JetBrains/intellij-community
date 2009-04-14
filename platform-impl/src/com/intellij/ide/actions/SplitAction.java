@@ -7,13 +7,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
 
 /**
  * @author Vladimir Kondratyev
  */
-public abstract class SplitAction extends AnAction{
+public abstract class SplitAction extends AnAction implements DumbAware {
   private final int myOrientation;
 
   protected SplitAction(final int orientation){

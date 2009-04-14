@@ -4,8 +4,9 @@ package com.intellij.ide.actions;
 import com.intellij.ide.CutProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
-public class CutAction extends AnAction {
+public class CutAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     CutProvider provider = (CutProvider)dataContext.getData(DataConstants.CUT_PROVIDER);

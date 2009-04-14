@@ -9,12 +9,13 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * User: anna
  * Date: 27-Jan-2006
  */
-public class EditScopesAction extends AnAction {
+public class EditScopesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.EditScopesAction");
 
   public EditScopesAction() {

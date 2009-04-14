@@ -5,8 +5,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
+import com.intellij.openapi.project.DumbAware;
 
-public class SelectAllAction extends AnAction {
+public class SelectAllAction extends AnAction implements DumbAware {
   public SelectAllAction() {
     setEnabledInModalContext(true);
   }

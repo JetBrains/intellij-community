@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class MultiplePasteAction extends AnAction {
+public class MultiplePasteAction extends AnAction implements DumbAware {
   public MultiplePasteAction() {
     setEnabledInModalContext(true);
   }

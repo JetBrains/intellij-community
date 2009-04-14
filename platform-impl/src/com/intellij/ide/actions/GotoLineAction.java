@@ -10,8 +10,9 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 
-public class GotoLineAction extends AnAction {
+public class GotoLineAction extends AnAction implements DumbAware {
   public GotoLineAction() {
     setEnabledInModalContext(true);
   }

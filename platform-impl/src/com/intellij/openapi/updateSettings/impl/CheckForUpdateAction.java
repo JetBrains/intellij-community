@@ -6,10 +6,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.project.DumbAware;
 
 import java.util.List;
 
-public class CheckForUpdateAction extends AnAction {
+public class CheckForUpdateAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent e) {
     e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu);

@@ -5,11 +5,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 
-public class ToggleDockModeAction extends ToggleAction{
+public class ToggleDockModeAction extends ToggleAction implements DumbAware {
 
   public boolean isSelected(AnActionEvent event){
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());

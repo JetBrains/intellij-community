@@ -25,12 +25,13 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public class ClearTextAction extends AnAction {
+public class ClearTextAction extends AnAction implements DumbAware {
 
   public ClearTextAction() {
     setEnabledInModalContext(true);

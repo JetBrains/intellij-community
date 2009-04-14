@@ -14,11 +14,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.project.DumbAware;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SelectWordAtCaretAction extends TextComponentEditorAction {
+public class SelectWordAtCaretAction extends TextComponentEditorAction implements DumbAware {
   public SelectWordAtCaretAction() {
     super(new Handler());
     setInjectedContext(true);

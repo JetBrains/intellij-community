@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
@@ -14,7 +15,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Vladimir Kondratyev
  */
-public class ShowPopupMenuAction extends AnAction {
+public class ShowPopupMenuAction extends AnAction implements DumbAware {
   public ShowPopupMenuAction() {
     setEnabledInModalContext(true);
   }

@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,7 +29,7 @@ import com.intellij.openapi.actionSystem.Presentation;
  * Time: 7:41:17 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class TreeExpandAllActionBase extends AnAction {
+public abstract class TreeExpandAllActionBase extends AnAction implements DumbAware {
   protected abstract TreeExpander getExpander(DataContext dataContext);
 
   public final void actionPerformed(AnActionEvent e) {

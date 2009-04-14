@@ -8,11 +8,12 @@ import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-abstract class BaseDiffAction extends AnAction implements PreloadableAction {
+abstract class BaseDiffAction extends AnAction implements PreloadableAction, DumbAware {
   public void actionPerformed(AnActionEvent e) {
     DiffRequest diffData = getDiffData(e.getDataContext());
     if (diffData == null) return;

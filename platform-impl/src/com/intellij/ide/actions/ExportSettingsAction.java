@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.io.ZipUtil;
 
 import java.io.BufferedOutputStream;
@@ -25,7 +26,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.jar.JarOutputStream;
 
-public class ExportSettingsAction extends AnAction {
+public class ExportSettingsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ExportSettingsAction");
 
   public void actionPerformed(AnActionEvent e) {

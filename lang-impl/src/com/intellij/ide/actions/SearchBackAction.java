@@ -11,9 +11,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiDocumentManager;
 
-public class SearchBackAction extends AnAction {
+public class SearchBackAction extends AnAction implements DumbAware {
   public SearchBackAction() {
     setEnabledInModalContext(true);
   }
