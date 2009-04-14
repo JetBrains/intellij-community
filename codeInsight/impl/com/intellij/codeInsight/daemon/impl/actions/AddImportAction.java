@@ -89,6 +89,8 @@ public class AddImportAction implements QuestionAction {
           }
 
           String qname = selectedValue.getQualifiedName();
+          if (qname == null) return FINAL_CHOICE;
+
           List<String> toExclude = getAllExcludableStrings(qname);
 
           return new BaseListPopupStep<String>(null, toExclude) {

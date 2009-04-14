@@ -17,8 +17,11 @@ import com.intellij.util.Consumer;
 public class ExcludeFromCompletionLookupActionProvider implements LookupActionProvider {
   public void fillActions(LookupElement element, Lookup lookup, Consumer<LookupElementAction> consumer) {
     if (element instanceof JavaPsiClassReferenceElement) {
-      for (final String s : AddImportAction.getAllExcludableStrings(((JavaPsiClassReferenceElement)element).getQualifiedName())) {
-        consumer.consume(new ExcludeFromCompletionAction(s));
+      final String qname = ((JavaPsiClassReferenceElement)element).getQualifiedName();
+      if (qname != null) {
+        for (final String s : AddImportAction.getAllExcludableStrings(qname)) {
+          consumer.consume(new ExcludeFromCompletionAction(s));
+        }
       }
     }
   }
