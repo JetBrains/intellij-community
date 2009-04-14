@@ -86,7 +86,6 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
           return new DomElementXmlDescriptor((DomChildrenDescription)description, domElement);
         }
       }
-
       return null;
     }
 
@@ -121,8 +120,11 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
     DomElement domElement = myManager.getDomElement(context);
     if (domElement == null) return null;
 
-    final DomAttributeChildDescription childDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
-    if (childDescription != null) return new DomAttributeXmlDescriptor(childDescription);
+    for (DomAttributeChildDescription description : domElement.getGenericInfo().getAttributeChildrenDescriptions()) {
+      if (attributeName.equals(DomAttributeXmlDescriptor.getQualifiedAttributeName(context, description.getXmlName()))) {
+        return new DomAttributeXmlDescriptor(description);
+      }
+    }
     return null;
   }
 

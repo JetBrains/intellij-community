@@ -7,6 +7,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.XmlName;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -63,21 +64,26 @@ public class DomAttributeXmlDescriptor implements XmlAttributeDescriptor {
 
   @NonNls
   public String getName(final PsiElement context) {
+    return getQualifiedAttributeName(context, myDescription.getXmlName());
+  }
+
+  static String getQualifiedAttributeName(PsiElement context, XmlName xmlName) {
+    final String localName = xmlName.getLocalName();
     if (context instanceof XmlTag) {
       final XmlTag tag = (XmlTag)context;
       final DomInvocationHandler handler = DomManagerImpl.getDomManager(context.getProject()).getDomHandler(tag);
       if (handler != null) {
-        final String ns = handler.createEvaluatedXmlName(myDescription.getXmlName()).getNamespace(tag, handler.getFile());
+        final String ns = handler.createEvaluatedXmlName(xmlName).getNamespace(tag, handler.getFile());
         if (!ns.equals(XmlUtil.EMPTY_URI) && !ns.equals(tag.getNamespace())) {
           final String prefix = tag.getPrefixByNamespace(ns);
           if (StringUtil.isNotEmpty(prefix)) {
-            return prefix + ":" + getLocalName();
+            return prefix + ":" + localName;
           }
         }
       }
     }
 
-    return getName();
+    return localName;
   }
 
   @NonNls
