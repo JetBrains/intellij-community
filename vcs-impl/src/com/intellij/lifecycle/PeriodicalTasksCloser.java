@@ -84,6 +84,8 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
     }
     synchronized (ourLock) {
       final Boolean state = myStates.get(project);
+      // if project is already closed and project key is already removed from map - then it should have thrown an exception in the block above
+      // so ok to just check for 'closing' stage here
       if (state != null && ! Boolean.TRUE.equals(state)) {
         throw new ProcessCanceledException();
       }
