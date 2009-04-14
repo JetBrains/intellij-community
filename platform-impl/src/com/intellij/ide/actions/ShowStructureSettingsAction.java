@@ -9,9 +9,10 @@ import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.diagnostic.Logger;
 
-public class ShowStructureSettingsAction extends AnAction {
+public class ShowStructureSettingsAction extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowStructureSettingsAction");
 
