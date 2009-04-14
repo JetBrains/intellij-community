@@ -3,7 +3,6 @@ interface a {
   def g() throws Exception
 }
 -----
------------------------- data\statements\typedef\interfaces\interface5 ------------------------
 Groovy script
   Interface definition
     Modifiers
