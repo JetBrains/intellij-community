@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -511,7 +512,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     updateResults(true);
   }
 
-  private class PrevOccurenceAction extends AnAction {
+  private class PrevOccurenceAction extends AnAction implements DumbAware {
     public PrevOccurenceAction() {
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
 
@@ -538,7 +539,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     return myOkToSearch && myHasMatches;
   }
 
-  private class NextOccurenceAction extends AnAction {
+  private class NextOccurenceAction extends AnAction implements DumbAware {
     public NextOccurenceAction() {
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE));
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
@@ -560,7 +561,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
   }
 
-  private class ShowHistoryAction extends AnAction {
+  private class ShowHistoryAction extends AnAction implements DumbAware {
     private ShowHistoryAction() {
       getTemplatePresentation().setIcon(IconLoader.findIcon("/actions/search.png"));
       getTemplatePresentation().setDescription("Search history");
@@ -581,7 +582,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
   }
 
-  private class FindAllAction extends AnAction {
+  private class FindAllAction extends AnAction implements DumbAware {
     private FindAllAction() {
       getTemplatePresentation().setIcon(IconLoader.findIcon("/actions/export.png"));
       getTemplatePresentation().setDescription("Export matches to Find tool window");
