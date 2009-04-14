@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -190,11 +191,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
       // Test's duration in milliseconds
       int duration = 0;
-      try {
-        duration = Integer.parseInt(durationStr);
-      } catch (NumberFormatException ex) {
-        LOG.error(ex);
+
+      if (!StringUtil.isEmptyOrSpaces(durationStr)) {
+        try {
+          duration = Integer.parseInt(durationStr);
+        } catch (NumberFormatException ex) {
+          LOG.error(ex);
+        }
       }
+      
       fireOnTestFinished(testFinished.getTestName(), duration);
     }
 
