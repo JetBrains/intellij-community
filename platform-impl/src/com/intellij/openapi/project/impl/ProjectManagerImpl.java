@@ -377,6 +377,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Nullable
   public Project loadProjectWithProgress(final String filePath, final Pair<Class, Object> convertorComponent) throws IOException {
+    return loadProjectWithProgress(filePath, convertorComponent, null);
+  }
+
+  @Nullable
+  public Project loadProjectWithProgress(final String filePath, final Pair<Class, Object> convertorComponent, Ref<Boolean> canceled) throws IOException {
     final IOException[] io = {null};
     final StateStorage.StateStorageException[] stateStorage = {null};
 
@@ -414,6 +419,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       if (project[0] != null) {
         Disposer.dispose(project[0]);
         project[0] = null;
+      }
+      if (canceled != null) {
+        canceled.set(true);
       }
       notifyProjectOpenFailed();
     }

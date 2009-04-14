@@ -5,13 +5,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.projectImport.ProjectOpenProcessor;
@@ -60,9 +61,10 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
+    Ref<Boolean> cancelled = new Ref<Boolean>();
     if (projectDir.exists()) {
       try {
-        project = ((ProjectManagerImpl) projectManager).loadProjectWithProgress(baseDir.getPath(), null);
+        project = ((ProjectManagerImpl) projectManager).loadProjectWithProgress(baseDir.getPath(), null, cancelled);
       }
       catch (Exception e) {
         // ignore
@@ -71,7 +73,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     else {
       projectDir.mkdirs();
     }
-    if (project == null) {
+    if (project == null && cancelled.isNull()) {
       project = projectManager.newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
     }
     if (project == null) return null;
