@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -183,6 +184,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
     }
 
     context.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.updating.caches"));
+    context.getProgressIndicator().setText2("");
     refreshOutputFiles(writtenPaths);
     new ReadAction() {
       protected void run(final Result result) {
@@ -195,11 +197,16 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
   }
 
   private static void removeInvalidItems(List<PackagingProcessingItem> processedItems) {
+    Set<VirtualFile> files = new THashSet<VirtualFile>(processedItems.size());
+    for (PackagingProcessingItem item : processedItems) {
+      files.add(item.getFile());
+    }
+    RefreshQueue.getInstance().refresh(false, false, null, files.toArray(new VirtualFile[files.size()]));
+
     final Iterator<PackagingProcessingItem> iterator = processedItems.iterator();
     while (iterator.hasNext()) {
       PackagingProcessingItem item = iterator.next();
       final VirtualFile file = item.getFile();
-      file.refresh(false, false);
       if (!file.isValid()) {
         iterator.remove();
       }
