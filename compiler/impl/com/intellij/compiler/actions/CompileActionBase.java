@@ -5,9 +5,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiFile;
 
-public abstract class CompileActionBase extends AnAction {
+public abstract class CompileActionBase extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getData(PlatformDataKeys.PROJECT);

@@ -9,8 +9,9 @@ import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.DumbAware;
 
-public class ShowSettingsAction extends AnAction {
+public class ShowSettingsAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
