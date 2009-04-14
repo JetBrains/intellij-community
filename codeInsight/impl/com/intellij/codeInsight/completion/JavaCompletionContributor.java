@@ -126,7 +126,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
       completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
 
-      completionData.fillCompletions(parameters, result);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          completionData.fillCompletions(parameters, result);
+        }
+      });
 
       for (final LookupElement item : lookupSet) {
         if (item.getInsertHandler() == null) {
