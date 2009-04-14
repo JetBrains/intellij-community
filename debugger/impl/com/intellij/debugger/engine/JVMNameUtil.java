@@ -6,6 +6,8 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -307,7 +309,38 @@ public class JVMNameUtil {
         return allClasses.get(0).name();
       }
     }
-    return DebuggerBundle.message("string.file.line.position", positionFile.getName(), position.getLine());
+    return calcClassDisplayName(psiClass);
+  }
+
+  static String calcClassDisplayName(final PsiClass aClass) {
+    final String qName = aClass.getQualifiedName();
+    if (qName != null)  {
+      return qName;
+    }
+    final PsiClass parent = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true, true);
+    if (parent == null) {
+      return null;
+    }
+    
+    final String name = aClass.getName();
+    if (name != null) {
+      return calcClassDisplayName(parent) + "$" + name;
+    }
+    
+    final Ref<Integer> classIndex = new Ref<Integer>(0);
+    try {
+        parent.accept(new JavaRecursiveElementVisitor() {
+          public void visitAnonymousClass(PsiAnonymousClass cls) {
+            classIndex.set(classIndex.get() + 1);
+            if (aClass.equals(cls)) {
+              throw new ProcessCanceledException();
+            }
+          }
+        });
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+    return calcClassDisplayName(parent) + "$" + classIndex.get();
   }
 
   @Nullable
