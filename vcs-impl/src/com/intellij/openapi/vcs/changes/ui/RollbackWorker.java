@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -139,8 +140,9 @@ public class RollbackWorker {
       final Runnable forAwtThread = new Runnable() {
         public void run() {
           action.finish();
-          LocalHistory.putSystemLabel(project, (myLocalHistoryActionName == null) ? actionName : myLocalHistoryActionName);
-          final VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(project);
+          PeriodicalTasksCloser.safeGetComponent(project, LocalHistory.class).putSystemLabel((myLocalHistoryActionName == null) ?
+                                                                                             actionName : myLocalHistoryActionName, -1);
+          final VcsDirtyScopeManager manager = PeriodicalTasksCloser.safeGetComponent(project, VcsDirtyScopeManager.class);
           for (Change change : changesToRefresh) {
             if ((! change.isIsReplaced()) && Comparing.equal(change.getBeforeRevision(), change.getAfterRevision())) {
               manager.fileDirty(change.getBeforeRevision().getFile());

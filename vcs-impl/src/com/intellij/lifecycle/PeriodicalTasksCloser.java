@@ -1,18 +1,26 @@
 package com.intellij.lifecycle;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PeriodicalTasksCloser implements ProjectManagerListener {
+  private final static Logger LOG = Logger.getInstance("#com.intellij.lifecycle.PeriodicalTasksCloser");
+  private final static Object ourLock = new Object();
   private final List<Pair<String, Runnable>> myInterrupters;
+  private final static Map<Project, Boolean> myStates = new HashMap<Project, Boolean>();
 
   private PeriodicalTasksCloser(final Project project, final ProjectManager projectManager) {
     myInterrupters = new ArrayList<Pair<String, Runnable>>();
@@ -28,6 +36,9 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
   }       
 
   public void projectOpened(Project project) {
+    synchronized (ourLock) {
+      myStates.put(project, Boolean.TRUE);
+    }
   }
 
   public boolean canCloseProject(Project project) {
@@ -35,9 +46,15 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
   }
 
   public void projectClosed(Project project) {
+    synchronized (ourLock) {
+      myStates.remove(project);
+    }
   }
 
   public void projectClosing(Project project) {
+    synchronized (ourLock) {
+      myStates.put(project, Boolean.FALSE);
+    }
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -50,5 +67,26 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
         }
       }
     }, "Please wait for safe shutdown of periodical tasks...", true, project);
+  }
+
+  public static<T> T safeGetComponent(@NotNull final Project project, final Class<T> componentClass) throws ProcessCanceledException {
+    final T component;
+    try {
+      component = project.getComponent(componentClass);
+    }
+    catch (Throwable t) {
+      if (t instanceof NullPointerException) {
+      } else if (t instanceof AssertionError) {
+      } else {
+        LOG.info(t);
+      }
+      throw new ProcessCanceledException();
+    }
+    synchronized (ourLock) {
+      if (! Boolean.TRUE.equals(myStates.get(project))) {
+        throw new ProcessCanceledException();
+      }
+      return component;
+    }
   }
 }

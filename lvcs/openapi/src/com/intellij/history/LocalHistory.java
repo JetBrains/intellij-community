@@ -57,23 +57,23 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     return getInstance(p).hasUnavailableContent(f);
   }
 
-  private static LocalHistory getInstance(Project p) {
+  public static LocalHistory getInstance(Project p) {
     return p.getComponent(LocalHistory.class);
   }
 
-  protected abstract LocalHistoryAction startAction(String name);
+  public abstract LocalHistoryAction startAction(String name);
 
-  protected abstract void putUserLabel(String name);
+  public abstract void putUserLabel(String name);
 
-  protected abstract void putUserLabel(VirtualFile f, String name);
+  public abstract void putUserLabel(VirtualFile f, String name);
 
-  protected abstract void putSystemLabel(String name, int color);
+  public abstract void putSystemLabel(String name, int color);
 
-  protected abstract Checkpoint putCheckpoint();
+  public abstract Checkpoint putCheckpoint();
 
-  protected abstract byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
+  public abstract byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
 
-  protected abstract boolean isUnderControl(VirtualFile f);
+  public abstract boolean isUnderControl(VirtualFile f);
 
-  protected abstract boolean hasUnavailableContent(VirtualFile f);
+  public abstract boolean hasUnavailableContent(VirtualFile f);
 }

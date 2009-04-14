@@ -142,54 +142,54 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   @Override
-  protected LocalHistoryAction startAction(String name) {
+  public LocalHistoryAction startAction(String name) {
     if (!isInitialized) return LocalHistoryAction.NULL;
     return myService.startAction(name);
   }
 
   @Override
-  protected void putUserLabel(String name) {
+  public void putUserLabel(String name) {
     if (!isInitialized) return;
     myGateway.registerUnsavedDocuments(myVcs);
     myVcs.putUserLabel(name);
   }
 
   @Override
-  protected void putUserLabel(VirtualFile f, String name) {
+  public void putUserLabel(VirtualFile f, String name) {
     if (!isInitialized) return;
     myGateway.registerUnsavedDocuments(myVcs);
     myVcs.putUserLabel(f.getPath(), name);
   }
 
   @Override
-  protected void putSystemLabel(String name, int color) {
+  public void putSystemLabel(String name, int color) {
     if (!isInitialized) return;
     myGateway.registerUnsavedDocuments(myVcs);
     myVcs.putSystemLabel(name, color);
   }
 
   @Override
-  protected Checkpoint putCheckpoint() {
+  public Checkpoint putCheckpoint() {
     if (!isInitialized) return new Checkpoint.NullCheckpoint();
 
     return new CheckpointImpl(myGateway, myVcs);
   }
 
   @Override
-  protected byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c) {
+  public byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c) {
     if (!isInitialized) return null;
     if (!isUnderControl(f)) return null;
     return myVcs.getByteContent(f.getPath(), c);
   }
 
   @Override
-  protected boolean isUnderControl(VirtualFile f) {
+  public boolean isUnderControl(VirtualFile f) {
     if (!isInitialized) return false;
     return myGateway.getFileFilter().isAllowedAndUnderContentRoot(f);
   }
 
   @Override
-  protected boolean hasUnavailableContent(VirtualFile f) {
+  public boolean hasUnavailableContent(VirtualFile f) {
     if (!isInitialized) return false;
     if (!isUnderControl(f)) return false;
 
