@@ -32,6 +32,7 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.codeInsight.template.impl.TemplateColors;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -60,6 +61,10 @@ public class GeneralColorsPage implements ColorSettingsPage {
 
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.template.variable"), TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.injected.language.fragment"), EditorColors.INJECTED_LANGUAGE_FRAGMENT),
+    new AttributesDescriptor("Console standard output", ConsoleViewContentType.NORMAL_OUTPUT_KEY),
+    new AttributesDescriptor("Console error output", ConsoleViewContentType.ERROR_OUTPUT_KEY),
+    new AttributesDescriptor("Console user input", ConsoleViewContentType.USER_INPUT_KEY),
+    new AttributesDescriptor("Console system output", ConsoleViewContentType.SYSTEM_OUTPUT_KEY),
   };
 
   private static final ColorDescriptor[] COLOR_DESCRIPTORS = {

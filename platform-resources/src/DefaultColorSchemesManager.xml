@@ -1103,6 +1103,27 @@
           <option name="EFFECT_TYPE" value="1"/>
         </value>
       </option>
+      <option name="CONSOLE_NORMAL_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="000000"/>
+        </value>
+      </option>
+      <option name="CONSOLE_ERROR_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="7f0000"/>
+        </value>
+      </option>
+      <option name="CONSOLE_USER_INPUT">
+        <value>
+          <option name="FOREGROUND" value="007f00"/>
+          <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
+      <option name="CONSOLE_SYSTEM_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="00007f"/>
+        </value>
+      </option>
     </attributes>
   </scheme>
 </component>
