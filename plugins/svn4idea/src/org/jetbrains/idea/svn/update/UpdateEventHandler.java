@@ -4,6 +4,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -132,7 +133,10 @@ public class UpdateEventHandler implements ISVNEventHandler {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            WindowManager.getInstance().getStatusBar(myVCS.getProject()).setInfo(SvnBundle.message("status.text.updated.to.revision", revision));
+            final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myVCS.getProject());
+            if (statusBar != null) {
+              statusBar.setInfo(SvnBundle.message("status.text.updated.to.revision", revision));
+            }
           }
         });
       }
