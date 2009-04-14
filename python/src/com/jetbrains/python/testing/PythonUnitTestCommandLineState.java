@@ -15,14 +15,24 @@ import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Leonid Shalupov
  */
 public class PythonUnitTestCommandLineState extends CommandLineState {
   private PythonUnitTestRunConfiguration myConfig;
+  private static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
+  private static final String PYTHONPATH = "PYTHONPATH";
+  private static final String UTRUNNER_PY = "pycharm/utrunner.py";
 
   public PythonUnitTestRunConfiguration getConfig() {
     return myConfig;
@@ -50,25 +60,64 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
   }
 
   private GeneralCommandLine generateCommandLine() {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+    GeneralCommandLine cmd = new GeneralCommandLine();
 
-    commandLine.setExePath(PythonSdkType.getInterpreterPath(myConfig.getSdkHome()));
+    final File helpersRoot = PythonHelpersLocator.getHelpersRoot();
 
-    commandLine.getParametersList().addParametersString(myConfig.getInterpreterOptions());
-
-    if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
-      commandLine.addParameter(myConfig.getScriptName());
-    }
-
-    //commandLine.getParametersList().addParametersString(myConfig.getScriptName());
-
+    cmd.setExePath(PythonSdkType.getInterpreterPath(myConfig.getSdkHome()));
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
-      commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
+      cmd.setWorkDirectory(myConfig.getWorkingDirectory());
     }
 
-    commandLine.setEnvParams(myConfig.getEnvs());
-    commandLine.setPassParentEnvs(myConfig.isPassParentEnvs());
-    return commandLine;
+    cmd.getParametersList().addParametersString(myConfig.getInterpreterOptions());
+    cmd.addParameter(new File(helpersRoot, UTRUNNER_PY).getAbsolutePath());
+    for (String testSpec : getTestSpecs()) {
+      cmd.addParameter(testSpec);
+    }
+
+    Map<String, String> envs = myConfig.getEnvs();
+    if (envs == null)
+      envs = new HashMap<String, String>();
+    else
+      envs = new HashMap<String, String>(envs);
+
+    envs.put(PYTHONUNBUFFERED, "1");
+    insertToPythonPath(envs, helpersRoot);
+
+    cmd.setEnvParams(envs);
+    cmd.setPassParentEnvs(myConfig.isPassParentEnvs());
+
+    return cmd;
+  }
+
+  private List<String> getTestSpecs() {
+    List<String> specs = new ArrayList<String>();
+    
+    switch (myConfig.getTestType()) {
+      case TEST_SCRIPT:
+        specs.add(myConfig.getScriptName());
+        break;
+      case TEST_CLASS:
+        specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName());
+        break;
+      case TEST_METHOD:
+        specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
+        break;
+      case TEST_FOLDER:
+        throw new RuntimeException("No support for folders yet"); // TODO
+      default:
+        throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());
+    }
+
+    return specs;
+  }
+
+  private static void insertToPythonPath(Map<String, String> envs, File path) {
+    if (envs.containsKey(PYTHONPATH)) {
+      envs.put(PYTHONPATH, path.getAbsolutePath() + ":" + envs.get(PYTHONPATH));
+    } else {
+      envs.put(PYTHONPATH, path.getAbsolutePath());
+    }
   }
 
   @NotNull
