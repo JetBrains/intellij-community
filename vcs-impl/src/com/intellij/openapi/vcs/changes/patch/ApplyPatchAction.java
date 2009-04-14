@@ -114,7 +114,11 @@ public class ApplyPatchAction extends AnAction {
   @Nullable
   public static ApplyPatchStatus mergeAgainstBaseVersion(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
                                                          final TextFilePatch patch, final PatchMergeRequestFactory mergeRequestFactory) {
-    final DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project, file, patch.getBeforeVersionId());
+    final String beforeVersionId = patch.getBeforeVersionId();
+    if (beforeVersionId == null) {
+      return null;
+    }
+    final DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project, file, beforeVersionId);
     if (provider.canProvideContent()) {
       final StringBuilder newText = new StringBuilder();
       final Ref<CharSequence> contentRef = new Ref<CharSequence>();
