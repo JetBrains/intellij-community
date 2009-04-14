@@ -5,20 +5,23 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
+import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
-import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -29,9 +32,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
-import com.intellij.lang.Language;
-import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.lang.html.HTMLLanguage;
 import gnu.trove.THashSet;
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.bag.HashBag;
@@ -271,9 +271,13 @@ public class HtmlUtil {
         getCustomAttributeDescriptors(context),
         XmlAttributeDescriptor.class
       );
-    } else if (declarationTag.getNSDescriptor(XmlUtil.JSF_HTML_URI, true) != null &&
-               declarationTag.getNSDescriptor(XmlUtil.XHTML_URI, true) != null && !XmlUtil.JSP_URI.equals(declarationTag.getNamespace())
-              ) {
+      return descriptors;
+    }
+
+    if (declarationTag.getPrefixByNamespace(XmlUtil.JSF_HTML_URI) != null &&
+        declarationTag.getNSDescriptor(XmlUtil.XHTML_URI, true) != null &&
+        !XmlUtil.JSP_URI.equals(declarationTag.getNamespace())) {
+      
       descriptors = ArrayUtil.append(
         descriptors,
         new XmlAttributeDescriptorImpl() {
