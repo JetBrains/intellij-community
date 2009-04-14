@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,12 +21,11 @@ public class LibrariesConfigurationManager implements Disposable {
   private static final String VERSION_TEMPLATE = "$VERSION$";
 
   @NotNull
-  public static Map<LibraryVersionInfo, List<LibraryInfo>> getLibraries(final String... urls) {
+  public static Map<LibraryVersionInfo, List<LibraryInfo>> getLibraries(final URL... urls) {
     final Map<LibraryVersionInfo, List<LibraryInfo>> versionLibs = new HashMap<LibraryVersionInfo, List<LibraryInfo>>();
 
-    for (String url : urls) {
-      final LibrariesConfigurationInfo libs =
-        XmlSerializer.deserialize(LibrariesConfigurationInfo.class.getResource(url), LibrariesConfigurationInfo.class);
+    for (URL url : urls) {
+      final LibrariesConfigurationInfo libs = XmlSerializer.deserialize(url, LibrariesConfigurationInfo.class);
 
       assert libs != null;
       assert libs.getLibraryConfigurationInfos() != null;
