@@ -83,7 +83,8 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
       throw new ProcessCanceledException();
     }
     synchronized (ourLock) {
-      if (! Boolean.TRUE.equals(myStates.get(project))) {
+      final Boolean state = myStates.get(project);
+      if (state != null && ! Boolean.TRUE.equals(state)) {
         throw new ProcessCanceledException();
       }
       return component;
