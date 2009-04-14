@@ -1,0 +1,37 @@
+/*
+ * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
+package org.jetbrains.plugins.groovy.lang.parser;
+
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * @author peter
+ */
+public abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestCase{
+
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/parsing/groovy/";
+  }
+
+  public void doTest() throws IOException {
+    doTest(getTestName(true).replace('$', '/') + ".test");
+  }
+
+  protected void doTest(String fileName) throws IOException {
+    final List<String> list = SimpleGroovyFileSetTestCase.readInput(getTestDataPath() + "/" + fileName);
+
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(getProject(), list.get(0));
+    String psiTree = DebugUtil.psiToString(psiFile, false);
+    assertEquals(list.get(1).trim(), psiTree.trim());
+  }
+}
