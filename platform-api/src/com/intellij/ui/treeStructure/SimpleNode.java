@@ -15,17 +15,17 @@
  */
 package com.intellij.ui.treeStructure;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,12 +33,12 @@ import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class SimpleNode extends NodeDescriptor implements ComparableObject {
+public abstract class SimpleNode extends PresentableNodeDescriptor implements ComparableObject {
 
   protected static final SimpleNode[] NO_CHILDREN = new SimpleNode[0];
 
-  protected final List<ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
-  private Font myFont;
+
+  private PresentationData myPresentationData = new PresentationData();
 
   protected SimpleNode(Project project) {
     this(project, null);
@@ -82,36 +82,37 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     return getElement();
   }
 
-  public final boolean update() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        Object newElement = updateElement();
-        boolean changed = false;
-        if (getElement() != newElement) {
-          changed = true;
-        }
-        if (newElement == null) return changed;
+  protected void update(PresentationData presentation) {
+    Object newElement = updateElement();
+    boolean changed = false;
+    if (getElement() != newElement) {
+      presentation.setChanged(true);
+    }
+    if (newElement == null) return;
 
-        Color oldColor = myColor;
-        String oldName = myName;
-        Icon oldOpenIcon = myOpenIcon;
-        Icon oldClosedIcon = myClosedIcon;
-        List<ColoredFragment> oldFragments = new ArrayList<ColoredFragment>(myColoredText);
+    Color oldColor = myColor;
+    String oldName = myName;
+    Icon oldOpenIcon = myOpenIcon;
+    Icon oldClosedIcon = myClosedIcon;
+    List<ColoredFragment> oldFragments = new ArrayList<ColoredFragment>(presentation.getColoredText());
 
-        myColor = Color.black;
-        updateFileStatus();
+    myColor = Color.black;
+    updateFileStatus();
 
-        doUpdate();
-        myName = getName();
+    doUpdate();
+    myName = getName();
 
-        return changed || !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, oldFragments, myColor},
-                                           new Object[]{oldOpenIcon, oldClosedIcon, oldName, oldFragments, oldColor});
-      }
-    }).booleanValue();
+    presentation.setChanged(changed ||
+                            !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, oldFragments, myColor},
+                                             new Object[]{oldOpenIcon, oldClosedIcon, oldName, oldFragments, oldColor}));
+
+    presentation.setForcedTextForeground(myColor);
+    presentation.setOpenIcon(myOpenIcon);
+    presentation.setClosedIcon(myClosedIcon);
   }
 
-  protected  void updateFileStatus() {
-    assert getFileStatus() != null: getClass().getName() + ' ' + toString();
+  protected void updateFileStatus() {
+    assert getFileStatus() != null : getClass().getName() + ' ' + toString();
 
     Color fileStatusColor = getFileStatus().getColor();
     if (fileStatusColor != null) {
@@ -121,16 +122,16 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
 
   public final String getName() {
     StringBuilder result = new StringBuilder("");
-    for (ColoredFragment each : myColoredText) {
+    for (ColoredFragment each : myPresentationData.getColoredText()) {
       result.append(each.getText());
     }
     return result.toString();
   }
 
-  public final void setNodeText(String text, String tooltip, boolean hasError){
+  public final void setNodeText(String text, String tooltip, boolean hasError) {
     clearColoredText();
     SimpleTextAttributes attributes = hasError ? getErrorAttributes() : getPlainAttributes();
-    myColoredText.add(new ColoredFragment(text, tooltip, attributes));
+    myPresentationData.addText(new ColoredFragment(text, tooltip, attributes));
   }
 
   public final void setPlainText(String aText) {
@@ -139,15 +140,15 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   }
 
   public final void addPlainText(String aText) {
-    myColoredText.add(new ColoredFragment(aText, getPlainAttributes()));
+    myPresentationData.addText(new ColoredFragment(aText, getPlainAttributes()));
   }
 
   public final void addErrorText(String aText, String errorTooltipText) {
-    myColoredText.add(new ColoredFragment(aText, errorTooltipText, getErrorAttributes()));
+    myPresentationData.addText(new ColoredFragment(aText, errorTooltipText, getErrorAttributes()));
   }
 
   public final void clearColoredText() {
-    myColoredText.clear();
+    myPresentationData.clearText();
   }
 
   public final void addColoredFragment(String aText, SimpleTextAttributes aAttributes) {
@@ -155,11 +156,11 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   }
 
   public final void addColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
-    myColoredText.add(new ColoredFragment(aText, toolTip, aAttributes));
+    myPresentationData.addText(new ColoredFragment(aText, toolTip, aAttributes));
   }
 
   public final void addColoredFragment(ColoredFragment fragment) {
-    myColoredText.add(new ColoredFragment(fragment.getText(), fragment.getAttributes()));
+    myPresentationData.addText(new ColoredFragment(fragment.getText(), fragment.getAttributes()));
   }
 
   protected void doUpdate() {
@@ -170,7 +171,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   }
 
   public final SimpleNode getParent() {
-    return (SimpleNode) getParentDescriptor();
+    return (SimpleNode)getParentDescriptor();
   }
 
   public int getIndex(SimpleNode child) {
@@ -217,7 +218,8 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   }
 
   public final ColoredFragment[] getColoredText() {
-    return myColoredText.toArray(new ColoredFragment[myColoredText.size()]);
+    final List<ColoredFragment> list = myPresentationData.getColoredText();
+    return list.toArray(new ColoredFragment[list.size()]);
   }
 
   public Object[] getEqualityObjects() {
@@ -241,63 +243,14 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   }
 
   public boolean isParentOf(SimpleNode eachNode) {
-      SimpleNode eachParent = eachNode.getParent();
-      while (eachParent != null) {
-        if (eachParent == this) return true;
-        eachParent = eachParent.getParent();
-      }
-      return false;
+    SimpleNode eachParent = eachNode.getParent();
+    while (eachParent != null) {
+      if (eachParent == this) return true;
+      eachParent = eachParent.getParent();
     }
-
-  public static class ColoredFragment {
-    private final String myText;
-    private final String myToolTip;
-    private final SimpleTextAttributes myAttributes;
-
-    public ColoredFragment(String aText, SimpleTextAttributes aAttributes) {
-      this(aText, null, aAttributes);
-    }
-
-    public ColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
-      myText = aText == null? "" : aText;
-      myAttributes = aAttributes;
-      myToolTip = toolTip;
-    }
-
-    public String getToolTip() {
-      return myToolTip;
-    }
-
-    public String getText() {
-      return myText;
-    }
-
-    public SimpleTextAttributes getAttributes() {
-      return myAttributes;
-    }
-
-
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final ColoredFragment that = (ColoredFragment)o;
-
-      if (myAttributes != null ? !myAttributes.equals(that.myAttributes) : that.myAttributes != null) return false;
-      if (myText != null ? !myText.equals(that.myText) : that.myText != null) return false;
-      if (myToolTip != null ? !myToolTip.equals(that.myToolTip) : that.myToolTip != null) return false;
-
-      return true;
-    }
-
-    public int hashCode() {
-      int result;
-      result = (myText != null ? myText.hashCode() : 0);
-      result = 31 * result + (myToolTip != null ? myToolTip.hashCode() : 0);
-      result = 31 * result + (myAttributes != null ? myAttributes.hashCode() : 0);
-      return result;
-    }
+    return false;
   }
+
 
   public boolean isAncestorOrSelf(SimpleNode selectedNode) {
     SimpleNode node = selectedNode;
@@ -308,14 +261,6 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     return false;
   }
 
-  public Font getFont() {
-    return myFont;
-  }
-
-  public void setFont(Font font) {
-    myFont = font;
-  }
-
   public final boolean equals(Object o) {
     return ComparableObjectCheck.equals(this, o);
   }
@@ -324,4 +269,10 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     return ComparableObjectCheck.hashCode(this, super.hashCode());
   }
 
+  @NotNull
+  @Override
+  protected PresentationData createPresentation() {
+    myPresentationData.setChanged(false);
+    return myPresentationData;
+  }
 }

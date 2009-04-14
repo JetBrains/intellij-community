@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.treeView;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -25,22 +26,18 @@ import com.intellij.ui.SimpleTextAttributes;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.util.List;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
 
-  public void customizeCellRenderer(JTree tree,
-                                    Object value,
-                                    boolean selected,
-                                    boolean expanded,
-                                    boolean leaf,
-                                    int row,
-                                    boolean hasFocus) {
+  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     Color color = null;
+    NodeDescriptor descriptor = null;
     if (value instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       Object userObject = node.getUserObject();
       if (userObject instanceof NodeDescriptor) {
-        NodeDescriptor descriptor = (NodeDescriptor)userObject;
+        descriptor = (NodeDescriptor)userObject;
         color = descriptor.getColor();
         if (expanded) {
           setIcon(descriptor.getOpenIcon());
@@ -50,44 +47,47 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
         }
       }
     }
-    final Object valueToGetText = value instanceof AbstractTreeNode ? value.toString() : value;
-    String text = tree.convertValueToText(valueToGetText,selected, expanded, leaf, row, hasFocus);
 
-    if (text == null) text = "";
 
-    SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(value, color);
+    if (descriptor instanceof PresentableNodeDescriptor) {
+      final PresentableNodeDescriptor node = (PresentableNodeDescriptor)descriptor;
+      final PresentationData presentation = node.getPresentation();
 
-    append(text, simpleTextAttributes);
-
-    if (value instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-      Object userObject = node.getUserObject();
-
-      if (userObject instanceof AbstractTreeNode) {
-        AbstractTreeNode treeNode = (AbstractTreeNode)userObject;
-        String locationString = treeNode.getPresentation().getLocationString();
-        if (locationString != null && locationString.length() > 0) {
-          append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-        }
-        setToolTipText(treeNode.getToolTip());
+      final List<PresentableNodeDescriptor.ColoredFragment> coloredText = presentation.getColoredText();
+      if (coloredText.size() == 0) {
+        String text = tree.convertValueToText(value.toString(), selected, expanded, leaf, row, hasFocus);
+        SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node, color);
+        append(text, simpleTextAttributes);
       }
+      else {
+        for (PresentableNodeDescriptor.ColoredFragment each : coloredText) {
+          append(each.getText(), each.getAttributes(), true);
+        }
+      }
+
+      final String location = presentation.getLocationString();
+      if (location != null && location.length() > 0) {
+        append(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
+
+      setToolTipText(presentation.getTooltip());
+    }
+    else if (value != null) {
+      String text = value.toString();
+      if (descriptor != null) {
+        text = descriptor.myName;
+      }
+      text = tree.convertValueToText(text, selected, expanded, leaf, row, hasFocus);
+      if (text == null) {
+        text = "";
+      }
+      setToolTipText(null);
     }
   }
 
-  protected static SimpleTextAttributes getSimpleTextAttributes(final Object value, final Color color) {
-    SimpleTextAttributes simpleTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-    if (value instanceof DefaultMutableTreeNode) {
-      final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (userObject instanceof AbstractTreeNode) {
-        simpleTextAttributes = getSimpleTextAttributes(((AbstractTreeNode)userObject).getPresentation());
-      }
-      else if (userObject instanceof NodeDescriptor) {
-        final Object element = ((NodeDescriptor)userObject).getElement();
-        if (element instanceof AbstractTreeNode) {
-          simpleTextAttributes = getSimpleTextAttributes(((AbstractTreeNode)element).getPresentation());
-        }
-      }
-    }
+  protected static SimpleTextAttributes getSimpleTextAttributes(final PresentableNodeDescriptor node, final Color color) {
+    SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node.getPresentation());
+
     if (color != null) {
       final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
       textAttributes.setForegroundColor(color);

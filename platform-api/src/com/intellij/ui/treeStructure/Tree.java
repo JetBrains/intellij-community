@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure;
 
 import com.intellij.Patches;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,8 @@ public class Tree extends JTree implements Autoscroll  {
     }
 
     addFocusListener(new SelectionFixer());
+
+    setCellRenderer(new NodeRenderer());
   }
 
   /**

@@ -118,7 +118,6 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     Icon icon = value.getIcon(flags);
     data.setClosedIcon(icon);
     data.setOpenIcon(icon);
-    data.setLocationString(myLocationString);
     data.setPresentableText(myName);
     data.setTooltip(calcTooltip());
     if (isDeprecated()) {

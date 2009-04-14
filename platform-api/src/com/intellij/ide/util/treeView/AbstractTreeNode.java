@@ -16,10 +16,8 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -28,17 +26,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
-public abstract class AbstractTreeNode<T> extends NodeDescriptor implements NavigationItem {
+public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor implements NavigationItem {
   private AbstractTreeNode myParent;
   private T myValue;
   private NodeDescriptor myParentDescriptor;
-  protected String myLocationString;
-  private TextAttributesKey myAttributesKey;
-  private String myTooltip;
 
   protected AbstractTreeNode(Project project, T value) {
     super(project, null);
@@ -48,38 +42,6 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
   @NotNull
   public abstract Collection<? extends AbstractTreeNode> getChildren();
 
-  public final boolean update() {
-    PresentationData presentation = getUpdatedData();
-
-    Icon openIcon = presentation.getIcon(true);
-    Icon closedIcon = presentation.getIcon(false);
-    String name = presentation.getPresentableText();
-    String locationString = presentation.getLocationString();
-    TextAttributesKey attributesKey = presentation.getTextAttributesKey();
-    Color color = computeColor();
-    String tooltip = presentation.getTooltip();
-
-    boolean updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor, myAttributesKey, myTooltip},
-                                        new Object[]{openIcon, closedIcon, name, locationString, color, attributesKey, tooltip});
-    myOpenIcon = openIcon;
-    myClosedIcon = closedIcon;
-    myName = name;
-    myLocationString = locationString;
-    myColor = color;
-    myAttributesKey = attributesKey;
-    myTooltip = tooltip;
-
-    return updated;
-  }
-
-  private Color computeColor() {
-    Color color = getFileStatus().getColor();
-
-    if (valueIsCut()) {
-      color = CopyPasteManager.CUT_COLOR;
-    }
-    return color;
-  }
 
   protected boolean hasProblemFileBeneath() {
     return false;
@@ -89,22 +51,30 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     return CopyPasteManager.getInstance().isCutElement(getValue());
   }
 
-  private PresentationData getUpdatedData() {
-    PresentationData presentation = new PresentationData();
-    if (shouldUpdateData()) {
-      update(presentation);
-    }
+
+  @Override
+  protected void postprocess(PresentationData presentation) {
     if (hasProblemFileBeneath() ) {
       presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);
     }
-    return presentation;
+
+    Color fgColor = getFileStatus().getColor();
+
+    if (valueIsCut()) {
+      fgColor = CopyPasteManager.CUT_COLOR;
+    }
+
+    presentation.setForcedTextForeground(fgColor);
+
+    if (hasProblemFileBeneath() ) {
+      presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);
+    }
   }
 
   protected boolean shouldUpdateData() {
     return !myProject.isDisposed() && getValue() != null;
   }
 
-  protected abstract void update(PresentationData presentation);
 
   public boolean isAlwaysShowPlus() {
     return false;
@@ -164,9 +134,6 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     }
   }
 
-  public ItemPresentation getPresentation() {
-    return new PresentationData(myName, myLocationString, myOpenIcon, myClosedIcon,myAttributesKey);
-  }
 
   public FileStatus getFileStatus() {
     return FileStatus.NOT_CHANGED;
@@ -193,19 +160,9 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     return parent == null ? null : parent.getValue();
   }
 
-  protected String getToolTip() {
-    return myTooltip;
-  }
 
   public boolean canRepresent(final Object element) {
     return Comparing.equal(getValue(), element);
   }
 
-  public TextAttributesKey getAttributesKey() {
-    return myAttributesKey;
-  }
-
-  public String getLocationString() {
-    return myLocationString;
-  }
 }

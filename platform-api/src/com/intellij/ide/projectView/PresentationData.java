@@ -15,23 +15,42 @@
  */
 package com.intellij.ide.projectView;
 
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.ComparableObject;
+import com.intellij.util.ui.update.ComparableObjectCheck;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 
 /**
  * Default implementation of the {@link ItemPresentation} interface.
  */
 
-public class PresentationData implements ItemPresentation {
+public class PresentationData implements ItemPresentation, ComparableObject {
+
+  protected final List<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
+
   private Icon myClosedIcon;
   private Icon myOpenIcon;
+
   private String myLocationString;
   private String myPresentableText;
+
   private String myTooltip;
   private TextAttributesKey myAttributesKey;
+
+  private Color myForcedTextForeground;
+
+  private Font myFont;
+
+
+  private boolean myChanged;
 
   /**
    * Creates an instance with the specified parameters.
@@ -62,6 +81,16 @@ public class PresentationData implements ItemPresentation {
 
   public Icon getIcon(boolean open) {
     return open ? myOpenIcon : myClosedIcon;
+  }
+
+
+  @Nullable
+  public Color getForcedTextForeground() {
+    return myForcedTextForeground;
+  }
+
+  public void setForcedTextForeground(@Nullable Color forcedTextForeground) {
+    myForcedTextForeground = forcedTextForeground;
   }
 
   public String getLocationString() {
@@ -160,5 +189,40 @@ public class PresentationData implements ItemPresentation {
 
   public void setTooltip(final String tooltip) {
     myTooltip = tooltip;
+  }
+
+  public boolean isChanged() {
+    return myChanged;
+  }
+
+  public void setChanged(boolean changed) {
+    myChanged = changed;
+  }
+
+  @NotNull
+  public List<PresentableNodeDescriptor.ColoredFragment> getColoredText() {
+    return myColoredText;
+  }
+
+  public void addText(PresentableNodeDescriptor.ColoredFragment coloredFragment) {
+    myColoredText.add(coloredFragment);
+  }
+
+  public void clearText() {
+    myColoredText.clear();
+  }
+
+  public Object[] getEqualityObjects() {
+    return new Object[] {myOpenIcon, myClosedIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText, myLocationString};
+  }
+
+  @Override
+  public int hashCode() {
+    return ComparableObjectCheck.hashCode(this, super.hashCode());
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return ComparableObjectCheck.equals(this, obj);
   }
 }

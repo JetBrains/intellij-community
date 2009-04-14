@@ -81,7 +81,6 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
     Icon icon = value.getIcon(flags);
     data.setClosedIcon(icon);
     data.setOpenIcon(icon);
-    data.setLocationString(myLocationString);
     data.setPresentableText(myName);
     if (isDeprecated()) {
       data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
