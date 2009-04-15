@@ -81,6 +81,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       if (text == null) {
         text = "";
       }
+      append(text);
       setToolTipText(null);
     }
   }
