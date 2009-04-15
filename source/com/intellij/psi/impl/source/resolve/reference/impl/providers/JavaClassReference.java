@@ -23,7 +23,9 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
@@ -293,7 +295,14 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode) {
+    final PsiManager manager = getElement().getManager();
+    if(manager instanceof PsiManagerImpl){
+      return (JavaResolveResult)((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, false, false)[0];
+    }
+    return doAdvancedResolve();
+  }
 
+  private JavaResolveResult doAdvancedResolve() {
     final PsiElement psiElement = getElement();
 
     if (!psiElement.isValid()) return JavaResolveResult.EMPTY;
@@ -537,4 +546,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   public String getUnresolvedMessagePattern() {
     return myJavaClassReferenceSet.getUnresolvedMessagePattern(myIndex);
   }
+
+  private static class MyResolver implements ResolveCache.PolyVariantResolver<JavaClassReference> {
+    private static final MyResolver INSTANCE = new MyResolver();
+
+    public JavaResolveResult[] resolve(JavaClassReference javaClassReference, boolean incompleteCode) {
+      return new JavaResolveResult[]{javaClassReference.doAdvancedResolve()};
+    }
+  }
+
 }
