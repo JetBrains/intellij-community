@@ -121,11 +121,15 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   public final String getName() {
-    StringBuilder result = new StringBuilder("");
-    for (ColoredFragment each : myPresentationData.getColoredText()) {
-      result.append(each.getText());
+    if (myPresentationData.getColoredText().size() > 0) {
+      StringBuilder result = new StringBuilder("");
+      for (ColoredFragment each : myPresentationData.getColoredText()) {
+        result.append(each.getText());
+      }
+      return result.toString();
+    } else {
+      return myName;     
     }
-    return result.toString();
   }
 
   public final void setNodeText(String text, String tooltip, boolean hasError) {
@@ -273,6 +277,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   @Override
   protected PresentationData createPresentation() {
     myPresentationData.setChanged(false);
+    myPresentationData.setPresentableText(myName);
     return myPresentationData;
   }
 }
