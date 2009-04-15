@@ -43,6 +43,8 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class ResolveAction extends BasicAction {
@@ -77,9 +79,7 @@ public class ResolveAction extends BasicAction {
     }
     final List<VirtualFile> fileList = new ArrayList<VirtualFile>();
     if (!hasDirs) {
-      for (VirtualFile file : files) {
-        addIfWritable(file, project, fileList);
-      }
+      Collections.addAll(fileList, files);
     }
     else {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -91,7 +91,7 @@ public class ResolveAction extends BasicAction {
                   ProgressManager.getInstance().checkCanceled();
                   VirtualFile fileOrDir = filePath.getVirtualFile();
                   if (fileOrDir != null && !fileOrDir.isDirectory() && isEnabled(project, activeVcs, fileOrDir) && !fileList.contains(fileOrDir)) {
-                    addIfWritable(fileOrDir, project, fileList);
+                    fileList.add(fileOrDir);
                   }
                   return true;
                 }
@@ -106,14 +106,8 @@ public class ResolveAction extends BasicAction {
         }
       }, SvnBundle.message("progress.searching.for.files.with.conflicts"), true, project);
     }
-    AbstractVcsHelper.getInstance(project).showMergeDialog(fileList, new SvnMergeProvider(project));
-  }
-
-  private void addIfWritable(final VirtualFile fileOrDir, final Project project, final List<VirtualFile> fileList) {
-    final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(fileOrDir);
-    if (! operationStatus.hasReadonlyFiles()) {
-      fileList.add(fileOrDir);
-    }
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(fileList);
+    AbstractVcsHelper.getInstance(project).showMergeDialog(Arrays.asList(status.getUpdatedFiles()), new SvnMergeProvider(project));
   }
 
   protected boolean isBatchAction() {
