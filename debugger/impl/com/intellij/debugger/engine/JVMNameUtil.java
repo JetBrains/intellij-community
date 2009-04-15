@@ -309,6 +309,9 @@ public class JVMNameUtil {
         return allClasses.get(0).name();
       }
     }
+    if (psiClass == null) {
+      return DebuggerBundle.message("string.file.line.position", positionFile.getName(), position.getLine());
+    }
     return calcClassDisplayName(psiClass);
   }
 
