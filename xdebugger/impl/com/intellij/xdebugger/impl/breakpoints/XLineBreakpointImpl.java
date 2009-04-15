@@ -42,6 +42,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   private Icon myIcon;
   private XSourcePosition mySourcePosition;
   @NonNls private static final String BR_NBSP = "<br>&nbsp;";
+  private boolean myDisposed;
 
   public XLineBreakpointImpl(final XLineBreakpointType<P> type, XBreakpointManagerImpl breakpointManager, String url, int line, final @Nullable P properties) {
     super(type, breakpointManager, properties, new LineBreakpointState<P>(true, type.getId(), url, line));
@@ -54,6 +55,8 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   public void updateUI() {
+    if (myDisposed) return;
+
     Document document = getDocument();
     if (document == null) return;
 
@@ -170,6 +173,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   public void dispose() {
     removeHighlighter();
+    myDisposed = true;
   }
 
   private void removeHighlighter() {
