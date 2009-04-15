@@ -204,9 +204,6 @@ public class SvnVcs extends AbstractVcs {
       });
     }
 
-    myMapping = SvnFileUrlMappingImpl.getInstance(myProject);
-    myMapping.setVcs(this);
-    
     // do one time after project loaded
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
@@ -231,6 +228,7 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public void postStartup() {
+    myMapping = SvnFileUrlMappingImpl.getInstance(myProject);
     // only mapping for default
     if (myProject.isDefault()) return;
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, myMapping);
@@ -773,7 +771,6 @@ public class SvnVcs extends AbstractVcs {
 
   @NotNull
   public SvnFileUrlMapping getSvnFileUrlMapping() {
-    //myRootsInfo.ensureInitialized();
     return myMapping;
   }
 

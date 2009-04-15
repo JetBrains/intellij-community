@@ -63,18 +63,8 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
     return project.getComponent(SvnFileUrlMappingImpl.class);
   }
 
-  private SvnFileUrlMappingImpl(final Project project) {
-    myMapping = new SvnMapping();
-    myMoreRealMapping = new SvnMapping();
-    myHelper = new MyRootsHelper(project);
-  }
-
-  public void setVcs(SvnVcs vcs) {
-    myVcs = vcs;
-  }
-
-  private SvnFileUrlMappingImpl(final Project project, final SvnVcs vcs) {
-    myVcs = vcs;
+  private SvnFileUrlMappingImpl(final Project project, final ProjectLevelVcsManager vcsManager) {
+    myVcs = (SvnVcs) vcsManager.findVcsByName(SvnVcs.VCS_NAME);
     myMapping = new SvnMapping();
     myMoreRealMapping = new SvnMapping();
     myHelper = new MyRootsHelper(project);
