@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.dnd.DragSource;
 
 /**
  * @author nik
@@ -241,6 +244,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
   }
 
+  private boolean canMoveTo(int line) {
+    final VirtualFile file = getFile();
+    return file != null && myType.canPutAt(file, line, getProject());
+  }
+
   @Nullable
   private String getErrorMessage() {
     CustomizedBreakpointPresentation presentation = getCustomizedPresentation();
@@ -316,7 +324,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
 
     @Nullable
-  public ActionGroup getPopupMenuActions() {
+    public ActionGroup getPopupMenuActions() {
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(new MyRemoveBreakpointAction());
       group.add(new MyToggleBreakpointAction());
@@ -331,6 +339,26 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     @Nullable
     public String getTooltipText() {
       return getDescription();
+    }
+
+    @Override
+    public GutterDraggableObject getDraggableObject() {
+      return new GutterDraggableObject() {
+        public void removeSelf() {
+        }
+
+        public boolean copy(int line) {
+          if (canMoveTo(line)) {
+            setLine(line);
+            return true;
+          }
+          return false;
+        }
+
+        public Cursor getCursor(int line) {
+          return canMoveTo(line) ? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop;
+        }
+      };
     }
   }
 
