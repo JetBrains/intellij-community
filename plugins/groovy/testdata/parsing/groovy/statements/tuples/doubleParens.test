@@ -1,0 +1,11 @@
+def ((a))
+-----
+Groovy script
+  PsiErrorElement:';' or new line expected
+    PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    PsiElement(()('(')
+    PsiElement(identifier)('a')
+    PsiElement())(')')
+    PsiElement())(')')
