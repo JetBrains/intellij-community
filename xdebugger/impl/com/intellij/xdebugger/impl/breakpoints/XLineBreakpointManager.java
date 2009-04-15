@@ -2,6 +2,8 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -17,11 +19,15 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author nik
@@ -93,9 +99,23 @@ public class XLineBreakpointManager {
   private void updateBreakpoints(final Document document) {
     Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(document);
     if (breakpoints == null) return;
+
+    TIntHashSet lines = new TIntHashSet();
+    final List<XLineBreakpointImpl> toRemove = new ArrayList<XLineBreakpointImpl>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
+      if (!breakpoint.isValid() || !lines.add(breakpoint.getLine())) {
+        toRemove.add(breakpoint);
+      }
     }
+
+    new WriteAction() {
+      protected void run(final Result result) {
+        for (XLineBreakpointImpl breakpoint : toRemove) {
+          XDebuggerManager.getInstance(myProject).getBreakpointManager().removeBreakpoint(breakpoint);
+        }
+      }
+    }.execute();
   }
 
   public void dispose() {

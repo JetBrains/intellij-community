@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +24,11 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     if (position == null) return false;
 
     XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
-      if (breakpointType.canPutAt(position.getFile(), position.getLine(), project)) {
+      final VirtualFile file = position.getFile();
+      final int line = position.getLine();
+      if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
         return true;
       }
     }
@@ -38,8 +43,9 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
 
     int line = position.getLine();
     VirtualFile file = position.getFile();
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XLineBreakpointType<?> type : XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
-      if (type.canPutAt(file, line, project)) {
+      if (type.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(type, file, line) != null) {
         XDebuggerUtil.getInstance().toggleLineBreakpoint(project, type, file, line);
         return;
       }
