@@ -521,22 +521,34 @@ public class SvnUtil {
     }
   }
 
+  public static boolean seemsLikeVersionedDir(final VirtualFile file) {
+    final String adminName = SVNFileUtil.getAdminDirectoryName();
+    final VirtualFile[] children = file.getChildren();
+    for (VirtualFile child : children) {
+      if (adminName.equals(child.getName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static boolean isAdminDirectory(final VirtualFile file) {
     return isAdminDirectory(file.getParent(), file.getName());
   }
 
   public static boolean isAdminDirectory(VirtualFile parent, String name) {
+    final String adminName = SVNFileUtil.getAdminDirectoryName();
     // never allow to delete admin directories by themselves (this can happen during LVCS undo,
     // which deletes created directories from bottom to top)
-    if (name.equals(SVNFileUtil.getAdminDirectoryName())) {
+    if (name.equals(adminName)) {
       return true;
     }
     if (parent != null) {
-      if (parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+      if (parent.getName().equals(adminName)) {
         return true;
       }
       parent = parent.getParent();
-      if (parent != null && parent.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+      if (parent != null && parent.getName().equals(adminName)) {
         return true;
       }
     }

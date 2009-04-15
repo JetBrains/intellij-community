@@ -1,18 +1,18 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.StringLenComparator;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.lifecycle.AtomicSectionsAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -37,6 +37,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileUrlMappingImpl");
 
   private SvnVcs myVcs;
+  private final SvnCompatibilityChecker myChecker;
 
   private final Object myMonitor = new Object();
 
@@ -68,6 +69,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
     myMapping = new SvnMapping();
     myMoreRealMapping = new SvnMapping();
     myHelper = new MyRootsHelper(project);
+    myChecker = new SvnCompatibilityChecker(project);
   }
 
   @Nullable
@@ -167,6 +169,10 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
 
     synchronized (myMonitor) {
       final List<VirtualFile> cachedRoots = myMapping.getUnderVcsRoots();
+      final List<VirtualFile> lonelyRoots = myMapping.getLonelyRoots();
+      if (! lonelyRoots.isEmpty()) {
+        myChecker.reportNoRoots(lonelyRoots);
+      }
       if (cachedRoots.isEmpty()) {
         // todo +-
         return result;
@@ -183,12 +189,15 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
     final SvnMapping mapping = new SvnMapping();
 
     final List<Real> allRoots = new ArrayList<Real>();
-    for (VirtualFile root : roots) {
+    for (final VirtualFile root : roots) {
       final List<Real> foundRoots = ForNestedRootChecker.getAllNestedWorkingCopies(root, myVcs, goIntoNested, new Getter<Boolean>() {
         public Boolean get() {
           return atomicSectionsAware.shouldExitAsap();
         }
       });
+      if (foundRoots.isEmpty()) {
+        mapping.reportLonelyRoot(root);
+      }
       allRoots.addAll(foundRoots);
       
       for (Real foundRoot : foundRoots) {

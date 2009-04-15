@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.*;
 
 public class SvnMapping {
+  private final List<VirtualFile> myLonelyRoots;
   private final Map<String, RootUrlInfo> myFile2UrlMap;
   private final Map<String, RootUrlInfo> myUrl2FileMap;
   //private final List<VirtualFile> myPhysicalCopies;
@@ -18,6 +19,7 @@ public class SvnMapping {
   public SvnMapping() {
     myFile2UrlMap = new HashMap<String, RootUrlInfo>();
     myUrl2FileMap = new HashMap<String, RootUrlInfo>();
+    myLonelyRoots = new ArrayList<VirtualFile>();
     //myPhysicalCopies = new ArrayList<VirtualFile>();
 
     myPreCalculatedUnderVcsRoots = null;
@@ -28,10 +30,12 @@ public class SvnMapping {
   public void copyFrom(final SvnMapping other) {
     myFile2UrlMap.clear();
     myUrl2FileMap.clear();
+    myLonelyRoots.clear();
     //myPhysicalCopies.clear();
 
     myFile2UrlMap.putAll(other.myFile2UrlMap);
     myUrl2FileMap.putAll(other.myUrl2FileMap);
+    myLonelyRoots.addAll(other.myLonelyRoots);
     //myPhysicalCopies.addAll(other.myPhysicalCopies);
     myRootsDifferFromSettings = other.myRootsDifferFromSettings;
     myPreCalculatedUnderVcsRoots = null;
@@ -91,5 +95,13 @@ public class SvnMapping {
 
   public boolean isRootsDifferFromSettings() {
     return myRootsDifferFromSettings;
+  }
+
+  public void reportLonelyRoot(final VirtualFile root) {
+    myLonelyRoots.add(root);
+  }
+
+  public List<VirtualFile> getLonelyRoots() {
+    return myLonelyRoots;
   }
 }
