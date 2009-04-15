@@ -125,13 +125,13 @@ public class Utils{
 
       if (anAction instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)anAction;
+        final Presentation presentation = factory.getPresentation(childGroup);
+        AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
+        event1.setInjectedContext(childGroup.isInInjectedContext());
+        doUpdate(childGroup, event1, presentation);
 
         // popup menu must be visible itself
         if (childGroup.isPopup()) {
-          final Presentation presentation = factory.getPresentation(childGroup);
-          AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
-          event1.setInjectedContext(childGroup.isInInjectedContext());
-          doUpdate(childGroup, event1, presentation);
           if (!presentation.isVisible()) {
             continue;
           }
