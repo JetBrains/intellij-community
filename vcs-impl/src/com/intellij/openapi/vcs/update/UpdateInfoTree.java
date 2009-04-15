@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.util.Disposer;
@@ -51,11 +52,11 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -298,7 +299,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     }
   }
 
-  private class MyGroupByPackagesAction extends ToggleAction {
+  private class MyGroupByPackagesAction extends ToggleAction implements DumbAware {
     public MyGroupByPackagesAction() {
       super(VcsBundle.message("action.name.group.by.packages"), null, Icons.GROUP_BY_PACKAGES);
     }
@@ -318,7 +319,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     }
   }
 
-  private class GroupByChangeListAction extends ToggleAction {
+  private class GroupByChangeListAction extends ToggleAction implements DumbAware {
     public GroupByChangeListAction() {
       super(VcsBundle.message("update.info.group.by.changelist"), null, IconLoader.getIcon("/objectBrowser/browser.png"));
     }
