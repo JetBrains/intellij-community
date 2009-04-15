@@ -1,5 +1,6 @@
 import traceback, types, sys, os
 from unittest import TestResult
+import datetime
 
 from pycharm.tcmessages import TeamcityServiceMessages
 
@@ -8,10 +9,6 @@ class TeamcityTestResult(TestResult):
         TestResult.__init__(self)
 
         self.output = stream
-        
-        self.createMessages()
-
-    def createMessages(self):
         self.messages = TeamcityServiceMessages(self.output)
     
     def formatErr(self, err):
@@ -19,12 +16,15 @@ class TeamcityTestResult(TestResult):
         return ''.join(traceback.format_exception(exctype, value, tb))
     
     def getTestName(self, test):
-        return test.shortDescription() or str(test)
+        return str(test)
+
+    def getTestId(self, test):
+        return test.id
 
     def addSuccess(self, test):
         TestResult.addSuccess(self, test)
         
-        self.output.write("ok\n")
+        # self.output.write("ok\n")
         
     def addError(self, test, err):
         TestResult.addError(self, test, err)
@@ -43,13 +43,17 @@ class TeamcityTestResult(TestResult):
             message='Failure', details=err)
 
     def startTest(self, test):
-        self.messages.testStarted(self.getTestName(test))
+        setattr(test, "startTime", datetime.datetime.now())
+        self.messages.testStarted(self.getTestName(test), location="python_uttestid://" + str(test.id()))
         
     def stopTest(self, test):
-        self.messages.testFinished(self.getTestName(test))
+        start = getattr(test, "startTime", datetime.datetime.now())
+        d = datetime.datetime.now() - start
+        duration=d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
+        self.messages.testFinished(self.getTestName(test), duration=duration)
 
 class TeamcityTestRunner:
-    def __init__(self, stream=sys.stderr):
+    def __init__(self, stream=sys.stdout):
         self.stream = stream
 
     def _makeResult(self):

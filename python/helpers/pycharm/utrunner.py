@@ -3,6 +3,7 @@ import os
 import imp
 import sys
 import types
+from pycharm.tcmessages import TeamcityServiceMessages
 from pycharm.tcunittest import TeamcityTestRunner
 
 ENABLE_DEBUG_LOGGING = False
@@ -11,7 +12,7 @@ if os.getenv("UTRUNNER_ENABLE_DEBUG_LOGGING"):
 
 def debug(what):
   if ENABLE_DEBUG_LOGGING:
-    print >>sys.stderr, what
+    print >>sys.stdout, what
 
 modules = {}
 def loadSource(fileName):
@@ -51,4 +52,6 @@ for arg in sys.argv[1:]:
     testCaseClass = getattr(module, a[1])
     all.addTest(testCaseClass(a[2]))
 
+debug("/ Loaded " + str(all.countTestCases()) + " tests")
+TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
 TeamcityTestRunner().run(all)
