@@ -12,9 +12,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
-import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
@@ -37,8 +35,9 @@ import com.intellij.xdebugger.impl.frame.XWatchesView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Collection;
 
 /**
  * @author spleaner
@@ -79,8 +78,7 @@ public class XDebugSessionTab implements Disposable {
     myWatchesView = new XWatchesView(session, this, sessionData);
     myViews.add(myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
-                                         XDebuggerBundle.message("debugger.session.tab.watches.title"),
-                                         XDebuggerUIConstants.WATCHES_TAB_ICON, null);
+                                         XDebuggerBundle.message("debugger.session.tab.watches.title"), XDebuggerUIConstants.WATCHES_TAB_ICON, null);
 
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP);
     watchesContent.setActions(group, ActionPlaces.DEBUGGER_TOOLBAR, myWatchesView.getTree());
@@ -172,8 +170,19 @@ public class XDebugSessionTab implements Disposable {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     myUi.addContent(createWatchesContent(session, sessionData), 0, PlaceInGrid.right, false);
-    // attach console here
-    myUi.addContent(createConsoleContent(), 1, PlaceInGrid.bottom, false);
+    final Content consoleContent = createConsoleContent();
+    myUi.addContent(consoleContent, 1, PlaceInGrid.bottom, false);
+    if (myConsole instanceof ObservableConsoleView) {
+      ObservableConsoleView observable = (ObservableConsoleView)myConsole;
+      observable.addChangeListener(new ObservableConsoleView.ChangeListener() {
+        public void contentAdded(final Collection<ConsoleViewContentType> types) {
+          if (types.contains(ConsoleViewContentType.ERROR_OUTPUT) || types.contains(ConsoleViewContentType.SYSTEM_OUTPUT)) {
+            consoleContent.fireAlert();
+          }
+        }
+      }, consoleContent);
+    }
+
 
     myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName());
 
