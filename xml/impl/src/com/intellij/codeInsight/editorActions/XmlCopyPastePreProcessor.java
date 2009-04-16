@@ -10,10 +10,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,19 +36,35 @@ public class XmlCopyPastePreProcessor implements CopyPastePreProcessor {
     int caretOffset = editor.getCaretModel().getOffset();
     PsiElement element = PsiUtilBase.getElementAtOffset(file, caretOffset);
 
-    if (element != null && element instanceof XmlElement) {
-      boolean hasMarkup = text.indexOf('>') >= 0 || text.indexOf('<') >= 0;
-      if (hasMarkup) {
-        if (!(element instanceof XmlAttributeValue)) {
-          return text;
+    if (element != null) {
+      ASTNode node = element.getNode();
+      if (node != null) {
+        boolean hasMarkup = text.indexOf('>') >= 0 || text.indexOf('<') >= 0;
+        if (element.getTextOffset() == caretOffset &&
+            node.getElementType() == XmlElementType.XML_END_TAG_START &&
+            node.getTreePrev().getElementType() == XmlElementType.XML_TAG_END) {
+
+           return hasMarkup ? text : encode(text, element);
+        } else {
+          XmlElement parent = PsiTreeUtil.getParentOfType(element, XmlText.class, XmlAttributeValue.class);
+          if (parent != null) {
+            if (parent instanceof XmlText && hasMarkup) {
+              return text;
+            }
+
+            if (TreeUtil.findParent(node, XmlElementType.XML_CDATA) == null &&
+                TreeUtil.findParent(node, XmlElementType.XML_COMMENT) == null) {
+              return encode(text, element);
+            }
+          }
         }
-      }
-      if (TreeUtil.findParent(element.getNode(), XmlElementType.XML_CDATA) == null &&
-          TreeUtil.findParent(element.getNode(), XmlElementType.XML_COMMENT) == null) {
-        ASTNode astNode = ENCODE_EACH_SYMBOL_POLICY.encodeXmlTextContents(text, element);
-        return astNode.getTreeParent().getText();
       }
     }
     return text;
+  }
+
+  private static String encode(String text, PsiElement element) {
+    ASTNode astNode = ENCODE_EACH_SYMBOL_POLICY.encodeXmlTextContents(text, element);
+    return astNode.getTreeParent().getText();
   }
 }
