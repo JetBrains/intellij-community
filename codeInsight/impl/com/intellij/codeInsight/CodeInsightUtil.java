@@ -251,7 +251,7 @@ public class CodeInsightUtil {
               for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
                 final PsiType substituted = superSubstitutor.substitute(baseParameter);
                 PsiType arg = baseSubstitutor.substitute(baseParameter);
-                if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getBound();
+                if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getExtendsBound();
                 PsiType substitution = resolveHelper.getSubstitutionForTypeParameter(inheritorParameter,
                                                                                      substituted,
                                                                                      arg,

@@ -326,7 +326,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             for (PsiType type : ExpectedTypesGetter.getExpectedTypes(identifierCopy, true)) {
-              type = JavaCompletionUtil.eliminateWildcards(type);
               if (type instanceof PsiClassType) {
                 final PsiClassType classType = (PsiClassType)type;
                 if (classType.resolve() != null) {
