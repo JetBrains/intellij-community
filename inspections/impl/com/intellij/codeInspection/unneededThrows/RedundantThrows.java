@@ -180,7 +180,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myProcessor != null) {
         RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
-        if (refElement.isValid() && refElement instanceof RefMethod) {
+        if (refElement instanceof RefMethod && refElement.isValid()) {
           RefMethod refMethod = (RefMethod)refElement;
           final ProblemDescriptor[] problems = (ProblemDescriptor[])myProcessor.getDescriptions(refMethod);
           if (problems != null) {
