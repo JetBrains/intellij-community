@@ -5,6 +5,7 @@ import com.intellij.lang.LanguageFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CompositeLanguageFileViewProvider;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.templateLanguages.TemplateLanguage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -16,6 +17,7 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
   public XmlFileViewProvider(final PsiManager manager, final VirtualFile virtualFile, final boolean physical, XMLLanguage language) {
     super(manager, virtualFile, physical);
     myLanguage = language;
+    assert !(myLanguage instanceof TemplateLanguage);
   }
 
   public void contentsSynchronized() {
