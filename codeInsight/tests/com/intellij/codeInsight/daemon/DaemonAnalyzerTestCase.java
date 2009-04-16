@@ -42,6 +42,7 @@ import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +54,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
   private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
   private boolean toInitializeDaemon;
+  protected final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -196,6 +198,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
     VirtualFileFilter javaFilesFilter = new VirtualFileFilter() {
       public boolean accept(VirtualFile file) {
+        if (myAddedClasses.contains(file)) return false;
+
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
         return (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS) && !file.getName().equals("package-info.java");
       }
