@@ -348,7 +348,8 @@ public class ContainerUtil {
     }
     return result;
   }
-  public static <T> List<T> concat(@NotNull final List<T> list1, @NotNull final List<T> list2) {
+
+  public static <T> List<T> concat(@NotNull final List<? extends T> list1, @NotNull final List<? extends T> list2) {
     return new AbstractList<T>() {
       public T get(final int index) {
         return index < list1.size() ? list1.get(index) : list2.get(index - list1.size());
