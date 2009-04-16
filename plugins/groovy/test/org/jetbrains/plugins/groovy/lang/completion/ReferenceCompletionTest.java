@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -42,12 +41,8 @@ public class ReferenceCompletionTest extends CompletionTestBase {
     );
   }
 
-  protected boolean addKeywords(PsiReference ref) {
+  protected boolean addKeywords() {
     return false;
-  }
-
-  protected boolean addReferenceVariants() {
-    return true;
   }
 
   public static Test suite() {

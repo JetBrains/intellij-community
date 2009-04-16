@@ -2,7 +2,6 @@ package org.jetbrains.plugins.gant.completion;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -30,14 +29,6 @@ public class GantReferenceCompletionTest extends CompletionTestBase {
 
   protected PsiFile createFile(String fileText) throws IncorrectOperationException {
     return TestUtils.createPseudoPhysicalFile(myProject, TEMP_FILE, fileText);
-  }
-
-  protected boolean addKeywords(PsiReference ref) {
-    return false;
-  }
-
-  protected boolean addReferenceVariants() {
-    return true;
   }
 
   public static Test suite() {

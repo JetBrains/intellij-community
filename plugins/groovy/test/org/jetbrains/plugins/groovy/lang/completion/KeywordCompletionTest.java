@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.psi.PsiReference;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.util.PathUtil;
@@ -28,14 +27,8 @@ public class KeywordCompletionTest extends CompletionTestBase {
   @NonNls
   private static final String DATA_PATH = PathUtil.getDataPath(KeywordCompletionTest.class) + "/keyword";
 
-  protected String myNewDocumentText;
-
   public KeywordCompletionTest() {
     super(System.getProperty("path") != null ? System.getProperty("path") : DATA_PATH);
-  }
-
-  protected boolean addKeywords(PsiReference ref) {
-    return true;
   }
 
   protected boolean addReferenceVariants() {

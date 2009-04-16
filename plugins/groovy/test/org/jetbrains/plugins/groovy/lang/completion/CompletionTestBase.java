@@ -12,8 +12,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.CompositeCompletionData;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
@@ -32,6 +32,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
 
   public CompletionTestBase(String path) {
     super(path);
+    JavaTestFixtureFactory.getFixtureFactory();
   }
 
   protected CodeInsightActionHandler getCompetionHandler() {
@@ -51,7 +52,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
     myEditor = myFileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, virtualFile, 0), false);
     Assert.assertNotNull(myEditor);
     myEditor.getCaretModel().moveToOffset(offset);
-    CompositeCompletionData.restrictCompletion(addReferenceVariants(), addKeywords(myFile.findReferenceAt(offset)));
+    CompositeCompletionData.restrictCompletion(addReferenceVariants(), addKeywords());
 
     boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = false;
@@ -102,7 +103,11 @@ public abstract class CompletionTestBase extends ActionTestCase {
     return result;
   }
 
-  protected abstract boolean addKeywords(PsiReference ref);
+  protected boolean addKeywords() {
+    return true;
+  }
 
-  protected abstract boolean addReferenceVariants();
+  protected boolean addReferenceVariants() {
+    return true;
+  }
 }
