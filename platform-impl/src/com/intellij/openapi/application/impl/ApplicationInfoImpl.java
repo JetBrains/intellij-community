@@ -15,12 +15,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.ArrayList;
-import java.awt.*;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExternalizable, ApplicationComponent {
 
@@ -267,21 +267,26 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (buildElement != null) {
       myBuildNumber = buildElement.getAttributeValue(ATTRIBUTE_NUMBER);
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
-      int year = 0;
-      int month = 0;
-      int day = 0;
-      try {
-        year = Integer.parseInt(dateString.substring(0, 4));
-        month = Integer.parseInt(dateString.substring(4, 6));
-        day = Integer.parseInt(dateString.substring(6, 8));
+      if (dateString.equals("__BUILD_DATE__")) {
+        myBuildDate = new GregorianCalendar();
       }
-      catch (Exception ex) {
-        //ignore
+      else {
+        int year = 0;
+        int month = 0;
+        int day = 0;
+        try {
+          year = Integer.parseInt(dateString.substring(0, 4));
+          month = Integer.parseInt(dateString.substring(4, 6));
+          day = Integer.parseInt(dateString.substring(6, 8));
+        }
+        catch (Exception ex) {
+          //ignore
+        }
+        if (month > 0) {
+          month--;
+        }
+        myBuildDate = new GregorianCalendar(year, month, day);
       }
-      if (month > 0) {
-        month--;
-      }
-      myBuildDate = new GregorianCalendar(year, month, day);
     }
 
     Thread currentThread = Thread.currentThread();
