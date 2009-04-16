@@ -1,6 +1,7 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -12,7 +13,7 @@ import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SelectedCommittedStuffChecker;
 import org.jetbrains.idea.svn.integrate.SvnIntegrateChangesActionPerformer;
 
-public abstract class AbstractIntegrateChangesAction<T extends SelectedCommittedStuffChecker> extends AnAction {
+public abstract class AbstractIntegrateChangesAction<T extends SelectedCommittedStuffChecker> extends AnAction implements DumbAware {
   private final boolean myCheckUseCase;
 
   protected AbstractIntegrateChangesAction(final boolean checkUseCase) {
