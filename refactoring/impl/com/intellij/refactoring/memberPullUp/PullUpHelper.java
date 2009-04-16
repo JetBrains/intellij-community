@@ -33,6 +33,7 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -363,6 +364,7 @@ public class PullUpHelper {
     }
   }
 
+  @Nullable
   private PsiExpression hasCommonInitializer(PsiExpression commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<PsiElement> statementsToRemove) {
     PsiExpression commonInitializerCandidate = null;
     final PsiCodeBlock body = subConstructor.getBody();
@@ -390,6 +392,7 @@ public class PullUpHelper {
                 doLookup = false;
                 if (commonInitializerCandidate == null) {
                   final PsiExpression initializer = assignmentExpression.getRExpression();
+                  if (initializer == null) return null;
                   if (commonInitializer == null) {
                     final IsMovableInitializerVisitor visitor = new IsMovableInitializerVisitor();
                     initializer.accept(visitor);
