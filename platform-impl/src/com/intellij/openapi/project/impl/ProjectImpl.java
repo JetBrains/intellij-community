@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -254,14 +255,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       LOG.info(e);
     }
     catch (PluginException e) {
-      LOG.info(e);
       PluginManager.disablePlugin(e.getPluginId().getIdString());
       MessagesEx.error(this, "The plugin " + e.getPluginId() + " failed to save settings and has been disabled. Please restart " +
-                             ApplicationNamesInfo.getInstance().getFullProductName());
+                             ApplicationNamesInfo.getInstance().getFullProductName()
+                             + (ApplicationManagerEx.getApplicationEx().isInternal() ? "\n"+StringUtil.getThrowableText(e) : ""));
     }
     catch (IOException e) {
-      LOG.info(e);
-      MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
+      MessagesEx.error(this, ProjectBundle.message("project.save.error", ApplicationManagerEx.getApplicationEx().isInternal()?
+                                                                         StringUtil.getThrowableText(e) : e.getMessage())).showLater();
     }
   }
 
