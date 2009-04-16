@@ -21,7 +21,11 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionException;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -186,7 +190,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myCountLabel.setText(DiagnosticBundle.message("error.list.message.index.count", Integer.toString(myIndex + 1), myModel.size()));
   }
 
-  private class BackAction extends AnAction {
+  private class BackAction extends AnAction implements DumbAware {
     public BackAction() {
       super(DiagnosticBundle.message("error.list.back.action"), null, IconLoader.getIcon("/actions/back.png"));
     }
@@ -202,7 +206,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ForwardAction extends AnAction {
+  private class ForwardAction extends AnAction implements DumbAware {
     public ForwardAction() {
       super(DiagnosticBundle.message("error.list.forward.action"), null, IconLoader.getIcon("/actions/forward.png"));
     }
@@ -428,7 +432,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class BlameAction extends AnAction {
+  private class BlameAction extends AnAction implements DumbAware {
     public BlameAction() {
       super(DiagnosticBundle.message("error.list.submit.action"),
             DiagnosticBundle.message("error.list.submit.action.description"), IconLoader.getIcon("/actions/startDebugger.png"));
