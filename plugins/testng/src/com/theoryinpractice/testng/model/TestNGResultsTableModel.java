@@ -21,7 +21,7 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
   private final List<TestResultMessage> testResults;
 
   public TestNGResultsTableModel() {
-    super(new StatusColumnInfo(), new TestNameColumnInfo(), new DurationColumnInfo());
+    super(new StatusColumnInfo(), new TestNameColumnInfo(), new TestClassNameColumnInfo(), new DurationColumnInfo());
     testResults = new ArrayList<TestResultMessage>();
   }
 
@@ -79,6 +79,26 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
       return new Comparator<TestResultMessage>() {
         public int compare(final TestResultMessage o1, final TestResultMessage o2) {
           return o1.getMethod().compareToIgnoreCase(o2.getMethod());
+        }
+      };
+    }
+  }
+
+  private static class TestClassNameColumnInfo extends ColumnInfo<TestResultMessage, String> {
+    public TestClassNameColumnInfo() {
+      super("Test Class");
+    }
+
+    public String valueOf(final TestResultMessage result) {
+      final String description = result.getTestClass();
+      if (description != null) return description;
+      return result.toDisplayString();
+    }
+
+    public Comparator<TestResultMessage> getComparator() {
+      return new Comparator<TestResultMessage>() {
+        public int compare(final TestResultMessage o1, final TestResultMessage o2) {
+          return o1.getTestClass().compareToIgnoreCase(o2.getTestClass());
         }
       };
     }
