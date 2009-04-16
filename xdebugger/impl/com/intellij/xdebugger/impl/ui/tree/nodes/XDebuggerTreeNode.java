@@ -86,11 +86,15 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   }
 
   protected void fireNodesRemoved(int[] indices, TreeNode[] nodes) {
-    myTree.getTreeModel().nodesWereRemoved(this, indices, nodes);
+    if (indices.length > 0) {
+      myTree.getTreeModel().nodesWereRemoved(this, indices, nodes);
+    }
   }
 
   protected void fireNodesInserted(Collection<? extends TreeNode> added) {
-    myTree.getTreeModel().nodesWereInserted(this, getNodesIndices(added));
+    if (!added.isEmpty()) {
+      myTree.getTreeModel().nodesWereInserted(this, getNodesIndices(added));
+    }
   }
 
   protected TreeNode[] getChildNodes(int[] indices) {
@@ -101,7 +105,9 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     return children;
   }
 
-  protected int[] getNodesIndices(Collection<? extends TreeNode> children) {
+  protected int[] getNodesIndices(@Nullable Collection<? extends TreeNode> children) {
+    if (children == null) return new int[0];
+
     final int[] ints = new int[children.size()];
     int i = 0;
     for (TreeNode node : children) {
