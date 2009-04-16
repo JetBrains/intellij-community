@@ -303,13 +303,15 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     if (argumentTypes == null || arguments == null || argumentTypes.length != arguments.length) {
       throw new IllegalArgumentException("Arguments must be non-null and of equal length");
     }
-    this.argumentTypes = argumentTypes;
-    this.arguments = arguments;
-    try {
-      return createHelper();
-    }
-    finally {
-      this.arguments = null;
+    synchronized (this) {
+      this.argumentTypes = argumentTypes;
+      this.arguments = arguments;
+      try {
+        return createHelper();
+      }
+      finally {
+        this.arguments = null;
+      }
     }
   }
 
