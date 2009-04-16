@@ -1296,7 +1296,7 @@ public class XmlUtil {
 
   public static String generateElementDTD(String name, List<String> tags, List<MyAttributeInfo> attributes) {
     if (name == null || "".equals(name)) return "";
-    if (name.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) return "";
+    if (name.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) return "";
 
     @NonNls final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
@@ -1334,7 +1334,7 @@ public class XmlUtil {
   }
 
   private static String generateAttributeDTD(MyAttributeInfo info) {
-    if (info.myName.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) return "";
+    if (info.myName.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) return "";
     @NonNls final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
       buffer.append(info.myName).append(" ");
