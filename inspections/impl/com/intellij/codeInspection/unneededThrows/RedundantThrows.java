@@ -182,7 +182,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
         RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
         if (refElement instanceof RefMethod && refElement.isValid()) {
           RefMethod refMethod = (RefMethod)refElement;
-          final ProblemDescriptor[] problems = (ProblemDescriptor[])myProcessor.getDescriptions(refMethod);
+          final CommonProblemDescriptor[] problems = myProcessor.getDescriptions(refMethod);
           if (problems != null) {
             removeExcessiveThrows(refMethod, null, problems);
           }
@@ -191,7 +191,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
       else {
         final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
         if (psiMethod != null) {
-          removeExcessiveThrows(null, psiMethod, new ProblemDescriptor[]{descriptor});
+          removeExcessiveThrows(null, psiMethod, new CommonProblemDescriptor[]{descriptor});
         }
       }
     }
@@ -201,7 +201,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
       return getName();
     }
 
-    private void removeExcessiveThrows(@Nullable RefMethod refMethod, @Nullable final PsiModifierListOwner element, final ProblemDescriptor[] problems) {
+    private void removeExcessiveThrows(@Nullable RefMethod refMethod, @Nullable final PsiModifierListOwner element, final CommonProblemDescriptor[] problems) {
       try {
         @Nullable final PsiMethod psiMethod;
         if (element == null) {
@@ -215,8 +215,8 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
         final Project project = psiMethod.getProject();
         final PsiManager psiManager = PsiManager.getInstance(project);
         final List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<PsiJavaCodeReferenceElement>();
-        for (ProblemDescriptor problem : problems) {
-          final PsiElement psiElement = problem.getPsiElement();
+        for (CommonProblemDescriptor problem : problems) {
+          final PsiElement psiElement = ((ProblemDescriptor)problem).getPsiElement();
           if (psiElement instanceof PsiJavaCodeReferenceElement) {
             final PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)psiElement;
             final PsiType psiType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(classRef);
