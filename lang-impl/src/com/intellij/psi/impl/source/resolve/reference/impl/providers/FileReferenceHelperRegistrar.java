@@ -6,12 +6,16 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +62,7 @@ public class FileReferenceHelperRegistrar {
 
     @NotNull
     public String getDirectoryTypeName() {
-      throw new UnsupportedOperationException("Method getDirectoryTypeName is not yet implemented in " + getClass().getName());
+      return LangBundle.message("terms.directory");
     }
 
     @NotNull
@@ -71,11 +75,15 @@ public class FileReferenceHelperRegistrar {
     }
 
     public PsiFileSystemItem getPsiFileSystemItem(final Project project, @NotNull final VirtualFile file) {
-      return null;
+      final PsiManager psiManager = PsiManager.getInstance(project);
+      return file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
     }
 
     public PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file) {
-      return null;
+      final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+      VirtualFile contentRootForFile = index.getContentRootForFile(file);
+
+      return contentRootForFile != null ? PsiManager.getInstance(project).findDirectory(contentRootForFile) : null;
     }
 
     @NotNull
@@ -85,11 +93,18 @@ public class FileReferenceHelperRegistrar {
 
     @NotNull
     public Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file) {
+      final PsiFileSystemItem item = getPsiFileSystemItem(project, file);
+      if (item != null) {
+        final PsiFileSystemItem parent = item.getParent();
+        if (parent != null) {
+          return Collections.singleton(parent);
+        }
+      }
       return Collections.emptyList();
     }
 
     public boolean isMine(final Project project, final @NotNull VirtualFile file) {
-      return false;
+      return ProjectRootManager.getInstance(project).getFileIndex().isInContent(file);
     }
   }
 }
