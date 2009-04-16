@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Default implementation of the {@link ItemPresentation} interface.
@@ -34,7 +35,7 @@ import java.util.List;
 
 public class PresentationData implements ItemPresentation, ComparableObject {
 
-  protected final List<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
+  protected final CopyOnWriteArrayList<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
 
   private Icon myClosedIcon;
   private Icon myOpenIcon;
@@ -212,6 +213,19 @@ public class PresentationData implements ItemPresentation, ComparableObject {
     myColoredText.clear();
   }
 
+  public void clear() {
+    myOpenIcon = null;
+    myClosedIcon = null;
+    clearText();
+    myAttributesKey = null;
+    myFont = null;
+    myForcedTextForeground = null;
+    myLocationString = null;
+    myPresentableText = null;
+    myTooltip = null;
+    myChanged = false;
+  }
+
   public Object[] getEqualityObjects() {
     return new Object[] {myOpenIcon, myClosedIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText, myLocationString};
   }
@@ -224,5 +238,18 @@ public class PresentationData implements ItemPresentation, ComparableObject {
   @Override
   public boolean equals(Object obj) {
     return ComparableObjectCheck.equals(this, obj);
+  }
+
+  public void copyFrom(PresentationData from) {
+    myAttributesKey = from.myAttributesKey;
+    myClosedIcon = from.myClosedIcon;
+    clearText();
+    myColoredText.addAll(from.myColoredText);
+    myFont = from.myFont;
+    myForcedTextForeground = from.myForcedTextForeground;
+    myLocationString = from.myLocationString;
+    myOpenIcon = from.myOpenIcon;
+    myPresentableText = from.myPresentableText;
+    myTooltip = from.myTooltip;
   }
 }

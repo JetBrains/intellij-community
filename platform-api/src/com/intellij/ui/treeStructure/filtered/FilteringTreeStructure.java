@@ -6,6 +6,7 @@ package com.intellij.ui.treeStructure.filtered;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
@@ -105,16 +106,10 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
 
     protected void doUpdate() {
       clearColoredText();
-      if (myDelegate instanceof SimpleNode) {
-        SimpleNode node = (SimpleNode)myDelegate;
+      if (myDelegate instanceof PresentableNodeDescriptor) {
+        PresentableNodeDescriptor node = (PresentableNodeDescriptor)myDelegate;
         node.update();
-
-        ColoredFragment[] text = node.getColoredText();
-        for (ColoredFragment each : text) {
-          addColoredFragment(each);
-        }
-
-        setIcons(node.getClosedIcon(), node.getOpenIcon());
+        apply(node.getPresentation());
       } else if (myDelegate != null) {
         NodeDescriptor descriptor = getStructure().createDescriptor(myDelegate, getParentDescriptor());
         Icon closedIcon = null;

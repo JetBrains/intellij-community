@@ -1,18 +1,13 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-
 public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
-
-  private static PresentationData EMPTY = new PresentationData();
 
   private PresentationData myPresenation;
 
@@ -23,27 +18,29 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   public final boolean update() {
     if (!shouldUpdateData()) return false;
 
-    PresentationData presentation = executeUpdate();
+    return apply(getUpdatedPresentation());
+  }
 
-    Icon openIcon = presentation.getIcon(true);
-    Icon closedIcon = presentation.getIcon(false);
-    String name = presentation.getPresentableText();
-    Color color = presentation.getForcedTextForeground();
+  protected final boolean apply(PresentationData presentation) {
+    myOpenIcon = presentation.getIcon(true);
+    myClosedIcon = presentation.getIcon(false);
+    myName = presentation.getPresentableText();
+    myColor = presentation.getForcedTextForeground();
+    final boolean updated = presentation.equals(myPresenation);
 
-    myOpenIcon = openIcon;
-    myClosedIcon = closedIcon;
-    myName = name;
-    myColor = color;
+    if (myPresenation == null) {
+      myPresenation = createPresentation();
+    }
 
-    boolean updated = presentation.equals(myPresenation);
-
-    myPresenation = presentation;
+    myPresenation.copyFrom(presentation);
 
     return updated;
   }
 
-  private PresentationData executeUpdate() {
-    PresentationData presentation = createPresentation();
+  private PresentationData getUpdatedPresentation() {
+    PresentationData presentation = myPresenation != null ? myPresenation : createPresentation();
+    myPresenation = presentation;
+    presentation.clear();
     update(presentation);
     postprocess(presentation);
     return presentation;
@@ -65,8 +62,11 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   }
 
   @NotNull
-  public PresentationData getPresentation() {
-    return myPresenation != null ? myPresenation : EMPTY;
+  public final PresentationData getPresentation() {
+    if (myPresenation == null) {
+      myPresenation = createPresentation();
+    }
+    return myPresenation;
   }
 
   public static class ColoredFragment {

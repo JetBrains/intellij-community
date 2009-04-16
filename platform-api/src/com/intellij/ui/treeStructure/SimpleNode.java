@@ -25,7 +25,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,9 +35,6 @@ import java.util.List;
 public abstract class SimpleNode extends PresentableNodeDescriptor implements ComparableObject {
 
   protected static final SimpleNode[] NO_CHILDREN = new SimpleNode[0];
-
-
-  private PresentationData myPresentationData = new PresentationData();
 
   protected SimpleNode(Project project) {
     this(project, null);
@@ -100,7 +96,9 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     updateFileStatus();
 
     doUpdate();
+
     myName = getName();
+    presentation.setPresentableText(myName);
 
     presentation.setChanged(changed ||
                             !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, oldFragments, myColor},
@@ -121,9 +119,9 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   public final String getName() {
-    if (myPresentationData.getColoredText().size() > 0) {
+    if (getPresentation().getColoredText().size() > 0) {
       StringBuilder result = new StringBuilder("");
-      for (ColoredFragment each : myPresentationData.getColoredText()) {
+      for (ColoredFragment each : getPresentation().getColoredText()) {
         result.append(each.getText());
       }
       return result.toString();
@@ -135,7 +133,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   public final void setNodeText(String text, String tooltip, boolean hasError) {
     clearColoredText();
     SimpleTextAttributes attributes = hasError ? getErrorAttributes() : getPlainAttributes();
-    myPresentationData.addText(new ColoredFragment(text, tooltip, attributes));
+    getPresentation().addText(new ColoredFragment(text, tooltip, attributes));
   }
 
   public final void setPlainText(String aText) {
@@ -144,15 +142,15 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   public final void addPlainText(String aText) {
-    myPresentationData.addText(new ColoredFragment(aText, getPlainAttributes()));
+    getPresentation().addText(new ColoredFragment(aText, getPlainAttributes()));
   }
 
   public final void addErrorText(String aText, String errorTooltipText) {
-    myPresentationData.addText(new ColoredFragment(aText, errorTooltipText, getErrorAttributes()));
+    getPresentation().addText(new ColoredFragment(aText, errorTooltipText, getErrorAttributes()));
   }
 
   public final void clearColoredText() {
-    myPresentationData.clearText();
+    getPresentation().clearText();
   }
 
   public final void addColoredFragment(String aText, SimpleTextAttributes aAttributes) {
@@ -160,11 +158,11 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   public final void addColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
-    myPresentationData.addText(new ColoredFragment(aText, toolTip, aAttributes));
+    getPresentation().addText(new ColoredFragment(aText, toolTip, aAttributes));
   }
 
   public final void addColoredFragment(ColoredFragment fragment) {
-    myPresentationData.addText(new ColoredFragment(fragment.getText(), fragment.getAttributes()));
+    getPresentation().addText(new ColoredFragment(fragment.getText(), fragment.getAttributes()));
   }
 
   protected void doUpdate() {
@@ -222,7 +220,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   public final ColoredFragment[] getColoredText() {
-    final List<ColoredFragment> list = myPresentationData.getColoredText();
+    final List<ColoredFragment> list = getPresentation().getColoredText();
     return list.toArray(new ColoredFragment[list.size()]);
   }
 
@@ -271,13 +269,5 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
 
   public final int hashCode() {
     return ComparableObjectCheck.hashCode(this, super.hashCode());
-  }
-
-  @NotNull
-  @Override
-  protected PresentationData createPresentation() {
-    myPresentationData.setChanged(false);
-    myPresentationData.setPresentableText(myName);
-    return myPresentationData;
   }
 }
