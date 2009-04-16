@@ -70,5 +70,9 @@ public class VersionCompareTest extends TestCase {
     assertTrue("Server version is not great than user version",
                StringUtil.compareVersionNumbers(serverVer, userVer) > 0);
   }
+
+  public void testJira() {
+    assertTrue(StringUtil.compareVersionNumbers("3.6.2", "3.7") < 0);
+  }
 }
 
