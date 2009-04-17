@@ -51,7 +51,7 @@ public final class FileContent extends UserDataHolderBase {
           project = ProjectManager.getInstance().getDefaultProject();
         }
         else {
-          throw new RuntimeException("Project was not set");
+          throw new NoProjectForFileException();
         }
       }
       psi = PsiFileFactory.getInstance(project).createFileFromText(
