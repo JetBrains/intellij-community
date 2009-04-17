@@ -175,8 +175,8 @@ public class PositionManagerImpl implements PositionManager {
     }
     
     if (psiClass != null) {
-      psiClass = (PsiClass)psiClass.getNavigationElement();
-      return psiClass.getContainingFile();
+      final PsiElement element = psiClass.getNavigationElement();
+      return element.getContainingFile();
     }
 
     return null;
