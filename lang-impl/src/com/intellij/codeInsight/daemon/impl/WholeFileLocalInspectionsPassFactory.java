@@ -10,9 +10,9 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +57,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
   }
 
   private boolean wholeFileToolsDefined(PsiFile file) {
-    final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(file);
+    final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
     final List<LocalInspectionTool> tools = profile.getHighlightingLocalInspectionTools(file);
     for (LocalInspectionTool tool : tools) {
       if (tool.runForWholeFile()) return true;

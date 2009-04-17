@@ -299,7 +299,7 @@ public class InspectionApplication {
   }
 
   private static void describeInspections(@NonNls String myOutputPath, final String name) throws IOException {
-    final InspectionProfileEntry[] profileEntries = InspectionProfileImpl.getDefaultProfile().getInspectionTools();
+    final InspectionProfileEntry[] profileEntries = InspectionProfileImpl.getDefaultProfile().getInspectionTools(null);
     final Map<String, Set<InspectionProfileEntry>> map = new HashMap<String, Set<InspectionProfileEntry>>();
     for (InspectionProfileEntry entry : profileEntries) {
       final String groupName = entry.getGroupDisplayName();

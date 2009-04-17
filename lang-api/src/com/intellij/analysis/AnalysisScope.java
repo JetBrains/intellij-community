@@ -33,7 +33,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProjectProfileManager;
 import com.intellij.psi.*;
@@ -468,47 +467,7 @@ public class AnalysisScope {
     }
   }
 
-  public Set<String> getActiveInspectionProfiles() {
-    Set<String> result = new HashSet<String>();
-    if (myType == PROJECT || myType == CUSTOM){
-      final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myProject, Profile.INSPECTION);
-      LOG.assertTrue(profileManager != null);
-      if (profileManager.useProjectLevelProfileSettings()) {
-        result.addAll(profileManager.getProfilesUsedInProject().values());
-        result.add(profileManager.getProjectProfile());
-      } else {
-        final ApplicationProfileManager applicationProfileManager = ApplicationProfileManager.getProfileManager(Profile.INSPECTION);
-        LOG.assertTrue(applicationProfileManager != null);
-        result.add(applicationProfileManager.getRootProfile().getName());
-      }
-    } else if (myType == MODULE){
-      processModule(result, myModule);
-    } else if (myType == MODULES){
-      for (Module module : myModules) {
-        processModule(result, module);
-      }
-    } else if (myType == FILE){
-      final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
-      LOG.assertTrue(profileManager != null);
-      result.add(profileManager.getProfileName((PsiFile)myElement));
-    } else if (myType == DIRECTORY) {
-      final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
-      LOG.assertTrue(profileManager != null);
-      processDirectories(new PsiDirectory[]{(PsiDirectory)myElement}, result, profileManager);
-    } else if (myType == VIRTUAL_FILES){
-      final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myProject, Profile.INSPECTION);
-      final PsiManager psiManager = PsiManager.getInstance(myProject);
-      LOG.assertTrue(profileManager != null);
-      for (final VirtualFile file : myFilesSet) {
-        final PsiFile psiFile = getPsiFileInReadAction(psiManager, file);
-        if (psiFile != null) {
-          result.add(profileManager.getProfileName(psiFile));
-        }
-      }
-    }
-    return result;
-  }
-
+  
   private static PsiFile getPsiFileInReadAction(final PsiManager psiManager, final VirtualFile file) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Nullable
@@ -529,7 +488,7 @@ public class AnalysisScope {
         }
       });
       for (PsiFile file : psiFiles) {
-        result.add(profileManager.getProfileName(file));
+        result.add(profileManager.getProfileName());
       }
       processDirectories(ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory[]>() {
         public PsiDirectory[] compute() {

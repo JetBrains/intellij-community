@@ -240,18 +240,20 @@ public class HtmlUtil {
     if (context == null) return null;
     PsiFile containingFile = context.getContainingFile().getOriginalFile();
 
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile(containingFile);
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile();
 
     switch(type) {
       case XmlEntitiesInspection.UNKNOWN_TAG:
-        LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper) profile.getInspectionTool(HtmlUnknownTagInspection.TAG_SHORT_NAME);
+        LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper) profile.getInspectionTool(HtmlUnknownTagInspection.TAG_SHORT_NAME,
+                                                                                                    containingFile);
         HtmlUnknownTagInspection unknownTagInspection = wrapper != null ? (HtmlUnknownTagInspection) wrapper.getTool() : null;
         if (unknownTagInspection != null) {
           return unknownTagInspection.getAdditionalEntries();
         }
         break;
       case XmlEntitiesInspection.UNKNOWN_ATTRIBUTE:
-        LocalInspectionToolWrapper wrapper1 = (LocalInspectionToolWrapper) profile.getInspectionTool(HtmlUnknownAttributeInspection.ATTRIBUTE_SHORT_NAME);
+        LocalInspectionToolWrapper wrapper1 = (LocalInspectionToolWrapper) profile.getInspectionTool(HtmlUnknownAttributeInspection.ATTRIBUTE_SHORT_NAME,
+                                                                                                     containingFile);
         HtmlUnknownAttributeInspection unknownAttributeInspection = wrapper1 != null ? (HtmlUnknownAttributeInspection) wrapper1.getTool() : null;
         if (unknownAttributeInspection != null) {
           return unknownAttributeInspection.getAdditionalEntries();

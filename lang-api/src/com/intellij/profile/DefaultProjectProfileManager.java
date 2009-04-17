@@ -21,10 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
@@ -40,21 +37,24 @@ import java.util.*;
 public abstract class DefaultProjectProfileManager extends ProjectProfileManager {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProjectProfileManager");
 
-  @NonNls private static final String PROFILES = "profiles";
-  @NonNls private static final String SCOPES = "scopes";
-  @NonNls private static final String SCOPE = "scope";
-  @NonNls private static final String PROFILE = "profile";
-  @NonNls private static final String NAME = "name";
+  @NonNls protected static final String PROFILES = "profiles";
+  @NonNls public static final String SCOPES = "scopes";
+  @NonNls protected static final String SCOPE = "scope";
+  @NonNls public static final String PROFILE = "profile";
+  @NonNls protected static final String NAME = "name";
+
+
+  private static final String VERSION = "1.0";
 
   protected final Project myProject;
-  private final LinkedHashMap<NamedScope, String> myScopeToProfileMap = new LinkedHashMap<NamedScope, String>();
+
   private final String myProfileType;
 
   public String PROJECT_PROFILE;
   protected ApplicationProfileManager myApplicationProfileManager;
-  public boolean USE_PROJECT_LEVEL_SETTINGS = false;
+
   protected Map<String, Profile> myProfiles = new HashMap<String, Profile>();
-  private final DependencyValidationManager myHolder;
+  protected final DependencyValidationManager myHolder;
 
   public DefaultProjectProfileManager(final Project project, final String profileType, final DependencyValidationManager holder) {
     myProject = project;
@@ -64,118 +64,69 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     LOG.assertTrue(myApplicationProfileManager != null);
   }
 
-  public String assignProfileToScope(String profile, @NotNull NamedScope scope) {
-    //String projectProfileName = updateProjectProfiles(profile);
-    myScopeToProfileMap.put(scope, profile);
-    return profile;
-  }
-
-  public void deassignProfileFromScope(NamedScope scope) {
-    final String profile = myScopeToProfileMap.remove(scope);
-    if (!myScopeToProfileMap.containsValue(profile)) {
-      myProfiles.remove(profile);
-    }
-  }
-
-  public String getProfileName(PsiFile psiFile) {
-    if (USE_PROJECT_LEVEL_SETTINGS){
-      final NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(myProject);
-      for (NamedScope scope : myScopeToProfileMap.keySet()) {
-        final PackageSet packageSet = scope.getValue();
-        if (packageSet != null && packageSet.contains(psiFile, scopeManager)) {
-          return myScopeToProfileMap.get(scope);
-        }
-      }
-      final Profile profile = myProfiles.get(PROJECT_PROFILE);
-      if (profile != null) return profile.getName();
-    }
-    return myApplicationProfileManager.getRootProfile().getName();
-  }
-
   public Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent) {
-    return USE_PROJECT_LEVEL_SETTINGS ? myProfiles.get(name) : myApplicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent);
+    return myProfiles.containsKey(name) ? myProfiles.get(name) : myApplicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent);
   }
 
   public void updateProfile(Profile profile) {
-    if (profile.isLocal()) {
-      myApplicationProfileManager.updateProfile(profile);
-    } else {
-      myProfiles.put(profile.getName(), profile);
-    }
+    myProfiles.put(profile.getName(), profile);
   }
 
 
-  public LinkedHashMap<NamedScope, String> getProfilesUsedInProject() {
-    return myScopeToProfileMap;
-  }
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    final Element profiles = element.getChild(PROFILES);
-    if (profiles != null) {
-      for (Object p : profiles.getChildren(PROFILE)) {
-        Element profileElement = (Element)p;
+    final Element profilesElement = element.getChild(PROFILES);
+    if (profilesElement != null) {
+      for (Object o : profilesElement.getChildren(PROFILE)) {
         final Profile profile = myApplicationProfileManager.createProfile();
         profile.setProfileManager(this);
-        profile.readExternal(profileElement);
+        profile.readExternal((Element)o);
         final String name = profile.getName();
         if (myApplicationProfileManager.getProfile(name) != null) { //override ide profile
-          myApplicationProfileManager.deleteProfile(name);
+          // myApplicationProfileManager.deleteProfile(name);
         }
         myProfiles.put(name, profile);
       }
     }
-    final Element scopes = element.getChild(SCOPES);
-    if (scopes != null) {
-      final List children = scopes.getChildren(SCOPE);
-      if (children != null) {
-        for (Object s : children) {
-          Element scopeElement = (Element)s;
-          final String profile = scopeElement.getAttributeValue(PROFILE);
-          if (profile != null && myProfiles.containsKey(profile)) {
-            final NamedScope scope = myHolder.getScope(scopeElement.getAttributeValue(NAME));
-            if (scope != null) {
-              myScopeToProfileMap.put(scope, profile);
-            }
-          }
+    if (element.getChild("version") == null || !Comparing.strEqual(element.getChild("version").getAttributeValue("value"), VERSION)) {
+      boolean toConvert = true;
+      for (Object o : element.getChildren("option")) {
+        if (Comparing.strEqual(((Element)o).getAttributeValue("name"), "USE_PROJECT_LEVEL_SETTINGS")) {
+          toConvert = Boolean.parseBoolean(((Element)o).getAttributeValue("value"));
+          break;
         }
       }
+      if (toConvert) {
+        convert(element);
+      }
     }
-    if (USE_PROJECT_LEVEL_SETTINGS && PROJECT_PROFILE == null){
-      getProjectProfileImpl();
-    }
+  }
+
+  protected void convert(Element element) throws InvalidDataException {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
-    //if (!USE_PROJECT_LEVEL_SETTINGS) return;
-    final Map<NamedScope, String> usedProfiles = getProfilesUsedInProject();
-    final HashSet<String> profilesSet = new HashSet<String>(usedProfiles.values());
-    profilesSet.add(PROJECT_PROFILE);
+    Element version = new Element("version");
+    version.setAttribute("value", VERSION);
+    element.addContent(version);
     final List<String> sortedProfiles = new ArrayList<String>(myProfiles.keySet());
     Collections.sort(sortedProfiles);
-    if (!sortedProfiles.isEmpty()) {
-      final Element assignedScopes = new Element(SCOPES);
-      final List<NamedScope> scopes = new ArrayList<NamedScope>(usedProfiles.keySet());
-      for (NamedScope scope : scopes) {
-        final Element scopeElement = new Element(SCOPE);
-        scopeElement.setAttribute(PROFILE, usedProfiles.get(scope));
-        scopeElement.setAttribute(NAME, scope.getName());
-        assignedScopes.addContent(scopeElement);
+    final Element profiles = new Element(PROFILES);
+    for (String profile : sortedProfiles) {
+      final Profile projectProfile = myProfiles.get(profile);
+      if (projectProfile != null) {
+        final Element profileElement = new Element(PROFILE);
+        projectProfile.writeExternal(profileElement);
+        profiles.addContent(profileElement);
       }
-      element.addContent(assignedScopes);
-
-      final Element profiles = new Element(PROFILES);
-      for (String profile : sortedProfiles) {
-        final Profile projectProfile = myProfiles.get(profile);
-        if (projectProfile != null) {
-          final Element profileElement = new Element(PROFILE);
-          projectProfile.writeExternal(profileElement);
-          profiles.addContent(profileElement);
-        }
-      }
-      element.addContent(profiles);
     }
+    element.addContent(profiles);
+  }
+
+  public NamedScopesHolder getScopesManager() {
+    return DependencyValidationManager.getInstance(myProject);
   }
 
   public String getProfileType() {
@@ -187,40 +138,12 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     return myProfiles.values();
   }
 
-  public void clearProfileScopeAssignments() {
-    myScopeToProfileMap.clear();
-  }
-
-  public boolean useProjectLevelProfileSettings() {
-    return USE_PROJECT_LEVEL_SETTINGS;
-  }
-
-  public void useProjectLevelProfileSettings(boolean useProjectLevelSettings) {    
-    USE_PROJECT_LEVEL_SETTINGS = useProjectLevelSettings;
-  }
-
-  public void updateAdditionalSettings() {
-  }
-
   public String[] getAvailableProfileNames() {
-    return USE_PROJECT_LEVEL_SETTINGS
-           ? ArrayUtil.toStringArray(myProfiles.keySet())
-           : myApplicationProfileManager.getAvailableProfileNames();
+    return ArrayUtil.toStringArray(myProfiles.keySet());
   }
 
   public void deleteProfile(String name) {
     myProfiles.remove(name);
-    if (USE_PROJECT_LEVEL_SETTINGS) {
-      for (Iterator<NamedScope> iterator = myScopeToProfileMap.keySet().iterator(); iterator.hasNext();) {
-        NamedScope scope = iterator.next();
-        if (Comparing.strEqual(myScopeToProfileMap.get(scope), name)) {
-          iterator.remove();
-        }
-      }
-    }
-    else {
-      myApplicationProfileManager.deleteProfile(name);
-    }
   }
 
   public String getProjectProfile() {

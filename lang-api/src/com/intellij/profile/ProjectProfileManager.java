@@ -17,11 +17,7 @@ package com.intellij.profile;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.LinkedHashMap;
 
 /**
  * User: anna
@@ -40,19 +36,7 @@ public abstract class ProjectProfileManager implements ProfileManager, JDOMExter
     return null;
   }
 
-  public abstract String assignProfileToScope(String profile, NamedScope scope);
-
-  public abstract void deassignProfileFromScope(NamedScope scope);
-
-  public abstract String getProfileName(PsiFile psiFile);
-
-  public abstract LinkedHashMap<NamedScope,String> getProfilesUsedInProject();
-
-  public abstract void clearProfileScopeAssignments();
-
-  public abstract boolean useProjectLevelProfileSettings();
-
-  public abstract void useProjectLevelProfileSettings(boolean useProjectLevelSettings);
+  public abstract String getProfileName();
 
   public abstract String getProjectProfile();
   public abstract void setProjectProfile(final String projectProfile);

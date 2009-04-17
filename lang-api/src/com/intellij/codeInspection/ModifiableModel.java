@@ -18,10 +18,13 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.openapi.util.Pair;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * User: anna
@@ -35,15 +38,13 @@ public interface ModifiableModel extends Profile {
 
   void setBaseProfile(InspectionProfile profile);
 
-  void patchTool(InspectionProfileEntry tool);
-
   void enableTool(String inspectionTool);
 
   void disableTool(String inspectionTool);
 
   void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level);
 
-  HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey);
+  HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey, PsiElement element);
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
@@ -61,17 +62,13 @@ public interface ModifiableModel extends Profile {
 
   void resetToEmpty();
 
-  InspectionProfileEntry getInspectionTool(String shortName);
+  InspectionProfileEntry getInspectionTool(String shortName, PsiElement element);
 
-  InspectionProfileEntry[] getInspectionTools();
+  InspectionProfileEntry[] getInspectionTools(PsiElement element);
 
   void copyFrom(InspectionProfile profile);
 
-  void inheritFrom(InspectionProfile profile);
-
   boolean isDefault();
-
-  boolean isExecutable();
 
   void setEditable(String toolDisplayName);
 
@@ -80,4 +77,6 @@ public interface ModifiableModel extends Profile {
   boolean isProfileLocked();
 
   void lockProfile(boolean isLocked);
+
+  List<Pair<InspectionProfileEntry,NamedScope>> getAllEnabledInspectionTools();
 }

@@ -87,7 +87,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private void inspectRoot(final ProgressIndicator progress) {
     if (!HighlightLevelUtil.shouldInspect(myFile)) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-    final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
+    final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
     final List<LocalInspectionTool> tools = getInspectionTools(profile);
 
     inspect(tools, progress, iManager, true, true);
@@ -118,14 +118,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private void addDescriptorsFromInjectedResults(Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper,
                                                  InspectionManagerEx iManager) {
     Set<TextRange> emptyActionRegistered = new THashSet<TextRange>();
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myInjectedPsiInspectionResults.size(); i++) {
       InjectedPsiInspectionResult result = myInjectedPsiInspectionResults.get(i);
       LocalInspectionTool tool = result.tool;
-      HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
+      HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), myFile).getSeverity();
 
       PsiElement injectedPsi = result.injectedPsi;
       DocumentWindow documentRange = (DocumentWindow)documentManager.getDocument((PsiFile)injectedPsi);
@@ -253,8 +253,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private synchronized void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool, boolean ignoreSuppressed) {
     if (problemDescriptors == null) return;
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
-    final HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+    final HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), myFile).getSeverity();
     ProgressManager progressManager = ProgressManager.getInstance();
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
       progressManager.checkCanceled();
@@ -318,12 +318,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private void addHighlightsFromInjectedPsiProblems(final List<HighlightInfo> infos) {
     Set<TextRange> emptyActionRegistered = new THashSet<TextRange>();
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     for (InjectedPsiInspectionResult result : myInjectedPsiInspectionResults) {
       LocalInspectionTool tool = result.tool;
-      HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
+      HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), myFile).getSeverity();
 
       PsiElement injectedPsi = result.injectedPsi;
       DocumentWindow documentRange = (DocumentWindow)documentManager.getDocument((PsiFile)injectedPsi);
@@ -361,7 +361,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     @NonNls String message = renderDescriptionMessage(descriptor);
 
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     if (!inspectionProfile.isToolEnabled(key, myFile)) return null;
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(psiElement), level.getAttributesKey());

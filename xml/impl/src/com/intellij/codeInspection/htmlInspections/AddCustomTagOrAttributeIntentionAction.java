@@ -62,9 +62,9 @@ public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
     final PsiFile file = element.getContainingFile();
 
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile(file);
+    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
     final ModifiableModel model = inspectionProfile.getModifiableModel();
-    final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName);
+    final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName, element);
     final HtmlUnknownTagInspection inspection = (HtmlUnknownTagInspection)wrapper.getTool();
     inspection.addCustomPropertyName(myName);
     model.isProperSetting(HighlightDisplayKey.find(myInspectionName));

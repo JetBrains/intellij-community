@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -61,10 +62,10 @@ public class VisibleTreeState implements JDOMExternalizable{
   }
 
   private void traverseNodes(final DefaultMutableTreeNode root, List<TreePath> pathsToExpand, List<TreePath> toSelect) {
-    final Object userObject = root.getUserObject();
+    final Descriptor descriptor = ((SingleInspectionProfilePanel.MyTreeNode)root).getDesriptor();
     final TreeNode[] rootPath = root.getPath();
-    if (userObject instanceof Descriptor) {
-      final String shortName = ((Descriptor)userObject).getKey().toString();
+    if (descriptor != null) {
+      final String shortName = descriptor.getKey().toString();
       if (mySelectedNodes.contains(shortName)) {
         toSelect.add(new TreePath(rootPath));
       }
@@ -72,8 +73,8 @@ public class VisibleTreeState implements JDOMExternalizable{
         pathsToExpand.add(new TreePath(rootPath));
       }
     }
-    else if (userObject instanceof String){
-      final String str = (String)userObject;
+    else {
+      final String str = ((SingleInspectionProfilePanel.MyTreeNode)root).getGroupName();
       if (mySelectedNodes.contains(str)) {
         toSelect.add(new TreePath(rootPath));
       }
@@ -93,13 +94,14 @@ public class VisibleTreeState implements JDOMExternalizable{
     if (expanded != null) {
       while (expanded.hasMoreElements()) {
         final TreePath treePath = expanded.nextElement();
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+        final SingleInspectionProfilePanel.MyTreeNode node = (SingleInspectionProfilePanel.MyTreeNode)treePath.getLastPathComponent();
+        final Descriptor descriptor = node.getDesriptor();
         String expandedNode;
-        if (node.getUserObject() instanceof Descriptor) {
-          expandedNode = ((Descriptor)node.getUserObject()).getKey().toString();
+        if (descriptor != null) {
+          expandedNode = descriptor.getKey().toString();
         }
         else {
-          expandedNode = (String)node.getUserObject();
+          expandedNode = node.getGroupName();
         }
         myExpandedNodes.add(expandedNode);
       }
@@ -111,14 +113,15 @@ public class VisibleTreeState implements JDOMExternalizable{
   public void setSelectionPaths(final TreePath[] selectionPaths) {
     mySelectedNodes.clear();
     if (selectionPaths != null) {
-      for (int i = 0; selectionPaths != null && i < selectionPaths.length; i++) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPaths[i].getLastPathComponent();
+      for (TreePath selectionPath : selectionPaths) {
+        final SingleInspectionProfilePanel.MyTreeNode node = (SingleInspectionProfilePanel.MyTreeNode)selectionPath.getLastPathComponent();
+        final Descriptor descriptor = node.getDesriptor();
         String selectedNode;
-        if (node.getUserObject() instanceof Descriptor) {
-          selectedNode = ((Descriptor)node.getUserObject()).getKey().toString();
+        if (descriptor != null) {
+          selectedNode = descriptor.getKey().toString();
         }
         else {
-          selectedNode = (String)node.getUserObject();
+          selectedNode = node.getGroupName();
         }
         mySelectedNodes.add(selectedNode);
       }

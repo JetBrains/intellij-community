@@ -27,7 +27,7 @@ import javax.swing.*;
 public abstract class TooltipLinkHandler {
   public abstract void handleLink(@NotNull String descriptionSuffix, @NotNull Editor editor, @NotNull JEditorPane tooltipComponent);
   @Nullable
-  public String getDescription(String descriptionSuffix) {
+  public String getDescription(String descriptionSuffix, Editor editor) {
     return null;
   }
 }

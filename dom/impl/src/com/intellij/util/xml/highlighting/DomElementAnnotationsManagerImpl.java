@@ -268,7 +268,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     Class rootType = fileElement.getRootElementClass();
     final InspectionProfile profile = getInspectionProfile(fileElement);
     final List<DomElementsInspection> inspections = new SmartList<DomElementsInspection>();
-    for (final InspectionProfileEntry profileEntry : profile.getInspectionTools()) {
+    for (final InspectionProfileEntry profileEntry : profile.getInspectionTools(fileElement.getFile())) {
       if (!enabledOnly || profile.isToolEnabled(HighlightDisplayKey.find(profileEntry.getShortName()), fileElement.getFile())) {
         ContainerUtil.addIfNotNull(getSuitableInspection(profileEntry, rootType), inspections);
       }
@@ -277,7 +277,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   protected InspectionProfile getInspectionProfile(final DomFileElement fileElement) {
-    return InspectionProjectProfileManager.getInstance(fileElement.getManager().getProject()).getInspectionProfile(fileElement.getFile());
+    return InspectionProjectProfileManager.getInstance(fileElement.getManager().getProject()).getInspectionProfile();
   }
 
   @Nullable

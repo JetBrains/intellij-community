@@ -40,9 +40,9 @@ public class TooltipLinkHandlerEP extends AbstractExtensionPointBean {
   }
 
   @Nullable
-  public final String getDescription(@NotNull String description) {
+  public final String getDescription(@NotNull String description, Editor editor) {
     if (description.startsWith(prefix)) {
-      return myHandler.getValue().getDescription(description.substring(prefix.length()));
+      return myHandler.getValue().getDescription(description.substring(prefix.length()), editor);
     }
     return null;
   }

@@ -53,6 +53,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -67,6 +68,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -286,7 +288,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     final InspectionProfileImpl profile = new InspectionProfileImpl("Configurable") {
       @NotNull
-      public InspectionProfileEntry[] getInspectionTools() {
+      public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
         if (availableInspectionTools != null){
           final Collection<InspectionTool> tools = availableInspectionTools.values();
           return tools.toArray(new InspectionTool[tools.size()]);
@@ -294,16 +296,25 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         return new InspectionTool[0];
       }
 
+      @Override
+      public List<Pair<InspectionProfileEntry, NamedScope>> getAllEnabledInspectionTools() {
+        List<Pair<InspectionProfileEntry, NamedScope>> result = new ArrayList<Pair<InspectionProfileEntry, NamedScope>>();
+        for (InspectionProfileEntry entry : getInspectionTools(null)) {
+          result.add(new Pair<InspectionProfileEntry, NamedScope>(entry, null));
+        }
+        return result;
+      }
+
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
         return key != null && availableInspectionTools.containsKey(key.toString());
       }
 
-      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key) {
+      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
         InspectionTool localInspectionTool = availableInspectionTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
-      public InspectionTool getInspectionTool(@NotNull String shortName) {
+      public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
         if (availableInspectionTools.containsKey(shortName)) {
           return availableInspectionTools.get(shortName);
         }
@@ -315,6 +326,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     inspectionProfileManager.addProfile(profile);
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
+    InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
 
     assertFalse(getPsiManager().isDisposed());
 

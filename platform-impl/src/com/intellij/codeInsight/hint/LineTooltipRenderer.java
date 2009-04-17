@@ -46,7 +46,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     //setup text
     myText = myText.replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
-    final boolean [] expanded = new boolean[] { myCurrentWidth > 0 && dressDescription()};
+    final boolean [] expanded = new boolean[] { myCurrentWidth > 0 && dressDescription(editor)};
 
     //pane
     final JEditorPane pane = initPane(myText);
@@ -191,7 +191,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     return new LineTooltipRenderer(text, width);
   }
 
-  protected boolean dressDescription() { return false; }
+  protected boolean dressDescription(Editor editor) { return false; }
   protected void stripDescription() {}
 
   static JEditorPane initPane(@NonNls String text) {

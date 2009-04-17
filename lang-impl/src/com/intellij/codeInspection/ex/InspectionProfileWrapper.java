@@ -4,13 +4,14 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ public class InspectionProfileWrapper {
   }
 
   public InspectionTool[] getInspectionTools(PsiElement element){
-     return (InspectionTool[])myProfile.getInspectionTools();
+     return (InspectionTool[])myProfile.getInspectionTools(element);
   }
 
   public List<LocalInspectionTool> getHighlightingLocalInspectionTools(PsiElement element) {
@@ -55,21 +56,21 @@ public class InspectionProfileWrapper {
     return myProfile.isToolEnabled(key);
   }
 
-  public InspectionTool getInspectionTool(final String shortName) {
-    return (InspectionTool)myProfile.getInspectionTool(shortName);
+  public InspectionTool getInspectionTool(final String shortName, PsiElement element) {
+    return (InspectionTool)myProfile.getInspectionTool(shortName, element);
   }
 
   public void init(final Project project) {
-    final InspectionProfileEntry[] profileEntries = myProfile.getInspectionTools();
-    for (InspectionProfileEntry profileEntry : profileEntries) {
-      profileEntry.projectOpened(project);
+    final List<Pair<InspectionProfileEntry,NamedScope>> profileEntries = myProfile.getAllEnabledInspectionTools();
+    for (Pair<InspectionProfileEntry, NamedScope> profileEntry : profileEntries) {
+      profileEntry.first.projectOpened(project);
     }
   }
 
   public void cleanup(final Project project){
-    final InspectionProfileEntry[] profileEntries = myProfile.getInspectionTools();
-    for (InspectionProfileEntry profileEntry : profileEntries) {
-      profileEntry.projectClosed(project);
+    final List<Pair<InspectionProfileEntry, NamedScope>> profileEntries = myProfile.getAllEnabledInspectionTools();
+    for (Pair<InspectionProfileEntry, NamedScope> profileEntry : profileEntries) {
+      profileEntry.first.projectClosed(project);
     }
     myProfile.cleanup();
   }
@@ -78,7 +79,5 @@ public class InspectionProfileWrapper {
     return myProfile;
   }
 
-  public HighlightDisplayLevel getErrorLevel(final HighlightDisplayKey key) {
-    return myProfile.getErrorLevel(key);
-  }
+
 }

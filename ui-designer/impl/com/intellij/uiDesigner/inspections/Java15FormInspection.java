@@ -43,8 +43,8 @@ public class Java15FormInspection extends BaseFormInspection {
     for(final IProperty prop: component.getModifiedProperties()) {
       final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, prop.getName(), false, true);
       InspectionProfileEntry profileEntry =
-        InspectionProjectProfileManager.getInstance(aClass.getProject()).getInspectionProfile(aClass)
-          .getInspectionTool(Java15APIUsageInspection.SHORT_NAME);
+        InspectionProjectProfileManager.getInstance(aClass.getProject()).getInspectionProfile()
+          .getInspectionTool(Java15APIUsageInspection.SHORT_NAME, aClass);
       if (profileEntry instanceof LocalInspectionToolWrapper) {
         profileEntry = ((LocalInspectionToolWrapper) profileEntry).getTool();
       }

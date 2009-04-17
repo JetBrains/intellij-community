@@ -100,7 +100,7 @@ public class InspectionProfileConvertor {
   public static Element convertToNewFormat(Element profileFile, InspectionProfile profile) throws IOException, JDOMException {
     Element rootElement = new Element(INSPECTIONS_TAG);
     rootElement.setAttribute(NAME_ATT, profile.getName());
-    final InspectionProfileEntry[] tools = profile.getInspectionTools();
+    final InspectionProfileEntry[] tools = profile.getInspectionTools(null);
     for (final Object o : profileFile.getChildren(INSP_TOOL_TAG)) {
       Element toolElement = (Element)((Element)o).clone();
       String toolClassName = toolElement.getAttributeValue(CLASS_ATT);
@@ -143,7 +143,7 @@ public class InspectionProfileConvertor {
   }
 
   protected void fillErrorLevels(final ModifiableModel profile) {
-    InspectionProfileEntry[] tools = profile.getInspectionTools();
+    InspectionProfileEntry[] tools = profile.getInspectionTools(null);
     LOG.assertTrue(tools != null, "Profile was not correctly init");
     //fill error levels
     for (final String shortName : myDisplayLevelMap.keySet()) {

@@ -4,12 +4,13 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,20 +28,11 @@ public class Descriptor {
   private InspectionProfileEntry myTool;
   private final HighlightDisplayLevel myLevel;
   private boolean myEnabled = false;
+  private NamedScope myScope;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
 
-
-  public Descriptor(@NotNull HighlightDisplayKey key,
-                    ModifiableModel inspectionProfile) {
-    myText = HighlightDisplayKey.getDisplayNameByKey(key);
-    myGroup = InspectionProfileEntry.GENERAL_GROUP_NAME;
-    myKey = key;
-    myConfig = null;
-    myEnabled = inspectionProfile.isToolEnabled(key);
-    myLevel = inspectionProfile.getErrorLevel(key);
-  }
-
-  public Descriptor(InspectionProfileEntry tool, InspectionProfile inspectionProfile) {
+  public Descriptor(Pair< NamedScope, InspectionTool> pair, InspectionProfile inspectionProfile) {
+    final InspectionProfileEntry tool = pair.second;
     @NonNls Element config = new Element("options");
     try {
       tool.writeSettings(config);
@@ -50,11 +42,12 @@ public class Descriptor {
     }
     myConfig = config;
     myText = tool.getDisplayName();
-    myGroup = tool.getGroupDisplayName() != null && tool.getGroupDisplayName().length() == 0 ? InspectionProfileEntry.GENERAL_GROUP_NAME : tool.getGroupDisplayName();
+    myGroup = tool.getGroupDisplayName().length() == 0 ? InspectionProfileEntry.GENERAL_GROUP_NAME : tool.getGroupDisplayName();
     myKey = HighlightDisplayKey.find(tool.getShortName());
-    myLevel = inspectionProfile.getErrorLevel(myKey);
+    myLevel = ((InspectionProfileImpl)inspectionProfile).getErrorLevel(myKey, pair.first);
     myEnabled = inspectionProfile.isToolEnabled(myKey);
     myTool = tool;
+    myScope = pair.first;
   }
 
   public boolean equals(Object obj) {
@@ -62,11 +55,13 @@ public class Descriptor {
     final Descriptor descriptor = (Descriptor)obj;
     return myKey.equals(descriptor.getKey()) &&
            myLevel.equals(descriptor.getLevel()) &&
-           myEnabled == descriptor.isEnabled();
+           myEnabled == descriptor.isEnabled() &&
+           Comparing.equal(myScope, descriptor.myScope);
   }
 
   public int hashCode() {
-    return myKey.hashCode() + 29 * myLevel.hashCode();
+    final int hash = myKey.hashCode() + 29 * myLevel.hashCode();
+    return myScope != null ? myScope.hashCode() + 29 * hash : hash;
   }
 
   public boolean isEnabled() {
@@ -90,7 +85,7 @@ public class Descriptor {
   }
 
   @Nullable
-  public JComponent getAdditionalConfigPanel(ModifiableModel inspectionProfile) {
+  public JComponent getAdditionalConfigPanel() {
     if (myAdditionalConfigPanel == null && myTool != null){
       myAdditionalConfigPanel = myTool.createOptionsPanel();
       if (myAdditionalConfigPanel == null){
@@ -122,4 +117,7 @@ public class Descriptor {
     return myGroup;
   }
 
+  public NamedScope getScope() {
+    return myScope;
+  }
 }

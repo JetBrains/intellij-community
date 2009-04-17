@@ -7,8 +7,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
@@ -25,14 +25,15 @@ public class FormEditorErrorCollector extends FormErrorCollector {
   private final RadComponent myComponent;
   private List<ErrorInfo> myResults = null;
   private final InspectionProfile myProfile;
+  private PsiFile myFormPsiFile;
 
   public FormEditorErrorCollector(final GuiEditor editor, final RadComponent component) {
     myEditor = editor;
     myComponent = component;
 
-    final PsiFile formPsiFile = PsiManager.getInstance(editor.getProject()).findFile(editor.getFile());
+    myFormPsiFile = PsiManager.getInstance(editor.getProject()).findFile(editor.getFile());
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(editor.getProject());
-    myProfile = profileManager.getInspectionProfile(formPsiFile);
+    myProfile = profileManager.getInspectionProfile();
   }
 
   public ErrorInfo[] result() {
@@ -52,7 +53,7 @@ public class FormEditorErrorCollector extends FormErrorCollector {
     }
 
     final ErrorInfo errorInfo = new ErrorInfo(myComponent, prop == null ? null : prop.getName(), errorMessage,
-                                              myProfile.getErrorLevel(HighlightDisplayKey.find(inspectionId)), quickFixes);
+                                              myProfile.getErrorLevel(HighlightDisplayKey.find(inspectionId), myFormPsiFile), quickFixes);
     errorInfo.setInspectionId(inspectionId);
     myResults.add(errorInfo);
   }

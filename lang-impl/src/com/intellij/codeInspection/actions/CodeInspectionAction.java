@@ -15,8 +15,8 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
+import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,9 +81,9 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ErrorsConfigurable errorConfigurable = ErrorOptionsConfigurable.getInstance(project);
+        final IDEInspectionToolsConfigurable errorConfigurable = new IDEInspectionToolsConfigurable(null, profileManager);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
-        errorConfigurable.selectNodeInTree(((Profile)profiles.getSelectedItem()).getName());
+        errorConfigurable.selectProfile(((Profile)profiles.getSelectedItem()).getName());
         editor.show();
         if (editor.isOK()) {
           reloadProfiles(profiles, profileManager, projectProfileManager, manager);
@@ -108,20 +108,6 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     });
     final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
     dialog.setOKActionEnabled(profile != null && profile.isExecutable());
-
-    panel.myRunWithChoosenButton.setSelected(!getGlobalInspectionContext(project).RUN_WITH_EDITOR_PROFILE);
-    panel.myRunWithEditorSettingsButton.setSelected(getGlobalInspectionContext(project).RUN_WITH_EDITOR_PROFILE);
-    panel.myBrowseProfilesCombo.setEnabled(!getGlobalInspectionContext(project).RUN_WITH_EDITOR_PROFILE);
-
-    final ActionListener onChoose = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        getGlobalInspectionContext(project).RUN_WITH_EDITOR_PROFILE = panel.myRunWithEditorSettingsButton.isSelected();
-        panel.myBrowseProfilesCombo.setEnabled(!getGlobalInspectionContext(project).RUN_WITH_EDITOR_PROFILE);
-      }
-    };
-    panel.myRunWithEditorSettingsButton.addActionListener(onChoose);
-    panel.myRunWithChoosenButton.addActionListener(onChoose);
-
     return panel.myAdditionalPanel;
   }
 
@@ -146,8 +132,6 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
 
   private static class AdditionalPanel {
-    public JRadioButton myRunWithEditorSettingsButton;
-    public JRadioButton myRunWithChoosenButton;
     public ComboboxWithBrowseButton myBrowseProfilesCombo;
     public JPanel myAdditionalPanel;
   }

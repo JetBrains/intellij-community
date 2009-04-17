@@ -17,6 +17,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
@@ -52,7 +53,7 @@ public class RunInspectionIntention implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final InspectionProfileEntry inspectionTool =
-        InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).getInspectionTool(myShortName);
+        InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getInspectionTool(myShortName, file);
     if (inspectionTool instanceof LocalInspectionToolWrapper &&
         ((LocalInspectionToolWrapper)inspectionTool).getTool() instanceof UnfairLocalInspectionTool) {
       return false;
@@ -75,14 +76,15 @@ public class RunInspectionIntention implements IntentionAction {
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     scope = dlg.getScope(uiOptions, scope, project, module);
     final InspectionProfileEntry baseTool =
-        InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).getInspectionTool(myShortName);
-    rerunInspection(baseTool, managerEx, scope);
+        InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getInspectionTool(myShortName, file);
+    rerunInspection(baseTool, managerEx, scope, file);
   }
 
-  public void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope) {
+  public void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope,
+                              PsiElement psiElement) {
     final InspectionProfileImpl profile = new InspectionProfileImpl(myDisplayName);
     final ModifiableModel model = profile.getModifiableModel();
-    final InspectionProfileEntry[] profileEntries = model.getInspectionTools();
+    final InspectionProfileEntry[] profileEntries = model.getInspectionTools(null);
     for (InspectionProfileEntry entry : profileEntries) {
       model.disableTool(entry.getShortName());
     }
@@ -90,7 +92,7 @@ public class RunInspectionIntention implements IntentionAction {
     try {
       Element element = new Element("toCopy");
       baseTool.writeSettings(element);
-      model.getInspectionTool(myShortName).readSettings(element);
+      model.getInspectionTool(myShortName, psiElement).readSettings(element);
     }
     catch (Exception e) {
       //skip

@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -9,10 +10,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable;
+import com.intellij.openapi.util.Factory;
+import com.intellij.profile.codeInspection.ui.InspectionToolsConfigurable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +34,7 @@ public class InspectionToolRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolRegistrar");
 
   private final ArrayList<Factory<InspectionTool>> myInspectionToolFactories = new ArrayList<Factory<InspectionTool>>();
+  private final ArrayList<Function<String, InspectionTool>> myToolsProviders = new ArrayList<Function<String, InspectionTool>>();
 
   private final AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
   private final AtomicBoolean myInspectionComponentsLoaded = new AtomicBoolean(false);
@@ -51,48 +54,74 @@ public class InspectionToolRegistrar {
     for (InspectionToolProvider provider : providers) {
       Class[] classes = provider.getInspectionClasses();
       for (Class aClass : classes) {
-        if (LocalInspectionTool.class.isAssignableFrom(aClass)) {
-          registerLocalInspection(aClass);
-        } else if (GlobalInspectionTool.class.isAssignableFrom(aClass)){
-          registerGlobalInspection(aClass);
-        } else {
-          registerInspectionTool(aClass);
-        }
+        registerInspectionTool(aClass, true);
       }
     }
+  }
+
+  private Factory<InspectionTool> registerInspectionTool(final Class aClass, boolean store) {
+    if (LocalInspectionTool.class.isAssignableFrom(aClass)) {
+      return registerLocalInspection(aClass, store);
+    } else if (GlobalInspectionTool.class.isAssignableFrom(aClass)){
+      return registerGlobalInspection(aClass, store);
+    } else {
+      ensureInitialized();
+      return registerInspectionToolFactory(new Factory<InspectionTool>() {
+        public InspectionTool create() {
+          return (InspectionTool)instantiateTool(aClass);
+        }
+      }, store);
+    }
+  }
+
+  public InspectionTool createInspectionTool(String shortName, final InspectionProfileEntry profileEntry) {
+    for (Function<String, InspectionTool> toolsProvider : myToolsProviders) {
+      final InspectionTool inspectionTool = toolsProvider.fun(shortName);
+      if (inspectionTool != null) return inspectionTool;
+    }
+    final Class<? extends InspectionProfileEntry> inspectionToolClass;
+    if (profileEntry instanceof LocalInspectionToolWrapper) {
+      inspectionToolClass = ((LocalInspectionToolWrapper)profileEntry).getTool().getClass();
+    }
+    else if (profileEntry instanceof GlobalInspectionToolWrapper) {
+      inspectionToolClass = ((GlobalInspectionToolWrapper)profileEntry).getTool().getClass();
+    }
+    else {
+      inspectionToolClass = profileEntry.getClass();
+    }
+    return registerInspectionTool(inspectionToolClass, false).create();
   }
 
   public static InspectionToolRegistrar getInstance() {
     return ServiceManager.getService(InspectionToolRegistrar.class);
   }
 
-  public void registerInspectionToolFactory(Factory<InspectionTool> factory) {
-    myInspectionToolFactories.add(factory);
+  public Factory<InspectionTool> registerInspectionToolFactory(Factory<InspectionTool> factory, boolean store) {
+    if (store) {
+      myInspectionToolFactories.add(factory);
+    }
+    return factory;
   }
 
-  private void registerLocalInspection(final Class toolClass) {
-    registerInspectionToolFactory(new Factory<InspectionTool>() {
+  public Function<String, InspectionTool> registerInspectionToolProvider(Function<String, InspectionTool> provider) {
+    myToolsProviders.add(provider);
+    return provider;
+  }
+
+  private Factory<InspectionTool> registerLocalInspection(final Class toolClass, boolean store) {
+    return registerInspectionToolFactory(new Factory<InspectionTool>() {
       public InspectionTool create() {
         return new LocalInspectionToolWrapper((LocalInspectionTool)instantiateTool(toolClass));
       }
-    });
+    }, store);
   }
 
-  private void registerGlobalInspection(final Class aClass) {
-    registerInspectionToolFactory(new Factory<InspectionTool>() {
+  private Factory<InspectionTool> registerGlobalInspection(final Class aClass, boolean store) {
+    return registerInspectionToolFactory(new Factory<InspectionTool>() {
       public InspectionTool create() {
         return new GlobalInspectionToolWrapper((GlobalInspectionTool) instantiateTool(aClass));
       }
-    });
-  }
-
-  private void registerInspectionTool(final Class toolClass) {
-    registerInspectionToolFactory(new Factory<InspectionTool>() {
-      public InspectionTool create() {
-        return (InspectionTool)instantiateTool(toolClass);
-      }
-    });
-    ensureInitialized();
+    }, store);
   }
 
   public InspectionTool[] createTools() {
@@ -157,7 +186,7 @@ public class InspectionToolRegistrar {
     LOG.assertTrue(optionsRegistrar != null);
     final Set<String> words = optionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
     for (String word : words) {
-      optionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), ErrorOptionsConfigurable.ID, ErrorOptionsConfigurable.DISPLAY_NAME);
+      optionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), InspectionToolsConfigurable.ID, InspectionToolsConfigurable.DISPLAY_NAME);
     }
   }
 }

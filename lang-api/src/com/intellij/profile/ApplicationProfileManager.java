@@ -15,9 +15,10 @@
  */
 package com.intellij.profile;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -67,4 +68,8 @@ public abstract class ApplicationProfileManager implements ProfileManager{
 
   public abstract void addProfile(Profile profile);
 
+  @Nullable
+  public NamedScopesHolder getScopesManager() {
+    return null;
+  }
 }

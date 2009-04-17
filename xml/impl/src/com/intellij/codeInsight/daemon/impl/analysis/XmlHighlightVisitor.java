@@ -289,9 +289,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           final InsertRequiredAttributeFix insertRequiredAttributeIntention = new InsertRequiredAttributeFix(
               tag, attrName, null);
           final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
-          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
+          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
           final LocalInspectionToolWrapper toolWrapper =
-            (LocalInspectionToolWrapper)profile.getInspectionTool(RequiredAttributesInspection.SHORT_NAME);
+            (LocalInspectionToolWrapper)profile.getInspectionTool(RequiredAttributesInspection.SHORT_NAME, tag);
           if (toolWrapper != null) {
             RequiredAttributesInspection inspection = (RequiredAttributesInspection)toolWrapper.getTool();
             reportOneTagProblem(
@@ -327,13 +327,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       if(isAdditionallyDeclared(inspection.getAdditionalEntries(type), name)) return;
     }
 
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
     final IntentionAction intentionAction = inspection.getIntentionAction(name, type);
     if (htmlTag && profile.isToolEnabled(key, tag)) {
       addElementsForTagWithManyQuickFixes(
         tag,
         localizedMessage,
-        SeverityRegistrar.getInstance(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key).getSeverity()),
+        SeverityRegistrar.getInstance(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
         intentionAction,
         basicIntention);
     } else if (!htmlTag) {

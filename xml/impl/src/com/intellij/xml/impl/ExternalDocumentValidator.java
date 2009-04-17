@@ -334,9 +334,9 @@ public class ExternalDocumentValidator {
 
     final Project project = document.getProject();
 
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(containingFile);
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     final LocalInspectionToolWrapper toolWrapper =
-      (LocalInspectionToolWrapper)profile.getInspectionTool(CheckXmlFileWithXercesValidatorInspection.SHORT_NAME);
+      (LocalInspectionToolWrapper)profile.getInspectionTool(CheckXmlFileWithXercesValidatorInspection.SHORT_NAME, containingFile);
 
     if (toolWrapper == null) return;
     if (!profile.isToolEnabled(HighlightDisplayKey.find(CheckXmlFileWithXercesValidatorInspection.SHORT_NAME), containingFile)) return;

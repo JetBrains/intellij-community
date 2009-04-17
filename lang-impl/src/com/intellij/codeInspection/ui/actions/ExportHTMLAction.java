@@ -6,7 +6,6 @@ package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.InspectionApplication;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
@@ -37,6 +36,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -187,9 +187,9 @@ public class ExportHTMLAction extends AnAction {
     }
     final String shortName = tool.getShortName();
     final GlobalInspectionContextImpl context = myView.getGlobalInspectionContext();
-    final Set<Pair<InspectionTool,InspectionProfile>> tools = context.getTools().get(shortName);
+    final Set<Pair<InspectionTool, NamedScope>> tools = context.getTools().get(shortName);
     if (tools != null) {   //dummy entry points tool
-      for (Pair<InspectionTool, InspectionProfile> pair : tools) {
+      for (Pair<InspectionTool, NamedScope> pair : tools) {
         result.add(pair.first);
       }
     }

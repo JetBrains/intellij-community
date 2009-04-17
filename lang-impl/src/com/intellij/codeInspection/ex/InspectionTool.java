@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,22 +152,22 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   protected HighlightSeverity getCurrentSeverity(RefElement element) {
-    if (myContext != null) {
-      final Set<Pair<InspectionTool, InspectionProfile>> tools = myContext.getTools().get(getShortName());
-      if (tools != null) {
-        for (Pair<InspectionTool, InspectionProfile> pair : tools) {
-          if (pair.first == this) {
-            return pair.second.getErrorLevel(HighlightDisplayKey.find(getShortName())).getSeverity();
-          }
-        }
-      }
-    }
     final PsiElement psiElement = element.getElement();
     if (psiElement != null) {
-      final InspectionProfile profile =
-        InspectionProjectProfileManager.getInstance(getContext().getProject()).getInspectionProfile(psiElement);
-      final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(getShortName()));
-      return level.getSeverity();
+      if (myContext != null) {
+        final Set<Pair<InspectionTool, NamedScope>> tools = myContext.getTools().get(getShortName());
+        if (tools != null) {
+          for (Pair<InspectionTool, NamedScope> pair : tools) {
+            if (pair.first == this) {
+              return myContext.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(getShortName()), psiElement).getSeverity();
+            }
+          }
+        }
+
+        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(getContext().getProject()).getInspectionProfile();
+        final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(getShortName()), psiElement);
+        return level.getSeverity();
+      }
     }
     return null;
   }

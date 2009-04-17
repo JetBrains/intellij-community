@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipLinkHandlerEP;
 import com.intellij.codeInsight.hint.TooltipRenderer;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.Extensions;
@@ -109,14 +110,14 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       ShowErrorDescriptionAction.rememberCurrentWidth(contentComponent.getWidth());
     }
 
-    protected boolean dressDescription() {
+    protected boolean dressDescription(Editor editor) {
       final String[] problems = getHtmlBody(myText).split(BORDER_LINE);
       String text = "";
       for (String problem : problems) {
         final String descriptionPrefix = getDescriptionPrefix(problem);
         if (descriptionPrefix != null) {
           for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
-            final String description = handlerEP.getDescription(descriptionPrefix);
+            final String description = handlerEP.getDescription(descriptionPrefix, editor);
             if (description != null) {
               text += getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
                                                      DaemonBundle.message("inspection.collapse.description")) + BORDER_LINE + getHtmlBody(description) + BORDER_LINE;

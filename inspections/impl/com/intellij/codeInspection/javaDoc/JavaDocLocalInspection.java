@@ -13,8 +13,8 @@ import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -1091,7 +1091,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         myAdditionalJavadocTags = myTag.getName();
       }
       final InspectionProfile inspectionProfile =
-        InspectionProjectProfileManager.getInstance(project).getInspectionProfile(myTag);
+        InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
       //correct save settings
       ((ModifiableModel)inspectionProfile).isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
       InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);

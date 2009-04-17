@@ -302,7 +302,8 @@ public class Browser extends JPanel {
     if (manager.RUN_WITH_EDITOR_PROFILE && refEntity instanceof RefElement){
       PsiElement element = ((RefElement)refEntity).getElement();
       if (element == null) return tool;
-      tool = InspectionProjectProfileManager.getInstance(manager.getProject()).getProfileWrapper(element).getInspectionTool(tool.getShortName());
+      tool = InspectionProjectProfileManager.getInstance(manager.getProject()).getProfileWrapper().getInspectionTool(tool.getShortName(),
+                                                                                                                            element);
     }
     return tool;
   }

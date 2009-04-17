@@ -40,30 +40,44 @@ public class InspectionProfileTest extends TestCase {
 
   public void testCopyProjectProfile() throws Exception {
     final Element element = loadProfile();
-    final InspectionProfileImpl profile = new InspectionProfileImpl("Default");
-    profile.readExternal(element);
-    final ModifiableModel model = profile.getModifiableModel();
-    model.commit();
-    final Element copy = new Element("inspections");
-    profile.writeExternal(copy);
-    StringWriter writer = new StringWriter();
-    JDOMUtil.writeElement(copy, writer, "\n");
-    //System.out.println(writer.getBuffer().toString());
-    assertTrue(JDOMUtil.areElementsEqual(element, copy));
+    final InspectionProfileImpl profile = new InspectionProfileImpl("DefaultCopyProjectProfile");
+    try {
+      InspectionProfileImpl.INIT_INSPECTIONS = true;
+      profile.initInspectionTools();
+      profile.readExternal(element);
+      final ModifiableModel model = profile.getModifiableModel();
+      model.commit();
+      final Element copy = new Element("inspections");
+      profile.writeExternal(copy);
+      StringWriter writer = new StringWriter();
+      JDOMUtil.writeElement(copy, writer, "\n");
+      //System.out.println(writer.getBuffer().toString());
+      assertTrue(JDOMUtil.areElementsEqual(element, copy));
+    }
+    finally {
+      InspectionProfileImpl.INIT_INSPECTIONS = false;
+    }
   }
 
   public void testConvertOldProfile() throws Exception {
     final Element element = loadOldStyleProfile();
-    final InspectionProfileImpl profile = new InspectionProfileImpl("Default");
-    profile.readExternal(element);
-    final ModifiableModel model = profile.getModifiableModel();
-    model.commit();
-    final Element copy = new Element("inspections");
-    profile.writeExternal(copy);
-    StringWriter writer = new StringWriter();
-    JDOMUtil.writeElement(copy, writer, "\n");
-    //System.out.println(writer.getBuffer().toString());
-    assertTrue(JDOMUtil.areElementsEqual(loadProfile(), copy));
+    final InspectionProfileImpl profile = new InspectionProfileImpl("DefaultConvertOldProfile");
+    try {
+      InspectionProfileImpl.INIT_INSPECTIONS = true;
+      profile.initInspectionTools();
+      profile.readExternal(element);
+      final ModifiableModel model = profile.getModifiableModel();
+      model.commit();
+      final Element copy = new Element("inspections");
+      profile.writeExternal(copy);
+      StringWriter writer = new StringWriter();
+      JDOMUtil.writeElement(copy, writer, "\n");
+      //System.out.println(writer.getBuffer().toString());
+      assertTrue(JDOMUtil.areElementsEqual(loadProfile(), copy));
+    }
+    finally {
+      InspectionProfileImpl.INIT_INSPECTIONS = false;
+    }
   }
 
   private static Element loadOldStyleProfile() throws IOException, JDOMException {
@@ -154,7 +168,7 @@ public class InspectionProfileTest extends TestCase {
                                                     "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
                                                     "  </inspection_tool>\n" +
                                                     "</inspections>");
-    HighlightDisplayKey.register("JavaDoc"); //InspectionProfileImpl.DEFAULT wasn't setup because of tests optimizations
+
     return document.getRootElement();
   }
 }

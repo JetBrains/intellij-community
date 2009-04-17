@@ -107,8 +107,8 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
 
       InspectionProfile inspectionProfile =
-        InspectionProjectProfileManager.getInstance(position.getProject()).getInspectionProfile(position);
-      final InspectionProfileEntry inspectionTool = inspectionProfile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME);
+        InspectionProjectProfileManager.getInstance(position.getProject()).getInspectionProfile();
+      final InspectionProfileEntry inspectionTool = inspectionProfile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME, position);
       JavaDocLocalInspection inspection = (JavaDocLocalInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
       final StringTokenizer tokenizer = new StringTokenizer(inspection.myAdditionalJavadocTags, ", ");
       while (tokenizer.hasMoreTokens()) {

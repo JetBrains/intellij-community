@@ -19,8 +19,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
@@ -149,7 +149,7 @@ public class SpecialAnnotationsUtil {
   private static void doQuickFixInternal(final Project project, final List<String> targetList, final String qualifiedName, final PsiElement context) {
     targetList.add(qualifiedName);
     Collections.sort(targetList);
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(context);
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     //correct save settings
     ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
 

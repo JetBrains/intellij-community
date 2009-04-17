@@ -373,8 +373,8 @@ public class HighlightInfo {
       if (myOptions == null && myKey != null) {
         myOptions = IntentionManager.getInstance().getStandardIntentionOptions(myKey, element);
         final InspectionProfileEntry tool = InspectionProjectProfileManager.getInstance(element.getProject())
-          .getInspectionProfile(element)
-          .getInspectionTool(myKey.toString());
+          .getInspectionProfile()
+          .getInspectionTool(myKey.toString(), element);
         if (tool instanceof LocalInspectionToolWrapper) {
           final LocalInspectionTool localInspectionTool = ((LocalInspectionToolWrapper)tool).getTool();
           Class aClass = myAction.getClass();

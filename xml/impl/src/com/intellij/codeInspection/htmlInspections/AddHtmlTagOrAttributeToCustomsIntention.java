@@ -4,6 +4,7 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
@@ -15,7 +16,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.CommonBundle;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,9 +67,9 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile(file);
+    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
     final ModifiableModel model = inspectionProfile.getModifiableModel();
-    final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName);
+    final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName, file);
     final XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection)wrapper.getTool();
     xmlEntitiesInspection.setAdditionalEntries(myType, appendName(xmlEntitiesInspection.getAdditionalEntries(myType)));
     model.isProperSetting(HighlightDisplayKey.find(myInspectionName));//update map with non-default settings

@@ -123,7 +123,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
     if (suppressedScopes.values().isEmpty()) return null;
     // have to visit all file from scratch since inspections can be written in any perversive way including checkFile() overriding
-    final ModifiableModel model = InspectionProjectProfileManager.getInstance(manager.getProject()).getInspectionProfile(psiElement).getModifiableModel();
+    final ModifiableModel model = InspectionProjectProfileManager.getInstance(manager.getProject()).getInspectionProfile().getModifiableModel();
     InspectionProfileWrapper profile = new InspectionProfileWrapper((InspectionProfile)model);
     profile.init(manager.getProject());
     Collection<InspectionTool> suppressedTools = new THashSet<InspectionTool>();

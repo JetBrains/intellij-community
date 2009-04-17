@@ -32,7 +32,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
     final GlobalInspectionContextImpl inspectionContext = inspectionManagerEx.createNewGlobalContext(false);
     inspectionContext.setCurrentScope(scope);
     final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(psiFile);
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     inspectionContext.setExternalProfile(inspectionProfile);
     inspectionContext.doInspections(scope, inspectionManagerEx);    
   }

@@ -74,15 +74,15 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
   @Nullable
   private InspectionProfileEntry getTool(final Project project, final PsiFile file) {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile(file);
-    return inspectionProfile.getToolById(myId);
+    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile();
+    return inspectionProfile.getToolById(myId, file);
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     InspectionProfileEntry tool = getTool(project, file);
     if (tool == null) return;
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile(file);
+    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile();
     EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, false, tool.getShortName());
   }
 

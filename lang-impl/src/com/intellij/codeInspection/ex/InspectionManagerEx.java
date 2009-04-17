@@ -8,22 +8,22 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
+import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
-import com.intellij.ide.impl.ContentManagerWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,9 +136,7 @@ public class InspectionManagerEx extends InspectionManager {
   public String getCurrentProfile() {
     if (myCurrentProfileName == null) {
       final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
-      if (profileManager.useProjectLevelProfileSettings()) {
-        myCurrentProfileName = profileManager.getProjectProfile();
-      }
+      myCurrentProfileName = profileManager.getProjectProfile();
       if (myCurrentProfileName == null) {
         myCurrentProfileName = InspectionProfileManager.getInstance().getRootProfile().getName();
       }

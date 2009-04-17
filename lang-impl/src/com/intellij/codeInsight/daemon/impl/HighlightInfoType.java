@@ -154,8 +154,8 @@ public interface HighlightInfoType {
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
                                   ? (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()
-                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile(psiElement);
-      HighlightDisplayLevel level = profile.getErrorLevel(myToolKey);
+                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile();
+      HighlightDisplayLevel level = profile.getErrorLevel(myToolKey, psiElement);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level.getSeverity();
     }
@@ -185,7 +185,9 @@ public interface HighlightInfoType {
     }
 
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
-      HighlightDisplayLevel level = psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile(psiElement).getErrorLevel(mySeverityKey) : ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(mySeverityKey);
+      HighlightDisplayLevel level = psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile().getErrorLevel(mySeverityKey,
+                                                                                                                                                                   psiElement) : ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(mySeverityKey,
+                                                                                                                                                                                                                                                                         psiElement);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level.getSeverity();
     }

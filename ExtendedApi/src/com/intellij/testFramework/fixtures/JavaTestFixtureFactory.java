@@ -1,5 +1,7 @@
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.testFramework.fixtures.impl.IdeaTestFixtureFactoryImpl;
+
 /**
  * @author yole
  */
@@ -23,4 +25,9 @@ public abstract class JavaTestFixtureFactory {
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
 
   public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
+
+  //also implicitly initializes ourInstance and registers java module fixture builder
+  public static TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
+    return IdeaTestFixtureFactoryImpl.getFixtureFactory().createFixtureBuilder();
+  }
 }

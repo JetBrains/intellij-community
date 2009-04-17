@@ -239,7 +239,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
 
   public void updateProfile(Profile profile) {
-    mySchemesManager.addNewScheme(profile, true);
+   // mySchemesManager.addNewScheme(profile, true);
     updateProfileImpl(profile);
   }
 

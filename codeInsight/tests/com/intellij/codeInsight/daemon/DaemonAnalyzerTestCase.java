@@ -38,11 +38,12 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
-import gnu.trove.TIntArrayList;
 import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,21 +72,30 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
 
       @NotNull
-      public InspectionProfileEntry[] getInspectionTools() {
+      public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
         final Collection<LocalInspectionToolWrapper> tools = myAvailableLocalTools.values();
         return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
+      }
+
+      @Override
+      public List<Pair<InspectionProfileEntry, NamedScope>> getAllEnabledInspectionTools() {
+        List<Pair<InspectionProfileEntry, NamedScope>> result = new ArrayList<Pair<InspectionProfileEntry, NamedScope>>();
+        for (InspectionProfileEntry entry : getInspectionTools(null)) {
+          result.add(new Pair<InspectionProfileEntry, NamedScope>(entry, null));
+        }
+        return result;
       }
 
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
         return key != null && myAvailableTools.containsKey(key.toString());
       }
 
-      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key) {
+      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
         final LocalInspectionTool localInspectionTool = key == null ? null : myAvailableTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
-      public InspectionTool getInspectionTool(@NotNull String shortName) {
+      public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
         return myAvailableLocalTools.get(shortName);
       }
     };
@@ -93,6 +103,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     inspectionProfileManager.addProfile(profile);
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
+    InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     toInitializeDaemon = !daemonCodeAnalyzer.isInitialized();
     if (toInitializeDaemon) {

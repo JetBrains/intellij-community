@@ -8,9 +8,12 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +32,13 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
   }
 
   @Nullable
-  public String getDescription(final String shortName) {
+  public String getDescription(final String shortName, Editor editor) {
+    final Project project = editor.getProject();
+    assert project != null;
+    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    assert file != null;
     final InspectionProfileEntry tool =
-      ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getInspectionTool(shortName);
+      ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getInspectionTool(shortName, file);
     if (tool == null) return null;
 
     String description;
@@ -43,7 +50,7 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
   }
 
   private void showDescription(final String shortName, final Editor editor, final JEditorPane tooltip) {
-    final String description = getDescription(shortName);
+    final String description = getDescription(shortName, editor);
     if (description == null) return;
     final JEditorPane pane = LineTooltipRenderer.initPane(description);
     pane.select(0, 0);

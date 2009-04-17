@@ -10,9 +10,9 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
-import com.intellij.profile.codeInspection.ui.InspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -51,11 +51,8 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
-    final boolean canChooseDifferentProfiles = !projectProfileManager.useProjectLevelProfileSettings();
-    final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
-    InspectionProfile inspectionProfile = (InspectionProfile)(canChooseDifferentProfiles
-                                                                      ? profileManager.getRootProfile()
-                                                                          : projectProfileManager.getInspectionProfile(file));
+    final boolean canChooseDifferentProfiles = false;
+    InspectionProfile inspectionProfile = projectProfileManager.getInspectionProfile();
     editToolSettings(project,
                      inspectionProfile,
                      canChooseDifferentProfiles,
@@ -79,13 +76,13 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     if (!canChooseDifferentProfile) {
       @NonNls final String dimensionServiceKey = "#Errors";
       return settingsUtil.editConfigurable(project, dimensionServiceKey,
-                                           new InspectionToolsConfigurable(inspectionProfile, selectedToolShortName));
+                                           new IDEInspectionToolsConfigurable(selectedToolShortName, InspectionProfileManager.getInstance()));
     }
     else {
-      final ErrorsConfigurable errorsConfigurable = ErrorOptionsConfigurable.getInstance(project);
+      final ErrorsConfigurable errorsConfigurable = ProjectInspectionToolsConfigurable.getInstance(project);
       return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
         public void run() {
-          errorsConfigurable.selectNodeInTree(inspectionProfile.getName());
+          errorsConfigurable.selectProfile(inspectionProfile.getName());
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               errorsConfigurable.selectInspectionTool(selectedToolShortName);

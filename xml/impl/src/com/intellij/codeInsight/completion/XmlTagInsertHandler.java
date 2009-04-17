@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -13,10 +14,10 @@ import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -32,7 +33,6 @@ import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.application.options.editor.WebEditorOptions;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -139,9 +139,9 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
     Set<String> notRequiredAttributes = Collections.emptySet();
 
     if (tag instanceof HtmlTag) {
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
       LocalInspectionToolWrapper localInspectionToolWrapper = (LocalInspectionToolWrapper) profile.getInspectionTool(
-        RequiredAttributesInspection.SHORT_NAME);
+        RequiredAttributesInspection.SHORT_NAME, tag);
       RequiredAttributesInspection inspection = localInspectionToolWrapper != null ?
         (RequiredAttributesInspection) localInspectionToolWrapper.getTool(): null;
 

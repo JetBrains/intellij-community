@@ -38,7 +38,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -72,6 +75,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -691,21 +695,30 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       @NotNull
-      public InspectionProfileEntry[] getInspectionTools() {
+      public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
         final Collection<LocalInspectionToolWrapper> tools = myAvailableLocalTools.values();
         return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
+      }
+
+      @Override
+      public List<Pair<InspectionProfileEntry, NamedScope>> getAllEnabledInspectionTools() {
+        List<Pair<InspectionProfileEntry, NamedScope>> result = new ArrayList<Pair<InspectionProfileEntry, NamedScope>>();
+        for (InspectionProfileEntry entry : getInspectionTools(null)) {
+          result.add(new Pair<InspectionProfileEntry, NamedScope>(entry, null));
+        }
+        return result;
       }
 
       public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
         return key != null && key.toString() != null && myAvailableTools != null && myAvailableTools.containsKey(key.toString());
       }
 
-      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key) {
+      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
         final LocalInspectionTool localInspectionTool = key == null ? null : myAvailableTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
-      public InspectionTool getInspectionTool(@NotNull String shortName) {
+      public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
         return myAvailableLocalTools.get(shortName);
       }
     };
@@ -718,6 +731,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     });
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
+    InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
   }
 
   public void tearDown() throws Exception {

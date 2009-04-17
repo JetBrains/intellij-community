@@ -31,9 +31,6 @@ import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,8 +69,8 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return project.getComponent(InspectionProjectProfileManager.class);
   }
 
-  public String getProfileName(PsiFile psiFile) {
-    return getInspectionProfile(psiFile).getName();
+  public String getProfileName() {
+    return getInspectionProfile().getName();
   }
 
   public Element getState() {
@@ -98,41 +95,12 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   @NotNull
-  public InspectionProfile getInspectionProfile(@NotNull final PsiElement psiElement){
-    final PsiFile psiFile = psiElement.getContainingFile();
-
-    if (psiFile == null) {
-      LOG.assertTrue(psiElement instanceof PsiDirectory, "Element of type: " + psiElement.getClass().getName());
-      return (InspectionProfile)getProjectProfileImpl();
-    }
-
-    final HighlightingSettingsPerFile settingsPerFile = HighlightingSettingsPerFile.getInstance(myProject);
-
-    final InspectionProfile cachedProfile = settingsPerFile.getInspectionProfile(psiFile);
-    if (cachedProfile != null) {
-      return cachedProfile;
-    }
-
-    InspectionProfileImpl inspectionProfile = null;
-
-    //by name
-    final String profile = super.getProfileName(psiFile);
-    if (profile != null) {
-      inspectionProfile = (InspectionProfileImpl)getProfile(profile);
-    }
-
-    //default
-    if (inspectionProfile == null) {
-      inspectionProfile = (InspectionProfileImpl)myApplicationProfileManager.getRootProfile();
-    }
-
-    settingsPerFile.addProfileSettingForFile(psiFile, inspectionProfile);
-
-    return inspectionProfile;
+  public InspectionProfile getInspectionProfile(){
+    return (InspectionProfile)getProjectProfileImpl();
   }
 
-  public InspectionProfileWrapper getProfileWrapper(final PsiElement psiElement){
-    final InspectionProfile profile = getInspectionProfile(psiElement);
+  public InspectionProfileWrapper getProfileWrapper(){
+    final InspectionProfile profile = getInspectionProfile();
     final String profileName = profile.getName();
     if (!myName2Profile.containsKey(profileName)){
       initProfileWrapper(profile);
@@ -200,9 +168,6 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public SeverityRegistrar getSeverityRegistrar() {
-    if (!USE_PROJECT_LEVEL_SETTINGS) {
-      return ((SeverityProvider)myApplicationProfileManager).getSeverityRegistrar();
-    }
     return mySeverityRegistrar;
   }
 
@@ -226,5 +191,12 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
 
   public Profile getProfile(@NotNull final String name) {
     return getProfile(name, true);
+  }
+
+  public void convert(Element element) throws InvalidDataException {
+    super.convert(element);
+    if (PROJECT_PROFILE != null) {
+      ((InspectionProfileImpl)getProjectProfileImpl()).convert(element, myProject);
+    }
   }
 }

@@ -91,11 +91,11 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
     final PsiElement parent = myTarget.getParent().getParent();
     LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(), parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset());
     final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(myTarget);
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     for (PsiLiteralExpression target : targets) {
       final Object value = target.getValue();
       if (value instanceof String) {
-        final InspectionProfileEntry toolById = ((InspectionProfileImpl)inspectionProfile).getToolById(((String)value));
+        final InspectionProfileEntry toolById = ((InspectionProfileImpl)inspectionProfile).getToolById(((String)value), target);
         if (toolById instanceof LocalInspectionToolWrapper) {
           final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(((LocalInspectionToolWrapper)toolById).getTool());
           final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));

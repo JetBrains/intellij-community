@@ -32,19 +32,21 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -150,8 +152,8 @@ public class ViewOfflineResultsAction extends AnAction {
           return resMap.containsKey(key.toString());
         }
 
-        public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key) {
-          return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key);
+        public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
+          return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key, element);
         }
 
         public boolean isEditable() {
@@ -171,7 +173,7 @@ public class ViewOfflineResultsAction extends AnAction {
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(inspectionProfile);
     inspectionContext.setCurrentScope(scope);
-    inspectionContext.initializeTools(scope, new HashMap<String, List<InspectionProfileEntry>>(), new HashMap<String, List<InspectionProfileEntry>>());
+    inspectionContext.initializeTools(new ArrayList<Pair<InspectionProfileEntry, NamedScope>>(), new ArrayList<Pair<InspectionProfileEntry, NamedScope>>());
     final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope, inspectionContext,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionStarted();

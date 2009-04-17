@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -50,7 +49,7 @@ public class PlatformInspectionsConfigurable implements ErrorsConfigurable {
     }
   }
 
-  public void selectNodeInTree(final String name) {
+  public void selectProfile(final String name) {
   }
 
   public void selectInspectionTool(final String selectedToolShortName) {
@@ -59,9 +58,6 @@ public class PlatformInspectionsConfigurable implements ErrorsConfigurable {
 
   public Object getSelectedObject() {
     return null;
-  }
-
-  public void selectScopeFor(final PsiFile file) {
   }
 
   public String getHelpTopic() {
@@ -73,7 +69,7 @@ public class PlatformInspectionsConfigurable implements ErrorsConfigurable {
       myProfile = new InspectionProfileImpl((InspectionProfileImpl) InspectionProfileManager.getInstance().getRootProfile());
     }
     if (myPanel == null) {
-      myPanel = new SingleInspectionProfilePanel(myProfile.getName(), myProfile);
+      myPanel = new SingleInspectionProfilePanel(myProfile.getName(), myProfile, false);
     }
     return myPanel;
   }

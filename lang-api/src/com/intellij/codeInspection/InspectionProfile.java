@@ -18,9 +18,13 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.openapi.util.Pair;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * User: anna
@@ -28,12 +32,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface InspectionProfile extends Profile {
 
-  HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey);
+  HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element);
+  
 
-  InspectionProfileEntry getInspectionTool(@NotNull String shortName);
+  InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element);
 
   @NotNull
-  InspectionProfileEntry[] getInspectionTools();
+  InspectionProfileEntry[] getInspectionTools(PsiElement element);
+
+  List<Pair<InspectionProfileEntry,NamedScope>> getAllEnabledInspectionTools();
 
   void cleanup();
 

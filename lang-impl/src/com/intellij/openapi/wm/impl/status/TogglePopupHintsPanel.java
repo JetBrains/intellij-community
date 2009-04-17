@@ -14,8 +14,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
+import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
@@ -59,12 +59,8 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
         if (file != null) {
           if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
           final Project project = file.getProject();
-          final ErrorsConfigurable profileConfigurable = ErrorOptionsConfigurable.getInstance(project);
-          ShowSettingsUtil.getInstance().editConfigurable(project, profileConfigurable, new Runnable() {
-            public void run() {
-              profileConfigurable.selectScopeFor(file);
-            }
-          });
+          final ErrorsConfigurable profileConfigurable = ProjectInspectionToolsConfigurable.getInstance(project);
+          ShowSettingsUtil.getInstance().editConfigurable(project, profileConfigurable);
         }
       }
     });
@@ -98,7 +94,7 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
     if (isStateChangeable(file)) {
       if (HighlightLevelUtil.shouldInspect(file)) {
         myHectorLabel.setIcon(INSPECTIONS_ICON);
-        String text = InspectionProjectProfileManager.getInstance(file.getProject()).getProfileName(file);
+        String text = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile().getName();
         if (text != null){
           text = "Inspections: " + text;
           final Font font = getFont();

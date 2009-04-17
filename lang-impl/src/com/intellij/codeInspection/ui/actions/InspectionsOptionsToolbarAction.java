@@ -103,7 +103,16 @@ public class InspectionsOptionsToolbarAction extends AnAction {
     final RunInspectionIntention runInspectionIntention = new RunInspectionIntention(key);
     result.add(new AnAction(runInspectionIntention.getText()) {
       public void actionPerformed(final AnActionEvent e) {
-        runInspectionIntention.rerunInspection(tool, (InspectionManagerEx)InspectionManagerEx.getInstance(myView.getProject()), myView.getScope());
+        final RefEntity[] selectedElements = tree.getSelectedElements();
+
+        final PsiElement psiElement;
+        if (selectedElements.length > 0 && selectedElements[0] instanceof RefElement) {
+          psiElement = ((RefElement)selectedElements[0]).getElement();
+        } else {
+          psiElement = null;
+        }
+        runInspectionIntention.rerunInspection(tool, (InspectionManagerEx)InspectionManagerEx.getInstance(myView.getProject()), myView.getScope(),
+                                               psiElement);
       }
     });
 
@@ -136,7 +145,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
           for (RefEntity selectedElement : selectedElements) {
             if (selectedElement instanceof RefElement) {
               final PsiElement element = ((RefElement)selectedElement).getElement();
-              files.add(profileManager.getInspectionProfile(element.getContainingFile()));
+              files.add(profileManager.getInspectionProfile());
             }
           }
           for (InspectionProfile inspectionProfile : files) {

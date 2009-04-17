@@ -34,7 +34,7 @@ public class DumpInspectionDescriptionsAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
-    final InspectionProfileEntry[] tools = profile.getInspectionTools();
+    final InspectionProfileEntry[] tools = profile.getInspectionTools(null);
     System.out.println("String[][] inspections = ");
     for (InspectionProfileEntry tool : tools) {
       String group = tool.getGroupDisplayName();

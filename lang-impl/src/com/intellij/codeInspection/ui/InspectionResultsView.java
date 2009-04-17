@@ -38,6 +38,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
@@ -454,17 +455,17 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final InspectionProfile profile = myInspectionProfile;
     final boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
     myGroups = new HashMap<HighlightDisplayLevel, Map<String, InspectionGroupNode>>();
-    final Map<String, Set<Pair<InspectionTool, InspectionProfile>>> tools = myGlobalInspectionContext.getTools();
+    final Map<String, Set<Pair<InspectionTool, NamedScope>>> tools = myGlobalInspectionContext.getTools();
     boolean resultsFound = false;
-    for (Set<Pair<InspectionTool, InspectionProfile>> toolsInsideProfile : tools.values()) {
-      for (Pair<InspectionTool, InspectionProfile> toolWithProfile : toolsInsideProfile) {
+    for (Set<Pair<InspectionTool, NamedScope>> toolsInsideProfile : tools.values()) {
+      for (Pair<InspectionTool, NamedScope> toolWithProfile : toolsInsideProfile) {
         final InspectionTool tool = toolWithProfile.first;
         final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
         if (profile != null && !profile.isToolEnabled(key)) {
           break; //exclude disabled inspections from view
         }
         if (myProvider.checkReportedProblems(tool)) {
-          addTool(tool, toolWithProfile.second.getErrorLevel(key), isGroupedBySeverity);
+          addTool(tool, ((InspectionProfileImpl)profile).getErrorLevel(key, toolWithProfile.second), isGroupedBySeverity);
           resultsFound = true;
         }
       }
@@ -718,7 +719,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final RefElement refElement = (RefElement)selectedElement;
         final PsiElement element = refElement.getElement();
         if (element != null) {
-          profiles.add(profileManager.getInspectionProfile(element));
+          profiles.add(profileManager.getInspectionProfile());
         }
       }
     }
