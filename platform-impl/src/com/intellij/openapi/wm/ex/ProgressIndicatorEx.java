@@ -4,26 +4,27 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
 
 public interface ProgressIndicatorEx extends ProgressIndicator {
 
-  void addStateDelegate(ProgressIndicatorEx delegate);
+  void addStateDelegate(@NotNull ProgressIndicatorEx delegate);
 
-  void initStateFrom(ProgressIndicatorEx indicator);
+  void initStateFrom(@NotNull ProgressIndicatorEx indicator);
 
-  Stack<String> getTextStack();
+  @NotNull Stack<String> getTextStack();
 
-  DoubleArrayList getFractionStack();
+  @NotNull DoubleArrayList getFractionStack();
 
-  Stack<String> getText2Stack();
+  @NotNull Stack<String> getText2Stack();
 
   int getNonCancelableCount();
 
   boolean isModalityEntered();
 
-  void finish(final TaskInfo task);
+  void finish(@NotNull TaskInfo task);
   
-  boolean isFinished(final TaskInfo task);
+  boolean isFinished(@NotNull TaskInfo task);
 
   boolean wasStarted();
 

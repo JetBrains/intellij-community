@@ -8,20 +8,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolder {
+public class ProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
 
   private volatile String myText;
@@ -42,12 +41,16 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
   private ModalityState myModalityState = ModalityState.NON_MODAL;
   private boolean myModalityEntered = false;
 
-  private final Set<ProgressIndicatorEx> myStateDelegates = new HashSet<ProgressIndicatorEx>();
+  private final CopyOnWriteArrayList<ProgressIndicatorEx> myStateDelegates = ContainerUtil.createEmptyCOWList();
   private final WeakList<TaskInfo> myFinished = new WeakList<TaskInfo>();
   private boolean myWasStarted;
 
   private TaskInfo myOwnerTask;
-  private final UserDataHolder myUserDataHolder = new UserDataHolderBase();
+  private static final IndicatorAction CHECK_CANCELED_ACTION = new IndicatorAction() {
+    public void execute(final ProgressIndicatorEx each) {
+      each.checkCanceled();
+    }
+  };
 
   public void start() {
     synchronized (this) {
@@ -139,7 +142,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
     });
   }
 
-  public void finish(final TaskInfo task) {
+  public void finish(@NotNull final TaskInfo task) {
     synchronized (myFinished) {
       if (myFinished.contains(task)) return;
 
@@ -153,7 +156,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
     });
   }
 
-  public boolean isFinished(final TaskInfo task) {
+  public boolean isFinished(@NotNull final TaskInfo task) {
     synchronized (myFinished) {
       return myFinished.contains(task);
     }
@@ -178,11 +181,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
       throw new ProcessCanceledException();
     }
 
-    delegate(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
-        each.checkCanceled();
-      }
-    });
+    delegate(CHECK_CANCELED_ACTION);
   }
 
   public void setText(final String text) {
@@ -228,9 +227,9 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
   }
 
   public synchronized void pushState() {
-    myTextStack.add(myText);
+    myTextStack.push(myText);
     myFractionStack.add(myFraction);
-    myText2Stack.add(myText2);
+    myText2Stack.push(myText2);
     setText("");
     setFraction(0);
     setText2("");
@@ -244,9 +243,9 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
 
   public synchronized void popState() {
     LOG.assertTrue(!myTextStack.isEmpty());
-    setText(myTextStack.remove(myTextStack.size() - 1));
+    setText(myTextStack.pop());
     setFraction(myFractionStack.remove(myFractionStack.size() - 1));
-    setText2(myText2Stack.remove(myText2Stack.size() - 1));
+    setText2(myText2Stack.pop());
 
     delegateProgressChange(new IndicatorAction() {
       public void execute(final ProgressIndicatorEx each) {
@@ -309,11 +308,9 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
     });
   }
 
-  public final void addStateDelegate(ProgressIndicatorEx delegate) {
-    synchronized(myStateDelegates) {
-      delegate.initStateFrom(this);
-      myStateDelegates.add(delegate);
-    }
+  public final void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
+    delegate.initStateFrom(this);
+    myStateDelegates.addIfAbsent(delegate);
   }
 
   private void delegateProgressChange(IndicatorAction action) {
@@ -327,10 +324,8 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
   }
 
   private void delegate(IndicatorAction action) {
-    synchronized(myStateDelegates) {
-      for (ProgressIndicatorEx each : myStateDelegates) {
-        action.execute(each);
-      }
+    for (ProgressIndicatorEx each : myStateDelegates) {
+      action.execute(each);
     }
   }
 
@@ -347,15 +342,17 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
 
   }
 
-
+  @NotNull
   public Stack<String> getTextStack() {
     return myTextStack;
   }
 
+  @NotNull
   public DoubleArrayList getFractionStack() {
     return myFractionStack;
   }
 
+  @NotNull
   public Stack<String> getText2Stack() {
     return myText2Stack;
   }
@@ -373,7 +370,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
     return myWasStarted;
   }
 
-  public synchronized void initStateFrom(final ProgressIndicatorEx indicator) {
+  public synchronized void initStateFrom(@NotNull final ProgressIndicatorEx indicator) {
     myRunning = indicator.isRunning();
     myCanceled = indicator.isCanceled();
     myModalityEntered = indicator.isModalityEntered();
@@ -397,11 +394,4 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolde
     myFraction = indicator.getFraction();
   }
 
-  public <T> T getUserData(Key<T> key) {
-    return myUserDataHolder.getUserData(key);
-  }
-
-  public <T> void putUserData(Key<T> key, T value) {
-    myUserDataHolder.putUserData(key, value);
-  }
 }

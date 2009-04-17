@@ -17,6 +17,7 @@ import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -365,7 +366,7 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     }
 
     @Override
-    public void finish(final TaskInfo task) {
+    public void finish(@NotNull final TaskInfo task) {
       super.finish(task);
       queueRunningUpdate(new Runnable() {
         public void run() {
