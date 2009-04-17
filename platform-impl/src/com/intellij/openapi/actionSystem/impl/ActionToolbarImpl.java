@@ -16,6 +16,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -741,7 +742,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     myTargetComponent = component;
 
     if (myTargetComponent != null && myTargetComponent.isVisible()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
         public void run() {
           updateActions();
         }
