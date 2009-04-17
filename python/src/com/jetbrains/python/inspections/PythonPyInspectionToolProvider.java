@@ -7,8 +7,10 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.Factory;
+import com.intellij.util.Function;
 import com.jetbrains.python.JythonManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 
@@ -39,18 +41,31 @@ public class PythonPyInspectionToolProvider implements ApplicationComponent {
     int len = pyList.__len__();
     for(int i=0; i<len; i++) {
       final String inspectionToolName = pyList.__getitem__(i).toString();
-      myRegistrar.registerInspectionToolFactory(new PyInspectionToolFactory(inspectionToolName));
+      myRegistrar.registerInspectionToolFactory(new PyInspectionToolFactory(inspectionToolName), true);
     }
+    myRegistrar.registerInspectionToolProvider(new Function<String, InspectionTool>() {
+      @Nullable
+      public InspectionTool fun(String shortName) {
+        final LocalInspectionTool tool = createLocalInspectionTool(shortName);
+        return tool != null ? new LocalInspectionToolWrapper(tool) : null;
+      }
+    });
   }
 
   public void disposeComponent() {
     //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  @Nullable
   public static LocalInspectionTool createLocalInspectionTool(final String inspectionToolName) {
-    final PyObject object = JythonManager.getInstance().eval(inspectionToolName + "()");
-    final Object o = object.__tojava__(LocalInspectionTool.class);
-    return (LocalInspectionTool)o;
+    try {
+      final PyObject object = JythonManager.getInstance().eval(inspectionToolName + "()");
+      final Object o = object.__tojava__(LocalInspectionTool.class);
+      return (LocalInspectionTool)o;
+    }
+    catch (Exception e) {
+      return null;
+    }
   }
 
   private static class PyInspectionToolFactory implements Factory<InspectionTool> {
@@ -60,9 +75,10 @@ public class PythonPyInspectionToolProvider implements ApplicationComponent {
       myInspectionToolName = inspectionToolName;
     }
 
+    @Nullable
     public InspectionTool create() {
       final LocalInspectionTool tool = createLocalInspectionTool(myInspectionToolName);
-      return new LocalInspectionToolWrapper(tool);
+      return tool != null ? new LocalInspectionToolWrapper(tool) : null;
     }
   }
 }
