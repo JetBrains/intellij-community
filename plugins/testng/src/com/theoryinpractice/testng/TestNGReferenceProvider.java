@@ -6,9 +6,6 @@
  */
 package com.theoryinpractice.testng;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
@@ -30,6 +27,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.DataProvider;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestNGReferenceProvider implements ProjectComponent
 {
@@ -200,8 +200,8 @@ public class TestNGReferenceProvider implements ProjectComponent
     public Object[] getVariants() {
       List<Object> list = new ArrayList<Object>();
 
-      InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myElement);
-      final InspectionProfileEntry inspectionTool = inspectionProfile.getInspectionTool(DependsOnGroupsInspection.SHORT_NAME);
+      InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+      final InspectionProfileEntry inspectionTool = inspectionProfile.getInspectionTool(DependsOnGroupsInspection.SHORT_NAME, myElement);
       DependsOnGroupsInspection inspection = (DependsOnGroupsInspection) ((LocalInspectionToolWrapper) inspectionTool).getTool();
 
       for (String groupName : inspection.groups) {
