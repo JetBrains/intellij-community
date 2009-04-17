@@ -6,13 +6,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 
 /**
  * @author yole
  */
-public class StartupWizardAction extends AnAction {
+public class StartupWizardAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     final StartupWizard startupWizard = new StartupWizard(project, ApplicationInfoImpl.getShadowInstance().getPluginChooserPages());

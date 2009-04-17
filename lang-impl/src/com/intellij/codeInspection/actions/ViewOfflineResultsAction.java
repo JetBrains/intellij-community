@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -50,7 +51,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ViewOfflineResultsAction extends AnAction {
+public class ViewOfflineResultsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
   @NonNls private static final String XML_EXTENSION = "xml";
 

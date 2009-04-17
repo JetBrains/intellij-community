@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -44,7 +45,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-public class MergeFilesAction extends AnAction{
+public class MergeFilesAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     DataContext context = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(context);

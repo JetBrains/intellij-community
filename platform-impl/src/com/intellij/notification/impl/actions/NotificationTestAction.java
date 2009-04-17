@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author spleaner
  */
-public class NotificationTestAction extends AnAction {
+public class NotificationTestAction extends AnAction implements DumbAware {
   public NotificationTestAction() {
     super("Add Test Notification");
   }

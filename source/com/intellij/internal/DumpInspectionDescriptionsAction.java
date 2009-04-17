@@ -11,6 +11,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
@@ -27,7 +28,7 @@ import java.net.URL;
  * To change this template use Options | File Templates.
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class DumpInspectionDescriptionsAction extends AnAction {
+public class DumpInspectionDescriptionsAction extends AnAction implements DumbAware {
   public DumpInspectionDescriptionsAction() {
     super ("Dump inspection descriptions");
   }

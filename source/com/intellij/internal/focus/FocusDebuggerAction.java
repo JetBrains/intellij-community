@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -13,7 +14,7 @@ import java.awt.event.FocusEvent;
 /**
  * @author spleaner
  */
-public class FocusDebuggerAction extends AnAction {
+public class FocusDebuggerAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.internal.focus.FocusDebuggerAction");
   private FocusDrawer myFocusDrawer;
 

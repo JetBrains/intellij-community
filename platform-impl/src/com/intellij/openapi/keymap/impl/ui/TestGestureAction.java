@@ -2,10 +2,11 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardGestureAction;
 import com.intellij.openapi.actionSystem.AnActionEventVisitor;
+import com.intellij.openapi.actionSystem.KeyboardGestureAction;
+import com.intellij.openapi.project.DumbAware;
 
-public class TestGestureAction extends AnAction implements KeyboardGestureAction {
+public class TestGestureAction extends AnAction implements KeyboardGestureAction, DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     e.accept(new AnActionEventVisitor() {
       @Override

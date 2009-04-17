@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  *         Date: Jan 5, 2004
  */
-public class NewModuleAction extends AnAction {
+public class NewModuleAction extends AnAction implements DumbAware {
   public NewModuleAction() {
     super(ProjectBundle.message("module.new.action"), ProjectBundle.message("module.new.action.description"), null);
   }

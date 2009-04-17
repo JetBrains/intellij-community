@@ -7,9 +7,10 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 
-public class TemplateProjectStructureAction extends AnAction {
+public class TemplateProjectStructureAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
     final Configurable configurable = ProjectConfigurablesGroup.getProjectStructureConfigurable(defaultProject);

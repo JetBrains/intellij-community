@@ -10,13 +10,14 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import com.intellij.util.ArrayUtil;
 
-public class OpenProjectAction extends AnAction {
+public class OpenProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 

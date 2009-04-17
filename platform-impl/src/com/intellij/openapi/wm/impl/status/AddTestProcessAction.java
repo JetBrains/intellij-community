@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class AddTestProcessAction extends AnAction {
+public class AddTestProcessAction extends AnAction implements DumbAware {
   public AddTestProcessAction() {
     super("Add Test Process");
   }

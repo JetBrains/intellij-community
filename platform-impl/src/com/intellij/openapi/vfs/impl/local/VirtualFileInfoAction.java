@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.DumbAware;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +18,7 @@ import java.util.Date;
  * author: lesya
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class VirtualFileInfoAction extends AnAction{
+public class VirtualFileInfoAction extends AnAction implements DumbAware {
 
   public static final DateFormat DATE_FORMAT =
     SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.LONG, SimpleDateFormat.LONG);
