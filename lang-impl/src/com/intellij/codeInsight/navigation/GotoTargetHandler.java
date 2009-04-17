@@ -28,7 +28,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(getFeatureUsedKey());
 
     Pair<PsiElement, PsiElement[]> sourceAndTarget = getSourceAndTargetElements(editor, file);
-    show(project, editor, file, sourceAndTarget.first, sourceAndTarget.second);
+    if (sourceAndTarget.first != null) {
+      show(project, editor, file, sourceAndTarget.first, sourceAndTarget.second);
+    }
   }
 
   @NonNls
