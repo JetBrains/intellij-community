@@ -7,6 +7,7 @@ import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
@@ -107,7 +108,6 @@ public class ITNProxy {
     params.put("_description",
                (compilationTimestamp != null ? ("Build time: " + compilationTimestamp + "\n") : "") +
                error.getDescription() + "\n\n" + e.getStackTrace());
-    params.put("addWatch", "true");
 
     String jdkVersion = SystemProperties.getJavaVersion();
     String jdkVendor = SystemProperties.getJavaVmVendor();
@@ -158,9 +158,7 @@ public class ITNProxy {
       os = "1";
     params.put("_os", os);
 
-    params.put("_visibility", "2"); // public
-    params.put("command", "createSCR");
-    params.put("_type", "1");  // bug
+    params.put("_product", ApplicationNamesInfo.getInstance().getProductName());
 
     HttpURLConnection connection = post(NEW_THREAD_URL, params);
     int responce = connection.getResponseCode();
