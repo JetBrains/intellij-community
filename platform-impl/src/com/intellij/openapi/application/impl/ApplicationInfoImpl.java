@@ -49,6 +49,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String mySupportUrl;
   private String myEAPFeedbackUrl;
   private String myReleaseFeedbackUrl;
+  private String myPluginManagerUrl;
   private boolean myEAP;
   @NonNls private String myHelpFileName = "ideahelp.jar";
   @NonNls private String myHelpRootName = "idea";
@@ -91,6 +92,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_FEEDBACK = "feedback";
   @NonNls private static final String ATTRIBUTE_RELEASE_URL = "release-url";
   @NonNls private static final String ATTRIBUTE_EAP_URL = "eap-url";
+  @NonNls private static final String ELEMENT_PLUGINS = "plugins";
 
   public void initComponent() { }
 
@@ -201,6 +203,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getReleaseFeedbackUrl() {
     return myReleaseFeedbackUrl;
+  }
+
+  @Override
+  public String getPluginManagerUrl() {
+    return myPluginManagerUrl;
   }
 
   public UpdateUrls getEapUpdateUrls() {
@@ -357,6 +364,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (feedbackElement != null) {
       myEAPFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_EAP_URL);
       myReleaseFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_RELEASE_URL);
+    }
+
+    Element pluginsElement = parentNode.getChild(ELEMENT_PLUGINS);
+    if (pluginsElement != null) {
+      myPluginManagerUrl = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
+    }
+    else {
+      myPluginManagerUrl = "http://plugins.intellij.net";
     }
 
     myPluginChooserPages = new ArrayList<PluginChooserPage>();

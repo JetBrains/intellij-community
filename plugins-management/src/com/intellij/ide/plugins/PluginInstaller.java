@@ -137,7 +137,7 @@ public class PluginInstaller {
     }
 
     synchronized (PluginManager.lock) {
-      final String buildNumber = RepositoryHelper.ExtractBuildNumber();
+      final String buildNumber = RepositoryHelper.extractBuildNumber();
       final @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
                          URLEncoder.encode(pluginNode.getPluginId().getIdString(), "UTF8") +
                          "&build=" + buildNumber;

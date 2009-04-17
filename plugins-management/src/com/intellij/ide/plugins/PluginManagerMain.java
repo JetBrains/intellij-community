@@ -320,7 +320,7 @@ public class PluginManagerMain implements Disposable {
 
       public Object construct() {
         try {
-          list = RepositoryHelper.Process(mySynchStatus);
+          list = RepositoryHelper.process(mySynchStatus);
         }
         catch (Exception e) {
           error = e;

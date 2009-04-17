@@ -4,8 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressStream;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.UIUtil;
@@ -34,48 +33,41 @@ import java.util.ArrayList;
  */
 public class RepositoryHelper {
   //private static final Logger LOG = com.intellij.openapi.diagnostic.Logger.getInstance("#com.intellij.ide.plugins.RepositoryHelper");
-  @NonNls public static final String REPOSITORY_HOST = "http://plugins.intellij.net";
   //public static final String REPOSITORY_HOST = "http://unit-038:8080/plug";
-  @NonNls public static final String REPOSITORY_LIST_URL = REPOSITORY_HOST + "/plugins/list/";
-  @NonNls public static final String DOWNLOAD_URL = REPOSITORY_HOST + "/pluginManager?action=download&id=";
-  @NonNls public static final String REPOSITORY_LIST_SYSTEM_ID = REPOSITORY_HOST + "/plugin-repository.dtd";
+  @NonNls public static final String REPOSITORY_LIST_URL = getRepositoryHost() + "/plugins/list/";
+  @NonNls public static final String DOWNLOAD_URL = getRepositoryHost() + "/pluginManager?action=download&id=";
 
   @NonNls private static final String FILENAME = "filename=";
   @NonNls public static final String extPluginsFile = "availables.xml";
 
-  public static ArrayList<IdeaPluginDescriptor> Process( JLabel label )
-    throws IOException, ParserConfigurationException, SAXException
-  {
+  public static ArrayList<IdeaPluginDescriptor> process(JLabel label) throws IOException, ParserConfigurationException, SAXException {
     ArrayList<IdeaPluginDescriptor> plugins = null;
     try {
-      String buildNumber = RepositoryHelper.ExtractBuildNumber();
-      @NonNls String url = RepositoryHelper.REPOSITORY_LIST_URL + "?build=" + buildNumber;
+      String buildNumber = extractBuildNumber();
+      @NonNls String url = REPOSITORY_LIST_URL + "?build=" + buildNumber;
 
-      setLabelText(label, IdeBundle.message("progress.connecting.to.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
-      HttpConfigurable.getInstance().prepareURL(RepositoryHelper.REPOSITORY_HOST);
+      setLabelText(label, IdeBundle.message("progress.connecting.to.plugin.manager", getRepositoryHost()));
+      HttpConfigurable.getInstance().prepareURL(getRepositoryHost());
 //      if( !pi.isCanceled() )
       {
         RepositoryContentHandler handler = new RepositoryContentHandler();
-        HttpURLConnection connection = (HttpURLConnection)new URL (url).openConnection();
+        HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
 
-        setLabelText(label, IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
+        setLabelText(label, IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", getRepositoryHost()));
 
-        InputStream is = RepositoryHelper.getConnectionInputStream( connection );
-        if (is != null)
-        {
+        InputStream is = getConnectionInputStream(connection);
+        if (is != null) {
           setLabelText(label, IdeBundle.message("progress.downloading.list.of.plugins"));
-          File temp = RepositoryHelper.CreateLocalPluginsDescriptions();
-          RepositoryHelper.ReadPluginsStream( temp, is, handler );
+          File temp = createLocalPluginsDescriptions();
+          readPluginsStream(temp, is, handler);
 
           plugins = handler.getPluginsList();
         }
       }
     }
-    catch (RuntimeException e)
-    {
+    catch (RuntimeException e) {
       e.printStackTrace();
-      if( e.getCause() == null || !( e.getCause() instanceof InterruptedException) )
-      {
+      if (e.getCause() == null || !(e.getCause() instanceof InterruptedException)) {
       }
     }
     return plugins;
@@ -90,92 +82,53 @@ public class RepositoryHelper {
   }
 
 
-  public static InputStream getConnectionInputStream (URLConnection connection )
-  {
-    try
-    {
+  public static InputStream getConnectionInputStream(URLConnection connection) {
+    try {
       return connection.getInputStream();
     }
-    catch( IOException e )
-    {
+    catch (IOException e) {
       return null;
     }
   }
 
-  public static File CreateLocalPluginsDescriptions() throws IOException
-  {
-    File basePath = new File( PathManager.getPluginsPath() );
+  public static File createLocalPluginsDescriptions() throws IOException {
+    File basePath = new File(PathManager.getPluginsPath());
     basePath.mkdirs();
 
-    File temp = new File( basePath, extPluginsFile );
-    if( temp.exists() )
-    {
-        FileUtil.delete(temp);
+    File temp = new File(basePath, extPluginsFile);
+    if (temp.exists()) {
+      FileUtil.delete(temp);
     }
     temp.createNewFile();
     return temp;
   }
 
-  public static void  ReadPluginsStream( File temp,
-                                         InputStream is,
-                                         RepositoryContentHandler handler,
-                                         ProgressIndicator pi)
-    throws SAXException, IOException, ParserConfigurationException
-  {
-    SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-    FileOutputStream fos = null;
-    ProgressStream ps = null;
-    try {
-      fos = new FileOutputStream(temp, false);
-      ps = new ProgressStream(is, pi);
-      byte [] buffer = new byte [1024];
-      do {
-        int size = ps.read(buffer);
-        if (size == -1)
-          break;
-        fos.write(buffer, 0, size);
-      } while (true);
-      fos.close();
-
-      parser.parse(temp, handler);
-    } finally {
-      if( fos != null ) {
-        fos.close();
-      }
-      if( ps != null )  {
-        ps.close();
-      }
-    }
-  }
-
-  public static void  ReadPluginsStream( File temp, InputStream is,
-                                         RepositoryContentHandler handler )
-    throws SAXException, IOException, ParserConfigurationException
-  {
+  public static void readPluginsStream(File temp, InputStream is, RepositoryContentHandler handler)
+    throws SAXException, IOException, ParserConfigurationException {
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     FileOutputStream fos = null;
     try {
       fos = new FileOutputStream(temp, false);
-      byte [] buffer = new byte [1024];
+      byte[] buffer = new byte[1024];
       do {
         int size = is.read(buffer);
-        if (size == -1)
-          break;
+        if (size == -1) break;
         fos.write(buffer, 0, size);
-      } while (true);
+      }
+      while (true);
       fos.close();
       fos = null;
 
       parser.parse(temp, handler);
-    } finally {
-      if( fos != null ) {
+    }
+    finally {
+      if (fos != null) {
         fos.close();
       }
     }
   }
 
-  public static String  ExtractBuildNumber()
-  {
+  public static String extractBuildNumber() {
     String build;
     ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
     try {
@@ -185,5 +138,9 @@ public class RepositoryHelper {
       build = "3000";
     }
     return build;
+  }
+
+  public static String getRepositoryHost() {
+    return ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl();
   }
 }
