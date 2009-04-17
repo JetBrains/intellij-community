@@ -12,4 +12,6 @@ public class OptionId {
   public static final OptionId COMPLETION_AUTO_POPUP_XML = new OptionId(); 
   public static final OptionId COMPLETION_AUTO_POPUP_DOC_COMMENT = new OptionId();
   public static final OptionId COMPLETION_DOUBLE_PAREN_NO_ARGS = new OptionId(); 
+  public static final OptionId COMPLETION_SMART_TYPE = new OptionId();
+  public static final OptionId COMPLETION_CLASS_NAME = new OptionId();
 }
