@@ -10,6 +10,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -185,7 +186,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
   }
 
-  private class ReopenProjectAction extends AnAction {
+  private class ReopenProjectAction extends AnAction implements DumbAware {
     private final String myProjectPath;
 
     public ReopenProjectAction(String projectPath) {

@@ -27,11 +27,15 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
@@ -83,7 +87,7 @@ public class BraceHighlightingHandler {
             return null != psiFile ? getInjectedFileIfAny(editor, project, offset, psiFile, alarm) : null;
           }
         });
-        ApplicationManager.getApplication().invokeLater(new Runnable(){
+        ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable(){
           public void run() {
             if (!isReallyDisposed(editor, project)) {
               Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);

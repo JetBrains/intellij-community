@@ -15,14 +15,15 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +102,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       new WindowAdapter() {
         public void windowClosing(final WindowEvent e) {
           final Application app = ApplicationManager.getApplication();
-          app.invokeLater(new Runnable() {
+          app.invokeLater(new DumbAwareRunnable() {
             public void run() {
               if (app.isDisposed()) {
                 ApplicationManagerEx.getApplicationEx().exit();
