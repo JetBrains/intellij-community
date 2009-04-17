@@ -45,6 +45,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   private final Project myProject;
   private StructureViewWrapperImpl myStructureViewWrapperImpl;
   private State myState = new State();
+  private Runnable myRunWhenInitialized = null;
 
   private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
   private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myImplExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
@@ -73,6 +74,10 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     final FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
     if (fileEditors.length > 0) {
       myStructureViewWrapperImpl.setFileEditor(fileEditors [0]);
+    }
+    if (myRunWhenInitialized != null) {
+      myRunWhenInitialized.run();
+      myRunWhenInitialized = null;
     }
   }
 
@@ -127,6 +132,16 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
 
   public boolean isActionActive(final String name) {
     return collectActiveActions().contains(name);
+  }
+
+  @Override
+  public void runWhenInitialized(Runnable runnable) {
+    if (myStructureViewWrapperImpl != null) {
+      runnable.run();
+    }
+    else {
+      myRunWhenInitialized = runnable;
+    }
   }
 
   public StructureView createStructureView(final FileEditor fileEditor, final StructureViewModel treeModel, final Project project) {

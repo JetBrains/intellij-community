@@ -24,4 +24,6 @@ public abstract class StructureViewFactoryEx extends StructureViewFactory {
   public static StructureViewFactoryEx getInstanceEx(final Project project) {
     return (StructureViewFactoryEx)getInstance(project);
   }
+
+  public abstract void runWhenInitialized(Runnable runnable);
 }
