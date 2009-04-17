@@ -108,4 +108,12 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
   public void testArrayLikeAccessForMap() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
+
+  public void testEachMethodForRanges() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+
+  public void testEachMethodForEnumRanges() throws Throwable {
+    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
 }

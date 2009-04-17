@@ -4,10 +4,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 
 /**
  * @author ilyas
  */
-public interface GrRangeExpression extends GrExpression {
+public interface GrRangeExpression extends GrBinaryExpression {
 }

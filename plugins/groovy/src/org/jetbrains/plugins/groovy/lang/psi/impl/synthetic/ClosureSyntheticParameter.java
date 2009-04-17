@@ -15,10 +15,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.NavigationItem;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -38,7 +35,9 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
   private final GrClosableBlock myClosure;
 
   public ClosureSyntheticParameter(PsiManager manager, GrClosableBlock closure) {
-    super(manager, GrClosableBlock.IT_PARAMETER_NAME, null, JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", closure.getResolveScope()), closure);
+    super(manager, GrClosableBlock.IT_PARAMETER_NAME, null,
+          JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object",
+                                                                                                      closure.getResolveScope()), closure);
     myClosure = closure;
   }
 
@@ -73,5 +72,15 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
   @NotNull
   public SearchScope getUseScope() {
     return new LocalSearchScope(myClosure);
+  }
+
+  @NotNull
+  @Override
+  public PsiType getType() {
+    PsiType typeGroovy = getTypeGroovy();
+    if (typeGroovy instanceof PsiIntersectionType) {
+      typeGroovy=((PsiIntersectionType)typeGroovy).getRepresentative();
+    }
+    return typeGroovy != null ? typeGroovy : super.getType();
   }
 }
