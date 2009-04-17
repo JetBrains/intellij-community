@@ -26,14 +26,16 @@ import java.util.Set;
 public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFieldImpl");
 
-  private PsiIdentifier myNameIdentifier = null; //guarded by PsiLock.LOCK
+  private final PsiIdentifier myNameIdentifier;
+  private final PsiDocComment myDocComment;
   private PsiTypeElement myType = null;          //guarded by PsiLock.LOCK
-  private PsiDocComment myDocComment = null;     //guarded by PsiLock.LOCK
   private PsiExpression myInitializer = null;    //guarded by PsiLock.LOCK
   private boolean myInitializerInitialized = false;  //guarded by PsiLock.LOCK
 
   public ClsFieldImpl(final PsiFieldStub stub) {
     super(stub);
+    myDocComment = isDeprecated() ? new ClsDocCommentImpl(this) : null;
+    myNameIdentifier = new ClsIdentifierImpl(this, getName());
   }
 
   @NotNull
@@ -73,12 +75,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
 
   @NotNull
   public PsiIdentifier getNameIdentifier() {
-    synchronized (PsiLock.LOCK) {
-      if (myNameIdentifier == null) {
-        myNameIdentifier = new ClsIdentifierImpl(this, getName());
-      }
-      return myNameIdentifier;
-    }
+    return myNameIdentifier;
   }
 
   @NotNull
@@ -98,7 +95,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   }
 
   public PsiTypeElement getTypeElement() {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (myType == null) {
         String typeText = RecordUtil.createTypeText(getStub().getType());
         myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
@@ -116,7 +113,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   }
 
   public PsiExpression getInitializer() {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (!myInitializerInitialized) {
         myInitializerInitialized = true;
         try {
@@ -169,14 +166,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   }
 
   public PsiDocComment getDocComment() {
-    if (!isDeprecated()) return null;
-
-    synchronized (PsiLock.LOCK) {
-      if (myDocComment == null) {
-        myDocComment = new ClsDocCommentImpl(this);
-      }
-      return myDocComment;
-    }
+    return myDocComment;
   }
 
   public void normalizeDeclaration() throws IncorrectOperationException {
@@ -200,9 +190,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(isValid());
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiField mirror = (PsiField)SourceTreeToPsiMap.treeElementToPsi(element);
     if (getDocComment() != null) {

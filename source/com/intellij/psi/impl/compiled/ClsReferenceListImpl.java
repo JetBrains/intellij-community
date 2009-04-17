@@ -18,7 +18,7 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
 
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (myRefs == null) {
         final String[] strings = getStub().getReferencedNames();
         ClsJavaCodeReferenceElementImpl[] res = new ClsJavaCodeReferenceElementImpl[strings.length];
@@ -69,8 +69,7 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiJavaCodeReferenceElement[] refs = getReferenceElements();
     PsiJavaCodeReferenceElement[] refMirrors = ((PsiReferenceList)SourceTreeToPsiMap.treeElementToPsi(element)).getReferenceElements();

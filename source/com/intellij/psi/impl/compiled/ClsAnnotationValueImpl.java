@@ -39,9 +39,7 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(isValid());
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiAnnotation mirror = (PsiAnnotation)SourceTreeToPsiMap.treeElementToPsi(element);
       ((ClsElementImpl)getParameterList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getParameterList()));

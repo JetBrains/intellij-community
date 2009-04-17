@@ -40,9 +40,7 @@ class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJava
   }
 
   public void setMirror(@NotNull TreeElement element){
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    LOG.assertTrue(element.getElementType() == ElementType.IDENTIFIER);
-    myMirror = element;
+    setMirrorCheckingType(element, ElementType.IDENTIFIER);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){

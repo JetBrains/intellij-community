@@ -31,9 +31,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    LOG.assertTrue(element.getElementType() == ElementType.DOC_TAG);
-    myMirror = element;
+    setMirrorCheckingType(element, ElementType.DOC_TAG);
   }
 
   public String getText() {
@@ -120,7 +118,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     }
 
     public void setMirror(@NotNull TreeElement element) {
-      myMirror = element;
+      setMirrorCheckingType(element, null);
     }
 
     public PsiElement getParent() {

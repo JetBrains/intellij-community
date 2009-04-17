@@ -10,13 +10,15 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
-  protected static final boolean CHECK_MIRROR_ENABLED = false;
+  private static final boolean CHECK_MIRROR_ENABLED = false;
+  protected static final Object LAZY_BUILT_LOCK = new String("lazy cls tree initialization lock");
 
   protected volatile TreeElement myMirror = null;
 
@@ -209,5 +211,17 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   public ASTNode getNode() {
     return null;
+  }
+
+  protected void setMirrorCheckingType(TreeElement element, IElementType type) {
+    if (CHECK_MIRROR_ENABLED) {
+      LOG.assertTrue(myMirror == null);
+    }
+
+    if (type != null) {
+      LOG.assertTrue(element.getElementType() == type);
+    }
+
+    myMirror = element;
   }
 }

@@ -10,8 +10,8 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierListStub> implements PsiModifierList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsModifierListImpl");
@@ -122,9 +122,8 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    LOG.assertTrue(element.getElementType() == JavaElementType.MODIFIER_LIST);
-    myMirror = element;
+    setMirrorCheckingType(element, JavaElementType.MODIFIER_LIST);
+
     PsiElement[] mirrorAnnotations = ((PsiModifierList)SourceTreeToPsiMap.treeElementToPsi(element)).getAnnotations();
     PsiAnnotation[] annotations = getAnnotations();
     LOG.assertTrue(annotations.length == mirrorAnnotations.length);

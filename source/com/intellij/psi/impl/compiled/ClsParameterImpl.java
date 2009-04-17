@@ -55,7 +55,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
 
   @NotNull
   public PsiTypeElement getTypeElement() {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (myType == null) {
         myType = new ClsTypeElementImpl(this, RecordUtil.createTypeText(getStub().getParameterType()), ClsTypeElementImpl.VARIANCE_NONE);
       }
@@ -106,7 +106,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
   }
 
   private String getMirrorName() {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (myMirrorName == null) {
         @NonNls String name = getName();
         if (name != null) return name;
@@ -162,8 +162,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiParameter mirror = (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(element);
       ((ClsElementImpl)getModifierList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));

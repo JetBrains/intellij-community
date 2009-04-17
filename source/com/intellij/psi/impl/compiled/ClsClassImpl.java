@@ -30,11 +30,13 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsClassImpl");
 
   private final ClassInnerStuffCache innersCache = new ClassInnerStuffCache(this);
-  private PsiIdentifier myNameIdentifier; //guarded by LOCK
-  private PsiDocComment myDocComment;     //guarded by LOCK
+  private final PsiIdentifier myNameIdentifier;
+  private final PsiDocComment myDocComment;
 
   public ClsClassImpl(final PsiClassStub stub) {
     super(stub);
+    myDocComment = isDeprecated() ? new ClsDocCommentImpl(this) : null;
+    myNameIdentifier = new ClsIdentifierImpl(this, getShortName());
   }
 
   @NotNull
@@ -81,17 +83,16 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
 
   @NotNull
   public PsiIdentifier getNameIdentifier() {
-    synchronized (PsiLock.LOCK) {
-      if (myNameIdentifier == null) {
-        String qName = getQualifiedName();
-        String name = PsiNameHelper.getShortClassName(qName);
-        if (name.length() == 0) {
-          name = "_";
-        }
-        myNameIdentifier = new ClsIdentifierImpl(this, name);
-      }
-      return myNameIdentifier;
+    return myNameIdentifier;
+  }
+
+  private String getShortName() {
+    String qName = getQualifiedName();
+    String name = PsiNameHelper.getShortClassName(qName);
+    if (name.length() == 0) {
+      name = "_";
     }
+    return name;
   }
 
   @NotNull
@@ -276,14 +277,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   }
 
   public PsiDocComment getDocComment() {
-    if (!isDeprecated()) return null;
-
-    synchronized (PsiLock.LOCK) {
-      if (myDocComment == null) {
-        myDocComment = new ClsDocCommentImpl(this);
-      }
-      return myDocComment;
-    }
+    return myDocComment;
   }
 
   public PsiJavaToken getLBrace() {
@@ -379,9 +373,8 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(isValid());
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
+
     PsiClass mirror = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(element);
 
     final PsiDocComment docComment = getDocComment();

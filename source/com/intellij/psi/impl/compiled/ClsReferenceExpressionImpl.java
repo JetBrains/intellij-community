@@ -147,9 +147,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    LOG.assertTrue(element.getElementType() == ElementType.REFERENCE_EXPRESSION);
-    myMirror = element;
+    setMirrorCheckingType(element, ElementType.REFERENCE_EXPRESSION);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

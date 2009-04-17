@@ -35,9 +35,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(isValid());
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiArrayInitializerMemberValue mirror = (PsiArrayInitializerMemberValue)SourceTreeToPsiMap.treeElementToPsi(element);
     PsiAnnotationMemberValue[] initializers = mirror.getInitializers();

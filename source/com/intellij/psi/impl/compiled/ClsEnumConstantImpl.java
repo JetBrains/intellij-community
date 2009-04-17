@@ -30,9 +30,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(isValid());
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiField mirror = (PsiField)SourceTreeToPsiMap.treeElementToPsi(element);
     if (getDocComment() != null) {

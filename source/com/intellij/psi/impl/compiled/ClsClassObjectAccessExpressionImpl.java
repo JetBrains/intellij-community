@@ -32,9 +32,7 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(isValid());
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiClassObjectAccessExpression mirror = (PsiClassObjectAccessExpression)SourceTreeToPsiMap.treeElementToPsi(element);
       ((ClsElementImpl)getOperand()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getOperand()));

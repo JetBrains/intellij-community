@@ -46,8 +46,7 @@ public class ClsParameterListImpl extends ClsRepositoryPsiElement<PsiParameterLi
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiParameter[] parms = getParameters();
     PsiParameter[] parmMirrors = ((PsiParameterList)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getParameters();

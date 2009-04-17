@@ -14,11 +14,14 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsDocCommentImpl");
 
   private final ClsElementImpl myParent;
-
-  private PsiDocTag[] myTags = null; //guarded by LOCK
+  private final PsiDocTag[] myTags;
 
   ClsDocCommentImpl(ClsElementImpl parent) {
     myParent = parent;
+    
+    PsiDocTag[] tags = new PsiDocTag[1];
+    tags[0] = new ClsDocTagImpl(this, "@deprecated");
+    myTags = tags;
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
@@ -33,9 +36,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    LOG.assertTrue(element.getElementType() == JavaDocElementType.DOC_COMMENT);
-    myMirror = element;
+    setMirrorCheckingType(element, JavaDocElementType.DOC_COMMENT);
   }
 
   @NotNull
@@ -52,14 +53,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   }
 
   public PsiDocTag[] getTags() {
-    synchronized (PsiLock.LOCK) {
-      if (myTags == null){
-        PsiDocTag[] tags = new PsiDocTag[1];
-        tags[0] = new ClsDocTagImpl(this, "@deprecated");
-        myTags = tags;
-      }
-      return myTags;
-    }
+    return myTags;
   }
 
   public PsiDocTag findTagByName(@NonNls String name) {

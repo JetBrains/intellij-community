@@ -31,9 +31,7 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(isValid());
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiNameValuePair mirror = (PsiNameValuePair)SourceTreeToPsiMap.treeElementToPsi(element);
     final PsiIdentifier mirrorIdentifier = mirror.getNameIdentifier();

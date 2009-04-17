@@ -73,9 +73,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   public void setMirror(@NotNull TreeElement element){
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    LOG.assertTrue(element.getElementType() == JavaElementType.TYPE);
-    myMirror = element;
+    setMirrorCheckingType(element, JavaElementType.TYPE);
 
     loadChild();
 
@@ -86,7 +84,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   private void loadChild() {
     if (isPrimitive()) {
-      synchronized (PsiLock.LOCK) {
+      synchronized (LAZY_BUILT_LOCK) {
         myChildSet = true;
       }
       return;
@@ -115,7 +113,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   @NotNull
   public PsiType getType() {
     if (myCachedType == null) {
-      synchronized (PsiLock.LOCK) {
+      synchronized (LAZY_BUILT_LOCK) {
         if (myCachedType == null) {
           myCachedType = calculateType();
         }
@@ -175,7 +173,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   private void createClassReferenceChild() {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (!myChildSet) {
         if (myVariance != VARIANCE_INVARIANT) {
           myChild = new ClsJavaCodeReferenceElementImpl(this, myTypeText);
@@ -186,7 +184,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   private void createComponentTypeChild() {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (!myChildSet) {
         if (isArray()) {
           if (myVariance == VARIANCE_NONE) {

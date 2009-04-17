@@ -30,10 +30,11 @@ import java.util.List;
 public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeParameterImpl");
   static final ClsTypeParameterImpl[] EMPTY_ARRAY = new ClsTypeParameterImpl[0];
-  private LightEmptyImplementsList myLightEmptyImplementsList; //guarded by PsiLock
+  private final LightEmptyImplementsList myLightEmptyImplementsList;
 
   public ClsTypeParameterImpl(final PsiTypeParameterStub stub) {
     super(stub);
+    myLightEmptyImplementsList = new LightEmptyImplementsList(getManager());
   }
 
   public String getQualifiedName() {
@@ -150,12 +151,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   public PsiReferenceList getImplementsList() {
-    synchronized (PsiLock.LOCK) {
-      if (myLightEmptyImplementsList == null) {
-        myLightEmptyImplementsList = new LightEmptyImplementsList(getManager());
-      }
-      return myLightEmptyImplementsList;
-    }
+    return myLightEmptyImplementsList;
   }
 
   @NotNull
@@ -269,8 +265,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiTypeParameter mirror = (PsiTypeParameter)SourceTreeToPsiMap.treeElementToPsi(element);
       ((ClsReferenceListImpl)getExtendsList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getExtendsList()));

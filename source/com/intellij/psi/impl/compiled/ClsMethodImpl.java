@@ -94,7 +94,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
   public PsiIdentifier getNameIdentifier() {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (myNameIdentifier == null) {
         myNameIdentifier = new ClsIdentifierImpl(this, getName());
       }
@@ -149,7 +149,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   public PsiTypeElement getReturnTypeElement() {
     if (isConstructor()) return null;
 
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (myReturnType == null) {
         String typeText = RecordUtil.createTypeText(getStub().getReturnTypeText());
         myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
@@ -191,7 +191,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
   public PsiAnnotationMemberValue getDefaultValue() {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (myDefaultValue == null) {
         final String text = getStub().getDefaultValueText();
         if (StringUtil.isEmpty(text)) return null;
@@ -205,7 +205,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   public PsiDocComment getDocComment() {
     if (!isDeprecated()) return null;
 
-    synchronized (PsiLock.LOCK) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (myDocComment == null) {
         myDocComment = new ClsDocCommentImpl(this);
       }
@@ -268,9 +268,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(isValid());
-    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
-    myMirror = element;
+    setMirrorCheckingType(element, null);
 
     PsiMethod mirror = (PsiMethod)SourceTreeToPsiMap.treeElementToPsi(element);
     if (getDocComment() != null) {
