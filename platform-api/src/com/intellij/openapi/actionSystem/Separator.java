@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.project.DumbAware;
+
 /**
  * Represents a separator.
  */
-public final class Separator extends AnAction {
+public final class Separator extends AnAction implements DumbAware {
   private static final Separator ourInstance = new Separator();
 
   private String myText;
