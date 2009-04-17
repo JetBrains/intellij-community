@@ -63,10 +63,17 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         return o1.getDisplayName().compareTo(o2.getDisplayName());
       }
     });
-    myTypes = factories;
+
+    final ArrayList<ConfigurationType> types = new ArrayList<ConfigurationType>(Arrays.asList(factories));
+    types.add(UnknownConfigurationType.INSTANCE);
+    myTypes = types.toArray(new ConfigurationType[types.size()]);
+
     for (final ConfigurationType type : factories) {
       myTypesByName.put(type.getId(), type);
     }
+
+    final UnknownConfigurationType broken = UnknownConfigurationType.INSTANCE;
+    myTypesByName.put(broken.getId(), broken);
   }
 
   private void initConfigurationTypes() {
@@ -122,6 +129,22 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   public ConfigurationType[] getConfigurationFactories() {
     return myTypes.clone();
+  }
+
+  public ConfigurationType[] getConfigurationFactories(final boolean includeUnknown) {
+    final ConfigurationType[] configurationTypes = myTypes.clone();
+    if (!includeUnknown) {
+      final List<ConfigurationType> types = new ArrayList<ConfigurationType>();
+      for (ConfigurationType configurationType : configurationTypes) {
+        if (!(configurationType instanceof UnknownConfigurationType)) {
+          types.add(configurationType);
+        }
+      }
+
+      return types.toArray(new ConfigurationType[types.size()]);
+    }
+
+    return configurationTypes;
   }
 
   /**
@@ -186,7 +209,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean shared, Map<String, Boolean> method) {
     final String configName = getUniqueName(settings.getConfiguration());
     myConfigurations.put(configName, settings);
-    
+
     int id = settings.getConfiguration().getUniqueID();
     mySharedConfigurations.put(id, shared);
     myMethod2CompileBeforeRun.put(id, method);
@@ -323,16 +346,18 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     final Element configurationElement = new Element(elementType);
     parentNode.addContent(configurationElement);
     template.writeExternal(configurationElement);
-    final Map<String, Boolean> methods = myMethod2CompileBeforeRun.get(template.getConfiguration().getUniqueID());
-    if (methods != null) {
-      Element methodsElement = new Element(METHOD);
-      for (String key : methods.keySet()) {
-        final Element child = new Element(OPTION);
-        child.setAttribute(NAME_ATTR, key);
-        child.setAttribute(VALUE, String.valueOf(methods.get(key)));
-        methodsElement.addContent(child);
+    if (!(template.getConfiguration() instanceof UnknownRunConfiguration)) {
+      final Map<String, Boolean> methods = myMethod2CompileBeforeRun.get(template.getConfiguration().getUniqueID());
+      if (methods != null) {
+        Element methodsElement = new Element(METHOD);
+        for (String key : methods.keySet()) {
+          final Element child = new Element(OPTION);
+          child.setAttribute(NAME_ATTR, key);
+          child.setAttribute(VALUE, String.valueOf(methods.get(key)));
+          methodsElement.addContent(child);
+        }
+        configurationElement.addContent(methodsElement);
       }
-      configurationElement.addContent(methodsElement);
     }
   }
 
@@ -417,7 +442,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   @Nullable
   private ConfigurationFactory findFactoryOfTypeNameByName(final String typeName, final String factoryName) {
-    return findFactoryOfTypeByName(myTypesByName.get(typeName), factoryName);
+    ConfigurationType type = myTypesByName.get(typeName);
+    if (type == null) {
+      type = myTypesByName.get(UnknownConfigurationType.NAME);
+    }
+
+    return findFactoryOfTypeByName(type, factoryName);
   }
 
   @Nullable
@@ -427,6 +457,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     for (final ConfigurationFactory factory : factories) {
       if (factoryName.equals(factory.getName())) return factory;
     }
+
+    if (type instanceof UnknownConfigurationType) {
+      return type.getConfigurationFactories()[0];
+    }
+
     return null;
   }
 

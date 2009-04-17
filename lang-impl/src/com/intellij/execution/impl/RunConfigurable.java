@@ -4,6 +4,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -23,9 +24,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.config.StorageAccessors;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -662,7 +663,7 @@ class RunConfigurable extends BaseConfigurable {
 
     public void actionPerformed(AnActionEvent e) {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final ConfigurationType[] configurationTypes = getRunManager().getConfigurationFactories();
+      final ConfigurationType[] configurationTypes = getRunManager().getConfigurationFactories(false);
       Arrays.sort(configurationTypes, new Comparator<ConfigurationType>() {
         public int compare(final ConfigurationType type1, final ConfigurationType type2) {
           return type1.getDisplayName().compareTo(type2.getDisplayName());
@@ -858,7 +859,8 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(getSelectedConfiguration() != null);
+      final SingleConfigurationConfigurable<RunConfiguration> configuration = getSelectedConfiguration();
+      e.getPresentation().setEnabled(configuration != null && !(configuration.getConfiguration() instanceof UnknownRunConfiguration));
     }
   }
 

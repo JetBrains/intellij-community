@@ -23,12 +23,18 @@ import java.util.*;
 public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, Cloneable, RunnerAndConfigurationSettings, Comparable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunnerAndConfigurationSettings");
 
-  @NonNls private static final String RUNNER_ELEMENT = "RunnerSettings";
-  @NonNls private static final String CONFIGURATION_ELEMENT = "ConfigurationWrapper";
-  @NonNls private static final String RUNNER_ID = "RunnerId";
-  @NonNls private static final String CONFIGURATION_TYPE_ATTRIBUTE = "type";
-  @NonNls private static final String FACTORY_NAME_ATTRIBUTE = "factoryName";
-  @NonNls private static final String TEMPLATE_FLAG_ATTRIBUTE = "default";
+  @NonNls
+  private static final String RUNNER_ELEMENT = "RunnerSettings";
+  @NonNls
+  private static final String CONFIGURATION_ELEMENT = "ConfigurationWrapper";
+  @NonNls
+  private static final String RUNNER_ID = "RunnerId";
+  @NonNls
+  private static final String CONFIGURATION_TYPE_ATTRIBUTE = "type";
+  @NonNls
+  private static final String FACTORY_NAME_ATTRIBUTE = "factoryName";
+  @NonNls
+  private static final String TEMPLATE_FLAG_ATTRIBUTE = "default";
 
   private final RunManagerImpl myManager;
   private RunConfiguration myConfiguration;
@@ -99,8 +105,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
     if (myIsTemplate) {
       myConfiguration = myManager.getConfigurationTemplate(factory).getConfiguration();
-    }
-    else {
+    } else {
       final String name = element.getAttributeValue(NAME_ATTR);
       // souldn't call createConfiguration since it calls StepBeforeRunProviders that
       // may not be loaded yet. This creates initialization order issue. 
@@ -111,7 +116,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     List runners = element.getChildren(RUNNER_ELEMENT);
     myUnloadedRunnerSettings = null;
     for (final Object runner1 : runners) {
-      Element runnerElement = (Element)runner1;
+      Element runnerElement = (Element) runner1;
       String id = runnerElement.getAttributeValue(RUNNER_ID);
       ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(id);
       if (runner != null) {
@@ -127,16 +132,17 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     List configurations = element.getChildren(CONFIGURATION_ELEMENT);
     myUnloadedConfigurationPerRunnerSettings = null;
     for (final Object configuration : configurations) {
-      Element configurationElement = (Element)configuration;
+      Element configurationElement = (Element) configuration;
       String id = configurationElement.getAttributeValue(RUNNER_ID);
       ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(id);
       if (runner != null) {
         ConfigurationPerRunnerSettings settings =
-          new ConfigurationPerRunnerSettings(id, myConfiguration.createRunnerSettings(new InfoProvider(runner)));
+            new ConfigurationPerRunnerSettings(id, myConfiguration.createRunnerSettings(new InfoProvider(runner)));
         settings.readExternal(configurationElement);
         myConfigurationPerRunnerSettings.put(runner, settings);
       } else {
-        if (myUnloadedConfigurationPerRunnerSettings == null) myUnloadedConfigurationPerRunnerSettings = new ArrayList<Element>(1);
+        if (myUnloadedConfigurationPerRunnerSettings == null)
+          myUnloadedConfigurationPerRunnerSettings = new ArrayList<Element>(1);
         myUnloadedConfigurationPerRunnerSettings.add(configurationElement);
       }
     }
@@ -145,21 +151,26 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   public void writeExternal(final Element element) throws WriteExternalException {
     final ConfigurationFactory factory = myConfiguration.getFactory();
 
-    element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, String.valueOf(myIsTemplate));
-    if (!myIsTemplate) {
-      element.setAttribute(NAME_ATTR, myConfiguration.getName());
+    if (!(myConfiguration instanceof UnknownRunConfiguration)) {
+      element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, String.valueOf(myIsTemplate));
+      if (!myIsTemplate) {
+        element.setAttribute(NAME_ATTR, myConfiguration.getName());
+      }
+      element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.getType().getId());
+      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
     }
-    element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.getType().getId());
-    element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
+
     myConfiguration.writeExternal(element);
 
+    if (!(myConfiguration instanceof UnknownRunConfiguration)) {
     final Comparator<Element> runnerComparator = createRunnerComparator();
-    writeRunnerSettings(runnerComparator, element);
-    writeConfigurationPerRunnerSettings(runnerComparator, element);
+      writeRunnerSettings(runnerComparator, element);
+      writeConfigurationPerRunnerSettings(runnerComparator, element);
+    }
   }
 
   private void writeConfigurationPerRunnerSettings(final Comparator<Element> runnerComparator, final Element element)
-    throws WriteExternalException {
+      throws WriteExternalException {
     final ArrayList<Element> configurationPerRunnerSettings = new ArrayList<Element>();
     for (ProgramRunner runner : myConfigurationPerRunnerSettings.keySet()) {
       ConfigurationPerRunnerSettings settings = myConfigurationPerRunnerSettings.get(runner);
@@ -170,7 +181,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     }
     if (myUnloadedConfigurationPerRunnerSettings != null) {
       for (Element unloadedCRunnerSetting : myUnloadedConfigurationPerRunnerSettings) {
-        configurationPerRunnerSettings.add((Element)unloadedCRunnerSetting.clone());
+        configurationPerRunnerSettings.add((Element) unloadedCRunnerSetting.clone());
       }
     }
     Collections.sort(configurationPerRunnerSettings, runnerComparator);
@@ -190,7 +201,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     }
     if (myUnloadedRunnerSettings != null) {
       for (Element unloadedRunnerSetting : myUnloadedRunnerSettings) {
-        runnerSettings.add((Element)unloadedRunnerSetting.clone());
+        runnerSettings.add((Element) unloadedRunnerSetting.clone());
       }
     }
     Collections.sort(runnerSettings, runnerComparator);
@@ -206,7 +217,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   public void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException {
     myConfiguration.checkConfiguration();
     if (myConfiguration instanceof RunConfigurationBase) {
-      final RunConfigurationBase runConfigurationBase = (RunConfigurationBase)myConfiguration;
+      final RunConfigurationBase runConfigurationBase = (RunConfigurationBase) myConfiguration;
       Set<ProgramRunner> runners = new HashSet<ProgramRunner>();
       runners.addAll(myRunnerSettings.keySet());
       runners.addAll(myConfigurationPerRunnerSettings.keySet());
@@ -276,7 +287,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
       for (ProgramRunner runner : template.myConfigurationPerRunnerSettings.keySet()) {
         ConfigurationPerRunnerSettings data =
-          new ConfigurationPerRunnerSettings(runner.getRunnerId(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
+            new ConfigurationPerRunnerSettings(runner.getRunnerId(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
         myConfigurationPerRunnerSettings.put(runner, data);
         Element temp = new Element(DUMMY_ELEMENT_NANE);
         template.myConfigurationPerRunnerSettings.get(runner).writeExternal(temp);
@@ -297,7 +308,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
   public int compareTo(final Object o) {
     if (o instanceof RunnerAndConfigurationSettings) {
-      return getName().compareTo(((RunnerAndConfigurationSettings)o).getName());
+      return getName().compareTo(((RunnerAndConfigurationSettings) o).getName());
     }
     return 0;
   }

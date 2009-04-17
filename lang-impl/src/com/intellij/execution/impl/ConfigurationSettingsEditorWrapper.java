@@ -2,6 +2,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.StepsBeforeRunProvider;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -50,7 +51,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     final StepsBeforeRunProvider[] providers = Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME,
                                                                         runConfiguration.getProject());
     myStepsPanel.removeAll();
-    if (providers.length == 0) {
+    if (providers.length == 0 || runConfiguration instanceof UnknownRunConfiguration) {
       myStepsPanel.setVisible(false);
     }
     else {
@@ -62,6 +63,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     }
 
     myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
+    myCbStoreProjectConfiguration.setEnabled(!(runConfiguration instanceof UnknownRunConfiguration));
     myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
     myCbStoreProjectConfiguration.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

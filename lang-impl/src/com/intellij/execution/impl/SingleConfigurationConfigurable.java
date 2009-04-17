@@ -1,10 +1,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
@@ -40,6 +37,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final String myDisplayName;
   private final String myHelpTopic;
   private final Icon myIcon;
+  private boolean myBrokenConfiguration;
 
   private SingleConfigurationConfigurable(RunnerAndConfigurationSettingsImpl settings) {
     super(new ConfigurationSettingsEditorWrapper(settings), settings);
@@ -48,6 +46,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myDisplayName = getSettings().getName();
     myHelpTopic = null; //TODO
     myIcon = configuration.getType().getIcon();
+
+    myBrokenConfiguration = configuration instanceof UnknownRunConfiguration;
 
     setNameText(configuration.getName());
     myNameDocument.addDocumentListener(new DocumentAdapter() {
@@ -85,6 +85,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   public final JComponent createComponent() {
     if (myComponent == null) {
       myComponent = new MyValidatableComponent();
+      myComponent.myNameText.setEnabled(!myBrokenConfiguration);
     }
     return myComponent.getWholePanel();
   }
