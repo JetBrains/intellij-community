@@ -37,7 +37,7 @@ class PrimitiveValueBinding implements Binding {
     assert nodes != null;
 
     if (nodes.length == 0) {
-      return XmlSerializerImpl.convert("", myType);
+      return convertString("");
     }
 
     String value;
@@ -49,6 +49,11 @@ class PrimitiveValueBinding implements Binding {
       value = JDOMUtil.getValue(nodes[0]);
     }
 
+    return convertString(value);
+  }
+
+  @Nullable
+  protected Object convertString(String value) {
     return XmlSerializerImpl.convert(value, myType);
   }
 

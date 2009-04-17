@@ -104,6 +104,7 @@ class XmlSerializerImpl {
     if (Collection.class.isAssignableFrom(aClass)) return new CollectionBinding((ParameterizedType)originalType, this, accessor);
     if (Map.class.isAssignableFrom(aClass)) return new MapBinding((ParameterizedType)originalType, this, accessor);
     if (Element.class.isAssignableFrom(aClass)) return new JDOMElementBinding(accessor);
+    if (Date.class.isAssignableFrom(aClass)) return new DateBinding();
     if (aClass.isEnum()) return new PrimitiveValueBinding(aClass);
 
     return new BeanBinding(aClass, this, accessor);
