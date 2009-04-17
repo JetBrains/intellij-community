@@ -15,6 +15,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -278,6 +280,9 @@ public abstract class PassExecutorService {
                   myPass.collectInformation(myUpdateProgress);
                 }
               }
+              catch (IndexNotReadyException e) {
+                log(myUpdateProgress, myPass, "Index not ready ");
+              }
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, myPass, "Canceled ");
                 myUpdateProgress.cancel(); //for the case then some smartasses throw PCE just for fun
@@ -321,7 +326,7 @@ public abstract class PassExecutorService {
       });
     }
     else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
         public void run() {
           doApplyInformationToEditors(updateProgress, pass, fileEditors, threadsToStartCountdown, false);
         }

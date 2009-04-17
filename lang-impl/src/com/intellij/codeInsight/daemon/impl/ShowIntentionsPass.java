@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.IntentionFilterOwner;
@@ -160,10 +161,15 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset = editor.getCaretModel().getOffset();
     Project project = psiFile.getProject();
     for (IntentionAction action : IntentionManager.getInstance().getIntentionActions()) {
-      if (action instanceof PsiElementBaseIntentionAction) {
-        if (!isInProject || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) continue;
+      try {
+        if (action instanceof PsiElementBaseIntentionAction) {
+          if (!isInProject || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) continue;
+        }
+        else if (!action.isAvailable(project, editor, psiFile)) {
+          continue;
+        }
       }
-      else if (!action.isAvailable(project, editor, psiFile)) {
+      catch (IndexNotReadyException e) {
         continue;
       }
       List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();

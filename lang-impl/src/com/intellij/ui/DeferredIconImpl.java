@@ -7,6 +7,7 @@ import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.openapi.project.IndexNotReadyException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,6 +18,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private volatile boolean myIsScheduled = false;
   private final T myParam;
   private Component myLastTarget = null;
+  private static final EmptyIcon EMPTY_ICON = new EmptyIcon(16, 16);
 
   public DeferredIconImpl(Icon baseIcon, T param, Function<T, Icon> evaluator) {
     myParam = param;
@@ -25,7 +27,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
   private static Icon nonNull(final Icon icon) {
-    return icon != null ? icon : new EmptyIcon(16, 16);
+    return icon != null ? icon : EMPTY_ICON;
   }
 
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
@@ -79,7 +81,12 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     final Icon[] evaluated = new Icon[1];
     IconDeferrerImpl.evaluateDeferred(new Runnable() {
       public void run() {
-        evaluated[0] = nonNull(myEvaluator.fun(myParam));
+        try {
+          evaluated[0] = nonNull(myEvaluator.fun(myParam));
+        }
+        catch (IndexNotReadyException e) {
+          evaluated[0] = EMPTY_ICON;
+        }
       }
     });
 

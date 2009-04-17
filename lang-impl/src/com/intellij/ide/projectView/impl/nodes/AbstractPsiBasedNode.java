@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -115,13 +116,25 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       flags |= Iconable.ICON_FLAG_READ_STATUS;
     }
 
-    Icon icon = value.getIcon(flags);
-    data.setClosedIcon(icon);
-    data.setOpenIcon(icon);
+    try {
+      Icon icon = value.getIcon(flags);
+      data.setClosedIcon(icon);
+      data.setOpenIcon(icon);
+    }
+    catch (IndexNotReadyException ignored) {
+    }
     data.setPresentableText(myName);
-    data.setTooltip(calcTooltip());
-    if (isDeprecated()) {
-      data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    try {
+      data.setTooltip(calcTooltip());
+    }
+    catch (IndexNotReadyException ignored) {
+    }
+    try {
+      if (isDeprecated()) {
+        data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+      }
+    }
+    catch (IndexNotReadyException ignored) {
     }
     updateImpl(data);
   }

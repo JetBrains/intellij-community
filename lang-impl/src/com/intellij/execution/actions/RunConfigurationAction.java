@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class RunConfigurationAction extends ComboBoxAction {
+public class RunConfigurationAction extends ComboBoxAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.RunConfigurationAction");
   private static final Key<ComboBoxAction.ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
 
@@ -43,20 +45,25 @@ public class RunConfigurationAction extends ComboBoxAction {
       return;
     }
 
-    if (project == null || project.isDisposed()) {
-      //if (ProjectManager.getInstance().getOpenProjects().length > 0) {
-      //  // do nothing if frame is not active
-      //  return;
-      //}
+    try {
+      if (project == null || project.isDisposed()) {
+        //if (ProjectManager.getInstance().getOpenProjects().length > 0) {
+        //  // do nothing if frame is not active
+        //  return;
+        //}
 
-      updateButton(null, null, presentation);
-      presentation.setEnabled(false);
+        updateButton(null, null, presentation);
+        presentation.setEnabled(false);
+      }
+      else {
+        final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
+        RunnerAndConfigurationSettings selected = runManager.getSelectedConfiguration();
+        updateButton(selected, project, presentation);
+        presentation.setEnabled(true);
+      }
     }
-    else {
-      final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-      RunnerAndConfigurationSettings selected = runManager.getSelectedConfiguration();
-      updateButton(selected, project, presentation);
-      presentation.setEnabled(true);
+    catch (IndexNotReadyException e1) {
+      presentation.setEnabled(false);
     }
   }
 
@@ -73,7 +80,11 @@ public class RunConfigurationAction extends ComboBoxAction {
   }
 
   private static void setConfigurationIcon(final Presentation presentation, final RunnerAndConfigurationSettings settings, final Project project) {
-    presentation.setIcon(ExecutionUtil.getConfigurationIcon(project, settings));
+    try {
+      presentation.setIcon(ExecutionUtil.getConfigurationIcon(project, settings));
+    }
+    catch (IndexNotReadyException ignored) {
+    }
   }
 
   public JComponent createCustomComponent(final Presentation presentation) {
