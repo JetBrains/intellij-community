@@ -4,7 +4,7 @@
     <file>NonSerializableWithSerializationMethods.java</file>
     <line>16</line>
     <problem_class>Non-serializable class with 'readObject()' or 'writeObject()'</problem_class>
-    <description>Non-serializable anonymous class extending &amp;lt;code&amp;gt;Object&amp;lt;/code&amp;gt; defines readObject() #loc</description>
+    <description>Non-serializable anonymous class extending &lt;code&gt;Object&lt;/code&gt; defines readObject() #loc</description>
   </problem>
 
   <problem>
