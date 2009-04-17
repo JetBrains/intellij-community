@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ConcurrencyUtil;
@@ -76,7 +77,7 @@ public class RefreshQueueImpl extends RefreshQueue {
         }
         finally {
           final Application app = ApplicationManager.getApplication();
-          app.invokeLater(new Runnable() {
+          app.invokeLater(new DumbAwareRunnable() {
             public void run() {
               if (app.isDisposed()) return;
               app.runWriteAction(new Runnable() {

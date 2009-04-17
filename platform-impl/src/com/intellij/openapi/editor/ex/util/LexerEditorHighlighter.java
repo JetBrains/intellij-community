@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -288,7 +289,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     processor.finish();
 
     if(myEditor != null) {
-      Runnable repaint = new Runnable() {
+      Runnable repaint = new DumbAwareRunnable() {
         public void run() {
           myEditor.repaint(0, text.length());
         }
