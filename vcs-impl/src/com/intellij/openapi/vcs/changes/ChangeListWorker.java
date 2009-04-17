@@ -125,26 +125,26 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String description) {
-    return addChangeList(name, description, false);
+    return addChangeList(null, name, description, false);
   }
 
-  LocalChangeList addChangeList(@NotNull final String name, @Nullable final String description, final boolean inUpdate) {
+  LocalChangeList addChangeList(String id, @NotNull final String name, @Nullable final String description, final boolean inUpdate) {
     final boolean contains = myMap.containsKey(name);
     LOG.assertTrue(! contains, "Attempt to create duplicate changelist " + name);
-    if (! contains) {
-      final LocalChangeListImpl newList = (LocalChangeListImpl) LocalChangeList.createEmptyChangeList(myProject, name);
+    final LocalChangeListImpl newList = (LocalChangeListImpl) LocalChangeList.createEmptyChangeList(myProject, name);
 
-      if (description != null) {
-        newList.setCommentImpl(description);
-      }
-      myMap.put(name, newList);
-      if (inUpdate) {
-        // scope is not important: nothing had been added jet, nothing to move to "old state" members
-        newList.startProcessingChanges(myProject, null);
-      }
-      return newList.copy();
+    if (description != null) {
+      newList.setCommentImpl(description);
     }
-    return null;
+    if (id != null) {
+      newList.setId(id);
+    }
+    myMap.put(name, newList);
+    if (inUpdate) {
+      // scope is not important: nothing had been added jet, nothing to move to "old state" members
+      newList.startProcessingChanges(myProject, null);
+    }
+    return newList.copy();
   }
 
   public boolean addChangeToList(@NotNull final String name, final Change change) {
@@ -567,7 +567,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     }
 
     public LocalChangeList addChangeList(final String name, final String comment) {
-      return myWorker.addChangeList(name, comment, true);
+      return myWorker.addChangeList(null, name, comment, true);
     }
 
     public LocalChangeList findOrCreateList(final String name, final String comment) {

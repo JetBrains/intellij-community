@@ -50,10 +50,7 @@ class ChangeListManagerSerialization {
     final String changeListName = listNode.getAttributeValue(ATT_NAME);
     LocalChangeList list = myWorker.getCopyByName(changeListName);
     if (list == null) {
-      list = myWorker.addChangeList(changeListName, listNode.getAttributeValue(ATT_COMMENT));
-      if (list instanceof LocalChangeListImpl) {
-        ((LocalChangeListImpl)list).setId(listNode.getAttributeValue(ATT_ID));
-      }
+      list = myWorker.addChangeList(listNode.getAttributeValue(ATT_ID), changeListName, listNode.getAttributeValue(ATT_COMMENT), false);
     }
     //noinspection unchecked
     final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
