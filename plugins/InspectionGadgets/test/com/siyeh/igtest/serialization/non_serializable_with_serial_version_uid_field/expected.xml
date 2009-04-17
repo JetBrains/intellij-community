@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>NonSerializableWithSerialVersionUIDField.java</file>
+    <line>5</line>
+    <problem_class>Non-serializable class with 'serialVersionUID'</problem_class>
+    <description>Non-serializable class &lt;code&gt;NonSerializableWithSerialVersionUIDField&lt;/code&gt; defines a 'serialVersionUID' field #loc</description>
+  </problem>
+
+  <problem>
+    <file>NonSerializableWithSerialVersionUIDField.java</file>
+    <line>10</line>
+    <problem_class>Non-serializable class with 'serialVersionUID'</problem_class>
+    <description>Non-serializable anonymous class extending &lt;code&gt;Object&lt;/code&gt; defines a 'serialVersionUID' field #loc</description>
+  </problem>
+
+  <problem>
+    <file>NonSerializableWithSerialVersionUIDField.java</file>
+    <line>15</line>
+    <problem_class>Non-serializable class with 'serialVersionUID'</problem_class>
+    <description>Non-serializable @interface &lt;code&gt;X&lt;/code&gt; defines a 'serialVersionUID' field #loc</description>
+  </problem>
+
+  <problem>
+    <file>NonSerializableWithSerialVersionUIDField.java</file>
+    <line>18</line>
+    <problem_class>Non-serializable class with 'serialVersionUID'</problem_class>
+    <description>Non-serializable interface &lt;code&gt;Y&lt;/code&gt; defines a 'serialVersionUID' field #loc</description>
+  </problem>
+</problems>

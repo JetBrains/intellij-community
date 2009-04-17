@@ -1,4 +1,4 @@
-package com.siyeh.igtest.serialization;
+package com.siyeh.igtest.serialization.non_serializable_with_serialization_methods;
 
 import java.io.*;
 
@@ -13,6 +13,8 @@ public class NonSerializableWithSerializationMethods
 
     private void writeObject(ObjectOutputStream str)
     {
-
+        new Object() {
+            void readObject(ObjectInputStream x) {}
+        };
     }
 }

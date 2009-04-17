@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -33,32 +34,48 @@ import org.jetbrains.annotations.NotNull;
 public class NonSerializableWithSerialVersionUIDFieldInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "NonSerializableClassWithSerialVersionUID";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.serializable.with.serialversionuid.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.serializable.with.serialversionuid.problem.descriptor");
+        final PsiClass aClass = (PsiClass)infos[0];
+        if (aClass.isAnnotationType()) {
+            return InspectionGadgetsBundle.message(
+                    "non.serializable.@interface.with.serialversionuid.problem.descriptor");
+        } else if (aClass.isInterface()) {
+            return InspectionGadgetsBundle.message(
+                    "non.serializable.interface.with.serialversionuid.problem.descriptor");
+        } else if (aClass instanceof PsiAnonymousClass) {
+            return InspectionGadgetsBundle.message(
+                    "non.serializable.anonymous.with.serialversionuid.problem.descriptor");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "non.serializable.class.with.serialversionuid.problem.descriptor");
+        }
     }
 
+    @Override
     @NotNull
     protected InspectionGadgetsFix[] buildFixes(Object... infos){
+        final PsiClass aClass = (PsiClass)infos[0];
+        if (aClass.isAnnotationType() || aClass.isInterface() ||
+                aClass instanceof PsiAnonymousClass) {
+            return new InspectionGadgetsFix[]{new RemoveSerialVersionUIDFix()};
+        }
         return new InspectionGadgetsFix[]{new MakeSerializableFix(),
                                           new RemoveSerialVersionUIDFix()};
-    }
-
-    private static boolean isSerialVersionUID(PsiField field) {
-        final String fieldName = field.getName();
-        return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName);
     }
 
     private static class RemoveSerialVersionUIDFix extends InspectionGadgetsFix{
@@ -69,20 +86,21 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
                     "non.serializable.with.serialversionuid.remove.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement nameElement = descriptor.getPsiElement();
             final PsiClass aClass = (PsiClass)nameElement.getParent();
-            final PsiField[] fields = aClass.getFields();
-            for (PsiField field : fields) {
-                if (isSerialVersionUID(field)) {
-                    field.delete();
-                    return;
-                }
+            final PsiField field = aClass.findFieldByName(
+                    HardcodedMethodConstants.SERIAL_VERSION_UID, false);
+            if (field == null) {
+                return;
             }
+            field.delete();
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NonSerializableWithSerialVersionUIDVisitor();
     }
@@ -92,23 +110,15 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            final PsiField[] fields = aClass.getFields();
-            boolean hasSerialVersionUID = false;
-            for(final PsiField field : fields){
-                if(isSerialVersionUID(field)){
-                    hasSerialVersionUID = true;
-                }
-            }
-            if (!hasSerialVersionUID) {
+            final PsiField field = aClass.findFieldByName(
+                    HardcodedMethodConstants.SERIAL_VERSION_UID, false);
+            if (field == null) {
                 return;
             }
             if(SerializationUtils.isSerializable(aClass)){
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, aClass);
         }
     }
 }
