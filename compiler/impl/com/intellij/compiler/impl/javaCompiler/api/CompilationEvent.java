@@ -1,6 +1,7 @@
 package com.intellij.compiler.impl.javaCompiler.api;
 
 import com.intellij.compiler.OutputParser;
+import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -36,7 +37,7 @@ abstract class CompilationEvent {
       protected void process(OutputParser.Callback callback) {
         showProgressFor("Writing ", uri, callback);
         File file = new File(uri);
-        callback.fileGenerated(new com.intellij.compiler.impl.javaCompiler.FileObject(file,bytes));
+        callback.fileGenerated(new FileObject(file,bytes));
       }
     };
   }
@@ -46,7 +47,19 @@ abstract class CompilationEvent {
       protected void process(OutputParser.Callback callback) {
         JavaFileObject fileObject = diagnostic.getSource();
         String message = diagnostic.getMessage(null);
-        String url = fileObject == null ? null : VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(new File(fileObject.toUri()).getPath()));
+        String url;
+        if (fileObject == null) {
+          url = null;
+        }
+        else {
+          URI uri = fileObject.toUri();
+          if (uri.getScheme().equals("file")) {
+            url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(new File(uri).getPath()));
+          }
+          else {
+            url = fileObject.toString();
+          }
+        }
 
         CompilerMessageCategory category = diagnostic.getKind() == Diagnostic.Kind.ERROR
                                            ? CompilerMessageCategory.ERROR

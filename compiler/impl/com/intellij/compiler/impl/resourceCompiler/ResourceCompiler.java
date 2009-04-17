@@ -23,7 +23,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -86,23 +85,17 @@ public class ResourceCompiler implements TranslatingCompiler {
           }
           final String packagePrefix = fileIndex.getPackageNameByDirectory(fileRoot);
           final String targetPath;
-          final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-          try {
-            if (packagePrefix != null && packagePrefix.length() > 0) {
-              targetPath = builder.append(outputPath).append("/").append(packagePrefix.replace('.', '/')).append("/").append(relativePath).toString();
-            }
-            else {
-              targetPath = builder.append(outputPath).append("/").append(relativePath).toString();
-            }
-          }
-          finally {
-            StringBuilderSpinAllocator.dispose(builder);
-          }
-          if (!sourcePath.equals(targetPath)) {
-            copyCommands.add(new CopyCommand(outputPath, sourcePath, targetPath, file));
+          if (packagePrefix != null && packagePrefix.length() > 0) {
+            targetPath = outputPath+"/"+packagePrefix.replace('.', '/')+"/"+relativePath;
           }
           else {
+            targetPath = outputPath+"/"+relativePath;
+          }
+          if (sourcePath.equals(targetPath)) {
             processed.add(new MyOutputItem(outputPath, targetPath, file));
+          }
+          else {
+            copyCommands.add(new CopyCommand(outputPath, sourcePath, targetPath, file));
           }
         }
       }
@@ -116,7 +109,7 @@ public class ResourceCompiler implements TranslatingCompiler {
         break;
       }
       context.getProgressIndicator().setFraction(i * 1.0 / copyCommands.size());
-      context.getProgressIndicator().setText2("Copying "+command.getToPath()+"...");
+      context.getProgressIndicator().setText2("Copying "+command.getFromPath()+"...");
       try {
         final MyOutputItem outputItem = command.copy(filesToRefresh);
         processed.add(outputItem);

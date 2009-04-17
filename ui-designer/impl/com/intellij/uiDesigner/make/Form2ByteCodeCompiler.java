@@ -249,6 +249,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
     final ArrayList<ProcessingItem> compiledItems = new ArrayList<ProcessingItem>();
 
+    context.getProgressIndicator().pushState();
     context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));
 
     final HashMap<Module, ArrayList<MyInstrumentationItem>> module2itemsList = sortByModules(items);
@@ -285,8 +286,8 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         context.getProgressIndicator().setFraction((double)++formsProcessed / (double)items.length);
         
         final VirtualFile formFile = item.getFormFile();
+        context.getProgressIndicator().setText2(formFile.getPresentableUrl());
 
-        
         final Document doc = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
           public Document compute() {
             if (!belongsToCompileScope(context, formFile, item.getClassToBindFQname())) {
@@ -332,8 +333,9 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         }
       }
     }
+    context.getProgressIndicator().popState();
 
-    return compiledItems.toArray(new FileProcessingCompiler.ProcessingItem[compiledItems.size()]);
+    return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);
   }
 
   private void addMessage(final CompileContext context,
@@ -386,7 +388,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     private final String myClassToBindFQname;
     private final TimestampValidityState myState;
 
-    public MyInstrumentationItem(final VirtualFile classFile, final VirtualFile formFile, final String classToBindFQname) {
+    private MyInstrumentationItem(final VirtualFile classFile, final VirtualFile formFile, final String classToBindFQname) {
       myClassFile = classFile;
       myFormFile = formFile;
       myClassToBindFQname = classToBindFQname;

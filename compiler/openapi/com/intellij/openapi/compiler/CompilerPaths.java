@@ -92,7 +92,7 @@ public class CompilerPaths {
     }
 
     final int lastSlash = projectName.lastIndexOf('/');
-    if (lastSlash >= 0 && (lastSlash + 1) < projectName.length()) {
+    if (lastSlash >= 0 && lastSlash + 1 < projectName.length()) {
       projectName = projectName.substring(lastSlash + 1);
     }
 
@@ -154,13 +154,13 @@ public class CompilerPaths {
     if (forTestClasses) {
       if (application.isDispatchThread()) {
         final String url = extension.getCompilerOutputUrlForTests();
-        outPathUrl = (url != null) ? url : extension.getCompilerOutputUrl();
+        outPathUrl = url != null ? url : extension.getCompilerOutputUrl();
       }
       else {
         outPathUrl = application.runReadAction(new Computable<String>() {
           public String compute() {
             final String url = extension.getCompilerOutputUrlForTests();
-            return (url != null) ? url : extension.getCompilerOutputUrl();
+            return url != null ? url : extension.getCompilerOutputUrl();
           }
         });
       }
