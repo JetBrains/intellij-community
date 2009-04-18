@@ -145,7 +145,7 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
       case TEST_CLASS:
         return "Tests in " + myClassName;
       case TEST_METHOD:
-        return "Tests in " + myClassName + "." + myMethodName;
+        return "Test " + myClassName + "." + myMethodName;
       case TEST_SCRIPT:
         return "Tests in " + myScriptName;
       case TEST_FOLDER:

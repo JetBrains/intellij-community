@@ -42,6 +42,7 @@
 
     <configurationType implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationProducer"/>
+    <testSrcLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
 
     <applicationService serviceInterface="com.jetbrains.python.JythonManager"
                         serviceImplementation="com.jetbrains.python.JythonManager"/>
