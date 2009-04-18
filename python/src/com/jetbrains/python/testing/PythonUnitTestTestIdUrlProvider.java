@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,7 +52,7 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
     for (PyClass cls : getClassesByName(project, className)) {
       ProgressManager.getInstance().checkCanceled();
 
-      final PyFunction method = cls.findMethodByName(methodName);
+      final PyFunction method = locateMethodInHierarchy(cls, methodName);
       if (method == null) {
         continue;
       }
@@ -65,6 +66,23 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
     }
 
     return locations;
+  }
+
+  @Nullable
+  private static PyFunction locateMethodInHierarchy(final PyClass cls, final String methodName) {
+    PyFunction func = cls.findMethodByName(methodName);
+    if (func != null) {
+      return func;
+    }
+
+    for (PyClass ancestors : cls.iterateAncestors()) {
+      func = ancestors.findMethodByName(methodName);
+      if (func != null) {
+        return func;
+      }
+    }
+
+    return null;
   }
 
   private static Collection<PyClass> getClassesByName(final Project project, final String name) {
