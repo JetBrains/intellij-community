@@ -24,8 +24,6 @@ class TeamcityTestResult(TestResult):
     def addSuccess(self, test):
         TestResult.addSuccess(self, test)
         
-        # self.output.write("ok\n")
-        
     def addError(self, test, err):
         TestResult.addError(self, test, err)
         

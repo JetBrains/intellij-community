@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -18,6 +19,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -35,12 +38,10 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration imple
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    CommandLineState state = new PythonCommandLineState(this, env);
-    
-    TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getProject());
-    consoleBuilder.addFilter(new PythonTracebackFilter(getProject()));
-    state.setConsoleBuilder(consoleBuilder);
-    return state;
+    List<Filter> filters = new ArrayList<Filter>();
+    filters.add(new PythonTracebackFilter(getProject(), getWorkingDirectory()));
+
+    return new PythonCommandLineState(this, env, filters);
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {

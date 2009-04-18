@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
@@ -30,6 +31,7 @@ import java.util.Map;
  */
 public class PythonUnitTestCommandLineState extends CommandLineState {
   private PythonUnitTestRunConfiguration myConfig;
+  private final List<Filter> myFilters;
   private static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
   private static final String PYTHONPATH = "PYTHONPATH";
   private static final String UTRUNNER_PY = "pycharm/utrunner.py";
@@ -38,9 +40,10 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
     return myConfig;
   }
 
-  public PythonUnitTestCommandLineState(PythonUnitTestRunConfiguration runConfiguration, ExecutionEnvironment env) {
+  public PythonUnitTestCommandLineState(PythonUnitTestRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
     super(env);
     myConfig = runConfiguration;
+    myFilters = filters;
   }
 
   @Override
@@ -92,7 +95,7 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
 
   private List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();
-    
+
     switch (myConfig.getTestType()) {
       case TEST_SCRIPT:
         specs.add(myConfig.getScriptName());
@@ -122,6 +125,10 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
 
   @NotNull
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler) throws ExecutionException {
-    return SMTestRunnerConnectionUtil.attachRunner(project, processHandler, this, getConfig(), "PythonUnitTestRunner.Splitter.Proportion");
+    final ConsoleView consoleView = SMTestRunnerConnectionUtil.attachRunner(project, processHandler, this, getConfig(), "PythonUnitTestRunner.Splitter.Proportion");
+    for (Filter filter : myFilters) {
+      consoleView.addMessageFilter(filter);
+    }
+    return consoleView;
   }
 }

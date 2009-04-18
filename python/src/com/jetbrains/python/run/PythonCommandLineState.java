@@ -13,25 +13,30 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Leonid Shalupov
  */
 public class PythonCommandLineState extends CommandLineState {
   private PythonRunConfiguration myConfig;
+  private final List<Filter> myFilters;
 
   public PythonRunConfiguration getConfig() {
     return myConfig;
   }
 
-  public PythonCommandLineState(PythonRunConfiguration runConfiguration, ExecutionEnvironment env) {
+  public PythonCommandLineState(PythonRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
     super(env);
     myConfig = runConfiguration;
+    myFilters = filters;
   }
 
   @Override
@@ -46,6 +51,10 @@ public class PythonCommandLineState extends CommandLineState {
   @NotNull
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler) throws ExecutionException {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+    for (Filter filter : myFilters) {
+      consoleBuilder.addFilter(filter);
+    }
+    
     final ConsoleView consoleView = consoleBuilder.getConsole();
     consoleView.attachToProcess(processHandler);
     return consoleView;
