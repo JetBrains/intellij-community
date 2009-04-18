@@ -107,7 +107,8 @@ public class PythonUnitTestCommandLineState extends CommandLineState {
         specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
         break;
       case TEST_FOLDER:
-        throw new RuntimeException("No support for folders yet"); // TODO
+        specs.add(myConfig.getFolderName() + "/");
+        break;
       default:
         throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());
     }

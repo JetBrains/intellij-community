@@ -46,7 +46,11 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
 
     final String className = list.get(listSize - 2);
     final String methodName = list.get(listSize - 1);
-    final String fileName = list.get(listSize - 3);
+
+    String fileName = list.get(listSize - 3);
+    if (fileName.indexOf("%") >= 0) {
+      fileName = fileName.substring(0, fileName.lastIndexOf("%"));
+    }
 
     final List<Location> locations = new ArrayList<Location>();
     for (PyClass cls : getClassesByName(project, className)) {
