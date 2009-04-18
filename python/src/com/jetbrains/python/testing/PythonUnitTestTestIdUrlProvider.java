@@ -1,29 +1,25 @@
 package com.jetbrains.python.testing;
 
-import com.intellij.testIntegration.TestLocationProvider;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.StubIndex;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.intellij.psi.stubs.StubIndex;
+import com.intellij.testIntegration.TestLocationProvider;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Collections;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
   @NonNls
@@ -42,7 +38,7 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
     }
     final int listSize = list.size();
 
-    // parse path as ns.[ns.]*className.methodName
+    // parse path as [ns.]*fileName.className.methodName
     if (listSize < 3) {
       return Collections.emptyList();
     }
