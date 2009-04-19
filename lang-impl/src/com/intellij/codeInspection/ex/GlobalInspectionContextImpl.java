@@ -369,12 +369,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public boolean isToCheckMember(final PsiElement element, final InspectionTool tool) {
     if (RUN_WITH_EDITOR_PROFILE) {
-      final InspectionProfile inspectionProfile =
-        InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
       final Set<Pair<InspectionTool, NamedScope>> tools = myTools.get(tool.getShortName());
-      for (Pair<InspectionTool, NamedScope> inspectionProfilePair : tools) {
-        if (inspectionProfilePair.second.getValue().contains(element.getContainingFile(), getCurrentProfile().getProfileManager().getScopesManager())) {
-          return inspectionProfilePair.first == tool;
+      for (Pair<InspectionTool, NamedScope> pair : tools) {
+        if (pair.second != null && pair.second.getValue().contains(element.getContainingFile(), getCurrentProfile().getProfileManager().getScopesManager())) {
+          return pair.first == tool;
         }
       }
       return false;
