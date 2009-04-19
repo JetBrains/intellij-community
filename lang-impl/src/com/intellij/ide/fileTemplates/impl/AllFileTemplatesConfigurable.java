@@ -76,7 +76,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   }
 
   private void onAdd() {
-    createTemplate(IdeBundle.message("template.unnamed"), "java", "");
+    String ext = "java";
+    final FileTemplateDefaultExtension[] defaultExtensions = Extensions.getExtensions(FileTemplateDefaultExtension.EP_NAME);
+    if (defaultExtensions.length > 0) {
+      ext = defaultExtensions [0].value;
+    }
+    createTemplate(IdeBundle.message("template.unnamed"), ext, "");
   }
 
   private FileTemplate createTemplate(String prefName, @NonNls String extension, String content) {

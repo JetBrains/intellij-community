@@ -369,4 +369,6 @@
 
   <extensionPoint name="refactoring.elementListenerProvider" interface="com.intellij.refactoring.listeners.RefactoringElementListenerProvider"
                   area="IDEA_PROJECT"/>
+
+  <extensionPoint name="fileTemplateDefaultExtension" beanClass="com.intellij.ide.fileTemplates.FileTemplateDefaultExtension"/>
 </extensionPoints>
