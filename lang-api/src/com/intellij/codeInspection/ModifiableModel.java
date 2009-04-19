@@ -38,9 +38,9 @@ public interface ModifiableModel extends Profile {
 
   void setBaseProfile(InspectionProfile profile);
 
-  void enableTool(String inspectionTool);
+  void enableTool(String inspectionTool, NamedScope namedScope);
 
-  void disableTool(String inspectionTool);
+  void disableTool(String inspectionTool, NamedScope namedScope);
 
   void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level);
 
@@ -79,4 +79,8 @@ public interface ModifiableModel extends Profile {
   void lockProfile(boolean isLocked);
 
   List<Pair<InspectionProfileEntry,NamedScope>> getAllEnabledInspectionTools();
+
+  void disableTool(String toolId, PsiElement element);
+
+  void enableTool(String toolId, PsiElement element);
 }

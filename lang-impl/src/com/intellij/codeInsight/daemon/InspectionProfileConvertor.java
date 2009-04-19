@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -156,7 +157,7 @@ public class InspectionProfileConvertor {
 
       //set up tools for default profile
       if (level != HighlightDisplayLevel.DO_NOT_SHOW) {
-        profile.enableTool(shortName);
+        profile.enableTool(shortName, (NamedScope)null);
       }
 
       if (level == null || level == HighlightDisplayLevel.DO_NOT_SHOW) {

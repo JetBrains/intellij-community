@@ -491,6 +491,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return result;
   }
 
+  public void disableTool(String toolId, PsiElement element) {
+    getToolState(toolId).disableTool(element);
+  }
+
+  public void enableTool(String toolId, PsiElement element) {
+    getToolState(toolId).enableTool(element);
+  }
+
   public boolean wasInitialized() {
     return myInitialized.get();
   }
@@ -599,10 +607,18 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     setState(inspectionTool, new ToolState(getErrorLevel(HighlightDisplayKey.find(inspectionTool), (NamedScope)null), true));
   }
 
+  public void enableTool(String inspectionTool, NamedScope namedScope) {
+    getToolState(inspectionTool).enableTool(namedScope);
+  }
+
+  public void disableTool(String inspectionTool, NamedScope namedScope) {
+    getToolState(inspectionTool).disableTool(namedScope);
+  }
+
+
   public void disableTool(String inspectionTool) {
     setState(inspectionTool, new ToolState(getErrorLevel(HighlightDisplayKey.find(inspectionTool), (NamedScope)null), false));
   }
-
 
   public void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level) {
     setState(key.toString(), new ToolState(level, isToolEnabled(key)));
@@ -628,7 +644,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public boolean isToolEnabled(HighlightDisplayKey key) {
-    return isToolEnabled(key, null);
+    return isToolEnabled(key, (PsiElement)null);
   }
 
   public boolean isExecutable() {
@@ -781,5 +797,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     final List<Pair< NamedScope, InspectionTool>> result = new ArrayList<Pair<NamedScope, InspectionTool>>();
     result.addAll(myTools.get(shortName).getTools());
     return result;
+  }
+
+  public boolean isToolEnabled(HighlightDisplayKey key, NamedScope namedScope) {
+    return getToolState(key.toString()).isEnabled(namedScope);
   }
 }

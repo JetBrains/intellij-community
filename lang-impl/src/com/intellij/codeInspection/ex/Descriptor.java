@@ -45,7 +45,7 @@ public class Descriptor {
     myGroup = tool.getGroupDisplayName().length() == 0 ? InspectionProfileEntry.GENERAL_GROUP_NAME : tool.getGroupDisplayName();
     myKey = HighlightDisplayKey.find(tool.getShortName());
     myLevel = ((InspectionProfileImpl)inspectionProfile).getErrorLevel(myKey, pair.first);
-    myEnabled = inspectionProfile.isToolEnabled(myKey);
+    myEnabled = ((InspectionProfileImpl)inspectionProfile).isToolEnabled(myKey, pair.first);
     myTool = tool;
     myScope = pair.first;
   }

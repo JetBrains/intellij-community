@@ -48,7 +48,7 @@ public class DisableInspectionToolAction implements IntentionAction {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(file.getProject());
     InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
     ModifiableModel model = inspectionProfile.getModifiableModel();
-    model.disableTool(myToolId);
+    model.disableTool(myToolId, file);
     try {
       model.commit();
     }

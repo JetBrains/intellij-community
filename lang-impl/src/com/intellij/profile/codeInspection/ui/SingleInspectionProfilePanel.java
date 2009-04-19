@@ -248,7 +248,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       if (initValue == -1) {
         final InspectionProfileEntry[] profileEntries = profileModifiableModel.getInspectionTools(null);
         for (InspectionProfileEntry entry : profileEntries) {
-          profileModifiableModel.disableTool(entry.getShortName());
+          profileModifiableModel.disableTool(entry.getShortName(), (NamedScope)null);
         }
       }
       else if (initValue == 1) {
@@ -555,6 +555,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
         mySelectedProfile.disableTool(toolShortName);
       }
       toolNode.isProperSetting = mySelectedProfile.isProperSetting(key);
+      updateUpHierarchy(toolNode, (MyTreeNode)toolNode.getParent());
     }
     final TreePath path = new TreePath(toolNode.getPath());
     if (Comparing.equal(myTree.getSelectionPath(), path)) {
@@ -674,8 +675,8 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
         final Descriptor descriptor1 = o1.getDesriptor();
         final Descriptor descriptor2 = o2.getDesriptor();
         if (descriptor1 != null && descriptor2 != null) {
-          s1 = ((Descriptor)descriptor1).getText();
-          s2 = ((Descriptor)descriptor2).getText();
+          s1 = descriptor1.getText();
+          s2 = descriptor2.getText();
         }
 
         if (s1 != null && s2 != null) {
@@ -1014,7 +1015,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     for (String shortName : myDescriptors.keySet()) {
       List<Descriptor> descriptors = myDescriptors.get(shortName);
       for (Descriptor descriptor : descriptors) {
-        if (mySelectedProfile.isToolEnabled(descriptor.getKey()) != descriptor.isEnabled()) {
+        if (mySelectedProfile.isToolEnabled(descriptor.getKey(), descriptor.getScope()) != descriptor.isEnabled()) {
           return true;
         }
         if (mySelectedProfile.getErrorLevel(descriptor.getKey(), descriptor.getScope()) != descriptor.getLevel()) {
@@ -1023,10 +1024,14 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       }
 
       final List<Pair<NamedScope, InspectionTool>> tools = mySelectedProfile.getAllTools(shortName);
-      if (tools.size() != descriptors.size()) return true;
+      if (tools.size() != descriptors.size()) {
+        return true;
+      }
       for (int i = 0, toolsSize = tools.size(); i < toolsSize; i++) {
         final Pair<NamedScope, InspectionTool> pair = tools.get(i);
-        if (!Comparing.equal(pair.first, descriptors.get(i).getScope())) return true;
+        if (!Comparing.equal(pair.first, descriptors.get(i).getScope())) {
+          return true;
+        }
       }
     }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -86,9 +87,9 @@ public class RunInspectionIntention implements IntentionAction {
     final ModifiableModel model = profile.getModifiableModel();
     final InspectionProfileEntry[] profileEntries = model.getInspectionTools(null);
     for (InspectionProfileEntry entry : profileEntries) {
-      model.disableTool(entry.getShortName());
+      model.disableTool(entry.getShortName(), (NamedScope)null);
     }
-    model.enableTool(myShortName);
+    model.enableTool(myShortName, (NamedScope)null);
     try {
       Element element = new Element("toCopy");
       baseTool.writeSettings(element);

@@ -7,12 +7,12 @@ package com.intellij.codeInspection.ui.actions;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -134,25 +135,25 @@ public class InspectionsOptionsToolbarAction extends AnAction {
       try {
         if (myView.isProfileDefined()) {
           final ModifiableModel model = myView.getCurrentProfile().getModifiableModel();
-          model.disableTool(myKey.toString());
+          model.disableTool(myKey.toString(), (NamedScope)null);
           model.commit();
           myView.updateCurrentProfile();
         } else {
           final RefEntity[] selectedElements = myView.getTree().getSelectedElements();
-          final Set<InspectionProfile> files = new HashSet<InspectionProfile>();
+          final Set<PsiElement> files = new HashSet<PsiElement>();
           final Project project = myView.getProject();
           final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
           for (RefEntity selectedElement : selectedElements) {
             if (selectedElement instanceof RefElement) {
               final PsiElement element = ((RefElement)selectedElement).getElement();
-              files.add(profileManager.getInspectionProfile());
+              files.add(element);
             }
           }
-          for (InspectionProfile inspectionProfile : files) {
-            ModifiableModel model = inspectionProfile.getModifiableModel();
-            model.disableTool(myKey.toString());
-            model.commit();
+          ModifiableModel model = ((InspectionProfileImpl)profileManager.getProjectProfileImpl()).getModifiableModel();
+          for (PsiElement element : files) {
+            model.disableTool(myKey.toString(), element);
           }
+          model.commit();
           DaemonCodeAnalyzer.getInstance(project).restart();
         }
       }
