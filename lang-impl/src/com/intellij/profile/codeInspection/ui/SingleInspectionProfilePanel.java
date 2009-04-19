@@ -774,6 +774,18 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
 
     if (multipleScopes) {
       withSeverity.setBorder(BorderFactory.createEtchedBorder());
+      final JCheckBox enabledDescriptor = new JCheckBox("Enabled", mySelectedProfile.isToolEnabled(descriptor.getKey(), descriptor.getScope()));
+      enabledDescriptor.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (enabledDescriptor.isSelected()) {
+            mySelectedProfile.enableTool(descriptor.getKey().toString(), descriptor.getScope());
+          } else {
+            mySelectedProfile.disableTool(descriptor.getKey().toString(), descriptor.getScope());
+          }
+        }
+      });
+      withSeverity.add(enabledDescriptor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
+
       withSeverity.add(new JLabel("Scope:"), new GridBagConstraints(0,GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,5,5,10),0,0 ));
       final DefaultComboBoxModel model = new DefaultComboBoxModel();
       final NamedScopesHolder scopesHolder = mySelectedProfile.getProfileManager().getScopesManager();
