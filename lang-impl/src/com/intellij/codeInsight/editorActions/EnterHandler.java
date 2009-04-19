@@ -10,6 +10,7 @@ import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -421,10 +422,16 @@ public class EnterHandler extends EditorWriteActionHandler {
       if (settings.JAVADOC_STUB_ON_ENTER) {
         final DocumentationProvider langDocumentationProvider =
           LanguageDocumentation.INSTANCE.forLanguage(comment.getParent().getLanguage());
-        final CodeDocumentationProvider docProvider = langDocumentationProvider instanceof CodeDocumentationProvider ?
-                                                          (CodeDocumentationProvider)langDocumentationProvider:null;
-        if (docProvider != null) {
 
+        @Nullable final CodeDocumentationProvider docProvider;
+        if (langDocumentationProvider instanceof CompositeDocumentationProvider) {
+          docProvider = ((CompositeDocumentationProvider)langDocumentationProvider).getFirstCodeDocumentationProvider();
+        } else {
+          docProvider = langDocumentationProvider instanceof CodeDocumentationProvider ?
+                                                          (CodeDocumentationProvider)langDocumentationProvider : null;
+        }
+
+        if (docProvider != null) {
           if (docProvider.findExistingDocComment(comment) != comment) return comment;
           String docStub = docProvider.generateDocumentationContentStub(comment);
           

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -123,6 +124,16 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
       if (provider instanceof ExtensibleDocumentationProvider) {
         final String externalDocumentation = ((ExtensibleDocumentationProvider)provider).getExternalDocumentation(url, project);
         if (externalDocumentation != null) return externalDocumentation;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public CodeDocumentationProvider getFirstCodeDocumentationProvider() {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof CodeDocumentationProvider) {
+        return (CodeDocumentationProvider)provider;
       }
     }
     return null;
