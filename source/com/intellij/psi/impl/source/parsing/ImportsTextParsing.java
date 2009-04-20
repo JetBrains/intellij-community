@@ -5,12 +5,11 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.TokenType;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -18,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ImportsTextParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ImportsTextParsing");
-  private static final TokenSet IMPORT_LIST_STOPPER_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, AT);
+  private static final TokenSet IMPORT_LIST_STOPPER_BIT_SET = TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD,
+                                                                              JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT);
 
   public ImportsTextParsing(JavaParsingContext context) {
     super(context);
@@ -28,7 +28,7 @@ public class ImportsTextParsing extends Parsing {
     CompositeElement invalidElementsGroup = null;
     while(true){
       IElementType tt = filterLexer.getTokenType();
-      if (tt == null || IMPORT_LIST_STOPPER_BIT_SET.contains(tt) || MODIFIER_BIT_SET.contains(tt)) {
+      if (tt == null || IMPORT_LIST_STOPPER_BIT_SET.contains(tt) || ElementType.MODIFIER_BIT_SET.contains(tt)) {
         break;
       }
 
@@ -51,39 +51,39 @@ public class ImportsTextParsing extends Parsing {
 
   @Nullable
   private ASTNode parseImportStatement(Lexer lexer) {
-    if (lexer.getTokenType() != IMPORT_KEYWORD) return null;
+    if (lexer.getTokenType() != JavaTokenType.IMPORT_KEYWORD) return null;
 
     final TreeElement importToken = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
     lexer.advance();
     final CompositeElement statement;
     final boolean isStatic;
-    if (lexer.getTokenType() != STATIC_KEYWORD) {
-      statement = ASTFactory.composite(IMPORT_STATEMENT);
+    if (lexer.getTokenType() != JavaTokenType.STATIC_KEYWORD) {
+      statement = ASTFactory.composite(JavaElementType.IMPORT_STATEMENT);
       statement.rawAddChildren(importToken);
       isStatic = false;
     }
     else {
-      statement = ASTFactory.composite(IMPORT_STATIC_STATEMENT);
+      statement = ASTFactory.composite(JavaElementType.IMPORT_STATIC_STATEMENT);
       statement.rawAddChildren(importToken);
       statement.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
       isStatic = true;
     }
 
-    if (lexer.getTokenType() != IDENTIFIER){
+    if (lexer.getTokenType() != JavaTokenType.IDENTIFIER){
       statement.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
       return statement;
     }
 
     CompositeElement refElement = parseJavaCodeReference(lexer, true, false);
     final TreeElement refParameterList = refElement.getLastChildNode();
-    if (refParameterList.getTreePrev().getElementType() == ERROR_ELEMENT){
+    if (refParameterList.getTreePrev().getElementType() == TokenType.ERROR_ELEMENT){
       final ASTNode qualifier = refElement.findChildByRole(ChildRole.QUALIFIER);
       LOG.assertTrue(qualifier != null);
       refParameterList.getTreePrev().rawRemove();
       refParameterList.rawRemove();
       statement.rawAddChildren((TreeElement)qualifier);
-      if (lexer.getTokenType() == ASTERISK){
+      if (lexer.getTokenType() == JavaTokenType.ASTERISK){
         statement.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
       }
@@ -100,7 +100,7 @@ public class ImportsTextParsing extends Parsing {
       statement.rawAddChildren(refElement);
     }
 
-    if (lexer.getTokenType() == SEMICOLON){
+    if (lexer.getTokenType() == JavaTokenType.SEMICOLON){
       statement.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     }
@@ -112,7 +112,7 @@ public class ImportsTextParsing extends Parsing {
   }
 
   public static CompositeElement convertToImportStaticReference(CompositeElement refElement) {
-    final CompositeElement importStaticReference = ASTFactory.composite(IMPORT_STATIC_REFERENCE);
+    final CompositeElement importStaticReference = ASTFactory.composite(JavaElementType.IMPORT_STATIC_REFERENCE);
     final CompositeElement referenceParameterList = (CompositeElement)refElement.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);
     importStaticReference.rawAddChildren(refElement.getFirstChildNode());
     if (referenceParameterList != null) {

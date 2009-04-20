@@ -1,17 +1,13 @@
 package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.DummyHolderFactory;
-import static com.intellij.psi.impl.source.parsing.DeclarationParsing.Context.ANNOTATION_INTERFACE_CONTEXT;
-import static com.intellij.psi.impl.source.parsing.DeclarationParsing.Context.CLASS_CONTEXT;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
 
 /**
  *
@@ -26,24 +22,6 @@ public class ClassBodyParsing extends Parsing {
     super(context);
   }
 
-
-  public TreeElement parseClassBodyText(Lexer lexer,
-                                        CharSequence buffer,
-                                        int startOffset,
-                                        int endOffset,
-                                        int lexerState,
-                                        int context,
-                                        PsiManager manager){
-    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (lexerState < 0) filterLexer.start(buffer, startOffset, endOffset,0);
-    else filterLexer.start(buffer, startOffset, endOffset, lexerState);
-
-    CharTable table = myContext.getCharTable();
-    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
-    parseClassBody(dummyRoot, filterLexer, context);
-    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, lexerState, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
-    return (TreeElement)dummyRoot.getFirstChildNode();
-  }
 
   private void parseEnumConstants(Lexer lexer, CompositeElement dummyRoot) {
     while (lexer.getTokenType() != null) {
@@ -67,11 +45,11 @@ public class ClassBodyParsing extends Parsing {
         dummyRoot.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
       }
 
-      if (lexer.getTokenType() == COMMA) {
+      if (lexer.getTokenType() == JavaTokenType.COMMA) {
         dummyRoot.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
       }
-      else if (lexer.getTokenType() != null && lexer.getTokenType() != SEMICOLON) {
+      else if (lexer.getTokenType() != null && lexer.getTokenType() != JavaTokenType.SEMICOLON) {
         dummyRoot.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.semicolon")));
         return;
       }
@@ -84,9 +62,9 @@ public class ClassBodyParsing extends Parsing {
 
     while(true){
       IElementType tokenType = filterLexer.getTokenType();
-      if (tokenType == null || tokenType == RBRACE) break;
+      if (tokenType == null || tokenType == JavaTokenType.RBRACE) break;
 
-      if (tokenType == SEMICOLON){
+      if (tokenType == JavaTokenType.SEMICOLON){
         dummyRoot.rawAddChildren(ParseUtil.createTokenElement(filterLexer, myContext.getCharTable()));
         filterLexer.advance();
         invalidElementsGroup = null;
@@ -119,17 +97,17 @@ public class ClassBodyParsing extends Parsing {
   }
 
   private static DeclarationParsing.Context calcDeclarationContext(int context) {
-    DeclarationParsing.Context declarationParsingContext = CLASS_CONTEXT;
+    DeclarationParsing.Context declarationParsingContext = DeclarationParsing.Context.CLASS_CONTEXT;
     switch(context) {
       default:
         LOG.assertTrue(false);
         break;
       case CLASS:
       case ENUM:
-        declarationParsingContext = CLASS_CONTEXT;
+        declarationParsingContext = DeclarationParsing.Context.CLASS_CONTEXT;
         break;
       case ANNOTATION:
-        declarationParsingContext = ANNOTATION_INTERFACE_CONTEXT;
+        declarationParsingContext = DeclarationParsing.Context.ANNOTATION_INTERFACE_CONTEXT;
         break;
     }
     return declarationParsingContext;

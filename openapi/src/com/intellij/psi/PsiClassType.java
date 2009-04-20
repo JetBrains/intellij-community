@@ -32,7 +32,11 @@ public abstract class PsiClassType extends PsiType {
    * The empty array of PSI class types which can be reused to avoid unnecessary allocations.
    */
   public static final PsiClassType[] EMPTY_ARRAY = new PsiClassType[0];
-  protected LanguageLevel myLanguageLevel;
+  protected final LanguageLevel myLanguageLevel;
+
+  protected PsiClassType(LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
+  }
 
   /**
    * Resolves the class reference and returns the resulting class.

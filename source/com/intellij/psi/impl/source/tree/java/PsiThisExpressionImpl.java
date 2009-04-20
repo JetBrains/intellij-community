@@ -28,7 +28,7 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
       PsiClass qualifierResolve = (PsiClass)qualifier.resolve();
       if (qualifierResolve != null) return new PsiImmediateClassType(qualifierResolve, PsiSubstitutor.EMPTY);
 
-      return new PsiClassReferenceType(qualifier);
+      return new PsiClassReferenceType(qualifier, null);
     }
     for(PsiElement scope = getContext(); scope != null; scope = scope.getContext()){
       if (scope instanceof PsiClass){

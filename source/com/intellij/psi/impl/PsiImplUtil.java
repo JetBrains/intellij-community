@@ -177,7 +177,7 @@ public class PsiImplUtil {
     PsiManager manager = classAccessExpression.getManager();
     final PsiClass classClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Class", resolveScope);
     if (classClass == null) {
-      return new PsiClassReferenceType(new LightClassReference(manager, "Class", "java.lang.Class", resolveScope));
+      return new PsiClassReferenceType(new LightClassReference(manager, "Class", "java.lang.Class", resolveScope), null);
     }
     if (!PsiUtil.isLanguageLevel5OrHigher(classAccessExpression)) {
       //Raw java.lang.Class

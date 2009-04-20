@@ -2,19 +2,17 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiDeclarationStatementImpl extends CompositePsiElement implements PsiDeclarationStatement, Constants {
+public class PsiDeclarationStatementImpl extends CompositePsiElement implements PsiDeclarationStatement {
   public PsiDeclarationStatementImpl() {
-    super(DECLARATION_STATEMENT);
+    super(JavaElementType.DECLARATION_STATEMENT);
   }
 
   @NotNull
@@ -22,10 +20,10 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     return getChildrenAsPsiElements(DECLARED_ELEMENT_BIT_SET, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
-  private static final TokenSet DECLARED_ELEMENT_BIT_SET = TokenSet.create(new IElementType[]{LOCAL_VARIABLE, CLASS});
+  private static final TokenSet DECLARED_ELEMENT_BIT_SET = TokenSet.create(JavaElementType.LOCAL_VARIABLE, JavaElementType.CLASS);
 
   public int getChildRole(ASTNode child) {
-    if (child.getElementType() == ElementType.COMMA) return ChildRole.COMMA;
+    if (child.getElementType() == JavaTokenType.COMMA) return ChildRole.COMMA;
     return super.getChildRole(child);
   }
 
@@ -40,7 +38,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
         } else {
           if (SourceTreeToPsiMap.psiElementToTree(declaredElements[length - 1]) == child) {
             removeCommaBefore(child);
-            final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1,
+            final LeafElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, ";", 0, 1,
                                                                           SharedImplUtil.findCharTableByTree(this), getManager());
             SourceTreeToPsiMap.psiElementToTree(declaredElements[length - 2]).addChild(semicolon, null);
           }
@@ -65,7 +63,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     do {
       prev = prev.getTreePrev();
     } while (prev != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(prev.getElementType()));
-    if (prev != null && prev.getElementType() == COMMA) deleteChildInternal(prev);
+    if (prev != null && prev.getElementType() == JavaTokenType.COMMA) deleteChildInternal(prev);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

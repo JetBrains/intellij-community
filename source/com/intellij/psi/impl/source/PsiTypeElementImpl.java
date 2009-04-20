@@ -12,7 +12,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import org.jetbrains.annotations.NotNull;
-             
+
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
   private volatile PsiType myCachedType = null;
@@ -58,11 +58,15 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
                                                                                      : componentType.createArrayType();
         }
         else if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
-          cachedType = new PsiClassReferenceType(getReferenceElement());
+          cachedType = new PsiClassReferenceType(getReferenceElement(), null);
         }
         else if (elementType == JavaTokenType.QUEST) {
           cachedType = createWildcardType();
         }
+        //else if (elementType == JavaElementType.ANNOTATION) {
+        //  PsiAnnotation annotation = JavaPsiFacade.getInstance(getProject()).getElementFactory().createAnnotationFromText(element.getText(), this);
+        //  cachedType = createWildcardType();
+        //}
         else {
           LOG.error("Unknown element type: " + elementType);
         }

@@ -247,7 +247,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiClassType createType(@NotNull PsiJavaCodeReferenceElement classReference) {
-    return new PsiClassReferenceType(classReference);
+    return new PsiClassReferenceType(classReference, null);
   }
 
   private static class TypeDetacher extends PsiTypeVisitor<PsiType> {
@@ -336,7 +336,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiClassType createTypeByFQClassName(@NotNull String qName, @NotNull GlobalSearchScope resolveScope) {
-    return new PsiClassReferenceType(createReferenceElementByFQClassName(qName, resolveScope));
+    return new PsiClassReferenceType(createReferenceElementByFQClassName(qName, resolveScope), null);
   }
 
   @NotNull

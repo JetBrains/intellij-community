@@ -14,7 +14,8 @@ import org.jetbrains.annotations.NotNull;
 public class PsiClassReferenceType extends PsiClassType {
   private final PsiJavaCodeReferenceElement myReference;
 
-  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference) {
+  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel languageLevel) {
+    super(languageLevel);
     myReference = reference;
   }
 
@@ -39,8 +40,7 @@ public class PsiClassReferenceType extends PsiClassType {
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
-    final PsiClassReferenceType copy = new PsiClassReferenceType(myReference);
-    copy.myLanguageLevel = languageLevel;
+    final PsiClassReferenceType copy = new PsiClassReferenceType(myReference,languageLevel);
     return copy;
   }
 
@@ -109,7 +109,7 @@ public class PsiClassReferenceType extends PsiClassType {
       return factory.createType((PsiClass) resolved, rawSubstitutor, getLanguageLevel());
     }
     String qualifiedName = myReference.getQualifiedName();
-    return new PsiClassReferenceType(new LightClassReference(manager, myReference.getReferenceName(), qualifiedName, myReference.getResolveScope()));
+    return new PsiClassReferenceType(new LightClassReference(manager, myReference.getReferenceName(), qualifiedName, myReference.getResolveScope()), null);
   }
 
   public String getClassName() {

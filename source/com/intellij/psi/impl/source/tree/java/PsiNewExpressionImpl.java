@@ -29,7 +29,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       IElementType elementType = child.getElementType();
       if (elementType == JavaElementType.JAVA_CODE_REFERENCE){
         LOG.assertTrue(type == null);
-        type = new PsiClassReferenceType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(child));
+        type = new PsiClassReferenceType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(child), null);
       }
       else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)){
         LOG.assertTrue(type == null);

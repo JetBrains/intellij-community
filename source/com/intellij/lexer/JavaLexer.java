@@ -3,6 +3,7 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
@@ -13,11 +14,10 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class JavaLexer extends LexerBase {
-
   private JavaLexer(boolean isAssertKeywordEnabled, boolean isJDK15) {
-    myTable = isAssertKeywordEnabled ?
-              (isJDK15 ? ourTableWithAssertAndJDK15 : ourTableWithAssert) :
-              (isJDK15 ? ourTableWithJDK15 : ourTableWithoutAssert);
+    myTable = isAssertKeywordEnabled
+              ? isJDK15 ? ourTableWithAssertAndJDK15 : ourTableWithAssert
+              : isJDK15 ? ourTableWithJDK15 : ourTableWithoutAssert;
     myFlexlexer = new _JavaLexer(isAssertKeywordEnabled, isJDK15);
   }
 
@@ -30,20 +30,20 @@ public class JavaLexer extends LexerBase {
   private int myBufferIndex;
   private int myBufferEndOffset;
 
-  IElementType myTokenType;
+  private IElementType myTokenType;
   private _JavaLexer myFlexlexer;
 
   //Positioned after the last symbol of the current token
   private int myTokenEndOffset;
 
-  private final static class HashTable {
-    static final int NUM_ENTRIES = 999;
+  private static final class HashTable {
+    private static final int NUM_ENTRIES = 999;
     private static final Logger LOG = Logger.getInstance("com.intellij.Lexer.JavaLexer");
 
-    final char[][] myTable = new char[NUM_ENTRIES][];
-    final IElementType[] myKeywords = new IElementType[NUM_ENTRIES];
+    private final char[][] myTable = new char[NUM_ENTRIES][];
+    private final IElementType[] myKeywords = new IElementType[NUM_ENTRIES];
 
-    void add(String s, IElementType tokenType) {
+    private void add(String s, IElementType tokenType) {
       char[] chars = s.toCharArray();
       int hashCode = chars[0] * 2;
       for (int j = 1; j < chars.length; j++) {
@@ -56,7 +56,7 @@ public class JavaLexer extends LexerBase {
       myKeywords[modHashCode] = tokenType;
     }
 
-    boolean contains(int hashCode, final CharSequence buffer, final char[] bufferArray, int offset) {
+    private boolean contains(int hashCode, final CharSequence buffer, final char[] bufferArray, int offset) {
       int modHashCode = hashCode % NUM_ENTRIES;
       final char[] kwd = myTable[modHashCode];
       if (kwd == null) return false;
@@ -73,12 +73,12 @@ public class JavaLexer extends LexerBase {
       return true;
     }
 
-    IElementType getTokenType(int hashCode) {
+    private IElementType getTokenType(int hashCode) {
       return myKeywords[hashCode % NUM_ENTRIES];
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})
-    public HashTable(boolean isAssertKeywordEnabled, boolean isJDK15) {
+    private HashTable(boolean isAssertKeywordEnabled, boolean isJDK15) {
       if (isAssertKeywordEnabled) {
         add("assert", JavaTokenType.ASSERT_KEYWORD);
       }
@@ -140,10 +140,10 @@ public class JavaLexer extends LexerBase {
   }
 
   private final HashTable myTable;
-  private final static HashTable ourTableWithoutAssert = new HashTable(false, false);
-  private final static HashTable ourTableWithAssert = new HashTable(true, false);
-  private final static HashTable ourTableWithAssertAndJDK15 = new HashTable(true, true);
-  private final static HashTable ourTableWithJDK15 = new HashTable(false, true);
+  private static final HashTable ourTableWithoutAssert = new HashTable(false, false);
+  private static final HashTable ourTableWithAssert = new HashTable(true, false);
+  private static final HashTable ourTableWithAssertAndJDK15 = new HashTable(true, true);
+  private static final HashTable ourTableWithJDK15 = new HashTable(false, true);
 
   public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
@@ -210,11 +210,11 @@ public class JavaLexer extends LexerBase {
       case '\n':
       case '\r':
       case '\f':
-        myTokenType = JavaTokenType.WHITE_SPACE;
+        myTokenType = TokenType.WHITE_SPACE;
         myTokenEndOffset = getWhitespaces(myBufferIndex + 1);
         break;
 
-      case '/': {
+      case '/':
         if (myBufferIndex + 1 >= myBufferEndOffset) {
           myTokenType = JavaTokenType.DIV;
           myTokenEndOffset = myBufferEndOffset;
@@ -237,7 +237,7 @@ public class JavaLexer extends LexerBase {
               myTokenEndOffset = getDocClosingComment(myBufferIndex + 3);
             }
           }
-          else if ((c > 127) && Character.isJavaIdentifierStart(c)) {
+          else if (c > 127 && Character.isJavaIdentifierStart(c)) {
             myTokenEndOffset = getIdentifier(myBufferIndex + 1);
           }
           else {
@@ -245,7 +245,6 @@ public class JavaLexer extends LexerBase {
           }
         }
         break;
-      }
 
       case '"':
       case '\'':
@@ -398,8 +397,8 @@ public class JavaLexer extends LexerBase {
     if (pos < lBufferEnd) {
       char c = hasArray ? lBufferArray[pos]:lBuffer.charAt(pos);
 
-      while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
-              || c == '_' || c == '$' || ((c > 127) && Character.isJavaIdentifierPart(c))) {
+      while (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9'
+              || c == '_' || c == '$' || c > 127 && Character.isJavaIdentifierPart(c)) {
         pos++;
         hashCode += c;
 
@@ -434,7 +433,7 @@ public class JavaLexer extends LexerBase {
     try {
       BufferedReader reader = new BufferedReader(new FileReader(args[0]));
       String s;
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       while ((s = reader.readLine()) != null) {
         buf.append(s).append("\n");
       }

@@ -58,11 +58,11 @@ public class PsiImmediateClassType extends PsiClassType {
   }
 
   public PsiImmediateClassType(final PsiClass aClass, final PsiSubstitutor substitutor, final LanguageLevel languageLevel) {
+    super(languageLevel);
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
     LOG.assertTrue(mySubstitutor != null);
-    myLanguageLevel = languageLevel;
   }
 
   public PsiClass resolve() {

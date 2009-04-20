@@ -151,7 +151,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     createClassReferenceChild();
     final PsiClassReferenceType psiClassReferenceType;
     if (myVariance != VARIANCE_INVARIANT) {
-      psiClassReferenceType = new PsiClassReferenceType((PsiJavaCodeReferenceElement)myChild);
+      psiClassReferenceType = new PsiClassReferenceType((PsiJavaCodeReferenceElement)myChild, null);
     }
     else {
       psiClassReferenceType = null;
@@ -217,5 +217,4 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   public String toString() {
     return "PsiTypeElement:" + getText();
   }
-
 }
