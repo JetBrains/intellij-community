@@ -138,10 +138,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       synchronized (myOutputsToDelete) {
         final Map<String, SourceUrlClassNamePair> outputsToDelete = myOutputsToDelete.get(projectId);
         if (outputsToDelete != null) {
+          final VirtualFileManager vfm = VirtualFileManager.getInstance();
+          final LocalFileSystem lfs = LocalFileSystem.getInstance();
+          final List<String> zombieEntries = new ArrayList<String>();
           for (String outputPath : outputsToDelete.keySet()) {
             final SourceUrlClassNamePair classNamePair = outputsToDelete.get(outputPath);
             final String sourceUrl = classNamePair.getSourceUrl();
-            final VirtualFile srcFile = VirtualFileManager.getInstance().findFileByUrl(sourceUrl);
+            final VirtualFile srcFile = vfm.findFileByUrl(sourceUrl);
             final boolean sourcePresent = srcFile != null;
             if (sourcePresent) {
               if (!compiler.isCompilableFile(srcFile, context)) {
@@ -151,12 +154,21 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 continue;
               }
             }
-            //noinspection UnnecessaryBoxing
-            final File file = new File(outputPath);
-            toDelete.add(new Trinity<File, String, Boolean>(file, classNamePair.getClassName(), Boolean.valueOf(sourcePresent)));
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Found file to delete: " + file);
+            if (lfs.findFileByPath(outputPath) != null) {
+              //noinspection UnnecessaryBoxing
+              final File file = new File(outputPath);
+              toDelete.add(new Trinity<File, String, Boolean>(file, classNamePair.getClassName(), Boolean.valueOf(sourcePresent)));
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Found file to delete: " + file);
+              }
             }
+            else {
+              // must be gagbage entry, should cleanup
+              zombieEntries.add(outputPath);
+            }
+          }
+          for (String path : zombieEntries) {
+            unmarkOutputPathForDeletion(path);
           }
         }
       }
@@ -261,10 +273,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
     }
-
-
   }
-
 
   @NotNull
   public String getComponentName() {
@@ -277,7 +286,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
       try {
         final int projectsCount = is.readInt();
-        final LocalFileSystem lfs = LocalFileSystem.getInstance();
         synchronized (myOutputsToDelete) {
           for (int idx = 0; idx < projectsCount; idx++) {
             final int projectId = is.readInt();
@@ -289,12 +297,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 final String outputPath = FileUtil.toSystemIndependentName(CompilerIOUtil.readString(is));
                 final String srcUrl = CompilerIOUtil.readString(is);
                 final String className = CompilerIOUtil.readString(is);
-                if (lfs.findFileByPath(outputPath) != null) {
-                  if (LOG.isDebugEnabled()) {
-                    LOG.debug("INIT path to delete: " + outputPath);
-                  }
-                  map.put(outputPath, new SourceUrlClassNamePair(srcUrl, className));
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("INIT path to delete: " + outputPath);
                 }
+                map.put(outputPath, new SourceUrlClassNamePair(srcUrl, className));
               }
             }
           }
@@ -884,24 +890,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             }
           }
           finally {
-            synchronized (myOutputsToDelete) {
-              // it is important that update of myOutputsToDelete is done at the end
-              // otherwise the filePath of the file that is about to be deleted may be re-scheduled for deletion in addSourceForRecompilation()
-              for (int projectId : myOutputsToDelete.keys()) {
-                final Map<String, SourceUrlClassNamePair> map = myOutputsToDelete.get(projectId);
-                if (map != null) {
-                  final SourceUrlClassNamePair val = map.remove(filePath);
-                  if (val != null) {
-                    if (LOG.isDebugEnabled()) {
-                      LOG.debug("REMOVE path to delete: " + filePath);
-                    }
-                    if (map.isEmpty()) {
-                      myOutputsToDelete.remove(projectId);
-                    }
-                  }
-                }
-              }
-            }
+            // it is important that update of myOutputsToDelete is done at the end
+            // otherwise the filePath of the file that is about to be deleted may be re-scheduled for deletion in addSourceForRecompilation()
+            unmarkOutputPathForDeletion(filePath);
           }
         }
       });
@@ -1062,5 +1053,23 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  
+  private void unmarkOutputPathForDeletion(String outputPath) {
+    synchronized (myOutputsToDelete) {
+      for (int projectId : myOutputsToDelete.keys()) {
+        final Map<String, SourceUrlClassNamePair> map = myOutputsToDelete.get(projectId);
+        if (map != null) {
+          final SourceUrlClassNamePair val = map.remove(outputPath);
+          if (val != null) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("REMOVE path to delete: " + outputPath);
+            }
+            if (map.isEmpty()) {
+              myOutputsToDelete.remove(projectId);
+            }
+          }
+        }
+      }
+    }
+  }
+
 }
