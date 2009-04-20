@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
-import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
@@ -59,7 +58,10 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
         if (file != null) {
           if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
           final Project project = file.getProject();
-          final ErrorsConfigurable profileConfigurable = ProjectInspectionToolsConfigurable.getInstance(project);
+          ErrorsConfigurable profileConfigurable = ShowSettingsUtil.getInstance().findProjectConfigurable(project, ErrorsConfigurable.class);
+          if (profileConfigurable == null) {
+            profileConfigurable = ShowSettingsUtil.getInstance().findApplicationConfigurable(ErrorsConfigurable.class);
+          }
           ShowSettingsUtil.getInstance().editConfigurable(project, profileConfigurable);
         }
       }
