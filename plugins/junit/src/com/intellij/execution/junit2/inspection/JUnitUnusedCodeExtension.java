@@ -71,7 +71,7 @@ public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
             || "suite".equals(name) || "setUp".equals(name) ||  "tearDown".equals(name)) {
           return true;
         }
-        if (JUnitUtil.isTestClass(psiClass) && psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
           if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
             if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BeforeClass.class.getName(), AfterClass.class.getName()))) return true;
           } else {
