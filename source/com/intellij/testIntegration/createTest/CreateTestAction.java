@@ -41,16 +41,9 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     if (element == null) return false;
     if (Extensions.getExtensions(TestFrameworkDescriptor.EXTENSION_NAME).length == 0) return false;
 
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
-    if (psiClass == null ||
-        psiClass.isAnnotationType() ||
-        psiClass.isInterface() ||
-        psiClass.isEnum() ||
-        psiClass instanceof PsiAnonymousClass ||
-        PsiTreeUtil.getParentOfType(psiClass, PsiClass.class) != null || // inner
-        isUnderTestSources(psiClass)) {
-      return false;
-    }
+    if (!isAvailableForElement(element)) return false;
+
+    PsiClass psiClass = getContainingClass(element);
 
     PsiJavaToken leftBrace = psiClass.getLBrace();
     if (leftBrace == null) return false;
@@ -59,6 +52,27 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     TextRange declarationRange = HighlightNamesUtil.getClassDeclarationTextRange(psiClass);
     if (!declarationRange.contains(element.getTextRange())) return false;
 
+    return true;
+  }
+
+  public boolean isAvailableForElement(PsiElement element) {
+    if (element == null) return false;
+    
+    PsiClass psiClass = getContainingClass(element);
+
+    if (psiClass == null) return false;
+
+    Module srcModule = ModuleUtil.findModuleForPsiElement(psiClass);
+    if (srcModule == null) return false;
+
+    if (psiClass.isAnnotationType() ||
+        psiClass.isInterface() ||
+        psiClass.isEnum() ||
+        psiClass instanceof PsiAnonymousClass ||
+        PsiTreeUtil.getParentOfType(psiClass, PsiClass.class) != null || // inner
+        isUnderTestSources(psiClass)) {
+      return false;
+    }
     return true;
   }
 
@@ -73,7 +87,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
 
     final Module srcModule = ModuleUtil.findModuleForPsiElement(file);
-    final PsiClass srcClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+    final PsiClass srcClass = getContainingClass(element);
 
     if (srcClass == null) return;
 
@@ -167,6 +181,10 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     PsiMethod method = (PsiMethod)targetClass.add(TestIntegrationUtils.createDummyMethod(targetClass.getProject()));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true);
+  }
+
+  private PsiClass getContainingClass(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
   }
 
   public boolean startInWriteAction() {
