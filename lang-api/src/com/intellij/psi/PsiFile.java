@@ -57,9 +57,9 @@ public interface PsiFile extends PsiFileSystemItem {
 
   /**
    * If the file is a non-physical copy of a file, returns the original file which had
-   * been copied. Otherwise, returns null.
+   * been copied. Otherwise, returns the same file.
    *
-   * @return the original file of a copy, or null if the file is not a copy.
+   * @return the original file of a copy, or the same file if the file is not a copy.
    */
   @NotNull PsiFile getOriginalFile();
 
