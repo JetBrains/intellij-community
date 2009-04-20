@@ -90,13 +90,22 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   
   public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFile(file), keyDescriptor, initialSize);
-    myFile = file;
-    myValueExternalizer = valueExternalizer;
-    myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
-    myGarbageSize = getMetaData();
+    try {
+      myFile = file;
+      myValueExternalizer = valueExternalizer;
+      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
+      myGarbageSize = getMetaData();
 
-    if (makesSenceToCompact()) {
-      compact();
+      if (makesSenceToCompact()) {
+        compact();
+      }
+    }
+    catch (IOException e) {
+      throw e; // rethrow
+    }
+    catch (Throwable t) {
+      LOG.error(t);
+      throw new CorruptedException(file);
     }
   }
   
