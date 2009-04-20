@@ -987,6 +987,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         mySourcesToRecompile.put(projectId, set);
       }
       alreadyMarked = !set.add(getFileId(srcFile));
+      if (!alreadyMarked && LOG.isDebugEnabled()) {
+        LOG.debug("Scheduled recompilation " + srcFile.getPresentableUrl());
+      }
     }
 
     if (!alreadyMarked && srcInfo != null) {
