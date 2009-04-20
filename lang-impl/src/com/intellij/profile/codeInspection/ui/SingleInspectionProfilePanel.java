@@ -7,7 +7,6 @@ package com.intellij.profile.codeInspection.ui;
 import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -26,7 +25,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.profile.ProfileManager;
@@ -135,7 +137,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
         }
         InspectionProfileEntry tool = descriptor.getTool();
         if (tool != null) {
-          if (descriptor.isEnabled()) {
+          if (mySelectedProfile.isToolEnabled(descriptor.getKey())) {
             Element oldConfig = descriptor.getConfig();
             if (oldConfig == null) continue;
             @NonNls Element newConfig = new Element("options");
@@ -186,10 +188,10 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
   private void initDescriptors() {
     if (mySelectedProfile == null) return;
     myDescriptors.clear();
-    List<Pair<NamedScope, InspectionTool>> tools = mySelectedProfile.getAllTools();
+    List<ScopeToolState> tools = mySelectedProfile.getAllTools();
     final InspectionProfile profile = mySelectedProfile;
-    for (Pair<NamedScope, InspectionTool> pair : tools) {
-      final String key = pair.second.getShortName();
+    for (ScopeToolState pair : tools) {
+      final String key = pair.getTool().getShortName();
       List<Descriptor> descriptors = myDescriptors.get(key);
       if (descriptors == null) {
         descriptors = new ArrayList<Descriptor>();
@@ -539,7 +541,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     return popup;
   }
 
-  private static String renderSeverity(HighlightSeverity severity) {
+  static String renderSeverity(HighlightSeverity severity) {
     return InspectionsBundle.message("inspection.as", severity.toString().toLowerCase());
   }
 
@@ -736,9 +738,14 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       }
 
       myOptionsPanel.removeAll();
-      final List<Descriptor> descriptors = node.getDesriptors();
-      for (Descriptor desc : descriptors) {
-        final JPanel withSeverity = getSeverityPanel(node, desc, descriptors.size() > 1);
+
+
+      final List<NamedScope> scopes = mySelectedProfile.getScopes(descriptor.getKey().toString());
+      for (int i = 0, scopesSize = scopes.size(); i < scopesSize; i++) {
+        NamedScope scope = scopes.get(i);
+        final JPanel withSeverity =
+          getSeverityPanel(node, scope, descriptor.getKey(), descriptor.getTool(), descriptor.getAdditionalConfigPanel(),i,
+                           scopes.size() > 1);     //todo create separate config panel!!!!
         myOptionsPanel.add(withSeverity);
       }
       myOptionsPanel.validate();
@@ -750,16 +757,19 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     myOptionsPanel.repaint();
   }
 
-  private JPanel getSeverityPanel(final MyTreeNode node, final Descriptor descriptor, boolean multipleScopes) {
+  private JPanel getSeverityPanel(final MyTreeNode node, final NamedScope scope, final HighlightDisplayKey key, final InspectionProfileEntry tool,
+                                  final JComponent comp,
+                                  final int idx,
+                                  boolean multipleScopes) {
     final LevelChooser chooser = new LevelChooser(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar());
     chooser.getComboBox().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        boolean toUpdate = mySelectedProfile.getErrorLevel(descriptor.getKey(), descriptor.getScope()) != chooser.getLevel();
-        mySelectedProfile.setErrorLevel(descriptor.getKey(), chooser.getLevel());
-        if (toUpdate) node.isProperSetting = mySelectedProfile.isProperSetting(descriptor.getKey());
+        boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope) != chooser.getLevel();
+        mySelectedProfile.setErrorLevel(key, chooser.getLevel());
+        if (toUpdate) node.isProperSetting = mySelectedProfile.isProperSetting(key);
       }
     });
-    chooser.setLevel(mySelectedProfile.getErrorLevel(descriptor.getKey(), descriptor.getScope()));
+    chooser.setLevel(mySelectedProfile.getErrorLevel(key, scope));
 
     final JPanel withSeverity = new JPanel(new GridBagLayout());
     withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0,
@@ -772,15 +782,15 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     withSeverity.add(chooser, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                      new Insets(0, 0, 5, 0), 0, 0));
 
+    final JCheckBox enabledDescriptor = new JCheckBox("Enabled", mySelectedProfile.isToolEnabled(key, scope));
     if (multipleScopes) {
       withSeverity.setBorder(BorderFactory.createEtchedBorder());
-      final JCheckBox enabledDescriptor = new JCheckBox("Enabled", mySelectedProfile.isToolEnabled(descriptor.getKey(), descriptor.getScope()));
       enabledDescriptor.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           if (enabledDescriptor.isSelected()) {
-            mySelectedProfile.enableTool(descriptor.getKey().toString(), descriptor.getScope());
+            mySelectedProfile.enableTool(key.toString(), scope);
           } else {
-            mySelectedProfile.disableTool(descriptor.getKey().toString(), descriptor.getScope());
+            mySelectedProfile.disableTool(key.toString(), scope);
           }
         }
       });
@@ -791,16 +801,21 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final NamedScopesHolder scopesHolder = mySelectedProfile.getProfileManager().getScopesManager();
 
       final NamedScope[] scopes = scopesHolder.getScopes();
-      for (NamedScope scope : scopes) {
-        model.addElement(scope);
+      for (NamedScope ascope : scopes) {
+        model.addElement(ascope);
       }
       final JComboBox scopesCombo = new JComboBox(model);
-      scopesCombo.setSelectedItem(descriptor.getScope());
+      scopesCombo.setSelectedItem(scope);
+      scopesCombo.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          mySelectedProfile.setScope(key.toString(), idx, (NamedScope)scopesCombo.getSelectedItem());
+        }
+      });
 
       withSeverity.add(scopesCombo, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,5,0), 0,0));
     }
 
-    final JComponent config = descriptor.getAdditionalConfigPanel();
+    final JComponent config = comp;
     if (config != null) {
       withSeverity.add(config, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                       new Insets(0, 0, 0, 0), 0, 0));
@@ -816,9 +831,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final JButton addScope = new JButton("Add scope");
       addScope.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          final Descriptor descr1 = new Descriptor(new Pair<NamedScope, InspectionTool>(descriptor.getScope(), InspectionToolRegistrar
-            .getInstance().createInspectionTool(descriptor.getKey().toString(), descriptor.getTool())), mySelectedProfile);
-          node.getDesriptors().add(descr1);
+          mySelectedProfile.addScope(tool, scope, chooser.getLevel(), enabledDescriptor.isSelected());
           updateOptionsAndDescriptionPanel(new TreePath(node.getPath()));
         }
       });
@@ -827,18 +840,16 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final JButton removeScope = new JButton("Remove Scope"); //todo disable when only one exist
       removeScope.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          node.getDesriptors().remove(descriptor);
+          mySelectedProfile.removeScope(key.toString(), scope);
           updateOptionsAndDescriptionPanel(new TreePath(node.getPath()));
         }
       });
       addDeleteMoveUpDouwnPanel.add(removeScope);
 
-      final JButton moveUp = new JButton("Move Up"); //todo
+      final JButton moveUp = new JButton("Move Up");
       moveUp.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          final int desrIdx = node.getDesriptors().indexOf(descriptor);
-          node.getDesriptors().remove(descriptor);
-          node.getDesriptors().add(desrIdx - 1, descriptor);
+          mySelectedProfile.moveScope(key.toString(), idx, -1);
           updateOptionsAndDescriptionPanel(new TreePath(node.getPath()));
         }
       });
@@ -847,9 +858,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final JButton moveDown = new JButton("Move Down");
       moveDown.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          final int desrIdx = node.getDesriptors().indexOf(descriptor);
-          node.getDesriptors().remove(descriptor);
-          node.getDesriptors().add(desrIdx + 1, descriptor);
+          mySelectedProfile.moveScope(key.toString(), idx, +1);
           updateOptionsAndDescriptionPanel(new TreePath(node.getPath()));
         }
       });
@@ -1035,13 +1044,13 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
         }
       }
 
-      final List<Pair<NamedScope, InspectionTool>> tools = mySelectedProfile.getAllTools(shortName);
+      final List<ScopeToolState> tools = mySelectedProfile.getAllTools(shortName);
       if (tools.size() != descriptors.size()) {
         return true;
       }
       for (int i = 0, toolsSize = tools.size(); i < toolsSize; i++) {
-        final Pair<NamedScope, InspectionTool> pair = tools.get(i);
-        if (!Comparing.equal(pair.first, descriptors.get(i).getScope())) {
+        final ScopeToolState pair = tools.get(i);
+        if (!Comparing.equal(pair.getScope(), descriptors.get(i).getScope())) {
           return true;
         }
       }
@@ -1092,71 +1101,6 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
 
     public String getGroupName() {
       return userObject instanceof String ? (String)userObject : null;
-    }
-  }
-
-  public static class LevelChooser extends ComboboxWithBrowseButton {
-    private final MyRenderer ourRenderer = new MyRenderer();
-
-    public LevelChooser(final SeverityRegistrar severityRegistrar) {
-      final JComboBox comboBox = getComboBox();
-      final DefaultComboBoxModel model = new DefaultComboBoxModel();
-      comboBox.setModel(model);
-      fillModel(model, severityRegistrar);
-      comboBox.setRenderer(ourRenderer);
-      addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this, (HighlightSeverity)getComboBox().getSelectedItem(), severityRegistrar);
-          dlg.show();
-          if (dlg.isOK()) {
-            final Object item = getComboBox().getSelectedItem();
-            fillModel(model, severityRegistrar);
-            final HighlightInfoType type = dlg.getSelectedType();
-            if (type != null) {
-              getComboBox().setSelectedItem(type.getSeverity(null));
-            } else {
-              getComboBox().setSelectedItem(item);
-            }
-          }
-        }
-      });
-    }
-
-    private static void fillModel(DefaultComboBoxModel model, final SeverityRegistrar severityRegistrar) {
-      model.removeAllElements();
-      final TreeSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(severityRegistrar);
-      for (SeverityRegistrar.SeverityBasedTextAttributes type : severityRegistrar.getRegisteredHighlightingInfoTypes()) {
-        severities.add(type.getSeverity());
-      }
-      severities.add(HighlightSeverity.ERROR);
-      severities.add(HighlightSeverity.WARNING);
-      severities.add(HighlightSeverity.INFO);
-      severities.add(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
-      for (HighlightSeverity severity : severities) {
-        model.addElement(severity);
-      }
-    }
-
-    public HighlightDisplayLevel getLevel() {
-      HighlightSeverity severity = (HighlightSeverity)getComboBox().getSelectedItem();
-      if (severity == null) return HighlightDisplayLevel.WARNING;
-      return HighlightDisplayLevel.find(severity);
-    }
-
-    public void setLevel(HighlightDisplayLevel level) {
-      getComboBox().setSelectedItem(level.getSeverity());
-    }
-
-    private static class MyRenderer extends DefaultListCellRenderer {
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value instanceof HighlightSeverity) {
-          HighlightSeverity severity = (HighlightSeverity)value;
-          setText(renderSeverity(severity));
-          setIcon(HighlightDisplayLevel.find(severity).getIcon());
-        }
-        return this;
-      }
     }
   }
 

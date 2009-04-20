@@ -6,12 +6,9 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,16 +58,16 @@ public class InspectionProfileWrapper {
   }
 
   public void init(final Project project) {
-    final List<Pair<InspectionProfileEntry,NamedScope>> profileEntries = myProfile.getAllEnabledInspectionTools();
-    for (Pair<InspectionProfileEntry, NamedScope> profileEntry : profileEntries) {
-      profileEntry.first.projectOpened(project);
+    final List<ScopeToolState> profileEntries = myProfile.getAllEnabledInspectionTools();
+    for (ScopeToolState profileEntry : profileEntries) {
+      profileEntry.getTool().projectOpened(project);
     }
   }
 
   public void cleanup(final Project project){
-    final List<Pair<InspectionProfileEntry, NamedScope>> profileEntries = myProfile.getAllEnabledInspectionTools();
-    for (Pair<InspectionProfileEntry, NamedScope> profileEntry : profileEntries) {
-      profileEntry.first.projectClosed(project);
+    final List<ScopeToolState> profileEntries = myProfile.getAllEnabledInspectionTools();
+    for (ScopeToolState profileEntry : profileEntries) {
+      profileEntry.getTool().projectClosed(project);
     }
     myProfile.cleanup();
   }

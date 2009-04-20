@@ -43,7 +43,6 @@ public class InspectionProfileTest extends TestCase {
     final InspectionProfileImpl profile = new InspectionProfileImpl("DefaultCopyProjectProfile");
     try {
       InspectionProfileImpl.INIT_INSPECTIONS = true;
-      profile.initInspectionTools();
       profile.readExternal(element);
       final ModifiableModel model = profile.getModifiableModel();
       model.commit();
@@ -51,8 +50,7 @@ public class InspectionProfileTest extends TestCase {
       profile.writeExternal(copy);
       StringWriter writer = new StringWriter();
       JDOMUtil.writeElement(copy, writer, "\n");
-      //System.out.println(writer.getBuffer().toString());
-      assertTrue(JDOMUtil.areElementsEqual(element, copy));
+      assertTrue(writer.getBuffer().toString(), JDOMUtil.areElementsEqual(element, copy));
     }
     finally {
       InspectionProfileImpl.INIT_INSPECTIONS = false;
@@ -64,7 +62,6 @@ public class InspectionProfileTest extends TestCase {
     final InspectionProfileImpl profile = new InspectionProfileImpl("DefaultConvertOldProfile");
     try {
       InspectionProfileImpl.INIT_INSPECTIONS = true;
-      profile.initInspectionTools();
       profile.readExternal(element);
       final ModifiableModel model = profile.getModifiableModel();
       model.commit();
@@ -72,8 +69,7 @@ public class InspectionProfileTest extends TestCase {
       profile.writeExternal(copy);
       StringWriter writer = new StringWriter();
       JDOMUtil.writeElement(copy, writer, "\n");
-      //System.out.println(writer.getBuffer().toString());
-      assertTrue(JDOMUtil.areElementsEqual(loadProfile(), copy));
+      assertTrue(writer.getBuffer().toString(), JDOMUtil.areElementsEqual(loadProfile(), copy));
     }
     finally {
       InspectionProfileImpl.INIT_INSPECTIONS = false;

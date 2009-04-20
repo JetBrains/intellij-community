@@ -18,7 +18,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.openapi.util.Pair;
+import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -78,7 +78,7 @@ public interface ModifiableModel extends Profile {
 
   void lockProfile(boolean isLocked);
 
-  List<Pair<InspectionProfileEntry,NamedScope>> getAllEnabledInspectionTools();
+  List<ScopeToolState> getAllEnabledInspectionTools();
 
   void disableTool(String toolId, PsiElement element);
 

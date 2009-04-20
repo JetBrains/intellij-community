@@ -6,7 +6,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
@@ -31,8 +30,8 @@ public class Descriptor {
   private NamedScope myScope;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
 
-  public Descriptor(Pair< NamedScope, InspectionTool> pair, InspectionProfile inspectionProfile) {
-    final InspectionProfileEntry tool = pair.second;
+  public Descriptor(ScopeToolState pair, InspectionProfile inspectionProfile) {
+    final InspectionProfileEntry tool = pair.getTool();
     @NonNls Element config = new Element("options");
     try {
       tool.writeSettings(config);
@@ -44,10 +43,10 @@ public class Descriptor {
     myText = tool.getDisplayName();
     myGroup = tool.getGroupDisplayName().length() == 0 ? InspectionProfileEntry.GENERAL_GROUP_NAME : tool.getGroupDisplayName();
     myKey = HighlightDisplayKey.find(tool.getShortName());
-    myLevel = ((InspectionProfileImpl)inspectionProfile).getErrorLevel(myKey, pair.first);
-    myEnabled = ((InspectionProfileImpl)inspectionProfile).isToolEnabled(myKey, pair.first);
+    myLevel = ((InspectionProfileImpl)inspectionProfile).getErrorLevel(myKey, pair.getScope());
+    myEnabled = ((InspectionProfileImpl)inspectionProfile).isToolEnabled(myKey, pair.getScope());
     myTool = tool;
-    myScope = pair.first;
+    myScope = pair.getScope();
   }
 
   public boolean equals(Object obj) {

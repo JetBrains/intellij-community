@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -75,7 +76,6 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -701,10 +701,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       @Override
-      public List<Pair<InspectionProfileEntry, NamedScope>> getAllEnabledInspectionTools() {
-        List<Pair<InspectionProfileEntry, NamedScope>> result = new ArrayList<Pair<InspectionProfileEntry, NamedScope>>();
+      public List<ScopeToolState> getAllEnabledInspectionTools() {
+        List<ScopeToolState> result = new ArrayList<ScopeToolState>();
         for (InspectionProfileEntry entry : getInspectionTools(null)) {
-          result.add(new Pair<InspectionProfileEntry, NamedScope>(entry, null));
+          result.add(new ScopeToolState(null, entry, true, entry.getDefaultLevel()));
         }
         return result;
       }

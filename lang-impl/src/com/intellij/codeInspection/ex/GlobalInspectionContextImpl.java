@@ -567,9 +567,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         }
       });
     }
-    final List<Pair<InspectionProfileEntry, NamedScope>> usedTools = inspectionProfile.getInspectionProfile().getModifiableModel().getAllEnabledInspectionTools();
-    for (Pair<InspectionProfileEntry, NamedScope> entry : usedTools) {
-      final InspectionTool tool = (InspectionTool)entry.first;
+    final List<ScopeToolState> usedTools = inspectionProfile.getInspectionProfile().getModifiableModel().getAllEnabledInspectionTools();
+    for (ScopeToolState entry : usedTools) {
+      final InspectionTool tool = (InspectionTool)entry.getTool();
       tool.initialize(this);
       final String shortName = tool.getShortName();
       Set<Pair<InspectionTool, NamedScope>> sertainTools = myTools.get(shortName);
@@ -577,14 +577,14 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         sertainTools = new HashSet<Pair<InspectionTool, NamedScope>>();
         myTools.put(shortName, sertainTools);
       }
-      final Pair<InspectionTool, NamedScope> scopePair = Pair.create(tool, entry.second);
+      final Pair<InspectionTool, NamedScope> scopePair = Pair.create(tool, entry.getScope());
       sertainTools.add(scopePair);
       if (tool instanceof LocalInspectionToolWrapper) {
-        localTools.add(new Pair<InspectionProfileEntry, NamedScope>(tool, entry.second));
+        localTools.add(new Pair<InspectionProfileEntry, NamedScope>(tool, entry.getScope()));
         appendJobDescriptor(LOCAL_ANALYSIS);
       }
       else {
-        tools.add(new Pair<InspectionProfileEntry, NamedScope>(tool, entry.second));
+        tools.add(new Pair<InspectionProfileEntry, NamedScope>(tool, entry.getScope()));
         JobDescriptor[] jobDescriptors = tool.getJobDescriptors();
         for (JobDescriptor jobDescriptor : jobDescriptors) {
           appendJobDescriptor(jobDescriptor);

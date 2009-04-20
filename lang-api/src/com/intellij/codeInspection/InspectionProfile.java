@@ -18,10 +18,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.openapi.util.Pair;
+import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -40,7 +39,7 @@ public interface InspectionProfile extends Profile {
   @NotNull
   InspectionProfileEntry[] getInspectionTools(PsiElement element);
 
-  List<Pair<InspectionProfileEntry,NamedScope>> getAllEnabledInspectionTools();
+  List<ScopeToolState> getAllEnabledInspectionTools();
 
   void cleanup();
 

@@ -14,6 +14,7 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -38,7 +39,6 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
@@ -78,10 +78,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
 
       @Override
-      public List<Pair<InspectionProfileEntry, NamedScope>> getAllEnabledInspectionTools() {
-        List<Pair<InspectionProfileEntry, NamedScope>> result = new ArrayList<Pair<InspectionProfileEntry, NamedScope>>();
+      public List<ScopeToolState> getAllEnabledInspectionTools() {
+        List<ScopeToolState> result = new ArrayList<ScopeToolState>();
         for (InspectionProfileEntry entry : getInspectionTools(null)) {
-          result.add(new Pair<InspectionProfileEntry, NamedScope>(entry, null));
+          result.add(new ScopeToolState(null, entry, true, entry.getDefaultLevel()));
         }
         return result;
       }
