@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -277,7 +278,7 @@ public class TypesUtil {
         }
         PsiType returnType = getLeastUpperBound(clType1.getClosureReturnType(), clType2.getClosureReturnType(), manager);
         GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
-        return GrClosureType.create(returnType, paramTypes, opts, manager, scope);
+        return GrClosureType.create(returnType, paramTypes, opts, manager, scope, LanguageLevel.JDK_1_5);
       }
     }
 

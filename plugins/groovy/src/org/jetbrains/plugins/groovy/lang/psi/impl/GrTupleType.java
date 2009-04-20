@@ -36,10 +36,13 @@ public class GrTupleType extends PsiClassType {
 
 
   public GrTupleType(PsiType[] componentTypes, JavaPsiFacade facade, GlobalSearchScope scope) {
+    this(componentTypes, facade, scope,LanguageLevel.JDK_1_5);
+  }
+  public GrTupleType(PsiType[] componentTypes, JavaPsiFacade facade, GlobalSearchScope scope,LanguageLevel languageLevel) {
+    super(languageLevel);
     myComponentTypes = componentTypes;
     myFacade = facade;
     myScope = scope;
-    myLanguageLevel = LanguageLevel.JDK_1_5;
   }
 
   @Nullable
@@ -158,8 +161,7 @@ public class GrTupleType extends PsiClassType {
   }
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    GrTupleType copy = new GrTupleType(myComponentTypes, myFacade, myScope);
-    copy.myLanguageLevel = languageLevel;
+    GrTupleType copy = new GrTupleType(myComponentTypes, myFacade, myScope,languageLevel);
     return copy;
   }
 

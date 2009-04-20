@@ -31,8 +31,12 @@ public class GrClassReferenceType extends PsiClassType {
   private final GrCodeReferenceElement myReferenceElement;
 
   public GrClassReferenceType(GrCodeReferenceElement referenceElement) {
+    super(LanguageLevel.JDK_1_5);
     myReferenceElement = referenceElement;
-    myLanguageLevel = LanguageLevel.JDK_1_5;
+  }
+  public GrClassReferenceType(GrCodeReferenceElement referenceElement, LanguageLevel languageLevel) {
+    super(languageLevel);
+    myReferenceElement = referenceElement;
   }
 
   @Nullable
@@ -165,8 +169,7 @@ public class GrClassReferenceType extends PsiClassType {
   }
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    GrClassReferenceType copy = new GrClassReferenceType(myReferenceElement);
-    copy.myLanguageLevel = languageLevel;
+    GrClassReferenceType copy = new GrClassReferenceType(myReferenceElement,languageLevel);
     return copy;
   }
 }

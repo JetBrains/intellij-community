@@ -41,12 +41,19 @@ public class GrClosureType extends PsiClassType {
                         PsiType[] parameters,
                         boolean[] optionals,
                         PsiManager manager) {
+    this(scope, returnType, parameters, optionals, manager,LanguageLevel.JDK_1_5);
+  }
+  private GrClosureType(GlobalSearchScope scope,
+                        @Nullable PsiType returnType,
+                        PsiType[] parameters,
+                        boolean[] optionals,
+                        PsiManager manager, LanguageLevel languageLevel) {
+    super(languageLevel);
     myScope = scope;
     myReturnType = returnType;
     myParameterTypes = parameters;
     myOptionals = optionals;
     myManager = manager;
-    myLanguageLevel = LanguageLevel.JDK_1_5;
   }
 
   @Nullable
@@ -181,8 +188,7 @@ public class GrClosureType extends PsiClassType {
   }
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    GrClosureType copy = create(myReturnType, myParameterTypes, myOptionals, myManager, myScope);
-    copy.myLanguageLevel = languageLevel;
+    GrClosureType copy = create(myReturnType, myParameterTypes, myOptionals, myManager, myScope, languageLevel);
     return copy;
   }
 
@@ -204,15 +210,15 @@ public class GrClosureType extends PsiClassType {
       }
       parameterTypes[i] = parameter.getType();
     }
-    return create(returnType, parameterTypes, optionals, manager, scope);
+    return create(returnType, parameterTypes, optionals, manager, scope, LanguageLevel.JDK_1_5);
   }
 
   public static GrClosureType create(PsiType returnType,
                                      PsiType[] parameterTypes,
                                      boolean[] optionals,
                                      PsiManager manager,
-                                     GlobalSearchScope scope) {
-    return new GrClosureType(scope, returnType, parameterTypes, optionals, manager);
+                                     GlobalSearchScope scope, LanguageLevel languageLevel) {
+    return new GrClosureType(scope, returnType, parameterTypes, optionals, manager,languageLevel);
   }
 
   public PsiType curry(int num) {
@@ -221,6 +227,6 @@ public class GrClosureType extends PsiClassType {
     boolean[] newOptionals = new boolean[myParameterTypes.length - num];
     System.arraycopy(myParameterTypes, num, newParameterTypes, 0, newParameterTypes.length);
     System.arraycopy(myOptionals, num, newOptionals, 0, newOptionals.length);
-    return create(myReturnType, newParameterTypes, newOptionals, myManager, myScope);
+    return create(myReturnType, newParameterTypes, newOptionals, myManager, myScope, myLanguageLevel);
   }
 }
