@@ -224,9 +224,7 @@ public abstract class ElementPresentationManager {
   }
 
   @NotNull
-  public static Icon[] getIcons(Object o) {
-    final Object firstImpl = ModelMergerUtil.getFirstImplementation(o);
-    o = firstImpl != null ? firstImpl : o;
+  public static Icon[] getIcons(final Object o) {
     List<Icon> result = new ArrayList<Icon>();
     for (final Function<Object, Icon> function : ourIconProviders) {
       final Icon icon = function.fun(o);
