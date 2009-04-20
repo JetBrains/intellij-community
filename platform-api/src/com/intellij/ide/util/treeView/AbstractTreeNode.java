@@ -64,7 +64,9 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
       fgColor = CopyPasteManager.CUT_COLOR;
     }
 
-    presentation.setForcedTextForeground(fgColor);
+    if (presentation.getForcedTextForeground() == null) {
+      presentation.setForcedTextForeground(fgColor);
+    }
 
     if (hasProblemFileBeneath() ) {
       presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);

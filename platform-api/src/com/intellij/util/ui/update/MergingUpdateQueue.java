@@ -200,8 +200,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
-  private static void execute(final Update each) {
-    each.run();
+  private void execute(final Update each) {
+    if (myDisposed) {
+      each.setRejected();
+    } else {
+      each.run();
+    }
   }
 
   public void queue(final Update update) {

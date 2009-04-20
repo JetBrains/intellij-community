@@ -39,13 +39,7 @@ public final class ObjectTree<T> {
   private CopyOnWriteArraySet<ObjectTreeListener> myListeners = new CopyOnWriteArraySet<ObjectTreeListener>();
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
-  private final THashSet<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY) {
-    public void compact() {
-      if (((int)(capacity() * _loadFactor)/ Math.max(1, size())) >= 3) {
-        super.compact();
-      }
-    }
-  };
+  private final THashSet<T> myRootObjects = new MyTHashSet<T>();
   private final THashMap<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>(TObjectHashingStrategy.IDENTITY) {
     public void compact() {
       if (((int)(capacity() * _loadFactor)/ Math.max(1, size())) >= 3) {
@@ -56,7 +50,10 @@ public final class ObjectTree<T> {
 
   private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
   private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>();
+
   final Object treeLock = new Object();
+
+  private long myModification;
 
   public ObjectNode<T> getNode(@NotNull T object) {
     synchronized (treeLock) {
@@ -116,10 +113,14 @@ public final class ObjectTree<T> {
 
     if (parentNode != null) return parentNode;
 
-    final ObjectNode<T> parentless = new ObjectNode<T>(this, null, parentObject);
+    final ObjectNode<T> parentless = new ObjectNode<T>(this, null, parentObject, getNextModification());
     myRootObjects.add(parentObject);
     putNode(parentObject, parentless);
     return parentless;
+  }
+
+  public long getNextModification() {
+    return ++myModification;
   }
 
   public final boolean executeAll(@NotNull T object, boolean disposeTree, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
@@ -268,5 +269,21 @@ public final class ObjectTree<T> {
     for (ObjectTreeListener each : myListeners) {
       each.objectExecuted(object);
     }
+  }
+
+  private static class MyTHashSet<T> extends THashSet<T> {
+    public MyTHashSet() {
+      super(TObjectHashingStrategy.IDENTITY);
+    }
+
+    public void compact() {
+      if (((int)(capacity() * _loadFactor)/ Math.max(1, size())) >= 3) {
+        super.compact();
+      }
+    }
+  }
+
+  public long getModification() {
+    return myModification;
   }
 }

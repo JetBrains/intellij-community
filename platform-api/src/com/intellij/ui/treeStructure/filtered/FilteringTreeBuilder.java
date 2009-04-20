@@ -195,5 +195,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return ((FilteringTreeStructure.Node)node).getDelegate();
   }
 
-
+  @Override
+  protected Object transformElement(Object object) {
+    return getOriginalNode(object);
+  }
 }

@@ -2,9 +2,16 @@ package com.intellij.ui.debugger.extensions;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
+import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -21,30 +28,31 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
-import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeSelectionModel;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.text.DefaultCaret;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class DisposerDebugger extends JComponent implements UiDebuggerExtension {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.DisposerDebugger");
 
   private JBTabsImpl myTreeTabs;
-  private AddNewWatchAction myAddNewWatchAction = new AddNewWatchAction();
 
   public DisposerDebugger() {
     myTreeTabs = new JBTabsImpl(null, null, this);
@@ -62,53 +70,34 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
     setLayout(new BorderLayout());
     add(splitter, BorderLayout.CENTER);
 
-    addTree(new DisposerTree(this, ElementFilter.PASS_THROUGH), "All", false);
+    addTree(new DisposerTree(this), "All", false);
+    addTree(new DisposerTree(this), "Watch", true);
   }
 
-  private void addTree(DisposerTree tree, String name, boolean canBeRemoved) {
-
-
-    final TabInfo tab = myTreeTabs.addTab(
-      new TabInfo(tree).setText(name).setObject(tree).setActions(new DefaultActionGroup().addAction(myAddNewWatchAction).getGroup(),
-                                                                 ActionPlaces.UNKNOWN));
-
-    if (canBeRemoved) {
-      tab.setTabLabelActions(new DefaultActionGroup().addAction(new RemoveTreeAction(tab)).getGroup(), ActionPlaces.UNKNOWN);
+  private void addTree(DisposerTree tree, String name, boolean canClear) {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    if (canClear) {
+      group.add(new ClearAction(tree));
     }
+
+    myTreeTabs.addTab(new TabInfo(tree).setText(name).setObject(tree).setActions(group, ActionPlaces.UNKNOWN));
   }
 
-  private void removeTree(TabInfo tab) {
-    final DisposerTree tree = (DisposerTree)tab.getObject();
-    myTreeTabs.removeTab(tab);
-    Disposer.dispose(tree);
-  }
+  private class ClearAction extends AnAction {
+    private DisposerTree myTree;
 
-  private class RemoveTreeAction extends AnAction {
-    private TabInfo myTab;
-
-    private RemoveTreeAction(TabInfo tab) {
-      super("Remove");
-      myTab = tab;
+    private ClearAction(DisposerTree tree) {
+      super("Clear");
+      myTree = tree;
     }
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setIcon(IconLoader.getIcon("/actions/close.png"));
-      e.getPresentation().setHoveredIcon(IconLoader.getIcon("/actions/closeHovered.png"));
+      e.getPresentation().setIcon(IconLoader.getIcon("/actions/sync.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      removeTree(myTab);
-    }
-  }
-
-  private class AddNewWatchAction extends AnAction {
-
-    private AddNewWatchAction() {
-      super("Add New Watch Tree", "Monitor activity starting this moment", IconLoader.getIcon("/general/add.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
+      myTree.clear();
     }
   }
 
@@ -210,60 +199,55 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
 
   }
 
-  private static class DisposerTree extends JPanel implements Disposable, ObjectTreeListener, Runnable {
+  private static class DisposerTree extends JPanel implements Disposable, ObjectTreeListener, ElementFilter<DisposerNode> {
 
     private FilteringTreeBuilder myTreeBuilder;
     private Tree myTree;
+    private long myModificationToFilter;
 
-    private Alarm myUpdateAlarm = new Alarm();
+    private DisposerTree(Disposable parent) {
+      myModificationToFilter = -1;
 
-    private DisposerTree(Disposable parent, ElementFilter filter) {
-      Disposer.register(parent, this);
-
-      final DisposerStructure structure = new DisposerStructure();
+      final DisposerStructure structure = new DisposerStructure(this);
       final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
       final Tree tree = new Tree(model);
       tree.setRootVisible(false);
       tree.setShowsRootHandles(true);
       tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-      myTreeBuilder = new FilteringTreeBuilder(null, tree, filter, structure, AlphaComparator.INSTANCE) {
+      myTreeBuilder = new FilteringTreeBuilder(null, tree, DisposerTree.this, structure, AlphaComparator.INSTANCE) {
         @Override
         public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
           return structure.getRootElement() == getOriginalNode(nodeDescriptor);
         }
       };
+      myTreeBuilder.setFilteringMerge(200);
       Disposer.register(this, myTreeBuilder);
-      myTreeBuilder.updateFromRoot();
       myTree = tree;
 
       setLayout(new BorderLayout());
       add(new JScrollPane(myTree), BorderLayout.CENTER);
 
       Disposer.getTree().addListener(this);
+
+      Disposer.register(parent, this);
+    }
+
+    public boolean shouldBeShowing(DisposerNode value) {
+      return value.getValue().getModification() >= myModificationToFilter;
     }
 
     public void objectRegistered(Object node) {
       queueUpdate();
     }
 
+
+
     public void objectExecuted(Object node) {
       queueUpdate();
     }
 
-    public void run() {
-      if (!myTreeBuilder.isDisposed()) {
-        myTreeBuilder.updateFromRoot();
-      }
-    }
-
     private void queueUpdate() {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myUpdateAlarm.cancelAllRequests();
-          myUpdateAlarm.addRequest(this, 200);
-        }
-      });
+      myTreeBuilder.refilter();
     }
 
     public void dispose() {
@@ -278,6 +262,11 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
 
     public Tree getTree() {
       return myTree;
+    }
+
+    public void clear() {
+      myModificationToFilter = Disposer.getTree().getModification();
+      myTreeBuilder.refilter();
     }
   }
 
@@ -296,9 +285,9 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
   private static class DisposerStructure extends AbstractTreeStructureBase {
     private DisposerNode myRoot;
 
-    private DisposerStructure() {
+    private DisposerStructure(DisposerTree tree) {
       super(null);
-      myRoot = new DisposerNode(null);
+      myRoot = new DisposerNode(tree, null);
     }
 
     public List<TreeStructureProvider> getProviders() {
@@ -318,8 +307,11 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
   }
 
   private static class DisposerNode extends AbstractTreeNode<ObjectNode> {
-    private DisposerNode(ObjectNode value) {
+    private DisposerTree myTree;
+
+    private DisposerNode(DisposerTree tree, ObjectNode value) {
       super(null, value);
+      myTree = tree;
     }
 
     @NotNull
@@ -329,7 +321,7 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
         final Collection subnodes = value.getChildren();
         final ArrayList<DisposerNode> children = new ArrayList<DisposerNode>(subnodes.size());
         for (Iterator iterator = subnodes.iterator(); iterator.hasNext();) {
-          children.add(new DisposerNode((ObjectNode)iterator.next()));
+          children.add(new DisposerNode(myTree, (ObjectNode)iterator.next()));
         }
         return children;
       }
@@ -338,7 +330,7 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
         final THashSet<Disposable> root = tree.getRootObjects();
         ArrayList<DisposerNode> children = new ArrayList<DisposerNode>(root.size());
         for (Disposable each : root) {
-          children.add(new DisposerNode(tree.getNode(each)));
+          children.add(new DisposerNode(myTree, tree.getNode(each)));
         }
         return children;
       }
@@ -359,7 +351,22 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
         final Object object = getValue().getObject();
         final String classString = object.getClass().toString();
         final String objectString = object.toString();
+
         presentation.setPresentableText(objectString);
+
+        if (getValue().getOwnModification() < myTree.myModificationToFilter) {
+          presentation.setForcedTextForeground(Color.gray);
+        }
+
+        if (objectString != null) {
+          final int dogIndex = objectString.lastIndexOf("@");
+          if (dogIndex >= 0) {
+            final String fqNameObject = objectString.substring(0, dogIndex);
+            final String fqNameClass = classString.substring("class ".length());
+            if (fqNameObject.equals(fqNameClass)) return;
+          }
+        }
+
         presentation.setLocationString(classString);
       }
     }

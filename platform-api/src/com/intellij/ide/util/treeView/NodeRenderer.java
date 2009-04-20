@@ -56,7 +56,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       final List<PresentableNodeDescriptor.ColoredFragment> coloredText = presentation.getColoredText();
       if (coloredText.size() == 0) {
         String text = tree.convertValueToText(value.toString(), selected, expanded, leaf, row, hasFocus);
-        SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node, color);
+        SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node, presentation.getForcedTextForeground() != null ? presentation.getForcedTextForeground() : color);
         append(text, simpleTextAttributes);
       }
       else {

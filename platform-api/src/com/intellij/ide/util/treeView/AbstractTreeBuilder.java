@@ -312,12 +312,17 @@ public class AbstractTreeBuilder implements Disposable {
   public final <T> Set<T> getSelectedElements(Class<T> elementClass) {
     Set<T> result = new HashSet<T>();
     for (Object o : getSelectedElements()) {
-      if (elementClass.isInstance(o)) {
+      Object each = transformElement(o);
+      if (elementClass.isInstance(each)) {
         //noinspection unchecked
-        result.add((T) o);
+        result.add((T) each);
       }
     }
     return result;
+  }
+
+  protected Object transformElement(Object object) {
+    return object;
   }
 
   public final void setCanYieldUpdate(boolean yield) {

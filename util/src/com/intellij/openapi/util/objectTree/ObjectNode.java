@@ -37,12 +37,16 @@ public final class ObjectNode<T> {
   private LinkedHashSet<ObjectNode<T>> myChildren;
   private final Throwable myTrace;
 
-  public ObjectNode(ObjectTree<T> tree, ObjectNode<T> parentNode, T object) {
+  private long myOwnModification;
+  private long myChildModification;
+
+  public ObjectNode(ObjectTree<T> tree, ObjectNode<T> parentNode, T object, long modification) {
     myTree = tree;
     myParent = parentNode;
     myObject = object;
 
     myTrace = Disposer.isDebugMode() ? new Throwable() : null;
+    myOwnModification = modification;
   }
 
   private ObjectNode<T>[] getChildrenArray() {
@@ -52,7 +56,7 @@ public final class ObjectNode<T> {
     }
   }
   public void addChild(T childObject) {
-    addChild(new ObjectNode<T>(myTree, this, childObject));
+    addChild(new ObjectNode<T>(myTree, this, childObject, myTree.getNextModification()));
   }
 
   public void addChild(ObjectNode<T> child) {
@@ -61,6 +65,8 @@ public final class ObjectNode<T> {
       child.setParent(this);
       myChildren.add(child);
       myTree.putNode(child.getObject(), child);
+
+      propogateChildModification(child.getModification());
     }
   }
 
@@ -70,6 +76,7 @@ public final class ObjectNode<T> {
       if (myChildren.remove(child)) {
         child.setParent(null);
         myTree.putNode(child.getObject(), null);
+        propogateChildModification(myTree.getNextModification());
       }
     }
   }
@@ -169,5 +176,26 @@ public final class ObjectNode<T> {
 
   public Throwable getAllocation() {
     return myTrace;
+  }
+
+  public long getOwnModification() {
+    return myOwnModification;
+  }
+
+  public long getChildModification() {
+    return myChildModification;
+  }
+
+  private void propogateChildModification(long stamp) {
+    if (myChildModification < stamp) {
+      myChildModification = stamp;
+      if (getParent() != null) {
+        getParent().propogateChildModification(stamp);
+      }
+    }
+  }
+
+  public long getModification() {
+    return Math.max(getOwnModification(), getChildModification());
   }
 }
