@@ -18,8 +18,10 @@ package org.intellij.plugins.intelliLang.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -225,12 +227,12 @@ public class AnnotationUtilEx {
       };
       if (listOwner instanceof PsiMethod) {
         all.addAll(Arrays.asList(modifierList.getAnnotations()));
-        processSuperMethods((PsiMethod)listOwner, new Processor<PsiMethod>() {
-          public boolean process(final PsiMethod superMethod) {
-            all.addAll(Arrays.asList(superMethod.getModifierList().getAnnotations()));
-            return true;
-          }
-        });
+        SuperMethodsSearch.search((PsiMethod)listOwner, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
+              public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
+                all.addAll(Arrays.asList(superMethod.getMethod().getModifierList().getAnnotations()));
+                return true;
+              }
+            });
         return all.toArray(new PsiAnnotation[all.size()]);
       }
       if (listOwner instanceof PsiParameter && ((PsiParameter)listOwner).getDeclarationScope() instanceof PsiMethod) {
@@ -238,25 +240,20 @@ public class AnnotationUtilEx {
         PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
         final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
         all.addAll(Arrays.asList(modifierList.getAnnotations()));
-        processSuperMethods(method, new Processor<PsiMethod>() {
-          public boolean process(final PsiMethod superMethod) {
-            PsiParameter superParameter = superMethod.getParameterList().getParameters()[parameterIndex];
-            PsiModifierList modifierList = superParameter.getModifierList();
-            all.addAll(Arrays.asList(modifierList.getAnnotations()));
-            return true;
-          }
-        });
+        SuperMethodsSearch.search(method, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
+              public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
+                PsiParameter superParameter = superMethod.getMethod().getParameterList().getParameters()[parameterIndex];
+                PsiModifierList modifierList = superParameter.getModifierList();
+                if (modifierList != null) {
+                  all.addAll(Arrays.asList(modifierList.getAnnotations()));
+                }
+                return true;
+              }
+            });
         return all.toArray(new PsiAnnotation[all.size()]);
       }
     }
     return modifierList.getAnnotations();
   }
 
-  private static void processSuperMethods(PsiMethod method, Processor<PsiMethod> processor) {
-    final PsiMethod[] superMethods = method.findSuperMethods();
-    for (PsiMethod superMethod : superMethods) {
-      processor.process(superMethod);
-      processSuperMethods(superMethod, processor);
-    }
-  }
 }
