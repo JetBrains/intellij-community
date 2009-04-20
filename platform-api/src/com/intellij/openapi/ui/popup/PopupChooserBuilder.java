@@ -20,8 +20,9 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 
 /**
@@ -150,8 +156,9 @@ public class PopupChooserBuilder {
     myChooserComponent.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
     myChooserComponent.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (!isSelectionButtonDown(e) && !e.isConsumed()) {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (UIUtil.isActionClick(e) && !isSelectionButtonDown(e) && !e.isConsumed()) {
           closePopup(true);
         }
       }

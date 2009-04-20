@@ -11,14 +11,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.popup.PopupIcons;
-import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.ClosableByLeftArrow;
+import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.popup.PopupIcons;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup {
 
@@ -335,7 +340,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   }
 
   private class MyMouseListener extends MouseAdapter {
-    public void mouseClicked(MouseEvent e) {
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+      if (!UIUtil.isActionClick(e)) return;
+
       boolean handleFinalChoices = true;
       final Object selectedValue = myList.getSelectedValue();
       final ListPopupStep<Object> listStep = getListStep();

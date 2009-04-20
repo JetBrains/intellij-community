@@ -78,7 +78,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     else if (e.getID() == MouseEvent.MOUSE_EXITED) {
       setCursor(Cursor.getDefaultCursor());
     }
-    else if (e.getID() == MouseEvent.MOUSE_CLICKED) {
+    else if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED)) {
       fireHyperlinkEvent();
     }
     super.processMouseEvent(e);
