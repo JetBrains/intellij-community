@@ -23,7 +23,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private final PsiElement myArgumentsList;
   private final PsiType[] myActualParameterTypes;
 
-  public JavaMethodsConflictResolver(PsiExpressionList list){
+  public JavaMethodsConflictResolver(PsiExpressionList list) {
     myArgumentsList = list;
     myActualParameterTypes = ContainerUtil.map2Array(list.getExpressions(), PsiType.class, new Function<PsiExpression, PsiType>() {
       public PsiType fun(final PsiExpression expression) {
@@ -338,7 +338,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiType type1 = classSubstitutor1.substitute(methodSubstitutor1.substitute(types1[i]));
       PsiType type2 = classSubstitutor2.substitute(methodSubstitutor2.substitute(types2[i]));
 
-      final Specifics specifics = checkSubtyping(type1, type2);
+      final Specifics specifics = type1 == null || type2 == null ? null : checkSubtyping(type1, type2);
       if (specifics == null) continue;
       switch (specifics) {
         case TRUE:
