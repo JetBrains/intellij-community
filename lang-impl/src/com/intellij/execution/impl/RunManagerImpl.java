@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -201,6 +202,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     RunnerAndConfigurationSettingsImpl template = myTemplateConfigurationsMap.get(factory.getType().getId() + "." + factory.getName());
     if (template == null) {
       template = new RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(myProject, this), true);
+      if (template.getConfiguration() instanceof UnknownRunConfiguration) {
+        ((UnknownRunConfiguration) template.getConfiguration()).setDoNotStore(true);
+      }
       myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), template);
     }
     return template;
@@ -312,6 +316,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
 
     for (final RunnerAndConfigurationSettingsImpl runnerAndConfigurationSettings : myTemplateConfigurationsMap.values()) {
+      if (runnerAndConfigurationSettings.getConfiguration() instanceof UnknownRunConfiguration) {
+        if (((UnknownRunConfiguration) runnerAndConfigurationSettings.getConfiguration()).isDoNotStore()) {
+          continue;
+        }
+      }
+      
       addConfigurationElement(parentNode, runnerAndConfigurationSettings);
     }
 
@@ -323,7 +333,14 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
 
     final JDOMExternalizableStringList order = new JDOMExternalizableStringList();
-    order.addAll(myConfigurations.keySet()); //temp && stable configurations
+
+    //temp && stable configurations, !unknown
+    order.addAll(ContainerUtil.findAll(myConfigurations.keySet(), new Condition<String>() {
+      public boolean value(final String s) {
+        return !s.startsWith(UnknownConfigurationType.NAME);
+      }
+    }));
+
     order.writeExternal(parentNode);
 
     if (mySelectedConfiguration != null) {
@@ -452,14 +469,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   @Nullable
   private static ConfigurationFactory findFactoryOfTypeByName(final ConfigurationType type, final String factoryName) {
-    if (type == null || factoryName == null) return null;
+    if (factoryName == null) return null;
+    
+    if (type instanceof UnknownConfigurationType) {
+      return type.getConfigurationFactories()[0];
+    }
+
     final ConfigurationFactory[] factories = type.getConfigurationFactories();
     for (final ConfigurationFactory factory : factories) {
       if (factoryName.equals(factory.getName())) return factory;
-    }
-
-    if (type instanceof UnknownConfigurationType) {
-      return type.getConfigurationFactories()[0];
     }
 
     return null;

@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author spleaner
@@ -43,9 +44,20 @@ public class UnknownRunConfiguration implements RunConfiguration {
   private String myName;
   private Project myProject;
 
+  private static final AtomicInteger myUniqueName = new AtomicInteger(1);
+  private boolean myDoNotStore;
+
   public UnknownRunConfiguration(@NotNull final ConfigurationFactory factory, @NotNull final Project project) {
     myFactory = factory;
     myProject = project;
+  }
+
+  public void setDoNotStore(boolean b) {
+    myDoNotStore = b;
+  }
+
+  public boolean isDoNotStore() {
+    return myDoNotStore;
   }
 
   public ConfigurationFactory getFactory() {
@@ -102,6 +114,10 @@ public class UnknownRunConfiguration implements RunConfiguration {
   }
 
   public String getName() {
+    if (myName == null) {
+      myName = String.format("Unknown%s", myUniqueName.getAndAdd(1));
+    }
+
     return myName;
   }
 
@@ -114,16 +130,18 @@ public class UnknownRunConfiguration implements RunConfiguration {
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
-    final List attributeList = myStoredElement.getAttributes();
-    for (Object anAttributeList : attributeList) {
-      final Attribute a = (Attribute) anAttributeList;
-      element.setAttribute(a.getName(), a.getValue());
-    }
+    if (myStoredElement != null) {
+      final List attributeList = myStoredElement.getAttributes();
+      for (Object anAttributeList : attributeList) {
+        final Attribute a = (Attribute) anAttributeList;
+        element.setAttribute(a.getName(), a.getValue());
+      }
 
-    final List list = myStoredElement.getChildren();
-    for (Object child : list) {
-      final Element c = (Element) child;
-      element.addContent((Element) c.clone());
+      final List list = myStoredElement.getChildren();
+      for (Object child : list) {
+        final Element c = (Element) child;
+        element.addContent((Element) c.clone());
+      }
     }
   }
 
