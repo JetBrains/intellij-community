@@ -686,6 +686,7 @@ public class BackendCompilerWrapper {
     final ContentIterator contentIterator = new ContentIterator() {
       public boolean processFile(final VirtualFile child) {
         try {
+          assert child.isValid();
           if (!child.isDirectory() && myCompiler.getCompilableFileTypes().contains(typeManager.getFileTypeByFile(child))) {
             updateOutputItemsList(outputDir, child, compiledWithErrors, sourceRoot, packagePrefix);
           }

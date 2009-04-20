@@ -749,21 +749,25 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         public void rootsChanged(final ModuleRootEvent event) {
           final VirtualFile[] rootsAfter = ProjectRootManager.getInstance(project).getContentSourceRoots();
 
-          final Set<VirtualFile> newRoots = new HashSet<VirtualFile>();
-          newRoots.addAll(Arrays.asList(rootsAfter));
-          if (myRootsBefore != null) {
-            newRoots.removeAll(Arrays.asList(myRootsBefore));
+          {
+            final Set<VirtualFile> newRoots = new HashSet<VirtualFile>();
+            newRoots.addAll(Arrays.asList(rootsAfter));
+            if (myRootsBefore != null) {
+              newRoots.removeAll(Arrays.asList(myRootsBefore));
+            }
+            scanSourceContent(project, newRoots, newRoots.size(), true);
           }
-          scanSourceContent(project, newRoots, newRoots.size(), true);
 
-          final Set<VirtualFile> oldRoots = new HashSet<VirtualFile>();
-          if (myRootsBefore != null) {
-            oldRoots.addAll(Arrays.asList(myRootsBefore));
+          {
+            final Set<VirtualFile> oldRoots = new HashSet<VirtualFile>();
+            if (myRootsBefore != null) {
+              oldRoots.addAll(Arrays.asList(myRootsBefore));
+            }
+            if (!oldRoots.isEmpty()) {
+              oldRoots.removeAll(Arrays.asList(rootsAfter));
+            }
+            scanSourceContent(project, oldRoots, oldRoots.size(), false);
           }
-          if (!oldRoots.isEmpty()) {
-            oldRoots.removeAll(Arrays.asList(rootsAfter));
-          }
-          scanSourceContent(project, oldRoots, oldRoots.size(), false);
 
           myRootsBefore = null;
         }
