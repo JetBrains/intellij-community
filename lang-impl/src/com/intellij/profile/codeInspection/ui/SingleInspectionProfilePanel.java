@@ -211,10 +211,8 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
   private void postProcessModification() {
     wereToolSettingsModified();
     //resetup configs
-    for (List<Descriptor> descriptors : myDescriptors.values()) {
-      for (Descriptor descriptor : descriptors) {
-        descriptor.resetConfigPanel();
-      }
+    for (ScopeToolState state : mySelectedProfile.getAllTools()) {
+      state.resetConfigPanel();
     }
     fillTreeData(myProfileFilter.getFilter(), true);
     repaintTableData();
@@ -740,12 +738,12 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       myOptionsPanel.removeAll();
 
 
-      final List<NamedScope> scopes = mySelectedProfile.getScopes(descriptor.getKey().toString());
-      for (int i = 0, scopesSize = scopes.size(); i < scopesSize; i++) {
-        NamedScope scope = scopes.get(i);
+      final List<ScopeToolState> states = mySelectedProfile.getStates(descriptor.getKey().toString());
+      for (int i = 0, scopesSize = states.size(); i < scopesSize; i++) {
+        final ScopeToolState state = states.get(i);
+        NamedScope scope = state.getScope();
         final JPanel withSeverity =
-          getSeverityPanel(node, scope, descriptor.getKey(), descriptor.getTool(), descriptor.getAdditionalConfigPanel(),i,
-                           scopes.size() > 1);     //todo create separate config panel!!!!
+          getSeverityPanel(node, scope, descriptor.getKey(), descriptor.getTool(), state.getAdditionalConfigPanel(), i, states.size() > 1);
         myOptionsPanel.add(withSeverity);
       }
       myOptionsPanel.validate();
@@ -765,7 +763,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     chooser.getComboBox().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope) != chooser.getLevel();
-        mySelectedProfile.setErrorLevel(key, chooser.getLevel());
+        mySelectedProfile.setErrorLevel(key, chooser.getLevel(), idx);
         if (toUpdate) node.isProperSetting = mySelectedProfile.isProperSetting(key);
       }
     });
@@ -840,7 +838,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final JButton removeScope = new JButton("Remove Scope"); //todo disable when only one exist
       removeScope.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          mySelectedProfile.removeScope(key.toString(), scope);
+          mySelectedProfile.removeScope(key.toString(), idx);
           updateOptionsAndDescriptionPanel(new TreePath(node.getPath()));
         }
       });

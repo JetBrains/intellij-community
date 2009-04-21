@@ -10,9 +10,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * User: anna
@@ -22,7 +19,7 @@ public class Descriptor {
   private final String myText;
   private final String myGroup;
   private final HighlightDisplayKey myKey;
-  private JComponent myAdditionalConfigPanel;
+  
   private final Element myConfig;
   private InspectionProfileEntry myTool;
   private final HighlightDisplayLevel myLevel;
@@ -83,21 +80,7 @@ public class Descriptor {
     return myLevel;
   }
 
-  @Nullable
-  public JComponent getAdditionalConfigPanel() {
-    if (myAdditionalConfigPanel == null && myTool != null){
-      myAdditionalConfigPanel = myTool.createOptionsPanel();
-      if (myAdditionalConfigPanel == null){
-        myAdditionalConfigPanel = new JPanel();
-      }
-      return myAdditionalConfigPanel;
-    }
-    return myAdditionalConfigPanel;
-  }
 
-  public void resetConfigPanel(){
-    myAdditionalConfigPanel = null;
-  }
 
   public Element getConfig() {
     return myConfig;

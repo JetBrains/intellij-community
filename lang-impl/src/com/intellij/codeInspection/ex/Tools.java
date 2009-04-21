@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public class Tools {
@@ -194,16 +193,9 @@ public class Tools {
     return result;
   }
 
-  public void removeScope(NamedScope scope) {
-    if (myTools != null) {
-      //todo last
-      for (Iterator<ScopeToolState> it = myTools.iterator(); it.hasNext();) {
-        ScopeToolState pair = it.next();
-        if (Comparing.equal(pair.getScope(), scope)) {
-          it.remove();
-          break;
-        }
-      }
+  public void removeScope(int scopeIdx) {
+    if (myTools != null && scopeIdx >= 0 && myTools.size() > scopeIdx) {
+      myTools.remove(scopeIdx);
     }
   }
 
@@ -284,7 +276,18 @@ public class Tools {
   }
 
   public void enableTool(PsiElement element) {
-
+    myEnabled = true;
+    if (element == null) return;
+    final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(element.getProject());
+    if (myTools != null) {
+      for (ScopeToolState state : myTools) {
+        final NamedScope scope = state.getScope();
+        if (scope != null && scope.getValue().contains(element.getContainingFile(), validationManager)) {
+          state.setEnabled(true);
+          return;
+        }
+      }
+    }
   }
 
 
@@ -304,7 +307,17 @@ public class Tools {
 
 
   public void disableTool(PsiElement element) {
-
+    if (element == null) return;
+    final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(element.getProject());
+    if (myTools != null) {
+      for (ScopeToolState state : myTools) {
+        final NamedScope scope = state.getScope();
+        if (scope != null && scope.getValue().contains(element.getContainingFile(), validationManager)) {
+          state.setEnabled(false);
+          return;
+        }
+      }
+    }
   }
 
   public HighlightDisplayLevel getLevel(final NamedScope scope) {
@@ -351,5 +364,13 @@ public class Tools {
       LOG.error(e);
     }
     return false;
+  }
+
+  public void setLevel(HighlightDisplayLevel level, int idx) {
+    if (myTools != null && myTools.size() > idx && idx >= 0) {
+      final ScopeToolState scopeToolState = myTools.get(idx);
+      myTools.remove(idx);
+      myTools.add(idx, new ScopeToolState(scopeToolState.getScope(), scopeToolState.getTool(), scopeToolState.isEnabled(), level));
+    }
   }
 }

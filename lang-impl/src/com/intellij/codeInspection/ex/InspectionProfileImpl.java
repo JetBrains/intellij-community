@@ -382,7 +382,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     final ArrayList<ScopeToolState> result = new ArrayList<ScopeToolState>();
     for (final Tools toolList : myTools.values()) {
       if (toolList.isEnabled()) {
-        if (toolList.getScopes() != null) {
+        if (toolList.getTools() != null) {
           for (ScopeToolState state : toolList.getTools()) {
             if (state.getScope() == null || state.isEnabled()) {
               result.add(state);
@@ -665,12 +665,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return myTools.get(key.toString()).isEnabled(namedScope);
   }
 
-  public List<NamedScope> getScopes(String toolId) {
-    return myTools.get(toolId).getScopes();
+  public List<ScopeToolState> getStates(String toolId) {
+    return myTools.get(toolId).getTools();
   }
 
-  public void removeScope(String toolId, NamedScope scope) {
-    myTools.get(toolId).removeScope(scope);
+  public void removeScope(String toolId, int scopeIdx) {
+    myTools.get(toolId).removeScope(scopeIdx);
   }
 
   public void setScope(String toolId, int idx, NamedScope namedScope) {
@@ -700,5 +700,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void addScope(InspectionProfileEntry tool, NamedScope scope, HighlightDisplayLevel level, boolean enabled) {
      myTools.get(tool.getShortName()).addTool(scope, (InspectionTool)tool, enabled, level);
+  }
+
+  public void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level, int scopeIdx) {
+    myTools.get(key.toString()).setLevel(level, scopeIdx);
   }
 }
