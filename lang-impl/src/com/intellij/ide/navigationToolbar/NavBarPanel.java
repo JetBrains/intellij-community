@@ -317,23 +317,55 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   private synchronized void immediateUpdateList(boolean update) {
     if (update) {
+      class ItemDescriptor {
+        boolean myHasChildren;
+        Icon myIcon;
+        String myPresentableText;
+        SimpleTextAttributes myTextAttributes;
+
+        ItemDescriptor(boolean hasChildren, Icon icon, String presentableText, SimpleTextAttributes textAttributes) {
+          myHasChildren = hasChildren;
+          myIcon = icon;
+          myPresentableText = presentableText;
+          myTextAttributes = textAttributes;
+        }
+      }
+
+      final ItemDescriptor[] descriptors = new ItemDescriptor[myModel.size()];
       myFirstIndex = 0;
-      final int selectedIndex1 = -1;
-      myModel.setSelectedIndex(selectedIndex1);
-      myList.clear();
+      final int selectedIndex = -1;
+      myModel.setSelectedIndex(selectedIndex);
       for (int index = 0; index < myModel.size(); index++) {
         final Object object = myModel.get(index);
         final boolean hasChildren = myModel.hasChildren(object);
         final Icon icon = NavBarModel.getIcon(object);
-        final MyCompositeLabel label = new MyCompositeLabel(index,
-                                                            hasChildren ? wrapIcon(icon, index, Color.gray) : icon,
-                                                            NavBarModel.getPresentableText(object, getWindow()),
-                                                            myModel.getTextAttributes(object, false), myModel);
+        descriptors[index] =
+          new ItemDescriptor(hasChildren, hasChildren ? wrapIcon(icon, index, Color.gray) : icon, NavBarModel.getPresentableText(object, getWindow()),
+                             myModel.getTextAttributes(object, false));
 
-        installActions(index, hasChildren, icon, label);
-        myList.add(label);
       }
-      rebuildComponent();
+
+      final Runnable updateUI = new Runnable() {
+        public void run() {
+          myList.clear();
+          for (int index = 0; index < descriptors.length; index++) {
+            final ItemDescriptor descriptor = descriptors[index];
+            final MyCompositeLabel label =
+              new MyCompositeLabel(index, descriptor.myIcon, descriptor.myPresentableText, descriptor.myTextAttributes, myModel);
+
+            installActions(index, descriptor.myHasChildren, descriptor.myIcon, label);
+            myList.add(label);
+          }
+          rebuildComponent();
+          if (myHint != null) {
+            final Dimension dimension = getPreferredSize();
+            final Rectangle bounds = myHint.getBounds();
+            myHint.setBounds(bounds.x, bounds.y, dimension.width, dimension.height);
+          }
+          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+        }
+      };
+      SwingUtilities.invokeLater(updateUI);
     }
   }
 
