@@ -200,6 +200,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     ProgressIndicator indicator = getProcessIndicator();
     if (indicator != null) indicator.setText("Generating stubs for " + item.getName() + "...");
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Generating stubs for " + item.getName() + "...");
+    }
+
     final GroovyFile file = findPsiFile(item);
 
     List<String> generatedJavaFilesRelPaths = ApplicationManager.getApplication().runReadAction(new Computable<List<String>>() {

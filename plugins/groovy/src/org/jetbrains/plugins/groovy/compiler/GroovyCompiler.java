@@ -83,6 +83,9 @@ public class GroovyCompiler implements TranslatingCompiler {
 
   @Nullable
   public ExitStatus compile(final CompileContext compileContext, final VirtualFile[] virtualFiles) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("running groovyc");
+    }
     Set<OutputItem> successfullyCompiled = new HashSet<OutputItem>();
     Set<VirtualFile> toRecompile = new HashSet<VirtualFile>();
 
@@ -94,7 +97,8 @@ public class GroovyCompiler implements TranslatingCompiler {
       final Set<VirtualFile> moduleFiles = entry.getValue();
       if (facet == null || facet.getConfiguration().isCompileGroovyFiles()) {
         doCompile(compileContext, successfullyCompiled, toRecompile, module, moduleFiles);
-      } else {
+      }
+      else {
         final ResourceCompiler resourceCompiler = new ResourceCompiler(myProject, CompilerConfiguration.getInstance(myProject));
         final ExitStatus exitStatus = resourceCompiler.compile(compileContext, moduleFiles.toArray(new VirtualFile[moduleFiles.size()]));
         successfullyCompiled.addAll(Arrays.asList(exitStatus.getSuccessfullyCompiled()));
@@ -361,7 +365,11 @@ public class GroovyCompiler implements TranslatingCompiler {
   }
 
   public boolean isCompilableFile(VirtualFile virtualFile, CompileContext compileContext) {
-    return GroovyFileType.GROOVY_FILE_TYPE.equals(virtualFile.getFileType());
+    final boolean result = GroovyFileType.GROOVY_FILE_TYPE.equals(virtualFile.getFileType());
+    if (result && LOG.isDebugEnabled()) {
+      LOG.debug("compilable file: " + virtualFile.getPath());
+    }
+    return result;
   }
 
   @NotNull
@@ -447,36 +455,6 @@ public class GroovyCompiler implements TranslatingCompiler {
     final String output = CompilerPaths.getModuleOutputPath(module, false);
     if (output != null) pathsList.add(output);
     return pathsList;
-  }
-
-  public static PathsList getNonExcludedModuleSourceFolders(Module module) {
-    ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-    PathsList sourceFolders = findAllSourceFolders(contentEntries);
-    sourceFolders.getPathList().removeAll(findExcludedFolders(contentEntries));
-    return sourceFolders;
-  }
-
-  private static PathsList findAllSourceFolders(ContentEntry[] contentEntries) {
-    PathsList sourceFolders = new PathsList();
-    for (ContentEntry contentEntry : contentEntries) {
-      for (SourceFolder folder : contentEntry.getSourceFolders()) {
-        VirtualFile file = folder.getFile();
-        if (file == null) continue;
-
-        if (file.isDirectory() && file.isWritable()) {
-          sourceFolders.add(file);
-        }
-      }
-    }
-    return sourceFolders;
-  }
-
-  private static Set<VirtualFile> findExcludedFolders(ContentEntry[] entries) {
-    Set<VirtualFile> excludedFolders = new HashSet<VirtualFile>();
-    for (ContentEntry entry : entries) {
-      excludedFolders.addAll(Arrays.asList(entry.getExcludeFolderFiles()));
-    }
-    return excludedFolders;
   }
 
   private static Map<Module, Set<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final VirtualFile[] files) {
