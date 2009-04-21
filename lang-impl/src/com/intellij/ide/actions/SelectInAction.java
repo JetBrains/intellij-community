@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -23,7 +24,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class SelectInAction extends AnAction {
+public class SelectInAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.select.in");
     SelectInContext context = SelectInContextImpl.createContext(e);

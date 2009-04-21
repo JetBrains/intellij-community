@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NonNls;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 
-public class ActivateToolWindowAction extends AnAction {
+public class ActivateToolWindowAction extends AnAction implements DumbAware {
   private final String myToolWindowId;
 
   /**

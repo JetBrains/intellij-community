@@ -4,10 +4,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 
-public class NewElementAction extends AnAction {
+public class NewElementAction extends AnAction implements DumbAware {
 
   public void actionPerformed(final AnActionEvent e) {
     showPopup(e.getDataContext());
