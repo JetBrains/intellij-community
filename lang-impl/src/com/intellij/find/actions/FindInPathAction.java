@@ -3,9 +3,10 @@ package com.intellij.find.actions;
 
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
-public class FindInPathAction extends AnAction {
+public class FindInPathAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = e.getData(PlatformDataKeys.PROJECT);
