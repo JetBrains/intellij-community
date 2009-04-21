@@ -1,4 +1,3 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <name>Maven Integration</name>
   <id>org.jetbrains.idea.maven</id>
@@ -50,6 +49,8 @@
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
 
+    <projectService serviceInterface="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder" serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
+
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction</className>
     </intentionAction>
@@ -95,9 +96,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.events.MavenEventsManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder</implementation-class>
     </component>
   </project-components>
 

@@ -17,6 +17,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,12 +26,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class MavenDomElementDescriptorHolder extends SimpleProjectComponent {
+public class MavenDomElementDescriptorHolder {
   private final Project myProject;
   private volatile XmlNSDescriptorImpl myNSDescriptor;
 
@@ -38,16 +39,16 @@ public class MavenDomElementDescriptorHolder extends SimpleProjectComponent {
     myProject = project;
   }
 
-  public static MavenDomElementDescriptorHolder getInstance(Project project) {
-    return project.getComponent(MavenDomElementDescriptorHolder.class);
+  public static MavenDomElementDescriptorHolder getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, MavenDomElementDescriptorHolder.class);
   }
 
   public XmlElementDescriptor getDescriptor(XmlTag tag) {
     if (!MavenDomUtil.isPomFile(tag.getContainingFile())) return null;
 
-    if (myNSDescriptor == null) {
+    if (myNSDescriptor == null || !myNSDescriptor.getDeclaration().isValid()) {
       synchronized (this) {
-        if (myNSDescriptor == null) initDescriptor();
+        if (myNSDescriptor == null || !myNSDescriptor.getDeclaration().isValid()) initDescriptor();
       }
     }
     return myNSDescriptor.getElementDescriptor(tag.getName(), myNSDescriptor.getDefaultNamespace());
