@@ -22,9 +22,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Implementors of the interface encapsulate optimize imports process for the language.
  * @author max
- * @see ImportOptimizer2
  */
 public interface ImportOptimizer {
+  /**
+   * Call to this method is made before the <code>processFile()</code> call to ensure implementation can process the file given
+   *
+   * @param file file to check
+   * @return <code>true</code> if implementation can handle the file
+   */
+  boolean supports(PsiFile file);
+
   /**
    * Implementors of the method are expected to perform all necessary calculations synchronously and return a <code>Runnable</code>,
    * which performs modifications based on preprocessing results.
@@ -40,4 +47,5 @@ public interface ImportOptimizer {
    */
   @NotNull
   Runnable processFile(PsiFile file);
+
 }

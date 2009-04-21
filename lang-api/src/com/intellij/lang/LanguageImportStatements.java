@@ -16,9 +16,6 @@ public class LanguageImportStatements extends LanguageExtension<ImportOptimizer>
   @Nullable
   public ImportOptimizer forFile(PsiFile file) {
     ImportOptimizer optimizer = forLanguage(file.getLanguage());
-    if (optimizer instanceof ImportOptimizer2) {
-      return ((ImportOptimizer2)optimizer).supports(file) ? optimizer : null;
-    }
-    return optimizer;
+    return optimizer != null && optimizer.supports(file) ? optimizer : null;
   }
 }

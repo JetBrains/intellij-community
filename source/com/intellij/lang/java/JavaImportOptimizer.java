@@ -52,4 +52,8 @@ public class JavaImportOptimizer implements ImportOptimizer {
       return EmptyRunnable.getInstance();
     }
   }
+
+  public boolean supports(PsiFile file) {
+    return true;
+  }
 }
