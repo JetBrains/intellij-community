@@ -123,7 +123,7 @@ public abstract class BaseButtonBehavior {
     }
 
     private boolean passIfNeeded(final MouseEvent e) {
-      if (!UIUtil.isActionClick(e) || myMouseDeadzone.isWithin()) {
+      if (!UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) || myMouseDeadzone.isWithin()) {
         pass(e);
         return true;
       }
