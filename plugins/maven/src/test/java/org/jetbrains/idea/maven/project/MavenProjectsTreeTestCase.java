@@ -5,18 +5,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenProjectsTreeTest extends MavenImportingTestCase {
+public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
   private static final MavenConsole NULL_CONSOLE = NULL_MAVEN_CONSOLE;
 
-  private MavenEmbeddersManager myEmbeddersManager;
-  private MavenProjectsTree myTree = new MavenProjectsTree();
+  private boolean isQuick;
+  protected MavenEmbeddersManager myEmbeddersManager;
+  protected MavenProjectsTree myTree = new MavenProjectsTree();
+
+  protected MavenProjectsTreeTestCase(boolean quick) {
+    isQuick = quick;
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -28,28 +32,6 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
   protected void tearDown() throws Exception {
     myEmbeddersManager.release();
     super.tearDown();
-  }
-
-  public void testSendingNotificationAfterProjectIsAddedInToHierarchy() throws Exception {
-    final MavenProject[] projects = new MavenProject[2];
-
-    myTree.addListener(new MavenProjectsManager.ListenerAdapter() {
-      @Override
-      public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-        projects[0] = myTree.findProject(project.getFile());
-        projects[1] = myTree.getRootProjects().get(0);
-      }
-    });
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>m1</artifactId>" +
-                     "<version>1</version>");
-    readModel(myProjectPom);
-
-    List<MavenProject> roots = myTree.getRootProjects();
-
-    assertSame(projects[0], roots.get(0));
-    assertSame(projects[1], roots.get(0));
   }
 
   public void testTwoRootProjects() throws Exception {
@@ -69,30 +51,6 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertEquals(2, roots.size());
     assertEquals(m1, roots.get(0).getFile());
     assertEquals(m2, roots.get(1).getFile());
-  }
-
-  public void testDoNotImportSameRootProjectTwice() throws Exception {
-    MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
-
-    VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
-
-    VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
-
-    readModel(m1, m2, m1);
-    List<MavenProject> roots = myTree.getRootProjects();
-
-    assertEquals(2, roots.size());
-    assertEquals(m2, roots.get(0).getFile());
-    assertEquals(m1, roots.get(1).getFile());
-
-    assertEquals("read m1 read m2 ", listener.log);
   }
 
   public void testDoNotImportChildAsRootProject() throws Exception {
@@ -118,42 +76,6 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     assertEquals(1, myTree.getModules(roots.get(0)).size());
     assertEquals(m, myTree.getModules(roots.get(0)).get(0).getFile());
-  }
-
-  public void testRereadingChildIfParentWasReadAfterIt() throws Exception {
-    MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
-
-    VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<properties>" +
-                                     " <childId>m2</childId>" +
-                                     "</properties>");
-
-    VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>${childId}</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<parent>" +
-                                     "  <groupId>test</groupId>" +
-                                     "  <artifactId>m1</artifactId>" +
-                                     "  <version>1</version>" +
-                                     "</parent>");
-
-    readModel(m2, m1);
-
-    List<MavenProject> roots = myTree.getRootProjects();
-    assertEquals(2, roots.size());
-    assertEquals(m1, roots.get(0).getFile());
-    assertEquals(m2, roots.get(1).getFile());
-    assertEquals("m1", roots.get(0).getMavenId().artifactId);
-    assertEquals("m2", roots.get(1).getMavenId().artifactId);
-
-    assertEquals("read ${childId} read m1 read m2 ", listener.log);
   }
 
   public void testSameProjectAsModuleOfSeveralProjects() throws Exception {
@@ -391,12 +313,12 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
   public void testUpdatingInheritance() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
-                       "<artifactId>parent</artifactId>" +
-                       "<version>1</version>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
 
-                       "<properties>" +
-                       "  <childName>child</childName>" +
-                       "</properties>");
+                     "<properties>" +
+                     "  <childName>child</childName>" +
+                     "</properties>");
 
     VirtualFile child = createModulePom("child",
                                         "<groupId>test</groupId>" +
@@ -413,12 +335,12 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertEquals("child", myTree.findProject(child).getMavenId().artifactId);
 
     createProjectPom("<groupId>test</groupId>" +
-                       "<artifactId>parent</artifactId>" +
-                       "<version>1</version>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
 
-                       "<properties>" +
-                       "  <childName>child2</childName>" +
-                       "</properties>");
+                     "<properties>" +
+                     "  <childName>child2</childName>" +
+                     "</properties>");
 
     update(myProjectPom);
 
@@ -1068,53 +990,6 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertTrue(myTree.getModules(roots.get(1)).isEmpty());
   }
 
-  public void testSendingNotificationsWhenAggregationChanged() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
-
-    VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
-
-    VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
-
-    readModel(myProjectPom, m1, m2);
-
-    List<MavenProject> roots = myTree.getRootProjects();
-    assertEquals(1, roots.size());
-    assertEquals(2, myTree.getModules(roots.get(0)).size());
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
-
-    MyLoggingListener listener = new MyLoggingListener();
-    myTree.addListener(listener);
-    update(myProjectPom);
-
-    roots = myTree.getRootProjects();
-    assertEquals(2, roots.size());
-    assertEquals(1, myTree.getModules(roots.get(0)).size());
-
-    assertEquals("read project read m2 ", listener.log);
-  }
-
   public void testDeletingProject() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1394,54 +1269,6 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
   }
 
-  public void testDoNotUpdateModelWhenAggregatorProfilesXmlChange() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
-
-    createModulePom("m",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<build>" +
-                    "  <sourceDirectory>${prop}</sourceDirectory>" +
-                    "</build>");
-
-    createProfilesXml("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value1</prop>" +
-                      "  </properties>" +
-                      "</profile>");
-
-    readModel(myProjectPom);
-
-    MyLoggingListener l = new MyLoggingListener();
-    myTree.addListener(l);
-
-    createProfilesXml("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value2</prop>" +
-                      "  </properties>" +
-                      "</profile>");
-
-    readModel(myProjectPom);
-    assertEquals("read project ", l.log);
-  }
-
   public void testUpdatingModelWhenSettingXmlChange() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1512,67 +1339,22 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
   }
 
-  public void testSaveLoad() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
-
-    VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
-
-    VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<build>" +
-                                     "  <plugins>" +
-                                     "    <plugin>" +
-                                     "      <artifactId>maven-compiler-plugin</artifactId>" +
-                                     "    </plugin>" +
-                                     "  </plugins>" +
-                                     "</build>");
-
-    readModel(myProjectPom);
-
-    File f = new File(myDir, "tree.dat");
-    myTree.save(f);
-    MavenProjectsTree read = MavenProjectsTree.read(f);
-
-    List<MavenProject> roots = read.getRootProjects();
-    assertEquals(1, roots.size());
-    assertEquals(myProjectPom, roots.get(0).getFile());
-
-    assertEquals(2, read.getModules(roots.get(0)).size());
-    assertEquals(m1, read.getModules(roots.get(0)).get(0).getFile());
-    assertEquals(m2, read.getModules(roots.get(0)).get(1).getFile());
-    assertEquals(1, read.getModules(roots.get(0)).get(1).getPlugins().size());
-  }
-
-  private void readModel(VirtualFile... files) throws MavenProcessCanceledException, MavenException {
+  protected void readModel(VirtualFile... files) throws MavenProcessCanceledException, MavenException {
     readModel(Collections.<String>emptyList(), files);
   }
 
-  private void readModel(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException, MavenException {
+  protected void readModel(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException, MavenException {
     myTree.setManagedFiles(asList(files));
     myTree.setActiveProfiles(profiles);
-    myTree.updateAll(myProject, false, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(myProject, isQuick, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
   }
 
-  private void update(VirtualFile file) throws MavenProcessCanceledException {
-    myTree.update(myProject, asList(file), false, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
+  protected void update(VirtualFile file) throws MavenProcessCanceledException {
+    myTree.update(myProject, asList(file), isQuick, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
   }
 
-  private void deleteProject(VirtualFile file) throws MavenProcessCanceledException {
-    myTree.delete(myProject, asList(file), false, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
+  protected void deleteProject(VirtualFile file) throws MavenProcessCanceledException {
+    myTree.delete(myProject, asList(file), isQuick, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
   }
 
   private void updateTimestamps(VirtualFile... files) throws IOException {
@@ -1581,7 +1363,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     }
   }
 
-  private static class MyLoggingListener implements MavenProjectsTree.Listener {
+  protected static class MyLoggingListener implements MavenProjectsTree.Listener {
     String log = "";
 
     public void projectsReadQuickly(List<MavenProject> projects) {
