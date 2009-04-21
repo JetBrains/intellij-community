@@ -16,8 +16,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
@@ -536,9 +536,7 @@ public abstract class ChooseByNameBase{
        JComponent.WHEN_IN_FOCUSED_WINDOW
     );
 
-    if (myTextField.requestFocusInWindow() || SystemInfo.isMac) {
-      myTextField.requestFocus();
-    }
+    IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
 
     myTextFieldPanel.validate();
     myTextFieldPanel.paintImmediately(0, 0, myTextFieldPanel.getWidth(), myTextFieldPanel.getHeight());
