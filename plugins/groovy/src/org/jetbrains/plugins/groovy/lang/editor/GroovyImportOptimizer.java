@@ -59,6 +59,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     return new MyProcessor(file);
   }
 
+  public boolean supports(PsiFile file) {
+    return true;
+  }
+
   private class MyProcessor implements Runnable {
     private final GroovyFile myFile;
 
