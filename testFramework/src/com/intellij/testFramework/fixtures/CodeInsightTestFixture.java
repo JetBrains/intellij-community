@@ -112,6 +112,10 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls String... filePaths) throws Throwable;
 
+  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls String... filePaths) throws Throwable;
+
+  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls VirtualFile... files) throws Throwable;
+
   /**
    * Check highlighting of file already loaded by configure* methods
    * @param checkWarnings
@@ -306,4 +310,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   List<String> getLookupElementStrings();
 
   void renameElementAtCaret(String newName) throws Throwable;
+
+  void allowTreeAccessForFile(VirtualFile file);
 }

@@ -238,7 +238,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                final boolean checkInfos,
                                final boolean checkWeakWarnings,
                                final String... filePaths) throws Throwable {
-
     final Ref<Long> duration = new Ref<Long>();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
@@ -248,6 +247,49 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }.execute().throwException();
     return duration.get().longValue();
+  }
+
+  public long testHighlightingAllFiles(final boolean checkWarnings,
+                                       final boolean checkInfos,
+                                       final boolean checkWeakWarnings,
+                                       @NonNls final String... filePaths) throws Throwable {
+    final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    for (String path : filePaths) {
+      files.add(copyFileToProject(path));
+    }
+    return testHighlightingAllFiles(checkWarnings, checkInfos, checkWeakWarnings, files.toArray(new VirtualFile[files.size()]));
+  }
+
+  public long testHighlightingAllFiles(final boolean checkWarnings,
+                               final boolean checkInfos,
+                               final boolean checkWeakWarnings,
+                               @NonNls final VirtualFile... files) throws Throwable {
+    final Ref<Long> duration = new Ref<Long>();
+    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+
+      protected void run() throws Throwable {
+        collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration, files);
+      }
+    }.execute().throwException();
+    return duration.get().longValue();
+  }
+
+  private void collectAndCheckHighlightings(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings, final Ref<Long> duration,
+                                            final VirtualFile[] files) {
+    final List<Trinity<PsiFile, Editor, ExpectedHighlightingData>> datas = ContainerUtil.map2List(files, new Function<VirtualFile, Trinity<PsiFile, Editor, ExpectedHighlightingData>>() {
+      public Trinity<PsiFile, Editor, ExpectedHighlightingData> fun(final VirtualFile file) {
+        final PsiFile psiFile = myPsiManager.findFile(file);
+        assertNotNull(psiFile);
+        final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+        assertNotNull(document);
+        return Trinity.create(psiFile, createEditor(file), new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, psiFile));
+      }
+    });
+    for (Trinity<PsiFile, Editor, ExpectedHighlightingData> trinity : datas) {
+      myEditor = trinity.second;
+      myFile = trinity.first;
+      collectAndCheckHighlightings(trinity.third, duration);
+    }
   }
 
   public long checkHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) throws Throwable {
@@ -909,9 +951,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private void collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, Ref<Long> duration)
     throws Exception {
-    final Project project = getProject();
     ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
 
+    collectAndCheckHighlightings(data, duration);
+  }
+
+  private void collectAndCheckHighlightings(final ExpectedHighlightingData data, final Ref<Long> duration) {
+    final Project project = getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     ((PsiFileImpl)myFile).calcTreeElement(); //to load text
@@ -932,7 +978,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final long start = System.currentTimeMillis();
 //    ProfilingUtil.startCPUProfiling();
     Collection<HighlightInfo> infos = doHighlighting();
-    duration.set(System.currentTimeMillis() - start);
+    final long elapsed = System.currentTimeMillis() - start;
+    duration.set(duration.isNull()? elapsed : duration.get().longValue() + elapsed);
 //    ProfilingUtil.captureCPUSnapshot("testing");
 
     ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
@@ -1037,6 +1084,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
     return result;
+  }
+
+  public void allowTreeAccessForFile(final VirtualFile file) {
+    myAddedClasses.add(file);
   }
 
   static class SelectionAndCaretMarkupLoader {

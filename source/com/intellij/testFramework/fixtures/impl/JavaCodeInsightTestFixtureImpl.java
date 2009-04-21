@@ -3,6 +3,7 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,8 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   public PsiClass addClass(@NotNull @NonNls final String classText) throws IOException {
     assertInitialized();
     final PsiClass psiClass = addClass(getTempDirPath(), classText);
-    myAddedClasses.add(psiClass.getContainingFile().getVirtualFile());
+    final VirtualFile file = psiClass.getContainingFile().getVirtualFile();
+    allowTreeAccessForFile(file);
     return psiClass;
   }
 
