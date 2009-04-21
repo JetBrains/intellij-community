@@ -36,6 +36,9 @@ public interface InspectionProfile extends Profile {
 
   InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element);
 
+  @Deprecated
+  InspectionProfileEntry getInspectionTool(@NotNull String shortName);
+
   @NotNull
   InspectionProfileEntry[] getInspectionTools(PsiElement element);
 
