@@ -922,8 +922,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    importProject();
-
     assertProjectLibraries("Maven: junit:junit:4.0",
                            "Maven: junit:junit:war:4.0",
                            "Maven: junit:junit:jdk5:4.0");

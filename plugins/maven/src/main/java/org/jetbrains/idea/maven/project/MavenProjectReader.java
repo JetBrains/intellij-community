@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
@@ -11,18 +11,23 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.GenericDomValue;
 import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.extension.ExtensionScanningException;
-import org.apache.maven.model.Build;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.Parent;
-import org.apache.maven.model.Profile;
+import org.apache.maven.model.*;
+import org.apache.maven.profiles.activation.*;
+import org.apache.maven.profiles.injection.DefaultProfileInjector;
 import org.apache.maven.project.InvalidProjectModelException;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
+import org.apache.maven.project.interpolation.ModelInterpolationException;
+import org.apache.maven.project.interpolation.RegexBasedModelInterpolator;
+import org.apache.maven.project.path.DefaultPathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.reactor.MissingModuleException;
 import org.jetbrains.idea.maven.dom.model.*;
@@ -31,24 +36,55 @@ import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenConsoleHelper;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.*;
 
 public class MavenProjectReader {
   private static final String UNKNOWN = "Unknown";
+  private static final String UNNAMED = "Unnamed";
 
   public static MavenProjectReaderResult readProjectQuickly(Project project,
                                                             VirtualFile file,
-                                                            List<String> activeProfiles) {
+                                                            List<String> activeProfiles,
+                                                            MavenProjectReaderProjectLocator locator) {
+    File localRepository = MavenProjectsManager.getInstance(project).getLocalRepository();
+
+    Pair<Model, List<Profile>> readResult = doReadProjectModelQuickly(project, file, localRepository, activeProfiles, new HashSet<VirtualFile>(), locator);
+
+    File basedir = new File(file.getParent().getPath());
+    Model model = expandProperties(readResult.first, basedir);
+    alignModel(model, basedir);
+
+    MavenProject mavenProject = new MavenProject(model);
+    mavenProject.setFile(new File(file.getPath()));
+    mavenProject.setActiveProfiles(readResult.second);
+    MavenProjectHelper.setSourceRoots(mavenProject,
+                                      Collections.singletonList(model.getBuild().getSourceDirectory()),
+                                      Collections.singletonList(model.getBuild().getTestSourceDirectory()),
+                                      Collections.singletonList(model.getBuild().getScriptSourceDirectory()));
+
+    return new MavenProjectReaderResult(true,
+                                        activeProfiles,
+                                        Collections.EMPTY_LIST,
+                                        Collections.EMPTY_SET,
+                                        localRepository,
+                                        mavenProject);
+  }
+
+  private static Pair<Model, List<Profile>> doReadProjectModelQuickly(Project project,
+                                                                      VirtualFile file,
+                                                                      File localRepository,
+                                                                      List<String> activeProfiles,
+                                                                      Set<VirtualFile> recursionGuard,
+                                                                      MavenProjectReaderProjectLocator locator) {
     Model mavenModel = new Model();
-
     DomFileElement<MavenDomProjectModel> domFile = getDomFile(project, file, MavenDomProjectModel.class);
-
-    MavenProjectsManager mavenManager = MavenProjectsManager.getInstance(project);
 
     if (domFile != null) {
       MavenDomProjectModel domProject = domFile.getRootElement();
@@ -59,33 +95,8 @@ public class MavenProjectReader {
       mavenModel.setPackaging(domProject.getPackaging().getStringValue());
       mavenModel.setName(domProject.getName().getStringValue());
 
-      mavenModel.setModules(readModules(domProject.getModules()));
-      collectProperties(domProject.getProperties(), mavenModel);
-
-      Build mavenBuild = new Build();
-      mavenModel.setBuild(mavenBuild);
-      MavenDomBuild domBuild = domProject.getBuild();
-      if (domBuild.getXmlElement() != null) {
-        mavenBuild.setFinalName(domBuild.getFinalName().getStringValue());
-        mavenBuild.setDirectory(domBuild.getDirectory().getStringValue());
-        mavenBuild.setSourceDirectory(domBuild.getSourceDirectory().getStringValue());
-        mavenBuild.setTestSourceDirectory(domBuild.getTestSourceDirectory().getStringValue());
-        mavenBuild.setOutputDirectory(domBuild.getOutputDirectory().getStringValue());
-        mavenBuild.setTestOutputDirectory(domBuild.getTestOutputDirectory().getStringValue());
-      }
-
-      collectProfiles(mavenModel, domProject.getProfiles(), activeProfiles);
-
-      VirtualFile profilesFile = file.getParent().findChild(MavenConstants.PROFILES_XML);
-      if (profilesFile != null) {
-        DomFileElement<MavenDomProfiles> domProfilesFile = getDomFile(project, profilesFile, MavenDomProfiles.class);
-        if (domProfilesFile != null) {
-          collectProfiles(mavenModel, domProfilesFile.getRootElement(), activeProfiles);
-        }
-      }
-
       MavenDomParent domParent = domProject.getMavenParent();
-      if (domParent.getXmlElement() != null) {
+      if (domElementExists(domParent)) {
         Parent parent = new Parent();
 
         String groupId = domParent.getGroupId().getStringValue();
@@ -98,40 +109,96 @@ public class MavenProjectReader {
         parent.setRelativePath(domParent.getRelativePath().getStringValue());
 
         mavenModel.setParent(parent);
-
-        if (groupId != null && artifactId != null && version != null) {
-          MavenId parentId = new MavenId(groupId, artifactId, version);
-          org.jetbrains.idea.maven.project.MavenProject mavenProject = mavenManager.findProject(parentId);
-          if (mavenProject != null) {
-            Properties parentProperties = mavenProject.getProperties();
-            Properties props = mavenModel.getProperties();
-            for (Map.Entry<Object, Object> each : parentProperties.entrySet()) {
-              if (!props.containsKey(each.getKey())) {
-                props.setProperty((String)each.getKey(), (String)each.getValue());
-              }
-            }
-          }
-        }
       }
 
-      MavenGeneralSettings settings = mavenManager.getGeneralSettings();
-      File userSettings = MavenEmbedderFactory.resolveUserSettingsFile(settings.getMavenSettingsFile());
-      collectProfilesFromSettingsFile(project, userSettings, activeProfiles, mavenModel);
+      mavenModel.setBuild(new Build());
+      readModelAndBuild(mavenModel, mavenModel.getBuild(), domProject);
 
-      File globalSettings = MavenEmbedderFactory.resolveGlobalSettingsFile(settings.getMavenHome());
-      collectProfilesFromSettingsFile(project, globalSettings, activeProfiles, mavenModel);
+      mavenModel.setProfiles(collectProfiles(project, file, domProject));
     }
 
-    MavenProject mavenProject = createMavenProject(file, mavenModel);
-    return new MavenProjectReaderResult(true,
-                                        activeProfiles,
-                                        Collections.EMPTY_LIST,
-                                        Collections.EMPTY_SET,
-                                        mavenManager.getLocalRepository(),
-                                        mavenProject);
+    List<Profile> activatedProfiles = applyProfiles(mavenModel, activeProfiles);
+    repairModelHeader(mavenModel);
+    resolveInheritance(project, mavenModel, file, localRepository, activeProfiles, recursionGuard, locator);
+    repairModelBody(mavenModel);
+
+    return Pair.create(mavenModel, activatedProfiles);
   }
 
-  private static void collectProfilesFromSettingsFile(Project project, File settings, List<String> activeProfiles, Model mavenModel) {
+  private static void readModelAndBuild(ModelBase mavenModelBase,
+                                        BuildBase mavenBuildBase,
+                                        MavenDomProjectModelBase domModelBase) {
+    mavenModelBase.setModules(readModules(domModelBase.getModules()));
+    collectProperties(domModelBase.getProperties(), mavenModelBase);
+
+    MavenDomBuildBase domBuildBase = domModelBase.getBuild();
+    if (!domElementExists(domBuildBase)) return;
+
+    mavenBuildBase.setFinalName(domBuildBase.getFinalName().getStringValue());
+    mavenBuildBase.setDefaultGoal(domBuildBase.getDefaultGoal().getStringValue());
+    mavenBuildBase.setDirectory(domBuildBase.getDirectory().getStringValue());
+    mavenBuildBase.setResources(collectResources(domBuildBase.getResources().getResources()));
+    mavenBuildBase.setTestResources(collectResources(domBuildBase.getTestResources().getTestResources()));
+
+    if (mavenBuildBase instanceof Build) {
+      Build mavenBuild = (Build)mavenBuildBase;
+      MavenDomBuild domBuild = (MavenDomBuild)domBuildBase;
+
+      mavenBuild.setSourceDirectory(domBuild.getSourceDirectory().getStringValue());
+      mavenBuild.setTestSourceDirectory(domBuild.getTestSourceDirectory().getStringValue());
+      mavenBuild.setOutputDirectory(domBuild.getOutputDirectory().getStringValue());
+      mavenBuild.setTestOutputDirectory(domBuild.getTestOutputDirectory().getStringValue());
+      mavenBuild.setScriptSourceDirectory(domBuild.getScriptSourceDirectory().getStringValue());
+    }
+  }
+
+  private static List<Resource> collectResources(List<MavenDomResource> resources) {
+    List<Resource> result = new ArrayList<Resource>();
+    for (MavenDomResource each : resources) {
+      Resource r = new Resource();
+      r.setDirectory(each.getDirectory().getStringValue());
+      r.setFiltering("true".equals(each.getFiltering().getStringValue()));
+      r.setTargetPath(each.getTargetPath().getStringValue());
+      r.setIncludes(collectIncludesOrExcludes(each.getIncludes().getIncludes()));
+      r.setExcludes(collectIncludesOrExcludes(each.getExcludes().getExcludes()));
+      result.add(r);
+    }
+    return result;
+  }
+
+  private static List<String> collectIncludesOrExcludes(List<GenericDomValue<String>> includesOrExcludes) {
+    List<String> result = new ArrayList<String>();
+    for (GenericDomValue<String> eachExclude : includesOrExcludes) {
+      result.add(eachExclude.getStringValue());
+    }
+    return result;
+  }
+
+  private static List<Profile> collectProfiles(Project project, VirtualFile file, MavenDomProjectModel domProject) {
+    MavenProjectsManager mavenManager = MavenProjectsManager.getInstance(project);
+
+    List<Profile> result = new ArrayList<Profile>();
+    collectProfiles(domProject.getProfiles(), result);
+
+    VirtualFile profilesFile = file.getParent().findChild(MavenConstants.PROFILES_XML);
+    if (profilesFile != null) {
+      DomFileElement<MavenDomProfiles> domProfilesFile = getDomFile(project, profilesFile, MavenDomProfiles.class);
+      if (domProfilesFile != null) {
+        collectProfiles(domProfilesFile.getRootElement(), result);
+      }
+    }
+
+    MavenGeneralSettings settings = mavenManager.getGeneralSettings();
+    File userSettings = MavenEmbedderFactory.resolveUserSettingsFile(settings.getMavenSettingsFile());
+    collectProfilesFromSettingsFile(project, userSettings, result);
+
+    File globalSettings = MavenEmbedderFactory.resolveGlobalSettingsFile(settings.getMavenHome());
+    collectProfilesFromSettingsFile(project, globalSettings, result);
+
+    return result;
+  }
+
+  private static void collectProfilesFromSettingsFile(Project project, File settings, List<Profile> result) {
     if (settings == null) return;
 
     VirtualFile settingsFile = LocalFileSystem.getInstance().findFileByIoFile(settings);
@@ -140,23 +207,28 @@ public class MavenProjectReader {
     DomFileElement<MavenDomSettingsModel> domSettingsFile = getDomFile(project, settingsFile, MavenDomSettingsModel.class);
 
     if (domSettingsFile == null) return;
-    collectProfiles(mavenModel, domSettingsFile.getRootElement().getProfiles(), activeProfiles);
+    collectProfiles(domSettingsFile.getRootElement().getProfiles(), result);
   }
 
-  private static void collectProfiles(Model mavenModel, MavenDomProfiles domProfiles, List<String> activeProfiles) {
-    List<Profile> profiles = mavenModel.getProfiles();
+  private static void collectProfiles(MavenDomProfiles domProfiles, List<Profile> result) {
     for (MavenDomProfile each : domProfiles.getProfiles()) {
       String id = each.getId().getStringValue();
-      if (StringUtil.isEmptyOrSpaces(id)) continue;
+      if (isEmptyOrSpaces(id)) continue;
 
       Profile profile = new Profile();
       profile.setId(id);
-      profile.setModules(readModules(each.getModules()));
-      profiles.add(profile);
 
-      if (activeProfiles.contains(id)) {
-        collectProperties(each.getProperties(), mavenModel);
+      MavenDomActivation domActivation = each.getActivation();
+      if (domElementExists(domActivation)) {
+        Activation activation = new Activation();
+        activation.setActiveByDefault("true".equals(domActivation.getActiveByDefault().getStringValue()));
+        profile.setActivation(activation);
       }
+
+      profile.setBuild(new BuildBase());
+      readModelAndBuild(profile, profile.getBuild(), each);
+
+      result.add(profile);
     }
   }
 
@@ -175,8 +247,8 @@ public class MavenProjectReader {
     return result;
   }
 
-  private static void collectProperties(DomElement domProperties, Model mavenModel) {
-    Properties props = mavenModel.getProperties();
+  private static void collectProperties(DomElement domProperties, ModelBase mavenModelBase) {
+    Properties props = mavenModelBase.getProperties();
 
     XmlTag propertiesTag = domProperties.getXmlTag();
     if (propertiesTag == null) return;
@@ -189,11 +261,240 @@ public class MavenProjectReader {
     }
   }
 
-  public static Pair<MavenProject, MavenProjectReaderResult> readProject(MavenEmbedderWrapper embedder,
-                                                                         VirtualFile f,
-                                                                         List<String> activeProfiles,
-                                                                         MavenProcess process) throws MavenProcessCanceledException {
-    MavenProject project = null;
+  private static boolean domElementExists(DomElement domParent) {
+    return domParent.getXmlElement() != null;
+  }
+
+  private static List<Profile> applyProfiles(Model model, List<String> profiles) {
+    List<Profile> activated = new ArrayList<Profile>();
+    List<Profile> activeByDefault = new ArrayList<Profile>();
+
+    ProfileActivationContext context = new DefaultProfileActivationContext(System.getProperties(), true);
+
+    for (Profile eachProfile : (Iterable<? extends Profile>)model.getProfiles()) {
+      if (profiles.contains(eachProfile.getId())) {
+        activated.add(eachProfile);
+      }
+
+      Activation activation = eachProfile.getActivation();
+      if (activation == null) continue;
+
+      if (activation.isActiveByDefault()) {
+        activeByDefault.add(eachProfile);
+      }
+
+      ProfileActivator[] activators = new ProfileActivator[]{
+        new FileProfileActivator(),
+        new SystemPropertyProfileActivator(),
+        new JdkPrefixProfileActivator(),
+        new OperatingSystemProfileActivator()
+      };
+
+      for (ProfileActivator eachActivator : activators) {
+        try {
+          if (eachActivator.canDetermineActivation(eachProfile, context)
+              && eachActivator.isActive(eachProfile, context)) {
+            activated.add(eachProfile);
+          }
+        }
+        catch (ProfileActivationException e) {
+          MavenLog.LOG.warn(e);
+        }
+      }
+    }
+
+    List<Profile> result = activated.isEmpty() ? activeByDefault : activated;
+
+    for (Profile each : result) {
+      new DefaultProfileInjector().inject(each, model);
+    }
+
+    return result;
+  }
+
+  private static void repairModelHeader(Model model) {
+    if (isEmptyOrSpaces(model.getModelVersion())) model.setModelVersion("4.0.0");
+
+    Parent parent = model.getParent();
+    if (parent != null) {
+      if (isEmptyOrSpaces(parent.getGroupId())) parent.setGroupId(UNKNOWN);
+      if (isEmptyOrSpaces(parent.getArtifactId())) parent.setArtifactId(UNKNOWN);
+      if (isEmptyOrSpaces(parent.getVersion())) parent.setVersion(UNKNOWN);
+      if (isEmptyOrSpaces(parent.getRelativePath())) parent.setRelativePath("../pom.xml");
+    }
+
+    if (isEmptyOrSpaces(model.getGroupId())) {
+      if (parent != null) {
+        model.setGroupId(parent.getGroupId());
+      }
+      else {
+        model.setGroupId(UNKNOWN);
+      }
+    }
+    if (isEmptyOrSpaces(model.getArtifactId())) model.setArtifactId(UNKNOWN);
+    if (isEmptyOrSpaces(model.getVersion())) {
+      if (parent != null) {
+        model.setVersion(parent.getVersion());
+      }
+      else {
+        model.setVersion(UNKNOWN);
+      }
+    }
+
+    if (isEmptyOrSpaces(model.getName())) model.setName(UNNAMED);
+    if (isEmptyOrSpaces(model.getPackaging())) model.setPackaging("jar");
+  }
+
+  private static void repairModelBody(Model model) {
+    if (model.getBuild() == null) {
+      model.setBuild(new Build());
+    }
+    Build build = model.getBuild();
+
+    if (isEmptyOrSpaces(build.getFinalName())) {
+      build.setFinalName(model.getArtifactId() + "-" + model.getVersion());
+    }
+
+    build.setSourceDirectory(isEmptyOrSpaces(build.getSourceDirectory())
+                             ? "src/main/java"
+                             : build.getSourceDirectory());
+    build.setTestSourceDirectory(isEmptyOrSpaces(build.getTestSourceDirectory())
+                                 ? "src/test/java"
+                                 : build.getTestSourceDirectory());
+    build.setScriptSourceDirectory(isEmptyOrSpaces(build.getScriptSourceDirectory())
+                                   ? "src/main/scripts"
+                                   : build.getScriptSourceDirectory());
+
+    build.setResources(repairResources(build.getResources(), "src/main/resources"));
+    build.setTestResources(repairResources(build.getTestResources(), "src/test/resources"));
+
+    build.setDirectory(isEmptyOrSpaces(build.getDirectory()) ? "target" : build.getDirectory());
+    build.setOutputDirectory(isEmptyOrSpaces(build.getOutputDirectory())
+                             ? "target/classes"
+                             : build.getOutputDirectory());
+    build.setTestOutputDirectory(isEmptyOrSpaces(build.getTestOutputDirectory())
+                                 ? "target/test-classes"
+                                 : build.getTestOutputDirectory());
+  }
+
+  private static List<Resource> repairResources(List<Resource> resources, String defaultDir) {
+    List<Resource> result = new ArrayList<Resource>();
+    if (resources.isEmpty()) {
+      result.add(createResource(defaultDir));
+      return result;
+    }
+
+    for (Resource each : resources) {
+      if (isEmptyOrSpaces(each.getDirectory())) continue;
+      each.setDirectory(each.getDirectory());
+      result.add(each);
+    }
+    return result;
+  }
+
+  private static Resource createResource(String directory) {
+    Resource result = new Resource();
+    result.setDirectory(directory);
+    return result;
+  }
+
+  private static void resolveInheritance(Project project,
+                                         Model model,
+                                         VirtualFile file,
+                                         File localRepository,
+                                         List<String> activeProfiles,
+                                         Set<VirtualFile> recursionGuard,
+                                         MavenProjectReaderProjectLocator locator) {
+    if (recursionGuard.contains(file)) return;
+    recursionGuard.add(file);
+
+    Parent parent = model.getParent();
+    if (parent == null) return;
+
+    Model parentModel = null;
+
+    String parentGroupId = parent.getGroupId();
+    String parentArtifactId = parent.getArtifactId();
+    String parentVersion = parent.getVersion();
+
+    VirtualFile parentFile = locator.findProjectFile(new MavenId(parentGroupId, parentArtifactId, parentVersion));
+    if (parentFile != null) {
+      parentModel = doReadProjectModelQuickly(project, parentFile, localRepository, activeProfiles, recursionGuard, locator).first;
+    }
+
+    if (parentModel == null) {
+      parentFile = file.getParent().findFileByRelativePath(parent.getRelativePath());
+      if (parentFile != null) {
+        parentModel = doReadProjectModelQuickly(project, parentFile, localRepository, activeProfiles, recursionGuard, locator).first;
+        if (!(parentGroupId.equals(parentModel.getGroupId())
+              && parentArtifactId.equals(parentModel.getArtifactId())
+              && parentVersion.equals(parentModel.getVersion()))) {
+          parentModel = null;
+        }
+      }
+    }
+
+    if (parentModel == null) {
+      File parentIoFile = MavenArtifactUtil.getArtifactFile(localRepository,
+                                                            parent.getGroupId(),
+                                                            parent.getArtifactId(),
+                                                            parent.getVersion(),
+                                                            "pom");
+      parentFile = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
+      if (parentFile != null) {
+        parentModel = doReadProjectModelQuickly(project, parentFile, localRepository, activeProfiles, recursionGuard, locator).first;
+      }
+    }
+
+    if (parentModel != null) {
+      new DefaultModelInheritanceAssembler().assembleModelInheritance(model, parentModel);
+    }
+  }
+
+  private static Model expandProperties(Model model, File basedir) {
+    RegexBasedModelInterpolator interpolator;
+    try {
+      interpolator = new RegexBasedModelInterpolator();
+      Field f = RegexBasedModelInterpolator.class.getDeclaredField("pathTranslator");
+      f.setAccessible(true);
+      f.set(interpolator, createPathTranslator());
+    }
+    catch (Exception e) {
+      MavenLog.LOG.error(e);
+      return model;
+    }
+
+    Map context = new HashMap();
+    Map overrideContext = new HashMap();
+
+    try {
+      model = interpolator.interpolate(model, context, overrideContext, basedir, false);
+    }
+    catch (ModelInterpolationException e) {
+      MavenLog.LOG.warn(e);
+    }
+
+    return model;
+  }
+
+  private static void alignModel(Model model, File basedir) {
+    DefaultPathTranslator pathTranslator = createPathTranslator();
+    pathTranslator.alignToBaseDirectory(model, basedir);
+    Build build = model.getBuild();
+    build.setScriptSourceDirectory(pathTranslator.alignToBaseDirectory(build.getScriptSourceDirectory(), basedir));
+  }
+
+  private static DefaultPathTranslator createPathTranslator() {
+    return new DefaultPathTranslator();
+  }
+
+  public static MavenProjectReaderResult readProject(Project project,
+                                                     MavenEmbedderWrapper embedder,
+                                                     VirtualFile f,
+                                                     List<String> activeProfiles,
+                                                     MavenProjectReaderProjectLocator locator,
+                                                     MavenProcess process) throws MavenProcessCanceledException {
+    MavenProject mavenProject = null;
     boolean isValid = true;
     List<MavenProjectProblem> problems = new ArrayList<MavenProjectProblem>();
     Set<MavenId> unresolvedArtifactsIds = new HashSet<MavenId>();
@@ -202,7 +503,7 @@ public class MavenProjectReader {
 
     try {
       Pair<MavenProject, Set<MavenId>> result = doReadProject(embedder, path, activeProfiles, problems, process);
-      project = result.first;
+      mavenProject = result.first;
       unresolvedArtifactsIds = result.second;
     }
     catch (Throwable e) {
@@ -218,81 +519,21 @@ public class MavenProjectReader {
       MavenLog.LOG.info(e);
     }
 
-    if (project == null) {
+    if (mavenProject == null) {
       isValid = false;
 
       if (problems.isEmpty()) {
         problems.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.syntaxError"), true));
       }
-      Model model;
-
-      try {
-        model = embedder.readModel(path, process);
-      }
-      catch (Throwable e) {
-        MavenLog.LOG.info(e);
-        model = new Model();
-      }
-      project = createMavenProject(f, model);
+      mavenProject = readProjectQuickly(project, f, activeProfiles, locator).nativeMavenProject;
     }
 
-    return Pair.create(project, new MavenProjectReaderResult(isValid,
-                                                             activeProfiles,
-                                                             problems,
-                                                             unresolvedArtifactsIds,
-                                                             new File(embedder.getLocalRepository()),
-                                                             project));
-  }
-
-  private static MavenProject createMavenProject(VirtualFile f, Model model) {
-    repairModel(f, model);
-    MavenProject result = new MavenProject(model);
-    result.setFile(new File(f.getPath()));
-    return result;
-  }
-
-  private static void repairModel(VirtualFile file, Model model) {
-    if (model.getModelVersion() == null) model.setModelVersion("4.0.0");
-
-    Parent parent = model.getParent();
-    if (parent != null) {
-      if (parent.getGroupId() == null) parent.setGroupId(UNKNOWN);
-      if (parent.getArtifactId() == null) parent.setArtifactId(UNKNOWN);
-      if (parent.getVersion() == null) parent.setVersion(UNKNOWN);
-    }
-
-    if (model.getGroupId() == null) {
-      if (parent != null) {
-        model.setGroupId(parent.getGroupId());
-      }
-      else {
-        model.setGroupId(UNKNOWN);
-      }
-    }
-    if (model.getArtifactId() == null) model.setArtifactId(UNKNOWN);
-    if (model.getVersion() == null) {
-      if (parent != null) {
-        model.setVersion(parent.getVersion());
-      }
-      else {
-        model.setVersion(UNKNOWN);
-      }
-    }
-
-    if (model.getPackaging() == null) model.setPackaging("jar");
-
-    if (model.getBuild() == null) {
-      model.setBuild(new Build());
-    }
-    Build build = model.getBuild();
-    if (build.getFinalName() == null) {
-      build.setFinalName(model.getArtifactId() + "-" + model.getVersion() + "." + model.getPackaging());
-    }
-
-    String baseDir = file.getParent().getPath();
-    if (build.getDirectory() == null) build.setDirectory(baseDir + "/target");
-    if (build.getOutputDirectory() == null) build.setOutputDirectory(baseDir + "/classes");
-    if (build.getTestOutputDirectory() == null) build.setTestOutputDirectory(baseDir + "/test-classes");
+    return new MavenProjectReaderResult(isValid,
+                                        activeProfiles,
+                                        problems,
+                                        unresolvedArtifactsIds,
+                                        new File(embedder.getLocalRepository()),
+                                        mavenProject);
   }
 
   private static Pair<MavenProject, Set<MavenId>> doReadProject(MavenEmbedderWrapper embedder,

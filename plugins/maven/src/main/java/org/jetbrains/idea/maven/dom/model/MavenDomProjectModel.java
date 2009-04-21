@@ -20,7 +20,7 @@ import org.jetbrains.idea.maven.dom.MavenUrlConverter;
  * 3.0.0+
  * </pre>
  */
-public interface MavenDomProjectModel extends MavenDomElement, MavenDomArtifactCoordinates {
+public interface MavenDomProjectModel extends MavenDomElement, MavenDomProjectModelBase, MavenDomArtifactCoordinates {
   /**
    * Returns the value of the parent child.
    * <pre>
@@ -257,15 +257,6 @@ public interface MavenDomProjectModel extends MavenDomElement, MavenDomArtifactC
   @NotNull
   MavenDomOrganization getOrganization();
 
-  /**
-   * Returns the value of the build child.
-   * <pre>
-   * <h3>Element http://maven.apache.org/POM/4.0.0:build documentation</h3>
-   * 3.0.0+
-   * </pre>
-   *
-   * @return the value of the build child.
-   */
   @NotNull
   MavenDomBuild getBuild();
 
@@ -280,112 +271,4 @@ public interface MavenDomProjectModel extends MavenDomElement, MavenDomArtifactC
    */
   @NotNull
   MavenDomProfiles getProfiles();
-
-  /**
-   * Returns the value of the modules child.
-   * <pre>
-   * <h3>Element http://maven.apache.org/POM/4.0.0:modules documentation</h3>
-   * 4.0.0
-   * </pre>
-   *
-   * @return the value of the modules child.
-   */
-  @NotNull
-  MavenDomModules getModules();
-
-  /**
-   * Returns the value of the repositories child.
-   * <pre>
-   * <h3>Element http://maven.apache.org/POM/4.0.0:repositories documentation</h3>
-   * 4.0.0
-   * </pre>
-   *
-   * @return the value of the repositories child.
-   */
-  @NotNull
-  MavenDomRepositories getRepositories();
-
-  /**
-   * Returns the value of the pluginRepositories child.
-   * <pre>
-   * <h3>Element http://maven.apache.org/POM/4.0.0:pluginRepositories documentation</h3>
-   * 4.0.0
-   * </pre>
-   *
-   * @return the value of the pluginRepositories child.
-   */
-  @NotNull
-  MavenDomPluginRepositories getPluginRepositories();
-
-  /**
-   * Returns the value of the dependencies child.
-   * <pre>
-   * <h3>Element http://maven.apache.org/POM/4.0.0:dependencies documentation</h3>
-   * 3.0.0+
-   * </pre>
-   *
-   * @return the value of the dependencies child.
-   */
-  @NotNull
-  MavenDomDependencies getDependencies();
-
-  /**
-   * Returns the value of the reports child.
-   * <pre>
-   * <h3>Element http://maven.apache.org/POM/4.0.0:reports documentation</h3>
-   * 4.0.0
-   * </pre>
-   *
-   * @return the value of the reports child.
-   */
-  @NotNull
-  MavenDomReports getReports();
-
-  /**
-   * Returns the value of the reporting child.
-   * <pre>
-   * <h3>Element http://maven.apache.org/POM/4.0.0:reporting documentation</h3>
-   * 4.0.0
-   * </pre>
-   *
-   * @return the value of the reporting child.
-   */
-  @NotNull
-  MavenDomReporting getReporting();
-
-  /**
-   * Returns the value of the dependencyManagement child.
-   * <pre>
-   * <h3>Element http://maven.apache.org/POM/4.0.0:dependencyManagement documentation</h3>
-   * 4.0.0
-   * </pre>
-   *
-   * @return the value of the dependencyManagement child.
-   */
-  @NotNull
-  MavenDomDependencyManagement getDependencyManagement();
-
-  /**
-   * Returns the value of the distributionManagement child.
-   * <pre>
-   * <h3>Element http://maven.apache.org/POM/4.0.0:distributionManagement documentation</h3>
-   * 4.0.0
-   * </pre>
-   *
-   * @return the value of the distributionManagement child.
-   */
-  @NotNull
-  MavenDomDistributionManagement getDistributionManagement();
-
-  /**
-   * Returns the value of the properties child.
-   * <pre>
-   * <h3>Element http://maven.apache.org/POM/4.0.0:properties documentation</h3>
-   * 4.0.0
-   * </pre>
-   *
-   * @return the value of the properties child.
-   */
-  @NotNull
-  MavenDomProperties getProperties();
 }

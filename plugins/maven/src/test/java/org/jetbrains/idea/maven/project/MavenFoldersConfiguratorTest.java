@@ -74,13 +74,13 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertSources("project", "src/main/java");
-    assertTestSources("project", "src/test/java");
+    assertSources("project", "src/main/java", "src/main/resources");
+    assertTestSources("project", "src/test/java", "src/test/resources");
 
     updateFolders();
 
-    assertSources("project", "src/main/java");
-    assertTestSources("project", "src/test/java");
+    assertSources("project", "src/main/java", "src/main/resources");
+    assertTestSources("project", "src/test/java", "src/test/resources");
   }
 
   public void testDoesNotExcludeRegisteredSources() throws Exception {
@@ -92,7 +92,9 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
     File sourceDir = new File(myProjectRoot.getPath(), "target/src");
     sourceDir.mkdirs();
 
-    MavenRootModelAdapter adapter = new MavenRootModelAdapter(getModule("project"), null);
+    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
+                                                              getModule("project"),
+                                                              null);
     adapter.addSourceFolder(sourceDir.getPath(), false);
     adapter.getRootModel().commit();
 
@@ -116,7 +118,9 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    MavenRootModelAdapter adapter = new MavenRootModelAdapter(getModule("project"), null);
+    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
+                                                              getModule("project"),
+                                                              null);
     adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                             new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
     adapter.getRootModel().commit();

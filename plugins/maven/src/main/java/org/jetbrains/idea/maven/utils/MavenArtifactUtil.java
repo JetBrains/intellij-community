@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
 
 import java.io.File;

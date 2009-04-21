@@ -59,14 +59,14 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
     importProjects(myProjectPom, m);
 
     createModulePom("m", "<groupId>test</groupId>" +
-                    "<artifactId>m</artifactId>" +
-                    "<version>1</version>" +
+                         "<artifactId>m</artifactId>" +
+                         "<version>1</version>" +
 
-                    "<parent>" +
-                    "  <groupId><caret>test</groupId>" +
-                    "  <artifactId>project</artifactId>" +
-                    "  <version>1</version>" +
-                    "</parent>");
+                         "<parent>" +
+                         "  <groupId><caret>test</groupId>" +
+                         "  <artifactId>project</artifactId>" +
+                         "  <version>1</version>" +
+                         "</parent>");
 
     PsiReference ref = getReferenceAtCaret(m);
     assertNotNull(ref);
@@ -172,6 +172,32 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  <version>1</version>" +
                      "  <relativePath>../pom.xml</relativePath>" +
                      "</parent>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+    assertEquals(getPsiFile(parent), ref.resolve());
+  }
+
+  public void testResolvingByRelativePathWithoutPomXmlAtTheEnd() throws Throwable {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath><caret>parent</relativePath>" +
+                     "</parent>");
+
+    VirtualFile parent = createModulePom("parent",
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>parent</artifactId>" +
+                                         "<version>1</version>");
 
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);

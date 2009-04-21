@@ -28,7 +28,7 @@ public class MavenFoldersConfigurator {
           MavenProject project = manager.findProject(each);
           if (project == null) continue;
 
-          MavenRootModelAdapter a = new MavenRootModelAdapter(each, null);
+          MavenRootModelAdapter a = new MavenRootModelAdapter(project, each, null);
           new MavenFoldersConfigurator(project, settings, a).config(updateTargetFoldersOnly);
 
           ModifiableRootModel model = a.getRootModel();
@@ -73,9 +73,16 @@ public class MavenFoldersConfigurator {
     sourceFolders.addAll(myMavenProject.getSources());
     testFolders.addAll(myMavenProject.getTestSources());
 
+    for (MavenResource each : myMavenProject.getResources()) {
+      sourceFolders.add(each.getDirectory());
+    }
+    for (MavenResource each : myMavenProject.getTestResources()) {
+      testFolders.add(each.getDirectory());
+    }
+
     for (FacetImporter each : FacetImporter.getSuitableFacetImporters(myMavenProject)) {
-      sourceFolders.addAll(each.getSourceFolders(myMavenProject));
-      testFolders.addAll(each.getTestFolders(myMavenProject));
+      each.collectSourceFolders(myMavenProject, sourceFolders);
+      each.collectTestFolders(myMavenProject, testFolders);
     }
 
     for (String each : sourceFolders) {
@@ -116,11 +123,13 @@ public class MavenFoldersConfigurator {
       }
     }
 
+    List<String> facetExcludes = new ArrayList<String>();
     for (FacetImporter<?, ?, ?> each : FacetImporter.getSuitableFacetImporters(myMavenProject)) {
-      for (String eachFolder : each.getExcludedFolders(myMavenProject)) {
-        myModel.unregisterAll(eachFolder, true, true);
-        myModel.addExcludedFolder(eachFolder);
-      }
+      each.collectExcludedFolders(myMavenProject, facetExcludes);
+    }
+    for (String eachFolder : facetExcludes) {
+      myModel.unregisterAll(eachFolder, true, true);
+      myModel.addExcludedFolder(eachFolder);
     }
 
     if (!myModel.hasRegisteredSourceSubfolder(targetDir)) {

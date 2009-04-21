@@ -50,7 +50,8 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
         updateIndicesList();
       }
 
-      public void projectReadQuickly(MavenProject project) {
+      @Override
+      public void projectsReadQuickly(List<MavenProject> projects) {
         updateIndicesList();
       }
 

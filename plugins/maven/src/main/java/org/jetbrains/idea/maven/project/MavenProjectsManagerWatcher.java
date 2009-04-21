@@ -117,7 +117,11 @@ public class MavenProjectsManagerWatcher {
 
   private void scheduleUpdate(List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete) {
     if (!isRunning) return;
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorQuickReadingTask(myProject, myTree, filesToUpdate, filesToDelete));
+    myReadingProcessor.scheduleTask(new MavenProjectsProcessorQuickReadingTask(myProject,
+                                                                               myTree,
+                                                                               myGeneralSettings,
+                                                                               filesToUpdate,
+                                                                               filesToDelete));
   }
 
   private void onSettingsChange() {

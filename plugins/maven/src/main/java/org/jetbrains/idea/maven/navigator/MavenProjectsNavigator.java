@@ -33,6 +33,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.net.URL;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,90 +149,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
   }
 
   private void subscribeForChanges() {
-    myMavenProjectsListener = new MavenProjectsManager.Listener() {
-      boolean isActivated;
-      public void activate() {
-        for (MavenProject each : myProjectsManager.getProjects()) {
-          myFileToNode.put(each.getFile(), new PomNode(each));
-        }
-
-        updateFromRoot(true, true);
-        isActivated = true;
-      }
-
-      public void setIgnored(MavenProject project, boolean on) {
-        if (!isActivated) return;
-
-        final PomNode pomNode = myFileToNode.get(project);
-        if (pomNode != null) {
-          pomNode.setIgnored(on);
-        }
-      }
-
-      public void profilesChanged(List<String> profiles) {
-        if (!isActivated) return;
-
-        myRoot.setActiveProfiles(profiles);
-        myTree.repaint();
-      }
-
-      public void projectReadQuickly(MavenProject project) {
-        onProjectChange(project);
-      }
-
-      public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-        onProjectChange(project);
-      }
-
-      public void projectAggregatorChanged(MavenProject project) {
-        onProjectChange(project);
-      }
-
-      public void projectResolved(MavenProject project) {
-        onProjectChange(project);
-      }
-
-      private void onProjectChange(final MavenProject project) {
-        if (!isActivated) return;
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-
-            final PomNode pomNode = myFileToNode.get(project.getFile());
-            if (pomNode != null) {
-              pomNode.onFileUpdate();
-            }
-            else {
-              final PomNode newNode = new PomNode(project);
-              myFileToNode.put(project.getFile(), newNode);
-              myRoot.addToStructure(newNode);
-              updateFromRoot(true, true);
-            }
-            myRoot.updateProfileNodes();
-            myTree.repaint();
-          }
-        });
-      }
-
-      public void projectRemoved(final MavenProject project) {
-        if (!isActivated) return;
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-
-            final PomNode pomNode = myFileToNode.get(project.getFile());
-            if (pomNode != null) {
-              myFileToNode.remove(project.getFile());
-              pomNode.removeFromParent();
-            }
-            myRoot.updateProfileNodes();
-            myTree.repaint();
-          }
-        });
-      }
-    };
+    myMavenProjectsListener = new MyProjectsListener();
 
     myMavenEventsListener = new MavenEventsManager.Listener() {
       public void updateShortcuts(@Nullable String actionId) {
@@ -315,5 +233,105 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
   public void selectInTree(VirtualFile file) {
     PomNode node = myFileToNode.get(file);
     if (node != null) selectNode(myTreeBuilder, node);
+  }
+
+  private class MyProjectsListener implements MavenProjectsManager.Listener {
+    boolean isActivated;
+
+    public void activate() {
+      for (MavenProject each : myProjectsManager.getProjects()) {
+        myFileToNode.put(each.getFile(), new PomNode(each));
+      }
+
+      updateFromRoot(true, true);
+      isActivated = true;
+    }
+
+    public void setIgnored(MavenProject project, boolean on) {
+      if (!isActivated) return;
+
+      final PomNode pomNode = myFileToNode.get(project);
+      if (pomNode != null) {
+        pomNode.setIgnored(on);
+      }
+    }
+
+    public void profilesChanged(List<String> profiles) {
+      if (!isActivated) return;
+
+      myRoot.setActiveProfiles(profiles);
+      myTree.repaint();
+    }
+
+    public void projectsReadQuickly(final List<MavenProject> projects) {
+      scheduleUpdateTask(new Runnable() {
+        public void run() {
+          doOnProjectChange(projects);
+        }
+      });
+    }
+
+    public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+      onProjectChange(project);
+    }
+
+    public void projectAggregatorChanged(MavenProject project) {
+      onProjectChange(project);
+    }
+
+    public void projectResolved(MavenProject project) {
+      onProjectChange(project);
+    }
+
+    private void onProjectChange(final MavenProject project) {
+      scheduleUpdateTask(new Runnable() {
+        public void run() {
+          doOnProjectChange(Collections.singletonList(project));
+        }
+      });
+    }
+
+    private void doOnProjectChange(List<MavenProject> projects) {
+      boolean shouldUpdate = false;
+      for (MavenProject each : projects) {
+        final PomNode pomNode = myFileToNode.get(each.getFile());
+        if (pomNode != null) {
+          pomNode.onFileUpdate();
+        }
+        else {
+          final PomNode newNode = new PomNode(each);
+          myFileToNode.put(each.getFile(), newNode);
+          myRoot.addToStructure(newNode);
+          shouldUpdate = true;
+        }
+      }
+      if (shouldUpdate) updateFromRoot(true, true);
+      myRoot.updateProfileNodes();
+      myTree.repaint();
+    }
+
+    public void projectRemoved(final MavenProject project) {
+      scheduleUpdateTask(new Runnable() {
+        public void run() {
+          final PomNode pomNode = myFileToNode.get(project.getFile());
+          if (pomNode != null) {
+            myFileToNode.remove(project.getFile());
+            pomNode.removeFromParent();
+          }
+          myRoot.updateProfileNodes();
+          myTree.repaint();
+        }
+      });
+    }
+
+    private void scheduleUpdateTask(final Runnable r) {
+      if (!isActivated) return;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (myProject.isDisposed()) return;
+          r.run();
+        }
+      });
+    }
   }
 }

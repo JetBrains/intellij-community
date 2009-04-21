@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,9 +22,7 @@ import java.util.*;
 
 public class MavenProject implements Serializable {
   private transient VirtualFile myFile;
-
-  private long myLastTimestamp;
-  private long myLastProfilesTimestamp;
+  private long myLastReadStamp = 0;
 
   private boolean myValid;
   private boolean myIncluded;
@@ -113,18 +110,18 @@ public class MavenProject implements Serializable {
     }
   }
 
-  protected MavenProject() {}
+  protected MavenProject() {
+  }
 
   public MavenProject(VirtualFile file) {
     myFile = file;
     myIncluded = true;
   }
 
-  private synchronized void set(MavenProjectReaderResult readerResult, boolean updateTimestamps) {
-    if (updateTimestamps) {
-      myLastTimestamp = myFile.getTimeStamp();
-      myLastProfilesTimestamp = getProfilesXmlTimestamp();
-    }
+  private synchronized void set(MavenProjectReaderResult readerResult, boolean resetDependencies) {
+    resetProblemsCache();
+
+    myLastReadStamp++;
 
     myValid = readerResult.isValid;
     myActiveProfilesIds = readerResult.activeProfiles;
@@ -144,27 +141,27 @@ public class MavenProject implements Serializable {
                  ? new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion())
                  : null;
 
-    myPackaging = model.getPackaging() == null ? "jar" : model.getPackaging();
+    myPackaging = model.getPackaging();
     myName = model.getName();
 
     Build build = nativeMavenProject.getBuild();
 
-    myFinalName = myValid ? build.getFinalName() : (myMavenId.artifactId + ".jar");
-    myDefaultGoal = myValid ? build.getDefaultGoal() : null;
+    myFinalName = build.getFinalName();
+    myDefaultGoal = build.getDefaultGoal();
 
-    myBuildDirectory = myValid ? build.getDirectory() : getDirectory() + "/target";
-    myOutputDirectory = myValid ? build.getOutputDirectory() : getDirectory() + "/target/classes";
-    myTestOutputDirectory = myValid ? build.getTestOutputDirectory() : getDirectory() + "/target/test-classes";
+    myBuildDirectory = build.getDirectory();
+    myOutputDirectory = build.getOutputDirectory();
+    myTestOutputDirectory = build.getTestOutputDirectory();
 
     setFolders(readerResult);
 
-    myFilters = myValid ? new ArrayList<String>(build.getFilters()) : Collections.<String>emptyList();
-    myProperties = myValid && nativeMavenProject.getProperties() != null ? nativeMavenProject.getProperties() : new Properties();
+    myFilters = nonNull(build, build.getFilters());
+    myProperties = model.getProperties() != null ? model.getProperties() : new Properties();
 
-    myRemoteRepositories = myValid ? convertRepositories(model.getRepositories()) : Collections.<MavenRemoteRepository>emptyList();
-    myPlugins = myValid ? collectPlugins(model) : Collections.<MavenPlugin>emptyList();
-    myExtensions = myValid ? convertArtifacts(nativeMavenProject.getExtensionArtifacts()) : Collections.<MavenArtifact>emptyList();
-    setDependencies(readerResult, false);
+    myRemoteRepositories = convertRepositories(model.getRepositories());
+    myPlugins = collectPlugins(model);
+    myExtensions = convertArtifacts(nativeMavenProject.getExtensionArtifacts());
+    setDependencies(readerResult, resetDependencies);
 
     myModulesPathsAndNames = collectModulePathsAndNames(model);
 
@@ -174,31 +171,42 @@ public class MavenProject implements Serializable {
     MavenUtil.stripDown(myStrippedMavenModel);
   }
 
+  private List nonNull(Build build, List list) {
+    return list == null ? Collections.<String>emptyList() : list;
+  }
+
   private synchronized void setDependencies(MavenProjectReaderResult readerResult, boolean reset) {
+    resetProblemsCache();
+
     org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
-    List<MavenArtifact> newDependencies = myValid ? convertArtifacts(nativeMavenProject.getArtifacts()) : new ArrayList<MavenArtifact>();
-    //if (!reset && myDependencies != null) {
-    //  LinkedHashSet<MavenArtifact> set = new LinkedHashSet<MavenArtifact>(newDependencies);
-    //  set.addAll(myDependencies);
-    //  newDependencies = new ArrayList<MavenArtifact>(set);
-    //}
+    List<MavenArtifact> newDependencies = convertArtifacts(nativeMavenProject.getArtifacts());
+    if (!reset && myDependencies != null) {
+      LinkedHashSet<MavenArtifact> set = new LinkedHashSet<MavenArtifact>(newDependencies);
+      set.addAll(myDependencies);
+      newDependencies = new ArrayList<MavenArtifact>(set);
+    }
     myDependencies = newDependencies;
   }
 
   private synchronized void setFolders(MavenProjectReaderResult readerResult) {
+    resetProblemsCache();
+
     org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
 
-    mySources = myValid ? new ArrayList<String>(nativeMavenProject.getCompileSourceRoots()) : Collections.<String>emptyList();
-    myTestSources = myValid ? new ArrayList<String>(nativeMavenProject.getTestCompileSourceRoots()) : Collections.<String>emptyList();
+    mySources = new ArrayList<String>(nativeMavenProject.getCompileSourceRoots());
+    myTestSources = new ArrayList<String>(nativeMavenProject.getTestCompileSourceRoots());
 
-    myResources = myValid ? convertResources(nativeMavenProject.getResources()) : Collections.<MavenResource>emptyList();
-    myTestResources = myValid ? convertResources(nativeMavenProject.getTestResources()) : Collections.<MavenResource>emptyList();
+    myResources = convertResources(nativeMavenProject.getResources());
+    myTestResources = convertResources(nativeMavenProject.getTestResources());
   }
 
+  private void resetProblemsCache() {
+    myAllProblemsCache = null;
+  }
 
   private List<MavenResource> convertResources(List<Resource> resources) {
     if (resources == null) return new ArrayList<MavenResource>();
-    
+
     List<MavenResource> result = new ArrayList<MavenResource>(resources.size());
     for (Resource each : resources) {
       result.add(new MavenResource(each));
@@ -218,7 +226,7 @@ public class MavenProject implements Serializable {
 
   private List<MavenArtifact> convertArtifacts(Collection<Artifact> artifacts) {
     if (artifacts == null) return new ArrayList<MavenArtifact>();
-    
+
     List<MavenArtifact> result = new ArrayList<MavenArtifact>(artifacts.size());
     for (Artifact each : artifacts) {
       result.add(new MavenArtifact(each));
@@ -315,6 +323,10 @@ public class MavenProject implements Serializable {
     return myValid;
   }
 
+  public long getLastReadStamp() {
+    return myLastReadStamp;
+  }
+
   public synchronized VirtualFile getFile() {
     return myFile;
   }
@@ -332,24 +344,16 @@ public class MavenProject implements Serializable {
     return myFile.getParent();
   }
 
-  public synchronized boolean isOutdated() {
-    return myFile.getTimeStamp() != myLastTimestamp || getProfilesXmlTimestamp() != myLastProfilesTimestamp;
-  }
-
-  private long getProfilesXmlTimestamp() {
-    VirtualFile file = getDirectoryFile().findChild("profiles.xml");
-    return file == null ? -1 : file.getTimeStamp();
-  }
-
-  public synchronized boolean isOutdated(List<String> newProfiles) {
-    return isOutdated() || !new HashSet<String>(myActiveProfilesIds).equals(new HashSet<String>(newProfiles));
-  }
-
   public synchronized List<String> getActiveProfilesIds() {
     return myActiveProfilesIds;
   }
 
-  public synchronized String getProjectName() {
+  public synchronized String getName() {
+    return myName;
+  }
+
+  public synchronized String getDisplayName() {
+    if (StringUtil.isEmptyOrSpaces(myName)) return myMavenId.artifactId;
     return myName;
   }
 
@@ -413,42 +417,42 @@ public class MavenProject implements Serializable {
     return myFilters;
   }
 
-  public synchronized boolean isFiltered(VirtualFile resourceDir) {
-    List<MavenResource> resourceList = getResources();
-    resourceList.addAll(getTestResources());
-
-    for (MavenResource each : resourceList) {
-      String eachDir = each.getDirectory();
-      if (StringUtil.isEmpty(eachDir)) continue;
-      VirtualFile found = LocalFileSystem.getInstance().findFileByPath(eachDir);
-      if (found == resourceDir) {
-        return each.isFiltered();
-      }
-    }
-    return false;
+  public void readQuickly(Project project, List<String> profiles, MavenProjectReaderProjectLocator locator) {
+    set(MavenProjectReader.readProjectQuickly(project, myFile, profiles, locator), false);
   }
 
-  public void readQuickly(Project project, List<String> profiles) {
-    set(MavenProjectReader.readProjectQuickly(project, myFile, profiles), false);
-  }
-
-  public org.apache.maven.project.MavenProject read(MavenEmbedderWrapper embedder, List<String> profiles, MavenProcess p)
+  public org.apache.maven.project.MavenProject read(Project project,
+                                                    MavenEmbedderWrapper embedder,
+                                                    List<String> profiles,
+                                                    MavenProjectReaderProjectLocator locator,
+                                                    MavenProcess p)
     throws MavenProcessCanceledException {
-    Pair<org.apache.maven.project.MavenProject, MavenProjectReaderResult> readResult
-      = MavenProjectReader.readProject(embedder, getFile(), profiles, p);
-    set(readResult.second, true);
-    return readResult.first;
+    MavenProjectReaderResult readResult = MavenProjectReader.readProject(project, embedder, getFile(), profiles, locator, p);
+    set(readResult, true);
+    return readResult.nativeMavenProject;
   }
 
-  public void resolve(MavenEmbedderWrapper embedder, MavenProcess process) throws MavenProcessCanceledException {
+  public void resolve(Project project, MavenEmbedderWrapper embedder, MavenProjectReaderProjectLocator locator, MavenProcess process)
+    throws MavenProcessCanceledException {
     if (isAggregator()) return;
-    MavenProjectReaderResult result = MavenProjectReader.readProject(embedder, getFile(), getActiveProfilesIds(), process).second;
+    MavenProjectReaderResult result = MavenProjectReader.readProject(project,
+                                                                     embedder,
+                                                                     getFile(),
+                                                                     getActiveProfilesIds(),
+                                                                     locator,
+                                                                     process);
     if (result.isValid) setDependencies(result, true);
   }
 
-  public void generateSources(MavenEmbedderWrapper embedder, MavenImportingSettings importingSettings, MavenConsole console, MavenProcess p) throws MavenProcessCanceledException {
+  public void generateSources(MavenEmbedderWrapper embedder, MavenImportingSettings importingSettings, MavenConsole console, MavenProcess p)
+    throws MavenProcessCanceledException {
     if (isAggregator()) return;
-    MavenProjectReaderResult result = MavenProjectReader.generateSources(embedder, importingSettings, getFile(), getActiveProfilesIds(), console, p);
+    MavenProjectReaderResult result = MavenProjectReader.generateSources(embedder,
+                                                                         importingSettings,
+                                                                         getFile(),
+                                                                         getActiveProfilesIds(),
+                                                                         console,
+                                                                         p);
     if (result != null) setFolders(result);
   }
 
@@ -493,7 +497,7 @@ public class MavenProject implements Serializable {
   private void validate(List<MavenArtifact> artifacts, String messageKey, List<MavenProjectProblem> result) {
     for (MavenArtifact each : artifacts) {
       if (!each.isResolved()) {
-        result.add(new MavenProjectProblem(ProjectBundle.message(messageKey, each), false));
+        result.add(new MavenProjectProblem(ProjectBundle.message(messageKey, each.displayStringWithType()), false));
       }
     }
   }
@@ -506,7 +510,8 @@ public class MavenProject implements Serializable {
       // It is because embedder does not even try to resolve extensions that
       // are not necessary.
       if (unresolvedArtifacts.contains(each.getMavenId()) && !pomFileExists(each)) {
-        result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.unresolvedExtension", each), false));
+        result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.unresolvedExtension", each.displayStringSimple()),
+                                           false));
       }
     }
   }
@@ -518,6 +523,7 @@ public class MavenProject implements Serializable {
   private void validatePlugins(List<MavenProjectProblem> result) {
     for (MavenPlugin each : getPlugins()) {
       if (!MavenArtifactUtil.hasArtifactFile(myLocalRepository, each.getMavenId())) {
+        String string = each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion();
         result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.unresolvedPlugin", each), false));
       }
     }
@@ -668,6 +674,7 @@ public class MavenProject implements Serializable {
 
   private static class CompilerLevelTable {
     public static Map<String, String> table = new HashMap<String, String>();
+
     static {
       table.put("1.1", "1.1");
       table.put("1.2", "1.2");

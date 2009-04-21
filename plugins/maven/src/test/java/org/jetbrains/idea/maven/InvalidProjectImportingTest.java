@@ -170,7 +170,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    assertModules("project");
+    assertModules("project", "foo");
   }
 
   public void testNonPOMProjectWithModules() throws Exception {
@@ -435,7 +435,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:jar:1'.");
+    assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:1'.");
   }
 
   public void testUnresolvedExtensionsAfterResolve() throws Exception {
@@ -455,7 +455,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     resolveProject();
     MavenProject root = getRootProjects().get(0);
-    assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:jar:1'.");
+    assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:1'.");
   }
 
   public void testDoesNotReportExtensionsThatWereNotTriedToBeResolved() throws Exception {
@@ -556,10 +556,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertProblems(root, true);
     assertProblems(getModules(root).get(0), true,
-                   "Unresolved build extension: 'xxx:xxx:jar:1'.");
+                   "Unresolved build extension: 'xxx:xxx:1'.");
     assertProblems(getModules(root).get(1), true,
-                   "Unresolved build extension: 'yyy:yyy:jar:1'.",
-                   "Unresolved build extension: 'zzz:zzz:jar:1'.");
+                   "Unresolved build extension: 'yyy:yyy:1'.",
+                   "Unresolved build extension: 'zzz:zzz:1'.");
   }
 
   public void testUnresolvedPlugins() throws Exception {
@@ -626,7 +626,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   private void assertProblems(MavenProject project, boolean isValid, String... expectedProblems) {
-
     List<String> actualProblems = new ArrayList<String>();
     for (MavenProjectProblem each : project.getProblems()) {
       actualProblems.add(each.getDescription());

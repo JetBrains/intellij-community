@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.FileFinder;
+import org.jetbrains.idea.maven.utils.MavenId;
 
 import javax.swing.*;
 import java.util.*;
@@ -118,7 +119,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     try {
       for (VirtualFile f : getParameters().myFiles) {
         MavenProject project = new MavenProject(f);
-        project.read(embedder, Collections.EMPTY_LIST, process);
+        project.read(getProject(), embedder, Collections.EMPTY_LIST, new MavenProjectReaderProjectLocator() {
+          public VirtualFile findProjectFile(MavenId coordinates) {
+            return null;
+          }
+        }, process);
         uniqueProfiles.addAll(project.getProfilesIds());
       }
       getParameters().myProfiles = new ArrayList<String>(uniqueProfiles);

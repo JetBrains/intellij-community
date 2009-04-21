@@ -45,8 +45,8 @@ public class MavenModuleConfigurator {
   }
 
   public void config(boolean isNewlyCreatedModule) {
-    myRootModelAdapter = new MavenRootModelAdapter(myModule, myModulesProvider);
-    myRootModelAdapter.init(myMavenProject, isNewlyCreatedModule);
+    myRootModelAdapter = new MavenRootModelAdapter(myMavenProject, myModule, myModulesProvider);
+    myRootModelAdapter.init(isNewlyCreatedModule);
 
     configFolders();
     configDependencies();

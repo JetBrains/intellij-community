@@ -77,7 +77,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     MavenProjectsStructure.RootNode r = createMavenTree();
 
     assertEquals(1, r.pomNodes.size());
-    assertEquals("project", r.pomNodes.get(0).getId());
+    assertEquals("project", r.pomNodes.get(0).getProjectName());
 
     assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
   }
@@ -226,11 +226,11 @@ public class StructureImportingTest extends MavenImportingTestCase {
     MavenProjectsStructure.RootNode r = createMavenTree();
 
     assertEquals(1, r.pomNodes.size());
-    assertEquals("project", r.pomNodes.get(0).getId());
+    assertEquals("project", r.pomNodes.get(0).getProjectName());
 
     assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
-    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getId());
-    assertEquals("m2", r.pomNodes.get(0).modulePomsNode.pomNodes.get(1).getId());
+    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getProjectName());
+    assertEquals("m2", r.pomNodes.get(0).modulePomsNode.pomNodes.get(1).getProjectName());
   }
 
   public void testParentWithoutARelativePath() throws Exception {
@@ -263,10 +263,10 @@ public class StructureImportingTest extends MavenImportingTestCase {
     MavenProjectsStructure.RootNode r = createMavenTree();
 
     assertEquals(1, r.pomNodes.size());
-    assertEquals("project", r.pomNodes.get(0).getId());
+    assertEquals("project", r.pomNodes.get(0).getProjectName());
 
     assertEquals(1, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
-    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getId());
+    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getProjectName());
   }
 
   public void testModuleWithPropertiesWithParentWithoutARelativePath() throws Exception {
@@ -299,10 +299,10 @@ public class StructureImportingTest extends MavenImportingTestCase {
     MavenProjectsStructure.RootNode r = createMavenTree();
 
     assertEquals(1, r.pomNodes.size());
-    assertEquals("project", r.pomNodes.get(0).getId());
+    assertEquals("project", r.pomNodes.get(0).getProjectName());
 
     assertEquals(1, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
-    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getId());
+    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getProjectName());
   }
 
   public void testParentInLocalRepository() throws Exception {
@@ -838,12 +838,12 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProjectWithProfiles("one");
     assertModules("project");
 
-    assertModuleLibDep("project", "Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
     importProjectWithProfiles("two");
     assertModules("project");
 
-    assertModuleLibDep("project", "Maven: junit:junit:3.8.1");
+    assertModuleLibDeps("project", "Maven: junit:junit:3.8.1");
   }
 
   public void testProjectWithDefaultProfileInProfilesXmlFile() throws Exception {

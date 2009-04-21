@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
@@ -19,7 +21,7 @@ import java.io.*;
 import java.util.*;
 
 public class MavenProjectsTree {
-  private static final String VERSION = MavenProjectsTree.class.getSimpleName() + ".1";
+  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".2";
 
   private ReentrantWriterPreferenceReadWriteLock myLock = new ReentrantWriterPreferenceReadWriteLock();
 
@@ -30,10 +32,16 @@ public class MavenProjectsTree {
   private HashMap<MavenId, MavenProject> myMavenIdToProject = new HashMap<MavenId, MavenProject>();
   private Map<MavenProject, List<MavenProject>> myModuleMapping = new HashMap<MavenProject, List<MavenProject>>();
 
-  private long myLastGlobalSettingsTimestamp;
-  private long myLastUserSettingsTimestamp;
+  private Map<MavenProject, MavenProjectTimestamp> myTimestamps = new HashMap<MavenProject, MavenProjectTimestamp>();
 
   private List<Listener> myListeners = new ArrayList<Listener>();
+
+  private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
+    public VirtualFile findProjectFile(MavenId coordinates) {
+      MavenProject project = findProject(coordinates);
+      return project == null ? null : project.getFile();
+    }
+  };
 
   public static MavenProjectsTree read(File file) throws IOException {
     FileInputStream fs = new FileInputStream(file);
@@ -41,12 +49,13 @@ public class MavenProjectsTree {
 
     MavenProjectsTree result = new MavenProjectsTree();
     try {
-      if (!VERSION.equals(in.readUTF())) return null;
+      if (!STORAGE_VERSION.equals(in.readUTF())) return null;
       result.myManagedFilesPaths = readList(in);
       result.myActiveProfiles = readList(in);
-      result.myLastGlobalSettingsTimestamp = in.readLong();
-      result.myLastUserSettingsTimestamp = in.readLong();
-      result.myRootProjects = readProjectsRecursively(in, result.myMavenIdToProject, result.myModuleMapping);
+      result.myRootProjects = readProjectsRecursively(in,
+                                                      result.myMavenIdToProject,
+                                                      result.myModuleMapping,
+                                                      result.myTimestamps);
     }
     finally {
       in.close();
@@ -66,37 +75,44 @@ public class MavenProjectsTree {
 
   private static List<MavenProject> readProjectsRecursively(DataInputStream in,
                                                             HashMap<MavenId, MavenProject> mavenIdToProject,
-                                                            Map<MavenProject, List<MavenProject>> moduleMapping) throws IOException {
+                                                            Map<MavenProject, List<MavenProject>> moduleMapping,
+                                                            Map<MavenProject, MavenProjectTimestamp> timestamps) throws IOException {
     int count = in.readInt();
     List<MavenProject> result = new ArrayList<MavenProject>(count);
     while (count-- > 0) {
       MavenProject project = MavenProject.read(in);
-      List<MavenProject> modules = readProjectsRecursively(in, mavenIdToProject, moduleMapping);
+      MavenProjectTimestamp timestamp = MavenProjectTimestamp.read(in);
+      List<MavenProject> modules = readProjectsRecursively(in, mavenIdToProject, moduleMapping, timestamps);
       // todo what otherwise?
       if (project != null) {
         result.add(project);
         mavenIdToProject.put(project.getMavenId(), project);
         moduleMapping.put(project, modules);
+        timestamps.put(project, timestamp);
       }
     }
     return result;
   }
 
   public void save(File file) throws IOException {
-    file.getParentFile().mkdirs();
-    FileOutputStream fs = new FileOutputStream(file);
-    DataOutputStream out = new DataOutputStream(fs);
+    readLock();
     try {
-      out.writeUTF(VERSION);
-      writeList(out, myManagedFilesPaths);
-      writeList(out, myActiveProfiles);
-      out.writeLong(myLastGlobalSettingsTimestamp);
-      out.writeLong(myLastUserSettingsTimestamp);
-      writeProjectsRecursively(out, myRootProjects);
+      file.getParentFile().mkdirs();
+      FileOutputStream fs = new FileOutputStream(file);
+      DataOutputStream out = new DataOutputStream(fs);
+      try {
+        out.writeUTF(STORAGE_VERSION);
+        writeList(out, myManagedFilesPaths);
+        writeList(out, myActiveProfiles);
+        writeProjectsRecursively(out, myRootProjects);
+      }
+      finally {
+        out.close();
+        fs.close();
+      }
     }
     finally {
-      out.close();
-      fs.close();
+      readUnlock();
     }
   }
 
@@ -111,6 +127,7 @@ public class MavenProjectsTree {
     out.writeInt(list.size());
     for (MavenProject each : list) {
       each.write(out);
+      myTimestamps.get(each).write(out);
       writeProjectsRecursively(out, getModules(each));
     }
   }
@@ -164,65 +181,50 @@ public class MavenProjectsTree {
   public void updateAll(Project project,
                         boolean quickUpdate,
                         MavenEmbeddersManager embeddersManager,
-                        MavenGeneralSettings settings,
+                        MavenGeneralSettings generalSettings,
                         MavenConsole console,
                         MavenProcess process) throws MavenProcessCanceledException {
-    boolean settingsHaveChanged = haveSettingsChanged(settings, true);
     update(project,
            getExistingManagedFiles(),
            quickUpdate,
            embeddersManager,
+           generalSettings,
            console,
            process,
-           false,
-           settingsHaveChanged,
            true);
-  }
-
-  private boolean haveSettingsChanged(MavenGeneralSettings mavenSettings, boolean reset) {
-    File globalSettings = MavenEmbedderFactory.resolveGlobalSettingsFile(mavenSettings.getMavenHome());
-    File userSettings = MavenEmbedderFactory.resolveUserSettingsFile(mavenSettings.getMavenSettingsFile());
-    long globalSettingsTimestamp = globalSettings == null ? -1 : globalSettings.lastModified();
-    long userSettingsTimestamp = userSettings == null ? -1 : userSettings.lastModified();
-
-    boolean settingsHaveChanged = myLastGlobalSettingsTimestamp != globalSettingsTimestamp
-                                  || myLastUserSettingsTimestamp != userSettingsTimestamp;
-    if (reset) {
-      myLastGlobalSettingsTimestamp = globalSettingsTimestamp;
-      myLastUserSettingsTimestamp = userSettingsTimestamp;
-    }
-    return settingsHaveChanged;
   }
 
   public void update(Project project,
                      Collection<VirtualFile> files,
                      boolean quickUpdate,
                      MavenEmbeddersManager embeddersManager,
+                     MavenGeneralSettings generalSettings,
                      MavenConsole console,
                      MavenProcess process) throws MavenProcessCanceledException {
-    update(project, files, quickUpdate, embeddersManager, console, process, false, false, false);
+    update(project, files, quickUpdate, embeddersManager, generalSettings, console, process, false);
   }
 
   private void update(Project project,
                       Collection<VirtualFile> files,
                       boolean quickUpdate,
                       MavenEmbeddersManager embeddersManager,
+                      MavenGeneralSettings generalSettings,
                       MavenConsole console,
                       MavenProcess process,
-                      boolean parentHasChanged,
-                      boolean settingsHaveChanged,
                       boolean recursive) throws MavenProcessCanceledException {
+    if (files.isEmpty()) return;
+
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder();
     embedder.customizeForRead(this, console, process);
 
+    Map<VirtualFile, MavenProject> readProjects = new LinkedHashMap<VirtualFile, MavenProject>();
     try {
-      Set<VirtualFile> readFiles = new HashSet<VirtualFile>();
       Stack<MavenProject> updateStack = new Stack<MavenProject>();
 
       for (VirtualFile each : files) {
         MavenProject mavenProject = findProject(each);
         if (mavenProject == null) {
-          doAdd(project, each, quickUpdate, embedder, readFiles, updateStack, process, parentHasChanged, settingsHaveChanged, recursive);
+          doAdd(project, each, quickUpdate, embedder, readProjects, updateStack, generalSettings, process, recursive);
         }
         else {
           doUpdate(project,
@@ -231,11 +233,10 @@ public class MavenProjectsTree {
                    quickUpdate,
                    embedder,
                    false,
-                   readFiles,
+                   readProjects,
                    updateStack,
+                   generalSettings,
                    process,
-                   parentHasChanged,
-                   settingsHaveChanged,
                    recursive);
         }
       }
@@ -243,17 +244,19 @@ public class MavenProjectsTree {
     finally {
       embeddersManager.release(embedder);
     }
+    if (quickUpdate) {
+      fireProjectsRead(new ArrayList<MavenProject>(readProjects.values()));
+    }
   }
 
   private void doAdd(Project project,
                      final VirtualFile f,
                      boolean quickUpdate,
                      MavenEmbedderWrapper embedder,
-                     Set<VirtualFile> readFiles,
+                     Map<VirtualFile, MavenProject> readProjects,
                      Stack<MavenProject> updateStack,
+                     MavenGeneralSettings generalSettings,
                      MavenProcess process,
-                     boolean parentHasChanged,
-                     boolean settingsHaveChanged,
                      boolean recursuve) throws MavenProcessCanceledException {
     MavenProject newMavenProject = new MavenProject(f);
 
@@ -271,11 +274,10 @@ public class MavenProjectsTree {
              quickUpdate,
              embedder,
              true,
-             readFiles,
+             readProjects,
              updateStack,
+             generalSettings,
              process,
-             parentHasChanged,
-             settingsHaveChanged,
              recursuve);
   }
 
@@ -285,11 +287,10 @@ public class MavenProjectsTree {
                         boolean quickUpdate,
                         MavenEmbedderWrapper embedder,
                         boolean isNew,
-                        Set<VirtualFile> readFiles,
+                        Map<VirtualFile, MavenProject> readProjects,
                         Stack<MavenProject> updateStack,
+                        MavenGeneralSettings generalSettings,
                         MavenProcess process,
-                        boolean parentHasChanged,
-                        boolean settingsHaveChanged,
                         boolean recursive) throws MavenProcessCanceledException {
     process.checkCanceled();
 
@@ -310,13 +311,13 @@ public class MavenProjectsTree {
     // todo hook for IDEADEV-31568
     if (isNew) {
       VirtualFile f = mavenProject.getFile();
-      if (readFiles.contains(f)) {
+      if (readProjects.containsKey(f)) {
         assert false : "new file alread read " + f;
       }
     }
 
-    boolean shouldRead = ((settingsHaveChanged || mavenProject.isOutdated(myActiveProfiles))
-                         && !readFiles.contains(mavenProject.getFile())) || parentHasChanged;
+    MavenProjectTimestamp timestamp = calculateTimestamp(project, mavenProject, quickUpdate, myActiveProfiles, generalSettings);
+    boolean shouldRead = !timestamp.equals(myTimestamps.get(mavenProject));
 
     org.apache.maven.project.MavenProject nativeMavenProject = null;
     if (shouldRead) {
@@ -327,12 +328,13 @@ public class MavenProjectsTree {
       finally {
         writeUnlock();
       }
-      //if (quickUpdate) {
-      //  mavenProject.readQuickly(project, myActiveProfiles);
-      //} else {
-        nativeMavenProject = mavenProject.read(embedder, myActiveProfiles, process);
-      //}
-      readFiles.add(mavenProject.getFile());
+      if (quickUpdate) {
+        mavenProject.readQuickly(project, myActiveProfiles, myProjectLocator);
+      }
+      else {
+        nativeMavenProject = mavenProject.read(project, embedder, myActiveProfiles, myProjectLocator, process);
+      }
+      readProjects.put(mavenProject.getFile(), mavenProject);
 
       writeLock();
       try {
@@ -342,18 +344,16 @@ public class MavenProjectsTree {
         writeUnlock();
       }
 
-      parentHasChanged = true;
-
+      timestamp = calculateTimestamp(project, mavenProject, quickUpdate, myActiveProfiles, generalSettings);
+      myTimestamps.put(mavenProject, timestamp);
       resolveIntermoduleDependencies();
     }
 
     boolean reconnected = reconnect(aggregator, mavenProject);
     if (shouldRead) {
-      //if (quickUpdate) {
-      //  fireReadQuickly(mavenProject);
-      //} else {
+      if (!quickUpdate) {
         fireRead(mavenProject, nativeMavenProject);
-      //}
+      }
     }
     else if (reconnected) {
       fireAggregatorChanged(mavenProject);
@@ -399,18 +399,17 @@ public class MavenProjectsTree {
         }
       }
 
-      if (settingsHaveChanged || recursive || isNewModule) {
+      if (recursive || isNewModule) {
         doUpdate(project,
                  mavenProject,
                  child,
                  quickUpdate,
                  embedder,
                  isNewModule,
-                 readFiles,
+                 readProjects,
                  updateStack,
+                 generalSettings,
                  process,
-                 false,
-                 settingsHaveChanged,
                  recursive);
       }
       else {
@@ -429,15 +428,53 @@ public class MavenProjectsTree {
                quickUpdate,
                embedder,
                false,
-               readFiles,
+               readProjects,
                updateStack,
+               generalSettings,
                process,
-               parentHasChanged,
-               settingsHaveChanged,
                recursive);
     }
 
     updateStack.pop();
+  }
+
+  private MavenProjectTimestamp calculateTimestamp(Project project,
+                                                   MavenProject mavenProject,
+                                                   boolean quickRead,
+                                                   List<String> activeProfiles,
+                                                   MavenGeneralSettings generalSettings) {
+    FileAndPsiTimestamp pomTimestamp = calcFileAndPsiTimestamp(project, mavenProject.getFile());
+    MavenProject parent = findParent(mavenProject);
+    long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
+    VirtualFile profilesXmlFile = mavenProject.getDirectoryFile().findChild(MavenConstants.PROFILES_XML);
+    FileAndPsiTimestamp profilesTimestamp = calcFileAndPsiTimestamp(project, profilesXmlFile);
+
+    File userSettings = MavenEmbedderFactory.resolveUserSettingsFile(generalSettings.getMavenSettingsFile());
+    File globalSettings = MavenEmbedderFactory.resolveGlobalSettingsFile(generalSettings.getMavenHome());
+    FileAndPsiTimestamp userSettingsTimestamp = calcFileAndPsiTimestamp(project, userSettings);
+    FileAndPsiTimestamp globalSettingsTimestamp = calcFileAndPsiTimestamp(project, globalSettings);
+
+    int profilesHashCode = new HashSet<String>(activeProfiles).hashCode();
+
+    return new MavenProjectTimestamp(quickRead,
+                                     pomTimestamp,
+                                     parentLastReadStamp,
+                                     profilesTimestamp,
+                                     userSettingsTimestamp,
+                                     globalSettingsTimestamp,
+                                     profilesHashCode);
+  }
+
+  private FileAndPsiTimestamp calcFileAndPsiTimestamp(Project project, File file) {
+    if (file == null) return new FileAndPsiTimestamp(-1, -1);
+    return calcFileAndPsiTimestamp(project, LocalFileSystem.getInstance().findFileByIoFile(file));
+  }
+
+  private FileAndPsiTimestamp calcFileAndPsiTimestamp(Project project, VirtualFile file) {
+    if (file == null) return new FileAndPsiTimestamp(-1, -1);
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    long psiTimestamp = psiFile == null ? -1 : psiFile.getModificationStamp();
+    return new FileAndPsiTimestamp(file.getModificationStamp(), psiTimestamp);
   }
 
   private void resolveIntermoduleDependencies() {
@@ -502,9 +539,11 @@ public class MavenProjectsTree {
                      List<VirtualFile> files,
                      boolean quickUpdate,
                      MavenEmbeddersManager embeddersManager,
+                     MavenGeneralSettings generalSettings,
                      MavenConsole console,
-                     MavenProcess process)
-    throws MavenProcessCanceledException {
+                     MavenProcess process) throws MavenProcessCanceledException {
+    if (files.isEmpty()) return;
+
     List<MavenProject> projectsToUpdate = new ArrayList<MavenProject>();
     List<MavenProject> removedProjects = new ArrayList<MavenProject>();
 
@@ -525,7 +564,7 @@ public class MavenProjectsTree {
       filesToUpdate.add(each.getFile());
     }
 
-    update(project, filesToUpdate, quickUpdate, embeddersManager, console, process, true, false, false);
+    update(project, filesToUpdate, quickUpdate, embeddersManager, generalSettings, console, process, false);
   }
 
   private void doRemove(MavenProject aggregator, MavenProject project, List<MavenProject> removedProjects)
@@ -553,6 +592,26 @@ public class MavenProjectsTree {
     fireRemoved(project);
   }
 
+  private MavenProject findAggregator(final MavenProject project) {
+    return visit(new Visitor<MavenProject>() {
+      public void visit(MavenProject each) {
+        if (getModules(each).contains(project)) {
+          setResult(each);
+        }
+      }
+    });
+  }
+
+  private MavenProject findParent(final MavenProject project) {
+    return visit(new Visitor<MavenProject>() {
+      public void visit(MavenProject each) {
+        if (each.getMavenId().equals(project.getParentId())) {
+          setResult(each);
+        }
+      }
+    });
+  }
+
   private Set<MavenProject> findInheritors(final MavenProject project) {
     final Set<MavenProject> result = new HashSet<MavenProject>();
     final MavenId id = project.getMavenId();
@@ -564,16 +623,6 @@ public class MavenProjectsTree {
       }
     });
     return result;
-  }
-
-  private MavenProject findAggregator(final MavenProject project) {
-    return visit(new Visitor<MavenProject>() {
-      public void visit(MavenProject node) {
-        if (getModules(node).contains(project)) {
-          setResult(node);
-        }
-      }
-    });
   }
 
   public List<MavenProject> getRootProjects() {
@@ -674,7 +723,8 @@ public class MavenProjectsTree {
     }
   }
 
-  public void resolve(MavenProject project,
+  public void resolve(Project project,
+                      MavenProject mavenProject,
                       MavenEmbeddersManager embeddersManager,
                       MavenConsole console,
                       MavenProcess process) throws MavenProcessCanceledException {
@@ -683,10 +733,10 @@ public class MavenProjectsTree {
 
     try {
       process.checkCanceled();
-      process.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(project.getPath())));
+      process.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(mavenProject.getPath())));
       process.setText2("");
-      project.resolve(embedder, process);
-      fireResolved(project);
+      mavenProject.resolve(project, embedder, myProjectLocator, process);
+      fireResolved(mavenProject);
     }
     finally {
       embeddersManager.release(embedder);
@@ -748,8 +798,8 @@ public class MavenProjectsTree {
   }
 
   public MavenDomDependency addDependency(Project project,
-                                  MavenProject mavenProject,
-                                  MavenArtifact artifact) throws MavenProcessCanceledException {
+                                          MavenProject mavenProject,
+                                          MavenArtifact artifact) throws MavenProcessCanceledException {
     return mavenProject.addDependency(project, artifact);
   }
 
@@ -825,9 +875,9 @@ public class MavenProjectsTree {
     myListeners.add(l);
   }
 
-  protected void fireReadQuickly(MavenProject project) {
+  protected void fireProjectsRead(ArrayList<MavenProject> projects) {
     for (Listener each : myListeners) {
-      each.projectReadQuickly(project);
+      each.projectsReadQuickly(projects);
     }
   }
 
@@ -856,7 +906,7 @@ public class MavenProjectsTree {
   }
 
   public interface Listener {
-    void projectReadQuickly(MavenProject project);
+    void projectsReadQuickly(List<MavenProject> projects);
 
     void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject);
 
@@ -893,5 +943,137 @@ public class MavenProjectsTree {
   }
 
   public static abstract class SimpleVisitor extends Visitor<Object> {
+  }
+
+  private static class MavenProjectTimestamp {
+    private final boolean myQuickRead;
+    private final FileAndPsiTimestamp myPomTimestamp;
+    private final long myParentLastReadStamp;
+    private final FileAndPsiTimestamp myProfilesTimestamp;
+    private final FileAndPsiTimestamp myUserSettingsTimestamp;
+    private final FileAndPsiTimestamp myGlobalSettingsTimestamp;
+    private final long myActiveProfilesHashCode;
+
+    private MavenProjectTimestamp(boolean quickRead,
+                                  FileAndPsiTimestamp pomTimestamp,
+                                  long parentLastReadStamp,
+                                  FileAndPsiTimestamp profilesTimestamp,
+                                  FileAndPsiTimestamp userSettingsTimestamp,
+                                  FileAndPsiTimestamp globalSettingsTimestamp,
+                                  long activeProfilesHashCode) {
+      myQuickRead = quickRead;
+      myPomTimestamp = pomTimestamp;
+      myParentLastReadStamp = parentLastReadStamp;
+      myProfilesTimestamp = profilesTimestamp;
+      myUserSettingsTimestamp = userSettingsTimestamp;
+      myGlobalSettingsTimestamp = globalSettingsTimestamp;
+      myActiveProfilesHashCode = activeProfilesHashCode;
+    }
+
+    public static MavenProjectTimestamp read(DataInputStream in) throws IOException {
+      return new MavenProjectTimestamp(in.readBoolean(),
+                                       FileAndPsiTimestamp.read(in),
+                                       in.readLong(),
+                                       FileAndPsiTimestamp.read(in),
+                                       FileAndPsiTimestamp.read(in),
+                                       FileAndPsiTimestamp.read(in),
+                                       in.readLong());
+    }
+
+    public void write(DataOutputStream out) throws IOException {
+      out.writeBoolean(myQuickRead);
+      myPomTimestamp.write(out);
+      out.writeLong(myParentLastReadStamp);
+      myProfilesTimestamp.write(out);
+      myUserSettingsTimestamp.write(out);
+      myGlobalSettingsTimestamp.write(out);
+      out.writeLong(myActiveProfilesHashCode);
+    }
+
+    @Override
+    public String toString() {
+      return "(" + myQuickRead
+             + ":" + myPomTimestamp
+             + ":" + myParentLastReadStamp
+             + ":" + myProfilesTimestamp
+             + ":" + myUserSettingsTimestamp
+             + ":" + myGlobalSettingsTimestamp
+             + ":" + myActiveProfilesHashCode + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      MavenProjectTimestamp timestamp = (MavenProjectTimestamp)o;
+
+      if (myQuickRead != timestamp.myQuickRead) return false;
+      if (!myPomTimestamp.equals(timestamp.myPomTimestamp)) return false;
+      if (myParentLastReadStamp != timestamp.myParentLastReadStamp) return false;
+      if (!myProfilesTimestamp.equals(timestamp.myProfilesTimestamp)) return false;
+      if (!myUserSettingsTimestamp.equals(timestamp.myUserSettingsTimestamp)) return false;
+      if (!myGlobalSettingsTimestamp.equals(timestamp.myGlobalSettingsTimestamp)) return false;
+      if (myActiveProfilesHashCode != timestamp.myActiveProfilesHashCode) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (myQuickRead ? 1 : 0);
+      result = 31 * result + myPomTimestamp.hashCode();
+      result = 31 * result + (int)(myParentLastReadStamp ^ (myParentLastReadStamp >>> 32));
+      result = 31 * result + myProfilesTimestamp.hashCode();
+      result = 31 * result + myUserSettingsTimestamp.hashCode();
+      result = 31 * result + myGlobalSettingsTimestamp.hashCode();
+      result = 31 * result + (int)(myActiveProfilesHashCode ^ (myActiveProfilesHashCode >>> 32));
+      return result;
+    }
+  }
+
+  private static class FileAndPsiTimestamp {
+    private final long myFileTimestamp;
+    private final long myPsiTimestamp;
+
+    private FileAndPsiTimestamp(long fileTimestamp, long psiTimestamp) {
+      myFileTimestamp = fileTimestamp;
+      myPsiTimestamp = psiTimestamp;
+    }
+
+    public static FileAndPsiTimestamp read(DataInputStream in) throws IOException {
+      return new FileAndPsiTimestamp(in.readLong(),
+                                     in.readLong());
+    }
+
+    public void write(DataOutputStream out) throws IOException {
+      out.writeLong(myFileTimestamp);
+      out.writeLong(myPsiTimestamp);
+    }
+
+    @Override
+    public String toString() {
+      return "(" + myFileTimestamp + ":" + myPsiTimestamp + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      FileAndPsiTimestamp that = (FileAndPsiTimestamp)o;
+
+      if (myFileTimestamp != that.myFileTimestamp) return false;
+      if (myPsiTimestamp != that.myPsiTimestamp) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int)(myFileTimestamp ^ (myFileTimestamp >>> 32));
+      result = 31 * result + (int)(myPsiTimestamp ^ (myPsiTimestamp >>> 32));
+      return result;
+    }
   }
 }

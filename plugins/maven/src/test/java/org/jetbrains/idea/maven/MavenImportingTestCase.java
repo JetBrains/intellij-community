@@ -4,6 +4,7 @@
 
 package org.jetbrains.idea.maven;
 
+import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.compiler.*;
@@ -26,7 +27,8 @@ import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorSettings;
 import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.runner.MavenEmbeddedExecutor;
+import org.jetbrains.idea.maven.runner.MavenExecutor;
+import org.jetbrains.idea.maven.runner.MavenExternalExecutor;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 
@@ -345,16 +347,24 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     if (enableEventHandling) myMavenProjectsManager.initEventsHandling();
   }
 
-  protected void resolveProject() throws MavenException, MavenProcessCanceledException {
-    myMavenProjectsManager.updateDependencies();
+  protected void waitForProjectRead() {
+    myMavenProjectsManager.waitForReadingTask();
   }
 
-  protected void generateSourcesAndUpdateFolders() throws MavenException, MavenProcessCanceledException {
+  protected void resolveProject() {
+    myMavenProjectsManager.resolveDependencies();
+  }
+
+  protected void generateSourcesAndUpdateFolders() {
     myMavenProjectsManager.updateFolders();
   }
 
-  protected void download() throws Exception {
+  protected void downloadArtifacts() {
     myMavenProjectsManager.downloadArtifacts();
+  }
+
+  protected void downloadPlugins() {
+    myMavenProjectsManager.downloadPlugins();
   }
 
   protected void executeGoal(String relativePath, String goal) {
@@ -362,7 +372,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), Arrays.asList(goal), null);
     MavenRunnerSettings rs = new MavenRunnerSettings();
-    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenGeneralSettings(), rs, NULL_MAVEN_CONSOLE);
+    MavenExecutor e = new MavenExternalExecutor(rp, getMavenGeneralSettings(), rs, NULL_MAVEN_CONSOLE);
 
     e.execute(new EmptyProgressIndicator());
   }
@@ -411,6 +421,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
 
     CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
+    CompilerManagerImpl.testSetup();
 
     List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentRoots());
     TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size(), true);
@@ -428,7 +439,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     String result = "";
     for (CompilerMessage each : compileContext.getMessages(messageType)) {
       VirtualFile file = each.getVirtualFile();
-      result += each.getMessage()  + " FILE: " + (file == null ? "null" : file.getPath()) + "\n";
+      result += each.getMessage() + " FILE: " + (file == null ? "null" : file.getPath()) + "\n";
     }
     return result;
   }

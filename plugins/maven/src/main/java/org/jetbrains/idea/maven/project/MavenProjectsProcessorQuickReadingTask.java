@@ -19,9 +19,12 @@ public class MavenProjectsProcessorQuickReadingTask implements MavenProjectsProc
     mySettings = settings;
   }
 
-  public MavenProjectsProcessorQuickReadingTask(Project project, MavenProjectsTree tree, List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete) {
-    myProject = project;
-    myTree = tree;
+  public MavenProjectsProcessorQuickReadingTask(Project project,
+                                                MavenProjectsTree tree,
+                                                MavenGeneralSettings settings,
+                                                List<VirtualFile> filesToUpdate,
+                                                List<VirtualFile> filesToDelete) {
+    this(project, tree, settings);
     myFilesToUpdate = filesToUpdate;
     myFilesToDelete = filesToDelete;
   }
@@ -32,12 +35,12 @@ public class MavenProjectsProcessorQuickReadingTask implements MavenProjectsProc
       myTree.updateAll(myProject, true, embeddersManager, mySettings, console, process);
     }
     else {
-      myTree.delete(myProject, myFilesToDelete, true, embeddersManager, console, process);
-      myTree.update(myProject, myFilesToUpdate, true, embeddersManager, console, process);
+      myTree.delete(myProject, myFilesToDelete, true, embeddersManager, mySettings, console, process);
+      myTree.update(myProject, myFilesToUpdate, true, embeddersManager, mySettings, console, process);
     }
   }
 
   public boolean immediateInTestMode() {
-    return true;
+    return false;
   }
 }

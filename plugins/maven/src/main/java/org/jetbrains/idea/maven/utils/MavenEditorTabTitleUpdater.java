@@ -16,11 +16,14 @@
 
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+
+import java.util.Collections;
+import java.util.List;
 
 public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
   private final Project myProject;
@@ -38,21 +41,23 @@ public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
 
     MavenProjectsManager.getInstance(myProject).addListener(new MavenProjectsManager.ListenerAdapter() {
       @Override
-      public void projectReadQuickly(MavenProject project) {
-        updateTabName(project);
+      public void projectsReadQuickly(List<MavenProject> projects) {
+        updateTabName(projects);
       }
 
       @Override
       public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-        updateTabName(project);
+        updateTabName(Collections.singletonList(project));
       }
     });
   }
 
-  private void updateTabName(final MavenProject project) {
+  private void updateTabName(final List<MavenProject> projects) {
     MavenUtil.invokeLater(myProject, new Runnable() {
       public void run() {
-        FileEditorManagerEx.getInstanceEx(myProject).updateFilePresentation(project.getFile());
+        for (MavenProject each : projects) {
+          FileEditorManagerEx.getInstanceEx(myProject).updateFilePresentation(each.getFile());
+        }
       }
     });
   }

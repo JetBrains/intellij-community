@@ -1,7 +1,9 @@
 package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.project.MavenRootModelAdapter;
 
 public class ResourceCopyingTest extends MavenImportingTestCase {
   public void testBasic() throws Exception {
@@ -59,11 +61,11 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
   }
 
   public void testIncludesAndExcludes() throws Exception {
-    createProjectSubFile("res/dir/file.properties");
-    createProjectSubFile("res/dir/file.xml");
-    createProjectSubFile("res/file.properties");
-    createProjectSubFile("res/file.xml");
-    createProjectSubFile("res/file.txt");
+    createProjectSubFile("res/dir/file.xxx");
+    createProjectSubFile("res/dir/file.yyy");
+    createProjectSubFile("res/file.xxx");
+    createProjectSubFile("res/file.yyy");
+    createProjectSubFile("res/file.zzz");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -74,12 +76,12 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
                   "    <resource>" +
                   "      <directory>res</directory>" +
                   "      <includes>" +
-                  "        <include>**/*.properties</include>" +
-                  "        <include>**/*.xml</include>" +
+                  "        <include>**/*.xxx</include>" +
+                  "        <include>**/*.yyy</include>" +
                   "      </includes>" +
                   "      <excludes>" +
-                  "        <exclude>*.properties</exclude>" +
-                  "        <exclude>dir/*.xml</exclude>" +
+                  "        <exclude>*.xxx</exclude>" +
+                  "        <exclude>dir/*.yyy</exclude>" +
                   "      </excludes>" +
                   "    </resource>" +
                   "  </resources>" +
@@ -87,11 +89,11 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
 
     compileModules("project");
 
-    assertCopied("target/classes/dir/file.properties");
-    assertNotCopied("target/classes/dir/file.xml");
-    assertNotCopied("target/classes/file.properties");
-    assertCopied("target/classes/file.xml");
-    assertNotCopied("target/classes/file.txt");
+    assertCopied("target/classes/dir/file.xxx");
+    assertNotCopied("target/classes/dir/file.yyy");
+    assertNotCopied("target/classes/file.xxx");
+    assertCopied("target/classes/file.yyy");
+    assertNotCopied("target/classes/file.zzz");
   }
 
   public void testDoNotCopyIgnoredFiles() throws Exception {
@@ -183,6 +185,58 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
     assertNotCopied("target/classes/file.properties");
   }
 
+  public void testDeletingManuallyCopyedFiles() throws Exception {
+    if (ignore()) return;
+
+    createProjectSubFile("res/file.properties");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+    assertCopied("target/classes/file.properties");
+    createProjectSubFile("target/classes/file2.properties");
+
+    compileModules("project");
+    assertCopied("target/classes/file.properties");
+    assertNotCopied("target/classes/file2.properties");
+  }
+
+  public void testDeletingFilesCopyiedByIdeaCompiler() throws Exception {
+    if (ignore()) return;
+
+    createProjectSubFile("res/file.properties");
+    createProjectSubFile("res/file.xml");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <includes>" +
+                  "        <include>**/*.properties</include>" +
+                  "      </includes>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+    assertCopied("target/classes/file.properties");
+    assertNotCopied("target/classes/file.xml");
+  }
+
   public void testCopyManuallyDeletedFiles() throws Exception {
     createProjectSubFile("res/file.properties");
 
@@ -204,6 +258,33 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
 
     compileModules("project");
     assertCopied("target/classes/file.properties");
+  }
+
+  public void testWorkCorrectlyIfFoldersMarkedAsSource() throws Exception {
+    createProjectSubFile("src/main/resources/file.properties");
+    createProjectSubFile("src/main/resources/file.txt");
+    createProjectSubFile("src/main/resources/file.xxx");
+    createProjectSubFile("src/main/ideaRes/file2.xxx");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
+                                                              getModule("project"),
+                                                              ModulesProvider.EMPTY_MODULES_PROVIDER);
+    adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/resources").getPath(), false);
+    adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/ideaRes").getPath(), false);
+    adapter.getRootModel().commit();
+
+    assertSources("project", "src/main/resources", "src/main/ideaRes");
+
+    compileModules("project");
+
+    assertCopied("target/classes/file.properties");
+    assertCopied("target/classes/file.txt");
+    assertCopied("target/classes/file.xxx");
+    assertNotCopied("target/classes/file2.xxx");
   }
 
   public void testWebResources() throws Exception {

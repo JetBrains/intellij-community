@@ -542,18 +542,8 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       return "Maven.PomMenu";
     }
 
-    public String getId() {
-      final String name = myMavenProject.getProjectName();
-      if (!StringUtil.isEmptyOrSpaces(name)) {
-        return name;
-      }
-
-      final String artifactId = myMavenProject.getMavenId().artifactId;
-      if (!StringUtil.isEmptyOrSpaces(artifactId)) {
-        return artifactId;
-      }
-
-      return NavigatorBundle.message("node.pom.unnamed");
+    public String getProjectName() {
+      return myMavenProject.getDisplayName();
     }
 
     public MavenProject getMavenProject() {
@@ -613,7 +603,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setNameAndDescription(getId(), makeDescription());
+      setNameAndDescription(getProjectName(), makeDescription());
     }
 
     private String makeDescription() {

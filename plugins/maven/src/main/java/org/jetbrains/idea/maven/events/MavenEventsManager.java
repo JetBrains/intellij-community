@@ -31,13 +31,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.utils.MavenDataKeys;
-import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
-import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
+import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenDataKeys;
+import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
 import java.io.File;
 import java.util.*;
@@ -76,7 +76,7 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
     myProject = project;
     myProjectsManager = projectsManager;
     myRunner = runner;
-    myKeymapUpdaterAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD,project);
+    myKeymapUpdaterAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, project);
   }
 
   @Override
@@ -427,33 +427,36 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
     }
 
     @Override
-    public void projectReadQuickly(MavenProject project) {
-      scheduleKeymapUpdate(project, false);
+    public void projectsReadQuickly(List<MavenProject> projects) {
+      scheduleKeymapUpdate(projects, false);
     }
 
     @Override
     public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-      projectReadQuickly(project);
+      scheduleKeymapUpdate(Collections.singletonList(project), false);
     }
 
     @Override
     public void projectRemoved(MavenProject project) {
-      scheduleKeymapUpdate(project, true);
+      scheduleKeymapUpdate(Collections.singletonList(project), true);
     }
 
     @Override
     public void setIgnored(MavenProject project, boolean on) {
-      scheduleKeymapUpdate(project, on);
+      scheduleKeymapUpdate(Collections.singletonList(project), on);
     }
 
-    private void scheduleKeymapUpdate(final MavenProject mavenProject , final boolean delete) {
+    private void scheduleKeymapUpdate(final List<MavenProject> mavenProjects, final boolean delete) {
       Runnable updateTask = new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
-          if (mavenProject == null) {
+          if (mavenProjects == null) {
             MavenKeymapExtension.updateActions(myProject, delete);
-          } else {
-            MavenKeymapExtension.updateActions(myProject, mavenProject, delete);
+          }
+          else {
+            for (MavenProject each : mavenProjects) {
+              MavenKeymapExtension.updateActions(myProject, each, delete);
+            }
           }
         }
       };

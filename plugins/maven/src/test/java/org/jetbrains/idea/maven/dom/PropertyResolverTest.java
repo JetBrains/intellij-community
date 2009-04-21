@@ -115,7 +115,7 @@ public class PropertyResolverTest extends MavenImportingTestCase {
     assertEquals("value-2-3", resolve("${prop3}", myProjectPom));
   }
 
-  public void testDoNotGoIndoInfiniteRecursion() throws Exception {
+  public void testDoNotGoIntoInfiniteRecursion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -218,14 +218,15 @@ public class PropertyResolverTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    FileDocumentManager.getInstance().getDocument(myProjectPom).setText(
-        createProjectXml("<groupId>test</groupId>" +
-                         "<artifactId>project</artifactId>" +
-                         "<version>1</version>" +
+    Document doc = FileDocumentManager.getInstance().getDocument(myProjectPom);
+    doc.setText(createPomXml("<groupId>test</groupId>" +
+                             "<artifactId>project</artifactId>" +
+                             "<version>2</version>" +
 
-                         "<properties>" +
-                         " <uncomitted>value</uncomitted>" +
-                         "</properties>"));
+                             "<properties>" +
+                             "  <uncomitted>value</uncomitted>" +
+                             "</properties>"));
+    PsiDocumentManager.getInstance(myProject).commitDocument(doc);
 
     assertEquals("value", resolve("${uncomitted}", myProjectPom));
   }

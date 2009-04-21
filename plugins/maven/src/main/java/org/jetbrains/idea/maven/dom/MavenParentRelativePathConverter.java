@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.util.ArrayList;
@@ -26,8 +27,13 @@ public class MavenParentRelativePathConverter extends MavenPropertyResolvingConv
   @Override
   public PsiFile fromResolvedString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
+
     VirtualFile f = context.getFile().getVirtualFile().getParent().findFileByRelativePath(s);
     if (f == null) return null;
+
+    if (f.isDirectory()) f = f.findFileByRelativePath(MavenConstants.POM_XML);
+    if (f == null) return null;
+
     return PsiManager.getInstance(context.getXmlElement().getProject()).findFile(f);
   }
 

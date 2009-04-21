@@ -16,14 +16,15 @@ import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.MessageFormat;
 
 public class MavenRootModelAdapter {
   private static final String MAVEN_LIB_PREFIX = "Maven: ";
+  private final MavenProject myMavenProject;
   private final ModifiableRootModel myRootModel;
 
-  public MavenRootModelAdapter(Module module, final ModulesProvider modulesProvider) {
+  public MavenRootModelAdapter(MavenProject p, Module module, final ModulesProvider modulesProvider) {
+    myMavenProject = p;
     if (modulesProvider != null) {
       final ModuleRootModel rootModel = modulesProvider.getRootModel(module);
       if (rootModel instanceof ModifiableRootModel) {
@@ -38,9 +39,9 @@ public class MavenRootModelAdapter {
     }
   }
 
-  public void init(MavenProject p, boolean isNewlyCreatedModule) {
+  public void init(boolean isNewlyCreatedModule) {
     setupInitialValues(isNewlyCreatedModule);
-    initContentRoots(p);
+    initContentRoots();
     initOrderEntries();
   }
 
@@ -54,15 +55,24 @@ public class MavenRootModelAdapter {
     }
   }
 
-  private void initContentRoots(MavenProject p) {
-    findOrCreateContentRoot(toUrl(p.getDirectory()));
+  private void initContentRoots() {
+    Url url = toUrl(myMavenProject.getDirectory());
+    if (getContentRootFor(url) != null) return;
+    myRootModel.addContentEntry(url.getUrl());
+  }
+
+  private ContentEntry getContentRootFor(Url url) {
+    for (ContentEntry e : myRootModel.getContentEntries()) {
+      if (isEqualOrAncestor(e.getUrl(), url.getUrl())) return e;
+    }
+    return null;
   }
 
   private void initOrderEntries() {
     for (OrderEntry e : myRootModel.getOrderEntries()) {
       if (e instanceof ModuleSourceOrderEntry || e instanceof JdkOrderEntry) continue;
       if (e instanceof LibraryOrderEntry) {
-        if (!isMavenLibrary(((LibraryOrderEntry)e).getLibraryName())) continue;
+        if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) continue;
       }
       if (e instanceof ModuleOrderEntry) {
         Module m = ((ModuleOrderEntry)e).getModule();
@@ -85,8 +95,10 @@ public class MavenRootModelAdapter {
     if (!exists(path)) return;
 
     Url url = toUrl(path);
+    ContentEntry e = getContentRootFor(url);
+    if (e == null) return;
     unregisterAll(path, false, true);
-    findOrCreateContentRoot(url).addSourceFolder(url.getUrl(), testSource);
+    e.addSourceFolder(url.getUrl(), testSource);
   }
 
   public boolean hasRegisteredSourceSubfolder(File f) {
@@ -114,13 +126,15 @@ public class MavenRootModelAdapter {
   }
 
   private boolean exists(String path) {
-    return new File(new Path(path).getPath()).exists();
+    return new File(toPath(path).getPath()).exists();
   }
 
   public void addExcludedFolder(String path) {
     unregisterAll(path, true, false);
     Url url = toUrl(path);
-    findOrCreateContentRoot(url).addExcludeFolder(url.getUrl());
+    ContentEntry e = getContentRootFor(url);
+    if (e == null) return;
+    e.addExcludeFolder(url.getUrl());
   }
 
   public void unregisterAll(String path, boolean under, boolean unregisterSources) {
@@ -164,19 +178,14 @@ public class MavenRootModelAdapter {
   }
 
   private Url toUrl(String path) {
-    return new Path(path).toUrl();
+    return toPath(path).toUrl();
   }
 
-  ContentEntry findOrCreateContentRoot(Url url) {
-    try {
-      for (ContentEntry e : myRootModel.getContentEntries()) {
-        if (FileUtil.isAncestor(new File(e.getUrl()), new File(url.getUrl()), false)) return e;
-      }
-      return myRootModel.addContentEntry(url.getUrl());
+  private Path toPath(String path) {
+    if (!new File(path).isAbsolute()) {
+      path = new File(myMavenProject.getDirectory(), path).getPath();
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return new Path(path);
   }
 
   public void addModuleDependency(String moduleName, boolean isExportable) {
@@ -209,7 +218,8 @@ public class MavenRootModelAdapter {
       String artifactPath = artifact.getFile().getPath();
 
       setUrl(libraryModel, makeUrl(artifactPath, null), OrderRootType.CLASSES);
-      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER), OrderRootType.SOURCES);      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER), JavadocOrderRootType.getInstance());
+      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER), OrderRootType.SOURCES);
+      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER), JavadocOrderRootType.getInstance());
 
       provider.commit(libraryModel);
     }
@@ -296,11 +306,9 @@ public class MavenRootModelAdapter {
   }
 
   public static boolean isMavenLibrary(Library library) {
+    if (library == null) return false;
+    
     String name = library.getName();
-    return isMavenLibrary(name);
-  }
-
-  private static boolean isMavenLibrary(String name) {
     return name != null && name.startsWith(MAVEN_LIB_PREFIX);
   }
 

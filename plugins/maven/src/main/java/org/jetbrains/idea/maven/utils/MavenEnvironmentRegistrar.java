@@ -16,22 +16,33 @@
 
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
 
-public class MavenPathVariablesRegistrar implements ApplicationComponent {
+public class MavenEnvironmentRegistrar implements ApplicationComponent {
   private static final String MAVEN_REPOSITORY = "MAVEN_REPOSITORY";
 
   @NotNull
   public String getComponentName() {
-    return MavenPathVariablesRegistrar.class.getName();
+    return MavenEnvironmentRegistrar.class.getName();
   }
 
   public void initComponent() {
+    registerFileTypes();
+    registerPathVariable();
+  }
+
+  private void registerFileTypes() {
+    FileTypeManager.getInstance().associateExtension(XmlFileType.INSTANCE, MavenConstants.POM_EXTENSION);
+  }
+
+  private void registerPathVariable() {
     File repository = MavenEmbedderFactory.resolveLocalRepository(null, null, null);
     PathMacros macros = PathMacros.getInstance();
 

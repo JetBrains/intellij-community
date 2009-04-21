@@ -131,7 +131,30 @@ public class MavenArtifact implements Serializable {
 
   @Override
   public String toString() {
+    return displayStringFull();
+  }
+
+  public String displayStringSimple() {
+    return myGroupId + ":" + myArtifactId + ":" + myVersion;
+  }
+
+  public String displayStringWithType() {
     return myGroupId + ":" + myArtifactId + ":" + myType + ":" + myVersion;
+  }
+
+  public String displayStringWithTypeAndClassifier() {
+    String result = myGroupId + ":" + myArtifactId + ":" + myType;
+    if (myClassifier != null) result += ":" + myClassifier;
+    result += ":" + myVersion;
+    return result;
+  }
+
+  public String displayStringFull() {
+    String result = myGroupId + ":" + myArtifactId + ":" + myType;
+    if (myClassifier != null) result += ":" + myClassifier;
+    result += ":" + myVersion;
+    if (myScope != null) result += ":" + myScope;
+    return result;
   }
 
   @Override
@@ -141,10 +164,13 @@ public class MavenArtifact implements Serializable {
 
     MavenArtifact that = (MavenArtifact)o;
 
-    if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
     if (myGroupId != null ? !myGroupId.equals(that.myGroupId) : that.myGroupId != null) return false;
-    if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
+    if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
     if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
+    if (myBaseVersion != null ? !myBaseVersion.equals(that.myBaseVersion) : that.myBaseVersion != null) return false;
+    if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
+    if (myClassifier != null ? !myClassifier.equals(that.myClassifier) : that.myClassifier != null) return false;
+    if (myScope != null ? !myScope.equals(that.myScope) : that.myScope != null) return false;
 
     return true;
   }
@@ -154,7 +180,10 @@ public class MavenArtifact implements Serializable {
     int result = myGroupId != null ? myGroupId.hashCode() : 0;
     result = 31 * result + (myArtifactId != null ? myArtifactId.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
+    result = 31 * result + (myBaseVersion != null ? myBaseVersion.hashCode() : 0);
     result = 31 * result + (myType != null ? myType.hashCode() : 0);
+    result = 31 * result + (myClassifier != null ? myClassifier.hashCode() : 0);
+    result = 31 * result + (myScope != null ? myScope.hashCode() : 0);
     return result;
   }
 }

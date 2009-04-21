@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -11,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import junit.framework.TestCase;
@@ -172,7 +175,7 @@ public abstract class MavenTestCase extends TestCase {
     File ioFile = new File(myDir, "settings.xml");
     ioFile.createNewFile();
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
-    f.setBinaryContent(content.getBytes());
+    setFileContent(f, content);
     getMavenGeneralSettings().setMavenSettingsFile(f.getPath());
   }
 
@@ -218,11 +221,11 @@ public abstract class MavenTestCase extends TestCase {
       f = dir.createChildData(null, "pom.xml");
       myAllPoms.add(f);
     }
-    f.setBinaryContent(createProjectXml(xml).getBytes());
+    setFileContent(f, createPomXml(xml));
     return f;
   }
 
-  protected String createProjectXml(String xml) {
+  protected String createPomXml(String xml) {
     return "<?xml version=\"1.0\"?>" +
            "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
            "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -245,7 +248,7 @@ public abstract class MavenTestCase extends TestCase {
     if (f == null) {
       f = dir.createChildData(null, "profiles.xml");
     }
-    f.setBinaryContent(createValidProfiles(xml).getBytes());
+    setFileContent(f, createValidProfiles(xml));
   }
 
   private String createValidProfiles(String xml) {
@@ -288,8 +291,20 @@ public abstract class MavenTestCase extends TestCase {
 
   protected VirtualFile createProjectSubFile(String relativePath, String content) throws IOException {
     VirtualFile file = createProjectSubFile(relativePath);
-    file.setBinaryContent(content.getBytes());
+    setFileContent(file, content);
     return file;
+  }
+
+  private void setFileContent(VirtualFile file, String content) throws IOException {
+    FileDocumentManager manager = FileDocumentManager.getInstance();
+    Document doc = manager.getCachedDocument(file);
+    if (doc != null) {
+      doc.setText(content);
+      PsiDocumentManager.getInstance(myProject).commitDocument(doc);
+      manager.saveDocument(doc);
+    } else {
+      file.setBinaryContent(content.getBytes());
+    }
   }
 
   protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {

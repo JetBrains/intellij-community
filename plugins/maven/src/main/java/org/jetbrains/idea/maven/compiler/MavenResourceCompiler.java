@@ -134,9 +134,12 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         List<ProcessingItem> itemsToProcess = new ArrayList<ProcessingItem>();
         List<String> filesToDelete = new ArrayList<String>();
 
+        //List<String> modules = new ArrayList<String>();
         for (Module eachModule : context.getCompileScope().getAffectedModules()) {
           MavenProject mavenProject = mavenProjectManager.findProject(eachModule);
           if (mavenProject == null) continue;
+
+          //modules.add(eachModule.getName() + "->" + mavenProject.getMavenId());
 
           Properties properties = loadFilters(context, mavenProject);
 
@@ -154,12 +157,31 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                  nonFilteredExtensions, escapeString, true, itemsToProcess);
           collectItemsToDelete(eachModule, itemsToProcess, filesToDelete);
         }
+
+        //List<String> cache = new ArrayList<String>();
+        //for (Map.Entry<String, Set<String>> eachEntry : myOutputItemsCache.entrySet()) {
+        //  for (String eachFile : eachEntry.getValue()) {
+        //    cache.add(eachEntry.getKey() + "->" + eachFile);
+        //  }
+        //}
+        //
+        //MavenLog.LOG.info("MavenResourceCompiler");
+        //MavenLog.LOG.info("Modules: " + modules.size() + "\n" + StringUtil.join(modules, "\n"));
+        //MavenLog.LOG.info("Cache: " + cache.size() + "\n" + StringUtil.join(cache, "\n"));
+        //MavenLog.LOG.info("Files to update: " + itemsToProcess.size() + "\n" + StringUtil.join(itemsToProcess, new Function<ProcessingItem, String>() {
+        //  public String fun(ProcessingItem processingItem) {
+        //    return processingItem.getFile() + "->" + ((MyProcessingItem)processingItem).getOutputPath();
+        //  }
+        //}, "\n"));
+        //MavenLog.LOG.info("Files to delete: " + filesToDelete.size() + "\n" + StringUtil.join(filesToDelete, "\n"));
+
         if (!filesToDelete.isEmpty()) {
           itemsToProcess.add(new FakeProcessingItem());
         }
         context.putUserData(FILES_TO_DELETE_KEY, filesToDelete);
         resultObject.setResult(itemsToProcess.toArray(new ProcessingItem[itemsToProcess.size()]));
         removeObsoleteModulesFromCache();
+        saveCache();
       }
     }.execute().getResultObject();
   }
@@ -321,7 +343,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   private void collectItemsToDelete(Module module, List<ProcessingItem> processingItems, List<String> result) {
     Set<String> currentPaths = createPathsSet(processingItems.size());
     for (ProcessingItem each : processingItems) {
-      if (each instanceof FakeProcessingItem) continue;
+      if (!(each instanceof MyProcessingItem)) continue;
       currentPaths.add(((MyProcessingItem)each).getOutputPath());
     }
 
@@ -356,9 +378,16 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
     deleteOutdatedFile(context.getUserData(FILES_TO_DELETE_KEY), filesToRefresh);
 
+    //MavenLog.LOG.info("Files to process: " + items.length + "\n" + StringUtil.join(items, new Function<ProcessingItem, String>() {
+    //  public String fun(ProcessingItem processingItem) {
+    //    if (!(processingItem instanceof MyProcessingItem)) return "";
+    //    return processingItem.getFile() + "->" + ((MyProcessingItem)processingItem).getOutputPath();
+    //  }
+    //}, "\n"));
+
     int count = 0;
     for (final ProcessingItem each : items) {
-      if (each instanceof FakeProcessingItem) continue;
+      if (!(each instanceof MyProcessingItem)) continue;
 
       context.getProgressIndicator().setFraction(((double)count) / items.length);
       context.getProgressIndicator().checkCanceled();
@@ -399,7 +428,6 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       }
     }
     CompilerUtil.refreshIOFiles(filesToRefresh);
-    saveCache();
     return result.toArray(new ProcessingItem[result.size()]);
   }
 

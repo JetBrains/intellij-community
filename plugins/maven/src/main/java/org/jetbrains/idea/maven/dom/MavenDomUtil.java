@@ -8,10 +8,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenId;
 
@@ -20,10 +19,13 @@ import java.io.File;
 public class MavenDomUtil {
   public static boolean isPomFile(PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
-    if (!MavenProjectsManager.getInstance(file.getProject()).isMavenizedProject()) return false;
+    //if (!MavenProjectsManager.getInstance(file.getProject()).isMavenizedProject()) return false;
 
     String name = file.getName();
-    return name.equals(MavenConstants.POM_XML);
+    return name.equals(MavenConstants.POM_XML)
+           || name.endsWith("." + MavenConstants.POM_EXTENSION)
+           || name.equals(MavenConstants.PROFILES_XML)
+           || name.equals(MavenConstants.SETTINGS_XML);
   }
 
   public static String calcRelativePath(VirtualFile parent, VirtualFile child) {

@@ -5,7 +5,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.PsiTestUtil;
 
 public class NonMavenProjectInspectionsTest extends MavenCompletionAndResolutionTestCase {
-  public void testDisablingInpaectionForNonMavenProjects() throws Throwable {
+  public void testWorkForNonMavenProjects() throws Throwable {
     Module m = createModule("module");
     PsiTestUtil.addContentRoot(m, myProjectRoot);
     
@@ -14,15 +14,15 @@ public class NonMavenProjectInspectionsTest extends MavenCompletionAndResolution
                      "<version>1</version>" +
 
                      "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
+                     "  <module><error>m1</error></module>" +
+                     "  <module><error>m2</error></module>" +
                      "</modules>" +
 
                      "<dependencies>" +
                      "  <dependency>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>yyy</artifactId>" +
-                     "    <version>zzz</version>" +
+                     "    <groupId><error>xxx</error></groupId>" +
+                     "    <artifactId><error>yyy</error></artifactId>" +
+                     "    <version><error>zzz</error></version>" +
                      "  </dependency>" +
                      "</dependencies>");
 

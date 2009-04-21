@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.events;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,8 +15,8 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
     super.setUp();
     myEventsManager = MavenEventsManager.getInstance(myProject);
     myEventsManager.doInit();
-    MavenProjectsManager.getInstance(myProject).doInitComponent(false);
-    MavenProjectsManager.getInstance(myProject).initEventsHandling();
+    myMavenProjectsManager.doInitComponent(false);
+    myMavenProjectsManager.initEventsHandling();
   }
 
   public void testRefreshingActionsOnImport() throws Exception {
@@ -36,7 +35,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p2, "clean");
   }
 
-  public void testRefreshingOnProjectFileChange() throws Exception {
+  public void testRefreshingOnProjectProjectRead() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -55,6 +54,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
                      "    </plugin>" +
                      "  </plugins>" +
                      "</build>");
+    waitForProjectRead();
 
     assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
   }
@@ -78,6 +78,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>module</module>" +
                      "</modules>");
+    waitForProjectRead();
 
     assertKeymapContains(m, "clean");
   }
@@ -97,6 +98,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p2, "clean");
 
     p1.delete(this);
+    waitForProjectRead();
 
     assertKeymapDoesNotContain(p1, "clean");
     assertKeymapContains(p2, "clean");

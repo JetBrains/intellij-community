@@ -79,7 +79,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     setAggregatorProject(myProjectPom);
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertEquals(createProjectXml("<groupId>test</groupId>" +
+    assertEquals(createPomXml("<groupId>test</groupId>" +
                                   "<artifactId>project</artifactId>\r\n" +
                                   "    <packaging>pom</packaging>\r\n" +
                                   "    <version>1</version>\r\n" +
