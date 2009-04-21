@@ -26,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlSchemaProvider;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +92,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     final PsiFile containingFile = myElement.getContainingFile();
 
     if (tag != null &&
-        tag.getAttributeValue("schemaLocation", com.intellij.xml.util.XmlUtil.XML_SCHEMA_INSTANCE_URI) == null
+        tag.getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI) == null
        ) {
       final PsiFile file = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, containingFile, tag.getAttributeValue("version"));
       if (file != null) return file;
@@ -111,13 +112,13 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
       final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(canonicalText, true);
       if (nsDescriptor != null) return nsDescriptor.getDescriptorFile();
 
-      final String url = ExternalResourceManager.getInstance().getResourceLocation(canonicalText);
+      final String url = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, myElement.getProject());
       if (!url.equals(canonicalText)) {
         myIncorrectResourceMapped = true;
         return null;
       }
 
-      if (tag == rootTag && tag.getNamespace().equals(com.intellij.xml.util.XmlUtil.XML_SCHEMA_URI)) {
+      if (tag == rootTag && tag.getNamespace().equals(XmlUtil.XML_SCHEMA_URI)) {
         for(XmlTag t:tag.getSubTags()) {
           final String name = t.getLocalName();
           if ("import".equals(name)) {

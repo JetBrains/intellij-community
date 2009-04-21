@@ -2,6 +2,7 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -12,18 +13,28 @@ import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Arrays;
 
 public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable {
+
   private JPanel myPanel;
   private List<EditLocationDialog.NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
   private AddEditRemovePanel<EditLocationDialog.NameLocationPair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
+  private final Project myProject;
+
+  public ExternalResourceConfigurable(Project project) {
+    myProject = project;
+  }
 
   public String getDisplayName() {
     return XmlBundle.message("display.name.edit.external.resource");
@@ -49,22 +60,19 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       protected EditLocationDialog.NameLocationPair editItem(EditLocationDialog.NameLocationPair o) {
         return editExtLocation(o);
       }
-
-      protected char getAddMnemonic() {
-        return 'A';
-      }
-
-      protected char getEditMnemonic() {
-        return 'E';
-      }
-
-      protected char getRemoveMnemonic() {
-        return 'R';
-      }
     };
 
     myExtPanel.setRenderer(1, new PathRenderer());
 
+    JTable table = myExtPanel.getTable();
+    TableColumn column = table.getColumn(table.getColumnName(2));
+    column.setMaxWidth(50);
+
+    table.getModel().addTableModelListener(new TableModelListener() {
+      public void tableChanged(TableModelEvent e) {
+        setModified(true);
+      }
+    });
     myIgnorePanel = new AddEditRemovePanel<String>(new IgnoredUrlsModel(), myIgnoredUrls, XmlBundle.message("label.edit.external.resource.configure.ignored.resources")) {
       protected String addItem() {
         return addIgnoreLocation();
@@ -77,18 +85,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
       protected String editItem(String o) {
         return editIgnoreLocation(o);
-      }
-
-      protected char getAddMnemonic() {
-        return 'd';
-      }
-
-      protected char getEditMnemonic() {
-        return 't';
-      }
-
-      protected char getRemoveMnemonic() {
-        return 'm';
       }
     };
 
@@ -108,10 +104,15 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   public void apply() {
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
-    manager.clearAllResources();
+    manager.clearAllResources(myProject);
     for (Object myPair : myPairs) {
       EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)myPair;
-      manager.addResource(pair.myName, pair.myLocation.replace('\\', '/'));
+      String s = pair.myLocation.replace('\\', '/');
+      if (pair.myShared) {
+        manager.addResource(pair.myName, s);
+      } else {
+        manager.addResource(pair.myName, s, myProject);
+      }
     }
 
     for (Object myIgnoredUrl : myIgnoredUrls) {
@@ -128,17 +129,20 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
     String[] urls = manager.getAvailableUrls();
     for (String url : urls) {
-      String loc = manager.getResourceLocation(url);
-      myPairs.add(new EditLocationDialog.NameLocationPair(url, loc));
+      String loc = manager.getResourceLocation(url, myProject);
+      myPairs.add(new EditLocationDialog.NameLocationPair(url, loc, true));
+    }
+    urls = manager.getAvailableUrls(myProject);
+    for (String url : urls) {
+      String loc = manager.getResourceLocation(url, myProject);
+      myPairs.add(new EditLocationDialog.NameLocationPair(url, loc, false));
     }
 
     Collections.sort(myPairs);
 
     myIgnoredUrls = new ArrayList<String>();
     final String[] ignoredResources = manager.getIgnoredResources();
-    for (String ignoredResource : ignoredResources) {
-      myIgnoredUrls.add(ignoredResource);
-    }
+    myIgnoredUrls.addAll(Arrays.asList(ignoredResources));
 
     Collections.sort(myIgnoredUrls);
 
@@ -155,7 +159,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   }
 
   public String getHelpTopic() {
-    return "preferences.externalResources";
+    return getId();
   }
 
   private EditLocationDialog.NameLocationPair addExtLocation() {
@@ -194,10 +198,10 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   }
 
   public void selectResource(final String uri) {
-    myExtPanel.setSelected(new EditLocationDialog.NameLocationPair(uri, null));
+    myExtPanel.setSelected(new EditLocationDialog.NameLocationPair(uri, null, false));
   }
 
-  private class PathRenderer extends DefaultTableCellRenderer {
+  private static class PathRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       String loc = value.toString().replace('\\', '/');
@@ -215,7 +219,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
   }
 
-  private class IgnoredUrlsModel implements AddEditRemovePanel.TableModel {
+  private static class IgnoredUrlsModel extends AddEditRemovePanel.TableModel {
     private final String[] myNames = {XmlBundle.message("column.name.edit.external.resource.uri")};
 
     public int getColumnCount() {
@@ -226,29 +230,54 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       return o;
     }
 
+    public Class getColumnClass(int columnIndex) {
+      return String.class;
+    }
+
+    public boolean isEditable(int column) {
+      return false; 
+    }
+
+    public void setValue(Object aValue, Object data, int columnIndex) {
+
+    }
+
     public String getColumnName(int column) {
       return myNames[column];
     }
   }
 
-  private class ExtUrlsTableModel implements AddEditRemovePanel.TableModel {
+  private static class ExtUrlsTableModel extends AddEditRemovePanel.TableModel<EditLocationDialog.NameLocationPair> {
     final String[] myNames =
-      {XmlBundle.message("column.name.edit.external.resource.uri"), XmlBundle.message("column.name.edit.external.resource.location")};
+      {XmlBundle.message("column.name.edit.external.resource.uri"), XmlBundle.message("column.name.edit.external.resource.location"), "Share"};
 
     public int getColumnCount() {
       return myNames.length;
     }
 
-    public Object getField(Object o, int columnIndex) {
-      final EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)o;
+    public Object getField(EditLocationDialog.NameLocationPair pair, int columnIndex) {
       switch (columnIndex) {
         case 0:
           return pair.myName;
         case 1:
           return pair.myLocation;
+        case 2:
+          return pair.myShared;
       }
 
       return "";
+    }
+
+    public Class getColumnClass(int columnIndex) {
+      return columnIndex == 2 ? Boolean.class : String.class;
+    }
+
+    public boolean isEditable(int column) {
+      return column == 2;
+    }
+
+    public void setValue(Object aValue, EditLocationDialog.NameLocationPair data, int columnIndex) {
+      data.myShared = ((Boolean)aValue).booleanValue();
     }
 
     public String getColumnName(int column) {
@@ -256,9 +285,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
   }
 
-
   public String getId() {
-    return getHelpTopic();
+    return "preferences.externalResources";
   }
 
   @Nullable

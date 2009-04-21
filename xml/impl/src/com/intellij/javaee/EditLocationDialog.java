@@ -26,6 +26,7 @@ public class EditLocationDialog extends DialogWrapper {
   private final String myTitle;
   private final String myName;
   private final String myLocation;
+  private boolean myTfShared = true;
 
   public EditLocationDialog(Project project, boolean showPath) {
     super(project, true);
@@ -102,7 +103,7 @@ public class EditLocationDialog extends DialogWrapper {
   public NameLocationPair getPair() {
     String path = myTfPath.getText().trim();
     String url = myTfUrl.getText().trim();
-    return new NameLocationPair(url, path);
+    return new NameLocationPair(url, path, myTfShared);
   }
 
   protected FileChooserDescriptor getChooserDescriptor(){
@@ -128,10 +129,12 @@ public class EditLocationDialog extends DialogWrapper {
   public static class NameLocationPair implements Comparable {
     String myName;
     String myLocation;
+    boolean myShared;
 
-    public NameLocationPair(String name, String location) {
+    public NameLocationPair(String name, String location, boolean shared) {
       myName = name;
       myLocation = location;
+      myShared = shared;
     }
 
     public int compareTo(Object o) {

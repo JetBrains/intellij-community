@@ -1,10 +1,6 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.javaee.ExternalResourceManager</interface-class>
-      <implementation-class>com.intellij.javaee.ExternalResourceManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.browsers.BrowsersConfiguration</implementation-class>
     </component>
    </application-components>

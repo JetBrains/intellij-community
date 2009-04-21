@@ -96,11 +96,11 @@ public class XmlResourceResolver implements XMLEntityResolver {
               File workingFile = new File("");
               String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
               String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
-              vFile = UriUtil.findRelativeFile(id, null);
+              vFile = UriUtil.findRelativeFile(id, (VirtualFile)null);
             }
 
             if (vFile == null) {
-              vFile = UriUtil.findRelativeFile(baseSystemId, null);
+              vFile = UriUtil.findRelativeFile(baseSystemId, (VirtualFile)null);
 
               if (vFile == null) {
                 try {

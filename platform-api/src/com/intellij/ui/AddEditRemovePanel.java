@@ -61,11 +61,22 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
       }
 
       public Class getColumnClass(int columnIndex){
-        return String.class;
+        return myModel.getColumnClass(columnIndex);
+      }
+
+      @Override
+      public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return myModel.isEditable(columnIndex);
       }
 
       public Object getValueAt(int rowIndex, int columnIndex){
         return myModel.getField(myData.get(rowIndex), columnIndex);
+      }
+
+      @Override
+      public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        myModel.setValue(aValue, myData.get(rowIndex), columnIndex);
+        fireTableDataChanged();
       }
     };
 
@@ -130,10 +141,12 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
 
   protected void doEdit() {
     int selected = myTable.getSelectedRow();
-    T o = editItem(myData.get(selected));
-    if (o != null) myData.set(selected, o);
+    if (selected >= 0) {
+      T o = editItem(myData.get(selected));
+      if (o != null) myData.set(selected, o);
 
-    myTableModel.fireTableRowsUpdated(selected, selected);
+      myTableModel.fireTableRowsUpdated(selected, selected);
+    }
   }
   
   protected void doRemove() {
@@ -184,10 +197,19 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
       }
     }
   }
-  
-  public static interface TableModel<T> {
-    int getColumnCount();
-    String getColumnName(int columnIndex);
-    Object getField(T o, int columnIndex);
-   }
+
+  public JTable getTable() {
+    return myTable;
+  }
+
+  public abstract static class TableModel<T> {
+
+    public abstract int getColumnCount();
+    public abstract String getColumnName(int columnIndex);
+    public abstract Object getField(T o, int columnIndex);
+
+    public Class getColumnClass(int columnIndex) { return String.class; }
+    public boolean isEditable(int column) {return false; }
+    public void setValue(Object aValue, T data, int columnIndex) {}
+  }
 }

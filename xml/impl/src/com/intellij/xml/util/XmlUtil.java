@@ -135,7 +135,7 @@ public class XmlUtil {
 
   @Nullable
   public static String getSchemaLocation(XmlTag tag, String namespace) {
-    final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);
+    final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace, tag.getProject());
     if (uri != null && !uri.equals(namespace)) return uri;
 
     while (true) {
@@ -215,7 +215,7 @@ public class XmlUtil {
 
   @Nullable
   public static XmlFile findNamespace(PsiFile base, @NotNull String nsLocation) {
-    final String location = ExternalResourceManager.getInstance().getResourceLocation(nsLocation);
+    final String location = ExternalResourceManager.getInstance().getResourceLocation(nsLocation, base.getProject());
     if (!location.equals(nsLocation)) { // is mapped
       return findXmlFile(base, location);
     }
@@ -469,13 +469,13 @@ public class XmlUtil {
   public static PsiFile findRelativeFile(String uri, PsiElement base) {
     if (base instanceof PsiFile) {
       PsiFile baseFile = (PsiFile) base;
-      VirtualFile file = UriUtil.findRelativeFile(uri, baseFile.getOriginalFile().getVirtualFile());
+      VirtualFile file = UriUtil.findRelative(uri, baseFile.getOriginalFile());
       if (file == null) return null;
       return base.getManager().findFile(file);
     }
     else if (base instanceof PsiDirectory) {
       PsiDirectory baseDir = (PsiDirectory) base;
-      VirtualFile file = UriUtil.findRelativeFile(uri, baseDir.getVirtualFile());
+      VirtualFile file = UriUtil.findRelative(uri, baseDir);
       if (file == null) return null;
       return base.getManager().findFile(file);
     }

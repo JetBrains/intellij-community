@@ -14,10 +14,10 @@ public class PsiExternalResourceNotifier implements ProjectComponent {
   private final ExternalResourceManagerEx myExternalResourceManager;
   private final DaemonCodeAnalyzer myDaemonCodeAnalyzer;
 
-  public PsiExternalResourceNotifier(PsiManagerEx psiManager, ExternalResourceManagerEx externalResourceManager,
+  public PsiExternalResourceNotifier(PsiManagerEx psiManager, ExternalResourceManager externalResourceManager,
                                      final DaemonCodeAnalyzer daemonCodeAnalyzer) {
     myPsiManager = psiManager;
-    myExternalResourceManager = externalResourceManager;
+    myExternalResourceManager = (ExternalResourceManagerEx)externalResourceManager;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
     myExternalResourceListener = new MyExternalResourceListener();
     myExternalResourceManager.addExternalResourceListener(myExternalResourceListener);

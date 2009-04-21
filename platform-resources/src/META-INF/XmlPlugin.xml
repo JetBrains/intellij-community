@@ -56,6 +56,11 @@
 
     <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.HtmlClosingTagErrorFilter"/>
 
+    <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
+                        serviceImplementation="com.intellij.javaee.ExternalResourceManagerImpl"/>
+    <projectService serviceInterface="com.intellij.javaee.ProjectResources"
+                        serviceImplementation="com.intellij.javaee.ProjectResources"/>
+
     <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
     <fileBasedIndex implementation="com.intellij.xml.index.XmlNamespaceIndex"/>
     <fileBasedIndex implementation="com.intellij.html.HtmlLinkTagIndex"/>
