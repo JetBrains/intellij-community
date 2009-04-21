@@ -6,6 +6,7 @@ import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,11 @@ public class CompilerCacheManager implements ProjectComponent {
   private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<Compiler, Object>();
   private final List<Disposable> myCacheDisposables = new ArrayList<Disposable>();
   private final File myCachesRoot;
+  private final Runnable myShutdownTask = new Runnable() {
+    public void run() {
+      flushCaches();
+    }
+  };
 
   public CompilerCacheManager(Project project) {
     myCachesRoot = CompilerPaths.getCacheStoreDirectory(project);
@@ -38,10 +44,12 @@ public class CompilerCacheManager implements ProjectComponent {
   }
   
   public void projectOpened() {
+    ShutDownTracker.getInstance().registerShutdownTask(myShutdownTask);
   }
 
   public void projectClosed() {
-    disposeCaches();
+    ShutDownTracker.getInstance().unregisterShutdownTask(myShutdownTask);
+    flushCaches();
   }
 
   @NotNull
@@ -53,7 +61,7 @@ public class CompilerCacheManager implements ProjectComponent {
   }
 
   public void disposeComponent() {
-    disposeCaches();
+    flushCaches();
   }
   
   private File getCompilerRootDir(final Compiler compiler) {
@@ -62,7 +70,7 @@ public class CompilerCacheManager implements ProjectComponent {
     return dir;
   }
 
-  public FileProcessingCompilerStateCache getFileProcessingCompilerCache(FileProcessingCompiler compiler) throws IOException {
+  public synchronized FileProcessingCompilerStateCache getFileProcessingCompilerCache(FileProcessingCompiler compiler) throws IOException {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
       final FileProcessingCompilerStateCache stateCache = new FileProcessingCompilerStateCache(getCompilerRootDir(compiler),
@@ -82,7 +90,7 @@ public class CompilerCacheManager implements ProjectComponent {
     return (FileProcessingCompilerStateCache)cache;
   }
 
-  public StateCache<ValidityState> getGeneratingCompilerCache(final GeneratingCompiler compiler) throws IOException {
+  public synchronized StateCache<ValidityState> getGeneratingCompilerCache(final GeneratingCompiler compiler) throws IOException {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
       final File cacheDir = getCompilerRootDir(compiler);
@@ -116,7 +124,7 @@ public class CompilerCacheManager implements ProjectComponent {
     return description.replaceAll("\\s+", "_").replaceAll("[\\.\\?]", "_").toLowerCase();
   }
   
-  private void disposeCaches() {
+  private synchronized void flushCaches() {
     for (Disposable disposable : myCacheDisposables) {
       try {
         disposable.dispose();
@@ -130,7 +138,7 @@ public class CompilerCacheManager implements ProjectComponent {
   }
 
   public void clearCaches(final CompileContext context) {
-    disposeCaches();
+    flushCaches();
     final File[] children = myCachesRoot.listFiles();
     if (children != null) {
       for (final File child : children) {
