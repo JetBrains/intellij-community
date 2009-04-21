@@ -251,7 +251,7 @@ public class DependencyConfigurable extends BaseConfigurable {
 
     public void addRow() {
       ArrayList<DependencyRule> newList = new ArrayList<DependencyRule>(getItems());
-      final NamedScope scope = DefaultScopesProvider.getInstance(myProject).getAllScope();
+      final NamedScope scope = DefaultScopesProvider.getAllScope();
       newList.add(new DependencyRule(scope, scope, myDenyRule));
       setItems(newList);
     }

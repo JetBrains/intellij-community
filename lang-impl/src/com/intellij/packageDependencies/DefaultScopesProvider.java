@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultScopesProvider implements CustomScopesProvider {
-  private NamedScope myAllScope;
+  private static NamedScope myAllScope;
   private NamedScope myProblemsScope;
   private final Project myProject;
 
@@ -39,7 +39,7 @@ public class DefaultScopesProvider implements CustomScopesProvider {
     return list;
   }
 
-  public NamedScope getAllScope() {
+  public static NamedScope getAllScope() {
     if (myAllScope == null) {
       myAllScope = new NamedScope("All", new PackageSet() {
         public boolean contains(final PsiFile file, final NamedScopesHolder holder) {

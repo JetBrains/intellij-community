@@ -30,6 +30,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -792,7 +793,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
           }
         }
       });
-      withSeverity.add(enabledDescriptor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
+      withSeverity.add(enabledDescriptor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
 
       withSeverity.add(new JLabel("Scope:"), new GridBagConstraints(0,GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,5,5,10),0,0 ));
       final DefaultComboBoxModel model = new DefaultComboBoxModel();
@@ -813,9 +814,8 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       withSeverity.add(scopesCombo, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,5,0), 0,0));
     }
 
-    final JComponent config = comp;
-    if (config != null) {
-      withSeverity.add(config, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+    if (comp != null) {
+      withSeverity.add(comp, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                       new Insets(0, 0, 0, 0), 0, 0));
     }
     else {
@@ -829,13 +829,13 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final JButton addScope = new JButton("Add scope");
       addScope.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          mySelectedProfile.addScope(tool, scope, chooser.getLevel(), enabledDescriptor.isSelected());
+          mySelectedProfile.addOneMoreScope(tool, scope != null ? scope : DefaultScopesProvider.getAllScope(), chooser.getLevel(), enabledDescriptor.isSelected());
           updateOptionsAndDescriptionPanel(new TreePath(node.getPath()));
         }
       });
       addDeleteMoveUpDouwnPanel.add(addScope);
 
-      final JButton removeScope = new JButton("Remove Scope"); //todo disable when only one exist
+      final JButton removeScope = new JButton("Remove Scope");
       removeScope.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           mySelectedProfile.removeScope(key.toString(), idx);
@@ -844,7 +844,12 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       });
       addDeleteMoveUpDouwnPanel.add(removeScope);
 
-      final JButton moveUp = new JButton("Move Up");
+      final JButton moveUp = new JButton("Move Up"){
+        @Override
+        public boolean isEnabled() {
+          return idx > 0;
+        }
+      };
       moveUp.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           mySelectedProfile.moveScope(key.toString(), idx, -1);
@@ -853,7 +858,12 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       });
       addDeleteMoveUpDouwnPanel.add(moveUp);
 
-      final JButton moveDown = new JButton("Move Down");
+      final JButton moveDown = new JButton("Move Down") {
+        @Override
+        public boolean isEnabled() {
+          return idx < mySelectedProfile.getStates(key.toString()).size() - 1;
+        }
+      };
       moveDown.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           mySelectedProfile.moveScope(key.toString(), idx, +1);

@@ -156,7 +156,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             public void actionPerformed(final ActionEvent e) {
                 TableUtil.stopEditing(myScopeMappingTable);
                 List<ScopeSetting> newList = new ArrayList<ScopeSetting>(myScopeMappingModel.getItems());
-                newList.add(new ScopeSetting(DefaultScopesProvider.getInstance(myProject).getAllScope(),
+                newList.add(new ScopeSetting(DefaultScopesProvider.getAllScope(),
                         myProfilesModel.getAllProfiles().values().iterator().next()));
                 myScopeMappingModel.setItems(newList);
                 TableUtil.editCellAt(myScopeMappingTable, myScopeMappingModel.getRowCount() - 1, 0);

@@ -195,7 +195,11 @@ public class Tools {
 
   public void removeScope(int scopeIdx) {
     if (myTools != null && scopeIdx >= 0 && myTools.size() > scopeIdx) {
-      myTools.remove(scopeIdx);
+      final ScopeToolState state = myTools.remove(scopeIdx);
+      if (myTools.isEmpty()) {
+        myTools = null;
+        myTool = (InspectionTool)state.getTool();
+      }
     }
   }
 
@@ -210,10 +214,9 @@ public class Tools {
 
   public void moveScope(int idx, int dir) {
     if (myTools != null && idx >= 0 && idx < myTools.size() && idx + dir >= 0 && idx + dir < myTools.size()) {
-      final ScopeToolState state = myTools.remove(idx);
-      if (dir > 0) {
-
-      }
+      final ScopeToolState state = myTools.get(idx);
+      myTools.set(idx, myTools.get(idx + dir));
+      myTools.set(idx + dir, state);
     }
   }
 

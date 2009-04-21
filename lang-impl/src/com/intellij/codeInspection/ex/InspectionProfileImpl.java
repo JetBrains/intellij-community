@@ -636,7 +636,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
 
     for (InspectionTool tool : tools) {
-      final NamedScope allScope = DefaultScopesProvider.getInstance(project).getAllScope();
+      final NamedScope allScope = DefaultScopesProvider.getAllScope();
       final Tools toolsSettings = myTools.get(tool.getShortName());
       addScope(tool, allScope, toolsSettings.getLevel(), toolsSettings.isEnabled());
     }
@@ -701,6 +701,16 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void addScope(InspectionProfileEntry tool, NamedScope scope, HighlightDisplayLevel level, boolean enabled) {
      myTools.get(tool.getShortName()).addTool(scope, (InspectionTool)tool, enabled, level);
   }
+
+  public void addOneMoreScope(InspectionProfileEntry tool, NamedScope scope, HighlightDisplayLevel level, boolean enabled) {
+    final Tools tools = myTools.get(tool.getShortName());
+    final InspectionTool currentTool = tools.getTool();
+    if (currentTool != null) {
+      tools.addTool(scope, currentTool, tools.isEnabled(), tools.getLevel());
+    } 
+    tools.addTool(scope, (InspectionTool)tool, enabled, level);
+  }
+
 
   public void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level, int scopeIdx) {
     myTools.get(key.toString()).setLevel(level, scopeIdx);
