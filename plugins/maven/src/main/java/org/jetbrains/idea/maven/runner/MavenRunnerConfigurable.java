@@ -194,7 +194,7 @@ public abstract class MavenRunnerConfigurable implements Configurable {
     }
   }
 
-  private static class MyPropertiesTableModel implements AddEditRemovePanel.TableModel<Pair<String, String>> {
+  private static class MyPropertiesTableModel extends AddEditRemovePanel.TableModel<Pair<String, String>> {
     public int getColumnCount() {
       return 2;
     }
