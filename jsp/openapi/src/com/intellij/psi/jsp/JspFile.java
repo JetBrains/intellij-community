@@ -15,37 +15,12 @@
  */
 package com.intellij.psi.jsp;
 
-import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NotNull;
 
-public interface JspFile extends XmlFile {
+public interface JspFile extends BaseJspFile {
   JspFile[] EMPTY_ARRAY = new JspFile[0];
 
-  PsiElement[] getContentsElements();
-
-  boolean isErrorPage();
-  boolean isSessionPage();
-  boolean isTagPage();
-
-  XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind, final boolean searchInIncludes);
-  XmlTag createDirective(XmlTag context, JspDirectiveKind page);
-
-  PsiClass getJavaClass();
-
-  PsiFile getBaseLanguageRoot();
-  /**
-   * @return file which the errorPage directive references,
-   * or null, if there is no errorPage directive or directive references invalid file
-   */
-  PsiFile getErrorPage();
-
-  @NotNull
-  JspxFileViewProvider getViewProvider();
-
   XmlTag[] getDirectiveTagsInContext(JspDirectiveKind directiveKind);
+  PsiClass getJavaClass();
 }

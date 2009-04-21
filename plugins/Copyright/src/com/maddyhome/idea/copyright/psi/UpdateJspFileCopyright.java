@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
+import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;

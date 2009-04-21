@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.jsp.jspJava;
-
-import com.intellij.psi.impl.source.jsp.jspXml.JspTag;
+package com.intellij.psi.impl.source.jsp.jspXml;
 
 /**
  * @author peter

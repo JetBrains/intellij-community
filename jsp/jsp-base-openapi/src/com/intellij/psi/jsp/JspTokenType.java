@@ -6,11 +6,12 @@ package com.intellij.psi.jsp;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
+import com.intellij.psi.xml.XmlTokenType;
 
 /**
  * @author peter
  */
-public interface JspTokenType {
+public interface JspTokenType extends XmlTokenType {
   IElementType JSP_COMMENT = new IJspElementType("JSP_COMMENT");
   IElementType JSP_SCRIPTLET_START = new IJspElementType("JSP_SCRIPTLET_START");
   IElementType JSP_SCRIPTLET_END = new IJspElementType("JSP_SCRIPTLET_END");
@@ -29,4 +30,6 @@ public interface JspTokenType {
   IElementType JSPX_JAVA_IN_ATTR_START = new IJspElementType("JSPX_JAVA_IN_ATTR_START");
   IElementType JSPX_JAVA_IN_ATTR_END = new IJspElementType("JSPX_JAVA_IN_ATTR_END");
   IElementType JSPX_JAVA_IN_ATTR = new IJspElementType("JSPX_JAVA_IN_ATTR");
+
+  IElementType JSP_TEMPLATE_DATA = XML_DATA_CHARACTERS;
 }

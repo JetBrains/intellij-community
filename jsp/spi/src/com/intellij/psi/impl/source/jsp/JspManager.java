@@ -3,21 +3,20 @@
  */
 package com.intellij.psi.impl.source.jsp;
 
+import com.intellij.lang.jsp.IBaseJspManager;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +25,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-public abstract class JspManager implements ProjectComponent {
+public abstract class JspManager implements ProjectComponent, IBaseJspManager {
 
   public static final Key<VirtualFile[]> DIRECTORIES_KEY = Key.create("TagDirOriginalDirs");
 
@@ -70,12 +69,6 @@ public abstract class JspManager implements ProjectComponent {
 
   @Nullable
   public abstract XmlFile getTldFileByUri(@NonNls String uri, @Nullable Module module, @Nullable JspFile jspFile);
-
-  @Nullable
-  public abstract XmlElementDescriptor getDirectiveDescriptorByName(String name, final @NotNull PsiFile context);
-
-  @Nullable
-  public abstract XmlNSDescriptor getActionsLibrary(final @NotNull PsiFile context);
 
   public abstract boolean isJsp_2_1_OrBetter(final @NotNull PsiFile context);
 }
