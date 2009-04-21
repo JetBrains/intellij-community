@@ -95,8 +95,9 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
     current = context.getFile().findElementAt(context.getStartOffset());
     if (current != null && current.getPrevSibling()instanceof XmlToken) {
       if (!isClosed(current) && ((XmlToken)current.getPrevSibling()).getTokenType() == XmlTokenType.XML_END_TAG_START) {
-        editor.getDocument().insertString(current.getTextRange().getEndOffset(), ">");
-        editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
+        final int insertOffset = current.getTextRange().getEndOffset();
+        editor.getDocument().insertString(insertOffset, ">");
+        editor.getCaretModel().moveToOffset(insertOffset + 1);
       }
     }
 
