@@ -63,7 +63,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
 
     c.getLocalVcs().createFile("file", cf(""), -1, false);
     c.save();
-    c.closeVcs();
+    c.doCloseVcs();
 
     assertHasSavedEntry("file");
   }
@@ -160,7 +160,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
       }
 
       @Override
-      protected void closeService() {
+      protected void doCloseService() {
       }
 
       @Override
@@ -229,8 +229,8 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     }
 
     @Override
-    public void closeVcs() {
-      if (isVcsInitialized) super.closeVcs();
+    public void doCloseVcs() {
+      if (isVcsInitialized) super.doCloseVcs();
     }
 
     @Override
@@ -242,7 +242,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     }
 
     @Override
-    protected void closeService() {
+    protected void doCloseService() {
     }
   }
 }

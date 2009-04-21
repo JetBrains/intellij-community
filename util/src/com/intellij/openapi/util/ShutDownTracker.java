@@ -112,4 +112,8 @@ public class ShutDownTracker implements Runnable {
   public void registerShutdownTask(Runnable task) {
     myShutdownTasks.add(task);
   }
+
+  public void unregisterShutdownTask(Runnable task) {
+    myShutdownTasks.remove(task);
+  }
 }

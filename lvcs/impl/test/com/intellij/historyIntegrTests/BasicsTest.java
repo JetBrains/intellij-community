@@ -25,7 +25,7 @@ public class BasicsTest extends IntegrationTestCase {
   public void testSaving() throws Exception {
     VirtualFile f = root.createChildData(null, "file.txt");
     myProject.save();
-    getVcsComponent().closeVcs();
+    getVcsComponent().doCloseVcs();
 
     File dir = getVcsComponent().getStorageDir();
     Storage s = new Storage(dir);
