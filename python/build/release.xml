@@ -49,6 +49,7 @@
     <include name="cglib-nodep-2.1_3.jar"/>
     <include name="velocity.jar"/>
     <include name="xmlrpc-2.0.jar"/>
+    <include name="serviceMessages.jar"/>
   </fileset>
 
   <path id="classpath.lib">
