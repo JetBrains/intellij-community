@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -32,7 +33,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public abstract class FindUsagesInProjectStructureActionBase extends AnAction {
+public abstract class FindUsagesInProjectStructureActionBase extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase");
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
   private final JComponent myParentComponent;

@@ -16,9 +16,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbAware;
 
-public class FindWordAtCaretAction extends EditorAction implements DumbAware {
+public class FindWordAtCaretAction extends EditorAction {
   private static class Handler extends EditorActionHandler {
     public void execute(Editor editor, DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
