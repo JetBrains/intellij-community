@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
+import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -98,6 +99,14 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   public InspectionProfile getInspectionProfile(){
     return (InspectionProfile)getProjectProfileImpl();
   }
+
+  @SuppressWarnings({"UnusedDeclaration"})
+  @NotNull
+  public InspectionProfile getInspectionProfile(PsiElement element){
+    return getInspectionProfile();
+  }
+
+
 
   public InspectionProfileWrapper getProfileWrapper(){
     final InspectionProfile profile = getInspectionProfile();
