@@ -19,6 +19,7 @@ import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.NonNls;
  * User: anna
  * Date: 09-Nov-2005
  */
-public class SelectInNavBarTarget extends SelectInTargetPsiWrapper {
+public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements DumbAware {
   public SelectInNavBarTarget(final Project project) {
     super(project);
   }

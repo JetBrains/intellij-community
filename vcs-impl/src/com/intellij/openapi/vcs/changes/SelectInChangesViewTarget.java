@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class SelectInChangesViewTarget implements SelectInTarget {
+public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   private final Project myProject;
 
   public SelectInChangesViewTarget(final Project project) {

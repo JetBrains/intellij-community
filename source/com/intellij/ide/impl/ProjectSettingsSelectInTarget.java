@@ -8,22 +8,23 @@ import com.intellij.ide.StandardTargetWeights;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author nik
  */
-public class ProjectSettingsSelectInTarget implements SelectInTarget {
+public class ProjectSettingsSelectInTarget implements SelectInTarget, DumbAware {
   public boolean canSelect(final SelectInContext context) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
     VirtualFile file = context.getVirtualFile();
