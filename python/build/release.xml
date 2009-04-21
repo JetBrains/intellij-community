@@ -204,6 +204,9 @@
           <fileset dir="${idea.dir}/jdk15/plugins/svn4idea"/>
         </dir>
       </dir>
+      <dir name="helpers">
+        <fileset dir="${basedir}/../helpers"/>
+      </dir>
     </layout>
   </target>
 
