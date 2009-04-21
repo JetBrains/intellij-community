@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class RTestUnitStatisticsTableModelTest extends BaseSMTRunnerTestCase {
+public class SMTRunnerStatisticsTableModelTest extends BaseSMTRunnerTestCase {
   private StatisticsTableModel myStatisticsTableModel;
   private SMTestProxy myRootSuite;
 

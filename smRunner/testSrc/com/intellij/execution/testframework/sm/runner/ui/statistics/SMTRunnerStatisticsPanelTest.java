@@ -4,7 +4,7 @@ import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
-import com.intellij.execution.testframework.sm.runner.ui.TestProxySelectionChangedListener;
+import com.intellij.execution.testframework.sm.runner.ui.PropagateSelectionHandler;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class RTestUnitStatisticsPanelTest extends BaseSMTRunnerTestCase {
+public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
   private StatisticsPanel myStatisticsPanel;
   private SMTRunnerEventsListener myTestEventsListener;
   private SMTestProxy myRootSuite;
@@ -148,8 +148,8 @@ public class RTestUnitStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final Ref<SMTestProxy> proxyRef = new Ref<SMTestProxy>();
     final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
 
-    myStatisticsPanel.addChangeSelectionListener(new TestProxySelectionChangedListener() {
-      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
+    myStatisticsPanel.addPropagateSelectionListener(new PropagateSelectionHandler() {
+      public void handlePropagateSelectionRequest(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
                                     final boolean requestFocus) {
         onSelectedHappend.set();
         proxyRef.set(selectedTestProxy);
