@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
@@ -157,6 +158,20 @@ public class DaemonListeners implements Disposable {
             }
           }
         }, ModalityState.stateForComponent(editors[0].getComponent()));
+      }
+    });
+
+    connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      public void beforeEnteringDumbMode() {
+        stopDaemon(true);
+      }
+
+      public void enteredDumbMode() {
+        stopDaemon(true);
+      }
+
+      public void exitDumbMode() {
+        stopDaemon(true);
       }
     });
 

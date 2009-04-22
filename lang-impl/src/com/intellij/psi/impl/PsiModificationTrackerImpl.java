@@ -9,9 +9,11 @@
 package com.intellij.psi.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.messages.MessageBus;
 
 public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
   private volatile long myModificationCount = 0;
@@ -20,7 +22,20 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   private final Listener myPublisher;
 
   public PsiModificationTrackerImpl(Project project) {
-    myPublisher = project.getMessageBus().syncPublisher(ProjectTopics.MODIFICATION_TRACKER);
+    final MessageBus bus = project.getMessageBus();
+    myPublisher = bus.syncPublisher(ProjectTopics.MODIFICATION_TRACKER);
+    bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      public void beforeEnteringDumbMode() {
+      }
+
+      public void enteredDumbMode() {
+        incCounter();
+      }
+
+      public void exitDumbMode() {
+        enteredDumbMode();
+      }
+    });
   }
 
   public void incCounter(){
