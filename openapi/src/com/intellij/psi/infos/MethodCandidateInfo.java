@@ -33,19 +33,6 @@ public class MethodCandidateInfo extends CandidateInfo{
                              PsiSubstitutor substitutor,
                              boolean accessProblem,
                              boolean staticsProblem,
-                             PsiExpressionList argumentList,
-                             PsiElement currFileContext,
-                             PsiType[] typeArguments) {
-    super(candidate, substitutor, accessProblem, staticsProblem, currFileContext);
-    myArgumentList = argumentList;
-    myArgumentTypes = argumentList == null ? null : argumentList.getExpressionTypes();
-    myTypeArguments = typeArguments;
-  }
-
-  public MethodCandidateInfo(PsiElement candidate,
-                             PsiSubstitutor substitutor,
-                             boolean accessProblem,
-                             boolean staticsProblem,
                              PsiElement argumentList,
                              PsiElement currFileContext,
                              @Nullable PsiType[] argumentTypes,
@@ -54,14 +41,6 @@ public class MethodCandidateInfo extends CandidateInfo{
     myArgumentList = argumentList;
     myArgumentTypes = argumentTypes;
     myTypeArguments = typeArguments;
-  }
-
-  public MethodCandidateInfo(PsiElement element, PsiSubstitutor substitutor) {
-    super(element, substitutor, false, false);
-    myApplicabilityLevel = ApplicabilityLevel.FIXED_ARITY;
-    myArgumentList = null;
-    myArgumentTypes = null;
-    myTypeArguments = null;
   }
 
   public boolean isApplicable(){

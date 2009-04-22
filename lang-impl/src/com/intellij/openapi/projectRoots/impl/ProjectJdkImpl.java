@@ -199,7 +199,6 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
   }
 
   public void copyTo(ProjectJdkImpl dest){
-    final String previousName = dest.getName();
     final String name = getName();
     dest.setName(name);
     dest.setHomePath(getHomePath());

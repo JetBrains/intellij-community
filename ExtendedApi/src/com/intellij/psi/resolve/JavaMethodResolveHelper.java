@@ -36,7 +36,6 @@ public class JavaMethodResolveHelper {
     myParameterTypes = parameterTypes;
     final PsiConflictResolver resolver = parameterTypes == null ? DuplicateConflictResolver.INSTANCE : new JavaMethodsConflictResolver(argumentList, parameterTypes);
     myProcessor = new MethodResolverProcessor(argumentList, new PsiConflictResolver[]{resolver}) {
-
       protected MethodCandidateInfo createCandidateInfo(final PsiMethod method, final PsiSubstitutor substitutor,
                                                         final boolean staticProblem,
                                                         final boolean accessible) {

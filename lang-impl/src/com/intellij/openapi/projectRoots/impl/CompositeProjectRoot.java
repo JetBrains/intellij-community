@@ -28,8 +28,7 @@ class CompositeProjectRoot implements ProjectRoot {
 
   public VirtualFile[] getVirtualFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (Iterator<ProjectRoot> iterator = myRoots.iterator(); iterator.hasNext();) {
-      ProjectRoot root = iterator.next();
+    for (ProjectRoot root : myRoots) {
       result.addAll(Arrays.asList(root.getVirtualFiles()));
     }
 
@@ -80,15 +79,14 @@ class CompositeProjectRoot implements ProjectRoot {
 
   public void readExternal(Element element) throws InvalidDataException {
     final List children = element.getChildren();
-    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-      Element e = (Element)iterator.next();
+    for (Object aChildren : children) {
+      Element e = (Element)aChildren;
       myRoots.add(ProjectRootUtil.read(e));
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (Iterator<ProjectRoot> iterator = myRoots.iterator(); iterator.hasNext();) {
-      ProjectRoot root = iterator.next();
+    for (ProjectRoot root : myRoots) {
       final Element e = ProjectRootUtil.write(root);
       if (e != null) {
         element.addContent(e);
@@ -97,8 +95,7 @@ class CompositeProjectRoot implements ProjectRoot {
   }
 
   public void update() {
-    for (Iterator<ProjectRoot> iterator = myRoots.iterator(); iterator.hasNext();) {
-      ProjectRoot root = iterator.next();
+    for (ProjectRoot root : myRoots) {
       root.update();
     }
   }

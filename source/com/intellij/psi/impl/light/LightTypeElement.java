@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.light;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -10,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class LightTypeElement extends LightElement implements PsiTypeElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.light.LightTypeElement");
-
   private final PsiType myType;
 
   public LightTypeElement(PsiManager manager, PsiType type) {

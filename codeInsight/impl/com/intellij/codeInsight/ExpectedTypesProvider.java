@@ -527,7 +527,7 @@ public class ExpectedTypesProvider {
       PsiMethod[] constructors = referencedClass.getConstructors();
       for (PsiMethod constructor : constructors) {
         if (helper.isAccessible(constructor, argumentList, null)) {
-          array.add(new MethodCandidateInfo(constructor, substitutor, false, false, argumentList, null, null));
+          array.add(new MethodCandidateInfo(constructor, substitutor, false, false, argumentList, null, argumentList.getExpressionTypes(), null));
         }
       }
       CandidateInfo[] candidates = array.toArray(new CandidateInfo[array.size()]);
@@ -868,7 +868,6 @@ public class ExpectedTypesProvider {
           substitutor = ((MethodCandidateInfo)candidateInfo).inferTypeArguments(forCompletion, leftArgs);
           inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, array);
         }
-
       }
 
       // try to find some variants without considering previous argument PRIMITIVE_TYPES
