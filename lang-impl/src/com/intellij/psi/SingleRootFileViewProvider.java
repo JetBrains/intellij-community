@@ -241,7 +241,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public static boolean isTooLarge(final VirtualFile vFile) {
-    return FileManagerImpl.MAX_INTELLISENSE_FILESIZE != -1 && fileSizeIsGreaterThan(vFile, FileManagerImpl.MAX_INTELLISENSE_FILESIZE);
+    return fileSizeIsGreaterThan(vFile, FileManagerImpl.MAX_INTELLISENSE_FILESIZE);
   }
 
   private static boolean fileSizeIsGreaterThan(final VirtualFile vFile, final long maxInBytes) {

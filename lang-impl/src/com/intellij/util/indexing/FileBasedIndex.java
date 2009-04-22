@@ -1098,13 +1098,23 @@ public class FileBasedIndex implements ApplicationComponent {
           for (ID<?, ?> indexId : myIndices.keySet()) {
             if (needsFileContentLoading(indexId) && shouldUpdateIndex(file, indexId)) {
               if (saveContent) {
-                myFileContentAttic.offer(file);
-                iterateIndexableFiles(file, new Processor<VirtualFile>() {
-                  public boolean process(final VirtualFile file) {
-                    myFilesToUpdate.add(file);
-                    return true;
+                try {
+                  myFileContentAttic.offer(file);
+                  iterateIndexableFiles(file, new Processor<VirtualFile>() {
+                    public boolean process(final VirtualFile file) {
+                      myFilesToUpdate.add(file);
+                      return true;
+                    }
+                  });
+                }
+                catch (IOException e) {
+                  LOG.info(e);
+                  for (ID<?, ?> id : myIndices.keySet()) {
+                    if (needsFileContentLoading(id) && shouldUpdateIndex(file, id)) {
+                      requestRebuild(indexId);
+                    }
                   }
-                });
+                }
                 break;  // no need to iterate further
               }
               else {

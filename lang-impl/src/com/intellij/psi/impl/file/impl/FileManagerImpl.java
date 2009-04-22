@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -47,6 +48,9 @@ import java.util.concurrent.ConcurrentMap;
 public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
 
+  /**
+   * always  in range [0, PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD]
+   */
   public static final int MAX_INTELLISENSE_FILESIZE = maxIntellisenseFileSize();
 
   private final PsiManagerImpl myManager;
@@ -86,8 +90,14 @@ public class FileManagerImpl implements FileManager {
   }
 
   private static int maxIntellisenseFileSize() {
-    final String maxSizeS = System.getProperty(MAX_INTELLISENSE_SIZE_PROPERTY);
-    return maxSizeS != null ? Integer.parseInt(maxSizeS) * 1024 : -1;
+    final int maxLimitBytes = (int)PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD;
+    final String userLimitKb = System.getProperty(MAX_INTELLISENSE_SIZE_PROPERTY);
+    try {
+      return userLimitKb != null ? Math.min(Integer.parseInt(userLimitKb) * 1024, maxLimitBytes) : maxLimitBytes;
+    }
+    catch (NumberFormatException ignored) {
+      return maxLimitBytes;
+    }
   }
 
   public void cleanupForNextTest() {

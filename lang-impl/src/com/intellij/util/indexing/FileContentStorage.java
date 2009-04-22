@@ -82,7 +82,7 @@ public class FileContentStorage {
     }
   }
 
-  public void offer(VirtualFile file) {
+  public void offer(VirtualFile file) throws IOException {
     try {
       final byte[] bytes = file.contentsToByteArray();
       if (bytes != null) {
@@ -99,9 +99,9 @@ public class FileContentStorage {
       // may happen, if content was never queried before
       // In this case the index for this file must not have been built and it is ok to ignore the file
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    //catch (IOException e) {
+    //  LOG.error(e);
+    //}
   }
 
   @Nullable

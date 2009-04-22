@@ -41,7 +41,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   static final int ALL_VALID_FLAGS = CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT;
 
-  private static final long FILE_LENGTH_TO_CACHE_THRESHOULD = 20 * 1024 * 1024; // 20 megabytes
+  public static final long FILE_LENGTH_TO_CACHE_THRESHOLD = 20 * 1024 * 1024; // 20 megabytes
 
   private final FSRecords myRecords;
   private final MessageBus myEventsBus;
@@ -370,7 +370,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       final byte[] content = delegate.contentsToByteArray(file);
 
       synchronized (INPUT_LOCK) {
-        if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOULD) {
+        if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
           DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
           try {
             FileUtil.copy(new ByteArrayInputStream(content), sink);
@@ -428,7 +428,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         final long len = delegate.getLength(file);
         final InputStream nativeStream = delegate.getInputStream(file);
 
-        if (len > FILE_LENGTH_TO_CACHE_THRESHOULD) return nativeStream;
+        if (len > FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
 
         return createReplicator(file, nativeStream, len);
       }
