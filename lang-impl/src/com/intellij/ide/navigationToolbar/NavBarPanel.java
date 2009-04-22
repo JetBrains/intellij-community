@@ -362,7 +362,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
             final Rectangle bounds = myHint.getBounds();
             myHint.setBounds(bounds.x, bounds.y, dimension.width, dimension.height);
           }
-          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+          if (!myProject.isDisposed())  IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
         }
       };
       SwingUtilities.invokeLater(updateUI);
