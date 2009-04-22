@@ -147,6 +147,11 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
         myModified = true;
       }
     });
+    mySandboxHome.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myModified = true;
+      }
+    });
     mySandboxHome.setText("");
     myModified = true;
     return wholePanel;
