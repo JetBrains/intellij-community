@@ -18,6 +18,9 @@ package com.intellij.ide;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +65,11 @@ public class SelectInManager  {
         return 0;
       }
     });
+
+    if (DumbService.getInstance().isDumb()) {
+      final List<SelectInTarget> awareList = (List)ContainerUtil.findAll(targets, DumbAware.class);
+      return awareList.toArray(new SelectInTarget[awareList.size()]);
+    }
 
     return targets;
   }
