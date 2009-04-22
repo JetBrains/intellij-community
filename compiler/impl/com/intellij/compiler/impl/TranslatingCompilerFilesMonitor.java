@@ -10,6 +10,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -709,19 +710,25 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         });
       }
       else {
+        final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         new Object() {
           void processFile(VirtualFile file) {
-            if (file.isDirectory()) {
-              for (VirtualFile child : file.getChildren()) {
-                processFile(child);
-              }
+            if (fileTypeManager.isFileIgnored(file.getName())) {
+              return;
             }
-            else {
-              final int fileId = getFileId(file);
-              if (fileId > 0 /*file is valid*/ && !isMarkedForRecompilation(projectId, fileId)) {
-                final SourceFileInfo srcInfo = loadSourceInfo(file);
-                if (srcInfo != null) {
-                  addSourceForRecompilation(projectId, file, srcInfo);
+            final int fileId = getFileId(file);
+            if (fileId > 0 /*file is valid*/) {
+              if (file.isDirectory()) {
+                for (VirtualFile child : file.getChildren()) {
+                  processFile(child);
+                }
+              }
+              else {
+                if (!isMarkedForRecompilation(projectId, fileId)) {
+                  final SourceFileInfo srcInfo = loadSourceInfo(file);
+                  if (srcInfo != null) {
+                    addSourceForRecompilation(projectId, file, srcInfo);
+                  }
                 }
               }
             }
