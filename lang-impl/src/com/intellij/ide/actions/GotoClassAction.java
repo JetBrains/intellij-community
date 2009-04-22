@@ -10,18 +10,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   public void gotoActionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    /*
-    if (DumbService.getInstance(project).isDumb()) {
+    if (DumbService.getInstance().isDumb()) {
+      myInAction = null;
       new GotoFileAction().gotoActionPerformed(e);
       return;
     }
-    */
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.class");
     PsiDocumentManager.getInstance(project).commitAllDocuments();
