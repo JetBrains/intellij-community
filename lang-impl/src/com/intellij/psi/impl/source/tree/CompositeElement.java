@@ -30,7 +30,8 @@ public class CompositeElement extends TreeElement {
   private TreeElement lastChild = null;
 
   private volatile int myModificationsCount = 0;
-  private volatile int myCachedLength = -1;
+  private static final int NOT_CACHED = -239;
+  private volatile int myCachedLength = NOT_CACHED;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper = null;
 
@@ -74,7 +75,7 @@ public class CompositeElement extends TreeElement {
 
   public void clearCaches() {
     super.clearCaches();
-    myCachedLength = -1;
+    myCachedLength = NOT_CACHED;
 
     myModificationsCount++;
     myHC = -1;
@@ -180,6 +181,7 @@ public class CompositeElement extends TreeElement {
     return curOffset;
   }
 
+
   public final PsiElement findChildByRoleAsPsiElement(int role) {
     ASTNode element = findChildByRole(role);
     if (element == null) return null;
@@ -280,24 +282,11 @@ public class CompositeElement extends TreeElement {
 
   public int getTextLength() {
     int cachedLength = myCachedLength;
-    if (cachedLength < 0) {
-      myCachedLength = cachedLength = getLengthInner();
-    }
-    if (DebugUtil.CHECK) {
-      int trueLength = getLengthInner();
-      if (myCachedLength != trueLength) {
-        LOG.error("myCachedLength != trueLength");
-        myCachedLength = trueLength;
-      }
-    }
-    return cachedLength;
-  }
+    if (cachedLength >= 0) return cachedLength;
 
-  public void assertLengthCorrect() {
-    int length = myCachedLength;
-    if (length != -1) {
-      int inner = getLengthInner();
-      assert length == inner : length +";"+inner;
+    synchronized (START_OFFSET_LOCK) {
+      walkCachingLength();
+      return myCachedLength;
     }
   }
 
@@ -315,13 +304,46 @@ public class CompositeElement extends TreeElement {
     return hc;
   }
 
-  private int getLengthInner() {
-    int length = 0;
-    for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
-      length += child.getTextLength();
-    }
-    return length;
+  public int getCachedLength() {
+    return myCachedLength;
   }
+
+  private void walkCachingLength() {
+    TreeElement cur = this;
+
+    while (cur != null) {
+      cur = next(cur, cur.getCachedLength() == NOT_CACHED);
+    }
+
+    assert myCachedLength >= 0;
+  }
+
+  @Nullable
+  private TreeElement next(TreeElement cur, boolean down) {
+    if (down) {
+      CompositeElement composite = (CompositeElement)cur; // It's a composite or we won't be going down
+      TreeElement child = composite.firstChild;
+      if (child != null) return child;
+
+      composite.myCachedLength = 0;
+    }
+
+    // up
+    while (cur != this) {
+      CompositeElement parent = cur.getTreeParent();
+      parent.myCachedLength -= cur.getCachedLength();
+
+      TreeElement next = cur.getTreeNext();
+      if (next != null) return next;
+
+      parent.myCachedLength = -parent.myCachedLength + NOT_CACHED;
+
+      cur = parent;
+    }
+
+    return null;
+  }
+
 
   public TreeElement getFirstChildNode() {
     return firstChild;

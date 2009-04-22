@@ -165,6 +165,10 @@ public abstract class LeafElement extends TreeElement {
     return myText.length();
   }
 
+  public int getCachedLength() {
+    return getNotCachedLength();
+  }
+
   public ASTNode[] getChildren(TokenSet filter) {
     return EMPTY_ARRAY;
   }

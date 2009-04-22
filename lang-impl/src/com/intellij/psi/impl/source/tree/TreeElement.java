@@ -19,7 +19,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
 
   private final IElementType myType;
   private volatile int myStartOffsetInParent = -1;
-  private static final String START_OFFSET_LOCK = new String("TreeElement.START_OFFSET_LOCK");
+  protected static final String START_OFFSET_LOCK = new String("TreeElement.START_OFFSET_LOCK");
 
   public TreeElement(IElementType type) {
     myType = type;
@@ -68,6 +68,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public abstract TreeElement getLastChildNode();
 
   public abstract int getNotCachedLength();
+
+  public abstract int getCachedLength();
 
   public TextRange getTextRange() {
     int start = getStartOffset();
