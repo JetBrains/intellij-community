@@ -47,7 +47,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private List<Element> myUnloadedConfigurationPerRunnerSettings = null;
 
   @NonNls
-  protected static final String NAME_ATTR = "name";
+  public static final String NAME_ATTR = "name";
   @NonNls
   protected static final String DUMMY_ELEMENT_NANE = "dummy";
 

@@ -311,10 +311,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void writeExternal(@NotNull final Element parentNode) throws WriteExternalException {
-    if (myTempConfiguration != null) {
-      addConfigurationElement(parentNode, myTempConfiguration, TEMP_CONFIGURATION);
-    }
 
+    writeContext(parentNode);
     for (final RunnerAndConfigurationSettingsImpl runnerAndConfigurationSettings : myTemplateConfigurationsMap.values()) {
       if (runnerAndConfigurationSettings.getConfiguration() instanceof UnknownRunConfiguration) {
         if (((UnknownRunConfiguration) runnerAndConfigurationSettings.getConfiguration()).isDoNotStore()) {
@@ -343,14 +341,20 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     order.writeExternal(parentNode);
 
-    if (mySelectedConfiguration != null) {
-      parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration.getConfiguration()));
-    }
-
     if (myUnloadedElements != null) {
       for (Element unloadedElement : myUnloadedElements) {
         parentNode.addContent((Element)unloadedElement.clone());
       }
+    }
+  }
+
+  public void writeContext(Element parentNode) throws WriteExternalException {
+    if (myTempConfiguration != null) {
+      addConfigurationElement(parentNode, myTempConfiguration, TEMP_CONFIGURATION);
+    }
+
+    if (mySelectedConfiguration != null) {
+      parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration.getConfiguration()));
     }
   }
 
@@ -395,6 +399,26 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
   }
 
+  public void readContext(Element parentNode) throws InvalidDataException {
+    final List children = parentNode.getChildren();
+    mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
+    for (final Object aChildren : children) {
+      final Element element = (Element)aChildren;
+      if (mySelectedConfig == null && Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR)).booleanValue()) {
+        mySelectedConfig = element.getAttributeValue(RunnerAndConfigurationSettingsImpl.NAME_ATTR);
+      }
+      if (TEMP_CONFIGURATION.equals(element.getName())) {
+        myTempConfiguration = loadConfiguration(element, false);
+      }
+    }
+    if (mySelectedConfig != null) {
+      RunnerAndConfigurationSettingsImpl configurationSettings = myConfigurations.get(mySelectedConfig);
+      if (configurationSettings != null) {
+        mySelectedConfiguration = null;
+      }
+    }
+  }
+
   public void clear() {
     myConfigurations.clear();
     myUnloadedElements = null;
@@ -412,9 +436,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
 
     final Element methodsElement = element.getChild(METHOD);
+    final Map<String, Boolean> map = updateStepsBeforeRun(methodsElement);
     if (configuration.isTemplate()) {
       myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), configuration);
-      final Map<String, Boolean> map = updateStepsBeforeRun(methodsElement);
       setCompileMethodBeforeRun(configuration.getConfiguration(), map);
     }
     else {
@@ -424,7 +448,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       if (TEMP_CONFIGURATION.equals(element.getName())) {
         myTempConfiguration = configuration;
       }
-      final Map<String, Boolean> map = updateStepsBeforeRun(methodsElement);
       addConfiguration(configuration, isShared, map);
     }
     return configuration;
