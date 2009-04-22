@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -43,7 +44,9 @@ import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Comparator;
 
 /**
  *
@@ -423,8 +426,7 @@ public class FindUtil {
     model = (FindModel)model.clone();
     int occurrences = 0;
 
-    List<TextRange> rangesToChange = new ArrayList<TextRange>();
-    List<String> replacer = new ArrayList<String>();
+    List<Pair<TextRange,String>> rangesToChange = new ArrayList<Pair<TextRange, String>>();
 
     boolean replaced = false;
     int offset = caretOffset;
@@ -460,8 +462,7 @@ public class FindUtil {
       boolean reallyReplace = toPrompt;
       TextRange textRange = doReplace(project, document, model, result, toReplace, reallyReplace);
       if (!reallyReplace) {
-        rangesToChange.add(textRange);
-        replacer.add(toReplace);
+        rangesToChange.add(Pair.create(textRange,toReplace));
       }
 
       offset = model.isForward()
@@ -482,9 +483,14 @@ public class FindUtil {
         int offsetBefore = 0;
         CharSequence text = document.getCharsSequence();
         final StringBuilder newText = new StringBuilder(document.getTextLength());
-        for (int i = 0; i < rangesToChange.size(); i++) {
-          TextRange range = rangesToChange.get(i);
-          String replace = replacer.get(i);
+        Collections.sort(rangesToChange, new Comparator<Pair<TextRange, String>>() {
+          public int compare(Pair<TextRange, String> o1, Pair<TextRange, String> o2) {
+            return o1.getFirst().getStartOffset() - o2.getFirst().getStartOffset();
+          }
+        });
+        for (Pair<TextRange, String> pair : rangesToChange) {
+          TextRange range = pair.getFirst();
+          String replace = pair.getSecond();
           newText.append(text, offsetBefore, range.getStartOffset()); //before change
           newText.append(replace);
           offsetBefore = range.getEndOffset();
