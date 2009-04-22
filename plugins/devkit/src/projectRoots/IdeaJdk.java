@@ -94,11 +94,21 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     if (!home.exists()) {
       return false;
     }
-    @NonNls final String openapiJar = "openapi.jar";
-    if (getBuildNumber(path) == null || !new File(new File(home, LIB_DIR_NAME), openapiJar).exists()) {
+    if (getBuildNumber(path) == null || getOpenApiJar(path) == null) {
       return false;
     }
     return true;
+  }
+
+  private static File getOpenApiJar(String home) {
+    @NonNls final String openapiJar = "openapi.jar";
+    @NonNls final String platformApiJar = "platform-api.jar";
+    final File libDir = new File(home, LIB_DIR_NAME);
+    File f = new File(libDir, openapiJar);
+    if (f.exists()) return f;
+    f = new File(libDir, platformApiJar);
+    if (f.exists()) return f;
+    return null;
   }
 
   public static boolean isFromIDEAProject(String path) {
@@ -129,9 +139,16 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
-    @NonNls final String idea = "IDEA ";
+    @NonNls final String productName;
+    if (new File(sdkHome, "lib/rubymine.jar").exists()) {
+      productName = "RubyMine ";
+    }
+    else {
+      productName = "IDEA ";
+
+    }
     String buildNumber = getBuildNumber(sdkHome);
-    return idea + (buildNumber != null ? buildNumber : "");
+    return productName + (buildNumber != null ? buildNumber : "");
   }
 
   @Nullable
@@ -230,8 +247,10 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
 
   private static int getIdeaClassFileVersion(final Sdk ideaSdk) {
     int result = -1;
-    final VirtualFile mainClassFile =
-      JarFileSystem.getInstance().findFileByPath(ideaSdk.getHomePath() + "/lib/openapi.jar!/com/intellij/psi/PsiManager.class");
+    File apiJar = getOpenApiJar(ideaSdk.getHomePath());
+    if (apiJar == null) return -1;
+    final VirtualFile mainClassFile = JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(apiJar.getPath()) +
+                                                                                 "!/com/intellij/psi/PsiManager.class");
     if (mainClassFile != null) {
       final BytePointer ptr;
       try {
