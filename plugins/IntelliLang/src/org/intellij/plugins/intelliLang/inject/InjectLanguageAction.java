@@ -92,26 +92,21 @@ public class InjectLanguageAction implements IntentionAction {
     }
     if (host instanceof PsiLiteralExpression) {
       final PsiType type = ((PsiLiteralExpression)host).getType();
-      if (type == null || !type.equalsToText("java.lang.String")) {
-        return null;
-      }
+      return type == null || !type.equalsToText("java.lang.String") ? null : host;
     }
     else if (host instanceof XmlAttributeValue) {
       final PsiElement p = host.getParent();
       if (p instanceof XmlAttribute) {
         final String s = ((XmlAttribute)p).getName();
-        if (s.equals("xmlns") || s.startsWith("xmlns:")) {
-          return null;
-        }
+        return s.equals("xmlns") || s.startsWith("xmlns:") ? null : host;
       }
     }
     else if (host instanceof XmlText) {
       final XmlTag tag = ((XmlText)host).getParentTag();
-      if (tag == null || tag.getValue().getTextElements().length > 1 || tag.getSubTags().length > 0) {
-        return null;
-      }
+      return tag == null || tag.getValue().getTextElements().length > 1 || tag.getSubTags().length > 0 ? null : host;
     }
-    return host;
+    // unknown injection host
+    return null;
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
