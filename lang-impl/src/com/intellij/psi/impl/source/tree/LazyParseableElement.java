@@ -26,35 +26,50 @@ public class LazyParseableElement extends CompositeElement {
   @Override
   public String getText() {
     synchronized (lock) {
-      return myText != null ? myText.toString() : super.getText();
+      if (myText != null) {
+        return myText.toString();
+      }
     }
+    return super.getText();
   }
 
   public CharSequence getChars() {
     synchronized (lock) {
-      return myText != null ? myText : getText();
+      if (myText != null) {
+        return myText;
+      }
     }
+    return getText();
   }
 
   @Override
   public int getTextLength() {
     synchronized (lock) {
-      return myText != null ? myText.length() : super.getTextLength();
+      if (myText != null) {
+        return myText.length();
+      }
     }
+    return super.getTextLength();
   }
 
   @Override
   public int getNotCachedLength() {
     synchronized (lock) {
-      return myText != null ? myText.length() : super.getNotCachedLength();
+      if (myText != null) {
+        return myText.length();
+      }
     }
+    return super.getNotCachedLength();
   }
 
   @Override
   public int getCachedLength() {
     synchronized (lock) {
-      return myText != null ? myText.length() : super.getCachedLength();
+      if (myText != null) {
+        return myText.length();
+      }
     }
+    return super.getCachedLength();
   }
 
   @Override
@@ -75,10 +90,8 @@ public class LazyParseableElement extends CompositeElement {
       if (myText != null) {
         return LeafElement.leafTextMatches(myText, buffer, start);
       }
-      else {
-        return super.textMatches(buffer, start);
-      }
     }
+    return super.textMatches(buffer, start);
   }
 
   public boolean isParsed() {
