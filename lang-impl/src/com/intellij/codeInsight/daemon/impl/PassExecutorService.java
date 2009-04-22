@@ -359,6 +359,9 @@ public abstract class PassExecutorService {
           afterApplyInformationToEditor(pass, fileEditor, updateProgress);
         }
       }
+      catch (IndexNotReadyException e) {
+        log(updateProgress, pass, "Index not ready");
+      }
       catch (RuntimeException e) {
         log(updateProgress, pass, "Error " + e);
         throw e;
