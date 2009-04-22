@@ -22,6 +22,7 @@ import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -378,6 +379,19 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void initComponent() {
     myConnection.subscribe(BatchUpdateListener.TOPIC, myHandler);
+    myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      public void beforeEnteringDumbMode() {
+      }
+
+      public void enteredDumbMode() {
+        exitDumbMode();
+      }
+
+      public void exitDumbMode() {
+        fireBeforeRootsChanged(true);
+        fireRootsChanged(true);
+      }
+    });
 
   }
 
