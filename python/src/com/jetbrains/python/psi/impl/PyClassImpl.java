@@ -27,6 +27,8 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.validation.DocStringAnnotator;
@@ -326,7 +328,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       if (!processor.execute(expr, substitutor)) return false;
     }
     //
-    if (processor instanceof PyResolveUtil.VariantsProcessor) {
+    if (processor instanceof VariantsProcessor) {
       return true;
     }
     return processor.execute(this, substitutor);

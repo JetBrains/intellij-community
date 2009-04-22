@@ -25,6 +25,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyAsScopeProcessor;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +56,16 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
     return (PyTargetExpression)asNameNode.getPsi();
   }
 
+  @Nullable
+  public String getVisibleName() {
+    PyTargetExpression asname = getAsName();
+    if (asname != null) return asname.getName();
+    for (PyElement name_elt : iterateNames()) {
+      return name_elt.getName(); // first to come must be right
+    }
+    return null; // we might have not found any names
+  }
+
   @Override
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
@@ -65,10 +77,10 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
     if (importRef != null) {
       final PsiElement element = importRef.resolve();
       if (element != null) {
-        if (processor instanceof PyScopeProcessor) {
+        if (processor instanceof PyAsScopeProcessor) {
           PyTargetExpression asName = getAsName();
           if (asName != null) {
-            return ((PyScopeProcessor) processor).execute(element, asName.getText()); // might resolve to asName to show the source of name
+            return ((PyAsScopeProcessor) processor).execute(element, asName.getText()); // might resolve to asName to show the source of name
           }
           // maybe the incoming name is qualified
           PyReferenceExpression place_ref = PsiTreeUtil.getChildOfType(place, PyReferenceExpression.class);

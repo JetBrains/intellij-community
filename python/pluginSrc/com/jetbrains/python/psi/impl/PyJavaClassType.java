@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.*;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.types.PyType;
 
 /**
@@ -26,7 +26,7 @@ public class PyJavaClassType implements PyType {
   }
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
-    final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
+    final VariantsProcessor processor = new VariantsProcessor();
     myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     return processor.getResult();
   }

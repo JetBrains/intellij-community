@@ -8,7 +8,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 
 /**

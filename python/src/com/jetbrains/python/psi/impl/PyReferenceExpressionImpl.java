@@ -36,6 +36,7 @@ import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyNoneType;
@@ -204,7 +205,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     // here we have an unqualified expr. it may be defined:
     // ...in current file
-    PyResolveUtil.ResolveProcessor processor = new PyResolveUtil.ResolveProcessor(referencedName);
+    ResolveProcessor processor = new ResolveProcessor(referencedName);
     PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, this);
     if ((uexpr != null)) {
       if ((uexpr instanceof PyClass)) {
@@ -230,7 +231,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (uexpr == null) {
       // ...as a builtin symbol
       PyFile bfile = PyBuiltinCache.getInstance(getProject()).getBuiltinsFile();
-      uexpr = PyResolveUtil.treeCrawlUp(new PyResolveUtil.ResolveProcessor(referencedName), true, bfile);
+      uexpr = PyResolveUtil.treeCrawlUp(new ResolveProcessor(referencedName), true, bfile);
     }
     if (uexpr == null) {
       uexpr = PyResolveUtil.resolveOffContext(this);
@@ -251,8 +252,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
     List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers(qualifier);
     if (qualifier_path != null) {
-      PyResolveUtil.AssignmentCollectProcessor<PyQualifiedExpression> proc =
-        new PyResolveUtil.AssignmentCollectProcessor<PyQualifiedExpression>(qualifier_path)
+      AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifier_path)
       ;
       PyResolveUtil.treeCrawlUp(proc, qualifier);
       return proc.getResult();
@@ -391,14 +391,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     // include our own names
-    final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
+    final VariantsProcessor processor = new VariantsProcessor();
     PyResolveUtil.treeCrawlUp(processor, this); // names from here
     // scan all "import *" and include names provided by them
-    PyResolveUtil.CollectProcessor<PyStarImportElement> collect_proc;
-    collect_proc = new PyResolveUtil.CollectProcessor<PyStarImportElement>(PyStarImportElement.class);
+    CollectProcessor collect_proc;
+    collect_proc = new CollectProcessor(PyStarImportElement.class);
     PyResolveUtil.treeCrawlUp(collect_proc, this);
-    List<PyStarImportElement> stars = collect_proc.getResult();
-    for (PyStarImportElement star_elt : stars) {
+    List<PsiElement> stars = collect_proc.getResult();
+    for (PsiElement star_elt : stars) {
       final PyFromImportStatement from_import_stmt = (PyFromImportStatement)star_elt.getParent();
       if (from_import_stmt != null) {
         final PyReferenceExpression import_src = from_import_stmt.getImportSource();

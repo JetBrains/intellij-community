@@ -33,5 +33,10 @@ public interface PyImportElement extends PyElement, NameDefiner {
   @Nullable
   PyTargetExpression getAsName();
 
+  /**
+   * @return name under which the element is wisible, that is, "as name" is there is one, or just name.
+   */
+  @Nullable
+  String getVisibleName();
 
 }

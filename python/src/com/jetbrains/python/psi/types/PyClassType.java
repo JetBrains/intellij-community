@@ -5,7 +5,9 @@ import com.intellij.psi.ResolveState;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveProcessor;
+import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +53,7 @@ public class PyClassType implements PyType {
   @Nullable
   public PsiElement resolveMember(final String name) {
     if (myClass == null) return null;
-    PyResolveUtil.ResolveProcessor processor = new PyResolveUtil.ResolveProcessor(name);
+    ResolveProcessor processor = new ResolveProcessor(name);
     myClass.processDeclarations(processor, ResolveState.initial(), null, myClass); // our members are strictly within us.
     final PsiElement resolveResult = processor.getResult();
     //final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
@@ -94,7 +96,7 @@ public class PyClassType implements PyType {
   }
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
-    final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor(new PyResolveUtil.FilterNotInstance(myClass));
+    final VariantsProcessor processor = new VariantsProcessor(new PyResolveUtil.FilterNotInstance(myClass));
     myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     List<Object> ret = new ArrayList<Object>();
     ret.addAll(processor.getResultList());

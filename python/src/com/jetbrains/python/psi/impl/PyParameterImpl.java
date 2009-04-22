@@ -102,6 +102,19 @@ public class PyParameterImpl extends PyPresentableElementImpl<PyParameterStub> i
     return null;
   }
 
+  @NotNull
+  public String getRepr(boolean includeDefaultValue) {
+    StringBuffer sb = new StringBuffer();
+    if (isPositionalContainer()) sb.append("*");
+    else if (isKeywordContainer()) sb.append("**");
+    sb.append(getName());
+    if (includeDefaultValue) {
+      PyExpression default_v = getDefaultValue();
+      if (default_v != null) sb.append("=").append(PyUtil.getReadableRepr(default_v, true));
+    }
+    return sb.toString();
+  }
+
   public Icon getIcon(final int flags) {
     return Icons.PARAMETER_ICON;
   }

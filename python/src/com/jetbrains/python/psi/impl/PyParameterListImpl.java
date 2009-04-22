@@ -54,21 +54,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
       PyUtil.ensureWritable(this);
       ASTNode beforeWhat = paren.getNode(); // the closing bracket will be this
       PyParameter[] params = getParameters();
-      addItemNode(param, beforeWhat, true, params.length == 0);
-    }
-  }
-
-  // TODO: open for general usage by all list-like structurtes
-  private void addItemNode(PyParameter item, ASTNode beforeThis, boolean isFirst, boolean isLast) {
-    PyUtil.ensureWritable(this);
-    ASTNode node = getNode();
-    ASTNode itemNode = item.getNode();
-    if (! isFirst) {
-      node.addChild(getLanguage().getElementGenerator().createComma(getProject()), beforeThis);
-    }
-    node.addChild(itemNode, beforeThis);
-    if (! isLast) {
-      node.addChild(getLanguage().getElementGenerator().createComma(getProject()), beforeThis);
+      PyUtil.addListNode(this, param, beforeWhat, true, params.length == 0);
     }
   }
 

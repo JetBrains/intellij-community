@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Test action that various inspections add.
+ * Test actions that various inspections add.
  * User: dcheryasov
  * Date: Nov 29, 2008 12:47:08 AM
  */
@@ -28,6 +28,22 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
   public void testAddImport() throws Exception {
     doInspectionTest("AddImport.py", PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
   }
+
+  public void testQualifyByImport() throws Exception {
+    doInspectionTest(
+      new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"},
+      PyUnresolvedReferencesInspection.class, "QualifyByImportFoo.foo?", true, false
+    );
+  }
+
+  public void testAddToImportFromList() throws Exception {
+    doInspectionTest(
+      new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"},
+      PyUnresolvedReferencesInspection.class, "foo(a) from AddToImportFromFoo?", true, false
+    );
+  }
+
+  // TODO: add a test for multiple variants of above
 
   public void testAddSelf() throws Exception {
     doInspectionTest("AddSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self"), true, true);
@@ -92,7 +108,7 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/python/testData/";
+    return PathManager.getHomePath() + "/plugins/python/testData/inspections/";
   }
 
   protected void doInspectionTest(String testFileName,
@@ -101,13 +117,30 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
                                   boolean applyFix,
                                   boolean available
   ) throws Exception {
+    doInspectionTest(new String[]{testFileName}, inspectionClass, quickFixName, applyFix, available);
+  }
+
+  /**
+   * Runs daemon passes and looks for given fix within infos.
+   * @param testFiles names of files to participate; first is used for inspection and then for check by "_after".
+   * @param inspectionClass what inspection to run
+   * @param quickFixName how the resulting fix should be named (the human-readable name users see)
+   * @param applyFix true if the fix needs to be applied
+   * @param available true if the fix should be available, false if it should be explicitly not available.
+   * @throws Exception
+   */
+  protected void doInspectionTest(String[] testFiles,
+                                  final Class inspectionClass,
+                                  String quickFixName,
+                                  boolean applyFix,
+                                  boolean available
+  ) throws Exception {
     final LocalInspectionTool tool = (LocalInspectionTool)inspectionClass.newInstance();
     enableInspectionTool(tool);
-    final String s = "inspections/" + testFileName;
-    configureByFile(s);
+    configureByFiles(null, testFiles);
     Collection<HighlightInfo> infos = doDoTest(true, false);
 
-    doQuickFixTest(infos, quickFixName, applyFix, available, s);
+    doQuickFixTest(infos, quickFixName, applyFix, available, testFiles[0]);
     disableInspectionTool(tool.getShortName());
   }
 

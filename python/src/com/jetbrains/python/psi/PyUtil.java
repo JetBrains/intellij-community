@@ -42,8 +42,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class PyUtil {
-    private PyUtil() {
-    }
+  private PyUtil() {
+  }
 
   public static void ensureWritable(PsiElement element) {
         PsiDocumentManager docmgr = PsiDocumentManager.getInstance(
@@ -358,4 +358,31 @@ public class PyUtil {
         point, Balloon.Position.above
     );
   }
+
+  @NonNls
+  /**
+   * Returns a quoted string representation, or "null".
+   */
+  public static String nvl(Object s) {
+    if (s != null) {
+      return "'" + s.toString() + "'";
+    }
+    else {
+      return "null";
+    }
+  }
+
+  public static void addListNode(PsiElement target, PsiElement source, ASTNode beforeThis, boolean isFirst, boolean isLast) {
+    ensureWritable(target);
+    ASTNode node = target.getNode();
+    assert node != null;
+    ASTNode itemNode = source.getNode();
+    assert itemNode != null;
+    Project project = target.getProject();
+    PyElementGenerator gen = PythonLanguage.getInstance().getElementGenerator();
+    if (! isFirst) node.addChild(gen.createComma(project), beforeThis);
+    node.addChild(itemNode, beforeThis);
+    if (! isLast) node.addChild(gen.createComma(project), beforeThis);
+  }
+
 }

@@ -1,4 +1,4 @@
-package com.jetbrains.python.psi.impl;
+package com.jetbrains.python.psi.resolve;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -6,6 +6,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 /**
  * @author yole
  */
-public interface PyScopeProcessor extends PsiScopeProcessor {
+public interface PyAsScopeProcessor extends PsiScopeProcessor {
   boolean execute(PsiElement element, String asName);
 }

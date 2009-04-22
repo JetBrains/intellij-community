@@ -13,6 +13,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveProcessor;
+import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -370,13 +373,13 @@ public class ResolveImportUtil {
   public static PsiElement resolveChild(final PsiElement parent, final String referencedName, final PsiFile containingFile, boolean fileOnly) {
     PsiDirectory dir = null;
     PsiElement ret = null;
-    PyResolveUtil.ResolveProcessor processor = null;
+    ResolveProcessor processor = null;
     if (parent instanceof PyFile) {
       boolean is_dir = (parent.getCopyableUserData(PyFile.KEY_IS_DIRECTORY) == Boolean.TRUE);
       PyFile pfparent = (PyFile)parent;
       if (! is_dir) {
         // look for name in the file:
-        processor = new PyResolveUtil.ResolveProcessor(referencedName);
+        processor = new ResolveProcessor(referencedName);
         //ret = PyResolveUtil.treeWalkUp(processor, parent, null, importRef);
         ret = PyResolveUtil.treeCrawlUp(processor, true, parent);
         if (ret != null) return ret;
@@ -407,8 +410,7 @@ public class ResolveImportUtil {
   @Nullable
   private static PsiElement resolveInDirectory(final String referencedName,
                                                final PsiFile containingFile,
-                                               final PsiDirectory dir,
-                                               PyResolveUtil.ResolveProcessor processor) {
+                                               final PsiDirectory dir, ResolveProcessor processor) {
     final PsiFile file = dir.findFile(referencedName + PY_SUFFIX);
     if (file != null) return file;
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
@@ -417,7 +419,7 @@ public class ResolveImportUtil {
       final PsiFile initPy = dir.findFile(INIT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in
       if (initPy != null) {
-        if (processor == null) processor = new PyResolveUtil.ResolveProcessor(referencedName); // should not normally happen
+        if (processor == null) processor = new ResolveProcessor(referencedName); // should not normally happen
         return PyResolveUtil.treeCrawlUp(processor, true, initPy);//PyResolveUtil.treeWalkUp(processor, initPy, null, importRef);
       }
     }
@@ -440,7 +442,7 @@ public class ResolveImportUtil {
         if (src != null) {
           PsiElement mod = src.resolve();
           if (mod != null) {
-            final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
+            final VariantsProcessor processor = new VariantsProcessor();
             PyResolveUtil.treeCrawlUp(processor, true, mod);
             /*
             for (LookupElement le : processor.getResult()) {
@@ -492,7 +494,7 @@ public class ResolveImportUtil {
       variants.addAll(visitor.getResult());
     }
 
-    return variants.toArray(new String[variants.size()]);
+    return variants.toArray(new Object[variants.size()]);
   }
 
 }

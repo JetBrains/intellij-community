@@ -4,7 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveState;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.impl.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +43,7 @@ public class PyModuleType implements PyType { // TODO: make it a PyClassType ref
   }
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
-    final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
+    final VariantsProcessor processor = new VariantsProcessor();
     myModule.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     return processor.getResult();
   }
@@ -55,7 +55,7 @@ public class PyModuleType implements PyType { // TODO: make it a PyClassType ref
   }
 
   @NotNull
-  public Set<String> getPossibleInstanceMembers() {
+  public static Set<String> getPossibleInstanceMembers() {
     return ourPossibleFields;
   }
   

@@ -19,6 +19,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.stubs.PyParameterStub;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,5 +36,12 @@ public interface PyParameter extends PyElement, PsiNamedElement, PyExpression, S
 
   @Nullable
   PyExpression getDefaultValue();
+
+  /**
+   * @param includeDefaultValue if true, include the default value after an " = ".
+   * @return Canonical representation of parameter. Includes asterisks for *param and **param, and name.
+   */
+  @NotNull
+  String getRepr(boolean includeDefaultValue);
 }
 

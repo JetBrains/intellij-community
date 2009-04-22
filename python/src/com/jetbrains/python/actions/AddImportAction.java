@@ -15,13 +15,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.PyClassScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,7 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
   /**
    * Finds first import statement that imports given name. 
    */
-  private static class ImportLookupProcessor implements PsiScopeProcessor {
+  private static class ImportLookupProcessor implements PyClassScopeProcessor {
 
     String name;
     PsiElement found;
@@ -100,6 +101,11 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
 
     public PsiElement getFound() {
       return found;
+    }
+
+    @NotNull
+    public Class[] getPossibleTargets() {
+      return NAME_DEFINER_ONLY;
     }
   }
 

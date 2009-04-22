@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +70,7 @@ public class PyRedeclarationInspection extends LocalInspectionTool {
     private void _checkAbove(PyElement node, String kind) {
       String name = node.getName();
       if (name != null) {
-        PyResolveUtil.ResolveProcessor proc = new PyResolveUtil.ResolveProcessor(node.getName());
+        ResolveProcessor proc = new ResolveProcessor(node.getName());
         PyResolveUtil.treeCrawlUp(proc, node);
         PsiElement found = proc.getResult();
         // TODO: check if the redefined name is used somehow

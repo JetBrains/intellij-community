@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -31,6 +32,8 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -149,6 +152,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public List<PyTargetExpression> getTopLevelAttributes() {
     return getTopLevelItems(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.class);
+  }
+
+  public PsiElement findExportedName(String name) {
+    // dull plain resolve, as fast as stub index or better
+    ResolveProcessor proc = new ResolveProcessor(name);
+    PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
+    return proc.getResult();
   }
 
   public List<PyExpression> getImportTargets() {
