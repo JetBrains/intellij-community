@@ -20,11 +20,25 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+
+    assertEquals(new File(myProjectPom.getPath()), p.getFile());
+    assertEquals(new File(myProjectRoot.getPath()), p.getBasedir());
+
+    assertEquals("test", p.getGroupId());
+    assertEquals("project", p.getArtifactId());
+    assertEquals("1", p.getVersion());
+  }
+
+  public void testInvalidXml() throws Exception {
+    createProjectPom("<foo>" +
+                     "</bar>" +
+                     "<" +
+                     "<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
 
     assertEquals(new File(myProjectPom.getPath()), p.getFile());
     assertEquals(new File(myProjectRoot.getPath()), p.getBasedir());
@@ -37,11 +51,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
   public void testEmpty() throws Exception {
     createProjectPom("");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
 
     assertEquals("Unknown", p.getGroupId());
     assertEquals("Unknown", p.getArtifactId());
@@ -56,11 +66,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                            "  <version>1</version>" +
                            "</project>");
 
-    org.apache.maven.project.MavenProject p = readProject(file, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(file);
 
     assertEquals("4.0.0", p.getModelVersion());
     assertEquals("jar", p.getPackaging());
@@ -92,13 +98,10 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                      "<version>1</version>" +
 
                      "<parent>" +
+                     "  dummy" +
                      "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
 
     assertParent(p, "Unknown", "Unknown", "Unknown", "../pom.xml");
   }
@@ -110,11 +113,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                      "  <version>1</version>" +
                      "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
 
     assertEquals("test", p.getGroupId());
     assertEquals("Unknown", p.getArtifactId());
@@ -165,11 +164,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                            "  </build>" +
                            "</project>");
 
-    org.apache.maven.project.MavenProject p = readProject(file, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(file);
 
     assertEquals("1.2.3", p.getModelVersion());
     assertEquals("pom", p.getPackaging());
@@ -209,11 +204,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                      "  </testResources>" +
                      "</build>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
 
     Build build = p.getBuild();
     assertEquals(0, build.getResources().size());
@@ -243,11 +234,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                      "  <testOutputDirectory>${foo}/myTestClasses</testOutputDirectory>" +
                      "</build>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
 
     Build build = p.getBuild();
     assertEquals(pathFromBasedir("subDir/mySrc"), build.getSourceDirectory());
@@ -272,11 +259,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
 
                      "<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>");
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
 
     assertEquals("value1", p.getName());
     assertEquals("value12", p.getPackaging());
@@ -304,11 +287,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                      "  </profile>" +
                      "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
     assertEquals("value1", p.getName());
     assertEquals("${prop2}", p.getPackaging());
   }
@@ -335,11 +314,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                      "  </profile>" +
                      "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    }, "two");
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom, "two");
     assertEquals("${prop1}", p.getName());
     assertEquals("value2", p.getPackaging());
   }
@@ -361,11 +336,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                                          "</parent>" +
                                          "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(module, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(module);
     assertEquals("value", p.getName());
   }
 
@@ -386,11 +357,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                                          "</parent>" +
                                          "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(module, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(module);
     assertEquals("${prop}", p.getName());
   }
 
@@ -412,11 +379,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                                          "</parent>" +
                                          "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(module, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(module);
     assertEquals("value", p.getName());
   }
 
@@ -448,11 +411,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                                             "</parent>" +
                                             "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(subModule, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(subModule);
     assertEquals("value", p.getName());
   }
 
@@ -475,11 +434,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                                          "</parent>" +
                                          "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(module, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(module);
     assertEquals("value", p.getName());
   }
 
@@ -505,11 +460,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                      "</parent>" +
                      "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
     assertEquals("value", p.getName());
   }
 
@@ -533,7 +484,6 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
 
     org.apache.maven.project.MavenProject p = readProject(module, new MavenProjectReaderProjectLocator() {
       public VirtualFile findProjectFile(MavenId coordinates) {
-        System.out.println(coordinates);
         return new MavenId("test", "parent", "1").equals(coordinates) ? parent : null;
       }
     });
@@ -555,11 +505,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                                          "  <version>1</version>" +
                                          "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(module, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(module);
     assertEquals(pathFromBasedir(module.getParent(), "custom"), p.getBuild().getDirectory());
   }
 
@@ -582,11 +528,35 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                                          "  <version>1</version>" +
                                          "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(module, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject p = readProject(module);
+    assertEquals(pathFromBasedir(module.getParent(), "subDir/custom"), FileUtil.toSystemDependentName(p.getBuild().getDirectory()));
+  }
+
+  public void testExpandingPropertiesAfterInheritingSettingsFromParentProfiles() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <prop>subDir</prop>" +
+                     "    </properties>" +
+                     "    <build>" +
+                     "      <directory>${basedir}/${prop}/custom</directory>" +
+                     "    </build>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    VirtualFile module = createModulePom("module",
+                                         "<parent>" +
+                                         "  <groupId>test</groupId>" +
+                                         "  <artifactId>parent</artifactId>" +
+                                         "  <version>1</version>" +
+                                         "</parent>");
+
+    org.apache.maven.project.MavenProject p = readProject(module, "one");
     assertEquals(pathFromBasedir(module.getParent(), "subDir/custom"), FileUtil.toSystemDependentName(p.getBuild().getDirectory()));
   }
 
@@ -599,18 +569,10 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                       "  </properties>" +
                       "</profile>");
 
-    org.apache.maven.project.MavenProject mavenProject = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject mavenProject = readProject(myProjectPom);
     assertEquals("${prop}", mavenProject.getName());
 
-    mavenProject = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    }, "one");
+    mavenProject = readProject(myProjectPom, "one");
     assertEquals("foo", mavenProject.getName());
   }
 
@@ -625,19 +587,147 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                       "  </profile>" +
                       "</profiles>");
 
-    org.apache.maven.project.MavenProject mavenProject = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    });
+    org.apache.maven.project.MavenProject mavenProject = readProject(myProjectPom);
     assertEquals("${prop}", mavenProject.getName());
 
-    mavenProject = readProject(myProjectPom, new MavenProjectReaderProjectLocator() {
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    }, "one");
+    mavenProject = readProject(myProjectPom, "one");
     assertEquals("foo", mavenProject.getName());
+  }
+
+  public void testActivatingProfilesByOS() throws Exception {
+    createProjectPom("<name>${prop1}</name>" +
+                     "<packaging>${prop2}</packaging>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <os><family>windows</family></os>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop1>value1</prop1>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <os><family>unix</family></os>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop2>value2</prop2>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    assertEquals("value1", p.getName());
+    assertEquals("${prop2}", p.getPackaging());
+  }
+
+  public void testActivatingProfilesByJdk() throws Exception {
+    System.setProperty("maven.test.property", "foo");
+
+    createProjectPom("<name>${prop1}</name>" +
+                     "<packaging>${prop2}</packaging>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <jdk>1.5+</jdk>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop1>value1</prop1>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <jdk>!1.5+</jdk>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop2>value2</prop2>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    assertEquals("value1", p.getName());
+    assertEquals("${prop2}", p.getPackaging());
+  }
+
+  public void testActivatingProfilesByProperty() throws Exception {
+    System.setProperty("maven.test.property", "foo");
+
+    createProjectPom("<name>${prop1}</name>" +
+                     "<packaging>${prop2}</packaging>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <property>" +
+                     "        <name>maven.test.property</name>" +
+                     "        <value>foo</value>" +
+                     "      </property>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop1>value1</prop1>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <property>" +
+                     "        <name>maven.test.property</name>" +
+                     "        <value>bar</value>" +
+                     "      </property>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop2>value2</prop2>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    assertEquals("value1", p.getName());
+    assertEquals("${prop2}", p.getPackaging());
+  }
+
+  public void testActivatingProfilesByFile() throws Exception {
+    createProjectSubFile("dir/file.txt");
+
+    createProjectPom("<name>${prop1}</name>" +
+                     "<packaging>${prop2}</packaging>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <file>" +
+                     "        <exists>${basedir}/dir/file.txt</exists>" +
+                     "      </file>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop1>value1</prop1>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <file>" +
+                     "        <missing>${basedir}/dir/file.txt</missing>" +
+                     "      </file>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop2>value2</prop2>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    assertEquals("value1", p.getName());
+    assertEquals("${prop2}", p.getPackaging());
   }
 
   private org.apache.maven.project.MavenProject readProject(VirtualFile file, String... profiles) {
@@ -651,7 +741,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
   private org.apache.maven.project.MavenProject readProject(VirtualFile file,
                                                             MavenProjectReaderProjectLocator locator,
                                                             String... profiles) {
-    MavenProjectReaderResult result = MavenProjectReader.readProjectQuickly(myProject, file, Arrays.asList(profiles), locator);
+    MavenProjectReaderResult result = new MavenProjectReader().readProjectQuickly(getMavenGeneralSettings(), file, Arrays.asList(profiles), locator);
     assertTrue(result.isValid);
     return result.nativeMavenProject;
   }

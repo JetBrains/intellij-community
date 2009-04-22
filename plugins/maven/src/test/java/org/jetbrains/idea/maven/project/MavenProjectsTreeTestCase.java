@@ -1346,15 +1346,15 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
   protected void readModel(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException, MavenException {
     myTree.setManagedFiles(asList(files));
     myTree.setActiveProfiles(profiles);
-    myTree.updateAll(myProject, isQuick, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(isQuick, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
   }
 
   protected void update(VirtualFile file) throws MavenProcessCanceledException {
-    myTree.update(myProject, asList(file), isQuick, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
+    myTree.update(asList(file), isQuick, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
   }
 
   protected void deleteProject(VirtualFile file) throws MavenProcessCanceledException {
-    myTree.delete(myProject, asList(file), isQuick, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
+    myTree.delete(asList(file), isQuick, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
   }
 
   private void updateTimestamps(VirtualFile... files) throws IOException {

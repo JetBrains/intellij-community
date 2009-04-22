@@ -6,6 +6,7 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
@@ -415,9 +416,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return sdk;
   }
 
-  protected void compileModules(String... modules) {
-    for (String each : modules) {
+  protected void compileModules(String... moduleNames) {
+    List<Module> modules = new ArrayList<Module>();
+    for (String each : moduleNames) {
       setupJdkForModule(each);
+      modules.add(getModule(each));
     }
 
     CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
@@ -426,7 +429,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentRoots());
     TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size(), true);
 
-    CompilerManager.getInstance(myProject).make(new CompileStatusNotification() {
+    CompileScope scope = new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
+
+    CompilerManager.getInstance(myProject).make(scope, new CompileStatusNotification() {
       public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
         assertFalse(aborted);
         assertEquals(collectMessages(compileContext, CompilerMessageCategory.ERROR), 0, errors);

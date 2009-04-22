@@ -20,10 +20,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlElement;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomModule;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.MavenRunner;
@@ -31,8 +31,8 @@ import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -133,8 +133,14 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   private void generateFromArchetype(final Project project, final VirtualFile pom) {
-    final File workingDir = MavenUtil.getPluginSystemDir("Archetypes/" + project.getLocationHash());
-    workingDir.mkdirs();
+    final File workingDir;
+    try {
+      workingDir = FileUtil.createTempDirectory("archetype", "tmp");
+    }
+    catch (IOException e) {
+      MavenLog.LOG.warn("Cannot generate archetype", e);
+      return;
+    }
 
     MavenRunnerParameters params = new MavenRunnerParameters(
         false, workingDir.getPath(), Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:create"), null);

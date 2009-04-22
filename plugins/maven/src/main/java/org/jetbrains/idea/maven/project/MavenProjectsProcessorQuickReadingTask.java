@@ -32,11 +32,11 @@ public class MavenProjectsProcessorQuickReadingTask implements MavenProjectsProc
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProcess process)
     throws MavenProcessCanceledException {
     if (myFilesToUpdate == null) {
-      myTree.updateAll(myProject, true, embeddersManager, mySettings, console, process);
+      myTree.updateAll(true, embeddersManager, mySettings, console, process);
     }
     else {
-      myTree.delete(myProject, myFilesToDelete, true, embeddersManager, mySettings, console, process);
-      myTree.update(myProject, myFilesToUpdate, true, embeddersManager, mySettings, console, process);
+      myTree.delete(myFilesToDelete, true, embeddersManager, mySettings, console, process);
+      myTree.update(myFilesToUpdate, true, embeddersManager, mySettings, console, process);
     }
   }
 

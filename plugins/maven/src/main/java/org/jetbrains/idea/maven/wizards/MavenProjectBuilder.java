@@ -10,7 +10,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.FileFinder;
@@ -102,37 +101,31 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
                                                           new ArrayList<VirtualFile>());
 
         collectProfiles(process);
-
         if (getParameters().myProfiles.isEmpty()) {
           readMavenProjectTree(process);
         }
 
+        process.setText("");
         process.setText2("");
       }
     });
   }
 
   private void collectProfiles(MavenProcess process) {
-    Set<String> uniqueProfiles = new LinkedHashSet<String>();
+    process.setText(ProjectBundle.message("maven.searching.profiles"));
 
-    MavenEmbedderWrapper embedder = getEmbeddersManager().getEmbedder();
-    try {
-      for (VirtualFile f : getParameters().myFiles) {
-        MavenProject project = new MavenProject(f);
-        project.read(getProject(), embedder, Collections.EMPTY_LIST, new MavenProjectReaderProjectLocator() {
-          public VirtualFile findProjectFile(MavenId coordinates) {
-            return null;
-          }
-        }, process);
-        uniqueProfiles.addAll(project.getProfilesIds());
-      }
-      getParameters().myProfiles = new ArrayList<String>(uniqueProfiles);
+    Set<String> uniqueProfiles = new LinkedHashSet<String>();
+    for (VirtualFile f : getParameters().myFiles) {
+      MavenProject project = new MavenProject(f);
+      process.setText2(ProjectBundle.message("maven.reading.pom", f.getPath()));
+      project.readQuickly(getGeneralSettings(), Collections.EMPTY_LIST, new MavenProjectReaderProjectLocator() {
+        public VirtualFile findProjectFile(MavenId coordinates) {
+          return null;
+        }
+      });
+      uniqueProfiles.addAll(project.getProfilesIds());
     }
-    catch (MavenProcessCanceledException ignore) {
-    }
-    finally {
-      getEmbeddersManager().release(embedder);
-    }
+    getParameters().myProfiles = new ArrayList<String>(uniqueProfiles);
   }
 
   public List<String> getProfiles() {
@@ -171,7 +164,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     tree.setManagedFiles(getParameters().myFiles);
     tree.setActiveProfiles(getParameters().mySelectedProfiles);
-    tree.updateAll(getProject(), true, getEmbeddersManager(), getGeneralSettings(), new SoutMavenConsole(), process);
+    tree.updateAll(true, getEmbeddersManager(), getGeneralSettings(), new SoutMavenConsole(), process);
     getParameters().myMavenProjectTree = tree;
   }
 
