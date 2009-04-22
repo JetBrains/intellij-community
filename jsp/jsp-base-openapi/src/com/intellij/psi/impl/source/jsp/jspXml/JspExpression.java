@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.jsp.jspJava;
-
-import com.intellij.psi.impl.source.jsp.jspXml.JspTag;
-import com.intellij.psi.xml.XmlTag;
+package com.intellij.psi.impl.source.jsp.jspXml;
 
 /**
  * @author peter
  */
-public interface JspXmlTagBase extends XmlTag, JspTag {
-  XmlTag findParentTag();
+public interface JspExpression extends JspXmlTagBase {
 }

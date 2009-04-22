@@ -3,7 +3,7 @@ package com.intellij.lang.properties;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlTagBase;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.util.PsiTreeUtil;

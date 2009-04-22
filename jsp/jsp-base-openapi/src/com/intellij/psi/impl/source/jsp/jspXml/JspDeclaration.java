@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.jsp.jspJava;
+package com.intellij.psi.impl.source.jsp.jspXml;
 
 /**
  * @author peter
  */
-public interface JspScriptlet extends JspXmlTagBase {
+public interface JspDeclaration extends JspXmlTagBase {
 }
