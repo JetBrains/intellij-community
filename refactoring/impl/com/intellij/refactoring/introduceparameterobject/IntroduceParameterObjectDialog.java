@@ -108,7 +108,6 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
-    final List<PsiParameter> params = getParametersToExtract();
     final boolean useExistingClass = useExistingClass();
     final boolean keepMethod = keepMethodAsDelegate();
     final String className;
@@ -170,6 +169,9 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       final String className = getExistingClassName();
       if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
         throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid qualified parameter class name");
+      }
+      if (JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())) == null) {
+        throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' does not exist");
       }
     }
   }
