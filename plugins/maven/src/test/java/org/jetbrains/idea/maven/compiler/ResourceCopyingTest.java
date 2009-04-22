@@ -1,7 +1,10 @@
 package org.jetbrains.idea.maven.compiler;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenRootModelAdapter;
 
@@ -285,6 +288,69 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
     assertCopied("target/classes/file.txt");
     assertCopied("target/classes/file.xxx");
     assertNotCopied("target/classes/file2.xxx");
+  }
+
+  public void testDoNotDeleteFilesFromOtherModulesOutput() throws Exception {
+    createProjectSubFile("resources/file.properties");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<build>" +
+                    "  <resources>" +
+                    "    <resource>" +
+                    "      <directory>../resources</directory>" +
+                    "    </resource>" +
+                    "  </resources>" +
+                    "</build>");
+
+    createModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<build>" +
+                    "  <resources>" +
+                    "    <resource>" +
+                    "      <directory>../resources</directory>" +
+                    "    </resource>" +
+                    "  </resources>" +
+                    "</build>");
+    importProject();
+
+    setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2");
+
+    compileModules("project", "m1", "m2");
+    assertCopied("output/file.properties");
+
+    compileModules("m1");
+    assertCopied("output/file.properties");
+
+    compileModules("m2");
+    assertCopied("output/file.properties");
+
+    compileModules("project");
+    assertCopied("output/file.properties");
+  }
+
+  private void setModulesOutput(VirtualFile output, String... moduleNames) {
+    for (String each : moduleNames) {
+      ModifiableRootModel model = ModuleRootManager.getInstance(getModule(each)).getModifiableModel();
+      model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(output);
+      model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(output);
+      model.commit();
+    }
   }
 
   public void testWebResources() throws Exception {
