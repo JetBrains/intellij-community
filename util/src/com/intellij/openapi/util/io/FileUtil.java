@@ -733,7 +733,7 @@ public class FileUtil {
         builder.append("[^/]*?");
       }
 
-      if (ch == '[' || ch == ']' || ch == '^' || ch == '$' || ch == '.' || ch == '{' || ch == '}' || ch == '+' || ch == '|') {
+      if (ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == '^' || ch == '$' || ch == '.' || ch == '{' || ch == '}' || ch == '+' || ch == '|') {
         // quote regexp-specific symbols
         builder.append('\\').append(ch);
         continue;
