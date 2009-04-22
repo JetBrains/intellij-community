@@ -247,7 +247,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     myTopPanel = new JPanel(new GridBagLayout());
     myTopPanel.add(combo, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    myTopPanel.add(myActionGroupPanel, new GridBagConstraints(1, 0, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    myTopPanel.add(myActionGroupPanel, new GridBagConstraints(1, 0, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     myViewContentPanel = new JPanel();
     myPanel = new SimpleToolWindowPanel(true);
