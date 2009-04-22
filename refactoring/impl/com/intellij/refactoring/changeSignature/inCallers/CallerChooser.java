@@ -113,8 +113,8 @@ public abstract class CallerChooser extends DialogWrapper {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        callerDocument.replaceString(0, callerDocument.getTextLength(), callerText);
-        calleeDocument.replaceString(0, calleeDocument.getTextLength(), calleeText);
+        callerDocument.setText(callerText);
+        calleeDocument.setText(calleeText);
       }
     });
 
