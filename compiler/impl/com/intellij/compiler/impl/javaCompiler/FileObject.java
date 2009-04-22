@@ -34,7 +34,7 @@ public class FileObject {
   public byte[] getContent() {
     if (myContent == NOT_LOADED) {
       try{
-        myContent = FileUtil.loadFileBytes(myFile);
+        return FileUtil.loadFileBytes(myFile);
       }
       catch(IOException ignored){
       }
