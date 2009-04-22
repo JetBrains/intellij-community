@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AddEditRemovePanel;
+import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nullable;
@@ -19,9 +20,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Arrays;
 
 public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable {
 
@@ -67,6 +68,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     JTable table = myExtPanel.getTable();
     TableColumn column = table.getColumn(table.getColumnName(2));
     column.setMaxWidth(50);
+    column.setCellEditor(Table.createBooleanEditor());
 
     table.getModel().addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {
@@ -249,7 +251,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
   private static class ExtUrlsTableModel extends AddEditRemovePanel.TableModel<EditLocationDialog.NameLocationPair> {
     final String[] myNames =
-      {XmlBundle.message("column.name.edit.external.resource.uri"), XmlBundle.message("column.name.edit.external.resource.location"), "Share"};
+      {XmlBundle.message("column.name.edit.external.resource.uri"), XmlBundle.message("column.name.edit.external.resource.location"), "Project"};
 
     public int getColumnCount() {
       return myNames.length;
@@ -262,7 +264,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
         case 1:
           return pair.myLocation;
         case 2:
-          return pair.myShared;
+          return !pair.myShared;
       }
 
       return "";
@@ -277,7 +279,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
 
     public void setValue(Object aValue, EditLocationDialog.NameLocationPair data, int columnIndex) {
-      data.myShared = ((Boolean)aValue).booleanValue();
+      data.myShared = !((Boolean)aValue).booleanValue();
     }
 
     public String getColumnName(int column) {

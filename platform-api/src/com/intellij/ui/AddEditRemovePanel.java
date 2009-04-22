@@ -76,7 +76,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
       @Override
       public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         myModel.setValue(aValue, myData.get(rowIndex), columnIndex);
-        fireTableDataChanged();
+        fireTableRowsUpdated(rowIndex, rowIndex);
       }
     };
 

@@ -63,6 +63,20 @@ public class Table extends JTable {
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
   }
 
+  public static DefaultCellEditor createBooleanEditor() {
+    return new DefaultCellEditor(new JCheckBox()) {
+      {
+        ((JCheckBox)getComponent()).setHorizontalAlignment(JCheckBox.CENTER);
+      }
+      @Override
+      public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+        Component component = super.getTableCellEditorComponent(table, value, isSelected, row, column);
+        component.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+        return component;
+      }
+    };
+  }
+
   private static class MyTableHeaderRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (table != null) {
