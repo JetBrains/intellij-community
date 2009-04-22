@@ -37,7 +37,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     myListeners.remove(listener);
   }
   
-  public void setBufferingEnabled(boolean enabled) {
+  public synchronized void setBufferingEnabled(boolean enabled) {
     final boolean wasEnabled = myBufferingEnabled.getAndSet(enabled);
     if (wasEnabled && !enabled) {
       myMap.clear();
@@ -53,7 +53,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     myBackendStorage.close();
   }
 
-  public void clear() throws StorageException {
+  public synchronized void clear() throws StorageException {
     myMap.clear();
     myBackendStorage.clear();
   }
@@ -68,7 +68,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     return keys;
   }
 
-  public boolean processKeys(final Processor<Key> processor) throws StorageException {
+  public synchronized boolean processKeys(final Processor<Key> processor) throws StorageException {
     if (myBufferingEnabled.get()) {
       final Set<Key> stopList = new HashSet<Key>();
 
@@ -110,7 +110,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     }
   }
 
-  private UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
+  private synchronized UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
     UpdatableValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
       valueContainer = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
@@ -133,7 +133,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   @NotNull
-  public ValueContainer<Value> read(final Key key) throws StorageException {
+  public synchronized ValueContainer<Value> read(final Key key) throws StorageException {
     if (!myBufferingEnabled.get()) {
       return myBackendStorage.read(key);
     }
@@ -144,7 +144,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     return myBackendStorage.read(key);
   }
 
-  public void remove(final Key key) throws StorageException {
+  public synchronized void remove(final Key key) throws StorageException {
     if (myBufferingEnabled.get()) {
       myMap.put(key, new ValueContainerImpl<Value>());
     }
