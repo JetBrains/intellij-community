@@ -18,7 +18,6 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Chunk;
@@ -28,7 +27,6 @@ import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -214,13 +212,13 @@ public class ModuleChunk extends Chunk<Module> {
     final StringBuilder classpathBuffer = StringBuilderSpinAllocator.alloc();
     try {
       for (final VirtualFile file : cpFiles) {
-        final String path;
-        if (file.getFileSystem() instanceof LocalFileSystem && file.isDirectory()) {
-          path = tryZipFor(file.getPath());
-        }
-        else {
-          path = PathUtil.getLocalPath(file);
-        }
+        final String path = PathUtil.getLocalPath(file);
+        //if (file.getFileSystem() instanceof LocalFileSystem && file.isDirectory()) {
+        //  path = tryZipFor(file.getPath());
+        //}
+        //else {
+        //  path = PathUtil.getLocalPath(file);
+        //}
 
         if (path == null) {
           continue;
@@ -238,19 +236,19 @@ public class ModuleChunk extends Chunk<Module> {
     }
   }
 
-  private String tryZipFor(String outputDir) {
-    final File zip = CompilerPathsEx.getZippedOutputPath(myContext.getProject(), outputDir);
-    if (zip.exists()) {
-      try {
-        myContext.commitZip(outputDir); // flush unsaved data if any
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-      return zip.getPath();
-    }
-    return outputDir;
-  }
+  //private String tryZipFor(String outputDir) {
+  //  final File zip = CompilerPathsEx.getZippedOutputPath(myContext.getProject(), outputDir);
+  //  if (zip.exists()) {
+  //    try {
+  //      myContext.commitZip(outputDir); // flush unsaved data if any
+  //    }
+  //    catch (IOException e) {
+  //      LOG.info(e);
+  //    }
+  //    return zip.getPath();
+  //  }
+  //  return outputDir;
+  //}
 
   public int getModuleCount() {
     return getNodes().size();
