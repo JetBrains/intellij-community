@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -116,6 +117,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
     Task task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
         new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener).run();
+      }
+
+      @Override
+      public DumbModeAction getDumbModeAction() {
+        return DumbModeAction.CANCEL;
       }
 
       @Nullable

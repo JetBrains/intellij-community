@@ -11,10 +11,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,9 +31,25 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   private TaskInfo myInfo;
 
   private boolean myDisposed;
+  private DumbModeAction myDumbModeAction = DumbModeAction.NOTHING;
 
   public BackgroundableProcessIndicator(Task.Backgroundable task) {
-    this(task.getProject(), task, task);    
+    this(task.getProject(), task, task);
+
+    myDumbModeAction = task.getDumbModeAction();
+    if (myDumbModeAction == DumbModeAction.CANCEL) {
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+        public void beforeEnteringDumbMode() {
+          cancel();
+        }
+
+        public void enteredDumbMode() {
+        }
+
+        public void exitDumbMode() {
+        }
+      });
+    }
   }
 
   public BackgroundableProcessIndicator(@Nullable Project project, TaskInfo info, @NotNull PerformInBackgroundOption option) {
@@ -76,6 +95,9 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     }, option);
   }
 
+  public DumbModeAction getDumbModeAction() {
+    return myDumbModeAction;
+  }
 
   protected void showDialog() {
     if (myDisposed) return;

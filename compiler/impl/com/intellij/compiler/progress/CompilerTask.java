@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
@@ -82,6 +83,11 @@ public class CompilerTask extends Task.Backgroundable {
 
   public String getProcessId() {
     return ProgressFunComponentProvider.COMPILATION_ID;
+  }
+
+  @Override
+  public DumbModeAction getDumbModeAction() {
+    return DumbModeAction.WAIT;
   }
 
   public boolean shouldStartInBackground() {
