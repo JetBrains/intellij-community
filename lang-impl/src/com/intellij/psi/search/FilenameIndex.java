@@ -4,6 +4,8 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
@@ -76,6 +78,10 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
 
   private static class MyInputFilter implements FileBasedIndex.InputFilter {
     public boolean acceptInput(final VirtualFile file) {
+      if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+        return true;
+      }
+
       return !ProjectUtil.isProjectOrWorkspaceFile(file);
     }
   }
