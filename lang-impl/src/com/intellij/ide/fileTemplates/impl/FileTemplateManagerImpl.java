@@ -759,6 +759,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       }
 
       ourTopDirs = dirList.toArray(new VirtualFile[dirList.size()]);
+      for (VirtualFile topDir : ourTopDirs) {
+        topDir.refresh(true,true);
+      }
       return ourTopDirs;
     }
   }
