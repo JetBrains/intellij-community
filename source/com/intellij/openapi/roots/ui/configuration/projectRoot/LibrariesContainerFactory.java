@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
  * @author nik
  */
 public class LibrariesContainerFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory");
   private static final Library[] EMPTY_LIBRARIES_ARRAY = new Library[0];
 
   private LibrariesContainerFactory() {
@@ -200,14 +202,11 @@ public class LibrariesContainerFactory {
 
     public Library createLibrary(@NotNull @NonNls final String name, @NotNull final LibraryLevel level,
                                  @NotNull final VirtualFile[] classRoots, @NotNull final VirtualFile[] sourceRoots) {
-      LibraryTableModifiableModelProvider provider;
-      if (level == LibraryLevel.PROJECT) {
-        provider = myContext.getProjectLibrariesProvider(false);
+      LibraryTableModifiableModelProvider provider = getProvider(level);
+      if (provider == null) {
+        LOG.error("cannot create module library in this context");
       }
-      else {
-        provider = myContext.getGlobalLibrariesProvider(false);
-      }
-      
+
       LibraryTable.ModifiableModel model = provider.getModifiableModel();
       Library library = model.createLibrary(getUniqueLibraryName(name, model));
       LibraryEditor libraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
@@ -227,14 +226,21 @@ public class LibrariesContainerFactory {
 
     @NotNull
     public Library[] getLibraies(@NotNull final LibraryLevel libraryLevel) {
-      LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
+      LibraryTableModifiableModelProvider provider = getProvider(libraryLevel);
+      return provider != null ? provider.getModifiableModel().getLibraries() : EMPTY_LIBRARIES_ARRAY;
+    }
+
+    @Nullable
+    private LibraryTableModifiableModelProvider getProvider(LibraryLevel libraryLevel) {
       if (libraryLevel == LibraryLevel.PROJECT) {
-        return registrar.getLibraryTable(myProject).getLibraries();
+        return myContext.getProjectLibrariesProvider(false);
       }
-      if (libraryLevel == LibraryLevel.GLOBAL) {
-        return registrar.getLibraryTable().getLibraries();
+      else if (libraryLevel == LibraryLevel.GLOBAL) {
+        return myContext.getGlobalLibrariesProvider(false);
       }
-      return EMPTY_LIBRARIES_ARRAY;
+      else {
+        return null;
+      }
     }
 
     public boolean canCreateLibrary(@NotNull final LibraryLevel level) {
