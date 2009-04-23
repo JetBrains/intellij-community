@@ -34,6 +34,7 @@ public class SemicolonFixer implements Fixer {
 
     if (psiElement instanceof PsiExpressionStatement ||
         psiElement instanceof PsiDeclarationStatement ||
+        psiElement instanceof PsiImportStatementBase || 
         psiElement instanceof PsiDoWhileStatement ||
         psiElement instanceof PsiReturnStatement ||
         psiElement instanceof PsiThrowStatement ||

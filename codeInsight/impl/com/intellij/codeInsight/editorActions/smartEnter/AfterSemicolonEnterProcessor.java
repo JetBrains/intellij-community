@@ -22,6 +22,7 @@ public class AfterSemicolonEnterProcessor implements EnterProcessor {
         psiElement instanceof PsiContinueStatement ||
         psiElement instanceof PsiAssertStatement ||
         psiElement instanceof PsiField ||
+        psiElement instanceof PsiImportStatementBase ||
         psiElement instanceof PsiMethod && (((PsiMethod) psiElement).getContainingClass().isInterface() ||
                                             ((PsiMethod) psiElement).hasModifierProperty(PsiModifier.ABSTRACT) ||
                                             ((PsiMethod) psiElement).hasModifierProperty(PsiModifier.NATIVE))) {
