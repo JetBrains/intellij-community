@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
@@ -41,7 +42,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
     catch (ProcessCanceledException e) {
       throw e;
-    } catch(Exception e) {
+    }
+    catch (IndexNotReadyException e) {
+      throw e;
+    }
+    catch(Exception e) {
       LOG.error(e);
         return null;
       }
