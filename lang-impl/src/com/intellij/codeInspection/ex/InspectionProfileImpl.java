@@ -238,7 +238,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
 
       final Tools toolList = myTools.get(toolClassName);
-      LOG.assertTrue(toolList != null);
+      LOG.assertTrue(toolList != null, toolClassName);
 
       toolList.readExternal(toolElement, this);
     }

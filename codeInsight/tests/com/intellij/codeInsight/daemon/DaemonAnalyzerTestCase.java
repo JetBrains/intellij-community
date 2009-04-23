@@ -16,6 +16,7 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -24,6 +25,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -101,7 +103,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     inspectionProfileManager.addProfile(profile);
-    inspectionProfileManager.setRootProfile(profile.getName());
+    inspectionProfileManager.setRootProfile(PROFILE);
+    Disposer.register(getProject(), new Disposable() {
+      public void dispose() {
+        inspectionProfileManager.deleteProfile(PROFILE);
+      }
+    });
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
     InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());

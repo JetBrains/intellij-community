@@ -10,10 +10,10 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import junit.framework.TestCase;
@@ -25,9 +25,11 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 public class InspectionProfileTest extends TestCase {
+  private static final String PROFILE = "ToConvert";
   private final IdeaTestFixture myFixture = JavaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture();
 
   protected void setUp() throws Exception {
+    InspectionProfileImpl.INIT_INSPECTIONS = true;
     super.setUp();
     myFixture.setUp();
     InspectionToolRegistrar.getInstance().ensureInitialized();
@@ -36,49 +38,39 @@ public class InspectionProfileTest extends TestCase {
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     super.tearDown();
+    InspectionProfileImpl.INIT_INSPECTIONS = false;
+    InspectionProfileManager.getInstance().deleteProfile(PROFILE);
   }
 
   public void testCopyProjectProfile() throws Exception {
     final Element element = loadProfile();
-    final InspectionProfileImpl profile = new InspectionProfileImpl("DefaultCopyProjectProfile");
-    try {
-      InspectionProfileImpl.INIT_INSPECTIONS = true;
-      profile.readExternal(element);
-      final ModifiableModel model = profile.getModifiableModel();
-      model.commit();
-      final Element copy = new Element("inspections");
-      profile.writeExternal(copy);
-      StringWriter writer = new StringWriter();
-      JDOMUtil.writeElement(copy, writer, "\n");
-      assertTrue(writer.getBuffer().toString(), JDOMUtil.areElementsEqual(element, copy));
-    }
-    finally {
-      InspectionProfileImpl.INIT_INSPECTIONS = false;
-    }
+    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE);
+    profile.readExternal(element);
+    final ModifiableModel model = profile.getModifiableModel();
+    model.commit();
+    final Element copy = new Element("inspections");
+    profile.writeExternal(copy);
+    StringWriter writer = new StringWriter();
+    JDOMUtil.writeElement(copy, writer, "\n");
+    assertTrue(writer.getBuffer().toString(), JDOMUtil.areElementsEqual(element, copy));
   }
 
   public void testConvertOldProfile() throws Exception {
     final Element element = loadOldStyleProfile();
-    final InspectionProfileImpl profile = new InspectionProfileImpl("DefaultConvertOldProfile");
-    try {
-      InspectionProfileImpl.INIT_INSPECTIONS = true;
-      profile.readExternal(element);
-      final ModifiableModel model = profile.getModifiableModel();
-      model.commit();
-      final Element copy = new Element("inspections");
-      profile.writeExternal(copy);
-      StringWriter writer = new StringWriter();
-      JDOMUtil.writeElement(copy, writer, "\n");
-      assertTrue(writer.getBuffer().toString(), JDOMUtil.areElementsEqual(loadProfile(), copy));
-    }
-    finally {
-      InspectionProfileImpl.INIT_INSPECTIONS = false;
-    }
+    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE);
+    profile.readExternal(element);
+    final ModifiableModel model = profile.getModifiableModel();
+    model.commit();
+    final Element copy = new Element("inspections");
+    profile.writeExternal(copy);
+    StringWriter writer = new StringWriter();
+    JDOMUtil.writeElement(copy, writer, "\n");
+    assertTrue(writer.getBuffer().toString(), JDOMUtil.areElementsEqual(loadProfile(), copy));
   }
 
   private static Element loadOldStyleProfile() throws IOException, JDOMException {
     final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
-                                                    "  <option name=\"myName\" value=\"Default\" />\n" +
+                                                    "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
                                                     "  <option name=\"myLocal\" value=\"true\" />\n" +
                                                     "  <used_levels>\n" +
                                                     "    <error>\n" +
@@ -127,13 +119,12 @@ public class InspectionProfileTest extends TestCase {
                                                     "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
                                                     "  </inspection_tool>\n" +
                                                     "</inspections>");
-    HighlightDisplayKey.register("JavaDoc"); //InspectionProfileImpl.DEFAULT wasn't setup because of tests optimizations
     return document.getRootElement();
   }
 
   private static Element loadProfile() throws IOException, JDOMException {
     final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
-                                                    "  <option name=\"myName\" value=\"Default\" />\n" +
+                                                    "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
                                                     "  <option name=\"myLocal\" value=\"true\" />\n" +
                                                     "  <inspection_tool class=\"JavaDoc\" level=\"WARNING\" enabled=\"false\">\n" +
                                                     "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
