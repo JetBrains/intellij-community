@@ -1,13 +1,15 @@
 package com.intellij.history.integration;
 
-import com.intellij.history.core.LocalVcs;
-import com.intellij.history.core.tree.Entry;
-import com.intellij.history.core.changes.Change;
-import com.intellij.history.core.changes.ContentChange;
-import com.intellij.history.core.changes.ChangeVisitor;
-import com.intellij.history.core.changes.StructuralChange;
-import com.intellij.history.integration.revertion.ChangeRevertionVisitor;
+import com.intellij.history.ByteContent;
 import com.intellij.history.Checkpoint;
+import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.changes.Change;
+import com.intellij.history.core.changes.ChangeVisitor;
+import com.intellij.history.core.changes.ContentChange;
+import com.intellij.history.core.changes.StructuralChange;
+import com.intellij.history.core.tree.Entry;
+import com.intellij.history.integration.revertion.ChangeRevertionVisitor;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -28,6 +30,11 @@ public class CheckpointImpl implements Checkpoint {
 
   public void revertToThatState() throws IOException {
     doRevert(false);
+  }
+
+  @Nullable
+  public ByteContent getByteContentBefore(String path) {
+    return myVcs.getByteContentBefore(path, myLastChange);
   }
 
   private void doRevert(boolean revertLastChange) throws IOException {

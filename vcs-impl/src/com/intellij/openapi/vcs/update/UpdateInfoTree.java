@@ -31,6 +31,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.history.Checkpoint;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
@@ -50,6 +51,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.ui.*;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.Tree;
@@ -71,15 +73,16 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.UpdateInfoTree");
 
   private VirtualFile mySelectedFile;
+  private String mySelectedUrl;
   private final Tree myTree = new Tree();
   @NotNull private final Project myProject;
   private final UpdatedFiles myUpdatedFiles;
@@ -98,6 +101,10 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   @NonNls private static final String CARD_CHANGES = "Changes";
   private CommittedChangesTreeBrowser myTreeBrowser;
   private final TreeExpander myTreeExpander;
+  private final MyTreeIterable myTreeIterable;
+
+  private Checkpoint myBefore;
+  private Checkpoint myAfter;
 
   public UpdateInfoTree(@NotNull ContentManager contentManager,
                         @NotNull Project project,
@@ -126,6 +133,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     createTree();
     init();
     myTreeExpander = new DefaultTreeExpander(myTree);
+    myTreeIterable = new MyTreeIterable();
   }
 
   public void dispose() {
@@ -155,6 +163,9 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     group.add(new GroupByChangeListAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
+    final ShowUpdatedDiffAction diffAction = new ShowUpdatedDiffAction();
+    diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK)), this);
+    group.add(diffAction);
   }
 
   protected JComponent createCenterPanel() {
@@ -174,9 +185,12 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       public void valueChanged(TreeSelectionEvent e) {
         AbstractTreeNode treeNode = (AbstractTreeNode)e.getPath().getLastPathComponent();
         if (treeNode instanceof FileTreeNode) {
-          mySelectedFile = ((FileTreeNode)treeNode).getFilePointer().getFile();
+          final VirtualFilePointer pointer = ((FileTreeNode)treeNode).getFilePointer();
+          mySelectedUrl = pointer.getUrl();
+          mySelectedFile = pointer.getFile();
         }
         else {
+          mySelectedUrl = null;
           mySelectedFile = null;
         }
       }
@@ -232,17 +246,65 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     }
     else if (VcsDataConstants.IO_FILE_ARRAY.equals(dataId)) {
       return getFileArray();
-    }
-    else if (DataConstantsEx.TREE_EXPANDER.equals(dataId)) {
+    } else if (DataConstantsEx.TREE_EXPANDER.equals(dataId)) {
       if (myGroupByChangeList) {
         return myTreeBrowser.getTreeExpander();
       }
       else {
         return myTreeExpander;
       }
+    } else if (VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.getName().equals(dataId)) {
+      return mySelectedUrl;
+    } else if (VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getName().equals(dataId)) {
+      return myTreeIterable;
+    } else if (VcsDataKeys.CHECKPOINT_BEFORE.getName().equals(dataId)) {
+      return myBefore;
+    }  else if (VcsDataKeys.CHECKPOINT_AFTER.getName().equals(dataId)) {
+      return myAfter;
     }
 
     return super.getData(dataId);
+  }
+
+  private class MyTreeIterator implements Iterator<VirtualFilePointer> {
+    private final Enumeration myEnum;
+    private VirtualFilePointer myNext;
+
+    private MyTreeIterator() {
+      myEnum = myRoot.depthFirstEnumeration();
+      step();
+    }
+
+    public boolean hasNext() {
+      return myNext != null;
+    }
+
+    public VirtualFilePointer next() {
+      final VirtualFilePointer result = myNext;
+      step();
+      return result;
+    }
+
+    private void step() {
+      myNext = null;
+      while (myEnum.hasMoreElements()) {
+        final Object o = myEnum.nextElement();
+        if (o instanceof FileTreeNode) {
+          myNext = ((FileTreeNode) o).getFilePointer();
+          break;
+        }
+      }
+    }
+
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  private class MyTreeIterable implements Iterable<VirtualFilePointer> {
+    public Iterator<VirtualFilePointer> iterator() {
+      return new MyTreeIterator();
+    }
   }
 
   private VirtualFile[] getVirtualFileArray() {
@@ -344,5 +406,13 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       super.update(e);
       e.getPresentation().setVisible(myCanGroupByChangeList);
     }
+  }
+
+  public void setBefore(Checkpoint before) {
+    myBefore = before;
+  }
+
+  public void setAfter(Checkpoint after) {
+    myAfter = after;
   }
 }

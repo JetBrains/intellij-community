@@ -60,7 +60,7 @@ public class ByteContentRetriever extends ChangeSetsProcessor {
   }
 
   @Override
-  protected void nothingToVisit(long timestamp) {
+  protected void nothingToVisit() {
     // visit current version
     doVisit();
   }

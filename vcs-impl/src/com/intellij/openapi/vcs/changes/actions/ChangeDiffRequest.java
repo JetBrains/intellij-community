@@ -1,30 +1,28 @@
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.*;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableFactory;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeRequestChain;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.changes.ChangeRequestChain;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CommonBundle;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,16 +38,24 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   private final AnAction myNextChangeAction;
   private final Project myProject;
 
-  public ChangeDiffRequest(final Project project, final Change[] changes, final ShowDiffAction.DiffExtendUIFactory actionsFactory) {
+  public ChangeDiffRequest(final Project project, final List<Change> changes, final ShowDiffAction.DiffExtendUIFactory actionsFactory) {
     myProject = project;
-    myChanges = new ArrayList<Change>(changes.length);
-    Collections.addAll(myChanges, changes);
+    myChanges = changes;
 
     myIndex = 0;
     myActionsFactory = actionsFactory;
 
     myPrevChangeAction = ActionManager.getInstance().getAction("Diff.PrevChange");
     myNextChangeAction = ActionManager.getInstance().getAction("Diff.NextChange");
+  }
+
+  public boolean quickCheckHaveStuff() {
+    if (myChanges.isEmpty()) return false;
+    if (myChanges.size() == 1) {
+      final Change change = myChanges.get(0);
+      return checkContentsAvailable(change.getBeforeRevision(), change.getAfterRevision());
+    }
+    return true;
   }
 
   @Nullable
@@ -235,9 +241,11 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     if ((bRev != null && (bRev.getFile().getFileType().isBinary() || bRev.getFile().isDirectory())) ||
         (aRev != null && (aRev.getFile().getFileType().isBinary() || aRev.getFile().isDirectory()))) {
       if (bRev != null && bRev.getFile().getFileType() == FileTypes.UNKNOWN && !bRev.getFile().isDirectory()) {
+        if (! checkContentsAvailable(bRev, aRev)) return false;
         if (!checkAssociate(myProject, bRev.getFile())) return false;
       }
       else if (aRev != null && aRev.getFile().getFileType() == FileTypes.UNKNOWN && !aRev.getFile().isDirectory()) {
+        if (! checkContentsAvailable(bRev, aRev)) return false;
         if (!checkAssociate(myProject, aRev.getFile())) return false;
       }
       else {
@@ -245,6 +253,22 @@ public class ChangeDiffRequest implements ChangeRequestChain {
       }
     }
     return true;
+  }
+
+  private static boolean checkContentsAvailable(final ContentRevision bRev, final ContentRevision aRev) {
+    String bContents = null;
+    try {
+      bContents = bRev.getContent();
+    } catch (VcsException e) {
+      //
+    }
+    String aContents = null;
+    try {
+      aContents = aRev.getContent();
+    } catch (VcsException e) {
+      //
+    }
+    return (bContents != null) || (aContents != null);
   }
 
   private static boolean checkAssociate(final Project project, final FilePath file) {

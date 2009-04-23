@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jdom.Element;
 

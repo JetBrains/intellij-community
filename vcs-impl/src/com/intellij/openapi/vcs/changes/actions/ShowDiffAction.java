@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -156,23 +157,52 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     JComponent createBottomComponent();
   }
 
+  public static void showDiffForChange(final Iterable<Change> changes, final NotNullFunction<Change, Boolean> selectionChecker,
+                                       final Project project, @Nullable DiffExtendUIFactory actionsFactory, final boolean showFrame) {
+    int cnt = 0;
+    int newIndex = -1;
+    final List<Change> changeList = new ArrayList<Change>();
+    for (Change change : changes) {
+      if (! directoryOrBinary(change)) {
+        changeList.add(change);
+        if ((newIndex == -1) && selectionChecker.fun(change)) {
+          newIndex = cnt;
+        }
+        ++ cnt;
+      }
+    }
+    if (changeList.isEmpty()) {
+      return;
+    }
+    if (newIndex < 0) {
+      newIndex = 0;
+    }
+    
+    showDiffImpl(project, changeList, newIndex, actionsFactory, showFrame);
+  }
+
   public static void showDiffForChange(Change[] changes, int index, final Project project, @Nullable DiffExtendUIFactory actionsFactory,
                                        final boolean showFrame) {
     Change selectedChange = changes [index];
-    changes = filterDirectoryAndBinaryChanges(changes);
-    if (changes.length == 0) {
+    final List<Change> changeList = filterDirectoryAndBinaryChanges(changes);
+    if (changeList.isEmpty()) {
       return;
     }
     index = 0;
-    for(int i=0; i<changes.length; i++) {
-      if (changes [i] == selectedChange) {
+    for (int i = 0; i < changeList.size(); i++) {
+      if (changeList.get(i) == selectedChange) {
         index = i;
         break;
       }
     }
+    showDiffImpl(project, changeList, index, actionsFactory, showFrame);
+  }
+
+  private static void showDiffImpl(Project project, List<Change> changeList, int index, DiffExtendUIFactory actionsFactory, boolean showFrame) {
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
 
-    final ChangeDiffRequest request = new ChangeDiffRequest(project, changes, actionsFactory);
+    final ChangeDiffRequest request = new ChangeDiffRequest(project, changeList, actionsFactory);
+    if (! request.quickCheckHaveStuff()) return;
     final SimpleDiffRequest simpleRequest = request.init(index);
     if (simpleRequest != null) {
       simpleRequest.passForDataContext(VcsDataKeys.DIFF_REQUEST_CHAIN, request);
@@ -183,34 +213,40 @@ public class ShowDiffAction extends AnAction implements DumbAware {
       else {
         simpleRequest.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
       }
-      if (changes.length > 1) {
+      if (changeList.size() > 1) {
         simpleRequest.addHint(DiffTool.HINT_ALLOW_NO_DIFFERENCES);
       }
       tool.show(simpleRequest);
     }
   }
 
-  private static Change[] filterDirectoryAndBinaryChanges(final Change[] changes) {
-    ArrayList<Change> changesList = new ArrayList<Change>();
+  private static boolean directoryOrBinary(final Change change) {
+    // todo instead for repository tab, filter directories (? ask remotely ? non leaf nodes)
+    /*if ((change.getBeforeRevision() instanceof BinaryContentRevision) || (change.getAfterRevision() instanceof BinaryContentRevision)) {
+      changesList.remove(i);
+      continue;
+    }*/
+    final FilePath path = ChangesUtil.getFilePath(change);
+    if (path.isDirectory()) {
+      return true;
+    }
+    final FileType type = path.getFileType();
+    if ((! FileTypes.UNKNOWN.equals(type)) && (type.isBinary())) {
+      return true;
+    }
+    return false;
+  }
+
+  private static List<Change> filterDirectoryAndBinaryChanges(final Change[] changes) {
+    final ArrayList<Change> changesList = new ArrayList<Change>();
     Collections.addAll(changesList, changes);
     for(int i=changesList.size()-1; i >= 0; i--) {
       final Change change = changesList.get(i);
-      // todo instead for repository tab, filter directories (? ask remotely ? non leaf nodes)
-      /*if ((change.getBeforeRevision() instanceof BinaryContentRevision) || (change.getAfterRevision() instanceof BinaryContentRevision)) {
-        changesList.remove(i);
-        continue;
-      }*/
-      final FilePath path = ChangesUtil.getFilePath(change);
-      if (path.isDirectory()) {
-        changesList.remove(i);
-        continue;
-      }
-      final FileType type = path.getFileType();
-      if ((! FileTypes.UNKNOWN.equals(type)) && (type.isBinary())) {
+      if (directoryOrBinary(change)) {
         changesList.remove(i);
       }
     }
-    return changesList.toArray(new Change[changesList.size()]);
+    return changesList;
   }
 
   private static boolean checkNotifyBinaryDiff(final Change selectedChange) {

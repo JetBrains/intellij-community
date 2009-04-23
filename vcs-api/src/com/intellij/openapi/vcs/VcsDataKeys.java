@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeRequestChain;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -50,4 +51,8 @@ public interface VcsDataKeys {
   DataKey<Change[]> SELECTED_CHANGES = DataKey.create("ChangeListView.SelectedChange");
   DataKey<Change[]> CHANGE_LEAD_SELECTION = DataKey.create("ChangeListView.ChangeLeadSelection");
   DataKey<ChangeRequestChain> DIFF_REQUEST_CHAIN = DataKey.create("diffRequestChain");
+  DataKey<String> UPDATE_VIEW_SELECTED_PATH = DataKey.create("AbstractCommonUpdateAction.UpdateViewSelectedPath");
+  DataKey<Iterable<VirtualFilePointer>> UPDATE_VIEW_FILES_ITERABLE = DataKey.create("AbstractCommonUpdateAction.UpdatedFilesIterable");
+  DataKey<Object> CHECKPOINT_BEFORE = DataKey.create("CHECKPOINT_BEFORE");
+  DataKey<Object> CHECKPOINT_AFTER = DataKey.create("CHECKPOINT_AFTER");
 }

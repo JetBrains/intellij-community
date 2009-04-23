@@ -1,6 +1,7 @@
 package com.intellij.history.core;
 
 import com.intellij.diagnostic.Diagnostic;
+import com.intellij.history.ByteContent;
 import com.intellij.history.Clock;
 import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.core.changes.*;
@@ -17,6 +18,7 @@ import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -383,6 +385,34 @@ public class LocalVcs {
     }
     finally {
       unreadChangeSets();
+    }
+  }
+
+  @Nullable
+  public ByteContent getByteContentBefore(String path, Change change) {
+    readAll();
+    try {
+      Change found = null;
+      for (Change each : myChangeList.getChanges()) {
+        for (Change eachSubChange : each.getChanges()) {
+          if (change == eachSubChange) {
+            found = each;
+            break;
+          }
+        }
+      }
+      if (found == null) return null;
+
+      Revision revision = new RevisionAfterChange(myRoot, myRoot, myChangeList, found);
+      Entry entry = revision.getEntry().findEntry(path);
+      if (entry == null) return null;
+      if (entry.isDirectory()) {
+        return new ByteContent(true, null);
+      }
+      return new ByteContent(false, entry.getContent().getBytesIfAvailable());
+    }
+    finally {
+      unreadAll();
     }
   }
 

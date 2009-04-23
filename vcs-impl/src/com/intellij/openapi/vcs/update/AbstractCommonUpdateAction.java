@@ -31,6 +31,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.history.Checkpoint;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -308,6 +309,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     private final Map<String, SequentialUpdatesContext> myContextInfo;
     private VcsDirtyScopeManager myDirtyScopeManager;
 
+    private Checkpoint myBefore;
+    private Checkpoint myAfter;
+
     public Updater(final Project project, final FilePath[] roots, final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles) {
       super(project, getTemplatePresentation().getText(), true, VcsConfiguration.getInstance(project).getUpdateOption());
       myProject = project;
@@ -364,6 +368,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     private void runImpl(@NotNull final ProgressIndicator indicator) {
       ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
       myProjectLevelVcsManager.startBackgroundVcsOperation();
+
+      myBefore = LocalHistory.putCheckpoint(myProject);
+
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
       try {
@@ -394,6 +401,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           }
           doVfsRefresh();
         } finally {
+          myAfter = LocalHistory.putCheckpoint(myProject);
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
         }
       }
@@ -556,6 +564,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       restoreUpdateTree.registerUpdateInformation(myUpdatedFiles, myActionInfo);
       final String text = getTemplatePresentation().getText() + ((willBeContinued || (myUpdateNumber > 1)) ? ("#" + myUpdateNumber) : "");
       final UpdateInfoTree updateInfoTree = myProjectLevelVcsManager.showUpdateProjectInfo(myUpdatedFiles, text, myActionInfo);
+
+      updateInfoTree.setBefore(myBefore);
+      updateInfoTree.setAfter(myAfter);
+      
+      // todo make temporal listener of changes reload
       if (updateInfoTree != null) {
         updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(myVcsToVirtualFiles.keySet()));
         final MessageBusConnection messageBusConnection = myProject.getMessageBus().connect();

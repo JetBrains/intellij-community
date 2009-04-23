@@ -20,7 +20,7 @@ public abstract class ChangeSetsProcessor {
     List<Change> changes = collectChanges();
 
     if (changes.isEmpty()) {
-      nothingToVisit(myEntry.getTimestamp());
+      nothingToVisit();
       return;
     }
 
@@ -41,7 +41,7 @@ public abstract class ChangeSetsProcessor {
 
   protected abstract List<Change> collectChanges();
 
-  protected abstract void nothingToVisit(long timestamp);
+  protected abstract void nothingToVisit();
 
   protected abstract void visitLabel(Change c);
 
