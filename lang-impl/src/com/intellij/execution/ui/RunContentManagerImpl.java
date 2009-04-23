@@ -360,7 +360,7 @@ public class RunContentManagerImpl implements RunContentManager {
     content.putUserData(DESCRIPTOR_KEY, descriptor);
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     contentManager.addContent(content);
-    new CloseListener(content, myProject, processDisplayName, toolWindowId);
+    new CloseListener(content, myProject, toolWindowId);
     return content;
   }
 
@@ -458,15 +458,13 @@ public class RunContentManagerImpl implements RunContentManager {
   private class CloseListener extends ContentManagerAdapter implements ProjectManagerListener {
     private final Project myProject;
     private Content myContent;
-    private final String myProcessDisplayName;
     private final String myToolwindowId;
 
-    public CloseListener(final Content content, final Project project, final String processDisplayName, String toolWindowId) {
+    public CloseListener(final Content content, final Project project, String toolWindowId) {
       myContent = content;
       myProject = project;
       content.getManager().addContentManagerListener(this);
       ProjectManager.getInstance().addProjectManagerListener(this);
-      myProcessDisplayName = processDisplayName;
       myToolwindowId = toolWindowId;
     }
 
@@ -547,7 +545,7 @@ public class RunContentManagerImpl implements RunContentManager {
         destroyProcess = true;
       }
       else {
-        final TerminateRemoteProcessDialog terminateDialog = new TerminateRemoteProcessDialog(myProject, myProcessDisplayName,
+        final TerminateRemoteProcessDialog terminateDialog = new TerminateRemoteProcessDialog(myProject, descriptor.getDisplayName(),
                                                                                               processHandler.detachIsDefault());
         terminateDialog.show();
         if (terminateDialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return false;
