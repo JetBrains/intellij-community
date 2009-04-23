@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.lang.reflect.InvocationTargetException;
 
 public class Alarm implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
@@ -211,7 +212,15 @@ public class Alarm implements Disposable {
                 myRequests.remove(Request.this);
               }
 
-              task.run();
+              if (myThreadToUse == ThreadToUse.SWING_THREAD && !ApplicationManager.getApplication().isDispatchThread()) {
+                try {
+                  SwingUtilities.invokeAndWait(task);
+                } catch (Exception e) {
+                  LOG.error(e);
+                } 
+              } else {
+                task.run();
+              }
             }
           };
 

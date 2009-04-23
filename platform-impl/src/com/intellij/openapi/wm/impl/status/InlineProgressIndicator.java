@@ -332,7 +332,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myProcessName = processName;
       addMouseListener(new MouseAdapter() {
         public void mousePressed(final MouseEvent e) {
-          if (UIUtil.isCloseClick(e) && myProcessName.getBounds().contains(e.getX(), e.getY())) {
+          if (UIUtil.isCloseClick(e) && getBounds().contains(e.getX(), e.getY())) {
             cancelRequest();
           }
         }

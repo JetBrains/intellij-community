@@ -30,6 +30,8 @@ import java.util.TreeMap;
 
 public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
+  public static final JComponent ANY_COMPONENT = new JComponent() {};
+
   private boolean myActive;
 
   private final Map<Update, Update> mySheduledUpdates = new TreeMap<Update, Update>();
@@ -116,7 +118,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   private void restartTimer() {
     clearWaiter();
-    myWaiterForMerge.addRequest(this, myMergingTimeSpan, getModalityState());
+    myWaiterForMerge.addRequest(this, myMergingTimeSpan, getMergerModailityState());
   }
 
 
@@ -171,6 +173,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   protected boolean isModalityStateCorrect() {
+    if (myModalityStateComponent == ANY_COMPONENT) return true;
+
     ModalityState current = ApplicationManager.getApplication().getCurrentModalityState();
     final ModalityState modalityState = getModalityState();
     return !current.dominates(modalityState);
@@ -288,6 +292,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "Merger: " + myName + " active=" + myActive + " sheduled=" + mySheduledUpdates;
+  }
+
+  private ModalityState getMergerModailityState() {
+    return myModalityStateComponent == ANY_COMPONENT ? null : getModalityState();
   }
 
   public ModalityState getModalityState() {
