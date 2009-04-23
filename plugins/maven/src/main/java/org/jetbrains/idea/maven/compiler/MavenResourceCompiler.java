@@ -131,7 +131,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
     return new ReadAction<ProcessingItem[]>() {
       protected void run(Result<ProcessingItem[]> resultObject) throws Throwable {
-        List<ProcessingItem> itemsToProcess = new ArrayList<ProcessingItem>();
+        List<ProcessingItem> allItemsToProcess = new ArrayList<ProcessingItem>();
         List<String> filesToDelete = new ArrayList<String>();
 
         //List<String> modules = new ArrayList<String>();
@@ -151,11 +151,13 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
           long propertiesHashCode = calculateHashCode(properties);
 
+          List<ProcessingItem> moduleItemsToProcess = new ArrayList<ProcessingItem>();
           collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
-                                 nonFilteredExtensions, escapeString, false, itemsToProcess);
+                                 nonFilteredExtensions, escapeString, false, moduleItemsToProcess);
           collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
-                                 nonFilteredExtensions, escapeString, true, itemsToProcess);
-          collectItemsToDelete(eachModule, itemsToProcess, filesToDelete);
+                                 nonFilteredExtensions, escapeString, true, moduleItemsToProcess);
+          collectItemsToDelete(eachModule, moduleItemsToProcess, filesToDelete);
+          allItemsToProcess.addAll(moduleItemsToProcess);
         }
 
         //List<String> cache = new ArrayList<String>();
@@ -176,10 +178,10 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         //log("Files to delete: " + filesToDelete.size() + "\n" + StringUtil.join(filesToDelete, "\n"));
 
         if (!filesToDelete.isEmpty()) {
-          itemsToProcess.add(new FakeProcessingItem());
+          allItemsToProcess.add(new FakeProcessingItem());
         }
         context.putUserData(FILES_TO_DELETE_KEY, filesToDelete);
-        resultObject.setResult(itemsToProcess.toArray(new ProcessingItem[itemsToProcess.size()]));
+        resultObject.setResult(allItemsToProcess.toArray(new ProcessingItem[allItemsToProcess.size()]));
         removeObsoleteModulesFromCache();
         saveCache();
       }

@@ -291,7 +291,64 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
   }
 
   public void testDoNotDeleteFilesFromOtherModulesOutput() throws Exception {
-    createProjectSubFile("resources/file.properties");
+    createProjectSubFile("m1/resources/file.xxx");
+    createProjectSubFile("m2/resources/file.yyy");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<build>" +
+                    "  <resources>" +
+                    "    <resource>" +
+                    "      <directory>resources</directory>" +
+                    "    </resource>" +
+                    "  </resources>" +
+                    "</build>");
+
+    createModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<build>" +
+                    "  <resources>" +
+                    "    <resource>" +
+                    "      <directory>resources</directory>" +
+                    "    </resource>" +
+                    "  </resources>" +
+                    "</build>");
+    importProject();
+
+    compileModules("project", "m1", "m2");
+    assertCopied("m1/target/classes/file.xxx");
+    assertCopied("m2/target/classes/file.yyy");
+
+    compileModules("m1");
+    assertCopied("m1/target/classes/file.xxx");
+    assertCopied("m2/target/classes/file.yyy");
+
+    compileModules("m2");
+    assertCopied("m1/target/classes/file.xxx");
+    assertCopied("m2/target/classes/file.yyy");
+
+    compileModules("project");
+    assertCopied("m1/target/classes/file.xxx");
+    assertCopied("m2/target/classes/file.yyy");
+  }
+
+  public void testDoNotDeleteFilesFromOtherModulesOutputWhenOutputIsTheSame() throws Exception {
+    createProjectSubFile("resources/file.xxx");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -332,16 +389,16 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
     setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2");
 
     compileModules("project", "m1", "m2");
-    assertCopied("output/file.properties");
+    assertCopied("output/file.xxx");
 
     compileModules("m1");
-    assertCopied("output/file.properties");
+    assertCopied("output/file.xxx");
 
     compileModules("m2");
-    assertCopied("output/file.properties");
+    assertCopied("output/file.xxx");
 
     compileModules("project");
-    assertCopied("output/file.properties");
+    assertCopied("output/file.xxx");
   }
 
   private void setModulesOutput(VirtualFile output, String... moduleNames) {
