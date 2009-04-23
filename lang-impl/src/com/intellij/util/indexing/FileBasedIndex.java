@@ -16,9 +16,8 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -419,6 +418,10 @@ public class FileBasedIndex implements ApplicationComponent {
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
   public <K> void ensureUpToDate(final ID<K, ?> indexId) {
+    if (isDumb()) {
+      handleDumbMode(indexId);
+    }
+
     if (myReentrancyGuard.get().booleanValue()) {
       //assert false : "ensureUpToDate() is not reentrant!";
       return;
@@ -450,6 +453,31 @@ public class FileBasedIndex implements ApplicationComponent {
     finally {
       myReentrancyGuard.set(Boolean.FALSE);
     }
+  }
+
+  private void handleDumbMode(final ID<?, ?> indexId) {
+    if (myNotRequiringContentIndices.contains(indexId)) {
+      return; //indexed eagerly in foreground while building unindexed file list
+    }
+
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    progressManager.checkCanceled(); // DumbModeAction.CANCEL
+
+    final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
+    if (progressIndicator instanceof BackgroundableProcessIndicator) {
+      final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
+      if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {
+        assert !ApplicationManager.getApplication().isDispatchThread();
+        DumbService.getInstance().waitForSmartMode();
+        return;
+      }
+    }
+
+    throw new IndexNotReadyException();
+  }
+
+  private static boolean isDumb() {
+    return DumbServiceImpl.getInstance().isDumb();
   }
 
   @NotNull
@@ -1383,6 +1411,10 @@ public class FileBasedIndex implements ApplicationComponent {
 
   @Nullable
   private static PsiFile findLatestKnownPsiForUncomittedDocument(Document doc) {
+    if (isDumb()) {
+      return null;
+    }
+
     PsiFile target = null;
     long modStamp = -1L;
 
