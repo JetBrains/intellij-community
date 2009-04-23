@@ -176,7 +176,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       }
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.getType().getId());
       element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
-      element.setAttribute(TEMPORARY_ATTRIBUTE, Boolean.toString(myTemporary));
+      if (myTemporary) {
+        element.setAttribute(TEMPORARY_ATTRIBUTE, Boolean.toString(myTemporary));
+      }
     }
 
     myConfiguration.writeExternal(element);
