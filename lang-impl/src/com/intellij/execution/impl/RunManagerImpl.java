@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.NullableFunction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +31,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       new HashMap<String, RunnerAndConfigurationSettingsImpl>();
   private RunnerAndConfigurationSettingsImpl mySelectedConfiguration = null;
   private String mySelectedConfig = null;
-  private RunnerAndConfigurationSettingsImpl myTempConfiguration;
 
-  @NonNls
-  private static final String TEMP_CONFIGURATION = "tempConfiguration";
   @NonNls
   protected static final String CONFIGURATION = "configuration";
   private ConfigurationType[] myTypes;
@@ -212,11 +210,25 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   public void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean shared, Map<String, Boolean> method) {
     final String configName = getUniqueName(settings.getConfiguration());
+
     myConfigurations.put(configName, settings);
+    checkRecentsLimit();
 
     int id = settings.getConfiguration().getUniqueID();
     mySharedConfigurations.put(id, shared);
     myMethod2CompileBeforeRun.put(id, method);
+  }
+
+  void checkRecentsLimit() {    
+    while (getTempConfigurations().length > getConfig().getRecentsLimit()) {
+      for (Iterator<Map.Entry<String, RunnerAndConfigurationSettingsImpl>> it = myConfigurations.entrySet().iterator(); it.hasNext();) {
+        Map.Entry<String, RunnerAndConfigurationSettingsImpl> entry = it.next();
+        if (entry.getValue().isTemporary()) {
+          it.remove();
+          break;
+        }
+      }
+    }
   }
 
   public static String getUniqueName(final RunConfiguration settings) {
@@ -254,13 +266,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       final ConfigurationType configurationType = configuration.getType();
       if (configurationType != null && type.getId().equals(configurationType.getId())) {
         it.remove();
-      }
-    }
-
-    if (myTempConfiguration != null) {
-      final ConfigurationType tempType = myTempConfiguration.getType();
-      if (tempType != null && type.getId().equals(tempType.getId())) {
-        myTempConfiguration = null;
       }
     }
   }
@@ -349,10 +354,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void writeContext(Element parentNode) throws WriteExternalException {
-    if (myTempConfiguration != null) {
-      addConfigurationElement(parentNode, myTempConfiguration, TEMP_CONFIGURATION);
+    for (RunnerAndConfigurationSettingsImpl configurationSettings : myConfigurations.values()) {
+      if (configurationSettings.isTemporary()) {
+        addConfigurationElement(parentNode, configurationSettings, CONFIGURATION);
+      }
     }
-
     if (mySelectedConfiguration != null) {
       parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration.getConfiguration()));
     }
@@ -407,9 +413,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       if (mySelectedConfig == null && Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR)).booleanValue()) {
         mySelectedConfig = element.getAttributeValue(RunnerAndConfigurationSettingsImpl.NAME_ATTR);
       }
-      if (TEMP_CONFIGURATION.equals(element.getName())) {
-        myTempConfiguration = loadConfiguration(element, false);
-      }
+      loadConfiguration(element, false);
     }
     if (mySelectedConfig != null) {
       RunnerAndConfigurationSettingsImpl configurationSettings = myConfigurations.get(mySelectedConfig);
@@ -444,9 +448,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     else {
       if (Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR)).booleanValue()) { //to support old style
         mySelectedConfiguration = configuration;
-      }
-      if (TEMP_CONFIGURATION.equals(element.getName())) {
-        myTempConfiguration = configuration;
       }
       addConfiguration(configuration, isShared, map);
     }
@@ -512,11 +513,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void setTemporaryConfiguration(@NotNull final RunnerAndConfigurationSettingsImpl tempConfiguration) {
-    myConfigurations = getStableConfigurations();
-    myTempConfiguration = tempConfiguration;
-    addConfiguration(myTempConfiguration, isConfigurationShared(tempConfiguration),
+    tempConfiguration.setTemporary(true);
+
+    addConfiguration(tempConfiguration, isConfigurationShared(tempConfiguration),
                      getStepsBeforeLaunch(tempConfiguration.getConfiguration()));
-    setActiveConfiguration(myTempConfiguration);
+    setActiveConfiguration(tempConfiguration);
   }
 
   public void setActiveConfiguration(final RunnerAndConfigurationSettingsImpl configuration) {
@@ -526,35 +527,42 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public Map<String, RunnerAndConfigurationSettingsImpl> getStableConfigurations() {
     final Map<String, RunnerAndConfigurationSettingsImpl> result =
         new LinkedHashMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations);
-    if (myTempConfiguration != null) {
-      result.remove(getUniqueName(myTempConfiguration.getConfiguration()));
+    for (Iterator<Map.Entry<String, RunnerAndConfigurationSettingsImpl>> it = result.entrySet().iterator(); it.hasNext();) {
+      Map.Entry<String, RunnerAndConfigurationSettingsImpl> entry = it.next();
+      if (entry.getValue().isTemporary()) {
+        it.remove();
+      }
     }
     return result;
   }
 
   public boolean isTemporary(final RunConfiguration configuration) {
-    return myTempConfiguration != null && myTempConfiguration.getConfiguration() == configuration;
+    return Arrays.asList(getTempConfigurations()).contains(configuration);
   }
 
   public boolean isTemporary(RunnerAndConfigurationSettingsImpl settings) {
-    return settings.equals(myTempConfiguration);
+    return settings.isTemporary();
   }
 
-  @Nullable
-  public RunConfiguration getTempConfiguration() {
-    return myTempConfiguration == null ? null : myTempConfiguration.getConfiguration();
+  public RunConfiguration[] getTempConfigurations() {
+    List<RunConfiguration> configurations = ContainerUtil.mapNotNull(myConfigurations.values(), new NullableFunction<RunnerAndConfigurationSettingsImpl, RunConfiguration>() {
+      public RunConfiguration fun(RunnerAndConfigurationSettingsImpl settings) {
+        return settings.isTemporary() ? settings.getConfiguration() : null;
+      }
+    });
+    return configurations.toArray(new RunConfiguration[configurations.size()]);
   }
 
   public void makeStable(final RunConfiguration configuration) {
-    if (isTemporary(configuration)) {
-      myTempConfiguration = null;
+    RunnerAndConfigurationSettingsImpl settings = getSettings(configuration);
+    if (settings != null) {
+      settings.setTemporary(true);
     }
   }
 
   public RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type) {
     return createConfiguration(name, type);
   }
-
 
   public boolean isConfigurationShared(final RunnerAndConfigurationSettingsImpl settings) {
     Boolean shared = mySharedConfigurations.get(settings.getConfiguration().getUniqueID());

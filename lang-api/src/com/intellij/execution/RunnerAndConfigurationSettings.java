@@ -29,6 +29,8 @@ public interface RunnerAndConfigurationSettings {
 
   boolean isTemplate();
 
+  boolean isTemporary();
+
   RunConfiguration getConfiguration();
 
   void setName(String name);

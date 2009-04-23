@@ -15,6 +15,8 @@ public class RunManagerConfig {
   private final StoringPropertyContainer myProperties;
   private final RunManagerImpl myManager;
 
+  private int myRecentsLimit = 5;
+
   public RunManagerConfig(PropertiesComponent propertiesComponent,
                           RunManagerImpl manager) {
     myManager = manager;
@@ -38,4 +40,11 @@ public class RunManagerConfig {
     return false;
   }
 
+  public int getRecentsLimit() {
+    return myRecentsLimit;
+  }
+
+  public void setRecentsLimit(int recentsLimit) {
+    myRecentsLimit = recentsLimit;
+  }
 }

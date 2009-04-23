@@ -35,6 +35,16 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private static final String FACTORY_NAME_ATTRIBUTE = "factoryName";
   @NonNls
   private static final String TEMPLATE_FLAG_ATTRIBUTE = "default";
+  @NonNls
+  public static final String NAME_ATTR = "name";
+  @NonNls
+  protected static final String DUMMY_ELEMENT_NANE = "dummy";
+  @NonNls
+  private static final String TEMPORARY_ATTRIBUTE = "temporary";
+
+  /** for compatibility */
+  @NonNls
+  private static final String TEMP_CONFIGURATION = "tempConfiguration";
 
   private final RunManagerImpl myManager;
   private RunConfiguration myConfiguration;
@@ -46,10 +56,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private final Map<ProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new HashMap<ProgramRunner, ConfigurationPerRunnerSettings>();
   private List<Element> myUnloadedConfigurationPerRunnerSettings = null;
 
-  @NonNls
-  public static final String NAME_ATTR = "name";
-  @NonNls
-  protected static final String DUMMY_ELEMENT_NANE = "dummy";
+  private boolean myTemporary;
 
   public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager) {
     myManager = manager;
@@ -68,6 +75,14 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
   public boolean isTemplate() {
     return myIsTemplate;
+  }
+
+  public boolean isTemporary() {
+    return myTemporary;
+  }
+
+  public void setTemporary(boolean temporary) {
+    myTemporary = temporary;
   }
 
   public RunConfiguration getConfiguration() {
@@ -99,7 +114,10 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   }
 
   public void readExternal(Element element) throws InvalidDataException {
+
     myIsTemplate = Boolean.valueOf(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE)).booleanValue();
+    myTemporary = Boolean.valueOf(element.getAttributeValue(TEMPORARY_ATTRIBUTE)).booleanValue() || TEMP_CONFIGURATION.equals(element.getName());
+
     final ConfigurationFactory factory = getFactory(element);
     if (factory == null) return;
 
@@ -158,6 +176,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       }
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.getType().getId());
       element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
+      element.setAttribute(TEMPORARY_ATTRIBUTE, Boolean.toString(myTemporary));
     }
 
     myConfiguration.writeExternal(element);

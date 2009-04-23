@@ -147,7 +147,7 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
       final Project project = e.getData(PlatformDataKeys.PROJECT);
       if (project != null) {
         final RunManager runManager = RunManager.getInstance(project);
-        runManager.makeStable(runManager.getTempConfiguration());
+        runManager.makeStable(chooseTempConfiguration(project));
       }
     }
 
@@ -158,20 +158,33 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
         disable(presentation);
         return;
       }
-      final RunConfiguration tempConfiguration = RunManager.getInstance(project).getTempConfiguration();
-      if (tempConfiguration == null) {
+      RunConfiguration configuration = chooseTempConfiguration(project);
+      if (configuration == null) {
         disable(presentation);
-        return;
+      } else {
+        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", configuration.getName()));
+        presentation.setDescription(presentation.getText());
+        presentation.setVisible(true);
+        presentation.setEnabled(true);
       }
-      presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", tempConfiguration.getName()));
-      presentation.setDescription(presentation.getText());
-      presentation.setVisible(true);
-      presentation.setEnabled(true);
     }
 
     private static void disable(final Presentation presentation) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
+    }
+
+    @Nullable
+    private static RunConfiguration chooseTempConfiguration(Project project) {
+      final RunConfiguration[] tempConfigurations = RunManager.getInstance(project).getTempConfigurations();
+      if (tempConfigurations.length > 0) {
+        RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
+        if (selectedConfiguration == null || !selectedConfiguration.isTemporary()) {
+          return tempConfigurations[0];
+        }
+        return selectedConfiguration.getConfiguration();
+      }
+      return null;
     }
   }
 

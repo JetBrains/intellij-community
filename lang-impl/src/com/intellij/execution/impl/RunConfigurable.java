@@ -68,6 +68,7 @@ class RunConfigurable extends BaseConfigurable {
   private StorageAccessors myConfig;
   private SingleConfigurationConfigurable<RunConfiguration> mySelectedConfigurable = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
+  private JTextField myRecentsLimit = new JTextField("5");
 
   public RunConfigurable(final Project project) {
     this(project, null);
@@ -301,7 +302,35 @@ class RunConfigurable extends BaseConfigurable {
         editDefaultsConfiguration();
       }
     });
-    leftPanel.add(editDefaultsButton, BorderLayout.SOUTH);
+
+    final JPanel bottomPanel = new JPanel(new BorderLayout());
+    bottomPanel.add(editDefaultsButton, BorderLayout.NORTH);
+    bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+
+    myCbShowSettingsBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.display.settings.checkbox"));
+    myCbShowSettingsBeforeRunning.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        setModified(true);
+      }
+    });
+    bottomPanel.add(myCbShowSettingsBeforeRunning, BorderLayout.SOUTH);
+    Box box = new Box(BoxLayout.LINE_AXIS);
+    box.setBorder(BorderFactory.createEmptyBorder(7, 5, 3, 0));
+    box.add(new JLabel("Temporary configurations limit:"));
+    Dimension size = new Dimension(25, myRecentsLimit.getPreferredSize().height);
+    myRecentsLimit.setPreferredSize(size);
+    myRecentsLimit.setMaximumSize(size);
+    box.add(myRecentsLimit);
+    myRecentsLimit.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        setModified(true);
+      }
+    });
+    box.add(Box.createHorizontalGlue());
+    bottomPanel.add(box, BorderLayout.CENTER);
+
+    leftPanel.add(bottomPanel, BorderLayout.SOUTH);
     return leftPanel;
   }
 
@@ -347,19 +376,6 @@ class RunConfigurable extends BaseConfigurable {
     myPanel.setFirstComponent(createLeftPanel());
     myPanel.setSecondComponent(myRightPanel);
     myWholePanel.add(myPanel, BorderLayout.CENTER);
-    final JPanel bottomPanel = new JPanel(new GridLayout(2, 1, 5, 0));
-    myCbShowSettingsBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.display.settings.checkbox"));
-    bottomPanel.add(myCbShowSettingsBeforeRunning);
-
-    myWholePanel.add(bottomPanel, BorderLayout.SOUTH);
-    bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-    final ItemListener cbListener = new ItemListener() {
-      public void itemStateChanged(final ItemEvent e) {
-        setModified(true);
-      }
-    };
-    myCbShowSettingsBeforeRunning.addItemListener(cbListener);
 
     updateDialog();
     return myWholePanel;
@@ -373,6 +389,7 @@ class RunConfigurable extends BaseConfigurable {
     final RunManagerEx manager = getRunManager();
     final RunManagerConfig config = manager.getConfig();
     myCbShowSettingsBeforeRunning.setSelected(config.isShowSettingsBeforeRun());
+    myRecentsLimit.setText(Integer.toString(config.getRecentsLimit()));
     setModified(false);
   }
 
@@ -381,7 +398,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public void apply() throws ConfigurationException {
-    final RunManagerEx manager = getRunManager();
+    final RunManagerImpl manager = getRunManager();
     final ConfigurationType[] configurationTypes = manager.getConfigurationFactories();
     for (ConfigurationType configurationType : configurationTypes) {
       applyByType(configurationType);
@@ -395,6 +412,18 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     manager.getConfig().setShowSettingsBeforeRun(myCbShowSettingsBeforeRunning.isSelected());
+    String recentsLimit = myRecentsLimit.getText();
+    try {
+      int i = Integer.parseInt(recentsLimit);
+      int oldLimit = manager.getConfig().getRecentsLimit();
+      if (oldLimit != i) {
+        manager.getConfig().setRecentsLimit(i);
+        manager.checkRecentsLimit();
+      }
+    }
+    catch (NumberFormatException e) {
+      // ignore
+    }
 
     setModified(false);
   }
@@ -403,7 +432,6 @@ class RunConfigurable extends BaseConfigurable {
     DefaultMutableTreeNode typeNode = getConfigurationTypeNode(type);
     final RunManagerImpl manager = getRunManager();
     final ArrayList<RunConfigurationBean> stableConfigurations = new ArrayList<RunConfigurationBean>();
-    RunnerAndConfigurationSettingsImpl tempConfiguration = null;
     if (typeNode != null) {
       for (int i = 0; i < typeNode.getChildCount(); i++) {
         final Object userObject = ((DefaultMutableTreeNode)typeNode.getChildAt(i)).getUserObject();
@@ -412,22 +440,14 @@ class RunConfigurable extends BaseConfigurable {
           final RunnerAndConfigurationSettingsImpl settings = (RunnerAndConfigurationSettingsImpl)configurable.getSettings();
           if (manager.isTemporary(settings)) {
             applyConfiguration(typeNode, configurable);
-            tempConfiguration = settings;
           }
-          else {
-            stableConfigurations.add(new RunConfigurationBean(configurable));
-          }
+          stableConfigurations.add(new RunConfigurationBean(configurable));
         }
         else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
           RunnerAndConfigurationSettingsImpl settings = (RunnerAndConfigurationSettingsImpl)userObject;
-          if (manager.isTemporary(settings)) {
-            tempConfiguration = settings;
-          }
-          else {
             stableConfigurations.add(new RunConfigurationBean(settings,
                                                               manager.isConfigurationShared(settings),
                                                               manager.getStepsBeforeLaunch(settings.getConfiguration())));
-          }
         }
       }
     }
@@ -445,10 +465,6 @@ class RunConfigurable extends BaseConfigurable {
       manager.addConfiguration(stableConfiguration.getSettings(),
                                stableConfiguration.isShared(),
                                stableConfiguration.getStepsBeforeLaunch());
-    }
-
-    if (tempConfiguration != null) {
-      manager.setTemporaryConfiguration(tempConfiguration);
     }
   }
 

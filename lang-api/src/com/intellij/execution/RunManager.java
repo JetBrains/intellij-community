@@ -36,13 +36,13 @@ public abstract class RunManager {
 
   public abstract RunConfiguration[] getAllConfigurations();
 
-  @Nullable
-  public abstract RunConfiguration getTempConfiguration();
+  public abstract RunConfiguration[] getTempConfigurations();
 
   public abstract boolean isTemporary(RunConfiguration configuration);
 
   public abstract void makeStable(RunConfiguration configuration);
 
+  @Nullable
   public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
 
   public abstract RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type);
