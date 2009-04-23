@@ -44,6 +44,12 @@ public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
     return GroovyIcons.GROOVY_ICON_16x16;
   }
 
+  @NotNull
+  @Override
+  public String getAddActionText() {
+    return "Create new Groovy SDK...";
+  }
+
   public Library createLibrary(@NotNull ProjectSettingsContext context) {
     return createLibrary(context, GroovyConfigUtils.getInstance(), GroovyIcons.GROOVY_ICON_32x32);
   }
