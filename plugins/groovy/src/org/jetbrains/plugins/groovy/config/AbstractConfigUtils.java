@@ -286,10 +286,8 @@ public abstract class AbstractConfigUtils {
     });
   }
 
-  public abstract boolean isSDKConfigured(Module module);
-
   public boolean isSDKConfiguredToRun(Module module) {
-    return isSDKConfigured(module) && getSDKInstallPath(module).length() > 0;
+    return getSDKInstallPath(module).length() > 0;
   }
 
   @NotNull

@@ -193,12 +193,7 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsTagBodySelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsHtmlTagBodySelectioner"/>
 
-    <!--Gant-->
-    <facetType implementation="org.jetbrains.plugins.gant.config.grails.GantGrailsFacetType"/>
-    <facetType implementation="org.jetbrains.plugins.gant.config.groovy.GantGroovyFacetType"/>
-
-    <frameworkSupport implementation="org.jetbrains.plugins.gant.config.grails.GantGrailsFacetSupportProvider"/>
-    <frameworkSupport implementation="org.jetbrains.plugins.gant.config.groovy.GantGroovyFacetSupportProvider"/>
+    <frameworkSupport implementation="org.jetbrains.plugins.gant.config.GantSupportProvider"/>
     <!--Gant filetype-->
     <quoteHandler fileType="Gant" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
     <!--Gant Run/debug-->

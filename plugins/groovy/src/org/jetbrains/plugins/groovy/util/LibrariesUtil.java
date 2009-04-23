@@ -28,6 +28,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -102,6 +104,18 @@ public abstract class LibrariesUtil {
       }
     }
     return path;
+  }
+
+  @NotNull
+  public static VirtualFile getLocalFile(@NotNull VirtualFile libFile) {
+    final VirtualFileSystem system = libFile.getFileSystem();
+    if (system instanceof JarFileSystem) {
+      final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(libFile);
+      if (local != null) {
+        return local;
+      }
+    }
+    return libFile;
   }
 
   public static void addLibrary(Library library, Module module) {
