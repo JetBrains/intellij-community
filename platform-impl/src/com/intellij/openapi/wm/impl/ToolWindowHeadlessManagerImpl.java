@@ -224,7 +224,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
-                                       final Disposable parentDisposable) {
+                                       final Disposable parentDisposable, final boolean dumbAware) {
     return HEADLESS_WINDOW;
   }
 

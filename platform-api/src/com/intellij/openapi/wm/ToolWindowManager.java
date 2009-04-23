@@ -55,7 +55,15 @@ public abstract class ToolWindowManager {
 
   public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, boolean sideTool);
 
-  public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable);
+  public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable,
+                                                final boolean dumbAware);
+
+  public ToolWindow registerToolWindow(@NotNull final String id,
+                                       final boolean canCloseContent,
+                                       @NotNull final ToolWindowAnchor anchor,
+                                       final Disposable parentDisposable) {
+    return registerToolWindow(id, canCloseContent, anchor, parentDisposable, false);
+  }
 
   /**
    * @exception java.lang.IllegalArgumentException if tool window with specified isn't

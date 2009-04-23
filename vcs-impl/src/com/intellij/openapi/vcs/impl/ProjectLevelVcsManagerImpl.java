@@ -240,7 +240,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager != null) { // Can be null in tests
           ToolWindow toolWindow =
-            toolWindowManager.registerToolWindow(ToolWindowId.VCS, true, ToolWindowAnchor.BOTTOM);
+            toolWindowManager.registerToolWindow(ToolWindowId.VCS, true, ToolWindowAnchor.BOTTOM, myProject, true);
           myContentManager = toolWindow.getContentManager();
           toolWindow.setIcon(Icons.VCS_SMALL_TAB);
           toolWindow.installWatcher(myContentManager);

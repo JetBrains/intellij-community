@@ -13,6 +13,8 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
@@ -26,10 +28,12 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +68,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final HashMap<String, FloatingDecorator> myId2FloatingDecorator;
   private final HashMap<String, StripeButton> myId2StripeButton;
   private final HashMap<String, FocusWatcher> myId2FocusWatcher;
+  private final Set<String> myDumbAwareIds = CollectionFactory.newTroveSet();
 
   private final EditorComponentFocusWatcher myEditorComponentFocusWatcher;
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener;
@@ -198,9 +203,43 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       activateEditorComponentImpl(commandsList, true);
     }
     execute(commandsList);
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+
+    final DumbService.DumbModeListener dumbModeListener = new DumbService.DumbModeListener() {
+      private final Set<String> hiddenIds = new THashSet<String>();
+
+      public void enteredDumbMode() {
+      }
+
+      public void beforeEnteringDumbMode() {
+        for (final String id : getToolWindowIds()) {
+          if (!myDumbAwareIds.contains(id)) {
+            if (isToolWindowVisible(id)) {
+              hiddenIds.add(id);
+              hideToolWindow(id, true);
+            }
+            getStripeButton(id).setEnabled(false);
+          }
+        }
+      }
+
+      public void exitDumbMode() {
+        for (final String id : getToolWindowIds()) {
+          getStripeButton(id).setEnabled(true);
+        }
+        for (final String id : hiddenIds) {
+          showToolWindow(id);
+        }
+        hiddenIds.clear();
+      }
+    };
+    myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, dumbModeListener);
+
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         registerToolWindowsFromBeans();
+        if (DumbService.getInstance().isDumb()) {
+          dumbModeListener.beforeEnteringDumbMode();
+        }
       }
     });
   }
@@ -406,6 +445,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
+    if (DumbService.getInstance().isDumb() && !myDumbAwareIds.contains(id)) {
+      return;
+    }
+
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     activateToolWindowImpl(id, commandList, forced, autoFocusContents);
     execute(commandList);
@@ -687,33 +730,31 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        @NotNull final JComponent component,
                                        @NotNull final ToolWindowAnchor anchor) {
-    return registerToolWindow(id, component, anchor, false, false);
+    return registerToolWindow(id, component, anchor, false, false, false);
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
-    return registerToolWindow(id, null, anchor, false, canCloseContent);
+    return registerToolWindow(id, null, anchor, false, canCloseContent, false);
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        final boolean canCloseContent,
                                        @NotNull final ToolWindowAnchor anchor,
                                        final boolean sideTool) {
-    return registerToolWindow(id, null, anchor, sideTool, canCloseContent);
+    return registerToolWindow(id, null, anchor, sideTool, canCloseContent, false);
   }
 
 
-  public ToolWindow registerToolWindow(@NotNull final String id,
-                                       final boolean canCloseContent,
-                                       @NotNull final ToolWindowAnchor anchor,
-                                       final Disposable parentDisposable) {
-    return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, false, canCloseContent));
+  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
+                                       final Disposable parentDisposable, final boolean dumbAware) {
+    return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, false, canCloseContent, dumbAware));
   }
 
   private ToolWindow registerToolWindow(@NotNull final String id,
                                         @Nullable final JComponent component,
                                         @NotNull final ToolWindowAnchor anchor,
                                         boolean sideTool,
-                                        boolean canCloseContent) {
+                                        boolean canCloseContent, final boolean dumbAware) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -736,6 +777,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     decorator.addInternalDecoratorListener(myInternalDecoratorListener);
     toolWindow.addPropertyChangeListener(myToolWindowPropertyChangeListener);
     myId2FocusWatcher.put(id, new ToolWindowFocusWatcher(toolWindow));
+
+    if (dumbAware) {
+      myDumbAwareIds.add(id);
+    }
 
     // Create and show tool button
 

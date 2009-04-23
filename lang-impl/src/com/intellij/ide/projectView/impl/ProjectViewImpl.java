@@ -471,7 +471,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.PROJECT_VIEW, false, ToolWindowAnchor.LEFT, myProject);
+      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.PROJECT_VIEW, false, ToolWindowAnchor.LEFT, myProject, true);
       final ContentManager contentManager = toolWindow.getContentManager();
       final Content content = contentManager.getFactory().createContent(getComponent(), ToolWindowId.PROJECT_VIEW, false);
       contentManager.addContent(content);
