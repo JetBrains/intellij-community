@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +32,8 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author ilyas
@@ -64,29 +63,7 @@ public abstract class AbstractConfigUtils {
    * @param file
    * @return
    */
-  public boolean isSDKHome(final VirtualFile file) {
-    final Ref<Boolean> result = Ref.create(false);
-    processFilesUnderSDKRoot(file, new Processor<VirtualFile>() {
-      public boolean process(final VirtualFile virtualFile) {
-        result.set(true);
-        return false;
-      }
-    });
-    return result.get().booleanValue();
-  }
-
-  private void processFilesUnderSDKRoot(VirtualFile file, final Processor<VirtualFile> processor) {
-    if (file != null && file.isDirectory()) {
-      final VirtualFile child = file.findChild("bin");
-      if (child != null && child.isDirectory()) {
-        for (VirtualFile grandChild : child.getChildren()) {
-          if (STARTER_SCRIPT_FILE_NAME.equals(grandChild.getNameWithoutExtension())) {
-            if (!processor.process(grandChild)) return;
-          }
-        }
-      }
-    }
-  }
+  public abstract boolean isSDKHome(final VirtualFile file);
 
   @NotNull
   public abstract String getSDKVersion(@NotNull String path);

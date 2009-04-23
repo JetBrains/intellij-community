@@ -35,7 +35,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureCo
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -53,8 +52,6 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.jar.JarFile;
 
 /**
  * @author ilyas
@@ -95,28 +92,14 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   public boolean isSDKLibrary(Library library) {
     if (library == null) return false;
     VirtualFile[] classFiles = library.getFiles(OrderRootType.CLASSES);
+    return containsGroovyJar(classFiles) && !GrailsConfigUtils.containsGrailsJar(classFiles);
+  }
+
+  public static boolean containsGroovyJar(VirtualFile[] classFiles) {
     for (VirtualFile file : classFiles) {
-      String path = file.getPath();
-      if (path != null && "jar".equals(file.getExtension())) {
-        path = StringUtil.trimEnd(path, "!/");
-        @NonNls String name = file.getName();
-        if (isGroovyAllJar(name) || name.matches(GROOVY_LIB_PATTERN)) {
-          File realFile = new File(path);
-          if (realFile.exists()/* && new File(realFile, "../../" + GroovyScriptRunConfiguration.GROOVY_STARTER_CONF).exists()*/) {
-            try {
-              JarFile jarFile = new JarFile(realFile);
-              try {
-                return isSDKJar(jarFile) && !GrailsConfigUtils.getInstance().isSDKLibrary(library);
-              }
-              finally {
-                jarFile.close();
-              }
-            }
-            catch (IOException e) {
-              return false;
-            }
-          }
-        }
+      String name = file.getName();
+      if (isGroovyAllJar(name) || name.matches(GROOVY_LIB_PATTERN)) {
+        return true;
       }
     }
     return false;

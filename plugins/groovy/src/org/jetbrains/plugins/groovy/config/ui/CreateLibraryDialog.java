@@ -17,7 +17,7 @@ public class CreateLibraryDialog extends DialogWrapper {
     setTitle(title);
     myInProject.setSelected(true);
     myInProject.setMnemonic(KeyEvent.VK_P);
-    myGlobal.setMnemonic(KeyEvent.VK_A);
+    myGlobal.setMnemonic(KeyEvent.VK_G);
 
     myInProject.setText(inProjectText);
     myGlobal.setText(isGlobalText);

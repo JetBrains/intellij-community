@@ -30,10 +30,14 @@
   <extensionPoints>
     <extensionPoint name="grails.facetProvider" interface="org.jetbrains.plugins.grails.util.GrailsFacetProvider"/>
     <extensionPoint name="nonCodeProcessor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor"/>
+    <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.LibraryManager"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
     <nonCodeProcessor implementation="org.jetbrains.plugins.grails.references.domain.GrailsNonCodeMembersProcessor"/>
+    <libraryManager implementation="org.jetbrains.plugins.gant.config.GantLibraryManager"/>
+    <libraryManager implementation="org.jetbrains.plugins.grails.config.GrailsLibraryManager"/>
+    <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

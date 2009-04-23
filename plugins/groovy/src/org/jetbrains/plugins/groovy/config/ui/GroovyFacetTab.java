@@ -15,41 +15,48 @@
 
 package org.jetbrains.plugins.groovy.config.ui;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.facet.ui.FacetEditorTab;
-import com.intellij.facet.ui.ValidationResult;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.facet.impl.ui.FacetContextChangeListener;
+import com.intellij.facet.impl.ui.FacetEditorContextBase;
+import com.intellij.facet.ui.*;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Function;
+import com.intellij.util.Icons;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.grails.config.GrailsLibraryManager;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.config.GroovyFacetConfiguration;
-import org.jetbrains.plugins.groovy.config.GroovySDK;
-import org.jetbrains.plugins.groovy.config.util.GroovySDKPointer;
-import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
-import org.jetbrains.plugins.groovy.util.LibrariesUtil;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryManager;
+import org.jetbrains.plugins.groovy.config.LibraryManager;
 
 import javax.swing.*;
-import java.awt.event.*;
-import java.util.Arrays;
-import java.util.Collection;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -58,45 +65,259 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.config.ui.GroovyFacetTab");
 
-  private GroovySDKComboBox myComboBox;
-  private JButton myNewButton;
   private final Module myModule;
   private JPanel myPanel;
   private JRadioButton myCompile;
   private JRadioButton myCopyToOutput;
-  private final FacetEditorContext myEditorContext;
+  private JButton myAddButton;
+  private JButton myRemoveButton;
+  private JList myLibraryList;
+  private JButton myModuleDeps;
+  private final ProjectSettingsContext myEditorContext;
 
-  private final LibraryTable.Listener myLibraryListener;
-
-  private String oldGroovyLibName = "";
-  private String newGroovyLibName = "";
   private final GroovyFacetConfiguration myConfiguration;
+  private final FacetValidatorsManager myValidatorsManager;
+  private final DefaultListModel myListModel;
+  private LibrariesContainer myLibrariesContainer;
+  private final LibraryManager[] myManagers = LibraryManager.EP_NAME.getExtensions();
 
-  public GroovyFacetTab(FacetEditorContext editorContext, GroovyFacetConfiguration configuration) {
+  public GroovyFacetTab(final FacetEditorContext editorContext, GroovyFacetConfiguration configuration, FacetValidatorsManager validatorsManager) {
     myConfiguration = configuration;
-    myModule = editorContext.getModule();
-    setUpComboBox();
-    myNewButton.setMnemonic(KeyEvent.VK_N);
-    myEditorContext = editorContext;
-    setUpComponents();
-    myLibraryListener = new MyLibraryTableListener();
-    LibraryTablesRegistrar.getInstance().getLibraryTable().addListener(myLibraryListener);
-    ProjectLibraryTable.getInstance(myModule.getProject()).addListener(myLibraryListener);
+    myValidatorsManager = validatorsManager;
+    myEditorContext = (ProjectSettingsContext)editorContext;
+    myModule = myEditorContext.getModule();
+    myLibrariesContainer = ((FacetEditorContextBase)editorContext).getContainer();
+
+    myListModel = new DefaultListModel();
+
+    setUpLibraryList();
+
+    ((FacetEditorContextBase)editorContext).addFacetContextChangeListener(new FacetContextChangeListener() {
+      public void moduleRootsChanged(ModifiableRootModel rootModel) {
+        updateLibraryList();
+      }
+
+      public void facetModelChanged(@NotNull Module module) {
+      }
+    });
+    myAddButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        performAddAction(myAddButton, false);
+      }
+    });
+    myRemoveButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        deleteSelectedLibraries();
+      }
+    });
+    myModuleDeps.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ModuleStructureConfigurable.getInstance(editorContext.getProject()).selectOrderEntry(myModule, null);
+      }
+    });
+
+    validatorsManager.registerValidator(new FacetEditorValidator() {
+      @Override
+      public ValidationResult check() {
+        final Set<ManagedLibrary> libraries = getUsedLibraries();
+        for (final ManagedLibrary library : libraries) {
+          if (isGroovyOrGrails(library.manager)) {
+            return ValidationResult.OK;
+          }
+        }
+
+        return new ValidationResult("Groovy/Grails is not configured yet", new FacetConfigurationQuickFix() {
+          @Override
+          public void run(JComponent place) {
+            performAddAction(place, true);
+          }
+        });
+      }
+    });
   }
 
-  private void setUpComboBox() {
-    myComboBox.setModule(myModule);
-    myComboBox.setModel(new GroovySDKComboBox.GroovySDKComboBoxModel(myModule));
-    myComboBox.insertItemAt(new GroovySDKComboBox.NoGroovySDKComboBoxItem(), 0);
-    final Object o = myComboBox.getSelectedItem();
-    if (o instanceof GroovySDKComboBox.DefaultGroovySDKComboBoxItem) {
-      GroovySDKComboBox.DefaultGroovySDKComboBoxItem item = (GroovySDKComboBox.DefaultGroovySDKComboBoxItem)o;
-      oldGroovyLibName = newGroovyLibName = item.getName();
-    } else if (o == null) {
-      myComboBox.setSelectedIndex(0);
+  private void performAddAction(final JComponent component, boolean mainOnly) {
+    final Set<ManagedLibrary> managed = getUsedLibraries();
+    final Set<LibraryManager> usedManagers = ContainerUtil.map2Set(managed, new Function<ManagedLibrary, LibraryManager>() {
+      public LibraryManager fun(ManagedLibrary managedLibrary) {
+        return managedLibrary.manager;
+      }
+    });
+    final Set<Library> usedLibraries = ContainerUtil.map2Set(managed, new Function<ManagedLibrary, Library>() {
+      public Library fun(ManagedLibrary managedLibrary) {
+        return managedLibrary.library;
+      }
+    });
+
+    final MultiMap<LibraryManager, ManagedLibrary> libs = new MultiMap<LibraryManager, ManagedLibrary>() {
+      @Override
+      protected Map<LibraryManager, Collection<ManagedLibrary>> createMap() {
+        return new TreeMap<LibraryManager, Collection<ManagedLibrary>>(new Comparator<LibraryManager>() {
+          public int compare(LibraryManager o1, LibraryManager o2) {
+            return Arrays.asList(myManagers).indexOf(o2) - Arrays.asList(myManagers).indexOf(o1);
+          }
+        });
+      }
+    };
+
+    final List<Object> toAdd = CollectionFactory.arrayList();
+    final Map<Object, ListSeparator> separators = CollectionFactory.newTroveMap();
+
+    for (Library library : myLibrariesContainer.getAllLibraries()) {
+      if (!usedLibraries.contains(library)) {
+        final LibraryManager manager = findManagerFor(library);
+        if (manager != null && !usedManagers.contains(manager)) {
+          libs.putValue(manager, new ManagedLibrary(library, manager));
+        }
+      }
     }
+
+    for (final LibraryManager manager : libs.keySet()) {
+      if (mainOnly && !isGroovyOrGrails(manager)) {
+        continue;
+      }
+
+      boolean separatorSet = false;
+      for (ManagedLibrary library : libs.get(manager)) {
+        if (!separatorSet) {
+          separators.put(library, new ListSeparator(manager.getLibraryCategoryName()));
+          separatorSet = true;
+        }
+        toAdd.add(library);
+      }
+      toAdd.add(manager);
+    }
+
+    JBPopupFactory.getInstance().createListPopup(new ManagedLibrariesPopupStep(toAdd, separators)).showUnderneathOf(component);
   }
 
+  private static boolean isGroovyOrGrails(final LibraryManager manager) {
+    return manager instanceof GrailsLibraryManager || manager instanceof GroovyLibraryManager;
+  }
+
+  private void deleteSelectedLibraries() {
+    Set<Library> toDelete = new HashSet<Library>();
+    for (final Object value : myLibraryList.getSelectedValues()) {
+      toDelete.add(((ManagedLibrary) value).library);
+    }
+    final ModifiableRootModel rootModel = myEditorContext.getModifiableRootModel();
+    for (OrderEntry entry : rootModel.getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry) {
+        final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+        final Library library = libraryOrderEntry.getLibrary();
+        if (library != null && toDelete.contains(library)) {
+          rootModel.removeOrderEntry(libraryOrderEntry);
+        }
+      }
+    }
+    updateLibraryList();
+  }
+
+  private void setUpLibraryList() {
+    myLibraryList.setModel(myListModel);
+
+    myLibraryList.setCellRenderer(new ColoredListCellRenderer() {
+      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        ManagedLibrary ml = (ManagedLibrary)value;
+        setIcon(ml.manager.getIcon());
+        append(ml.library.getName());
+        final String version = ml.version;
+        if (StringUtil.isNotEmpty(version)) {
+          append(" (version " + version + ")", SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+        }
+      }
+    });
+
+    myLibraryList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        myRemoveButton.setEnabled(hasSelection());
+      }
+    });
+
+    AnAction navigateAction = new AnAction("&Show in module dependencies") {
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(hasSelection());
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final Object value = myLibraryList.getSelectedValue();
+        if (value instanceof ManagedLibrary) {
+          for (OrderEntry entry : myEditorContext.getModifiableRootModel().getOrderEntries()) {
+            if (entry instanceof LibraryOrderEntry) {
+              final LibraryOrderEntry orderEntry = (LibraryOrderEntry)entry;
+              if (((ManagedLibrary)value).library.equals(orderEntry.getLibrary())) {
+                ModuleStructureConfigurable.getInstance(myEditorContext.getProject()).selectOrderEntry(myModule, orderEntry);
+                return;
+              }
+            }
+          }
+        }
+
+      }
+    };
+    navigateAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myLibraryList);
+
+    final AnAction removeAction = new AnAction("R&emove...") {
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(hasSelection());
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        deleteSelectedLibraries();
+      }
+    };
+    removeAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE).getShortcutSet(), myLibraryList);
+
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(navigateAction);
+    actionGroup.add(removeAction);
+    PopupHandler.installPopupHandler(myLibraryList, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+  }
+
+  private boolean hasSelection() {
+    return myLibraryList.getSelectedIndices().length > 0;
+  }
+
+  private Set<ManagedLibrary> getUsedLibraries() {
+    final LinkedHashSet<ManagedLibrary> libraries = new LinkedHashSet<ManagedLibrary>();
+    for (OrderEntry entry : myEditorContext.getModifiableRootModel().getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry) {
+        final Library library = ((LibraryOrderEntry)entry).getLibrary();
+        if (library != null) {
+          final LibraryManager manager = findManagerFor(library);
+          if (manager != null) {
+            libraries.add(new ManagedLibrary(library, manager));
+          }
+        }
+      }
+    }
+    return libraries;
+  }
+
+  @Nullable
+  private LibraryManager findManagerFor(@NotNull Library library) {
+    for (final LibraryManager manager : myManagers) {
+      if (manager.managesLibrary(library, myLibrariesContainer)) {
+        return manager;
+      }
+    }
+    return null;
+  }
+
+  private void updateLibraryList() {
+    myListModel.clear();
+    for (final ManagedLibrary library : getUsedLibraries()) {
+      myListModel.addElement(library);
+    }
+
+    myAddButton.setEnabled(getUsedLibraries().size() < myManagers.length);
+    myValidatorsManager.validate();
+  }
 
   @Nls
   public String getDisplayName() {
@@ -108,16 +329,10 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public boolean isModified() {
-    if (!oldGroovyLibName.equals(newGroovyLibName)) {
-      return true;
-    }
     if (myCompile.isSelected() != myConfiguration.isCompileGroovyFiles()) {
       return true;
     }
 
-    for (GroovySDKComboBox.DefaultGroovySDKComboBoxItem item : myComboBox.getAllItems()) {
-      if (item instanceof GroovySDKComboBox.GroovySDKPointerItem) return true;
-    }
     return false;
   }
 
@@ -126,183 +341,85 @@ public class GroovyFacetTab extends FacetEditorTab {
     return super.getHelpTopic();
   }
 
-  public void onFacetInitialized(@NotNull Facet facet) {
-    fireRootsChangedEvent();
-    oldGroovyLibName = newGroovyLibName;
-  }
-
-  private void fireRootsChangedEvent() {
-    final GroovySDKComboBox.DefaultGroovySDKComboBoxItem selectedItem =
-      (GroovySDKComboBox.DefaultGroovySDKComboBoxItem)myComboBox.getSelectedItem();
-    final Module module = myEditorContext.getModule();
-    if (module != null) {
-      if (selectedItem != null ) {
-        final GroovySDK sdk = selectedItem.getGroovySDK();
-        if (sdk != null && Arrays.asList(GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module)).contains(sdk.getLibrary())) {
-          return;
-        }
-      }
-
-      final Project project = module.getProject();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          GroovySDK sdk = null;
-          if (selectedItem instanceof GroovySDKComboBox.GroovySDKPointerItem) {
-            GroovySDKComboBox.GroovySDKPointerItem pointerItem = (GroovySDKComboBox.GroovySDKPointerItem)selectedItem;
-            final GroovySDKPointer pointer = pointerItem.getPointer();
-            String name = pointerItem.getName();
-            String path = pointerItem.getPath();
-            Library library = GroovyConfigUtils.getInstance().createSDKLibrary(path, name, project, true, pointer.isProjectLib());
-            if (library != null) {
-              sdk = new GroovySDK(library, myModule, pointer.isProjectLib());
-            }
-          } else {
-            sdk = selectedItem.getGroovySDK();
-          }
-          GroovyConfigUtils.getInstance().updateSDKLibInModule(module, sdk);
-
-          // create other libraries by their pointers
-          for (int i = 0; i < myComboBox.getItemCount(); i++) {
-            Object item = myComboBox.getItemAt(i);
-            if (item != selectedItem && item instanceof GroovySDKComboBox.GroovySDKPointerItem) {
-              GroovySDKComboBox.GroovySDKPointerItem pointerItem = (GroovySDKComboBox.GroovySDKPointerItem)item;
-              final GroovySDKPointer pointer = pointerItem.getPointer();
-              String name = pointerItem.getName();
-              String path = pointerItem.getPath();
-              GroovyConfigUtils.getInstance().createSDKLibrary(path, name, project, true, pointer.isProjectLib());
-            }
-          }
-        }
-      });
-    }
-  }
-
   public void apply() throws ConfigurationException {
-    oldGroovyLibName = newGroovyLibName;
     myConfiguration.setCompileGroovyFiles(myCompile.isSelected());
   }
 
   public void reset() {
-    Module module = myEditorContext.getModule();
-    if (module != null && module.isDisposed()) return;
-    if (module != null && FacetManager.getInstance(module).getFacetByType(GroovyFacet.ID) != null) {
-      Library[] libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(myEditorContext.getModule());
-      if (libraries.length == 0) {
-        myComboBox.setSelectedIndex(0);
-        oldGroovyLibName = newGroovyLibName;
-      } else {
-        Library library = libraries[0];
-        if (library != null && library.getName() != null) {
-          myComboBox.selectLibrary(library);
-          oldGroovyLibName = newGroovyLibName;
-        }
-      }
-    } else {
-      Library library = LibrariesUtil.getLibraryByName(GroovyApplicationSettings.getInstance().DEFAULT_GROOVY_LIB_NAME);
-      if (library != null) {
-        myComboBox.selectLibrary(library);
-      }
-    }
-
     (myConfiguration.isCompileGroovyFiles() ? myCompile : myCopyToOutput).setSelected(true);
+    updateLibraryList();
   }
 
   public void disposeUIResources() {
-    if (myLibraryListener != null) {
-      ProjectLibraryTable.getInstance(myModule.getProject()).removeListener(myLibraryListener);
-      LibraryTablesRegistrar.getInstance().getLibraryTable().removeListener(myLibraryListener);
+  }
+
+  private class ManagedLibrary {
+    final Library library;
+    final LibraryManager manager;
+    @Nullable final String version;
+
+    private ManagedLibrary(@NotNull Library library, @NotNull LibraryManager manager) {
+      this.library = library;
+      this.manager = manager;
+      version = manager.getLibraryVersion(library, myLibrariesContainer);
     }
   }
 
-  private void createUIComponents() {
-    initComboBox();
-  }
+  private class ManagedLibrariesPopupStep extends BaseListPopupStep<Object> {
+    private final Map<Object, ListSeparator> mySeparators;
 
-  private void setUpComponents() {
-
-    if (myEditorContext != null && myEditorContext.getProject() != null) {
-      final Project project = myEditorContext.getProject();
-      myNewButton.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
-            public boolean isFileSelectable(VirtualFile file) {
-              return super.isFileSelectable(file) && GroovyConfigUtils.getInstance().isSDKHome(file);
-            }
-          };
-          final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
-          final VirtualFile[] files = fileChooserDialog.choose(null, project);
-          if (files.length > 0) {
-            String path = files[0].getPath();
-            if (ValidationResult.OK == GroovyConfigUtils.getInstance().isSDKHome(path)) {
-              Collection<String> versions = GroovyConfigUtils.getInstance().getSDKVersions(myModule.getProject());
-              String version = GroovyConfigUtils.getInstance().getSDKVersion(path);
-              boolean addVersion = !versions.contains(version) ||
-                                   Messages.showOkCancelDialog(GroovyBundle.message("duplicate.groovy.lib.version.add", version),
-                                                               GroovyBundle.message("duplicate.groovy.lib.version"),
-                                                               GroovyIcons.GROOVY_ICON_32x32) == 0;
-
-              if (addVersion && !GroovyConfigUtils.getInstance().UNDEFINED_VERSION.equals(version)) {
-                String name = myComboBox.generatePointerName(version);
-                final CreateLibraryDialog dialog = new CreateLibraryDialog(project, GroovyBundle.message("facet.create.lib.title"),
-                                                                           GroovyBundle.message("facet.create.project.lib", name),
-                                                                           GroovyBundle.message("facet.create.application.lib", name));
-                dialog.show();
-                if (dialog.isOK()) {
-                  myComboBox.addSdk(new GroovySDKPointer(name, path, version, dialog.isInProject()));
-                  newGroovyLibName = name;
-                }
-              }
-            } else {
-              Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"),
-                                       GroovyBundle.message("invalid.groovy.sdk.path.text"));
-            }
-          }
-        }
-      });
+    public ManagedLibrariesPopupStep(List<Object> toAdd, Map<Object, ListSeparator> separators) {
+      super(null, toAdd);
+      mySeparators = separators;
     }
-  }
 
-  private void initComboBox() {
-    myComboBox = new GroovySDKComboBox(null);
-    myComboBox.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        final Object o = e.getItem();
-        if (o instanceof GroovySDKComboBox.GroovySDKComboBoxItem) {
-          final GroovySDK sdk = ((GroovySDKComboBox.GroovySDKComboBoxItem)o).getGroovySDK();
-          newGroovyLibName = sdk.getLibraryName();
-        } else if (o instanceof GroovySDKComboBox.GroovySDKPointerItem) {
-          final GroovySDKPointer pointer = ((GroovySDKComboBox.GroovySDKPointerItem)o).getPointer();
-          newGroovyLibName = pointer.getLibraryName();
-        } else {
-          newGroovyLibName = "";
+    @NotNull
+    @Override
+    public String getTextFor(Object value) {
+      if (value instanceof ManagedLibrary) {
+        final ManagedLibrary ml = (ManagedLibrary)value;
+        final String name = ml.library.getName();
+
+        //todo make it gray
+        final String version = ml.version;
+        if (StringUtil.isNotEmpty(version)) {
+          return name + " (version " + version + ")";
         }
+        return name;
       }
-    });
+      return ((LibraryManager) value).getAddActionText();
+    }
+
+    @Override
+    public Icon getIconFor(Object value) {
+      if (value instanceof ManagedLibrary) {
+        return Icons.LIBRARY_ICON;
+      }
+      return ((LibraryManager) value).getIcon();
+
+    }
+
+    @Override
+    public ListSeparator getSeparatorAbove(Object value) {
+      return mySeparators.get(value);
+    }
+
+    @Override
+    public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
+      if (selectedValue instanceof ManagedLibrary) {
+        myEditorContext.getModifiableRootModel().addLibraryEntry(((ManagedLibrary)selectedValue).library);
+      }
+      else if (selectedValue instanceof LibraryManager) {
+        final Library library = ((LibraryManager)selectedValue).createLibrary(myEditorContext);
+        if (library == null) {
+          return FINAL_CHOICE;
+        }
+        myEditorContext.getModifiableRootModel().addLibraryEntry(library);
+      }
+      //todo reorder
+      updateLibraryList();
+      return FINAL_CHOICE;
+    }
   }
-
-  private void updateComboBox() {
-    myComboBox.refresh();
-    reset();
-  }
-
-  private class MyLibraryTableListener implements LibraryTable.Listener {
-
-    public void afterLibraryAdded(Library newLibrary) {
-      updateComboBox();
-    }
-
-    public void afterLibraryRenamed(Library library) {
-      updateComboBox();
-    }
-
-    public void afterLibraryRemoved(Library library) {
-      updateComboBox();
-    }
-
-    public void beforeLibraryRemoved(Library library) {
-    }
-
-  }
-
 
 }
