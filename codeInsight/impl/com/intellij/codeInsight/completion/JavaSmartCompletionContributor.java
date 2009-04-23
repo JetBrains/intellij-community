@@ -415,9 +415,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             final String value = statisticsInfo.getValue();
             if (value.startsWith(JavaStatisticsManager.CLASS_PREFIX)) {
               final String qname = value.substring(JavaStatisticsManager.CLASS_PREFIX.length());
-              for (final PsiClass psiClass : JavaPsiFacade.getInstance(file.getProject()).findClasses(qname, file.getResolveScope())) {
-                if (!PsiTreeUtil.isAncestor(file, psiClass, true) && !processor.process(psiClass)) break;
-              }
+              final PsiClass psiClass = JavaPsiFacade.getInstance(file.getProject()).findClass(qname, file.getResolveScope());
+              if (psiClass != null && !PsiTreeUtil.isAncestor(file, psiClass, true) && !processor.process(psiClass)) break;
             }
           }
 
