@@ -8,12 +8,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -89,34 +93,49 @@ public class StartupManagerImpl extends StartupManagerEx {
   public synchronized void runPostStartupActivities() {
     final Application app = ApplicationManager.getApplication();
     app.assertIsDispatchThread();
-    runActivities(myPostStartupActivities);
+    if (DumbService.UPDATE_IN_BACKGROUND) {
+      final List<Runnable> dumbAware = CollectionFactory.arrayList();
+      for (Iterator<Runnable> iterator = myPostStartupActivities.iterator(); iterator.hasNext();) {
+        Runnable runnable = iterator.next();
+        if (runnable instanceof DumbAware) {
+          dumbAware.add(runnable);
+          iterator.remove();
+        }
+      }
+      runActivities(dumbAware);
+      DumbService.getInstance().runWhenSmart(new Runnable() {
+        public void run() {
+          if (myProject.isDisposed()) return;
+          
+          runActivities(myPostStartupActivities);
+          myPostStartupActivities.clear();
+        }
+      });
+    } else {
+      runActivities(myPostStartupActivities);
+      myPostStartupActivities.clear();
+    }
 
     if (app.isUnitTestMode()) return;
-    
+
     VirtualFileManager.getInstance().refresh(!app.isHeadlessEnvironment());
   }
 
   private static void runActivities(final List<Runnable> activities) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    try {
+    while (!activities.isEmpty()) {
+      final Runnable runnable = activities.remove(0);
+      if (indicator != null) indicator.checkCanceled();
 
-      while (!activities.isEmpty()) {
-        final Runnable runnable = activities.remove(0);
-        if (indicator != null) indicator.checkCanceled();
-
-        try {
-          runnable.run();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable ex) {
-          LOG.error(ex);
-        }
+      try {
+        runnable.run();
       }
-    }
-    finally {
-      activities.clear();
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable ex) {
+        LOG.error(ex);
+      }
     }
   }
 
