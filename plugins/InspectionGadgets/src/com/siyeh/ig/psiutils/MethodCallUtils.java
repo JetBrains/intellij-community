@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,7 @@ public class MethodCallUtils {
         regexMethodNames.add("split");
     }
 
-    private MethodCallUtils() {
-        super();
-    }
+    private MethodCallUtils() {}
 
     @Nullable
     public static String getMethodName(
@@ -86,8 +84,9 @@ public class MethodCallUtils {
             return isCallToMethod(expression, calledOnClassName, returnType,
                     methodName);
         }
-        final PsiManager manager = expression.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        final JavaPsiFacade psiFacade =
+                JavaPsiFacade.getInstance(expression.getProject());
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         final PsiType[] parameterTypes =
                 new PsiType[parameterTypeStrings.length];
         final GlobalSearchScope scope = expression.getResolveScope();
@@ -159,8 +158,8 @@ public class MethodCallUtils {
                     methodExpression.getQualifierExpression();
             if (qualifier != null) {
                 if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
-		                calledOnClassName)) {
-	                return false;
+                        calledOnClassName)) {
+                    return false;
                 }
                 return MethodUtils.methodMatches(method, null, returnType,
                         methodName, parameterTypes);
