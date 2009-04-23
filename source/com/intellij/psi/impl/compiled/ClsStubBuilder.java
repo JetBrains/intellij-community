@@ -349,12 +349,13 @@ public class ClsStubBuilder {
 
       String returnType;
       List<String> args = new ArrayList<String>();
+      List<String> throwables = exceptions != null ? new ArrayList<String>() : null;
       boolean parsedViaGenericSignature = false;
       if (signature == null) {
         returnType = parseMethodViaDescription(desc, stub, args);
       } else {
         try {
-          returnType = parseMethodViaGenericSignature(signature, stub, args);
+          returnType = parseMethodViaGenericSignature(signature, stub, args, throwables);
           parsedViaGenericSignature = true;
         }
         catch (ClsFormatException e) {
@@ -379,17 +380,24 @@ public class ClsStubBuilder {
         new PsiModifierListStubImpl(parameterStub, 0);
       }
 
-      if (exceptions != null) {
+      String[] thrownTypes = buildThrowsList(exceptions, throwables, parsedViaGenericSignature);
+      new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, thrownTypes, PsiReferenceList.Role.THROWS_LIST);
+
+      return new AnnotationCollectingVisitor(stub, modlist);
+    }
+
+    private static String[] buildThrowsList(String[] exceptions, List<String> throwables, boolean parsedViaGenericSignature) {
+      if (exceptions == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+      if (parsedViaGenericSignature) {
+        return throwables.toArray(new String[throwables.size()]);
+      }
+      else {
         String[] converted = ArrayUtil.newStringArray(exceptions.length);
         for (int i = 0; i < converted.length; i++) {
           converted[i] = getClassName(exceptions[i]);
         }
-        new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, converted, PsiReferenceList.Role.THROWS_LIST);
-      } else {
-        new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, ArrayUtil.EMPTY_STRING_ARRAY, PsiReferenceList.Role.THROWS_LIST);
+        return converted;
       }
-
-      return new AnnotationCollectingVisitor(stub, modlist);
     }
 
     private static int packMethodFlags(final int access) {
@@ -411,7 +419,10 @@ public class ClsStubBuilder {
       return returnType;
     }
 
-    private static String parseMethodViaGenericSignature(final String signature, final PsiMethodStubImpl stub, final List<String> args)
+    private static String parseMethodViaGenericSignature(final String signature,
+                                                         final PsiMethodStubImpl stub,
+                                                         final List<String> args,
+                                                         final List<String> throwables)
       throws ClsFormatException {
       StringCharacterIterator iterator = new StringCharacterIterator(signature);
       SignatureParsing.parseTypeParametersDeclaration(iterator, stub);
@@ -430,7 +441,14 @@ public class ClsStubBuilder {
       }
       iterator.next();
 
-      return SignatureParsing.parseTypeString(iterator);
+      String returnType = SignatureParsing.parseTypeString(iterator);
+
+      while (iterator.current() == '^') {
+        iterator.next();
+        throwables.add(SignatureParsing.parseTypeString(iterator));
+      }
+
+      return returnType;
     }
 
     public void visitEnd() {
