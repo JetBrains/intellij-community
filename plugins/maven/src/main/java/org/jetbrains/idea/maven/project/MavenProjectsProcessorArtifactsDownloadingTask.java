@@ -3,10 +3,10 @@ package org.jetbrains.idea.maven.project;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import com.intellij.openapi.project.Project;
 
-public class MavenProjectsProcessorDownloadingTask extends MavenProjectsProcessorBasicTask {
+public class MavenProjectsProcessorArtifactsDownloadingTask extends MavenProjectsProcessorBasicTask {
   private MavenDownloadingSettings myDownloadingSettings;
 
-  public MavenProjectsProcessorDownloadingTask(MavenProject project,
+  public MavenProjectsProcessorArtifactsDownloadingTask(MavenProject project,
                                                MavenProjectsTree tree,
                                                MavenDownloadingSettings downloadingSettings) {
     super(project, tree);

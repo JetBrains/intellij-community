@@ -2,8 +2,8 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.project.DefaultMavenModuleModelsProvider;
 import org.jetbrains.idea.maven.project.MavenRootModelAdapter;
 
 import java.io.IOException;
@@ -172,7 +172,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
 
     MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
                                                               getModule("project"),
-                                                              ModulesProvider.EMPTY_MODULES_PROVIDER);
+                                                              new DefaultMavenModuleModelsProvider(myProject));
     adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/resources").getPath(), false);
     adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/ideaRes").getPath(), false);
     adapter.getRootModel().commit();

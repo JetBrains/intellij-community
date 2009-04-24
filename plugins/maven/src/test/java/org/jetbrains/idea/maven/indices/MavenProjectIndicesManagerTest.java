@@ -60,7 +60,7 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
 
     assertFalse(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
 
-    resolveProject();
+    resolveDependenciesAndImport();
 
     assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
   }

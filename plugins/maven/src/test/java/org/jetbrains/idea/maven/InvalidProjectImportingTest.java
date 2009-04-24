@@ -453,7 +453,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "  </extensions>" +
                   "</build>");
 
-    resolveProject();
+    resolveDependenciesAndImport();
     MavenProject root = getRootProjects().get(0);
     assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:1'.");
   }
@@ -477,7 +477,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertProblems(getRootProjects().get(0), true);
 
-    resolveProject();
+    resolveDependenciesAndImport();
     assertProblems(getRootProjects().get(0), true);
   }
 
@@ -500,7 +500,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertProblems(getRootProjects().get(0), true);
 
-    resolveProject();
+    resolveDependenciesAndImport();
     assertProblems(getRootProjects().get(0), true);
   }
 

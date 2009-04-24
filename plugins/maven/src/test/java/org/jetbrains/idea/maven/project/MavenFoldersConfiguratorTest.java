@@ -20,7 +20,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
 
     new File(myProjectRoot.getPath(), "target/foo").mkdirs();
     new File(myProjectRoot.getPath(), "target/generated-sources/xxx").mkdirs();
-    updateFolders();
+    updateProjectFolders();
 
     assertExcludes("project", "target/foo");
     assertSources("project", "target/generated-sources/xxx");
@@ -59,7 +59,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
     new File(myProjectRoot.getPath(), "m2/target/bar").mkdirs();
     new File(myProjectRoot.getPath(), "m2/target/generated-sources/yyy").mkdirs();
 
-    updateFolders();
+    updateProjectFolders();
 
     assertExcludes("m1", "target/foo");
     assertSources("m1", "target/generated-sources/xxx");
@@ -77,7 +77,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
     assertSources("project", "src/main/java", "src/main/resources");
     assertTestSources("project", "src/test/java", "src/test/resources");
 
-    updateFolders();
+    updateProjectFolders();
 
     assertSources("project", "src/main/java", "src/main/resources");
     assertTestSources("project", "src/test/java", "src/test/resources");
@@ -94,11 +94,11 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
 
     MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
                                                               getModule("project"),
-                                                              null);
+                                                              new DefaultMavenModuleModelsProvider(myProject));
     adapter.addSourceFolder(sourceDir.getPath(), false);
     adapter.getRootModel().commit();
 
-    updateFolders();
+    updateProjectFolders();
 
     assertSources("project", "target/src");
     assertExcludes("project", "target/foo");
@@ -110,7 +110,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     createModule("userModule");
-    updateFolders(); // shouldn't throw exceptions
+    updateProjectFolders(); // shouldn't throw exceptions
   }
 
   public void testDoNotUpdateOutputFoldersWhenUpdatingExcludedFolders() throws Exception {
@@ -120,7 +120,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
 
     MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
                                                               getModule("project"),
-                                                              null);
+                                                              new DefaultMavenModuleModelsProvider(myProject));
     adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                             new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
     adapter.getRootModel().commit();
@@ -148,7 +148,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
       }
     });
 
-    updateFolders();
+    updateProjectFolders();
 
     assertEquals(0, count[0]);
   }
@@ -190,12 +190,12 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
     new File(m1.getPath(), "target/generated-sources/bar").mkdirs();
     new File(m2.getPath(), "target/generated-sources/baz").mkdirs();
 
-    updateFolders();
+    updateProjectFolders();
 
     assertEquals(1, count[0]);
   }
 
-  private void updateFolders() throws MavenException {
+  private void updateProjectFolders() throws MavenException {
     MavenFoldersConfigurator.updateProjectFolders(myProject, false);
   }
 }

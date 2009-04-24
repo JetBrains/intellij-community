@@ -204,7 +204,7 @@ public class ReimportingTest extends MavenImportingTestCase {
                     "</build>");
 
     importProject(); // shouldn't throw Dialog.show exception
-    resolveProject();
+    resolveDependenciesAndImport();
     assertEquals(0, questionsCount);
   }
 

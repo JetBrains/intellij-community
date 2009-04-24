@@ -327,45 +327,43 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(Arrays.asList(files));
   }
 
-  private void doImportProjects(List<VirtualFile> files, String... profiles) throws MavenException {
-    try {
-      myProfilesList = Arrays.asList(profiles);
+  private void doImportProjects(List<VirtualFile> files, String... profiles) {
+    myProfilesList = Arrays.asList(profiles);
 
-      initMavenProjectsManager(false);
-      myMavenProjectsManager.setManagedFiles(files);
-      myMavenProjectsManager.setActiveProfiles(myProfilesList);
-      myMavenProjectsManager.scheduleUpdateAll();
-      myMavenProjectsManager.doReimport();
-      myMavenTree = myMavenProjectsManager.getProjectsTree();
-    }
-    catch (MavenProcessCanceledException e) {
-      throw new RuntimeException(e);
-    }
+    initMavenProjectsManager(false);
+    myMavenProjectsManager.resetManagedFilesAndProfilesInTests(files, myProfilesList);
+    myMavenProjectsManager.waitForFullReadingCompletionAndImport();
+    myMavenTree = myMavenProjectsManager.getProjectsTree();
   }
 
   protected void initMavenProjectsManager(boolean enableEventHandling) {
-    myMavenProjectsManager.doInitComponent(false);
-    if (enableEventHandling) myMavenProjectsManager.initEventsHandling();
+    myMavenProjectsManager.initForTests();
+    if (enableEventHandling) myMavenProjectsManager.listenForExternalChanges();
   }
 
-  protected void waitForProjectRead() {
-    myMavenProjectsManager.waitForReadingTask();
+  protected void waitForFullReadingCompletion() {
+    myMavenProjectsManager.waitForFullReadingCompletion();
   }
 
-  protected void resolveProject() {
-    myMavenProjectsManager.resolveDependencies();
+  protected void resolveDependenciesAndImport() {
+    myMavenProjectsManager.waitForResolvingCompletionAndImport();
   }
 
-  protected void generateSourcesAndUpdateFolders() {
-    myMavenProjectsManager.updateFolders();
-  }
-
-  protected void downloadArtifacts() {
-    myMavenProjectsManager.downloadArtifacts();
+  protected void updateFoldersAndImport() {
+    myMavenProjectsManager.waitForFoldersUpdatingCompletionAndImport();
   }
 
   protected void downloadPlugins() {
-    myMavenProjectsManager.downloadPlugins();
+    myMavenProjectsManager.waitForPluginsDownloadingCompletion();
+  }
+
+  protected void downloadArtifacts() {
+    myMavenProjectsManager.scheduleArtifactsDownloading();
+    myMavenProjectsManager.waitForArtifactsDownloadingCompletion();
+  }
+
+  protected void performPostImportTasks() {
+    myMavenProjectsManager.waitForPostImportTasksCompletion();
   }
 
   protected void executeGoal(String relativePath, String goal) {

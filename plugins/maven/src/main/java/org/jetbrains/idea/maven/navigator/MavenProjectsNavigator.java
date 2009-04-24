@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
 
 import javax.swing.*;
@@ -52,8 +53,6 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
   private SimpleTree myTree;
 
   private final Map<VirtualFile, PomNode> myFileToNode = new LinkedHashMap<VirtualFile, PomNode>();
-  private MavenProjectsManager.Listener myMavenProjectsListener;
-  private MavenEventsManager.Listener myMavenEventsListener;
 
   public static MavenProjectsNavigator getInstance(Project project) {
     return project.getComponent(MavenProjectsNavigator.class);
@@ -84,11 +83,10 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
 
     initMavenProjectsTree();
     initToolWindow();
-    subscribeForChanges();
+    listenForChanges();
   }
 
   public void projectClosed() {
-    unsubscribe();
   }
 
   private void initMavenProjectsTree() {
@@ -148,19 +146,18 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
     });
   }
 
-  private void subscribeForChanges() {
-    myMavenProjectsListener = new MyProjectsListener();
+  private void listenForChanges() {
+    MyProjectsListener projectsListener = new MyProjectsListener();
+    myProjectsManager.addListener(projectsListener);
+    myProjectsManager.addProjectsTreeListener(projectsListener);
 
-    myMavenEventsListener = new MavenEventsManager.Listener() {
+    myEventsHandler.addListener(new MavenEventsManager.Listener() {
       public void updateShortcuts(@Nullable String actionId) {
         for (PomNode pomNode : myFileToNode.values()) {
           pomNode.updateShortcuts(actionId);
         }
       }
-    };
-
-    myProjectsManager.addListener(myMavenProjectsListener);
-    myEventsHandler.addListener(myMavenEventsListener);
+    });
 
     myEventsHandler.installTaskSelector(new MavenEventsManager.TaskSelector() {
       SelectMavenGoalDialog dialog;
@@ -182,11 +179,6 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
         return dialog.getSelectedGoal();
       }
     });
-  }
-
-  private void unsubscribe() {
-    myEventsHandler.removeListener(myMavenEventsListener);
-    myProjectsManager.removeListener(myMavenProjectsListener);
   }
 
   private void initToolWindow() {
@@ -235,10 +227,10 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
     if (node != null) selectNode(myTreeBuilder, node);
   }
 
-  private class MyProjectsListener implements MavenProjectsManager.Listener {
+  private class MyProjectsListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
     boolean isActivated;
 
-    public void activate() {
+    public void activated() {
       for (MavenProject each : myProjectsManager.getProjects()) {
         myFileToNode.put(each.getFile(), new PomNode(each));
       }

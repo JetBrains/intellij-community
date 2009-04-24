@@ -7,6 +7,7 @@ import org.apache.lucene.search.Query;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenRemoteRepository;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenId;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -44,12 +45,16 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
       updateIndicesList();
     }
 
-    getMavenProjectManager().addListener(new MavenProjectsManager.ListenerAdapter() {
-      @Override
-      public void activate() {
+    getMavenProjectManager().addListener(new MavenProjectsManager.Listener() {
+      public void activated() {
         updateIndicesList();
       }
 
+      public void setIgnored(MavenProject project, boolean on) {
+      }
+    });
+
+    getMavenProjectManager().addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
       public void projectsReadQuickly(List<MavenProject> projects) {
         updateIndicesList();
@@ -57,6 +62,11 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
       @Override
       public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+        updateIndicesList();
+      }
+
+      @Override
+      public void projectResolved(MavenProject project) {
         updateIndicesList();
       }
 

@@ -25,11 +25,11 @@ public class MavenFoldersConfigurator {
       public void run() {
         List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
         for (Module each : ModuleManager.getInstance(project).getModules()) {
-          MavenProject project = manager.findProject(each);
-          if (project == null) continue;
+          MavenProject mavenProject = manager.findProject(each);
+          if (mavenProject == null) continue;
 
-          MavenRootModelAdapter a = new MavenRootModelAdapter(project, each, null);
-          new MavenFoldersConfigurator(project, settings, a).config(updateTargetFoldersOnly);
+          MavenRootModelAdapter a = new MavenRootModelAdapter(mavenProject, each, new DefaultMavenModuleModelsProvider(project));
+          new MavenFoldersConfigurator(mavenProject, settings, a).config(updateTargetFoldersOnly);
 
           ModifiableRootModel model = a.getRootModel();
           if (model.isChanged()) {

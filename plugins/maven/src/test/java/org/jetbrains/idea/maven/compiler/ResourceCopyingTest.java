@@ -3,9 +3,9 @@ package org.jetbrains.idea.maven.compiler;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.project.DefaultMavenModuleModelsProvider;
 import org.jetbrains.idea.maven.project.MavenRootModelAdapter;
 
 public class ResourceCopyingTest extends MavenImportingTestCase {
@@ -275,7 +275,7 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
 
     MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
                                                               getModule("project"),
-                                                              ModulesProvider.EMPTY_MODULES_PROVIDER);
+                                                              new DefaultMavenModuleModelsProvider(myProject));
     adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/resources").getPath(), false);
     adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/ideaRes").getPath(), false);
     adapter.getRootModel().commit();

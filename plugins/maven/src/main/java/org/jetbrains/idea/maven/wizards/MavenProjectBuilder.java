@@ -5,6 +5,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,8 +78,27 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     settings.downloadingSettings = getDownloadingSettings();
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-    manager.setImportedMavenProjectsTree(getParameters().myMavenProjectTree);
-    return manager.commit(model, modulesProvider);
+    List<VirtualFile> files = getParameters().myMavenProjectTree.getRootProjectsFiles();
+
+    manager.addManagedFilesWithProfiles(files, getSelectedProfiles());
+    manager.waitForQuickReadingCompletion();
+
+    return manager.importProjects(new DefaultMavenModuleModelsProvider(project) {
+      public ModifiableModuleModel getModuleModel() {
+        if (model != null) return model;
+        return super.getModuleModel();
+      }
+
+      public ModifiableRootModel getRootModel(Module module) {
+        ModuleRootModel rootModel = modulesProvider.getRootModel(module);
+        if (rootModel instanceof ModifiableRootModel) return (ModifiableRootModel)rootModel;
+        return super.getRootModel(module);
+      }
+
+      public void commit(ModifiableModuleModel modulModel, ModifiableRootModel[] rootModels) {
+        if (model == null) super.commit(modulModel, rootModels);
+      }
+    });
   }
 
   public VirtualFile getRootDirectory() {
@@ -161,9 +182,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
   private void readMavenProjectTree(MavenProcess process) throws MavenProcessCanceledException {
     MavenProjectsTree tree = new MavenProjectsTree();
-
-    tree.setManagedFiles(getParameters().myFiles);
-    tree.setActiveProfiles(getParameters().mySelectedProfiles);
+    tree.addManagedFilesWithProfiles(getParameters().myFiles, getParameters().mySelectedProfiles);
     tree.updateAll(true, getEmbeddersManager(), getGeneralSettings(), new SoutMavenConsole(), process);
     getParameters().myMavenProjectTree = tree;
   }

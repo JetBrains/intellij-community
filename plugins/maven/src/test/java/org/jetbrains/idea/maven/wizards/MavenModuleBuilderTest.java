@@ -240,8 +240,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     myBuilder.createModule(model);
     model.commit();
 
-    // emulate invokeLater from MavenModuleBulder.
-    MavenProjectsManager.getInstance(myProject).scheduleUpdateAll();
-    MavenProjectsManager.getInstance(myProject).reimport();
+    // emulate invokeLater from MavenModuleBuilder
+    MavenProjectsManager.getInstance(myProject).waitForFullReadingCompletionAndImport();
   }
 }

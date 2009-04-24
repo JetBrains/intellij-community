@@ -15,8 +15,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
     super.setUp();
     myEventsManager = MavenEventsManager.getInstance(myProject);
     myEventsManager.doInit();
-    myMavenProjectsManager.doInitComponent(false);
-    myMavenProjectsManager.initEventsHandling();
+    initMavenProjectsManager(true);
   }
 
   public void testRefreshingActionsOnImport() throws Exception {
@@ -54,7 +53,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
                      "    </plugin>" +
                      "  </plugins>" +
                      "</build>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
   }
@@ -78,7 +77,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>module</module>" +
                      "</modules>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertKeymapContains(m, "clean");
   }
@@ -98,7 +97,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p2, "clean");
 
     p1.delete(this);
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertKeymapDoesNotContain(p1, "clean");
     assertKeymapContains(p2, "clean");

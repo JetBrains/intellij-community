@@ -70,7 +70,7 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
 
     assertEquals("4.0.0", p.getModelVersion());
     assertEquals("jar", p.getPackaging());
-    assertEquals("Unnamed", p.getName());
+    assertNull(p.getModel().getName());
     assertNull(p.getParent());
     assertNull(p.getParentArtifact());
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenRootModelAdapter;
+import org.jetbrains.idea.maven.project.DefaultMavenModuleModelsProvider;
 import org.jetbrains.idea.maven.utils.Path;
 
 import java.io.File;
@@ -65,7 +66,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
     MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
                                                               getModule("project"),
-                                                              null);
+                                                              new DefaultMavenModuleModelsProvider(myProject));
     adapter.addSourceFolder(dir1.getPath(), false);
     adapter.addExcludedFolder(dir2.getPath());
     adapter.getRootModel().commit();
@@ -78,7 +79,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertSources("project", "userSourceFolder");
     assertExcludes("project", "target", "userExcludedFolder");
 
-    generateSourcesAndUpdateFolders();
+    updateFoldersAndImport();
 
     assertSources("project", "userSourceFolder");
     assertExcludes("project", "target", "userExcludedFolder");
@@ -184,7 +185,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-    generateSourcesAndUpdateFolders();
+    updateFoldersAndImport();
     assertModules("project");
 
     assertSources("project", "src/main/java", "src/main/resources", "src1", "src2");
@@ -220,7 +221,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-    generateSourcesAndUpdateFolders();
+    updateFoldersAndImport();
     assertModules("project");
 
     assertSources("project", "extraResources", "src/main/java", "src/main/resources");
@@ -258,7 +259,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-    generateSourcesAndUpdateFolders();
+    updateFoldersAndImport();
     assertModules("project");
 
     assertTestSources("project", "extraTestResources", "src/test/java", "src/test/resources");
@@ -294,7 +295,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-    generateSourcesAndUpdateFolders();
+    updateFoldersAndImport();
     assertModules("project");
 
     assertSources("project", "src/main/java", "src/main/resources", "relativePath");
@@ -330,7 +331,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-    generateSourcesAndUpdateFolders();
+    updateFoldersAndImport();
     assertModules("project");
 
     assertSources("project", "src/main/java", "src/main/resources", "target/src");
@@ -393,7 +394,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m1", "m2");
 
-    generateSourcesAndUpdateFolders();
+    updateFoldersAndImport();
     assertSources("m1", "src/main/java", "src/main/resources", "src/foo");
   }
 
@@ -432,8 +433,8 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-    resolveProject();
-    generateSourcesAndUpdateFolders();
+    resolveDependenciesAndImport();
+    updateFoldersAndImport();
 
     assertTrue(pluginFile.exists());
   }
@@ -504,7 +505,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-    generateSourcesAndUpdateFolders();
+    updateFoldersAndImport();
 
     assertSources("project",
                   "src/main/java",

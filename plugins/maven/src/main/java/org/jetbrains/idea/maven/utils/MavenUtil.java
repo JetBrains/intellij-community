@@ -10,6 +10,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.apache.commons.beanutils.BeanUtils;
@@ -27,26 +29,36 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class MavenUtil {
-  public static void invokeLater(final Project p, final Runnable r) {
-    invokeLater(p, ModalityState.defaultModalityState(), r);
+  public static void invokeInDispatchThread(final Project p, final Runnable r) {
+    invokeInDispatchThread(p, ModalityState.defaultModalityState(), r);
   }
 
-  public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+  public static void invokeInDispatchThread(final Project p, final ModalityState state, final Runnable r) {
+    if (ApplicationManager.getApplication().isUnitTestMode()
+        || ApplicationManager.getApplication().isDispatchThread()) {
       r.run();
-      return;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (p.isDisposed()) return;
-        r.run();
-      }
-    }, state);
+    else {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (p.isDisposed()) return;
+          r.run();
+        }
+      }, state);
+    }
   }
 
   public static File getPluginSystemDir(String folder) {
     // PathManager.getSystemPath() may return relative path
     return new File(PathManager.getSystemPath(), "Maven" + "/" + folder).getAbsoluteFile();
+  }
+
+  public static List<String> collectPaths(List<VirtualFile> files) {
+    return ContainerUtil.map(files, new Function<VirtualFile, String>() {
+      public String fun(VirtualFile file) {
+        return file.getPath();
+      }
+    });
   }
 
   public static String makeFileContent(MavenId projectId) {
@@ -96,7 +108,7 @@ public class MavenUtil {
     }
     return true;
   }
-  
+
   public static <T extends Serializable> T cloneObject(T object) {
     try {
       return (T)BeanUtils.cloneBean(object);

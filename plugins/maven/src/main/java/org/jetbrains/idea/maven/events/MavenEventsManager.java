@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.utils.MavenConstants;
@@ -92,7 +93,10 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
 
   @TestOnly
   public void doInit() {
-    myProjectsManager.addListener(new MyProjectStateListener());
+    MyProjectsTreeListener listener = new MyProjectsTreeListener();
+    myProjectsManager.addListener(listener);
+    myProjectsManager.addProjectsTreeListener(listener);
+
     myKeymapListener = new MyKeymapListener();
 
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
@@ -420,9 +424,8 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
     }
   }
 
-  private class MyProjectStateListener extends MavenProjectsManager.ListenerAdapter {
-    @Override
-    public void activate() {
+  private class MyProjectsTreeListener extends MavenProjectsTree.ListenerAdapter implements MavenProjectsManager.Listener {
+    public void activated() {
       scheduleKeymapUpdate(null, false);
     }
 
@@ -441,7 +444,6 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
       scheduleKeymapUpdate(Collections.singletonList(project), true);
     }
 
-    @Override
     public void setIgnored(MavenProject project, boolean on) {
       scheduleKeymapUpdate(Collections.singletonList(project), on);
     }
@@ -470,11 +472,11 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
     }
   }
 
-  public static interface Listener {
+  public interface Listener {
     void updateShortcuts(@Nullable String actionId);
   }
 
-  public static interface TaskSelector {
+  public interface TaskSelector {
     boolean select(Project project, @Nullable String pomPath, @Nullable String goal, @NotNull String title);
 
     String getSelectedPomPath();

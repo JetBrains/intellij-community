@@ -114,7 +114,7 @@ public class MavenConsoleImpl extends MavenConsole {
   private void ensureAttachedToToolWindow() {
     if (!isOpen.compareAndSet(false, true)) return;
 
-    MavenUtil.invokeLater(myProject, new Runnable() {
+    MavenUtil.invokeInDispatchThread(myProject, new Runnable() {
       public void run() {
         MessageView messageView = MessageView.SERVICE.getInstance(myProject);
 

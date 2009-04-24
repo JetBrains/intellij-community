@@ -33,7 +33,12 @@ public class MavenProjectsProcessor {
       public void run() {
         while (doRunCycle()) { /* nothing */ }
       }
-    });
+    }, getClass().getSimpleName());
+
+    if (isUnitTestMode()) return;
+
+    isStopped = false;
+    myThread.start(); // rework if make inheritance
   }
 
   protected void scheduleTask(MavenProjectsProcessorTask task) {
@@ -53,13 +58,6 @@ public class MavenProjectsProcessor {
 
   public void removeTask(MavenProjectsProcessorTask task) {
     myQueue.remove(task);
-  }
-
-  public void start() {
-    if (isUnitTestMode()) return;
-
-    isStopped = false;
-    myThread.start();
   }
 
   public void waitForCompletion() {

@@ -32,7 +32,6 @@ public class MavenProjectsManagerWatcher {
   private MavenGeneralSettings.Listener mySettingsPathsChangesListener;
   private MessageBusConnection myBusConnection;
   private List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<VirtualFilePointer>();
-  private boolean isRunning;
 
   public MavenProjectsManagerWatcher(Project project,
                                      MavenEmbeddersManager embeddersManager,
@@ -60,8 +59,6 @@ public class MavenProjectsManagerWatcher {
     };
     myGeneralSettings.addListener(mySettingsPathsChangesListener);
     updateSettingsFilePointers();
-
-    isRunning = true;
   }
 
   private void updateSettingsFilePointers() {
@@ -83,26 +80,24 @@ public class MavenProjectsManagerWatcher {
   }
 
   public void stop() {
-    isRunning = false;
-
-    mySettingsFilesPointers.clear();
     myGeneralSettings.removeListener(mySettingsPathsChangesListener);
+    mySettingsFilesPointers.clear();
     myBusConnection.disconnect();
   }
 
-  public void setManagedFiles(List<VirtualFile> files) {
-    myTree.setManagedFiles(files);
-    scheduleUpdateAll();
+  public void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> profiles) {
+    myTree.addManagedFilesWithProfiles(files, profiles);
+    scheduleUpdate(files, Collections.<VirtualFile>emptyList());
   }
 
-  public void addManagedFile(VirtualFile file) {
-    myTree.addManagedFile(file);
-    scheduleUpdate(Collections.singletonList(file), Collections.<VirtualFile>emptyList());
+  public void resetManagedFilesAndProfiles(List<VirtualFile> files, List<String> profiles) {
+    myTree.resetManagedFilesAndProfiles(files, profiles);
+    scheduleUpdate(files, Collections.<VirtualFile>emptyList());
   }
 
   public void removeManagedFiles(List<VirtualFile> files) {
-    List<VirtualFile> removedFiles = myTree.removeManagedFiles(files);
-    scheduleUpdate(Collections.<VirtualFile>emptyList(), removedFiles);
+    myTree.removeManagedFiles(files);
+    scheduleUpdate(Collections.<VirtualFile>emptyList(), files);
   }
 
   public void setActiveProfiles(List<String> profiles) {
@@ -111,12 +106,10 @@ public class MavenProjectsManagerWatcher {
   }
 
   private void scheduleUpdateAll() {
-    if (!isRunning) return;
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorQuickReadingTask(myProject, myTree, myGeneralSettings));
   }
 
   private void scheduleUpdate(List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete) {
-    if (!isRunning) return;
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorQuickReadingTask(myProject,
                                                                                myTree,
                                                                                myGeneralSettings,

@@ -793,7 +793,45 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
     assertEquals(m, myTree.getModules(roots.get(0)).get(0).getFile());
   }
 
-  public void testUpdatingDoesNotUpdateModules() throws Exception {
+  public void testUpdatingUpdatesModulesIfProjectIsChanged() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
+
+    readModel(myProjectPom);
+
+    assertEquals("m", myTree.findProject(m).getMavenId().artifactId);
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<name>foo</name>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    createModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m2</artifactId>" +
+                         "<version>1</version>");
+    update(myProjectPom);
+
+    assertEquals("m2", myTree.findProject(m).getMavenId().artifactId);
+  }
+
+  public void testUpdatingDoesNotUpdateModulesIfProjectIsNotChanged() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1057,6 +1095,14 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
     assertEquals(myProjectPom, roots.get(0).getFile());
     assertEquals(0, myTree.getModules(roots.get(0)).size());
   }
+
+  //public void testAddingProjectsWhenManagedFilesChanged() throws Exception {
+  //  fail();
+  //}
+  //
+  //public void testDeletingProjectsWhenManagedFilesChanged() throws Exception {
+  //  fail();
+  //}
 
   public void testUpdatingModelWhenActiveProfilesChange() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
@@ -1344,8 +1390,7 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
   }
 
   protected void readModel(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException, MavenException {
-    myTree.setManagedFiles(asList(files));
-    myTree.setActiveProfiles(profiles);
+    myTree.resetManagedFilesAndProfiles(asList(files), profiles);
     myTree.updateAll(isQuick, myEmbeddersManager, getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
   }
 
@@ -1365,6 +1410,9 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
 
   protected static class MyLoggingListener implements MavenProjectsTree.Listener {
     String log = "";
+
+    public void profilesChanged(List<String> profiles) {
+    }
 
     public void projectsReadQuickly(List<MavenProject> projects) {
       log += "projectsReadQuickly ";

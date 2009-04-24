@@ -145,7 +145,7 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
     assertModuleLibDep("project", "Maven: test:foo:1-SNAPSHOT");
 
-    resolveProject();
+    resolveDependenciesAndImport();
     downloadArtifacts();
 
     assertModuleLibDep("project",

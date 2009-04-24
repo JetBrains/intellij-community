@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facets.FacetImporter;
@@ -18,7 +17,7 @@ public class MavenModuleConfigurator {
   private final MavenProject myMavenProject;
   private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
-  private final ModulesProvider myModulesProvider;
+  private final MavenModuleModelsProvider myRootModelsProvider;
   private final ProjectLibrariesProvider myLibrariesProvider;
   private MavenRootModelAdapter myRootModelAdapter;
 
@@ -28,7 +27,7 @@ public class MavenModuleConfigurator {
                                  MavenProject mavenProject,
                                  Map<MavenProject, String> mavenProjectToModuleName,
                                  MavenImportingSettings settings,
-                                 ModulesProvider modulesProvider,
+                                 MavenModuleModelsProvider rootModelsProvider,
                                  ProjectLibrariesProvider librariesProvider) {
     myModule = module;
     myModuleModel = moduleModel;
@@ -36,7 +35,7 @@ public class MavenModuleConfigurator {
     myMavenProject = mavenProject;
     myMavenProjectToModuleName = mavenProjectToModuleName;
     mySettings = settings;
-    myModulesProvider = modulesProvider;
+    myRootModelsProvider = rootModelsProvider;
     myLibrariesProvider = librariesProvider;
   }
 
@@ -45,7 +44,7 @@ public class MavenModuleConfigurator {
   }
 
   public void config(boolean isNewlyCreatedModule) {
-    myRootModelAdapter = new MavenRootModelAdapter(myMavenProject, myModule, myModulesProvider);
+    myRootModelAdapter = new MavenRootModelAdapter(myMavenProject, myModule, myRootModelsProvider);
     myRootModelAdapter.init(isNewlyCreatedModule);
 
     configFolders();

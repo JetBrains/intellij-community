@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +40,7 @@ public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
       return;
     }
 
-    MavenProjectsManager.getInstance(myProject).addListener(new MavenProjectsManager.ListenerAdapter() {
+    MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
       public void projectsReadQuickly(List<MavenProject> projects) {
         updateTabName(projects);
@@ -53,7 +54,7 @@ public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
   }
 
   private void updateTabName(final List<MavenProject> projects) {
-    MavenUtil.invokeLater(myProject, new Runnable() {
+    MavenUtil.invokeInDispatchThread(myProject, new Runnable() {
       public void run() {
         for (MavenProject each : projects) {
           FileEditorManagerEx.getInstanceEx(myProject).updateFilePresentation(each.getFile());

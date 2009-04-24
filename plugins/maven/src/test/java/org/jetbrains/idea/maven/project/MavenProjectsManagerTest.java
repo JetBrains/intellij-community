@@ -11,8 +11,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myMavenProjectsManager.doInitComponent(false);
-    myMavenProjectsManager.initEventsHandling();
+    initMavenProjectsManager(true);
   }
 
   public void testShouldReturnNullForUnprocessedFiles() throws Exception {
@@ -38,7 +37,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(1, myMavenTree.getRootProjects().size());
 
     myProjectPom.delete(this);
-    waitForProjectRead();
+    waitForFullReadingCompletion();
     
     assertEquals(0, myMavenTree.getRootProjects().size());    
 
@@ -49,7 +48,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>m</module>" +
                      "</modules>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(1, myMavenTree.getRootProjects().size());
   }
@@ -69,12 +68,12 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(2, myMavenTree.getRootProjects().size());
 
     p2.rename(this, "foo.bar");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(1, myMavenTree.getRootProjects().size());
 
     p2.rename(this, "pom.xml");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(2, myMavenTree.getRootProjects().size());
   }
@@ -97,12 +96,12 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(2, myMavenTree.getRootProjects().size());
 
     p2.move(this, newDir);
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(1, myMavenTree.getRootProjects().size());
 
     p2.move(this, oldDir);
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(2, myMavenTree.getRootProjects().size());
   }
@@ -130,17 +129,17 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
 
     m.move(this, newDir);
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
 
     m.move(this, oldDir);
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
 
     m.move(this, myProjectRoot.createChildDirectory(this, "xxx"));
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(0, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
   }
@@ -164,7 +163,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                     "<groupId>test</groupId>" +
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     List<MavenProject> children = myMavenTree.getModules(roots.get(0));
     assertEquals(1, children.size());
@@ -184,13 +183,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                     "<groupId>test</groupId>" +
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(1, myMavenTree.getRootProjects().size());
     assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
 
     myMavenProjectsManager.addManagedFile(m);
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(1, myMavenTree.getRootProjects().size());
     assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
@@ -198,7 +197,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(2, myMavenTree.getRootProjects().size());
     assertEquals(0, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
@@ -267,13 +266,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                       "    </properties>" +
                       "  </profile>" +
                       "</profiles>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
 
     deleteSettingsXml();
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/${prop}"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}"));
@@ -289,7 +288,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                       "    </properties>" +
                       "  </profile>" +
                       "</profiles>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
@@ -347,13 +346,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
 
     getMavenGeneralSettings().setMavenSettingsFile("");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/${prop}"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}"));
 
     getMavenGeneralSettings().setMavenSettingsFile(new File(myDir, "settings.xml").getPath());
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
@@ -417,13 +416,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                       "    <prop>value2</prop>" +
                       "  </properties>" +
                       "</profile>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
 
     deleteProfilesXml();
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/${prop}"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}"));
@@ -437,7 +436,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                       "    <prop>value2</prop>" +
                       "  </properties>" +
                       "</profile>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
@@ -460,13 +459,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>dir/module</module>" +
                      "</modules>");
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(2, MavenProjectsManager.getInstance(myProject).getProjects().size());
 
     VirtualFile dir = myProjectRoot.findChild("dir");
     dir.delete(null);
-    waitForProjectRead();
+    waitForFullReadingCompletion();
 
     assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size());
   }

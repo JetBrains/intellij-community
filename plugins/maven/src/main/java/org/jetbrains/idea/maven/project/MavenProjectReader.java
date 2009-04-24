@@ -1,7 +1,5 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -96,41 +94,7 @@ public class MavenProjectReader {
     //Pair<Model, List<Profile>> cached = myRawModelsCache.get(file);
     //if (cached != null) return cached;
 
-    Model mavenModel = new Model();
-    final Model mavenModel1 = mavenModel;
-    new ReadAction() {
-      protected void run(Result result) throws Throwable {
-        Element xmlProject = readXml(file).getChild("project");
-        if (xmlProject == null) return;
-
-        mavenModel1.setModelVersion(findChildValueByPath(xmlProject, "modelVersion"));
-        mavenModel1.setGroupId(findChildValueByPath(xmlProject, "groupId"));
-        mavenModel1.setArtifactId(findChildValueByPath(xmlProject, "artifactId"));
-        mavenModel1.setVersion(findChildValueByPath(xmlProject, "version"));
-        mavenModel1.setPackaging(findChildValueByPath(xmlProject, "packaging"));
-        mavenModel1.setName(findChildValueByPath(xmlProject, "name"));
-
-        if (hasChildByPath(xmlProject, "parent")) {
-          Parent parent = new Parent();
-
-          String groupId = findChildValueByPath(xmlProject, "parent.groupId");
-          String artifactId = findChildValueByPath(xmlProject, "parent.artifactId");
-          String version = findChildValueByPath(xmlProject, "parent.version");
-
-          parent.setGroupId(groupId);
-          parent.setArtifactId(artifactId);
-          parent.setVersion(version);
-          parent.setRelativePath(findChildValueByPath(xmlProject, "parent.relativePath"));
-
-          mavenModel1.setParent(parent);
-        }
-
-        mavenModel1.setBuild(new Build());
-        readModelAndBuild(mavenModel1, mavenModel1.getBuild(), xmlProject);
-
-        mavenModel1.setProfiles(collectProfiles(generalSettings, file, xmlProject));
-      }
-    }.execute();
+    Model mavenModel = doReadProjectModel(file, generalSettings);
 
     List<Profile> activatedProfiles = applyProfiles(mavenModel, getBaseDir(file), activeProfiles);
     repairModelHeader(mavenModel);
@@ -139,6 +103,41 @@ public class MavenProjectReader {
 
     Pair<Model, List<Profile>> result = Pair.create(mavenModel, activatedProfiles);
     //myRawModelsCache.put(file, result);
+    return result;
+  }
+
+  private Model doReadProjectModel(VirtualFile file, MavenGeneralSettings generalSettings) {
+    Model result = new Model();
+
+    Element xmlProject = readXml(file).getChild("project");
+    if (xmlProject == null) return result;
+
+    result.setModelVersion(findChildValueByPath(xmlProject, "modelVersion"));
+    result.setGroupId(findChildValueByPath(xmlProject, "groupId"));
+    result.setArtifactId(findChildValueByPath(xmlProject, "artifactId"));
+    result.setVersion(findChildValueByPath(xmlProject, "version"));
+    result.setPackaging(findChildValueByPath(xmlProject, "packaging"));
+    result.setName(findChildValueByPath(xmlProject, "name"));
+
+    if (hasChildByPath(xmlProject, "parent")) {
+      Parent parent = new Parent();
+
+      String groupId = findChildValueByPath(xmlProject, "parent.groupId");
+      String artifactId = findChildValueByPath(xmlProject, "parent.artifactId");
+      String version = findChildValueByPath(xmlProject, "parent.version");
+
+      parent.setGroupId(groupId);
+      parent.setArtifactId(artifactId);
+      parent.setVersion(version);
+      parent.setRelativePath(findChildValueByPath(xmlProject, "parent.relativePath"));
+
+      result.setParent(parent);
+    }
+
+    result.setBuild(new Build());
+    readModelAndBuild(result, result.getBuild(), xmlProject);
+
+    result.setProfiles(collectProfiles(generalSettings, file, xmlProject));
     return result;
   }
 
@@ -361,7 +360,6 @@ public class MavenProjectReader {
       }
     }
 
-    if (isEmptyOrSpaces(model.getName())) model.setName(UNNAMED);
     if (isEmptyOrSpaces(model.getPackaging())) model.setPackaging("jar");
   }
 

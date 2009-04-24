@@ -143,7 +143,7 @@ public class MavenRunner extends SimpleProjectComponent implements PersistentSta
 
   private void updateTargetFolders() {
     if (myProject.isDisposed()) return; // project was closed before task finished.
-    MavenProjectsManager.getInstance(myProject).updateProjectFolders(true);
+    MavenProjectsManager.getInstance(myProject).updateProjectTargetFolders();
   }
 
   private MavenConsole createConsole(MavenGeneralSettings coreSettings,

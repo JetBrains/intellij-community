@@ -412,7 +412,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "</dependencies>");
 
     importProject();
-    resolveProject();
+    resolveDependenciesAndImport();
     assertModules("project", "m1", "m2");
 
     assertModuleLibDeps("m2", "Maven: group:id:1");
@@ -441,7 +441,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "     <version>1.0.2</version>" +
                   "  </dependency>" +
                   "</dependencies>");
-    resolveProject();
+    resolveDependenciesAndImport();
 
     assertModules("project");
     assertModuleLibDep("project", "Maven: xml-apis:xml-apis:1.0.b2");
@@ -872,7 +872,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     File file = fixture.getTestData("local1/junit/junit/4.0/junit-4.0.pom");
     assertFalse(file.exists());
 
-    resolveProject();
+    resolveDependenciesAndImport();
 
     assertTrue(file.exists());
   }

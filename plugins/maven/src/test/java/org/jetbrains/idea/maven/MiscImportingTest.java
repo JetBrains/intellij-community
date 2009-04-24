@@ -39,7 +39,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
 
     assertEquals(1, count);
 
-    resolveProject();
+    resolveDependenciesAndImport();
     assertEquals(2, count);
   }
 
@@ -72,7 +72,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
 
     assertEquals(1, count);
 
-    resolveProject();
+    resolveDependenciesAndImport();
     assertEquals(2, count);
   }
 
@@ -82,7 +82,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     Module m = getModule("project");
-    resolveProject();
+    resolveDependenciesAndImport();
 
     assertSame(m, getModule("project"));
   }
@@ -104,12 +104,12 @@ public class MiscImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
 
     removeFromLocalRepository("junit");
-    resolveProject();
+    resolveDependenciesAndImport();
 
     File jarFile = new File(getRepositoryFile(), "junit/junit/4.0/junit-4.0.jar");
     assertTrue(jarFile.exists());
 
-    myMavenProjectsManager.initEventsHandling();
+    myMavenProjectsManager.listenForExternalChanges();
 
     // valid password is 'fg3W9' (see http://www.jetbrains.net/confluence/display/JBINT/HTTP+Proxy+with+authorization)
     updateSettingsXml("<proxies>" +
@@ -128,7 +128,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertFalse(jarFile.exists());
 
     try {
-      resolveProject();
+      resolveDependenciesAndImport();
     }
     finally {
       // LightweightHttpWagon does not clear settings if they were not set before a proxy was configured.
@@ -139,7 +139,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
 
     restoreSettingsFile();
 
-    resolveProject();
+    resolveDependenciesAndImport();
     assertTrue(jarFile.exists());
   }
 }

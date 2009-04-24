@@ -82,7 +82,6 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     File f = new File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar");
     assertFalse(f.exists());
 
-    waitForProjectRead();
     downloadPlugins();
 
     assertTrue(f.exists());
@@ -106,7 +105,7 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     File f = new File(getRepositoryPath(), "/org/apache/maven/wagon/wagon/1.0-alpha-6/wagon-1.0-alpha-6.pom");
     assertFalse(f.exists());
 
-    resolveProject();
+    resolveDependenciesAndImport();
 
     assertTrue(f.exists());
   }

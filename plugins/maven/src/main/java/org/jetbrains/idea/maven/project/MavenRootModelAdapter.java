@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -23,20 +22,9 @@ public class MavenRootModelAdapter {
   private final MavenProject myMavenProject;
   private final ModifiableRootModel myRootModel;
 
-  public MavenRootModelAdapter(MavenProject p, Module module, final ModulesProvider modulesProvider) {
+  public MavenRootModelAdapter(MavenProject p, Module module, final MavenModuleModelsProvider rootModelsProvider) {
     myMavenProject = p;
-    if (modulesProvider != null) {
-      final ModuleRootModel rootModel = modulesProvider.getRootModel(module);
-      if (rootModel instanceof ModifiableRootModel) {
-        myRootModel = (ModifiableRootModel)rootModel;
-      }
-      else {
-        myRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-      }
-    }
-    else {
-      myRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    }
+    myRootModel = rootModelsProvider.getRootModel(module);
   }
 
   public void init(boolean isNewlyCreatedModule) {

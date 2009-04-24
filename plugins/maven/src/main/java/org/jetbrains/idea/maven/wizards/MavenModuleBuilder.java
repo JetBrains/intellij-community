@@ -171,7 +171,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
         updateProjectPom(project, pom);
 
         LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
-        MavenUtil.invokeLater(project, new Runnable() {
+        MavenUtil.invokeInDispatchThread(project, new Runnable() {
           public void run() {
             reimportMavenProjects(project);
           }
@@ -184,7 +184,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     // under UnitTest mode invokeLater runs the Runnable immediatly and clashes
     // with ModuleBuilder logic that doesn't expect setupRootModel to commit the models.
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      MavenProjectsManager.getInstance(project).reimport();
+      MavenProjectsManager.getInstance(project).waitForFullReadingCompletionAndImport();
     }
   }
 

@@ -8,9 +8,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -48,20 +46,21 @@ public class MavenProjectConfigurator {
     myImportingSettings = importingSettings;
   }
 
-  public List<MavenProjectsProcessorPostConfigurationTask> config(final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
+  public List<MavenProjectsProcessorPostConfigurationTask> config(MavenModuleModelsProvider moduleModelsProvider) {
     List<MavenProjectsProcessorPostConfigurationTask> postTasks = new ArrayList<MavenProjectsProcessorPostConfigurationTask>();
 
-    myModuleModel = model != null ? model : ModuleManager.getInstance(myProject).getModifiableModel();
+    myModuleModel = moduleModelsProvider.getModuleModel();
     myLibrariesProvider = new ProjectLibrariesProvider(myProject);
 
     mapModulesToMavenProjects();
     deleteObsoleteModules();
-    configModules(postTasks, modulesProvider);
+    configModules(postTasks, moduleModelsProvider);
     configModuleGroups();
     refreshResolvedArtifacts();
     configSettings();
     removeUnusedProjectLibraries();
-    if (model == null) commit();
+
+    moduleModelsProvider.commit(myModuleModel, myRootModelsToCommit.toArray(new ModifiableRootModel[myRootModelsToCommit.size()]));
 
     return postTasks;
   }
@@ -182,7 +181,7 @@ public class MavenProjectConfigurator {
     return obsolete;
   }
 
-  private void configModules(List<MavenProjectsProcessorPostConfigurationTask> postTasks, final ModulesProvider modulesProvider) {
+  private void configModules(List<MavenProjectsProcessorPostConfigurationTask> postTasks, final MavenModuleModelsProvider rootModelsProvider) {
     List<MavenProject> projects = getMavenProjectsToConfigure();
     Set<MavenProject> projectsWithNewlyCreatedModules = new HashSet<MavenProject>();
 
@@ -195,7 +194,7 @@ public class MavenProjectConfigurator {
     LinkedHashMap<Module, MavenModuleConfigurator> configurators = new LinkedHashMap<Module, MavenModuleConfigurator>();
     for (MavenProject each : projects) {
       Module module = myMavenProjectToModule.get(each);
-      MavenModuleConfigurator c = createModuleConfigurator(module, each, modulesProvider);
+      MavenModuleConfigurator c = createModuleConfigurator(module, each, rootModelsProvider);
       configurators.put(module, c);
 
       c.config(projectsWithNewlyCreatedModules.contains(each));
@@ -245,14 +244,14 @@ public class MavenProjectConfigurator {
 
   private MavenModuleConfigurator createModuleConfigurator(Module module,
                                                            MavenProject mavenProject,
-                                                           ModulesProvider modulesProvider) {
+                                                           MavenModuleModelsProvider rootModelsProvider) {
     return new MavenModuleConfigurator(module,
                                        myModuleModel,
                                        myMavenTree,
                                        mavenProject,
                                        myMavenProjectToModuleName,
                                        myImportingSettings,
-                                       modulesProvider,
+                                       rootModelsProvider,
                                        myLibrariesProvider);
   }
 
@@ -328,11 +327,6 @@ public class MavenProjectConfigurator {
         myLibrariesProvider.removeLibrary(each);
       }
     }
-  }
-
-  private void commit() {
-    ModifiableRootModel[] rootModels = myRootModelsToCommit.toArray(new ModifiableRootModel[myRootModelsToCommit.size()]);
-    ProjectRootManager.getInstance(myProject).multiCommit(myModuleModel, rootModels);
   }
 
   public List<Module> getCreatedModules() {
