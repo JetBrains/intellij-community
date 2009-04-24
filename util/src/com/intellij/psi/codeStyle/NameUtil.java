@@ -124,6 +124,10 @@ public class NameUtil {
       }
     }
 
+    if (exactPrefixLen == 0) {
+      buffer.append("_*");  // ignore leading underscores
+    }
+
     boolean firstIdentifierLetter = (exactPrefixLen == 0);
     for (int i = exactPrefixLen; i < pattern.length(); i++) {
       final char c = pattern.charAt(i);
@@ -155,7 +159,6 @@ public class NameUtil {
         else if (Character.isLowerCase(c) && allowToUpper) {
           buffer.append('[');
           buffer.append(c);
-          buffer.append('|');
           buffer.append(Character.toUpperCase(c));
           buffer.append(']');
         }
@@ -179,12 +182,7 @@ public class NameUtil {
         firstIdentifierLetter = true;
       }
       else if (c == ' ') {
-        if (!firstIdentifierLetter) {
-          buffer.append("[a-z\\s0-9\\$]*\\ ");
-        }
-        else {
-          buffer.append("\\ ");
-        }
+        buffer.append("([a-z\\s0-9\\$_-]*[\\ _-])+");
         firstIdentifierLetter = true;
       }
       else {
