@@ -371,7 +371,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     if (RUN_WITH_EDITOR_PROFILE) {
       final Set<Pair<InspectionTool, NamedScope>> tools = myTools.get(tool.getShortName());
       for (Pair<InspectionTool, NamedScope> pair : tools) {
-        if (pair.second != null && pair.second.getValue().contains(element.getContainingFile(), getCurrentProfile().getProfileManager().getScopesManager())) {
+        if (pair.second == null || pair.second.getValue().contains(element.getContainingFile(), getCurrentProfile().getProfileManager().getScopesManager())) {
           return pair.first == tool;
         }
       }
