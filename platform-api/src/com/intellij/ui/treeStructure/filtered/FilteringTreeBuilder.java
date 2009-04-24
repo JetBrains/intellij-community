@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.*;
 import java.util.Comparator;
 
 public class FilteringTreeBuilder extends AbstractTreeBuilder {
@@ -54,14 +55,19 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return new PatchedDefaultMutableTreeNode(childDescr);
   }
 
-  public void setFilteringMerge(int gap) {
+  public void setFilteringMerge(int gap, @Nullable JComponent modalityStateComponent) {
     if (myRefilterQueue != null) {
       Disposer.dispose(myRefilterQueue);
       myRefilterQueue = null;
     }
 
     if (gap >= 0) {
-      myRefilterQueue = new MergingUpdateQueue("FilteringTreeBuilder", gap, false, myTree, this, myTree);
+      JComponent stateComponent = modalityStateComponent;
+      if (stateComponent == null) {
+        stateComponent = myTree;
+      }
+
+      myRefilterQueue = new MergingUpdateQueue("FilteringTreeBuilder", gap, false, stateComponent, this, myTree);
       myRefilterQueue.setRestartTimerOnAdd(true);
     }
   }

@@ -88,7 +88,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         return super.isAutoExpandNode(nodeDescriptor);
       }
     };
-    myBuilder.setFilteringMerge(300);
+    myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
 
     myBuilder.updateFromRoot();

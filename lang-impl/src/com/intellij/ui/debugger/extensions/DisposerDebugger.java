@@ -28,6 +28,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
+import com.intellij.util.ui.update.MergingUpdateQueue;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +94,7 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setIcon(IconLoader.getIcon("/actions/sync.png"));
+      e.getPresentation().setIcon(IconLoader.getIcon("/debugger/watch.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -220,7 +221,7 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
           return structure.getRootElement() == getOriginalNode(nodeDescriptor);
         }
       };
-      myTreeBuilder.setFilteringMerge(200);
+      myTreeBuilder.setFilteringMerge(200, MergingUpdateQueue.ANY_COMPONENT);
       Disposer.register(this, myTreeBuilder);
       myTree = tree;
 
@@ -233,7 +234,7 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
     }
 
     public boolean shouldBeShowing(DisposerNode value) {
-      return value.getValue().getModification() >= myModificationToFilter;
+      return value.getValue().getModification() > myModificationToFilter;
     }
 
     public void objectRegistered(Object node) {
