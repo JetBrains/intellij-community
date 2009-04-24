@@ -32,6 +32,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -559,6 +560,9 @@ public class CompileDriver {
         outputsToRefresh.add(generated.getSecond());
       }
       RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
+
+      DumbService.getInstance().waitForSmartMode();
+
       if (needRecalcOutputDirs) {
         context.recalculateOutputDirs();
       }

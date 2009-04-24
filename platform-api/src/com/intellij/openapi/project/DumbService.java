@@ -5,6 +5,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.Topic;
@@ -24,8 +25,11 @@ public abstract class DumbService {
   public abstract void runWhenSmart(Runnable runnable);
 
   public void waitForSmartMode() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
-    assert !ApplicationManager.getApplication().isReadAccessAllowed();
+    final Application application = ApplicationManager.getApplication();
+    if (!application.isUnitTestMode()) {
+      assert !application.isDispatchThread();
+      assert !application.isReadAccessAllowed();
+    }
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
