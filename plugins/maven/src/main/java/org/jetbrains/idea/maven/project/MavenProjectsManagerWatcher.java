@@ -128,7 +128,7 @@ public class MavenProjectsManagerWatcher {
 
     public void rootsChanged(ModuleRootEvent event) {
       // todo is this logic necessary?
-      List<VirtualFile> existingFiles = myTree.getFiles();
+      List<VirtualFile> existingFiles = myTree.getProjectsFiles();
       List<VirtualFile> newFiles = new ArrayList<VirtualFile>();
       List<VirtualFile> deletedFiles = new ArrayList<VirtualFile>();
 

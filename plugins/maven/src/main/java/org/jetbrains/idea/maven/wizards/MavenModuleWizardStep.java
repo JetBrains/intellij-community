@@ -319,9 +319,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   }
 
   private boolean isMavenizedProject() {
-    return myProjectOrNull != null
-           && MavenProjectsManager.getInstance(myProjectOrNull).isInitialized()
-           && MavenProjectsManager.getInstance(myProjectOrNull).isMavenizedProject();
+    return myProjectOrNull != null && MavenProjectsManager.getInstance(myProjectOrNull).isMavenizedProject();
   }
 
   private void updateComponents() {

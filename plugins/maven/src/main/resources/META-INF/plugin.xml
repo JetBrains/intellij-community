@@ -171,8 +171,8 @@
               icon="/images/download.png">
       </action>
 
-      <action id="Maven.AddManagedFile" class="org.jetbrains.idea.maven.project.action.AddManageFileAction"
-              text="Add Maven project" description="Add Maven project to managed files"
+      <action id="Maven.AddManagedFiles" class="org.jetbrains.idea.maven.project.action.AddManagedFilesAction"
+              text="Add Maven projects" description="Add Maven projects to managed files"
               icon="/general/add.png">
       </action>
       <action id="Maven.RemoveManagedFiles" class="org.jetbrains.idea.maven.project.action.RemoveManagedFilesAction"
@@ -214,7 +214,7 @@
       <reference id="Maven.UpdateFolders"/>
       <reference id="Maven.DownloadArtifacts"/>
       <separator/>
-      <reference id="Maven.AddManagedFile"/>
+      <reference id="Maven.AddManagedFiles"/>
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
       <reference id="Maven.RunGoal"/>

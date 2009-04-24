@@ -626,11 +626,7 @@ public class MavenProjectsTree {
   }
 
   public List<VirtualFile> getRootProjectsFiles() {
-    return ContainerUtil.map(getRootProjects(), new Function<MavenProject, VirtualFile>() {
-      public VirtualFile fun(MavenProject each) {
-        return each.getFile();
-      }
-    });
+    return collectProjectsFiles(getRootProjects());
   }
 
   public List<MavenProject> getProjects() {
@@ -641,6 +637,18 @@ public class MavenProjectsTree {
       }
     });
     return result;
+  }
+
+  public List<VirtualFile> getProjectsFiles() {
+    return collectProjectsFiles(getProjects());
+  }
+
+  private List<VirtualFile> collectProjectsFiles(List<MavenProject> projects) {
+    return ContainerUtil.map(projects, new Function<MavenProject, VirtualFile>() {
+      public VirtualFile fun(MavenProject each) {
+        return each.getFile();
+      }
+    });
   }
 
   public MavenProject findProject(final VirtualFile f) {
@@ -665,16 +673,6 @@ public class MavenProjectsTree {
 
   public MavenProject findProject(Artifact artifact) {
     return findProject(new MavenId(artifact));
-  }
-
-  public List<VirtualFile> getFiles() {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
-    visit(new SimpleVisitor() {
-      public void visit(MavenProject each) {
-        result.add(each.getFile());
-      }
-    });
-    return result;
   }
 
   public boolean isModuleOf(MavenProject aggregator, MavenProject module) {

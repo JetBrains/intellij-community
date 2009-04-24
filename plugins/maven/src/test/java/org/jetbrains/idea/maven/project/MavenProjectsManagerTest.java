@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 public class MavenProjectsManagerTest extends MavenImportingTestCase {
@@ -38,8 +39,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     myProjectPom.delete(this);
     waitForFullReadingCompletion();
-    
-    assertEquals(0, myMavenTree.getRootProjects().size());    
+
+    assertEquals(0, myMavenTree.getRootProjects().size());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -188,7 +189,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(1, myMavenTree.getRootProjects().size());
     assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
 
-    myMavenProjectsManager.addManagedFile(m);
+    myMavenProjectsManager.addManagedFiles(Arrays.asList(m));
     waitForFullReadingCompletion();
 
     assertEquals(1, myMavenTree.getRootProjects().size());

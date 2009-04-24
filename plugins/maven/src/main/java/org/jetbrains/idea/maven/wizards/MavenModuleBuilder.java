@@ -85,7 +85,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-        manager.addManagedFile(pom);
+        manager.addManagedFiles(Collections.singletonList(pom));
 
         if (myArchetype == null) {
           try {
@@ -193,7 +193,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   public MavenProject findPotentialParentProject(Project project) {
-    if (!MavenProjectsManager.getInstance(project).isInitialized()) return null;
+    if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
 
     File parentDir = new File(myContentRootPath).getParentFile();
     if (parentDir == null) return null;

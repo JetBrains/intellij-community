@@ -333,7 +333,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     initMavenProjectsManager(false);
     myMavenProjectsManager.resetManagedFilesAndProfilesInTests(files, myProfilesList);
     myMavenProjectsManager.waitForFullReadingCompletionAndImport();
-    myMavenTree = myMavenProjectsManager.getProjectsTree();
+    myMavenTree = myMavenProjectsManager.getProjectsTreeForTests();
   }
 
   protected void initMavenProjectsManager(boolean enableEventHandling) {

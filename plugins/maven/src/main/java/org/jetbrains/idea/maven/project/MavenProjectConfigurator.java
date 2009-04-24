@@ -148,7 +148,7 @@ public class MavenProjectConfigurator {
     List<Module> obsolete = collectObsoleteModules();
     if (obsolete.isEmpty()) return;
 
-    MavenProjectsManager.getInstance(myProject).setRegularModules(obsolete);
+    MavenProjectsManager.getInstance(myProject).setMavenizedModules(obsolete, false);
 
     String formatted = StringUtil.join(obsolete, new Function<Module, String>() {
       public String fun(Module m) {
@@ -213,7 +213,7 @@ public class MavenProjectConfigurator {
     }
 
     ArrayList<Module> modules = new ArrayList<Module>(myMavenProjectToModule.values());
-    MavenProjectsManager.getInstance(myProject).setMavenizedModules(modules);
+    MavenProjectsManager.getInstance(myProject).setMavenizedModules(modules, true);
   }
 
   private List<MavenProject> getMavenProjectsToConfigure() {

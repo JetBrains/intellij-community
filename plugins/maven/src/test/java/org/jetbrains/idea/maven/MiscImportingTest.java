@@ -24,6 +24,32 @@ public class MiscImportingTest extends MavenImportingTestCase {
     });
   }
 
+  public void testImportingAllAvailableFilesIfNotInitialized() throws Exception {
+    createModule("m1");
+    createModule("m2");
+    createProjectSubDirs("m1/src/main/java",
+                         "m2/src/main/java");
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
+
+    createModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>");
+
+    assertSources("m1");
+    assertSources("m2");
+
+    assertFalse(myMavenProjectsManager.isMavenizedProject());
+    myMavenProjectsManager.findAndImportAllAvailablePomFiles();
+
+    assertSources("m1", "src/main/java");
+    assertSources("m2", "src/main/java");
+  }
+
   public void testImportingFiresRootChangesOnlyOnce() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

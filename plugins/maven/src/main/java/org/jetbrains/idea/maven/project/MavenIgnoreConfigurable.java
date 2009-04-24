@@ -87,7 +87,7 @@ public class MavenIgnoreConfigurable implements Configurable {
   }
 
   public void reset() {
-    IdeaAPIHelper.addElements(myFileChooser, myManager.getFiles(), myOriginalFiles, new Comparator<VirtualFile>() {
+    IdeaAPIHelper.addElements(myFileChooser, myManager.getProjectsFiles(), myOriginalFiles, new Comparator<VirtualFile>() {
       public int compare(VirtualFile o1, VirtualFile o2) {
         //noinspection ConstantConditions
         return o1.getParent().getPath().compareTo(o2.getParent().getPath());

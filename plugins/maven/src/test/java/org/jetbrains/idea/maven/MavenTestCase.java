@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -204,7 +206,11 @@ public abstract class MavenTestCase extends TestCase {
 
   protected Module createModule(String name) throws IOException {
     VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
-    return ModuleManager.getInstance(myProject).newModule(f.getPath(), StdModuleTypes.JAVA);
+    Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), StdModuleTypes.JAVA);
+    ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    model.addContentEntry(f.getParent());
+    model.commit();
+    return module;
   }
 
   protected void createProjectPom(String xml) throws IOException {
