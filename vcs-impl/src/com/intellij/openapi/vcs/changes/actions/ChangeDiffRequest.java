@@ -255,18 +255,22 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     return true;
   }
 
-  private static boolean checkContentsAvailable(final ContentRevision bRev, final ContentRevision aRev) {
+  private static boolean checkContentsAvailable(@Nullable final ContentRevision bRev, @Nullable final ContentRevision aRev) {
     String bContents = null;
-    try {
-      bContents = bRev.getContent();
-    } catch (VcsException e) {
-      //
+    if (bRev != null) {
+      try {
+        bContents = bRev.getContent();
+      } catch (VcsException e) {
+        //
+      }
     }
     String aContents = null;
-    try {
-      aContents = aRev.getContent();
-    } catch (VcsException e) {
-      //
+    if (aRev != null) {
+      try {
+        aContents = aRev.getContent();
+      } catch (VcsException e) {
+        //
+      }
     }
     return (bContents != null) || (aContents != null);
   }
