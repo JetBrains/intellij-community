@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="spring-core" />
     <orderEntry type="module" module-name="J2EE" />
     <orderEntry type="module" module-name="properties" />
+    <orderEntry type="module" module-name="execution-impl" />
   </component>
 </module>
 
