@@ -235,7 +235,9 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
         // anyway, the owner Future is no more interesting for us: its task is finished and does not require "anti-closing" defence
         if (myFuture != null) {
           debug("removing future");
-          myFutureList.remove(myFuture);
+          synchronized (myLock) {
+            myFutureList.remove(myFuture);
+          }
         }
       }
     }
