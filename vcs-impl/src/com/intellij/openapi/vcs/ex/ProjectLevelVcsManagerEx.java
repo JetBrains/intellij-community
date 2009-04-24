@@ -44,4 +44,6 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   public abstract UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo);
 
   public abstract void fireDirectoryMappingsChanged();
+
+  public abstract boolean haveDefaultMapping();
 }

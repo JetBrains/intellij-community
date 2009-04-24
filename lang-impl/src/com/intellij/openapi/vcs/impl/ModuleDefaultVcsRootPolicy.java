@@ -5,16 +5,21 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.StorageScheme;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.io.File;
 
 /**
  * @author yole
@@ -33,6 +38,13 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   public void addDefaultVcsRoots(final VcsDirectoryMappingList mappingList, final AbstractVcs vcs, final List<VirtualFile> result) {
     if (myBaseDir != null && vcs.getName().equals(mappingList.getVcsFor(myBaseDir)) && vcs.fileIsUnderVcs(new FilePathImpl(myBaseDir))) {
       result.add(myBaseDir);
+    }
+    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
+    if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
+      final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+        result.add(ideaDir);
+      }
     }
     // assertion for read access inside
     final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
@@ -78,11 +90,27 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     if (contentRoot != null) {
       return contentRoot;
     }
+    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
+    if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
+      final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+        if (VfsUtil.isAncestor(ideaDir, file, false)) {
+          return ideaDir;
+        }
+      }
+    }
     return null;
   }
 
   public void markDefaultRootsDirty(final DirtBuilder builder) {
+    final VirtualFile baseDir = myProject.getBaseDir();
+
     final Module[] modules = myModuleManager.getModules();
+    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
+    if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
+      builder.addDirtyDirRecursively(new FilePathImpl(new File(PathUtil.toPresentableUrl(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER), true));
+    }
+
     for(Module module: modules) {
       final VirtualFile[] files = ModuleRootManager.getInstanceChecked(module).getContentRoots();
       for(VirtualFile file: files) {
@@ -90,12 +118,13 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
       }
     }
 
-    final VirtualFile baseDir = myProject.getBaseDir();
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    final boolean haveDefaultMapping = ((ProjectLevelVcsManagerEx)plVcsManager).haveDefaultMapping();
+
     final VcsRoot[] vcsRoots = plVcsManager.getAllVcsRoots();
 
     for (VcsRoot root : vcsRoots) {
-      if (root.path.equals(baseDir)) {
+      if (haveDefaultMapping && root.path.equals(baseDir)) {
         builder.addDirtyFile(root);
       }
       else {

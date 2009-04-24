@@ -4,6 +4,7 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -57,6 +58,11 @@ public class MockProjectStore implements IProjectStore {
   @NotNull
   public String getProjectName() {
     throw new UnsupportedOperationException("Method getProjectName not implemented in " + getClass());
+  }
+
+  @NotNull
+  public StorageScheme getStorageScheme() {
+    throw new UnsupportedOperationException("Method getStorageScheme is not yet implemented in " + getClass().getName());
   }
 
   public void loadProject() throws IOException, JDOMException, InvalidDataException {

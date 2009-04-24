@@ -1,6 +1,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -34,6 +35,9 @@ public interface IProjectStore extends IComponentStore {
 
   @NotNull
   String getProjectName();
+
+  @NotNull
+  StorageScheme getStorageScheme();
 
   @Nullable
   String getPresentableUrl();

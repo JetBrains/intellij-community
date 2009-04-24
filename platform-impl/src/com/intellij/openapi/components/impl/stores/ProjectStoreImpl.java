@@ -279,6 +279,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return temp;
   }
 
+  @NotNull
+  public StorageScheme getStorageScheme() {
+    return myScheme;
+  }
+
   @Nullable
   public String getPresentableUrl() {
     if (myProject.isDefault()) return null;

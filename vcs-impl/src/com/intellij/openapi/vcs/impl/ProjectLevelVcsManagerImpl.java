@@ -848,4 +848,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       myProject.getMessageBus().syncPublisher(VCS_MAPPING_CHANGED).run();
     }
   }
+
+  public boolean haveDefaultMapping() {
+    return myDirectoryMappingList.haveDefaultMapping();
+  }
 }
