@@ -19,12 +19,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,40 +39,14 @@ public class ContextComputationProcessor {
     myEvaluationHelper = new SubstitutedExpressionEvaluationHelper(project);
   }
 
-  @Nullable
-  private static PsiElement getContext(@NotNull PsiElement place) {
-    final PsiConditionalExpression conditionalExpression = PsiTreeUtil.getParentOfType(place, PsiConditionalExpression.class);
-    if (conditionalExpression != null && PsiTreeUtil.isAncestor(conditionalExpression.getCondition(), place, false)) return null;
-
-    PsiElement element = place;
-    PsiElement prev = place;
-    while (true) {
-      final PsiElement parent = element.getParent();
-
-      if (!(parent instanceof PsiBinaryExpression ||
-            parent instanceof PsiParenthesizedExpression ||
-            parent instanceof PsiTypeCastExpression ||
-            parent instanceof PsiConditionalExpression)) {
-        break;
-      }
-      prev = element;
-      element = parent;
-    }
-    if (element instanceof PsiConditionalExpression) {
-      return prev;
-    }
-
-    return element;
-  }
-
   @NotNull
-  public static List<Object> collectOperands(@NotNull final PsiExpression place, final String prefix, final String suffix, final Ref<Boolean> unparsable) {
-    final PsiElement parent = getContext(place);
-    if (parent == null) return Collections.emptyList();
-
+  public static List<Object> collectOperands(@NotNull final String prefix, final String suffix, final Ref<Boolean> unparsable, final PsiElement[] operands) {
     final ArrayList<Object> result = new ArrayList<Object>();
+    final ContextComputationProcessor processor = new ContextComputationProcessor(operands[0].getProject());
     addStringFragment(prefix, result);
-    new ContextComputationProcessor(place.getProject()).collectOperands(parent, result, unparsable);
+    for (PsiElement operand : operands) {
+      processor.collectOperands(operand, result, unparsable);
+    }
     addStringFragment(suffix, result);
     return result;
   }

@@ -54,7 +54,7 @@ public class AnnotationUtilEx {
    * usage context ("expected type").
    */
   @Nullable
-  public static PsiModifierListOwner getAnnotatedElementFor(@Nullable PsiExpression element, LookupType type) {
+  public static PsiModifierListOwner getAnnotatedElementFor(@Nullable PsiElement element, LookupType type) {
     if (element == null) return null;
 
     if (type == LookupType.PREFER_DECLARATION || type == LookupType.DECLRARATION_ONLY) {
@@ -118,7 +118,7 @@ public class AnnotationUtilEx {
   }
 
   @Nullable
-  private static PsiModifierListOwner getAnnotationMethod(PsiNameValuePair pair, PsiExpression element) {
+  private static PsiModifierListOwner getAnnotationMethod(PsiNameValuePair pair, PsiElement element) {
     final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair.getParent(), PsiAnnotation.class);
     assert annotation != null;
 

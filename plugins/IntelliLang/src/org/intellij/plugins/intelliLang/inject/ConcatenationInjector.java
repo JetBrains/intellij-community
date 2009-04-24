@@ -21,7 +21,6 @@ import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -39,23 +38,16 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
     final PsiFile containingFile = operands[0].getContainingFile();
-
-    PsiLiteralExpression literal = null;
-    for (PsiElement operand : operands) {
-      if (CustomLanguageInjector.isStringLiteral(operand)) {
-        literal = (PsiLiteralExpression)operand;
-        break;
-      }
-    }
-    processLiteralExpressionInjections(literal, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
+    processLiteralExpressionInjections(new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
       public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
         CustomLanguageInjector.registerInjection(language, list, containingFile, registrar);
         return true;
       }
-    });
+    }, operands);
   }
 
-  private boolean processAnnotationInjections(@NotNull PsiLiteralExpression firstLiteral, final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
+  private boolean processAnnotationInjections(final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor,
+                                              final PsiElement... operands) {
     final PsiAnnotation[] annotations =
       AnnotationUtilEx.getAnnotationFrom(annoElement, myInjectionConfiguration.getLanguageAnnotationPair(), true);
     if (annotations.length > 0) {
@@ -66,25 +58,27 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       if (prefix != null) injection.setPrefix(prefix);
       if (suffix != null) injection.setSuffix(suffix);
       if (id != null) injection.setInjectedLanguageId(id);
-      processInjectionWithContext(firstLiteral, false, injection, processor);
+      processInjectionWithContext(false, injection, processor, operands);
       return true;
     }
     return false;
   }
-  private void processLiteralExpressionInjections(@Nullable final PsiLiteralExpression firstLiteral, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
-    if (firstLiteral == null) return;
-    final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstLiteral, null);
+  private void processLiteralExpressionInjections(final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor,
+                                                  final PsiElement... operands) {
+    if (operands.length == 0) return;
+    final PsiElement firstOperand = operands[0];
+    final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstOperand, null);
     final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
-                                                                               ? topBlock : firstLiteral.getContainingFile()}, "", true);
+                                                                               ? topBlock : firstOperand.getContainingFile()}, "", true);
     final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
-    final LinkedList<PsiExpression> places = new LinkedList<PsiExpression>();
-    places.add(firstLiteral);
+    final LinkedList<PsiElement> places = new LinkedList<PsiElement>();
+    places.add(firstOperand);
     boolean unparsable = false;
     while (!places.isEmpty()) {
-      final PsiExpression curPlace = places.removeFirst();
+      final PsiElement curPlace = places.removeFirst();
       final PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(curPlace, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
       if (owner == null) continue;
-      if (processAnnotationInjections(firstLiteral, owner, processor)) return; // annotated element
+      if (processAnnotationInjections(owner, processor, operands)) return; // annotated element
 
       final PsiMethod psiMethod;
       final Trinity<String, Integer, Integer> trin;
@@ -122,7 +116,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       if (injections == null) return;
       for (MethodParameterInjection injection : injections) {
         if (injection.isApplicable(psiMethod)) {
-          processInjectionWithContext(firstLiteral, unparsable, injection, processor);
+          processInjectionWithContext(unparsable, injection, processor, operands);
           if (injection.isTerminal()) {
             return;
           }
@@ -131,14 +125,15 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
   }
 
-  private static void processInjectionWithContext(@NotNull final PsiLiteralExpression place, final boolean unparsable, final MethodParameterInjection injection,
-                                                  final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
+  private static void processInjectionWithContext(final boolean unparsable, final MethodParameterInjection injection,
+                                                  final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor,
+                                                  final PsiElement... operands) {
     final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
     if (language == null) return;
     final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
     final Ref<Boolean> unparsableRef = Ref.create(unparsable);
-    final List<Object> objects = ContextComputationProcessor.collectOperands(place, injection.getPrefix(), injection.getSuffix(), unparsableRef);
+    final List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, operands);
     if (objects.isEmpty()) return;
     final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
     final int len = objects.size();
