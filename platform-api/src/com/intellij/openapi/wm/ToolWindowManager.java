@@ -56,7 +56,7 @@ public abstract class ToolWindowManager {
   public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, boolean sideTool);
 
   public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable,
-                                                final boolean dumbAware);
+                                                final boolean canWorkInDumbMode);
 
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        final boolean canCloseContent,
