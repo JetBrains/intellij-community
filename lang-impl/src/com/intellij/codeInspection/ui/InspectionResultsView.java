@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -38,7 +37,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
@@ -455,17 +453,17 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final InspectionProfile profile = myInspectionProfile;
     final boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
     myGroups = new HashMap<HighlightDisplayLevel, Map<String, InspectionGroupNode>>();
-    final Map<String, Set<Pair<InspectionTool, NamedScope>>> tools = myGlobalInspectionContext.getTools();
+    final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
     boolean resultsFound = false;
-    for (Set<Pair<InspectionTool, NamedScope>> toolsInsideProfile : tools.values()) {
-      for (Pair<InspectionTool, NamedScope> toolWithProfile : toolsInsideProfile) {
-        final InspectionTool tool = toolWithProfile.first;
+    for (Tools currentTools : tools.values()) {
+      for (ScopeToolState state : currentTools.getTools()) {
+        final InspectionTool tool = (InspectionTool)state.getTool();
         final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
         if (profile != null && !profile.isToolEnabled(key)) {
           break; //exclude disabled inspections from view
         }
         if (myProvider.checkReportedProblems(tool)) {
-          addTool(tool, ((InspectionProfileImpl)profile).getErrorLevel(key, toolWithProfile.second), isGroupedBySeverity);
+          addTool(tool, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope()), isGroupedBySeverity);
           resultsFound = true;
         }
       }

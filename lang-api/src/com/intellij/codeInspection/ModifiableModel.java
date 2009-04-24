@@ -18,13 +18,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * User: anna
@@ -77,8 +75,6 @@ public interface ModifiableModel extends Profile {
   boolean isProfileLocked();
 
   void lockProfile(boolean isLocked);
-
-  List<ScopeToolState> getAllEnabledInspectionTools();
 
   void disableTool(String toolId, PsiElement element);
 

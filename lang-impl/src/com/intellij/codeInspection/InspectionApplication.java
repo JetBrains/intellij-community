@@ -133,8 +133,7 @@ public class InspectionApplication {
       }
 
       if (inspectionProfile == null) {
-        logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", myProfileName));
-        InspectionMain.printHelp();
+        inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
       }
 
       PatchProjectUtil.patchProject(myProject);

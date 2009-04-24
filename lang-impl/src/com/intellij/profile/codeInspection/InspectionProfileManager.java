@@ -192,7 +192,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
       profile.load(JDOMUtil.loadDocument(file).getRootElement());
       return profile;
     }
-    return getProfile(path);
+    return getProfile(path, false);
   }
 
   private static String getProfileName(Document document) {

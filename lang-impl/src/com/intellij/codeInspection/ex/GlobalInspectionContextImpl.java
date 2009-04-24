@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -49,7 +48,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
@@ -79,7 +80,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   public boolean RUN_WITH_EDITOR_PROFILE = false;
   private boolean RUN_GLOBAL_TOOLS_ONLY = false;
 
-  private final Map<String, Set<Pair<InspectionTool, NamedScope>>> myTools = new THashMap<String, Set<Pair<InspectionTool, NamedScope>>>();
+  private final Map<String, Tools> myTools = new THashMap<String, Tools>();
 
   private final AnalysisUIOptions myUIOptions;
 
@@ -153,10 +154,11 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
       if (file == null) return false;
 
-      final Set<Pair<InspectionTool, NamedScope>> tools = myTools.get(tool.getShortName());
-      for (Pair<InspectionTool, NamedScope> inspectionProfilePair : tools) {
-        if (inspectionProfilePair.second == null || inspectionProfilePair.second.getValue().contains(file, getCurrentProfile().getProfileManager().getScopesManager())) {
-          return ((GlobalInspectionToolWrapper)inspectionProfilePair.first).getTool() == tool;
+      final Tools tools = myTools.get(tool.getShortName());
+      for (ScopeToolState state : tools.getTools()) {
+        final NamedScope namedScope = state.getScope();
+        if (namedScope == null || namedScope.getValue().contains(file, getCurrentProfile().getProfileManager().getScopesManager())) {
+          return state.isEnabled() && ((GlobalInspectionToolWrapper)state.getTool()).getTool() == tool;
         }
       }
       return false;
@@ -200,9 +202,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       extension.cleanup();
     }
 
-    for (Set<Pair<InspectionTool, NamedScope>> tools : myTools.values()) {
-      for (Pair<InspectionTool, NamedScope> pair : tools) {
-        pair.first.cleanup();
+    for (Tools tools : myTools.values()) {
+      for (ScopeToolState state : tools.getTools()) {
+        ((InspectionTool)state.getTool()).cleanup();
       }
     }
     myTools.clear();
@@ -271,16 +273,16 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         public void run() {
           performInspectionsWithProgress(scope, manager);
           @NonNls final String ext = ".xml";
-          for (Map.Entry<String,Set<Pair<InspectionTool,NamedScope>>> stringSetEntry : myTools.entrySet()) {
+          for (Map.Entry<String,Tools> stringSetEntry : myTools.entrySet()) {
             final Element root = new Element(InspectionsBundle.message("inspection.problems"));
             final Document doc = new Document(root);
-            final Set<Pair<InspectionTool, NamedScope>> sameTools = stringSetEntry.getValue();
+            final Tools sameTools = stringSetEntry.getValue();
             boolean hasProblems = false;
             boolean isLocalTool = false;
             String toolName = stringSetEntry.getKey();
             if (sameTools != null) {
-              for (Pair<InspectionTool, NamedScope> toolDescr : sameTools) {
-                final InspectionTool tool = toolDescr.first;
+              for (ScopeToolState toolDescr : sameTools.getTools()) {
+                final InspectionTool tool = (InspectionTool)toolDescr.getTool();
                 if (tool instanceof LocalInspectionToolWrapper) {
                   hasProblems = new File(outputPath, toolName + ext).exists();
                   isLocalTool = true;
@@ -369,10 +371,11 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public boolean isToCheckMember(final PsiElement element, final InspectionTool tool) {
     if (RUN_WITH_EDITOR_PROFILE) {
-      final Set<Pair<InspectionTool, NamedScope>> tools = myTools.get(tool.getShortName());
-      for (Pair<InspectionTool, NamedScope> pair : tools) {
-        if (pair.second == null || pair.second.getValue().contains(element.getContainingFile(), getCurrentProfile().getProfileManager().getScopesManager())) {
-          return pair.first == tool;
+      final Tools tools = myTools.get(tool.getShortName());
+      for (ScopeToolState state : tools.getTools()) {
+        final NamedScope namedScope = state.getScope();
+        if (namedScope == null || namedScope.getValue().contains(element.getContainingFile(), getCurrentProfile().getProfileManager().getScopesManager())) {
+          return state.isEnabled() && state.getTool() == tool;
         }
       }
       return false;
@@ -382,10 +385,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public void ignoreElement(final InspectionTool tool, final PsiElement element) {
     final RefElement refElement = getRefManager().getReference(element);
-    final Set<Pair<InspectionTool, NamedScope>> tools = myTools.get(tool.getShortName());
+    final Tools tools = myTools.get(tool.getShortName());
     if (tools != null){
-      for (Pair<InspectionTool, NamedScope> inspectionTool : tools) {
-        ignoreElementRecursively(inspectionTool.first, refElement);
+      for (ScopeToolState state : tools.getTools()) {
+        ignoreElementRecursively((InspectionTool)state.getTool(), refElement);
       }
     }
   }
@@ -483,26 +486,28 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private void runTools(final List<InspectionProfileEntry> needRepeatSearchRequest, final AnalysisScope scope, final InspectionManager manager) {
-    final List<Pair<InspectionProfileEntry, NamedScope>> usedTools = new ArrayList<Pair<InspectionProfileEntry, NamedScope>>();
-    final List<Pair<InspectionProfileEntry, NamedScope>> localTools = new ArrayList<Pair<InspectionProfileEntry, NamedScope>>();
+    final List<Tools> usedTools = new ArrayList<Tools>();
+    final List<Tools> localTools = new ArrayList<Tools>();
     initializeTools(usedTools, localTools);
     ((RefManagerImpl)getRefManager()).initializeAnnotators();
-    for (Pair<InspectionProfileEntry, NamedScope> tools : usedTools) {
-      final InspectionTool tool = (InspectionTool)tools.first;
-      try {
-        if (tool.isGraphNeeded()) {
-          ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
+    for (Tools tools : usedTools) {
+      for (ScopeToolState state : tools.getTools()) {
+        final InspectionTool tool = (InspectionTool)state.getTool();
+        try {
+          if (tool.isGraphNeeded()) {
+            ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
+          }
+          tool.runInspection(scope, manager);
+          if (tool.queryExternalUsagesRequests(manager)) {
+            needRepeatSearchRequest.add(tool);
+          }
         }
-        tool.runInspection(scope, manager);
-        if (tool.queryExternalUsagesRequests(manager)) {
-          needRepeatSearchRequest.add(tool);
+        catch (ProcessCanceledException e) {
+          throw e;
         }
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
     }
     for (GlobalInspectionContextExtension extension : myExtensions.values()) {
@@ -536,12 +541,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
           try {
             final List<InspectionProfileEntry> lTools = new ArrayList<InspectionProfileEntry>();
-            for (Pair<InspectionProfileEntry, NamedScope> tool : localTools) {
-              if (tool.second == null || tool.second.getValue().contains(file, getCurrentProfile().getProfileManager().getScopesManager())) {
-                lTools.add(tool.first);
+            for (Tools tool : localTools) {
+              final InspectionTool enabledTool = (InspectionTool)tool.getEnabledTool(file);
+              if (enabledTool != null) {
+                lTools.add(enabledTool);
               }
             }
-            pass.doInspectInBatch((InspectionManagerEx)manager, lTools.toArray(new InspectionProfileEntry[localTools.size()]), myProgressIndicator,true);
+            pass.doInspectInBatch((InspectionManagerEx)manager, lTools.toArray(new InspectionProfileEntry[lTools.size()]), myProgressIndicator,true);
           }
           catch (ProcessCanceledException e) {
             throw e;
@@ -554,7 +560,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  public void initializeTools(List<Pair<InspectionProfileEntry, NamedScope>> tools, List<Pair<InspectionProfileEntry, NamedScope>> localTools) {
+  public void initializeTools(List<Tools> tools, List<Tools> localTools) {
     myJobDescriptors = new ArrayList<JobDescriptor>();
     final InspectionProfile profile = getCurrentProfile();
     InspectionProfileWrapper inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName());
@@ -567,28 +573,25 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         }
       });
     }
-    final List<ScopeToolState> usedTools = inspectionProfile.getInspectionProfile().getModifiableModel().getAllEnabledInspectionTools();
-    for (ScopeToolState entry : usedTools) {
-      final InspectionTool tool = (InspectionTool)entry.getTool();
-      tool.initialize(this);
-      final String shortName = tool.getShortName();
-      Set<Pair<InspectionTool, NamedScope>> sertainTools = myTools.get(shortName);
-      if (sertainTools == null){
-        sertainTools = new HashSet<Pair<InspectionTool, NamedScope>>();
-        myTools.put(shortName, sertainTools);
-      }
-      final Pair<InspectionTool, NamedScope> scopePair = Pair.create(tool, entry.getScope());
-      sertainTools.add(scopePair);
+    final List<ToolsImpl> usedTools = ((InspectionProfileImpl)inspectionProfile.getInspectionProfile()).getAllEnabledInspectionTools();
+    for (Tools currentTools : usedTools) {
+      final String shortName = currentTools.getShortName();
+      myTools.put(shortName, currentTools);
+      final InspectionTool tool = (InspectionTool)currentTools.getTool();
       if (tool instanceof LocalInspectionToolWrapper) {
-        localTools.add(new Pair<InspectionProfileEntry, NamedScope>(tool, entry.getScope()));
+        localTools.add(currentTools);
         appendJobDescriptor(LOCAL_ANALYSIS);
       }
       else {
-        tools.add(new Pair<InspectionProfileEntry, NamedScope>(tool, entry.getScope()));
+        tools.add(currentTools);
         JobDescriptor[] jobDescriptors = tool.getJobDescriptors();
         for (JobDescriptor jobDescriptor : jobDescriptors) {
           appendJobDescriptor(jobDescriptor);
         }
+      }
+
+      for (ScopeToolState state : currentTools.getTools()) {
+        ((InspectionTool)state.getTool()).initialize(this);
       }
     }
     for (GlobalInspectionContextExtension extension : myExtensions.values()) {
@@ -596,7 +599,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  public Map<String, Set<Pair<InspectionTool, NamedScope>>> getTools() {
+  public Map<String, Tools> getTools() {
     return myTools;
   }
 
@@ -621,9 +624,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public void cleanup(final InspectionManagerEx managerEx) {
     managerEx.closeRunningContext(this);
-    for (Set<Pair<InspectionTool, NamedScope>> tools : myTools.values()) {
-      for (Pair<InspectionTool, NamedScope> tool : tools) {
-        tool.first.finalCleanup();
+    for (Tools tools : myTools.values()) {
+      for (ScopeToolState state : tools.getTools()) {
+        ((InspectionTool)state.getTool()).finalCleanup();
       }
     }
     cleanup();

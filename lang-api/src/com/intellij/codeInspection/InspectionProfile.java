@@ -18,12 +18,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * User: anna
@@ -41,8 +38,6 @@ public interface InspectionProfile extends Profile {
 
   @NotNull
   InspectionProfileEntry[] getInspectionTools(PsiElement element);
-
-  List<ScopeToolState> getAllEnabledInspectionTools();
 
   void cleanup();
 

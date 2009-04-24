@@ -58,16 +58,20 @@ public class InspectionProfileWrapper {
   }
 
   public void init(final Project project) {
-    final List<ScopeToolState> profileEntries = myProfile.getAllEnabledInspectionTools();
-    for (ScopeToolState profileEntry : profileEntries) {
-      profileEntry.getTool().projectOpened(project);
+    final List<ToolsImpl> profileEntries = myProfile.getAllEnabledInspectionTools();
+    for (Tools profileEntry : profileEntries) {
+      for (ScopeToolState toolState : profileEntry.getTools()) {
+        toolState.getTool().projectOpened(project);
+      }
     }
   }
 
   public void cleanup(final Project project){
-    final List<ScopeToolState> profileEntries = myProfile.getAllEnabledInspectionTools();
-    for (ScopeToolState profileEntry : profileEntries) {
-      profileEntry.getTool().projectClosed(project);
+    final List<ToolsImpl> profileEntries = myProfile.getAllEnabledInspectionTools();
+    for (Tools profileEntry : profileEntries) {
+      for (ScopeToolState toolState : profileEntry.getTools()) {
+        toolState.getTool().projectClosed(project);
+      }
     }
     myProfile.cleanup();
   }

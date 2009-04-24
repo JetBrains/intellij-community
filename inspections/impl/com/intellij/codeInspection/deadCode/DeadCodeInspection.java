@@ -37,8 +37,8 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -287,7 +287,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return serializableClass != null && aClass.isInheritor(serializableClass, true);
   }
 
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
+  public void runInspection(final AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(final RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
@@ -295,7 +295,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           final PsiElement element = refElement.getElement();
           if (element == null) return;
           if (!getContext().isToCheckMember(refElement, DeadCodeInspection.this)) {
-            getEntryPointsManager().addEntryPoint(refElement, false);
+            if (!scope.contains(element) || ((RefElementImpl)refElement).isSuppressed(DeadCodeInspection.this.getShortName())) {
+              getEntryPointsManager().addEntryPoint(refElement, false);
+            }
             return;
           }
           if (!refElement.isSuspicious()) return;

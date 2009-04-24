@@ -14,7 +14,7 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
@@ -80,10 +80,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
 
       @Override
-      public List<ScopeToolState> getAllEnabledInspectionTools() {
-        List<ScopeToolState> result = new ArrayList<ScopeToolState>();
+      public List<ToolsImpl> getAllEnabledInspectionTools() {
+        List<ToolsImpl> result = new ArrayList<ToolsImpl>();
         for (InspectionProfileEntry entry : getInspectionTools(null)) {
-          result.add(new ScopeToolState(null, entry, true, entry.getDefaultLevel()));
+          result.add(new ToolsImpl(entry, entry.getDefaultLevel(), true));
         }
         return result;
       }

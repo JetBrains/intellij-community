@@ -5,11 +5,10 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import junit.framework.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -18,7 +17,6 @@ import java.io.CharArrayReader;
 import java.io.File;
 import java.io.StreamTokenizer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InspectionTestUtil {
@@ -132,7 +130,7 @@ expected:
       HighlightDisplayKey.register(shortName);
     }
 
-    globalContext.getTools().put(tool.getShortName(), Collections.singleton(new Pair<InspectionTool, NamedScope>(tool, null)));
+    globalContext.getTools().put(tool.getShortName(), new ToolsImpl(tool, tool.getDefaultLevel(), true));
     tool.initialize(globalContext);
     ((RefManagerImpl)globalContext.getRefManager()).initializeAnnotators();
     if (tool.isGraphNeeded()){

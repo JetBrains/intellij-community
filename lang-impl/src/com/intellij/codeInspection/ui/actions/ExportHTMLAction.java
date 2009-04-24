@@ -9,6 +9,8 @@ import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.codeInspection.export.HTMLExportFrameMaker;
 import com.intellij.codeInspection.export.HTMLExporter;
@@ -34,9 +36,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -187,10 +187,10 @@ public class ExportHTMLAction extends AnAction {
     }
     final String shortName = tool.getShortName();
     final GlobalInspectionContextImpl context = myView.getGlobalInspectionContext();
-    final Set<Pair<InspectionTool, NamedScope>> tools = context.getTools().get(shortName);
+    final Tools tools = context.getTools().get(shortName);
     if (tools != null) {   //dummy entry points tool
-      for (Pair<InspectionTool, NamedScope> pair : tools) {
-        result.add(pair.first);
+      for (ScopeToolState state : tools.getTools()) {
+        result.add((InspectionTool)state.getTool());
       }
     }
     return result;

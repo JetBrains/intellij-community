@@ -25,12 +25,10 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.*;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -377,13 +375,13 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     };
   }
 
-  public void performPreRunActivities(final List<Pair<InspectionProfileEntry,NamedScope>> globalTools, final List<Pair<InspectionProfileEntry, NamedScope>> localTools,
+  public void performPreRunActivities(final List<Tools> globalTools, final List<Tools> localTools,
                                       final GlobalInspectionContext context) {
     getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
-    ContainerUtil.quickSort(globalTools, new Comparator<Pair<InspectionProfileEntry, NamedScope>>() {
-      public int compare(Pair<InspectionProfileEntry, NamedScope> o1, Pair<InspectionProfileEntry, NamedScope> o2) {
-        if (o1.first instanceof DeadCodeInspection) return -1;
-        if (o2.first instanceof DeadCodeInspection) return 1;
+    ContainerUtil.quickSort(globalTools, new Comparator<Tools>() {
+      public int compare(Tools o1, Tools o2) {
+        if (o1.getTool() instanceof DeadCodeInspection) return -1;
+        if (o2.getTool() instanceof DeadCodeInspection) return 1;
         return 0;
       }
     });

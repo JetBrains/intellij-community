@@ -9,7 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
@@ -297,10 +297,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
 
       @Override
-      public List<ScopeToolState> getAllEnabledInspectionTools() {
-        List<ScopeToolState> result = new ArrayList<ScopeToolState>();
+      public List<ToolsImpl> getAllEnabledInspectionTools() {
+        List<ToolsImpl> result = new ArrayList<ToolsImpl>();
         for (InspectionProfileEntry entry : getInspectionTools(null)) {
-          result.add(new ScopeToolState(null, entry, true, entry.getDefaultLevel()));
+          result.add(new ToolsImpl(entry, entry.getDefaultLevel(), true));
         }
         return result;
       }

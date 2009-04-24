@@ -22,11 +22,9 @@ import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,10 +153,10 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     final PsiElement psiElement = element.getElement();
     if (psiElement != null) {
       if (myContext != null) {
-        final Set<Pair<InspectionTool, NamedScope>> tools = myContext.getTools().get(getShortName());
+        final Tools tools = myContext.getTools().get(getShortName());
         if (tools != null) {
-          for (Pair<InspectionTool, NamedScope> pair : tools) {
-            if (pair.first == this) {
+          for (ScopeToolState state : tools.getTools()) {
+            if (state.getTool() == this) {
               return myContext.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(getShortName()), psiElement).getSeverity();
             }
           }
