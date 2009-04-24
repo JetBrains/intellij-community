@@ -1,0 +1,87 @@
+package com.intellij.packaging.impl.elements;
+
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.deployment.LibraryLink;
+import com.intellij.packaging.elements.ComplexPackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.ui.LibraryElementPresentation;
+import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.util.PathUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author nik
+ */
+public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPackagingElement> {
+  private String myLevel;
+  private String myName;
+
+  public LibraryPackagingElement() {
+    super(LibraryElementType.LIBRARY_ELEMENT_TYPE);
+  }
+
+  public LibraryPackagingElement(String level, String name) {
+    super(LibraryElementType.LIBRARY_ELEMENT_TYPE);
+    myLevel = level;
+    myName = name;
+  }
+
+  public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context) {
+    final Library library = findLibrary(context);
+    if (library != null) {
+      final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+      final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
+      for (VirtualFile file : files) {
+        elements.add(new FileCopyPackagingElement(FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file))));
+      }
+      return elements;
+    }
+    return null;
+  }
+
+  public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
+    return new LibraryElementPresentation(myLevel, myName, findLibrary(context));
+  }
+
+  public LibraryPackagingElement getState() {
+    return this;
+  }
+
+  public void loadState(LibraryPackagingElement state) {
+    myLevel = state.getLevel();
+    myName = state.getName();
+  }
+
+  @Attribute("level")
+  public String getLevel() {
+    return myLevel;
+  }
+
+  public void setLevel(String level) {
+    myLevel = level;
+  }
+
+  @Attribute("name")
+  public String getName() {
+    return myName;
+  }
+
+  public void setName(String name) {
+    myName = name;
+  }
+
+  @Nullable
+  public Library findLibrary(@NotNull PackagingElementResolvingContext context) {
+    return LibraryLink.findLibrary(myName, myLevel, context.getProject());
+  }
+}

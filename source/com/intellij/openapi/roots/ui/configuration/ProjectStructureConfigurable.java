@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.facet.Facet;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.*;
@@ -13,8 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.ui.navigation.BackAction;
-import com.intellij.ui.navigation.ForwardAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -23,6 +23,8 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.navigation.BackAction;
+import com.intellij.ui.navigation.ForwardAction;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.ui.UIUtil;
@@ -57,6 +59,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   private final Project myProject;
   private final ModuleManager myModuleManager;
   private final FacetStructureConfigurable myFacetStructureConfigurable;
+  private final ArtifactsStructureConfigurable myArtifactsStructureConfigurable;
 
   private History myHistory = new History(this);
   private SidePanel mySidePanel;
@@ -85,10 +88,12 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public ProjectStructureConfigurable(final Project project, final ModuleManager moduleManager, final ProjectLibrariesConfigurable projectLibrariesConfigurable,
                                       final GlobalLibrariesConfigurable globalLibrariesConfigurable,
                                       final ModuleStructureConfigurable moduleStructureConfigurable,
-                                      FacetStructureConfigurable facetStructureConfigurable) {
+                                      FacetStructureConfigurable facetStructureConfigurable,
+                                      ArtifactsStructureConfigurable artifactsStructureConfigurable) {
     myProject = project;
     myModuleManager = moduleManager;
     myFacetStructureConfigurable = facetStructureConfigurable;
+    myArtifactsStructureConfigurable = artifactsStructureConfigurable;
 
     myModuleConfigurator = new ModulesConfigurator(myProject, myProjectJdksModel);
     myContext = new StructureConfigurableContext(myProject, myModuleManager, myModuleConfigurator);
@@ -101,6 +106,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myGlobalLibrariesConfig.init(myContext);
     myModulesConfig.init(myContext);
     myFacetStructureConfigurable.init(myContext);
+    myArtifactsStructureConfigurable.init(myContext);
 
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
     myUiState.lastEditedConfigurable = propertiesComponent.getValue("project.structure.last.edited");
@@ -183,10 +189,17 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
     if (!isDefaultProject) {
       addFacetsConfig();
+      addArtifactsConfig();
     }
     mySidePanel.addSeparator("Platform Settings");
     addJdkListConfig();
     addGlobalLibrariesConfig();
+  }
+
+  private void addArtifactsConfig() {
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      addConfigurable(myArtifactsStructureConfigurable);
+    }
   }
 
   private void addFacetsConfig() {

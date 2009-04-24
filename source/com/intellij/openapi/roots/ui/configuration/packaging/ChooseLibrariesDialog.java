@@ -4,6 +4,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseElementsDialog;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -12,7 +13,11 @@ import java.util.List;
 /**
  * @author nik
  */
-class ChooseLibrariesDialog extends ChooseElementsDialog<Library> {
+public class ChooseLibrariesDialog extends ChooseElementsDialog<Library> {
+
+  public ChooseLibrariesDialog(Project project, List<? extends Library> items, String title, String description) {
+    super(project, items, title, description);
+  }
 
   public ChooseLibrariesDialog(JComponent component, String title, List<Library> items) {
     super(component, items, title, true);

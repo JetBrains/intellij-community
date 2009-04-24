@@ -268,7 +268,7 @@ public class ElementsChooser<T> extends JPanel {
     return elements;
   }
 
-  public void selectElements(Collection<T> elements) {
+  public void selectElements(Collection<? extends T> elements) {
     if (elements.size() == 0) {
       myTable.clearSelection();
       return;
@@ -279,7 +279,7 @@ public class ElementsChooser<T> extends JPanel {
     myTable.requestFocus();
   }
 
-  private int[] getElementsRows(final Collection<T> elements) {
+  private int[] getElementsRows(final Collection<? extends T> elements) {
     final int[] rows = new int[elements.size()];
     int index = 0;
     for (final T element : elements) {

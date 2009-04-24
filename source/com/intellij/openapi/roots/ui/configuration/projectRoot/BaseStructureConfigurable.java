@@ -31,6 +31,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -340,7 +341,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
             final NamedConfigurable namedConfigurable = ((MyNode)object).getConfigurable();
             if (namedConfigurable != null) {
               final Object editableObject = namedConfigurable.getEditableObject();
-              if (editableObject instanceof Sdk || editableObject instanceof Module || editableObject instanceof Facet) return true;
+              if (editableObject instanceof Sdk || editableObject instanceof Module || editableObject instanceof Facet || editableObject instanceof Artifact) return true;
               if (editableObject instanceof Library) {
                 final LibraryTable table = ((Library)editableObject).getTable();
                 return table == null || table.isEditable();
@@ -385,9 +386,14 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       else if (editableObject instanceof Library) {
         removeLibrary((Library)editableObject);
       }
+      else if (editableObject instanceof Artifact) {
+        removeArtifact((Artifact)editableObject);
+      }
       return true;
     }
+  }
 
+  protected void removeArtifact(Artifact artifact) {
   }
 
 

@@ -22,7 +22,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   protected ElementsChooser<T> myChooser;
   private String myDescription;
 
-  public ChooseElementsDialog(Project project, List<T> items, String title, final String description) {
+  public ChooseElementsDialog(Project project, List<? extends T> items, String title, final String description) {
     super(project, true);
     myDescription = description;
     initializeDialog(items, title);
@@ -44,7 +44,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     initializeDialog(items, title);
   }
 
-  private void initializeDialog(final List<T> items, final String title) {
+  private void initializeDialog(final List<? extends T> items, final String title) {
     setTitle(title);
     myChooser = new ElementsChooser<T>(false) {
       protected String getItemText(@NotNull final T item) {
@@ -89,7 +89,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     return panel;
   }
 
-  private void setElements(final Collection<T> elements, final Collection<T> elementsToSelect) {
+  private void setElements(final Collection<? extends T> elements, final Collection<? extends T> elementsToSelect) {
     myChooser.clear();
     for (final T item : elements) {
       myChooser.addElement(item, false, createElementProperties(item));
