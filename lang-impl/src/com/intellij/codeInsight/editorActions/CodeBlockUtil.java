@@ -51,6 +51,7 @@ public class CodeBlockUtil {
       braceType = null;
     }
 
+    boolean moved = false;
     while (true) {
       if (iterator.atEnd()) return;
 
@@ -59,11 +60,14 @@ public class CodeBlockUtil {
             braceType == null
           )
           ) {
-        if (depth == 0) break;
+        if (moved) {
+          if (depth == 0) break;
+          depth--;
+        }
+
         if (braceType == null) {
           braceType = getBraceType(iterator);
         }
-        depth--;
       }
       else if (isLStructuralBrace(fileType, iterator,document.getCharsSequence()) &&
                ( braceType == getBraceType(iterator) ||
@@ -76,6 +80,7 @@ public class CodeBlockUtil {
         depth++;
       }
 
+      moved = true;
       iterator.advance();
     }
 
@@ -112,6 +117,7 @@ public class CodeBlockUtil {
       braceType = null;
     }
 
+    boolean moved = false;
     while (true) {
       if (iterator.atEnd()) return;
 
@@ -120,11 +126,14 @@ public class CodeBlockUtil {
             braceType == null
           )
           ) {
-        if (depth == 0) break;
         if (braceType == null) {
           braceType = getBraceType(iterator);
         }
-        depth--;
+
+        if (moved) {
+          if (depth == 0) break;
+          depth--;
+        }
       }
       else if (isRStructuralBrace(fileType, iterator,document.getCharsSequence()) &&
                ( braceType == getBraceType(iterator) ||
@@ -137,6 +146,7 @@ public class CodeBlockUtil {
         depth++;
       }
 
+      moved = true;
       iterator.retreat();
     }
 
