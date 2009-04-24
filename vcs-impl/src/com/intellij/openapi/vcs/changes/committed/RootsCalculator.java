@@ -30,9 +30,19 @@ public class RootsCalculator {
     List<VirtualFile> roots = new ArrayList<VirtualFile>();
     final List<VcsDirectoryMapping> mappings = myPlManager.getDirectoryMappings(myVcs);
     for (VcsDirectoryMapping mapping : mappings) {
-      final VirtualFile newFile = mapping.isDefaultMapping() ? myProject.getBaseDir() :
-                                  LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
-      roots.add(newFile);
+      if (mapping.isDefaultMapping()) {
+        roots.add(myProject.getBaseDir());
+      } else {
+        VirtualFile newFile = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
+        if (newFile == null) {
+          newFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(mapping.getDirectory());
+        }
+        if (newFile != null) {
+          roots.add(newFile);
+        } else {
+          LOG.info("Can not file virtual file for root: " + mapping.getDirectory());
+        }
+      }
     }
     for (VirtualFile contentRoot : myContentRoots) {
       roots.add(contentRoot);
