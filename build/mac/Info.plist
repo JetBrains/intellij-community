@@ -54,6 +54,13 @@
         <string>ppc</string>
       </array>
 
+      <key>LSArchitecturePriority</key>
+      <array>
+        <string>i386</string>
+        <string>x86_64</string>
+        <string>ppc</string>
+      </array>
+
       <key>MainClass</key>
       <string>com.intellij.idea.Main</string>
       <key>Properties</key>
