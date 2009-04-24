@@ -34,7 +34,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     CollectingContentIterator finder = myIndex.createContentIterator();
     iterateIndexableFiles(finder);
     final List<VirtualFile> files = finder.getFiles();
-    return files.toArray(new VirtualFile[files.size()]);
+    return BackgroundUpdateHelper.maybeBackground(files.toArray(new VirtualFile[files.size()]), myProject, this);
   }
 
   public void processFile(final FileContent fileContent) {
