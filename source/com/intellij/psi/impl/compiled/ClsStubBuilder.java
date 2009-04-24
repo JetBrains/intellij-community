@@ -388,7 +388,15 @@ public class ClsStubBuilder {
 
     private static String[] buildThrowsList(String[] exceptions, List<String> throwables, boolean parsedViaGenericSignature) {
       if (exceptions == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-      if (parsedViaGenericSignature) {
+
+      if (parsedViaGenericSignature && throwables != null && exceptions.length > throwables.size()) {
+        // There seem to be an inconsistency (or bug) in class format. For instance, java.lang.Class.forName() method has
+        // signature equal to "(Ljava/lang/String;)Ljava/lang/Class<*>;" (i.e. no exceptions thrown) but exceptions actually not empty,
+        // method throws ClassNotFoundException
+        parsedViaGenericSignature = false;
+      }
+
+      if (parsedViaGenericSignature && throwables != null) {
         return throwables.toArray(new String[throwables.size()]);
       }
       else {
