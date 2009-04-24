@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
@@ -34,6 +35,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.THashMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +82,27 @@ public class FileManagerImpl implements FileManager {
 
     myFileDocumentManager = fileDocumentManager;
     myProjectRootManager = projectRootManager;
+
+    myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      public void beforeEnteringDumbMode() {
+      }
+
+      public void enteredDumbMode() {
+        recalcAllViewProviders();
+      }
+
+      public void exitDumbMode() {
+        recalcAllViewProviders();
+      }
+    });
+  }
+
+  private void recalcAllViewProviders() {
+    handleFileTypesChange(new FileTypesChanged() {
+      protected void updateMaps() {
+        myVFileToViewProviderMap.clear();
+      }
+    });
   }
 
   public void dispose() {
@@ -105,6 +128,7 @@ public class FileManagerImpl implements FileManager {
     myVFileToPsiDirMap.clear();
   }
 
+  @NotNull
   public FileViewProvider findViewProvider(final VirtualFile file) {
     FileViewProvider viewProvider = myVFileToViewProviderMap.get(file);
     if(viewProvider == null) {
@@ -127,6 +151,10 @@ public class FileManagerImpl implements FileManager {
   }
 
   public FileViewProvider createFileViewProvider(final VirtualFile file, boolean physical) {
+    if (DumbService.getInstance().isDumb()) {
+      return new SingleRootFileViewProvider(myManager, file, true, PlainTextLanguage.INSTANCE) {};
+    }
+
     FileViewProvider viewProvider;
     Language language = getLanguage(file);
     if (language != null) {
@@ -173,26 +201,44 @@ public class FileManagerImpl implements FileManager {
       public void beforeFileTypesChanged(FileTypeEvent event) {}
 
       public void fileTypesChanged(FileTypeEvent e) {
-        ApplicationManager.getApplication().runWriteAction(
-          new Runnable() {
-            public void run() {
-              PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-              event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
-              myManager.beforePropertyChange(event);
-
-              removeInvalidFilesAndDirs(true);
-
-              event = new PsiTreeChangeEventImpl(myManager);
-              event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
-              myManager.propertyChanged(event);
-            }
+        handleFileTypesChange(new FileTypesChanged() {
+          protected void updateMaps() {
+            removeInvalidFilesAndDirs(true);
           }
-        );
+        });
       }
     });
 
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
     myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
+  }
+
+  private abstract class FileTypesChanged implements Runnable {
+    protected abstract void updateMaps();
+
+    public void run() {
+      PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
+      event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
+      myManager.beforePropertyChange(event);
+
+      updateMaps();
+
+      event = new PsiTreeChangeEventImpl(myManager);
+      event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
+      myManager.propertyChanged(event);
+    }
+  }
+
+  private boolean myProcessingFileTypesChange = false;
+  private void handleFileTypesChange(final FileTypesChanged runnable) {
+    if (myProcessingFileTypesChange) return;
+    myProcessingFileTypesChange = true;
+    try {
+      ApplicationManager.getApplication().runWriteAction(runnable);
+    }
+    finally {
+      myProcessingFileTypesChange = false;
+    }
   }
 
   private void dispatchPendingEvents() {
@@ -419,7 +465,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void removeInvalidFilesAndDirs(boolean useFind) {
-    ConcurrentHashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = new ConcurrentHashMap<VirtualFile, PsiDirectory>((Map<? extends VirtualFile,? extends PsiDirectory>)myVFileToPsiDirMap);
+    Map<VirtualFile, PsiDirectory> fileToPsiDirMap = new THashMap<VirtualFile, PsiDirectory>((Map<VirtualFile, PsiDirectory>)myVFileToPsiDirMap);
     if (useFind) {
       myVFileToPsiDirMap.clear();
     }
@@ -439,7 +485,7 @@ public class FileManagerImpl implements FileManager {
     myVFileToPsiDirMap.putAll(fileToPsiDirMap);
 
     // note: important to update directories map first - findFile uses findDirectory!
-    ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> fileToPsiFileMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
     if (useFind) {
       myVFileToViewProviderMap.clear();
     }
@@ -780,7 +826,7 @@ public class FileManagerImpl implements FileManager {
 
                     treeEvent.setChild(oldPsiFile);
                     myManager.childRemoved(treeEvent);
-                  }
+                }
                   else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
                            newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue()) ||
                            languageDialectChanged(newPsiFile, (String)event.getOldValue()) ||
@@ -791,14 +837,14 @@ public class FileManagerImpl implements FileManager {
                     treeEvent.setOldChild(oldPsiFile);
                     treeEvent.setNewChild(newPsiFile);
                     myManager.childReplaced(treeEvent);
-                  }
+              }
                   else {
                     treeEvent.setElement(oldPsiFile);
                     treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_FILE_NAME);
                     treeEvent.setOldValue(event.getOldValue());
                     treeEvent.setNewValue(event.getNewValue());
                     myManager.propertyChanged(treeEvent);
-                  }
+            }
                 }
                 else {
                   if (newPsiFile != null) {
