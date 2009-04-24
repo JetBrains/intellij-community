@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -746,15 +747,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
 
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
-                                       final Disposable parentDisposable, final boolean dumbAware) {
-    return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, false, canCloseContent, dumbAware));
+                                       final Disposable parentDisposable, final boolean canWorkInDumbMode) {
+    return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, false, canCloseContent, canWorkInDumbMode));
   }
 
   private ToolWindow registerToolWindow(@NotNull final String id,
                                         @Nullable final JComponent component,
                                         @NotNull final ToolWindowAnchor anchor,
                                         boolean sideTool,
-                                        boolean canCloseContent, final boolean dumbAware) {
+                                        boolean canCloseContent, final boolean canWorkInDumbMode) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -778,7 +779,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     toolWindow.addPropertyChangeListener(myToolWindowPropertyChangeListener);
     myId2FocusWatcher.put(id, new ToolWindowFocusWatcher(toolWindow));
 
-    if (dumbAware) {
+    if (canWorkInDumbMode) {
       myDumbAwareIds.add(id);
     }
 
@@ -1772,7 +1773,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     fixStickingDialogs();
 
-    
     LaterInvocator.invokeLater(new Runnable() {
       public void run() {
         if (checkForRejectOrByPass(command, forced, result)) return;
@@ -1805,7 +1805,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           }
         }
         else {
-          result.setRejected();
+          rejectCommand(command, result);
         }
       }
     });
@@ -1833,7 +1833,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private boolean checkForRejectOrByPass(final FocusCommand cmd, final boolean forced, final ActionCallback result) {
     if (cmd.isExpired()) {
-      result.setRejected();
+      rejectCommand(cmd, result);
       return true;
     }
 
@@ -1844,14 +1844,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         result.setDone();
       }
       else {
-        result.setRejected();
+        rejectCommand(cmd, result);
       }
       return true;
     }
 
 
     if (lastRequest != null && lastRequest.dominatesOver(cmd)) {
-      result.setRejected();
+      rejectCommand(cmd, result);
       return true;
     }
 
@@ -1867,6 +1867,18 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     return false;
+  }
+
+  private void rejectCommand(FocusCommand cmd, ActionCallback callback) {
+    if (myRequestFocusCmd == cmd) {
+      resetCurrentCommand();
+    }
+
+    callback.setRejected();
+  }
+
+  private void resetCurrentCommand() {
+    myRequestFocusCmd = null;
   }
 
   private boolean canExecuteOnInactiveApplication(FocusCommand cmd) {
