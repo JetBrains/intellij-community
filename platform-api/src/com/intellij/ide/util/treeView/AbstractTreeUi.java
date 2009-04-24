@@ -994,7 +994,7 @@ class AbstractTreeUi {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodeObject;
 
     int loadingNodes = 0;
-    for (int i = 0; i < node.getChildCount(); i++) {
+    for (int i = 0; i < Math.min(node.getChildCount(), 2); i++) {
       TreeNode child = node.getChildAt(i);
       if (isLoadingNode(child)) {
         loadingNodes++;
@@ -1339,13 +1339,14 @@ class AbstractTreeUi {
     DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)node.getParent();
     if (parentNode != null) {
       int oldIndex = parentNode.getIndex(node);
-
-      int newIndex = 0;
-      for (int i = 0; i < parentNode.getChildCount(); i++) {
-        DefaultMutableTreeNode node1 = (DefaultMutableTreeNode)parentNode.getChildAt(i);
-        if (node == node1) continue;
-        if (node1.getUserObject() instanceof NodeDescriptor && ((NodeDescriptor)node1.getUserObject()).getElement() == null) continue;
-        if (myNodeComparator.compare(node, node1) > 0 || isLoadingNode(node1)) newIndex++;
+      int newIndex = oldIndex;
+      if (isLoadingChildrenFor(node.getParent()) || getBuilder().isChildrenResortingNeeded(descriptor)) {
+        final ArrayList<TreeNode> children = new ArrayList<TreeNode>(parentNode.getChildCount());
+        for (int i = 0; i < parentNode.getChildCount(); i++) {
+          children.add(parentNode.getChildAt(i));
+        }
+        Collections.sort(children, myNodeComparator);
+        newIndex = children.indexOf(node);
       }
 
       if (oldIndex != newIndex) {

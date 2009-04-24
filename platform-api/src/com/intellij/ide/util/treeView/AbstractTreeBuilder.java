@@ -270,6 +270,10 @@ public class AbstractTreeBuilder implements Disposable {
     return AbstractTreeUi.isLoadingNode(node);
   }
 
+  public boolean isChildrenResortingNeeded(NodeDescriptor descriptor) {
+    return true;
+  }
+
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
     public AbstractTreeNodeWrapper() {
       super(null, null);

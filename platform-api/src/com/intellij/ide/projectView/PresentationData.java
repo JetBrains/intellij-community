@@ -252,4 +252,24 @@ public class PresentationData implements ItemPresentation, ComparableObject {
     myPresentableText = from.myPresentableText;
     myTooltip = from.myTooltip;
   }
+
+  public void applyFrom(PresentationData from) {
+    myAttributesKey = getValue(myAttributesKey, from.myAttributesKey);
+    myClosedIcon = getValue(myClosedIcon, from.myClosedIcon);
+
+    if (myColoredText.size() == 0) {
+      myColoredText.addAll(from.myColoredText);
+    }
+
+    myFont = getValue(myFont, from.myFont);
+    myForcedTextForeground = getValue(myForcedTextForeground, from.myForcedTextForeground);
+    myLocationString = getValue(myLocationString, from.myLocationString);
+    myOpenIcon = getValue(myOpenIcon, from.myOpenIcon);
+    myPresentableText = getValue(myPresentableText, from.myPresentableText);
+    myTooltip = getValue(myTooltip, from.myTooltip);
+  }
+
+  private <T> T getValue(T ownValue, T fromValue) {
+    return ownValue != null ? ownValue : fromValue;
+  }
 }

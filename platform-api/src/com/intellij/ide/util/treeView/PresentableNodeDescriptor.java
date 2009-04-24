@@ -1,24 +1,25 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
-  private PresentationData myPresenation;
+  private PresentationData myTemplatePresentation;
+  private PresentationData myUpdatedPresentation;
 
   protected PresentableNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
     super(project, parentDescriptor);
   }
 
   public final boolean update() {
-    if (!shouldUpdateData()) return false;
-
-    return apply(getUpdatedPresentation());
+    if (shouldUpdateData()) {
+      return apply(getUpdatedPresentation());
+    } else {
+      return false;
+    }
   }
 
   protected final boolean apply(PresentationData presentation) {
@@ -26,20 +27,24 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     myClosedIcon = presentation.getIcon(false);
     myName = presentation.getPresentableText();
     myColor = presentation.getForcedTextForeground();
-    final boolean updated = presentation.equals(myPresenation);
+    final boolean updated = presentation.equals(myUpdatedPresentation);
 
-    if (myPresenation == null) {
-      myPresenation = createPresentation();
+    if (myUpdatedPresentation == null) {
+      myUpdatedPresentation = createPresentation();
     }
 
-    myPresenation.copyFrom(presentation);
+    myUpdatedPresentation.copyFrom(presentation);
+
+    if (myTemplatePresentation != null) {
+      myUpdatedPresentation.applyFrom(myTemplatePresentation);
+    }
 
     return updated;
   }
 
   private PresentationData getUpdatedPresentation() {
-    PresentationData presentation = myPresenation != null ? myPresenation : createPresentation();
-    myPresenation = presentation;
+    PresentationData presentation = myUpdatedPresentation != null ? myUpdatedPresentation : createPresentation();
+    myUpdatedPresentation = presentation;
     presentation.clear();
     update(presentation);
     postprocess(presentation);
@@ -63,10 +68,21 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
   @NotNull
   public final PresentationData getPresentation() {
-    if (myPresenation == null) {
-      myPresenation = createPresentation();
+    PresentationData result;
+    if (myUpdatedPresentation == null) {
+      result = getTemplatePresenation();
+    } else {
+      result = myUpdatedPresentation;
     }
-    return myPresenation;
+    return result;
+  }
+
+  protected final PresentationData getTemplatePresenation() {
+    if (myTemplatePresentation == null) {
+      myTemplatePresentation = createPresentation();
+    }
+
+    return myTemplatePresentation;
   }
 
   public static class ColoredFragment {
@@ -119,31 +135,16 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     }
   }
 
-
-  /**
-   * @deprecated @see getPresentation()
-   * @return
-   */
-  protected String getToolTip() {
-    return getPresentation().getTooltip();
-  }
-
-  /**
-   * @deprecated @see getPresentation()
-   * @return
-   */
-  @Nullable
-  public TextAttributesKey getAttributesKey() {
-    return getPresentation().getTextAttributesKey();
-  }
-
-  /**
-   * @deprecated @see getPresentation()
-   * @return
-   */
-  @Nullable
-  public String getLocationString() {
-    return getPresentation().getLocationString();
+  public String getName() {
+    if (getPresentation().getColoredText().size() > 0) {
+      StringBuilder result = new StringBuilder("");
+      for (ColoredFragment each : getPresentation().getColoredText()) {
+        result.append(each.getText());
+      }
+      return result.toString();
+    } else {
+      return myName;
+    }
   }
 
 }
