@@ -614,7 +614,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     @Override
     protected void processMouseEvent(final MouseEvent e) {
       final MyTreeUi ui = (MyTreeUi)myTree.getUI();
-      if (e.getID() == MouseEvent.MOUSE_RELEASED && UIUtil.isActionClick(e) && !ui.isToggleEvent(e)) {
+      if (e.getID() == MouseEvent.MOUSE_RELEASED && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !ui.isToggleEvent(e)) {
         final TreePath path = getPathForLocation(e.getX(), e.getY());
         if (path != null) {
           final Rectangle bounds = getPathBounds(path);
