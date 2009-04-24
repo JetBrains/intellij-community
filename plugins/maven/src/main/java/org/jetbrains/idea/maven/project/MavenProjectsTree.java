@@ -187,13 +187,18 @@ public class MavenProjectsTree {
                         MavenGeneralSettings generalSettings,
                         MavenConsole console,
                         MavenProcess process) throws MavenProcessCanceledException {
-    update(getExistingManagedFiles(),
+    List<VirtualFile> managedFiles = getExistingManagedFiles();
+    update(managedFiles,
            quickUpdate,
            embeddersManager,
            generalSettings,
            console,
            process,
            true);
+
+    List<VirtualFile> obsoleteFiles = getRootProjectsFiles();
+    obsoleteFiles.removeAll(managedFiles);
+    delete(obsoleteFiles, quickUpdate, embeddersManager, generalSettings, console, process);
   }
 
   public void update(Collection<VirtualFile> files,
