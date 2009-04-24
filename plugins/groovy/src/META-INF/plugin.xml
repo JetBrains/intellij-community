@@ -31,6 +31,8 @@
     <extensionPoint name="grails.facetProvider" interface="org.jetbrains.plugins.grails.util.GrailsFacetProvider"/>
     <extensionPoint name="nonCodeProcessor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor"/>
     <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.LibraryManager"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.grails.grailsProjectViewStructureProvider"
+                        interface="org.jetbrains.plugins.grails.projectView.v2.providers.GrailsProjectViewStructureProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
