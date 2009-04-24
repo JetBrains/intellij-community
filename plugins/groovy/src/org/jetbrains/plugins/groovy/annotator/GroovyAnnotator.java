@@ -808,7 +808,7 @@ public class GroovyAnnotator implements Annotator {
         annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner)targetClass));
       }
 
-      if (refExpr.getParent() instanceof GrCallExpression) {
+      if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
         annotation.registerFix(new CreateMethodFromUsageFix(refExpr, (GrMemberOwner)targetClass));
       }
     }

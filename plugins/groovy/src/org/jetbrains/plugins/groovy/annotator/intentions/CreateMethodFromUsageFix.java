@@ -25,8 +25,8 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
@@ -78,7 +78,7 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     methodBuffer.append(") {\n}");
     GrMethod method = GroovyPsiElementFactory.getInstance(project).createMethodFromText(methodBuffer.toString());
     GrMemberOwner owner = myTargetClass;
-    TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints((GrCallExpression) myRefExpression.getParent());
+    TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints((GrExpression) myRefExpression.getParent());
     method = owner.addMemberDeclaration(method, null);
 
     IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, owner, constraints, false);
