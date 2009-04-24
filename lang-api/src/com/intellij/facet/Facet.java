@@ -38,7 +38,7 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   private String myName;
   private boolean myImplicit;
 
-  public Facet(@NotNull final FacetType facetType, @NotNull final Module module, final String name, @NotNull final C configuration, Facet underlyingFacet) {
+  public Facet(@NotNull final FacetType facetType, @NotNull final Module module, final @NotNull String name, @NotNull final C configuration, Facet underlyingFacet) {
     myName = name;
     myFacetType = facetType;
     myModule = module;
@@ -105,7 +105,7 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     return super.equals(obj);
   }
 
-
+  @NotNull
   public final String getName() {
     return myName;
   }
@@ -113,7 +113,7 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   /**
    * Use {@link com.intellij.facet.ModifiableFacetModel#rename} to rename facets
    */
-  final void setName(final String name) {
+  final void setName(final @NotNull String name) {
     myName = name;
   }
 

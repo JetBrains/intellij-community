@@ -118,7 +118,10 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
 
     final ArrayList<FacetInfo> infos = new ArrayList<FacetInfo>();
     for (Facet facet : facets) {
-      infos.add(getFacetConfigurator().getFacetInfo(facet));
+      final FacetInfo facetInfo = getFacetConfigurator().getFacetInfo(facet);
+      if (facetInfo != null) {
+        infos.add(facetInfo);
+      }
     }
     return infos;
   }
