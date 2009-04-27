@@ -203,7 +203,7 @@ public class ElementPresentationUtil {
     if (list != null) {
       int level = PsiUtil.getAccessLevel(list);
       if (level != PsiUtil.ACCESS_LEVEL_PUBLIC) {
-        adj += " " + StringUtil.capitalize(PsiUtil.getAccessModifier(level));
+        adj += " " + StringUtil.capitalize(PsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level)));
       }
     }
     return adj;

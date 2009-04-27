@@ -154,7 +154,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
       else if (!existingTypeParamAgree && infoTypeParamAgree && !PsiSuperMethodUtil.isSuperMethod(existingMethod, method)) {
         signatures.put(signature, info);
-        int index = ContainerUtil.findByEquals(conflicts, existing);
+        int index = conflicts.indexOf(existing);
         conflicts.remove(index);
         i--;
         continue;

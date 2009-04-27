@@ -17,7 +17,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +39,7 @@ public class ReflectionUtil {
   @Nullable
   public static Type resolveVariable(TypeVariable variable, final Class classType, boolean resolveInInterfacesOnly) {
     final Class aClass = getRawType(classType);
-    int index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(aClass), variable);
+    int index = ArrayUtil.find(ReflectionCache.getTypeParameters(aClass), variable);
     if (index >= 0) {
       return variable;
     }
@@ -64,7 +63,7 @@ public class ReflectionUtil {
       }
       if (resolved instanceof TypeVariable) {
         final TypeVariable typeVariable = (TypeVariable)resolved;
-        index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(anInterface), typeVariable);
+        index = ArrayUtil.find(ReflectionCache.getTypeParameters(anInterface), typeVariable);
         if (index < 0) {
           LOG.assertTrue(false, "Cannot resolve type variable:\n" +
                               "typeVariable = " + typeVariable + "\n" +
@@ -126,7 +125,7 @@ public class ReflectionUtil {
         return (Class<?>)((ParameterizedType)type).getRawType();
       }
       if (type instanceof TypeVariable && classType instanceof ParameterizedType) {
-        final int index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(aClass), type);
+        final int index = ArrayUtil.find(ReflectionCache.getTypeParameters(aClass), type);
         if (index >= 0) {
           return getRawType(getActualTypeArguments(((ParameterizedType)classType))[index]);
         }
