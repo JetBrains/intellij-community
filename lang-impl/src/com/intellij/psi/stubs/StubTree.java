@@ -9,9 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -27,13 +24,11 @@ import java.util.Map;
 public class StubTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubTree");
 
-  private static final Key<StubTree> HARD_REF_IN_STUB = new Key<StubTree>("HARD_REF_IN_STUB");
   private final PsiFileStub myRoot;
   private final List<StubElement<?>> myPlainList = new ArrayList<StubElement<?>>();
 
   public StubTree(final PsiFileStub root) {
     myRoot = root;
-    ((UserDataHolder)root).putUserData(HARD_REF_IN_STUB, this);
     enumerateStubs(root, myPlainList);
   }
 
@@ -83,7 +78,7 @@ public class StubTree {
   }
 
   @Nullable
-  public static StubTree readFromVFile(Project project, final VirtualFile vFile) {
+  public static StubTree readFromVFile(final VirtualFile vFile) {
     if (DumbService.getInstance().isDumb()) {
       /*
       try {
@@ -125,31 +120,5 @@ public class StubTree {
     }
 
     return null;
-  }
-
-  /*
-  @Nullable
-  private static StubElement createStubElement(Project project, VirtualFile vFile) throws IOException {
-    final FileType fileType = vFile.getFileType();
-    if (fileType.isBinary()) {
-      final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-      assert builder != null;
-      return builder.buildStubTree(vFile, vFile.contentsToByteArray(), project);
-    }
-
-    final LanguageFileType filetype = (LanguageFileType)fileType;
-    Language l = filetype.getLanguage();
-    final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
-
-    PsiFile psi = PsiFileFactory.getInstance(project)
-      .createFileFromText(vFile.getName(), filetype, LoadTextUtil.getTextByBinaryPresentation(vFile.contentsToByteArray(), vFile.getCharset()), 1, false, false);
-
-    psi.putUserData(FileBasedIndex.VIRTUAL_FILE, vFile);
-    return ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
-  }
-  */
-
-  public static StubTree getTreeFromTopLevelStub(final PsiFileStub stubElement) {
-    return stubElement != null ? ((UserDataHolder)stubElement).getUserData(HARD_REF_IN_STUB):null;
   }
 }

@@ -372,7 +372,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         stub = myStub;
         stubHolder = stub == null ? null : stub.get();
         if (stubHolder != null) return stubHolder;
-        stubHolder = StubTree.readFromVFile(getProject(), getVirtualFile());
+        stubHolder = StubTree.readFromVFile(getVirtualFile());
         if (stubHolder != null) {
           myStub = new SoftReference<StubTree>(stubHolder);
           ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);

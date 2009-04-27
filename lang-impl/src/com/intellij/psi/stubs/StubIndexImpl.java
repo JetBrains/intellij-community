@@ -16,7 +16,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -183,7 +186,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
               if (stubTree != null || psiFile != null) {
                 if (stubTree == null) {
-                  stubTree = StubTree.readFromVFile(project, file);
+                  stubTree = StubTree.readFromVFile(file);
                   if (stubTree != null) {
                     final List<StubElement<?>> plained = stubTree.getPlainList();
                     for (int i = 0; i < value.size(); i++) {
