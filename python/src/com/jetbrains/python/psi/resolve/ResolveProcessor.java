@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.NameDefiner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

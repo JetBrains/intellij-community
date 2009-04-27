@@ -6,21 +6,23 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Handles cases when an unresolved name may be imported from one of existing imported modules.
- * The object contains a list of modules from which given name might be imported.
+ * The object contains a list of import candidates and serves only to show the initial hint;
+ * the actual work is done in ImportFromExistingAction..
  * User: dcheryasov
  * Date: Apr 15, 2009 2:06:25 PM
  */
@@ -28,36 +30,43 @@ public class ImportFromExistingFix implements HintAction {
 
   PyElement myNode;
 
-  List<Pair<PyImportElement, PsiElement>> myImports; // from where and what to import
+  List<ImportCandidateHolder> myImports; // from where and what to import
   String myName;
 
   /**
    * Creates a new, empty fix object.
    * @param node to which the fix applies.
+   * @param name the unresolved identifier portion of node's text
    */
   public ImportFromExistingFix(PyElement node, String name) {
     myNode = node;
-    myImports = new ArrayList<Pair<PyImportElement, PsiElement>>();
+    myImports = new ArrayList<ImportCandidateHolder>();
     myName = name;
   }
 
   /**
-   * Creates a mew fix object with one import variant.
-   * @param node to which the fix applies.
-   * @param source from which the name is importable.
-   * @param name
+   * Adds another import source.
+   * @param importable an element that could be imported either from import element or from file.
+   * @param file the file which is the source of the importable
+   * @param importElement an existing import element that can be a source for the importable.
    */
-  public ImportFromExistingFix(PyElement node, PyImportElement source, PsiElement item, String name) {
-    this(node, name);
-    addImport(source, item);
+  public void addImport(@NotNull PsiElement importable, @NotNull PsiFile file, @Nullable PyImportElement importElement) {
+    myImports.add(new ImportCandidateHolder(importable, file, importElement, null, null));
   }
 
   /**
    * Adds another import source.
-   * @param source an import statement from which the name is importable.
+   * @param importable an element that could be imported either from import element or from file.
+   * @param file the file which is the source of the importable
+   * @param importElement an existing import element that can be a source for the importable.
+   * @param path import path for the file, as a qualified name (a.b.c)
+   * @param asName name to use to import the path as: "import path as asName"
    */
-  public void addImport(PyImportElement source, PsiElement item) {
-    myImports.add(new Pair<PyImportElement, PsiElement>(source, item));
+  public void addImport(
+    @NotNull PsiElement importable, @NotNull PsiFile file,
+    @Nullable PyImportElement importElement, @Nullable String path, @Nullable String asName
+  ) {
+    myImports.add(new ImportCandidateHolder(importable, file, importElement, path, asName));
   }
 
   @NotNull
@@ -74,9 +83,10 @@ public class ImportFromExistingFix implements HintAction {
     if (myNode == null || !myNode.isValid() || myNode.getName() == null || myImports.size() <= 0) {
       return false; // TODO: also return false if an on-the-fly unambiguous fix is possible?
     }
+    if ((myNode instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myNode).getQualifier() != null))) return false; // we cannot be qualified
     final String message = ShowAutoImportPass.getMessage(
       myImports.size() > 1, 
-      myImports.get(0).getFirst().getVisibleName()+"."+myNode.getName()
+      ImportCandidateHolder.getQualifiedName(myName, myImports.get(0).getPath(), myImports.get(0).getImportElement())
     );
     final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, editor);
     HintManager.getInstance().showQuestionHint(

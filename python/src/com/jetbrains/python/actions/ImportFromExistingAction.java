@@ -6,9 +6,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -30,15 +29,17 @@ import java.util.List;
 public class ImportFromExistingAction implements QuestionAction {
 
   PyElement myTarget;
-  List<Pair<PyImportElement, PsiElement>> mySources; // list of <import, imported_item>
+  List<ImportCandidateHolder> mySources; // list of <import, imported_item>
   Editor myEditor;
   String myName;
 
   /**
    * @param target element to become qualified as imported.
    * @param sources clauses of import to be used.
+   * @param name relevant name ot the target element (e.g. of identifier in an experssion).
+   * @param editor target's editor.
    */
-  public ImportFromExistingAction(@NotNull PyElement target, @NotNull List<Pair<PyImportElement, PsiElement>> sources, String name, Editor editor) {
+  public ImportFromExistingAction(@NotNull PyElement target, @NotNull List<ImportCandidateHolder> sources, String name, Editor editor) {
     mySources = sources;
     myTarget = target;
     myEditor = editor;
@@ -54,35 +55,31 @@ public class ImportFromExistingAction implements QuestionAction {
     PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
     if (!myTarget.isValid()) return false;
     if ((myTarget instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myTarget).getQualifier() != null))) return false; // we cannot be qualified
-    for (Pair<PyImportElement, PsiElement> src : mySources) {
-      if (!src.getFirst().isValid()) return false;
-      if (!src.getSecond().isValid()) return false;
+    for (ImportCandidateHolder item : mySources) {
+      if (!item.getImportable().isValid()) return false;
+      if (!item.getFile().isValid()) return false;
+      if (item.getImportElement() != null && !item.getImportElement().isValid()) return false;
     }
     // act
     if (mySources.size() > 1) {
       selectSourceAndDo();
     }
-    else doWriteAction(mySources.get(0).getFirst());
+    else doWriteAction(mySources.get(0));
     return true; 
   }
 
   private void selectSourceAndDo() {
     // GUI part
-    QualifiedHolder[] items = new QualifiedHolder[mySources.size()];
-    int i = 0;
-    for (Pair<PyImportElement, PsiElement> pair : mySources) {
-      items[i] = new QualifiedHolder(pair.getFirst(), pair.getSecond(), myName);
-      i += 1;
-    }
+    ImportCandidateHolder[] items = mySources.toArray(new ImportCandidateHolder[mySources.size()]); // silly JList can't handle modern collections
     final JList list = new JList(items);
-    list.setCellRenderer(new CellRenderer());
+    list.setCellRenderer(new CellRenderer(myName));
     
     Runnable runnable = new Runnable() {
       public void run() {
         int index = list.getSelectedIndex();
         if (index < 0) return;
         PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-        doWriteAction(mySources.get(index).getFirst());
+        doWriteAction(mySources.get(index));
       }
     };
 
@@ -94,34 +91,41 @@ public class ImportFromExistingAction implements QuestionAction {
     ;
   }
 
-  private void doIt(final PyImportElement src) {
-    // did user choose 'import' or 'from import'?
-    PsiElement parent = src.getParent();
-    if (parent instanceof PyFromImportStatement) {
-      // add another import element right after the one we got
-      final PyElementGenerator gen = PythonLanguage.getInstance().getElementGenerator();
-      final Project project = myTarget.getProject();
-      PsiElement new_elt = gen.
-        createFromText(project, PyImportElement.class, "from foo import " + myName, new int[]{0,6})
-      ;
-      PyUtil.addListNode(parent, new_elt, null, false, true);
+  private void doIt(final ImportCandidateHolder item) {
+    PyImportElement src = item.getImportElement();
+    final PyElementGenerator gen = PythonLanguage.getInstance().getElementGenerator();
+    if (src != null) { // use existing import
+      // did user choose 'import' or 'from import'?
+      PsiElement parent = src.getParent();
+      if (parent instanceof PyFromImportStatement) {
+        // add another import element right after the one we got
+        final Project project = myTarget.getProject();
+        PsiElement new_elt = gen.
+          createFromText(project, PyImportElement.class, "from foo import " + myName, new int[]{0, 6});
+        PyUtil.addListNode(parent, new_elt, null, false, true);
+      }
+      else { // just 'import'
+        // all we need is to qualify our target
+        myTarget.replace(gen.createExpressionFromText(myTarget.getProject(), src.getVisibleName() + "." + myName));
+      }
     }
-    else { // just 'import'
-      // all we need is to qualify our target
-      myTarget.replace(
-        PythonLanguage.getInstance().
-        getElementGenerator().
-        createExpressionFromText(myTarget.getProject(), src.getVisibleName()+ "." + myName)
-      );
+    else { // no existing import, add it then use it
+      Project project = myTarget.getProject();
+      AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), item.getAsName(), project);
+      String qual_name;
+      if (item.getAsName() != null) qual_name = item.getAsName();
+      else qual_name = item.getPath();
+      myTarget.replace(gen.createExpressionFromText(project, qual_name + "." + myName));
     }
   }
 
-  private void doWriteAction(final PyImportElement src) {
+  private void doWriteAction(final ImportCandidateHolder item) {
+    PsiElement src = item.getImportable();
     CommandProcessor.getInstance().executeCommand(src.getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            doIt(src);
+            doIt(item);
           }
         });
       }
@@ -129,64 +133,13 @@ public class ImportFromExistingAction implements QuestionAction {
   }
 
 
-  // items to store in list
-  private static class QualifiedHolder {
-    final PyImportElement mySrc;
-    final PsiElement myItem;
-    final String myName;
-
-    public QualifiedHolder(PyImportElement src, PsiElement item, String name) {
-      mySrc = src;
-      myItem = item;
-      myName = name;
-    }
-
-    public Icon getIcon() {
-      return myItem.getIcon(0);
-    }
-
-    @Override
-    public String toString() {
-      StringBuffer sb = new StringBuffer();
-      PsiElement parent = mySrc.getParent();
-      if (parent instanceof PyFromImportStatement) {
-        sb.append(myName);
-      }
-      else {
-        sb.append(mySrc.getVisibleName()).append(".").append(myName);
-      }
-      if (myItem instanceof PyFunction) {
-        sb.append("(");
-        // below: ", ".join([x.getRepr(False) for x in getParameters()])
-        PyParameter[] params = ((PyFunction)myItem).getParameterList().getParameters();
-        String[] param_reprs = new String[params.length];
-        for (int i=0; i < params.length; i += 1) param_reprs[i] = params[i].getRepr(false);
-        PyUtil.joinSubarray(param_reprs, 0, params.length, ", ", sb);
-        sb.append(")");
-      }
-      else if (myItem instanceof PyClass) {
-        PyClass[] supers = ((PyClass)myItem).getSuperClasses();
-        if (supers.length > 0) {
-          sb.append("(");
-          // ", ".join(x.getName() for x in getSuperClasses())
-          String[] super_names = new String[supers.length];
-          for (int i=0; i < supers.length; i += 1) super_names[i] = supers[i].getName();
-          PyUtil.joinSubarray(super_names, 0, supers.length, ", ", sb);
-          sb.append(")");
-        }
-      }
-      if (parent instanceof PyFromImportStatement) {
-        sb.append(" from ").append(((PyFromImportStatement)parent).getImportSource().getReferencedName());
-      }
-      return sb.toString();
-    }
-  }
-
   // Stolen from FQNameCellRenderer
   private static class CellRenderer extends SimpleColoredComponent implements ListCellRenderer {
     private final Font FONT;
+    private final String myName;
 
-    public CellRenderer() {
+    public CellRenderer(String name) {
+      myName = name;
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       FONT = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
       setOpaque(true);
@@ -203,9 +156,9 @@ public class ImportFromExistingAction implements QuestionAction {
 
       clear();
 
-      QualifiedHolder item = (QualifiedHolder)value;
-      setIcon(item.getIcon());
-      String item_name = item.toString();
+      ImportCandidateHolder item = (ImportCandidateHolder)value;
+      setIcon(item.getImportable().getIcon(0));
+      String item_name = item.getPresentableText(myName);
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       setFont(FONT);
       if (isSelected) {

@@ -11,25 +11,25 @@ import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.ResolveImportUtil;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.PyClassScopeProcessor;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AddImportAction implements HintAction, QuestionAction, LocalQuickFix {
   private final PsiReference myReference;
   private final Project myProject;
-  private static final Logger LOG = Logger.getInstance("#" + AddImportAction.class.getName());
 
   public AddImportAction(final PsiReference reference) {
     myReference = reference;
@@ -203,40 +203,12 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
   private void execute(final PsiFile file) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        final String referenceName = getRefName();
-        if (ResolveImportUtil.resolveInRoots(file, referenceName) != null) { 
-          // TODO: annotate the case of multiple files
-          final PyImportStatement importNodeToInsert = PythonLanguage.getInstance().getElementGenerator().createImportStatementFromText(
-              myProject, "import " + referenceName + "\n\n"
-          );
-          try {
-            file.addBefore(importNodeToInsert, getInsertPosition(file));
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+        String name = getRefName();
+        if (ResolveImportUtil.resolveInRoots(file, name) != null) { // TODO: think about multiple possible resole results
+          AddImportHelper.addImportStatement(file, name, null, file.getProject());
         }
       }
     });
-  }
-
-  private static PsiElement getInsertPosition(final PsiFile file) {
-    PsiElement feeler = file.getFirstChild();
-    LOG.assertTrue(feeler != null);
-    // skip initial comments and whitespace and try to get just below the last import stmt
-    PsiElement seeker = feeler;
-    do {
-      if (PyUtil.instanceOf(feeler, PyImportStatement.class, PyFromImportStatement.class)) {
-        seeker = feeler;
-        feeler = feeler.getNextSibling();
-      }
-      else if (PyUtil.instanceOf(feeler, PsiWhiteSpace.class, PsiComment.class)) {
-        seeker = feeler;
-        feeler = feeler.getNextSibling();
-      }
-      else break; // some other statement, stop
-    } while (feeler != null);
-    return seeker;
   }
 
   public boolean startInWriteAction() {

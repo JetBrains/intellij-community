@@ -1,4 +1,4 @@
-package com.jetbrains.python.psi.impl;
+package com.jetbrains.python.psi.resolve;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -13,12 +13,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.ResolveProcessor;
-import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.psi.impl.PyImportResolver;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -51,7 +49,7 @@ public class ResolveImportUtil {
    * @return the object importRef refers to, or null.
    */
   @Nullable
-  static PsiElement resolveImportReference(final PyReferenceExpression importRef) {
+  public static PsiElement resolveImportReference(final PyReferenceExpression importRef) {
     if (importRef == null) return null; // fail fast
     final String referencedName = importRef.getReferencedName();
     if (referencedName == null) return null;
@@ -153,6 +151,66 @@ public class ResolveImportUtil {
     return null; // not resolved by any means
   }
 
+
+  public static void visitRoots(final PsiElement elt, @NotNull final SdkRootVisitor visitor) {
+    // real search
+    final Module module = ModuleUtil.findModuleForPsiElement(elt);
+    if (module != null) {
+      // TODO: implement a proper module-like approach in PyCharm for "project's dirs on pythonpath", minding proper search order
+      // Module-based approach works only in the IDEA plugin.
+      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      // look in module sources
+      boolean source_entries_missing = true;
+      for (ContentEntry entry: rootManager.getContentEntries()) {
+        VirtualFile root_file = entry.getFile();
+
+        if (!visitor.visitRoot(root_file)) return;
+        for (VirtualFile folder : entry.getSourceFolderFiles()) {
+          source_entries_missing = false;
+          if (!visitor.visitRoot(folder)) return;
+        }
+      }
+      if (source_entries_missing) {
+        // fallback for a case without any source entries: use project root
+        VirtualFile project_root = module.getProject().getBaseDir();
+        if (!visitor.visitRoot(project_root)) return;
+      }
+      // else look in SDK roots
+      RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
+        @Nullable
+        public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
+          if (value != null) return value;  // for chaining in processOrder()
+          visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
+          return null;
+        }
+      };
+      rootManager.processOrder(resolvePolicy, null);
+    }
+    else {
+      // no module, another way to look in SDK roots
+      final PsiFile elt_psifile = elt.getContainingFile();
+      if (elt_psifile != null) {  // formality
+        final VirtualFile elt_vfile = elt_psifile.getVirtualFile();
+        if (elt_vfile != null) { // reality
+          for (OrderEntry entry: ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile
+            )
+          ) {
+            if (!visitGivenRoots(entry.getFiles(OrderRootType.SOURCES), visitor)) break;
+          }
+        }
+      }
+    }
+  }
+
+
+  private static boolean visitGivenRoots(final VirtualFile[] roots, SdkRootVisitor visitor) {
+    for (VirtualFile root: roots) {
+      if (! visitor.visitRoot(root)) return false;
+    }
+    return true;
+  }
+
+  // TODO: rewrite using visitRoots
   /**
    * Looks for a name among element's module's roots; if there's no module, then among project's roots.
    * @param elt PSI element that defines the module and/or the project.
@@ -206,7 +264,7 @@ public class ResolveImportUtil {
         public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
           if (value != null) return value;
           LookupRootVisitor visitor = new LookupRootVisitor(refName, elt.getManager());
-          visitRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
+          visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
           return visitor.getResult();
         }
       };
@@ -256,12 +314,6 @@ public class ResolveImportUtil {
     return null;
   }
 
-  public static void visitRoots(final VirtualFile[] roots, SdkRootVisitor visitor) {
-    for (VirtualFile root: roots) {
-      if (! visitor.visitRoot(root)) break;
-    }
-  }
-
   /**
   Tries to find referencedName under a root.
   @param root where to look for the referenced name.
@@ -284,7 +336,6 @@ public class ResolveImportUtil {
 
     return null;
   }
-
 
   interface SdkRootVisitor {
     /**
@@ -486,7 +537,7 @@ public class ResolveImportUtil {
         @Nullable
         public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
           if (value != null) return value;
-          visitRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
+          visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
           return null;
         }
       };
@@ -496,5 +547,61 @@ public class ResolveImportUtil {
 
     return variants.toArray(new Object[variants.size()]);
   }
+
+  /**
+   * Tries to find roots that contain given vfile, and among them the root that contains at the smallest depth.
+   */
+  private static class PathChoosingVisitor implements SdkRootVisitor {
+
+    private final VirtualFile myFile;
+    private String myFname;
+    private String myResult = null;
+    private int myDots = Integer.MAX_VALUE; // how many dots in the path
+
+    private PathChoosingVisitor(VirtualFile file) {
+      myFile = file;
+      // cut off the ext
+      myFname = file.getPath();
+      int pos = myFname.lastIndexOf('.');
+      if (pos > 0) myFname = myFname.substring(0, pos);
+    }
+
+    public boolean visitRoot(VirtualFile root) {
+      // does it ever fit?
+      String root_name = root.getPath()+"/";
+      if (myFname.startsWith(root_name)) {
+        String bet = myFname.substring(root_name.length()).replace('/', '.'); // "/usr/share/python/foo/bar" -> "foo.bar"
+        // count the dots
+        int dots = 0;
+        for (int i = 0; i < bet.length(); i += 1) if (bet.charAt(i) == '.') dots += 1;
+        // a better variant?
+        if (dots < myDots) {
+          myDots = dots;
+          myResult = bet;
+        }
+      }
+      return true; // visit all roots
+    }
+
+    public String getResult() {
+      return myResult;
+    }
+  }
+
+  /**
+   * Looks for a way to import given file.
+   * @param foothold an element in the file to import to (maybe the file itself); used to determine module, roots, etc.
+   * @param vfile file which importable name we want to find.
+   * @return a possibly qualified name under which the file may be imported, or null. If there's more than one way (overlapping roots),
+   * the name with fewest qualifiers is selected.
+   */
+  @Nullable
+  public static String findShortestImportableName(PsiElement foothold, VirtualFile vfile) {
+    PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
+    visitRoots(foothold, visitor);
+    return visitor.getResult();
+  }
+
+
 
 }
