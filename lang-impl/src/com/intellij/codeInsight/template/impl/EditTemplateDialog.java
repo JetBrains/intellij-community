@@ -586,7 +586,7 @@ public class EditTemplateDialog extends DialogWrapper {
   private static boolean isAllowedTemplateAbbreviation(final String key) {
     for (int i = 0; i < key.length(); i++) {
       final char c = key.charAt(i);
-      if (c != '.' && !Character.isJavaIdentifierPart(c)) return false;
+      if (c != '.' && c != '-' && !Character.isJavaIdentifierPart(c)) return false;
     }
     return true;
   }
