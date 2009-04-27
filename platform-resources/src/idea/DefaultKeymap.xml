@@ -287,6 +287,9 @@
     <action id="RecentFiles">
       <keyboard-shortcut first-keystroke="control E"/>
     </action>
+    <action id="RecentChangedFiles">
+      <keyboard-shortcut first-keystroke="control shift E"/>
+    </action>
     <action id="QuickChangeScheme">
       <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
     </action>

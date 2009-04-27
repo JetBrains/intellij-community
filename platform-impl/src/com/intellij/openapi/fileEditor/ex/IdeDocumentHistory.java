@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.ex;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class IdeDocumentHistory {
   public static IdeDocumentHistory getInstance(Project project) {
@@ -20,4 +21,6 @@ public abstract class IdeDocumentHistory {
 
   public abstract void navigatePreviousChange();
   public abstract boolean isNavigatePreviousChangeAvailable();
+
+  public abstract VirtualFile[] getChangedFiles();
 }

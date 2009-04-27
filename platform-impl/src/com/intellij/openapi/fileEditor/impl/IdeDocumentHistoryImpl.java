@@ -1,10 +1,14 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -16,12 +20,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
-public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements ProjectComponent {
+@State(
+    name = "IdeDocumentHistory",
+    storages = {@Storage(id = "other", file = "$WORKSPACE_FILE$")}
+)
+public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements ProjectComponent, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl");
 
   private static final int BACK_QUEUE_LIMIT = 25;
@@ -66,6 +77,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
   };
 
+  private RecentlyChangedFilesState myRecentlyChangedFiles = new RecentlyChangedFilesState();
 
   public IdeDocumentHistoryImpl(Project project,
                                 EditorFactory editorFactory,
@@ -119,6 +131,40 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     };
     myVfManager.addVirtualFileListener(myFileListener);
     myCmdProcessor.addCommandListener(myCommandListener);
+  }
+
+  public static class RecentlyChangedFilesState {
+    private @Transient List<String> CHANGED_PATHS = new ArrayList<String>();
+
+    public List<String> getChangedFiles() {
+      return CHANGED_PATHS;
+    }
+
+    public void setChangedFiles(List<String> changed) {
+      CHANGED_PATHS = changed;
+    }
+
+    public void register(VirtualFile file) {
+      final String path = file.getPath();
+      CHANGED_PATHS.remove(path);
+      CHANGED_PATHS.add(path);
+      trimToSize();
+    }
+
+    private void trimToSize(){
+      final int limit = UISettings.getInstance().RECENT_FILES_LIMIT + 1;
+      while(CHANGED_PATHS.size()>limit){
+        CHANGED_PATHS.remove(0);
+      }
+    }
+  }
+
+  public RecentlyChangedFilesState getState() {
+    return myRecentlyChangedFiles;
+  }
+
+  public void loadState(RecentlyChangedFilesState state) {
+    myRecentlyChangedFiles = state;
   }
 
   public final void onFileDeleted() {
@@ -211,6 +257,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       return;
     }
     final PlaceInfo placeInfo = createPlaceInfo(selectedEditorWithProvider.getFirst(), selectedEditorWithProvider.getSecond ());
+
+    myRecentlyChangedFiles.register(placeInfo.getFile());
+
     myCurrentChangePlace = placeInfo;
     if (!myChangePlaces.isEmpty()) {
       final PlaceInfo lastInfo = myChangePlaces.get(myChangePlaces.size() - 1);
@@ -231,6 +280,22 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       myCurrentChangePlace = null;
     }
     myCurrentIndex = myStartIndex + myChangePlaces.size();
+  }
+
+  @Override
+  public VirtualFile[] getChangedFiles() {
+    List<VirtualFile> files = new ArrayList<VirtualFile>();
+
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final List<String> paths = myRecentlyChangedFiles.getChangedFiles();
+    for (String path : paths) {
+      final VirtualFile file = lfs.findFileByPath(path);
+      if (file != null) {
+        files.add(file);
+      }
+    }
+
+    return files.toArray(new VirtualFile[files.size()]);
   }
 
   public final void clearHistory() {
@@ -345,11 +410,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     boolean removed = false;
     for (Iterator<PlaceInfo> iterator = backPlaces.iterator(); iterator.hasNext();) {
       PlaceInfo info = iterator.next();
-      if (!info.myFile.isValid()) {
+      final VirtualFile file = info.myFile;
+      if (!file.isValid()) {
         iterator.remove();
         removed = true;
       }
     }
+    
     return removed;
   }
 
