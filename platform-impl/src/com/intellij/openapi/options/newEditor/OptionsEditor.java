@@ -178,7 +178,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     myMainSplitter.setFirstComponent(myLeftSide);
     myMainSplitter.setHonorComponentsMinimumSize(false);
 
-    myLoadingDecorator = new LoadingDecorator(myOwnDetails.getComponent(), project, 150);
+    myLoadingDecorator = new LoadingDecorator(myOwnDetails.getComponent(), this, 150);
     myMainSplitter.setSecondComponent(myLoadingDecorator.getComponent());
 
 

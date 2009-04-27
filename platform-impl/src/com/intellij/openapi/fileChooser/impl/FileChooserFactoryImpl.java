@@ -26,9 +26,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   }
 
   public FileTextField createFileTextField(final FileChooserDescriptor descriptor, final boolean showHidden, Disposable parent) {
-    FileTextFieldImpl.Vfs field = new FileTextFieldImpl.Vfs(descriptor, showHidden, new JTextField(), getMacroMap());
-    Disposer.register(parent, field);
-    return field;
+    return new FileTextFieldImpl.Vfs(descriptor, showHidden, new JTextField(), getMacroMap(), parent);
   }
 
   public FileTextField createFileTextField(final FileChooserDescriptor descriptor, Disposable parent) {
@@ -39,10 +37,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
                                     final Disposable parent) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-    FileTextFieldImpl.Vfs vfsField = new FileTextFieldImpl.Vfs(descriptor, showHidden, field, getMacroMap());
-    if (field.getClientProperty(FileTextFieldImpl.KEY) == vfsField) {
-      Disposer.register(parent, vfsField);
-    }
+    FileTextFieldImpl.Vfs vfsField = new FileTextFieldImpl.Vfs(descriptor, showHidden, field, getMacroMap(), parent);
   }
 
   public static Map<String, String> getMacroMap() {

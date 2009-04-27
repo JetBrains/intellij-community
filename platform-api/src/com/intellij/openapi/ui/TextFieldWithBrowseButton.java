@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.ui.update.ComponentDisposable;
 
 import javax.swing.*;
@@ -58,9 +59,13 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   }
 
   protected void installPathCompletion(final Project project, final FileChooserDescriptor fileChooserDescriptor) {
+    installPathCompletion(project, fileChooserDescriptor, null);
+  }
+
+  protected void installPathCompletion(final Project project, final FileChooserDescriptor fileChooserDescriptor, Disposable parent) {
     final Application application = ApplicationManager.getApplication();
      if (application == null || application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
-     FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, new ComponentDisposable(getChildComponent(), project));
+     FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, parent);
    }
         
   public JTextField getTextField() {

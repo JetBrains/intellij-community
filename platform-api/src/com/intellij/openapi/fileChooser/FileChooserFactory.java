@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.Nullable;
+
 public abstract class FileChooserFactory {
   public static FileChooserFactory getInstance() {
     return ServiceManager.getService(FileChooserFactory.class);
@@ -44,5 +46,13 @@ public abstract class FileChooserFactory {
   public abstract FileTextField createFileTextField(FileChooserDescriptor descriptor, boolean showHidden, Disposable parent);
   public abstract FileTextField createFileTextField(FileChooserDescriptor descriptor, Disposable parent);
 
-  public abstract void installFileCompletion(JTextField field, FileChooserDescriptor descriptor, boolean showHidden, final Disposable parent);
+  /**
+   *
+   * @param field
+   * @param descriptor
+   * @param showHidden
+   * @param parent if null then will be registered with {@link com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE}
+   */
+
+  public abstract void installFileCompletion(JTextField field, FileChooserDescriptor descriptor, boolean showHidden, @Nullable final Disposable parent);
 }

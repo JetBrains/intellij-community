@@ -2,9 +2,11 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTextField;
@@ -22,6 +24,8 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -68,7 +72,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     this(new JTextField(), finder, filter, macroMap, null);
   }
 
-  public FileTextFieldImpl(JTextField field, Finder finder, LookupFilter filter, Map<String, String> macroMap, MergingUpdateQueue uiUpdater) {
+  public FileTextFieldImpl(final JTextField field, Finder finder, LookupFilter filter, Map<String, String> macroMap, final Disposable parent) {
     myPathTextField = field;
     myMacroMap = new TreeMap<String, String>();
     myMacroMap.putAll(macroMap);
@@ -91,7 +95,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
 
 
-    FileTextFieldImpl assigned = (FileTextFieldImpl)myPathTextField.getClientProperty(KEY);
+    final FileTextFieldImpl assigned = (FileTextFieldImpl)myPathTextField.getClientProperty(KEY);
     if (assigned != null) {
       assigned.myFinder = finder;
       assigned.myFilter = filter;
@@ -101,15 +105,9 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myPathTextField.putClientProperty(KEY, this);
     final boolean headless = ApplicationManager.getApplication().isUnitTestMode();
 
-    if (uiUpdater == null) {
-      myUiUpdater = new MergingUpdateQueue("FileTextField.UiUpdater", 200, false, myPathTextField);
-      if (!headless) {
-        new UiNotifyConnector(myPathTextField, myUiUpdater);
-        Disposer.register(this, myUiUpdater);
-      }
-    }
-    else {
-      myUiUpdater = uiUpdater;
+    myUiUpdater = new MergingUpdateQueue("FileTextField.UiUpdater", 200, false, myPathTextField);
+    if (!headless) {
+      new UiNotifyConnector(myPathTextField, myUiUpdater);
     }
 
     myFinder = finder;
@@ -144,6 +142,24 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     });
 
     myCancelAction = new CancelAction();
+
+
+    new UiNotifyConnector.Once(myPathTextField, new Activatable() {
+      public void showNotify() {
+        final Disposable actual = UIUtil.findDisposable(parent);
+
+        if (!headless) {
+          Disposer.register(FileTextFieldImpl.this, myUiUpdater);
+        }
+        if (assigned == null) {
+          Disposer.register(actual, FileTextFieldImpl.this);
+        }
+      }
+
+      public void hideNotify() {
+      }
+    });
+
   }
 
   public void dispose() {
@@ -867,16 +883,12 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       super(new LocalFsFinder(), filter, macroMap);
     }
 
-    public Vfs(FileChooserDescriptor filter, boolean showHidden, JTextField field, Map<String, String> macroMap) {
-      super(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), macroMap, null);
+    public Vfs(FileChooserDescriptor filter, boolean showHidden, JTextField field, Map<String, String> macroMap, Disposable parent) {
+      super(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), macroMap, parent);
     }
 
-    public Vfs(FileChooserDescriptor filter, boolean showHidden, final MergingUpdateQueue uiUpdater, Map<String, String> macroMap) {
-      super(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), macroMap, uiUpdater);
-    }
-
-    public Vfs(final LookupFilter filter, final MergingUpdateQueue uiUpdater, Map<String, String> macroMap) {
-      super(new JTextField(), new LocalFsFinder(), filter, macroMap, uiUpdater);
+    public Vfs(FileChooserDescriptor filter, boolean showHidden, Map<String, String> macroMap, Disposable parent) {
+      super(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), macroMap, parent);
     }
 
     public VirtualFile getSelectedFile() {

@@ -166,8 +166,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myPathTextFieldWrapper = new JPanel(new BorderLayout());
     myPathTextFieldWrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
-    myPathTextField = new FileTextFieldImpl.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(), myUiUpdater,
-                                                FileChooserFactoryImpl.getMacroMap()) {
+    myPathTextField = new FileTextFieldImpl.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(),
+        FileChooserFactoryImpl.getMacroMap(), getDisposable()) {
       protected void onTextChanged(final String newValue) {
         updateTreeFromPath(newValue);
       }
