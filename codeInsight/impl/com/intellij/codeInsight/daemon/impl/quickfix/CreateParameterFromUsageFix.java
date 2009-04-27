@@ -66,7 +66,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     if (method == null) return;
 
     List<ParameterInfoImpl> parameterInfos = new ArrayList<ParameterInfoImpl>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
-    ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, PsiTypesUtil.getDefaultValueOfType(type), true);
+    ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, PsiTypesUtil.getDefaultValueOfType(type), false);
     parameterInfos.add(parameterInfo);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
