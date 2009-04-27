@@ -193,13 +193,12 @@ public class OverrideImplementUtil {
     return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc, true);
   }
 
-  private static boolean isInsertOverride(PsiMethod method, PsiMethod superMethod) {
-    if (!CodeStyleSettingsManager.getSettings(method.getProject()).INSERT_OVERRIDE_ANNOTATION || !PsiUtil.isLanguageLevel5OrHigher(method)) {
+  private static boolean isInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
+    if (!CodeStyleSettingsManager.getSettings(targetClass.getProject()).INSERT_OVERRIDE_ANNOTATION || !PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
       return false;
     }
-    if (PsiUtil.isLanguageLevel6OrHigher(method)) return true;
-    PsiClass aClass = method.getContainingClass();
-    if (aClass.isInterface()) return true;
+    if (PsiUtil.isLanguageLevel6OrHigher(targetClass)) return true;
+    if (targetClass.isInterface()) return true;
     PsiClass superClass = superMethod.getContainingClass();
     return !superClass.isInterface();
   }
@@ -247,7 +246,7 @@ public class OverrideImplementUtil {
         }
       }
 
-      if (insertAtOverrideIfPossible && isInsertOverride(result, method) && !method.isConstructor()) {
+      if (insertAtOverrideIfPossible && isInsertOverride(method, aClass) && !method.isConstructor()) {
         annotate(result, "java.lang.Override");
       }
 
