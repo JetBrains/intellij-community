@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.RangeHighlighterImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -19,6 +18,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.RangeHighlighterImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -30,8 +30,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -345,7 +345,7 @@ public class UpdateHighlightersUtil {
       for (LineMarkerInfo info : oldMarkers) {
         RangeHighlighter highlighter = info.highlighter;
         boolean toRemove = !highlighter.isValid() || info.updatePass == group
-                           && startOffset <= highlighter.getStartOffset() && highlighter.getEndOffset() < endOffset;
+                           && startOffset <= highlighter.getEndOffset() && highlighter.getStartOffset() <= endOffset;
 
         if (toRemove) {
           markupModel.removeHighlighter(highlighter);
