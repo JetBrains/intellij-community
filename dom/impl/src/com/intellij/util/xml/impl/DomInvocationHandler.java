@@ -606,12 +606,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   protected final void detach() {
-    final XmlElement element = getXmlElement();
     setXmlElement(null);
-
-    if (element != null) {
-      myManager.cacheHandler(getCacheKey(), element, null);
-    }
   }
 
   final SemKey getCacheKey() {
