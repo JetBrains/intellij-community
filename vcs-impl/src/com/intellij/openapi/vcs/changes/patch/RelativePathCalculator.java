@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +17,15 @@ public class RelativePathCalculator {
   private boolean myRename;
 
   public RelativePathCalculator(final String base, final String shifted) {
-    myShifted = shifted;
-    myBase = base;
+    myShifted = getLowerPathIfPossible(shifted);
+    myBase = getLowerPathIfPossible(base);
+  }
+
+  private String getLowerPathIfPossible(final String path) {
+    if (! SystemInfo.isFileSystemCaseSensitive) {
+      return path.toLowerCase();
+    }
+    return path;
   }
 
   public void execute() {
