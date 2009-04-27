@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
@@ -62,6 +63,27 @@ class JdkComboBox extends JComboBox{
         }
       }
     });
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    final Rectangle rec = ScreenUtil.getScreenRectangle(0, 0);
+    final Dimension size = super.getPreferredSize();
+    final int maxWidth = rec.width / 4;
+    if (size.width > maxWidth) {
+      size.width = maxWidth; 
+    }
+    return size;
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    final Dimension minSize = super.getMinimumSize();
+    final Dimension prefSize = getPreferredSize();
+    if (minSize.width > prefSize.width) {
+      minSize.width = prefSize.width;
+    }
+    return minSize;
   }
 
   public JButton createSetupButton(final Project project, final ProjectJdksModel jdksModel, final JdkComboBoxItem firstItem) {
