@@ -352,8 +352,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public boolean isDefault() {
-    for (Boolean def : myDisplayLevelMap.values()) {
-      if (!def.booleanValue()) return false;
+    final Map<String, Boolean> map = getDisplayLevelMap();
+    if (map != null) {
+      for (Boolean def : map.values()) {
+        if (!def.booleanValue()) return false;
+      }
     }
     return true;
   }
@@ -447,7 +450,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void copyFrom(InspectionProfile profile) {
     super.copyFrom(profile);
     final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)profile;
-    myDisplayLevelMap = new LinkedHashMap<String, Boolean>(inspectionProfile.myDisplayLevelMap);
     myBaseProfile = inspectionProfile.myBaseProfile;
   }
 
