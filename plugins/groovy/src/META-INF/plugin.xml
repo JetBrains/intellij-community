@@ -42,14 +42,14 @@
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager" order="last"/>
   </extensions>
 
-  <extensions defaultExtensionNs="org.jetbrains.plugins.grails">
-    <grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.ControllersFolderProvider"/>
-    <grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.DomainClassesFolderProvider"/>
-    <grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.UnitTestsFolderProvider"/>
-    <grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.UserFolderProvider"/>
-    <grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.ViewsFolderProvider"/>
-    <grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.ServicesFolderProvider"/>
-  </extensions>
+  <!--<extensions defaultExtensionNs="org.jetbrains.plugins.grails">-->
+    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.ControllersFolderProvider"/>-->
+    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.DomainClassesFolderProvider"/>-->
+    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.UnitTestsFolderProvider"/>-->
+    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.UserFolderProvider"/>-->
+    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.ViewsFolderProvider"/>-->
+    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.ServicesFolderProvider"/>-->
+  <!--</extensions>-->
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
