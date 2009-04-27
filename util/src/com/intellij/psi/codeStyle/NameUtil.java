@@ -90,6 +90,10 @@ public class NameUtil {
   }
 
   public static String buildRegexp(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
+    return buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false);
+  }
+
+  public static String buildRegexp(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
     final int eol = pattern.indexOf('\n');
     if (eol != -1) {
       pattern = pattern.substring(0, eol);
@@ -161,6 +165,9 @@ public class NameUtil {
           buffer.append(c);
           buffer.append(Character.toUpperCase(c));
           buffer.append(']');
+          if (lowerCaseWords) {
+            buffer.append("([a-z\\s0-9\\$]*[-_])?");
+          }
         }
         else {
           buffer.append(c);
