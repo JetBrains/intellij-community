@@ -48,6 +48,16 @@ public class LineMarkerInfo<T extends PsiElement> {
     this.updatePass = updatePass;
     endOffset = startOffset;
   }
+  public LineMarkerInfo(T element,
+                        PsiElement range,
+                        Icon icon,
+                        int updatePass,
+                        @Nullable Function<? super T, String> tooltipProvider,
+                        @Nullable GutterIconNavigationHandler<T> navHandler,
+                        GutterIconRenderer.Alignment alignment) {
+    this(element, range.getTextRange().getStartOffset(),icon, updatePass, tooltipProvider, navHandler,alignment);
+    endOffset = range.getTextRange().getEndOffset();
+  }
 
   public LineMarkerInfo(T element,
                         int startOffset,
@@ -75,7 +85,6 @@ public class LineMarkerInfo<T extends PsiElement> {
   public T getElement() {
     return elementRef.get();
   }
-
 
   private class NavigateAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
