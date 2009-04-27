@@ -44,7 +44,6 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
@@ -205,7 +204,7 @@ public class InjectLanguageAction implements IntentionAction {
   }
 
   private static int findParameterIndex(final PsiElement target, final PsiExpressionList parent) {
-    final int idx = ContainerUtil.findByEquals(Arrays.asList(parent.getExpressions()), target);
+    final int idx = Arrays.asList(parent.getExpressions()).indexOf(target);
     return idx < 0? -2 : idx;
   }
 
