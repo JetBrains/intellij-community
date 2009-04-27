@@ -203,6 +203,8 @@
                     serviceImplementation="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager"
                     serviceImplementation="org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager"/>
+    <projectService serviceInterface="org.jetbrains.plugins.grails.console.GrailsConsole"
+                    serviceImplementation="org.jetbrains.plugins.grails.console.GrailsConsole"/>
 
     <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.grails.lang.gsp.completion.GspXmlFileNSInfoProvider"/>
 
@@ -386,9 +388,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.console.GrailsConsole</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.fileType.GroovyInjector</implementation-class>
