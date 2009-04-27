@@ -34,10 +34,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.*;
 
 import java.util.Arrays;
 
@@ -65,17 +62,15 @@ public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
       else if (psiElement instanceof PsiMethod) {
         final PsiMethod psiMethod = (PsiMethod)psiElement;
         final String name = psiMethod.getName();
-        final PsiClass psiClass = psiMethod.getContainingClass();
-        if (JUnitUtil.isTestClass(psiClass) && psiMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
-            !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT) && name.startsWith("test")
-            || "suite".equals(name) || "setUp".equals(name) ||  "tearDown".equals(name)) {
-          return true;
-        }
-        if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
+             !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          if (name.startsWith("test") || "suite".equals(name) || "setUp".equals(name) || "tearDown".equals(name)) {
+            return true;
+          }
           if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
             if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BeforeClass.class.getName(), AfterClass.class.getName()))) return true;
           } else {
-            if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(Before.class.getName(), After.class.getName()))) return true;
+            if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(Before.class.getName(), After.class.getName(), Test.class.getName()))) return true;
           }
         }
       }
