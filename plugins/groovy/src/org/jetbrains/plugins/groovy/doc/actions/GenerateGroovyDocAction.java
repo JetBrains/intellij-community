@@ -4,12 +4,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.plugins.grails.config.GroovyGrailsFacetUtil;
 import org.jetbrains.plugins.grails.util.GrailsUtils;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.doc.GenerateGroovyDocDialog;
 import org.jetbrains.plugins.groovy.doc.GroovyDocConfiguration;
 import org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 public final class GenerateGroovyDocAction extends AnAction {
 
@@ -44,14 +43,13 @@ public final class GenerateGroovyDocAction extends AnAction {
     final DataContext context = event.getDataContext();
     Module module = (Module)context.getData(DataKeys.MODULE.getName());
 
-    if (GroovyUtils.isSuitableModule(module) &&
-        ((GroovyGrailsFacetUtil.hasGrailsSupport(module) || GroovyGrailsFacetUtil.hasGroovySupport(module)))) {
-      presentation.setEnabled(true);
-      presentation.setVisible(true);
-    }
-    else {
+    if (module == null || !GroovyConfigUtils.getInstance().isSDKConfigured(module) && !GrailsUtils.hasGrailsSupport(module)) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
+    }
+    else {
+      presentation.setEnabled(true);
+      presentation.setVisible(true);
     }
   }
 }

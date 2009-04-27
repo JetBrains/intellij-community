@@ -55,7 +55,6 @@ import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.groovy.compiler.rt.MessageCollector;
 import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
-import org.jetbrains.plugins.grails.module.GrailsModuleType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -128,7 +127,7 @@ public class GroovyCompiler implements TranslatingCompiler {
     String grailsPath = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
 
     String libPath =
-      (moduleType instanceof GrailsModuleType && grailsPath.length() > 0 || groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
+      (grailsPath.length() > 0 || groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
 
     libPath = libPath.replace(File.separatorChar, '/');
     VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);

@@ -138,7 +138,7 @@
 
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
-    <annotatedMembersSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
+    <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
 
     <typedHandler implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyTypedHandler"/>
 
@@ -168,8 +168,9 @@
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.LateBoundReferencesSearcher"/>-->
     <antCustomCompiler implementation="org.jetbrains.plugins.groovy.ant.GroovyAntCustomCompilerProvider"/>
 
+    <module.converter implementation="org.jetbrains.plugins.groovy.config.GroovyModuleConverter"/>
+
     <!-- Grails and GSP -->
-    <frameworkSupport implementation="org.jetbrains.plugins.grails.config.GrailsAdditionalFrameworksProvider"/>
     <syntaxHighlighter key="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspSyntaxHiglighter"/>
     <annotator language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.annotator.GspAnnotator"/>
     <lang.braceMatcher language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspPairedBraceMatcher"/>
@@ -192,8 +193,6 @@
     <configurationType implementation="org.jetbrains.plugins.grails.tests.runner.GrailsTestRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.grails.tests.runner.GrailsTestRunConfigurationProducer"/>
 
-    <facetType implementation="org.jetbrains.plugins.grails.config.GrailsFacetType"/>
-
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"
@@ -204,8 +203,6 @@
                     serviceImplementation="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager"
                     serviceImplementation="org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager"/>
-
-    <moduleType id="GRAILS_MODULE" implementationClass="org.jetbrains.plugins.grails.module.GrailsModuleType"/>
 
     <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.grails.lang.gsp.completion.GspXmlFileNSInfoProvider"/>
 
@@ -433,13 +430,6 @@
   </project-components>
 
   <module-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.config.GroovyFacetListener</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.module.GrailsModuleEditorsProvider</implementation-class>
-      <option name="type" value="GRAILS_MODULE"/>
-    </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.GrailsModuleActions</implementation-class>
     </component>
