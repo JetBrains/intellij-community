@@ -294,8 +294,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
           if (element == null) return;
-          if (!getContext().isToCheckMember(refElement, DeadCodeInspection.this)) {
-            if (!scope.contains(element) || ((RefElementImpl)refElement).isSuppressed(DeadCodeInspection.this.getShortName())) {
+          final boolean isSuppressed = ((RefElementImpl)refElement).isSuppressed(getShortName());
+          if (!getContext().isToCheckMember(element, DeadCodeInspection.this) || isSuppressed) {
+            if (isSuppressed || !scope.contains(element)) {
               getEntryPointsManager().addEntryPoint(refElement, false);
             }
             return;
