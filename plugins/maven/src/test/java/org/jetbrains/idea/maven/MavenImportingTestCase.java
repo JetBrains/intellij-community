@@ -332,7 +332,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     initMavenProjectsManager(false);
     myMavenProjectsManager.resetManagedFilesAndProfilesInTests(files, myProfilesList);
-    myMavenProjectsManager.waitForFullReadingCompletionAndImport();
+    myMavenProjectsManager.waitForQuickResolvingCompletionAndImport();
     myMavenTree = myMavenProjectsManager.getProjectsTreeForTests();
   }
 
@@ -341,8 +341,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     if (enableEventHandling) myMavenProjectsManager.listenForExternalChanges();
   }
 
-  protected void waitForFullReadingCompletion() {
-    myMavenProjectsManager.waitForFullReadingCompletion();
+  protected void waitForReadingCompletion() {
+    myMavenProjectsManager.waitForReadingCompletion();
+  }
+
+  protected void waitForQuickResolvingCompletion() {
+    myMavenProjectsManager.waitForQuickResolvingCompletion();
   }
 
   protected void resolveDependenciesAndImport() {

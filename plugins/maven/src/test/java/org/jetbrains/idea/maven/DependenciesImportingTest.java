@@ -100,6 +100,38 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: B:B:2", "Maven: A:A:1");
   }
 
+  public void testDoNotResetDependenciesIfProjectIsInvalid() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>group</groupId>" +
+                     "    <artifactId>lib</artifactId>" +
+                     "    <version>1</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    importProject();
+    assertModuleLibDeps("project", "Maven: group:lib:1");
+    
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version" + // incomplete tag
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>group</groupId>" +
+                     "    <artifactId>lib</artifactId>" +
+                     "    <version>1</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    importProject();
+    assertModuleLibDeps("project", "Maven: group:lib:1");
+  }
+
   public void testIntermoduleDependencies() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -643,7 +675,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    assertModuleLibDep("project", "Maven: group:lib:1");
     assertModuleLibDep("m", "Maven: group:lib:2");
   }
 
@@ -1092,44 +1123,49 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>group</groupId>" +
-                     "    <artifactId>lib1</artifactId>" +
-                     "    <version>1</version>" +
-                     "  </dependency>" +
-                     "  <dependency>" +
-                     "    <groupId>group</groupId>" +
-                     "    <artifactId>lib2</artifactId>" +
-                     "    <version>1</version>" +
-                     "  </dependency>" +
-                     "</dependencies>" +
-
                      "<modules>" +
-                     "  <module>m</module>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
                      "</modules>");
 
-    createModulePom("m", "<groupId>test</groupId>" +
-                         "<artifactId>m</artifactId>" +
-                         "<version>2</version>" +
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
 
-                         "<dependencies>" +
-                         "  <dependency>" +
-                         "    <groupId>group</groupId>" +
-                         "    <artifactId>lib2</artifactId>" +
-                         "    <version>1</version>" +
-                         "  </dependency>" +
-                         "  <dependency>" +
-                         "    <groupId>group</groupId>" +
-                         "    <artifactId>lib3</artifactId>" +
-                         "    <version>1</version>" +
-                         "  </dependency>" +
-                         "  <dependency>" +
-                         "    <groupId>group</groupId>" +
-                         "    <artifactId>lib4</artifactId>" +
-                         "    <version>1</version>" +
-                         "  </dependency>" +
-                         "</dependencies>");
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>lib1</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>lib2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>lib2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>lib3</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>lib4</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
 
     importProject();
     assertProjectLibraries("Maven: group:lib1:1",
@@ -1137,34 +1173,29 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                            "Maven: group:lib3:1",
                            "Maven: group:lib4:1");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>group</groupId>" +
-                     "    <artifactId>lib2</artifactId>" +
-                     "    <version>1</version>" +
-                     "  </dependency>" +
-                     "</dependencies>" +
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>lib2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
 
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
 
-    createModulePom("m", "<groupId>test</groupId>" +
-                         "<artifactId>m</artifactId>" +
-                         "<version>2</version>" +
-
-                         "<dependencies>" +
-                         "  <dependency>" +
-                         "    <groupId>group</groupId>" +
-                         "    <artifactId>lib3</artifactId>" +
-                         "    <version>1</version>" +
-                         "  </dependency>" +
-                         "</dependencies>");
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>lib3</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
 
     importProject();
     assertProjectLibraries("Maven: group:lib2:1",
@@ -1204,8 +1235,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>pom</packaging>");
+                  "<version>1</version>");
 
     assertProjectLibraries("Maven: group:lib1:1",
                            "Maven: group:lib2:1");

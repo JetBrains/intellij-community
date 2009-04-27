@@ -90,9 +90,9 @@ public class MavenProjectsManagerWatcher {
     scheduleUpdate(files, Collections.<VirtualFile>emptyList());
   }
 
-  public void resetManagedFilesAndProfiles(List<VirtualFile> files, List<String> profiles) {
+  public void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> profiles) {
     myTree.resetManagedFilesAndProfiles(files, profiles);
-    scheduleUpdate(files, Collections.<VirtualFile>emptyList());
+    scheduleUpdateAll();
   }
 
   public void removeManagedFiles(List<VirtualFile> files) {
@@ -106,15 +106,15 @@ public class MavenProjectsManagerWatcher {
   }
 
   private void scheduleUpdateAll() {
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorQuickReadingTask(myProject, myTree, myGeneralSettings));
+    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(myProject, myTree, myGeneralSettings));
   }
 
   private void scheduleUpdate(List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete) {
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorQuickReadingTask(myProject,
-                                                                               myTree,
-                                                                               myGeneralSettings,
-                                                                               filesToUpdate,
-                                                                               filesToDelete));
+    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(myProject,
+                                                                          myTree,
+                                                                          myGeneralSettings,
+                                                                          filesToUpdate,
+                                                                          filesToDelete));
   }
 
   private void onSettingsChange() {

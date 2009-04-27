@@ -44,22 +44,21 @@ import java.util.*;
 
 public class MavenProjectReader {
   private static final String UNKNOWN = "Unknown";
-  private static final String UNNAMED = "Unnamed";
 
   //private final Map<VirtualFile, Pair<Model, List<Profile>>> myRawModelsCache = new HashMap<VirtualFile, Pair<Model, List<Profile>>>();
 
-  public MavenProjectReaderResult readProjectQuickly(MavenGeneralSettings generalSettings,
-                                                     VirtualFile file,
-                                                     List<String> activeProfiles,
-                                                     MavenProjectReaderProjectLocator locator) {
+  public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
+                                              VirtualFile file,
+                                              List<String> activeProfiles,
+                                              MavenProjectReaderProjectLocator locator) {
     File localRepository = generalSettings.getEffectiveLocalRepository();
 
-    Pair<Model, List<Profile>> readResult = doReadProjectModelQuickly(generalSettings,
-                                                                      file,
-                                                                      localRepository,
-                                                                      activeProfiles,
-                                                                      new HashSet<VirtualFile>(),
-                                                                      locator);
+    Pair<Model, List<Profile>> readResult = doReadProjectModel(generalSettings,
+                                                               file,
+                                                               localRepository,
+                                                               activeProfiles,
+                                                               new HashSet<VirtualFile>(),
+                                                               locator);
 
     File basedir = getBaseDir(file);
     Model model = expandProperties(readResult.first, basedir);
@@ -85,12 +84,12 @@ public class MavenProjectReader {
     return new File(file.getParent().getPath());
   }
 
-  private Pair<Model, List<Profile>> doReadProjectModelQuickly(final MavenGeneralSettings generalSettings,
-                                                               final VirtualFile file,
-                                                               File localRepository,
-                                                               List<String> activeProfiles,
-                                                               Set<VirtualFile> recursionGuard,
-                                                               MavenProjectReaderProjectLocator locator) {
+  private Pair<Model, List<Profile>> doReadProjectModel(final MavenGeneralSettings generalSettings,
+                                                        final VirtualFile file,
+                                                        File localRepository,
+                                                        List<String> activeProfiles,
+                                                        Set<VirtualFile> recursionGuard,
+                                                        MavenProjectReaderProjectLocator locator) {
     //Pair<Model, List<Profile>> cached = myRawModelsCache.get(file);
     //if (cached != null) return cached;
 
@@ -437,18 +436,18 @@ public class MavenProjectReader {
 
     VirtualFile parentFile = locator.findProjectFile(new MavenId(parentGroupId, parentArtifactId, parentVersion));
     if (parentFile != null) {
-      parentModel = doReadProjectModelQuickly(generalSettings, parentFile, localRepository, activeProfiles, recursionGuard, locator).first;
+      parentModel = doReadProjectModel(generalSettings, parentFile, localRepository, activeProfiles, recursionGuard, locator).first;
     }
 
     if (parentModel == null) {
       parentFile = file.getParent().findFileByRelativePath(parent.getRelativePath());
       if (parentFile != null) {
-        parentModel = doReadProjectModelQuickly(generalSettings,
-                                                parentFile,
-                                                localRepository,
-                                                activeProfiles,
-                                                recursionGuard,
-                                                locator).first;
+        parentModel = doReadProjectModel(generalSettings,
+                                         parentFile,
+                                         localRepository,
+                                         activeProfiles,
+                                         recursionGuard,
+                                         locator).first;
         if (!(parentGroupId.equals(parentModel.getGroupId())
               && parentArtifactId.equals(parentModel.getArtifactId())
               && parentVersion.equals(parentModel.getVersion()))) {
@@ -465,12 +464,12 @@ public class MavenProjectReader {
                                                             "pom");
       parentFile = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
       if (parentFile != null) {
-        parentModel = doReadProjectModelQuickly(generalSettings,
-                                                parentFile,
-                                                localRepository,
-                                                activeProfiles,
-                                                recursionGuard,
-                                                locator).first;
+        parentModel = doReadProjectModel(generalSettings,
+                                         parentFile,
+                                         localRepository,
+                                         activeProfiles,
+                                         recursionGuard,
+                                         locator).first;
       }
     }
 
@@ -516,12 +515,12 @@ public class MavenProjectReader {
     return new DefaultPathTranslator();
   }
 
-  public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
-                                              MavenEmbedderWrapper embedder,
-                                              VirtualFile f,
-                                              List<String> activeProfiles,
-                                              MavenProjectReaderProjectLocator locator,
-                                              MavenProcess process) throws MavenProcessCanceledException {
+  public MavenProjectReaderResult resolveProject(MavenGeneralSettings generalSettings,
+                                                 MavenEmbedderWrapper embedder,
+                                                 VirtualFile f,
+                                                 List<String> activeProfiles,
+                                                 MavenProjectReaderProjectLocator locator,
+                                                 MavenProcess process) throws MavenProcessCanceledException {
     MavenProject mavenProject = null;
     boolean isValid = true;
     List<MavenProjectProblem> problems = new ArrayList<MavenProjectProblem>();
@@ -553,7 +552,7 @@ public class MavenProjectReader {
       if (problems.isEmpty()) {
         problems.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.syntaxError"), true));
       }
-      mavenProject = readProjectQuickly(generalSettings, f, activeProfiles, locator).nativeMavenProject;
+      mavenProject = readProject(generalSettings, f, activeProfiles, locator).nativeMavenProject;
     }
 
     return new MavenProjectReaderResult(isValid,
@@ -698,7 +697,7 @@ public class MavenProjectReader {
     final LinkedList<Element> stack = new LinkedList<Element>();
     final Element root = new Element("root");
 
-    String text = null;
+    String text;
     try {
       text = VfsUtil.loadText(file);
     }
@@ -752,7 +751,7 @@ public class MavenProjectReader {
       public void textElement(CharSequence text, CharSequence physical, int startoffset, int endoffset) {
         String value = text.toString();
         if (!StringUtil.isEmptyOrSpaces(value)) {
-          stack.getLast().setText(value);
+          stack.getLast().addContent(value);
         }
       }
 

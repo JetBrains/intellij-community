@@ -56,22 +56,17 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
     getMavenProjectManager().addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
-      public void projectsReadQuickly(List<MavenProject> projects) {
-        updateIndicesList();
-      }
-
-      @Override
-      public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-        updateIndicesList();
-      }
-
-      @Override
-      public void projectResolved(MavenProject project) {
+      public void projectsRead(List<MavenProject> projects) {
         updateIndicesList();
       }
 
       @Override
       public void projectRemoved(MavenProject project) {
+        updateIndicesList();
+      }
+
+      @Override
+      public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
         updateIndicesList();
       }
     });

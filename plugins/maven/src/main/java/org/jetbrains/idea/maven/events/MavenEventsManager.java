@@ -430,12 +430,12 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
     }
 
     @Override
-    public void projectsReadQuickly(List<MavenProject> projects) {
+    public void projectsRead(List<MavenProject> projects) {
       scheduleKeymapUpdate(projects, false);
     }
 
     @Override
-    public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+    public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
       scheduleKeymapUpdate(Collections.singletonList(project), false);
     }
 

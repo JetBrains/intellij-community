@@ -11,13 +11,12 @@ import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class MavenProjectRootStep extends ProjectImportWizardStep {
   private final JPanel myPanel;
@@ -52,9 +51,9 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
     JButton advancedButton = new JButton(ProjectBundle.message("maven.advanced.button.name"));
     myPanel.add(advancedButton, new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHEAST, 0, new Insets(15, 6, 0, 6),
                                                        0, 0));
-    advancedButton.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent event) {
-        super.mouseClicked(event);
+
+    advancedButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
         ShowSettingsUtil.getInstance().editConfigurable(myPanel, new MavenEnvironmentConfigurable());
       }
     });

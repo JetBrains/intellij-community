@@ -48,6 +48,23 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
     assertEquals("1", p.getVersion());
   }
 
+  public void testInvalidXmlWithNotClosedTag() throws Exception {
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1" +
+                     "<name>foo</name>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+
+    assertEquals(new File(myProjectPom.getPath()), p.getFile());
+    assertEquals(new File(myProjectRoot.getPath()), p.getBasedir());
+
+    assertEquals("test", p.getGroupId());
+    assertEquals("project", p.getArtifactId());
+    assertEquals("Unknown", p.getVersion());
+    assertEquals("foo", p.getName());
+  }
+
   public void testEmpty() throws Exception {
     createProjectPom("");
 
@@ -741,7 +758,10 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
   private org.apache.maven.project.MavenProject readProject(VirtualFile file,
                                                             MavenProjectReaderProjectLocator locator,
                                                             String... profiles) {
-    MavenProjectReaderResult result = new MavenProjectReader().readProjectQuickly(getMavenGeneralSettings(), file, Arrays.asList(profiles), locator);
+    MavenProjectReaderResult result = new MavenProjectReader().readProject(getMavenGeneralSettings(),
+                                                                           file,
+                                                                           Arrays.asList(profiles),
+                                                                           locator);
     assertTrue(result.isValid);
     return result.nativeMavenProject;
   }

@@ -417,46 +417,33 @@ public class MavenProject implements Serializable {
     return myFilters;
   }
 
-  public void readQuickly(MavenGeneralSettings generalSettings, List<String> profiles, MavenProjectReaderProjectLocator locator) {
-    set(new MavenProjectReader().readProjectQuickly(generalSettings, myFile, profiles, locator), false);
+  public void read(MavenGeneralSettings generalSettings, List<String> profiles, MavenProjectReaderProjectLocator locator) {
+    set(new MavenProjectReader().readProject(generalSettings, myFile, profiles, locator), false);
   }
 
-  public org.apache.maven.project.MavenProject read(MavenGeneralSettings generalSettings,
-                                                    MavenEmbedderWrapper embedder,
-                                                    List<String> profiles,
-                                                    MavenProjectReaderProjectLocator locator,
-                                                    MavenProcess p)
-    throws MavenProcessCanceledException {
-    MavenProjectReaderResult readResult = new MavenProjectReader().readProject(generalSettings, embedder, getFile(), profiles, locator, p);
-    set(readResult, true);
-    return readResult.nativeMavenProject;
-  }
-
-  public void resolve(MavenGeneralSettings generalSettings,
-                      MavenEmbedderWrapper embedder,
-                      MavenProjectReaderProjectLocator locator,
-                      MavenProcess process)
-    throws MavenProcessCanceledException {
-    if (isAggregator()) return;
-    MavenProjectReaderResult result = new MavenProjectReader().readProject(generalSettings,
-                                                                           embedder,
-                                                                           getFile(),
-                                                                           getActiveProfilesIds(),
-                                                                           locator,
-                                                                           process);
-    if (result.isValid) setDependencies(result, true);
+  public org.apache.maven.project.MavenProject resolve(MavenGeneralSettings generalSettings,
+                                                       MavenEmbedderWrapper embedder,
+                                                       MavenProjectReaderProjectLocator locator,
+                                                       MavenProcess process) throws MavenProcessCanceledException {
+    MavenProjectReaderResult result = new MavenProjectReader().resolveProject(generalSettings,
+                                                                              embedder,
+                                                                              getFile(),
+                                                                              getActiveProfilesIds(),
+                                                                              locator,
+                                                                              process);
+    set(result, result.isValid);
+    return result.nativeMavenProject;
   }
 
   public void generateSources(MavenEmbedderWrapper embedder, MavenImportingSettings importingSettings, MavenConsole console, MavenProcess p)
     throws MavenProcessCanceledException {
-    if (isAggregator()) return;
     MavenProjectReaderResult result = new MavenProjectReader().generateSources(embedder,
                                                                                importingSettings,
                                                                                getFile(),
                                                                                getActiveProfilesIds(),
                                                                                console,
                                                                                p);
-    if (result != null) setFolders(result);
+    if (result != null && result.isValid) setFolders(result);
   }
 
   public synchronized boolean isAggregator() {

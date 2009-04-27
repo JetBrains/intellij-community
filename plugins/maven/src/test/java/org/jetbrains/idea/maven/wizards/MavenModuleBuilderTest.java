@@ -241,6 +241,6 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     model.commit();
 
     // emulate invokeLater from MavenModuleBuilder
-    MavenProjectsManager.getInstance(myProject).waitForFullReadingCompletionAndImport();
+    MavenProjectsManager.getInstance(myProject).waitForQuickResolvingCompletionAndImport();
   }
 }

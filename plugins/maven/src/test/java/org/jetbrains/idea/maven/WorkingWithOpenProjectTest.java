@@ -55,7 +55,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
                              "  </dependency>" +
                              "</dependencies>"));
     
-    myMavenProjectsManager.waitForFullReadingCompletionAndImport();
+    myMavenProjectsManager.waitForQuickResolvingCompletionAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0");
   }

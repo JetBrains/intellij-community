@@ -53,7 +53,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
                      "    </plugin>" +
                      "  </plugins>" +
                      "</build>");
-    waitForFullReadingCompletion();
+    waitForQuickResolvingCompletion();
 
     assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
   }
@@ -77,7 +77,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>module</module>" +
                      "</modules>");
-    waitForFullReadingCompletion();
+    waitForReadingCompletion();
 
     assertKeymapContains(m, "clean");
   }
@@ -97,7 +97,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p2, "clean");
 
     p1.delete(this);
-    waitForFullReadingCompletion();
+    waitForReadingCompletion();
 
     assertKeymapDoesNotContain(p1, "clean");
     assertKeymapContains(p2, "clean");

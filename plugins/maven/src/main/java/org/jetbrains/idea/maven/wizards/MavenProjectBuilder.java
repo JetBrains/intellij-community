@@ -30,8 +30,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     private MavenImportingSettings myImportingSettingsCache;
     private MavenDownloadingSettings myDownloadingSettingsCache;
 
-    private MavenEmbeddersManager myEmbeddersManager;
-
     private VirtualFile myImportRoot;
     private List<VirtualFile> myFiles;
     private List<String> myProfiles = new ArrayList<String>();
@@ -53,7 +51,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   public void cleanup() {
-    if (myParamaters.myEmbeddersManager != null) myParamaters.myEmbeddersManager.release();
     myParamaters = null;
     super.cleanup();
   }
@@ -81,7 +78,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     List<VirtualFile> files = getParameters().myMavenProjectTree.getRootProjectsFiles();
 
     manager.addManagedFilesWithProfiles(files, getSelectedProfiles());
-    manager.waitForQuickReadingCompletion();
+    manager.waitForReadingCompletion();
 
     return manager.importProjects(new DefaultMavenModuleModelsProvider(project) {
       public ModifiableModuleModel getModuleModel() {
@@ -139,7 +136,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     for (VirtualFile f : getParameters().myFiles) {
       MavenProject project = new MavenProject(f);
       process.setText2(ProjectBundle.message("maven.reading.pom", f.getPath()));
-      project.readQuickly(getGeneralSettings(), Collections.EMPTY_LIST, new MavenProjectReaderProjectLocator() {
+      project.read(getGeneralSettings(), Collections.EMPTY_LIST, new MavenProjectReaderProjectLocator() {
         public VirtualFile findProjectFile(MavenId coordinates) {
           return null;
         }
@@ -183,7 +180,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   private void readMavenProjectTree(MavenProcess process) throws MavenProcessCanceledException {
     MavenProjectsTree tree = new MavenProjectsTree();
     tree.addManagedFilesWithProfiles(getParameters().myFiles, getParameters().mySelectedProfiles);
-    tree.updateAll(true, getEmbeddersManager(), getGeneralSettings(), new SoutMavenConsole(), process);
+    tree.updateAll(getGeneralSettings(), new SoutMavenConsole(), process);
     getParameters().myMavenProjectTree = tree;
   }
 
@@ -232,13 +229,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
   private MavenWorkspaceSettings getDirectProjectsSettings() {
     return getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState();
-  }
-
-  private MavenEmbeddersManager getEmbeddersManager() {
-    if (getParameters().myEmbeddersManager == null) {
-      getParameters().myEmbeddersManager = new MavenEmbeddersManager(getGeneralSettings());
-    }
-    return getParameters().myEmbeddersManager;
   }
 
   private Project getProject() {

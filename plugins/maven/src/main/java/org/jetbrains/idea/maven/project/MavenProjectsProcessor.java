@@ -17,7 +17,6 @@ public class MavenProjectsProcessor {
   private static final NullTask NULL_TASK = new NullTask();
 
   private final Project myProject;
-  private final String myTitle;
   private final MavenEmbeddersManager myEmbeddersManager;
   private final MavenConsole myConsole;
   private final Thread myThread;
@@ -26,14 +25,13 @@ public class MavenProjectsProcessor {
 
   public MavenProjectsProcessor(Project project, String title, MavenEmbeddersManager embeddersManager) {
     myProject = project;
-    myTitle = title;
     myEmbeddersManager = embeddersManager;
     myConsole = isUnitTestMode() ? new SoutMavenConsole() : new MavenConsoleImpl(title, myProject);
     myThread = new Thread(new Runnable() {
       public void run() {
         while (doRunCycle()) { /* nothing */ }
       }
-    }, getClass().getSimpleName());
+    }, getClass().getSimpleName() + ": " + title);
 
     if (isUnitTestMode()) return;
 

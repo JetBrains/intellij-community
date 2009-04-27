@@ -255,7 +255,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
       myTree.repaint();
     }
 
-    public void projectsReadQuickly(final List<MavenProject> projects) {
+    public void projectsRead(final List<MavenProject> projects) {
       scheduleUpdateTask(new Runnable() {
         public void run() {
           doOnProjectChange(projects);
@@ -263,15 +263,14 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
       });
     }
 
-    public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-      onProjectChange(project);
+    public void projectRead(MavenProject project) {
     }
 
     public void projectAggregatorChanged(MavenProject project) {
       onProjectChange(project);
     }
 
-    public void projectResolved(MavenProject project) {
+    public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
       onProjectChange(project);
     }
 

@@ -23,7 +23,6 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
-import java.util.Collections;
 import java.util.List;
 
 public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
@@ -42,13 +41,8 @@ public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
 
     MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
-      public void projectsReadQuickly(List<MavenProject> projects) {
+      public void projectsRead(List<MavenProject> projects) {
         updateTabName(projects);
-      }
-
-      @Override
-      public void projectRead(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-        updateTabName(Collections.singletonList(project));
       }
     });
   }

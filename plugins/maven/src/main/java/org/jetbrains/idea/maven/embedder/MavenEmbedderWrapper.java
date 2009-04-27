@@ -220,28 +220,22 @@ public class MavenEmbedderWrapper {
     return result.get();
   }
 
-  public void customizeForRead(MavenProjectsTree tree,
-                               MavenConsole console,
-                               MavenProcess process) {
-    doCustomize(tree, false, false, console, process);
-  }
-
   public void customizeForResolve(MavenConsole console,
                                   MavenProcess process) {
-    customizeForResolve(null, console, process);
+    doCustomize(null, true, false, console, process);
   }
 
-  public void customizeForResolve(MavenProjectsTree tree,
+  public void customizeForResolve(boolean quickResolve,
+                                  MavenProjectsTree tree,
                                   MavenConsole console,
                                   MavenProcess process) {
-    customizeForResolve(tree, false, console, process);
+    doCustomize(tree, !quickResolve, false, console, process);
   }
 
-  public void customizeForResolve(MavenProjectsTree tree,
-                                  boolean failOnUnresolved,
-                                  MavenConsole console,
-                                  MavenProcess process) {
-    doCustomize(tree, true, failOnUnresolved, console, process);
+  public void customizeForStrictResolve(MavenProjectsTree tree,
+                                        MavenConsole console,
+                                        MavenProcess process) {
+    doCustomize(tree, true, true, console, process);
   }
 
   private void doCustomize(MavenProjectsTree tree,

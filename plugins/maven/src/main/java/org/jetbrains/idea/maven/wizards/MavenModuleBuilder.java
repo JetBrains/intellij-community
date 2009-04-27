@@ -184,7 +184,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     // under UnitTest mode invokeLater runs the Runnable immediatly and clashes
     // with ModuleBuilder logic that doesn't expect setupRootModel to commit the models.
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      MavenProjectsManager.getInstance(project).waitForFullReadingCompletionAndImport();
+      MavenProjectsManager.getInstance(project).waitForQuickResolvingCompletionAndImport();
     }
   }
 

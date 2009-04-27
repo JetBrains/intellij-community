@@ -402,9 +402,10 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                                      "<artifactId>m2</artifactId>" +
                                      "<version>1</version>");
 
-    importProjects(m1, m2);
+    importProjects(myProjectPom, m1, m2);
 
-    createModulePom("m1", "<groupId>test</groupId>" +
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>" +
 
