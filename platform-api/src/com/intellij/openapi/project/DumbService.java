@@ -6,6 +6,7 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.Topic;
@@ -47,6 +48,14 @@ public abstract class DumbService {
         runWhenSmart(runnable);
       }
     });
+  }
+
+  public void smartInvokeLater(@NotNull final Runnable runnable, ModalityState modalityState) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        runWhenSmart(runnable);
+      }
+    }, modalityState);
   }
 
   public static DumbService getInstance() {
