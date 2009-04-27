@@ -257,7 +257,7 @@ public class ModelMergerImpl implements ModelMerger {
     @NotNull
     private InvocationStrategy findStrategy(final Object proxy, final Method method) {
       for (final Pair<InvocationStrategy, Class> pair : myAcceptsCache.get(method)) {
-        if (pair.second.isInstance(proxy)) {
+        if (Object.class.equals(pair.second) || pair.second.isInstance(proxy)) {
           return pair.first;
         }
       }
