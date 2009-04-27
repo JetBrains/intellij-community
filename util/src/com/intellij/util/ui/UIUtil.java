@@ -16,15 +16,12 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -985,21 +982,6 @@ public class UIUtil {
 
   public static void setFocusProxy(JComponent c, boolean isProxy) {
     c.putClientProperty(FOCUS_PROXY_KEY, isProxy ? Boolean.TRUE : null);
-  }
-
-  public static Disposable findDisposable(@Nullable Disposable parent) {
-    Disposable actual = parent;
-    if (actual == null) {
-      if (ApplicationManager.getApplication() != null) {
-        actual = PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext());
-      }
-    }
-
-    if (actual == null) {
-      actual = Disposer.get("ui");
-    }
-
-    return actual;
   }
 
 }

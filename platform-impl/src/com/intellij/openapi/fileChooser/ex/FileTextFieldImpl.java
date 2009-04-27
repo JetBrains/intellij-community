@@ -2,11 +2,9 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTextField;
@@ -17,15 +15,12 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.update.DisposerUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import com.intellij.util.ui.update.Update;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -146,7 +141,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     new UiNotifyConnector.Once(myPathTextField, new Activatable() {
       public void showNotify() {
-        final Disposable actual = UIUtil.findDisposable(parent);
+        final Disposable actual = DisposerUtil.findDisposable(parent);
 
         if (!headless) {
           Disposer.register(FileTextFieldImpl.this, myUiUpdater);
