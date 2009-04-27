@@ -88,6 +88,7 @@ import java.util.Observer;
  * Date: 03-Nov-2005
  */
 public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
+  private final Object myUpdateLock = new Object();
   private static final Icon LEFT_ICON = IconLoader.getIcon("/general/splitLeft.png");
   private static final Icon RIGHT_ICON = IconLoader.getIcon("/general/splitRight.png");
 
@@ -315,25 +316,27 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
   }
 
-  private synchronized void immediateUpdateList(boolean update) {
-    if (update) {
-      myFirstIndex = 0;
-      final int selectedIndex1 = -1;
-      myModel.setSelectedIndex(selectedIndex1);
-      myList.clear();
-      for (int index = 0; index < myModel.size(); index++) {
-        final Object object = myModel.get(index);
-        final boolean hasChildren = myModel.hasChildren(object);
-        final Icon icon = NavBarModel.getIcon(object);
-        final MyCompositeLabel label = new MyCompositeLabel(index,
-                                                            hasChildren ? wrapIcon(icon, index, Color.gray) : icon,
-                                                            NavBarModel.getPresentableText(object, getWindow()),
-                                                            myModel.getTextAttributes(object, false), myModel);
+  private void immediateUpdateList(boolean update) {
+    synchronized (myUpdateLock) {
+      if (update) {
+        myFirstIndex = 0;
+        final int selectedIndex1 = -1;
+        myModel.setSelectedIndex(selectedIndex1);
+        myList.clear();
+        for (int index = 0; index < myModel.size(); index++) {
+          final Object object = myModel.get(index);
+          final boolean hasChildren = myModel.hasChildren(object);
+          final Icon icon = NavBarModel.getIcon(object);
+          final MyCompositeLabel label = new MyCompositeLabel(index,
+                                                              hasChildren ? wrapIcon(icon, index, Color.gray) : icon,
+                                                              NavBarModel.getPresentableText(object, getWindow()),
+                                                              myModel.getTextAttributes(object, false), myModel);
 
-        installActions(index, hasChildren, icon, label);
-        myList.add(label);
+          installActions(index, hasChildren, icon, label);
+          myList.add(label);
+        }
+        rebuildComponent();
       }
-      rebuildComponent();
     }
   }
 
@@ -1068,7 +1071,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       public void run() {
         if (myProject.isDisposed()) return;
         immediateUpdateList(true);
-        rebuildComponent();
+        //rebuildComponent();
       }
     }, 500);
   }
