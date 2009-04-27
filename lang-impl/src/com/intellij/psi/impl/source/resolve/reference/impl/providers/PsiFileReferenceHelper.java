@@ -11,17 +11,17 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
@@ -55,7 +55,7 @@ public class PsiFileReferenceHelper implements FileReferenceHelper {
 
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
-    return FilePathReferenceProvider.getRoots(module, false);
+    return getContextsForModule(module, "", module.getModuleWithDependenciesScope());
   }
 
   @NotNull
@@ -69,14 +69,32 @@ public class PsiFileReferenceHelper implements FileReferenceHelper {
         assert parentFile != null;
         VirtualFile root = index.getSourceRootForFile(parentFile);
         if (root != null) {
-          final String path = VfsUtil.getRelativePath(parentFile, root, '.');
-          final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(path);
-          if (psiPackage != null) {
+          String path = VfsUtil.getRelativePath(parentFile, root, '.');
+
+          if (path != null) {
             final Module module = ModuleUtil.findModuleForFile(file, project);
+
             if (module != null) {
-              return Arrays.<PsiFileSystemItem>asList(psiPackage.getDirectories(module.getModuleWithDependenciesScope()));
+              OrderEntry orderEntry = ModuleRootManager.getInstance(module).getFileIndex().getOrderEntryForFile(file);
+
+              if (orderEntry instanceof ModuleSourceOrderEntry) {
+                for(ContentEntry e: ((ModuleSourceOrderEntry)orderEntry).getRootModel().getContentEntries()) {
+                  for(SourceFolder sf:e.getSourceFolders()) {
+                    if (sf.getFile() == root) {
+                      String s = sf.getPackagePrefix();
+                      if (s.length() > 0) {
+                        path = s + "." + path;
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+              return getContextsForModule(module, path, module.getModuleWithDependenciesScope());
             }
           }
+
+          // TODO: content root
         }
         return Collections.singleton(parent);
       }
@@ -94,4 +112,21 @@ public class PsiFileReferenceHelper implements FileReferenceHelper {
     return url.trim();
   }
 
+  static Collection<PsiFileSystemItem> getContextsForModule(@NotNull Module module, @NotNull String packageName, @Nullable GlobalSearchScope scope) {
+    List<PsiFileSystemItem> result = null;
+    Query<VirtualFile> query = DirectoryIndex.getInstance(module.getProject()).getDirectoriesByPackageName(packageName, false);
+    PsiManager manager = null;
+
+    for(VirtualFile file:query) {
+      if (scope != null && !scope.contains(file)) continue;
+      if (result == null) {
+        result = new ArrayList<PsiFileSystemItem>();
+        manager = PsiManager.getInstance(module.getProject());
+      }
+      PsiDirectory psiDirectory = manager.findDirectory(file);
+      if (psiDirectory != null) result.add(psiDirectory);
+    }
+
+    return result != null ? result:Collections.<PsiFileSystemItem>emptyList();
+  }
 }

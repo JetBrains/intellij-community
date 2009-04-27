@@ -6,12 +6,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -44,11 +41,7 @@ public class JarFileReferenceHelper implements FileReferenceHelper {
 
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
-    PsiPackage psiPackage = JavaPsiFacade.getInstance(module.getProject()).findPackage("");
-    if (psiPackage != null) {
-      return Arrays.<PsiFileSystemItem>asList(psiPackage.getDirectories());
-    }
-    return Collections.emptyList();
+    return PsiFileReferenceHelper.getContextsForModule(module, "", null);
   }
 
   @NotNull
