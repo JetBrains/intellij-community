@@ -332,6 +332,8 @@ public class ToolsImpl implements Tools {
           return;
         }
       }
+    } else {
+      disableTool();
     }
   }
 
