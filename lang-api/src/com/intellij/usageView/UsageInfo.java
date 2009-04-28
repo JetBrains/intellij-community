@@ -136,4 +136,9 @@ public class UsageInfo {
     result = 29 * result + (isNonCodeUsage ? 1 : 0);
     return result;
   }
+
+  @Nullable
+  public PsiFile getFile() {
+    return mySmartPointer.getContainingFile();
+  }
 }

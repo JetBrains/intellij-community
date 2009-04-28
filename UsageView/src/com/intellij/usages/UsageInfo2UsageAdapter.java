@@ -183,23 +183,27 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   }
 
   public boolean canNavigate() {
-    return markersValid();
+    return getFile().isValid();
   }
 
   public boolean canNavigateToSource() {
     return canNavigate();
   }
 
+  @Nullable
   private OpenFileDescriptor getDescriptor() {
-    return markersValid() ?
-           new OpenFileDescriptor(
-             getProject(),
-             getFile(),
-             myRangeMarkers.size() > 0 ?
-               getRangeMarker().getStartOffset():
-               myOffset // element over light virtual file
-           ) :
-           null;
+    if (markersValid()) {
+      return new OpenFileDescriptor(getProject(), getFile(), myRangeMarkers.size() > 0 ? getRangeMarker().getStartOffset() : myOffset);
+    }
+    else if (getFile().isValid()) {
+      final Document doc = FileDocumentManager.getInstance().getDocument(getFile());
+      if (doc != null) {
+        int line = Math.max(0, Math.min(myLineNumber, doc.getLineCount()));
+        return new OpenFileDescriptor(getProject(), getFile(), line, 0);
+      }
+    }
+    
+    return null;
   }
 
   private Project getProject() {
@@ -255,12 +259,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     if (isValid()) {
       return getElement().getContainingFile().getVirtualFile();
     }
-    else if (markersValid() && myRangeMarkers.size() > 0) {
-      final Document doc = myRangeMarkers.get(0).getDocument();
-      return FileDocumentManager.getInstance().getFile(doc);
+    else {
+      return myUsageInfo.getFile().getVirtualFile();
     }
-
-    return null;
   }
 
   public int getLine() {
