@@ -200,9 +200,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    setMirrorCheckingType(element, null);
-
-    PsiElement mirrorFile = SourceTreeToPsiMap.treeElementToPsi(myMirror);
+    PsiElement mirrorFile = SourceTreeToPsiMap.treeElementToPsi(element);
     if (mirrorFile instanceof PsiJavaFile) {
       PsiPackageStatement packageStatementMirror = ((PsiJavaFile)mirrorFile).getPackageStatement();
       final PsiPackageStatement packageStatement = getPackageStatement();
@@ -225,6 +223,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         }
       }
     }
+    setMirrorCheckingType(element, null);
   }
 
   public String getText() {
@@ -266,28 +265,32 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   private void initializeMirror() {
     if (myMirror == null) {
-      FileDocumentManager documentManager = FileDocumentManager.getInstance();
-      final Document document = documentManager.getDocument(getVirtualFile());
-      String text = document.getText();
-      String ext = StdFileTypes.JAVA.getDefaultExtension();
-      PsiClass aClass = getClasses()[0];
-      String fileName = aClass.getName() + "." + ext;
-      PsiManager manager = getManager();
-      PsiFile mirror = PsiFileFactory.getInstance(manager.getProject()).createFileFromText(fileName, text);
-      final ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
+      synchronized (getMirrorLock()) {
+        if (myMirror != null) return;
 
-      //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
-      ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
-        public void run() {
-          synchronized (myMirrorLock) {
-            if (myMirror == null) {
-              setMirror((TreeElement)mirrorTreeElement);
-              myMirror.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
-            }
+        FileDocumentManager documentManager = FileDocumentManager.getInstance();
+        final Document document = documentManager.getDocument(getVirtualFile());
+        String text = document.getText();
+        String ext = StdFileTypes.JAVA.getDefaultExtension();
+        PsiClass aClass = getClasses()[0];
+        String fileName = aClass.getName() + "." + ext;
+        PsiManager manager = getManager();
+        PsiFile mirror = PsiFileFactory.getInstance(manager.getProject()).createFileFromText(fileName, text);
+        final ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
+
+        //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
+        ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+          public void run() {
+            setMirror((TreeElement)mirrorTreeElement);
+            myMirror.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
           }
-        }
-      });
+        });
+      }
     }
+  }
+
+  Object getMirrorLock() {
+    return myMirrorLock;
   }
 
   public long getModificationStamp() {

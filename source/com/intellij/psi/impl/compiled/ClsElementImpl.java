@@ -102,7 +102,12 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   public final PsiElement getMirror() {
     if (myMirror == null) {
-      getContainingFile().getText(); // to initialize mirror (it is going to be under PsiLock anyway)
+      final ClsFileImpl file = (ClsFileImpl)getContainingFile();
+      synchronized (file.getMirrorLock()) {
+        if (myMirror == null) {
+          file.getText();
+        }
+      }
     }
     return SourceTreeToPsiMap.treeElementToPsi(myMirror);
   }
