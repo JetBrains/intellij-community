@@ -38,8 +38,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
@@ -1026,9 +1026,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
     final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
     for (final Node node : nodes) {
+      /*
       if (!node.isDataValid()) {
         continue;
       }
+      */
       Object userObject = node.getUserObject();
       if (userObject instanceof Navigatable) {
         result.add((Navigatable)userObject);

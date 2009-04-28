@@ -919,15 +919,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private static void setContext(final PsiFile file, final PsiElement context) {
     if (file != null && context != null) {
-      file.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, new SmartPsiElementPointer() {
-        public PsiElement getElement() {
-          return context;
-        }
-
-        public PsiFile getContainingFile() {
-          return context.getContainingFile();
-        }
-      });
+      file.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, new IdentitySmartPointer(context));
     }
   }
 

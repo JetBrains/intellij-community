@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
@@ -52,6 +53,11 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   public int hashCode() {
     PsiElement element = getElement();
     return element != null ? element.hashCode() : 0;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   @Nullable

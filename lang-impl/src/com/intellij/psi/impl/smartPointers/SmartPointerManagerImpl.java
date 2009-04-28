@@ -4,7 +4,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -106,39 +105,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     for (int i = size - 1; i >= index; i--) {
       pointers.remove(i);
     }
-  }
-
-  private class IdentitySmartPointer<T extends PsiElement> implements SmartPointerEx<T> {
-    private T myElement;
-
-    public IdentitySmartPointer(final T element) {
-      myElement = element;
-    }
-
-    public T getElement() {
-      if (myElement != null && !myElement.isValid()) {
-        myElement = null;
-      }
-      return myElement;
-    }
-
-    public int hashCode() {
-      final T elt = getElement();
-      return elt == null ? 0 : elt.hashCode();
-    }
-
-    public boolean equals(Object obj) {
-      return obj instanceof SmartPsiElementPointer && Comparing.equal(getElement(), ((SmartPsiElementPointer)obj).getElement());
-    }
-
-    public PsiFile getContainingFile() {
-      final T elt = getElement();
-      return elt != null ? elt.getContainingFile() : null;
-    }
-
-    public void documentAndPsiInSync() {}
-
-    public void fastenBelt() {}
   }
 
   @NotNull

@@ -31,8 +31,8 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 
 public interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E> {
   void fastenBelt();

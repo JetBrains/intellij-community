@@ -301,15 +301,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   private static <T extends PsiLanguageInjectionHost> SmartPsiElementPointer<T> createHostSmartPointer(final T host) {
     return host.isPhysical()
            ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host)
-           : new SmartPsiElementPointer<T>() {
-             public T getElement() {
-               return host;
-             }
-
-             public PsiFile getContainingFile() {
-               return host.getContainingFile();
-             }
-           };
+           : new IdentitySmartPointer<T>(host);
   }
 
   private static void patchLeafs(ASTNode parsedNode, List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers, Place shreds) {

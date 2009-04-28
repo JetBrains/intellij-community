@@ -106,6 +106,10 @@ public class UsageInfo {
     FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
   }
 
+  public Project getProject() {
+    return mySmartPointer.getProject();
+  }
+
   public final boolean isWritable() {
     PsiElement element = getElement();
     return element == null || element.isWritable();

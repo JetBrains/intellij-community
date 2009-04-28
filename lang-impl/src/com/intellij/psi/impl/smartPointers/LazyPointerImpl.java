@@ -31,14 +31,17 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ReflectionCache;
+import org.jetbrains.annotations.NotNull;
 
 public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private E myElement = null;
   private PsiAnchor myAnchor = null;
   private SmartPsiElementPointer myPointer = null;
   private final Class<? extends PsiElement> myElementClass;
+  private final Project myProject;
 
   public LazyPointerImpl(E element) {
     myElementClass = element.getClass();
@@ -48,6 +51,7 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
     else {
       myAnchor = PsiAnchor.create(element);
     }
+    myProject = element.getProject();
   }
 
   private static SmartPsiElementPointer setupPointer(PsiElement element) {
@@ -90,6 +94,11 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
     result = 31 * result + (myPointer != null ? myPointer.hashCode() : 0);
     result = 31 * result + (myElementClass != null ? myElementClass.hashCode() : 0);
     return result;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   public E getElement() {

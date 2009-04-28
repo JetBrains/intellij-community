@@ -40,7 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
@@ -122,6 +123,11 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     if (element == null || !element.isValid()) {
       return false;
     }
+
+    return markersValid();
+  }
+
+  private boolean markersValid() {
     for (RangeMarker rangeMarker : myRangeMarkers) {
       if (!rangeMarker.isValid()) {
         return false;
@@ -177,7 +183,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   }
 
   public boolean canNavigate() {
-    return isValid();
+    return markersValid();
   }
 
   public boolean canNavigateToSource() {
@@ -185,7 +191,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   }
 
   private OpenFileDescriptor getDescriptor() {
-    return isValid() ?
+    return markersValid() ?
            new OpenFileDescriptor(
              getProject(),
              getFile(),
@@ -197,7 +203,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   }
 
   private Project getProject() {
-    return getElement().getProject();
+    return getUsageInfo().getProject();
   }
 
   public String toString() {
@@ -246,7 +252,15 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   }
 
   public VirtualFile getFile() {
-    return isValid() ? getElement().getContainingFile().getVirtualFile() : null;
+    if (isValid()) {
+      return getElement().getContainingFile().getVirtualFile();
+    }
+    else if (markersValid() && myRangeMarkers.size() > 0) {
+      final Document doc = myRangeMarkers.get(0).getDocument();
+      return FileDocumentManager.getInstance().getFile(doc);
+    }
+
+    return null;
   }
 
   public int getLine() {
