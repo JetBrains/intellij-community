@@ -2,7 +2,7 @@ package org.apache.maven.project;
 
 import java.util.List;
 
-public class MavenProjectHelper {
+public class JBMavenProjectHelper {
   public static void setSourceRoots(MavenProject project,
                                     List<String> compileSourceRoots,
                                     List<String> testCompileSourceRoots,

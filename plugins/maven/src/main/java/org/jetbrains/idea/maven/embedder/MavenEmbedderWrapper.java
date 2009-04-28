@@ -98,7 +98,7 @@ public class MavenEmbedderWrapper {
     return doExecute(new Executor<Boolean>() {
       public Boolean execute() throws Exception {
         try {
-          MavenEmbedderHelper.verifyPlugin(plugin, nativeMavenProject, myEmbedder);
+          JBMavenEmbedderHelper.verifyPlugin(plugin, nativeMavenProject, myEmbedder);
         }
         catch (Exception e) {
           MavenLog.LOG.info(e);

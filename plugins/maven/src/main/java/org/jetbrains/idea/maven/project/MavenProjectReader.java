@@ -16,10 +16,8 @@ import org.apache.maven.extension.ExtensionScanningException;
 import org.apache.maven.model.*;
 import org.apache.maven.profiles.activation.*;
 import org.apache.maven.profiles.injection.DefaultProfileInjector;
-import org.apache.maven.project.InvalidProjectModelException;
+import org.apache.maven.project.*;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectHelper;
-import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
 import org.apache.maven.project.interpolation.RegexBasedModelInterpolator;
@@ -67,7 +65,7 @@ public class MavenProjectReader {
     MavenProject mavenProject = new MavenProject(model);
     mavenProject.setFile(new File(file.getPath()));
     mavenProject.setActiveProfiles(readResult.second);
-    MavenProjectHelper.setSourceRoots(mavenProject,
+    JBMavenProjectHelper.setSourceRoots(mavenProject,
                                       Collections.singletonList(model.getBuild().getSourceDirectory()),
                                       Collections.singletonList(model.getBuild().getTestSourceDirectory()),
                                       Collections.singletonList(model.getBuild().getScriptSourceDirectory()));
@@ -529,7 +527,7 @@ public class MavenProjectReader {
     String path = f.getPath();
 
     try {
-      Pair<MavenProject, Set<MavenId>> result = doReadProject(embedder, path, activeProfiles, problems, process);
+      Pair<MavenProject, Set<MavenId>> result = doResolveProject(embedder, path, activeProfiles, problems, process);
       mavenProject = result.first;
       unresolvedArtifactsIds = result.second;
     }
@@ -563,11 +561,11 @@ public class MavenProjectReader {
                                         mavenProject);
   }
 
-  private Pair<MavenProject, Set<MavenId>> doReadProject(MavenEmbedderWrapper embedder,
-                                                         String path,
-                                                         List<String> profiles,
-                                                         List<MavenProjectProblem> problems,
-                                                         MavenProcess p) throws MavenProcessCanceledException {
+  private Pair<MavenProject, Set<MavenId>> doResolveProject(MavenEmbedderWrapper embedder,
+                                                            String path,
+                                                            List<String> profiles,
+                                                            List<MavenProjectProblem> problems,
+                                                            MavenProcess p) throws MavenProcessCanceledException {
     MavenExecutionRequest request = createRequest(embedder, path, profiles);
     Pair<MavenExecutionResult, Set<MavenId>> result = embedder.readProject(request, p);
     if (!validate(result.first, problems)) return null;
