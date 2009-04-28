@@ -136,7 +136,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void addInternalResource(@NonNls String resource, @NonNls String version, @NonNls String fileName) {
-    addStdResource(resource, version, STANDARD_SCHEMAS + fileName, getClass());
+    addInternalResource(resource, version, fileName, getClass());
+  }
+
+  public void addInternalResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class clazz) {
+    addStdResource(resource, version, STANDARD_SCHEMAS + fileName, clazz);
   }
 
   public static boolean isStandardResource(VirtualFile file) {
