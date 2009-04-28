@@ -105,7 +105,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
         public void run() {
           try {
             setXmlElement(null);
-            tag.setAttribute(getXmlElementName(), "", null);
+            tag.setAttribute(getXmlElementName(), getXmlApiCompatibleNamespace(getParentHandler()), null);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
