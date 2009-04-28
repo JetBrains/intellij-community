@@ -1,5 +1,6 @@
 package com.intellij.psi.impl;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
@@ -20,9 +21,10 @@ public class SharedPsiElementImplUtil {
   private SharedPsiElementImplUtil() {}
 
   @Nullable
-  public static PsiReference findReferenceAt(PsiElement thisElement, int offset) {
+  public static PsiReference findReferenceAt(PsiElement thisElement, int offset, @Nullable Language lang) {
     if(thisElement == null) return null;
-    PsiElement element = thisElement.findElementAt(offset);
+    PsiElement element = lang != null ? thisElement.getContainingFile().getViewProvider().findElementAt(offset, lang):
+                         thisElement.findElementAt(offset);
     if (element == null) return null;
     offset = thisElement.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
@@ -38,6 +40,10 @@ public class SharedPsiElementImplUtil {
     if (referencesList.size() == 1) return referencesList.get(0);
     return new PsiMultiReference(referencesList.toArray(new PsiReference[referencesList.size()]),
                                  referencesList.get(referencesList.size() - 1).getElement());
+  }
+  @Nullable
+  public static PsiReference findReferenceAt(PsiElement thisElement, int offset) {
+    return findReferenceAt(thisElement, offset, null);
   }
 
   private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences) {
