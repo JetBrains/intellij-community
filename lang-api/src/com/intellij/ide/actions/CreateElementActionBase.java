@@ -100,7 +100,7 @@ public abstract class CreateElementActionBase extends AnAction {
   }
 
   protected boolean isDumbAware() {
-    return true;
+    return false;
   }
 
   protected boolean isAvailable(final DataContext dataContext) {
