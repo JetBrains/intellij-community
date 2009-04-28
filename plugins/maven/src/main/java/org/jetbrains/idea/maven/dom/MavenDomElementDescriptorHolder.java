@@ -46,9 +46,9 @@ public class MavenDomElementDescriptorHolder {
   public XmlElementDescriptor getDescriptor(XmlTag tag) {
     if (!MavenDomUtil.isPomFile(tag.getContainingFile())) return null;
 
-    if (myNSDescriptor == null || !myNSDescriptor.getDeclaration().isValid()) {
+    if (myNSDescriptor == null || !myNSDescriptor.isValid()) {
       synchronized (this) {
-        if (myNSDescriptor == null || !myNSDescriptor.getDeclaration().isValid()) initDescriptor();
+        if (myNSDescriptor == null || !myNSDescriptor.isValid()) initDescriptor();
       }
     }
     return myNSDescriptor.getElementDescriptor(tag.getName(), myNSDescriptor.getDefaultNamespace());
