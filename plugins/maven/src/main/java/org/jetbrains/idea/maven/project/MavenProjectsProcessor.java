@@ -1,32 +1,35 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.embedder.MavenConsoleImpl;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class MavenProjectsProcessor {
-  private static final NullTask NULL_TASK = new NullTask();
+  private static final NullTask STOP_TASK = new NullTask();
 
   private final Project myProject;
   private final MavenEmbeddersManager myEmbeddersManager;
-  private final MavenConsole myConsole;
+
   private final Thread myThread;
   private final BlockingQueue<MavenProjectsProcessorTask> myQueue = new LinkedBlockingQueue<MavenProjectsProcessorTask>();
   private volatile boolean isStopped;
 
+  private final Handler myHandler = new Handler();
+  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+
   public MavenProjectsProcessor(Project project, String title, MavenEmbeddersManager embeddersManager) {
     myProject = project;
     myEmbeddersManager = embeddersManager;
-    myConsole = isUnitTestMode() ? new SoutMavenConsole() : new MavenConsoleImpl(title, myProject);
     myThread = new Thread(new Runnable() {
       public void run() {
         while (doRunCycle()) { /* nothing */ }
@@ -40,7 +43,7 @@ public class MavenProjectsProcessor {
   }
 
   protected void scheduleTask(MavenProjectsProcessorTask task) {
-    if (task.immediateInTestMode() && isUnitTestMode()) {
+    if (isUnitTestMode() && task.immediateInTestMode()) {
       try {
         doPerform(task);
       }
@@ -52,6 +55,7 @@ public class MavenProjectsProcessor {
 
     if (myQueue.contains(task)) return;
     myQueue.add(task);
+    fireQueueChanged(myQueue.size());
   }
 
   public void removeTask(MavenProjectsProcessorTask task) {
@@ -81,12 +85,16 @@ public class MavenProjectsProcessor {
     }
   }
 
+  public void cancelNonBlocking() {
+    myQueue.clear();
+  }
+
   public void cancelAndStop() {
     if (isUnitTestMode()) return;
 
     try {
       isStopped = true;
-      myQueue.put(NULL_TASK);
+      myQueue.put(STOP_TASK);
       myThread.join();
     }
     catch (InterruptedException e) {
@@ -98,12 +106,13 @@ public class MavenProjectsProcessor {
     MavenProjectsProcessorTask task;
     try {
       task = myQueue.poll(100, TimeUnit.MILLISECONDS);
+      fireQueueChanged(myQueue.size());
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
     if (isStopped) return false;
-    if (task == null || task == NULL_TASK) return true;
+    if (task == null || task == STOP_TASK) return true;
 
     try {
       doPerform(task);
@@ -119,17 +128,21 @@ public class MavenProjectsProcessor {
 
   private void doPerform(final MavenProjectsProcessorTask task) throws MavenProcessCanceledException {
     // todo console and cancelation
-    task.perform(myProject, myEmbeddersManager, myConsole, new MavenProcess(new EmptyProgressIndicator()));
-    //MavenProcess.runInBackground(myProject, myTitle, false, new MavenProcess.MavenTask() {
-    //  @Override
-    //  public void run(MavenProcess process) throws MavenProcessCanceledException {
-    //    task.perform(myProject, myEmbeddersManager, myConsole, process);
-    //  }
-    //}).waitFor();
+    task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), new MavenProcess(new EmptyProgressIndicator()));
+  }
+
+  private void fireQueueChanged(int size) {
+    for (Listener each : myListeners) {
+      each.queueChanged(size);
+    }
   }
 
   private boolean isUnitTestMode() {
     return ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  public Handler getHandler() {
+    return myHandler;
   }
 
   private static class NullTask implements MavenProjectsProcessorTask {
@@ -141,5 +154,19 @@ public class MavenProjectsProcessor {
     public boolean immediateInTestMode() {
       throw new UnsupportedOperationException();
     }
+  }
+
+  public class Handler {
+    public void addListener(Listener listener) {
+      myListeners.add(listener);
+    }
+
+    public void cancelNonBlocking() {
+      MavenProjectsProcessor.this.cancelNonBlocking();
+    }
+  }
+
+  public interface Listener {
+    void queueChanged(int size);
   }
 }

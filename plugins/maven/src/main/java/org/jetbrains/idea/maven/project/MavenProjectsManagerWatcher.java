@@ -1,6 +1,12 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -13,43 +19,84 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class MavenProjectsManagerWatcher {
-  private Project myProject;
-  private MavenEmbeddersManager myEmbeddersManager;
-  private MavenProjectsTree myTree;
-  private MavenGeneralSettings myGeneralSettings;
-  private MavenProjectsProcessor myReadingProcessor;
-  private MavenGeneralSettings.Listener mySettingsPathsChangesListener;
+  private static final int DOCUMENT_SAVE_DELAY = 700;
+
+  private final Project myProject;
+  private final MavenProjectsTree myTree;
+  private final MavenGeneralSettings myGeneralSettings;
+  private final MavenProjectsProcessor myReadingProcessor;
+  private final MavenEmbeddersManager myEmbeddersManager;
+
   private MessageBusConnection myBusConnection;
+  private DocumentAdapter myDocumentListener;
+  private MavenGeneralSettings.Listener mySettingsPathsChangesListener;
   private List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<VirtualFilePointer>();
 
+  private final Alarm myChangedDocumentsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Set<Document> myChangedDocuments = new HashSet<Document>();
+
   public MavenProjectsManagerWatcher(Project project,
-                                     MavenEmbeddersManager embeddersManager,
                                      MavenProjectsTree tree,
                                      MavenGeneralSettings generalSettings,
-                                     MavenProjectsProcessor readingProcessor) {
+                                     MavenProjectsProcessor readingProcessor,
+                                     MavenEmbeddersManager embeddersManager) {
     myProject = project;
-    myEmbeddersManager = embeddersManager;
     myTree = tree;
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
+    myEmbeddersManager = embeddersManager;
   }
 
-  public void start() {
+  public synchronized void start() {
     myBusConnection = myProject.getMessageBus().connect();
 
     myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new MyFileChangeListener());
     myBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
+
+    myDocumentListener = new DocumentAdapter() {
+      public void documentChanged(DocumentEvent event) {
+        Document doc = event.getDocument();
+        VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
+
+        if (file == null) return;
+        boolean isMavenFile = file.getName().equals(MavenConstants.POM_XML)
+                              || file.getName().equals(MavenConstants.PROFILES_XML)
+                              || isSettingsFile(file);
+        if (!isMavenFile) return;
+
+        myChangedDocumentsAlarm.cancelAllRequests();
+
+        synchronized (myChangedDocuments) {
+          myChangedDocuments.add(doc);
+        }
+
+        myChangedDocumentsAlarm.addRequest(new Runnable() {
+          public void run() {
+            Set<Document> copy;
+
+            synchronized (myChangedDocuments) {
+              copy = new HashSet<Document>(myChangedDocuments);
+              myChangedDocuments.clear();
+            }
+
+            for (Document each : copy) {
+              FileDocumentManager.getInstance().saveDocument(each);
+            }
+          }
+        }, DOCUMENT_SAVE_DELAY);
+      }
+    };
+    getDocumentEventMulticaster().addDocumentListener(myDocumentListener);
 
     mySettingsPathsChangesListener = new MavenGeneralSettings.Listener() {
       public void pathChanged() {
@@ -79,28 +126,33 @@ public class MavenProjectsManagerWatcher {
     }));
   }
 
-  public void stop() {
+  public synchronized void stop() {
+    getDocumentEventMulticaster().removeDocumentListener(myDocumentListener);
     myGeneralSettings.removeListener(mySettingsPathsChangesListener);
     mySettingsFilesPointers.clear();
     myBusConnection.disconnect();
   }
 
-  public void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> profiles) {
+  private EditorEventMulticaster getDocumentEventMulticaster() {
+    return EditorFactory.getInstance().getEventMulticaster();
+  }
+
+  public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> profiles) {
     myTree.addManagedFilesWithProfiles(files, profiles);
     scheduleUpdate(files, Collections.<VirtualFile>emptyList());
   }
 
-  public void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> profiles) {
+  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> profiles) {
     myTree.resetManagedFilesAndProfiles(files, profiles);
     scheduleUpdateAll();
   }
 
-  public void removeManagedFiles(List<VirtualFile> files) {
+  public synchronized void removeManagedFiles(List<VirtualFile> files) {
     myTree.removeManagedFiles(files);
     scheduleUpdate(Collections.<VirtualFile>emptyList(), files);
   }
 
-  public void setActiveProfiles(List<String> profiles) {
+  public synchronized void setActiveProfiles(List<String> profiles) {
     myTree.setActiveProfiles(profiles);
     scheduleUpdateAll();
   }
@@ -146,6 +198,33 @@ public class MavenProjectsManagerWatcher {
     }
   }
 
+  private boolean isPomFile(String path) {
+    if (!path.endsWith("/" + MavenConstants.POM_XML)) return false;
+    return myTree.isPotentialProject(path);
+  }
+
+  private boolean isProfilesFile(String path) {
+    String suffix = "/" + MavenConstants.PROFILES_XML;
+    if (!path.endsWith(suffix)) return false;
+    int pos = path.lastIndexOf(suffix);
+    return myTree.isPotentialProject(path.substring(0, pos) + "/" + MavenConstants.POM_XML);
+  }
+
+  private boolean isSettingsFile(String path) {
+    for (VirtualFilePointer each : mySettingsFilesPointers) {
+      VirtualFile f = each.getFile();
+      if (f != null && FileUtil.pathsEqual(path, f.getPath())) return true;
+    }
+    return false;
+  }
+
+  private boolean isSettingsFile(VirtualFile f) {
+    for (VirtualFilePointer each : mySettingsFilesPointers) {
+      if (each.getFile() == f) return true;
+    }
+    return false;
+  }
+
   private class MyFileChangeListener extends MyFileChangeListenerBase {
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
@@ -153,26 +232,6 @@ public class MavenProjectsManagerWatcher {
 
     protected boolean isRelevant(String path) {
       return isPomFile(path) || isProfilesFile(path) || isSettingsFile(path);
-    }
-
-    private boolean isPomFile(String path) {
-      if (!path.endsWith("/" + MavenConstants.POM_XML)) return false;
-      return myTree.isPotentialProject(path);
-    }
-
-    private boolean isProfilesFile(String path) {
-      String suffix = "/" + MavenConstants.PROFILES_XML;
-      if (!path.endsWith(suffix)) return false;
-      int pos = path.lastIndexOf(suffix);
-      return myTree.isPotentialProject(path.substring(0, pos) + "/" + MavenConstants.POM_XML);
-    }
-
-    private boolean isSettingsFile(String path) {
-      for (VirtualFilePointer each : mySettingsFilesPointers) {
-        VirtualFile f = each.getFile();
-        if (f != null && FileUtil.pathsEqual(path, f.getPath())) return true;
-      }
-      return false;
     }
 
     protected void updateFile(VirtualFile file) {
@@ -203,13 +262,6 @@ public class MavenProjectsManagerWatcher {
       else {
         filesToUpdate.add(file);
       }
-    }
-
-    private boolean isSettingsFile(VirtualFile f) {
-      for (VirtualFilePointer each : mySettingsFilesPointers) {
-        if (each.getFile() == f) return true;
-      }
-      return false;
     }
 
     private VirtualFile getPomFileProfilesFile(VirtualFile f) {

@@ -36,7 +36,7 @@ public class MavenProjectsTree {
 
   private Map<MavenProject, MavenProjectTimestamp> myTimestamps = new HashMap<MavenProject, MavenProjectTimestamp>();
 
-  private List<Listener> myListeners = new ArrayList<Listener>();
+  private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
     public VirtualFile findProjectFile(MavenId coordinates) {

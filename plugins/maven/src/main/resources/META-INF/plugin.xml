@@ -82,9 +82,6 @@
       <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectsNavigator</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.embedder.MavenStatusToolWindow</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater</implementation-class>
     </component>
     <component>

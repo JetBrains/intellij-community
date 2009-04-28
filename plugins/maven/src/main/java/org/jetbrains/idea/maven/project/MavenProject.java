@@ -132,9 +132,9 @@ public class MavenProject implements Serializable {
     org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
     Model model = nativeMavenProject.getModel();
 
-    myMavenId = new MavenId(nativeMavenProject.getGroupId(),
-                            nativeMavenProject.getArtifactId(),
-                            nativeMavenProject.getVersion());
+    myMavenId = new MavenId(model.getGroupId(),
+                            model.getArtifactId(),
+                            model.getVersion());
 
     Parent parent = model.getParent();
     myParentId = parent != null
@@ -144,7 +144,7 @@ public class MavenProject implements Serializable {
     myPackaging = model.getPackaging();
     myName = model.getName();
 
-    Build build = nativeMavenProject.getBuild();
+    Build build = model.getBuild();
 
     myFinalName = build.getFinalName();
     myDefaultGoal = build.getDefaultGoal();

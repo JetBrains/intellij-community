@@ -45,7 +45,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
       updateIndicesList();
     }
 
-    getMavenProjectManager().addListener(new MavenProjectsManager.Listener() {
+    getMavenProjectManager().addManagerListener(new MavenProjectsManager.Listener() {
       public void activated() {
         updateIndicesList();
       }

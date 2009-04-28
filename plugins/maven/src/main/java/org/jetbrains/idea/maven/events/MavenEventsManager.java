@@ -94,7 +94,7 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
   @TestOnly
   public void doInit() {
     MyProjectsTreeListener listener = new MyProjectsTreeListener();
-    myProjectsManager.addListener(listener);
+    myProjectsManager.addManagerListener(listener);
     myProjectsManager.addProjectsTreeListener(listener);
 
     myKeymapListener = new MyKeymapListener();

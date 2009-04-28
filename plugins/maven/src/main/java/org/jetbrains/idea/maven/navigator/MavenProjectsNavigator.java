@@ -51,6 +51,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
 
   private SimpleTreeBuilder myTreeBuilder;
   private SimpleTree myTree;
+  private MavenStatusPanel myStatusPanel;
 
   private final Map<VirtualFile, PomNode> myFileToNode = new LinkedHashMap<VirtualFile, PomNode>();
 
@@ -81,15 +82,16 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-    initMavenProjectsTree();
+    initProjectsTree();
+    initStatusPanel();
     initToolWindow();
     listenForChanges();
-  }
+}
 
   public void projectClosed() {
   }
 
-  private void initMavenProjectsTree() {
+  private void initProjectsTree() {
     myTree = new SimpleTree() {
       private final JLabel myLabel = new JLabel(ProjectBundle.message("maven.navigator.nothing.to.display",
                                                                 formatHtmlImage(ADD_ICON_URL),
@@ -146,9 +148,13 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
     });
   }
 
+  private void initStatusPanel() {
+    myStatusPanel = new MavenStatusPanel(myProject, myProjectsManager);
+  }
+
   private void listenForChanges() {
     MyProjectsListener projectsListener = new MyProjectsListener();
-    myProjectsManager.addListener(projectsListener);
+    myProjectsManager.addManagerListener(projectsListener);
     myProjectsManager.addProjectsTreeListener(projectsListener);
 
     myEventsHandler.addListener(new MavenEventsManager.Listener() {
@@ -182,7 +188,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
   }
 
   private void initToolWindow() {
-    final JPanel navigatorPanel = new MavenProjectsNavigatorPanel(myProject, myTree);
+    final JPanel navigatorPanel = new MavenProjectsNavigatorPanel(myProject, myTree, myStatusPanel);
 
     ToolWindow pomToolWindow = ToolWindowManager.getInstance(myProject)
         .registerToolWindow(TOOL_WINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, myProject);
