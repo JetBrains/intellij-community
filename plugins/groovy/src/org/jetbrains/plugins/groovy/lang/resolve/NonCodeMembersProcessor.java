@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -32,5 +31,5 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 public interface NonCodeMembersProcessor {
   ExtensionPointName<NonCodeMembersProcessor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.nonCodeProcessor");
 
-  boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, Project project, PsiElement place, boolean forCompletion);
+  boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion);
 }

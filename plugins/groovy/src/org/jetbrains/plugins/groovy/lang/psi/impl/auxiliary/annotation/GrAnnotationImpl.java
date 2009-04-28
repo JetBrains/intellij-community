@@ -89,7 +89,7 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
   }
 
   @NotNull
-  public String getName(){
+  public String getShortName(){
     //Annotation is an identifier always
     return getClassReference().getText();
   }

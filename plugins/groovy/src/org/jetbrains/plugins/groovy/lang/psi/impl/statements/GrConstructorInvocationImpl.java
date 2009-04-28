@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -98,6 +99,11 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
       PsiType thisType = factory.createType(clazz, substitutor);
       MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
       clazz.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, this);
+
+      for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
+        if (!membersProcessor.processNonCodeMethods(thisType, processor, this, true)) break;
+      }
+
       return processor.getCandidates();
     }
     return GroovyResolveResult.EMPTY_ARRAY;

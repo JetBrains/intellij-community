@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -34,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.annotator.GroovyAnnotationsCheckings;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -128,7 +128,7 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
           for (PsiAnnotation psiClassAnnotation : psiClassAnnotations) {
             assert psiClassAnnotation instanceof GrAnnotation;
 
-            if (GroovyAnnotationsCheckings.IMMUTABLE.equals(((GrAnnotation)psiClassAnnotation).getName())) {
+            if (GroovyImmutableAnnotationInspection.IMMUTABLE.equals(psiClassAnnotation.getQualifiedName())) {
               if (modifier.equals(PsiModifier.FINAL)) return true;
               if (modifier.equals(PsiModifier.PRIVATE)) return true;
             }

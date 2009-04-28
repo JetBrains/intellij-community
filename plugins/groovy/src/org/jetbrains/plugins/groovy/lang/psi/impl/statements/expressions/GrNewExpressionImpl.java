@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -120,6 +121,10 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
         PsiSubstitutor substitutor = classResult.getSubstitutor();
         final boolean toBreak =
           element.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, ref);
+
+        for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
+          if (!membersProcessor.processNonCodeMethods(thisType, processor, this, true)) break;
+        }
         constructorResults.addAll(Arrays.asList(processor.getCandidates()));
         if (!toBreak) break;
       }

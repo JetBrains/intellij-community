@@ -119,7 +119,7 @@ public class ResolveUtil {
       }
 
       for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
-        if (!membersProcessor.processNonCodeMethods(type, processor, project, place, forCompletion)) return false;
+        if (!membersProcessor.processNonCodeMethods(type, processor, place, forCompletion)) return false;
       }
       /*
       for (PsiMethod method : getDomainClassMethods(type, project)) {

@@ -57,8 +57,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -460,15 +458,6 @@ public class GroovyAnnotator implements Annotator {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("modifier.transient.not.allowed.here"));
       }
     }
-
-    assert modifiersList instanceof GrModifierList;
-    checkTypeDefAnnotations(typeDefinition, ((GrModifierList)modifiersList), holder);
-  }
-
-  private static void checkTypeDefAnnotations(GrTypeDefinition typeDefinition, GrModifierList modifiersList, AnnotationHolder holder) {
-    for (GrAnnotation annotation : modifiersList.getAnnotations()) {
-      GroovyAnnotationsCheckings.processTypeDefAnnotation(typeDefinition, annotation, holder);
-    }
   }
 
   private static void checkAccessModifiers(AnnotationHolder holder, @NotNull PsiModifierList modifierList) {
@@ -800,7 +789,7 @@ public class GroovyAnnotator implements Annotator {
         registerReferenceFixes(refExpr, annotation);
         annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
       }
-      else { 
+      else {
         annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
       }
     }

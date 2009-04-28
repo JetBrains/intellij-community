@@ -42,6 +42,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
   protected static final String METHOD_METRICS = "Method Metrics (Groovy)";
   protected static final String THREADING_ISSUES = "Threading issues (Groovy)";
   protected static final String VALIDITY_ISSUES = "Validity issues (Groovy)";
+  protected static final String ANNOTATIONS_ISSUES = "Annotations verifying (Groovy)";
 
   @NotNull
   public String getShortName() {

@@ -28,5 +28,5 @@ public interface GrAnnotation extends GrCondition, PsiAnnotation, GrAnnotationMe
   GrCodeReferenceElement getClassReference();
 
   @NotNull
-  String getName();
+  String getShortName();
 }
