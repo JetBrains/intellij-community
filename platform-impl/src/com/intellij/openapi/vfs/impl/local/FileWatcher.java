@@ -322,7 +322,13 @@ public class FileWatcher {
 
         case CREATE:
         case DELETE:
-          myDirtyPaths.add(new File(path).getParentFile().getPath());
+          final File parentFile = new File(path).getParentFile();
+          if (parentFile != null) {
+            myDirtyPaths.add(parentFile.getPath());
+          }
+          else {
+            myDirtyPaths.add(path);
+          }
           break;
 
         case DIRTY:
