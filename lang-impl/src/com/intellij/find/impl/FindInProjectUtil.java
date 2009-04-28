@@ -366,8 +366,11 @@ public class FindInProjectUtil {
     if (psiDirectory == null || findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile())) {
       final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
       // optimization
-      final Collection<PsiFile> filesForFastWordSearch = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module);
-      if (filesForFastWordSearch != null && canOptimizeForFastWordSearch(findModel)) return filesForFastWordSearch;
+      Collection<PsiFile> filesForFastWordSearch = null;
+      if (canOptimizeForFastWordSearch(findModel)) {
+        filesForFastWordSearch = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module);
+        if (filesForFastWordSearch != null) return filesForFastWordSearch;
+      }
 
       class EnumContentIterator implements ContentIterator {
         final List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch == null ? Collections.<PsiFile>emptyList() : filesForFastWordSearch);
