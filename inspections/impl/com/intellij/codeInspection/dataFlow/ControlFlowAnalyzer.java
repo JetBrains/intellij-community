@@ -1112,7 +1112,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             return true;
           }
         }
-        else if ("junit.framework.Assert".equals(className)) {
+        else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className)) {
           if ("fail".equals(methodName)) {
             pushParameters(params, false);
             addInstruction(myInstructionFactory.createReturnInstruction());
