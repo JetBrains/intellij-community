@@ -11,10 +11,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -39,8 +36,8 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
       if (TestNGUtil.hasTest(psiClass)) break;
     }
     if (psiClass == null) {
-      if (element instanceof PsiJavaFile) {
-        PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+      if (element instanceof PsiClassOwner) {
+        PsiClass[] classes = ((PsiClassOwner)element).getClasses();
         if (classes.length == 1) psiClass = classes[0];
       }
     }
