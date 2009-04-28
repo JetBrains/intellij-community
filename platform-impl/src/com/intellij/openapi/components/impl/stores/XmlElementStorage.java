@@ -3,8 +3,8 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -520,7 +520,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
         if (document != null) {
           loadState(storageData, document.getRootElement());
-          return storageData.getDifference(myStorageData);
+          return storageData.getDifference(myStorageData, myPathMacroSubstitutor);
         }
         else {
           return Collections.emptySet();
@@ -700,7 +700,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       myHash = null;
     }
 
-    public Set<String> getDifference(final StorageData storageData) {
+    public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
       Set<String> bothStates = new HashSet<String>(myComponentStates.keySet());
       bothStates.retainAll(storageData.myComponentStates.keySet());
 
@@ -712,6 +712,11 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       for (String componentName : bothStates) {
         final Element e1 = myComponentStates.get(componentName);
         final Element e2 = storageData.myComponentStates.get(componentName);
+
+        // some configurations want to collapse path elements in writeExternal so make sure paths are expanded
+        if (substitutor != null) {
+          substitutor.expandPaths(e2);
+        }
 
         if (!JDOMUtil.areElementsEqual(e1, e2)) {
           diffs.add(componentName);
@@ -743,16 +748,18 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     if (oldLoadedData != null) {
       Set<String> componentsToRetain = new HashSet<String>(oldLoadedData.myComponentStates.keySet());
       componentsToRetain.addAll(changedComponents);
-      storageData.myComponentStates.keySet().retainAll(componentsToRetain);
 
+      // add empty configuration tags for removed components
       for (String componentToRetain : componentsToRetain) {
-        if (!storageData.myComponentStates.containsKey(componentToRetain)) {
+        if (!storageData.myComponentStates.containsKey(componentToRetain) && myStorageComponentStates.containsKey(componentToRetain)) {
           Element emptyElement = new Element("component");
           LOG.info("Create empty component element for " + componentsToRetain);
           emptyElement.setAttribute(NAME, componentToRetain);
           storageData.myComponentStates.put(componentToRetain, emptyElement);
         }
       }
+
+      storageData.myComponentStates.keySet().retainAll(componentsToRetain);
     }
     
     myLoadedData = storageData;

@@ -250,6 +250,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
             final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
             assert virtualFile != null : "Can't find vFile for: " + child;
             try {
+              myStorageData.removeBackup(child);
+              LOG.debug("Removing configuration file: " + virtualFile.getPresentableUrl());
               virtualFile.delete(DirectoryBasedStorage.this);
             }
             catch (IOException e) {
@@ -426,6 +428,10 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           entry.setValue(file.getTimeStamp());
         }
       }
+    }
+
+    public void removeBackup(final IFile child) {
+      myBackup.remove(child);
     }
   }
 

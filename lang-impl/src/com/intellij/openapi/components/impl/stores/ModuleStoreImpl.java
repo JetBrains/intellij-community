@@ -4,6 +4,7 @@ import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -126,10 +127,10 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
 
     @Nullable
-    public Set<String> getDifference(final XmlElementStorage.StorageData storageData) {
+    public Set<String> getDifference(final XmlElementStorage.StorageData storageData, PathMacroSubstitutor substitutor) {
       final ModuleFileData data = (ModuleFileData)storageData;
       if (!myOptions.equals(data.myOptions)) return null;
-      return super.getDifference(storageData);
+      return super.getDifference(storageData, substitutor);
     }
 
     public void setOption(final String optionName, final String optionValue) {

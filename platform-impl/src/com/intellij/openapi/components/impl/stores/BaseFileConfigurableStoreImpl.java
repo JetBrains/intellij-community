@@ -3,6 +3,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.util.containers.HashMap;
@@ -95,10 +96,10 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     }
 
     @Nullable
-    public Set<String> getDifference(final XmlElementStorage.StorageData storageData) {
+    public Set<String> getDifference(final XmlElementStorage.StorageData storageData, PathMacroSubstitutor substitutor) {
       final BaseStorageData data = (BaseStorageData)storageData;
       if (mySavePathsRelative != data.mySavePathsRelative || myVersion != data.myVersion) return null;
-      return super.getDifference(storageData);
+      return super.getDifference(storageData, substitutor);
     }
   }
 

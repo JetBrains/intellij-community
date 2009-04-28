@@ -478,10 +478,10 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     @Nullable
-    public Set<String> getDifference(final XmlElementStorage.StorageData storageData) {
+    public Set<String> getDifference(final XmlElementStorage.StorageData storageData, PathMacroSubstitutor substitutor) {
       final IprStorageData data = (IprStorageData)storageData;
       if (!myUsedMacros.equals(data.myUsedMacros)) return null;
-      return super.getDifference(storageData);
+      return super.getDifference(storageData, substitutor);
     }
 
     protected void setUsedMacros(Collection<String> m) {
@@ -590,7 +590,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
           for (IFile file : filesToSave) {
             final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-            if (virtualFile != null && !virtualFile.isWritable()) readonlyFiles.add(virtualFile);
+
+            if (virtualFile != null) {
+              virtualFile.refresh(false, false);
+              if (!virtualFile.isWritable()) readonlyFiles.add(virtualFile);
+            }
           }
 
           if (readonlyFiles.isEmpty()) return new ReadonlyStatusHandler.OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
