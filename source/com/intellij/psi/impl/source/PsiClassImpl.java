@@ -103,12 +103,16 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   public PsiElement getOriginalElement() {
     PsiFile psiFile = getContainingFile();
+
     VirtualFile vFile = psiFile.getVirtualFile();
     final ProjectFileIndex idx = ProjectRootManager.getInstance(getProject()).getFileIndex();
 
     if (vFile == null || !idx.isInLibrarySource(vFile)) return this;
     final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
-    PsiClass original = JavaPsiFacade.getInstance(getProject()).findClass(getQualifiedName(), new GlobalSearchScope() {
+    final String fqn = getQualifiedName();
+    if (fqn == null) return this;
+
+    PsiClass original = JavaPsiFacade.getInstance(getProject()).findClass(fqn, new GlobalSearchScope() {
       public int compare(VirtualFile file1, VirtualFile file2) {
         return 0;
       }
