@@ -15,6 +15,7 @@ public class PyNames {
 
   @NonNls public static final String INIT = "__init__";
   @NonNls public static final String DOT_PY = ".py";
+  @NonNls public static final String INIT_DOT_PY = INIT + DOT_PY;
 
   @NonNls public static final String OBJECT = "object";
   @NonNls public static final String NONE = "None";

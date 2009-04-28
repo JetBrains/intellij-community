@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import org.jetbrains.annotations.NonNls;
@@ -560,10 +561,13 @@ public class ResolveImportUtil {
 
     private PathChoosingVisitor(VirtualFile file) {
       myFile = file;
-      // cut off the ext
       myFname = file.getPath();
+      // cut off the ext
       int pos = myFname.lastIndexOf('.');
       if (pos > 0) myFname = myFname.substring(0, pos);
+      // cut off the final __init__ if it's there; we want imports directly from a module
+      pos = myFname.lastIndexOf(PyNames.INIT);
+      if (pos > 0) myFname = myFname.substring(0, pos-1); // pos-1 also cuts the '/' that came before "__init__" 
     }
 
     public boolean visitRoot(VirtualFile root) {

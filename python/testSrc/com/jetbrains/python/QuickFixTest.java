@@ -32,18 +32,19 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
   public void testQualifyByImport() throws Exception {
     doInspectionTest(
       new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"},
-      PyUnresolvedReferencesInspection.class, "QualifyByImportFoo.foo?", true, false
+      PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true
     );
   }
 
   public void testAddToImportFromList() throws Exception {
     doInspectionTest(
       new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"},
-      PyUnresolvedReferencesInspection.class, "foo(a) from AddToImportFromFoo?", true, false
+      PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true
     );
   }
-
   // TODO: add a test for multiple variants of above
+
+ // TODO: add tests for stub indexes-based autoimport of unimported somehow.   
 
   public void testAddSelf() throws Exception {
     doInspectionTest("AddSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self"), true, true);
