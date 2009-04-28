@@ -207,6 +207,11 @@ public class FileUtil {
       if (len < 0) {
         throw new IOException("File length reported negative, probably doesn't exist");
       }
+
+      if (len > 100 * MEGABYTE) {
+        throw new IOException("Attempt to load '" + file + "' in memory buffer, file length is " + len + " bytes.");
+      }
+
       bytes = loadBytes(stream, (int)len);
     }
     finally{
