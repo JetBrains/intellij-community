@@ -21,6 +21,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ilyas
@@ -50,8 +51,18 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public String DEFAULT_GROOVY_LIB_NAME = null;
   public String DEFAULT_GRAILS_LIB_NAME = null;
 
-  @Transient
-  private boolean myJsSupportEnabled = false;
+  @Transient private final boolean myJsSupportEnabled = classExists("com.intellij.lang.javascript.psi.JSElement");
+  @Transient private final boolean myCssSupportEnabled = classExists("com.intellij.psi.css.CssElement");
+
+  private boolean classExists(@NonNls String qname) {
+    try {
+      Class.forName(qname);
+      return true;
+    }
+    catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
 
   public GroovyApplicationSettings getState() {
     return this;
@@ -69,7 +80,7 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
     return myJsSupportEnabled;
   }
 
-  public void setJsSupportEnabled(final boolean jsSupportEnabled) {
-    myJsSupportEnabled = jsSupportEnabled;
+  public boolean isCssSupportEnabled() {
+    return myCssSupportEnabled;
   }
 }

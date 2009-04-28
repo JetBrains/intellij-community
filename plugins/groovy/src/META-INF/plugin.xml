@@ -21,10 +21,10 @@
   <version>8.0</version>
   <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
   </vendor>
-  <depends optional="true" config-file="groovy-js-integration.xml">JavaScript</depends>
+  <depends optional="true">JavaScript</depends>
   <depends optional="true" config-file="groovy-spring-integration.xml">com.intellij.spring</depends>
   <depends optional="true" config-file="groovy-javaee-integration.xml">com.intellij.javaee</depends>
-  <depends>com.intellij.css</depends>
+  <depends optional="true">com.intellij.css</depends>
   <depends>com.intellij.properties</depends>
 
   <extensionPoints>
