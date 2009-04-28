@@ -223,6 +223,7 @@ public abstract class JBPopupFactory {
 
   public abstract Point getCenterOf(JComponent container, JComponent content);
   
+  @Nullable
   public abstract JBPopup getChildPopup(@NotNull Component parent);
 
   public abstract BalloonBuilder createBalloonBuilder(@NotNull JComponent content);
