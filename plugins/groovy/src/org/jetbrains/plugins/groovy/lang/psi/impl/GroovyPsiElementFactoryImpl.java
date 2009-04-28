@@ -300,7 +300,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createReferenceExpressionFromText("a" + newDot + "b").getDotToken();
   }
 
-  public GrConstructorImpl createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body) {
+  public GrConstructorImpl createConstructorFromText(@NotNull String constructorName, @Nullable String[] paramTypes, String[] paramNames, String body) {
     final GrMethod method = createMethodFromText(null, constructorName, null, paramTypes, paramNames, body);
 
     GroovyFileBase file = createDummyFile("class " + constructorName + "{" + method.getText() + "}");
@@ -427,7 +427,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
 
-  private GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, String[] paramNames, String body) {
+  private GrMethod createMethodFromText(String modifier, String name, String type, @Nullable String[] paramTypes, @NotNull String[] paramNames, String body) {
     StringBuilder builder = new StringBuilder();
 
     if (modifier != null){

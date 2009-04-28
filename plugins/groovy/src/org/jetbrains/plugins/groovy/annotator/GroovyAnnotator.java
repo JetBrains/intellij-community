@@ -32,8 +32,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
@@ -57,6 +57,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -91,6 +93,12 @@ import java.util.*;
  */
 public class GroovyAnnotator implements Annotator {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
+
+  private static boolean isDocCommentElement(PsiElement element) {
+    if (element == null) return false;
+    ASTNode node = element.getNode();
+    return node != null && PsiTreeUtil.getParentOfType(element, GrDocComment.class) != null || element instanceof GrDocComment;
+  }
 
   public void annotate(PsiElement element, AnnotationHolder holder) {
     if (element instanceof GrCodeReferenceElement) {
@@ -146,7 +154,7 @@ public class GroovyAnnotator implements Annotator {
       checkGrDocReferenceElement(holder, element);
     }
     else if (element instanceof GrPackageDefinition) {
-      //todo: if reference isn't resolved it construct package definition 
+      //todo: if reference isn't resolved it construct package definition
       checkPackageReference(holder, (GrPackageDefinition)element);
     }
     else if (element instanceof GroovyFile) {
@@ -168,12 +176,6 @@ public class GroovyAnnotator implements Annotator {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile)element.getContainingFile());
       }
     }
-  }
-
-  private static boolean isDocCommentElement(PsiElement element) {
-    if (element == null) return false;
-    ASTNode node = element.getNode();
-    return node != null && PsiTreeUtil.getParentOfType(element, GrDocComment.class) != null || element instanceof GrDocComment;
   }
 
   private static void checkGrDocReferenceElement(AnnotationHolder holder, PsiElement element) {
@@ -457,6 +459,15 @@ public class GroovyAnnotator implements Annotator {
       if (modifiersList.hasExplicitModifier(PsiModifier.TRANSIENT)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("modifier.transient.not.allowed.here"));
       }
+    }
+
+    assert modifiersList instanceof GrModifierList;
+    checkTypeDefAnnotations(typeDefinition, ((GrModifierList)modifiersList), holder);
+  }
+
+  private static void checkTypeDefAnnotations(GrTypeDefinition typeDefinition, GrModifierList modifiersList, AnnotationHolder holder) {
+    for (GrAnnotation annotation : modifiersList.getAnnotations()) {
+      GroovyAnnotationsCheckings.processTypeDefAnnotation(typeDefinition, annotation, holder);
     }
   }
 

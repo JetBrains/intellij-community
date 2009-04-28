@@ -51,17 +51,12 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
   @Nullable
   @NonNls
   public String getQualifiedName() {
-    final GrCodeReferenceElement nameRef = getNameReferenceElementGroovy();
+    final GrCodeReferenceElement nameRef = getClassReference();
     if (nameRef != null) {
       final PsiElement resolved = nameRef.resolve();
       if (resolved instanceof PsiClass) return ((PsiClass) resolved).getQualifiedName();
     }
     return null;
-  }
-
-  @Nullable
-  public GrCodeReferenceElement getNameReferenceElementGroovy() {
-    return findChildByClass(GrCodeReferenceElement.class);
   }
 
   @Nullable
@@ -91,5 +86,11 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
 
   public GrCodeReferenceElement getClassReference() {
     return findChildByClass(GrCodeReferenceElement.class);
+  }
+
+  @NotNull
+  public String getName(){
+    //Annotation is an identifier always
+    return getClassReference().getText();
   }
 }
