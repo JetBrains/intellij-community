@@ -20,8 +20,9 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.Table;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -87,7 +88,7 @@ public class EditSourceOnDoubleClickHandler {
     }
 
     public void mouseClicked(MouseEvent e) {
-      if (e.getClickCount() != 2) return;
+      if (!UIUtil.isActionClick(e) || e.getClickCount() != 2) return;
       if (myTree.getPathForLocation(e.getX(), e.getY()) == null) return;
       DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
