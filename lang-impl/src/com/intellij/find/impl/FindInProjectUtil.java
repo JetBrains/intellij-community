@@ -448,14 +448,19 @@ public class FindInProjectUtil {
   private static Collection<PsiFile> getFilesForFastWordSearch(final FindModel findModel, final Project project,
                                                                final PsiDirectory psiDirectory, final Pattern fileMaskRegExp,
                                                                final Module module) {
+    if (DumbService.getInstance().isDumb()) {
+      return null;
+    }
+
     CacheManager cacheManager = ((PsiManagerEx)PsiManager.getInstance(project)).getCacheManager();
     SearchScope customScope = findModel.getCustomScope();
     @NotNull GlobalSearchScope scope = psiDirectory != null
-                              ? GlobalSearchScope.directoryScope(psiDirectory, true)
-                              : module != null ? moduleContentScope(module)
-                              : customScope instanceof GlobalSearchScope
-                                ? (GlobalSearchScope)customScope
-                                : GlobalSearchScope.projectScope(project);
+                                       ? GlobalSearchScope.directoryScope(psiDirectory, true)
+                                       : module != null
+                                         ? moduleContentScope(module)
+                                         : customScope instanceof GlobalSearchScope
+                                           ? (GlobalSearchScope)customScope
+                                           : GlobalSearchScope.projectScope(project);
     List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
     // if no words specified in search box, fallback to brute force search
     if (words.isEmpty()) return null;
@@ -486,7 +491,8 @@ public class FindInProjectUtil {
     }
 
     // in case our word splitting is incorrect
-    PsiFile[] allWordsFiles = cacheManager.getFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
+    PsiFile[] allWordsFiles =
+      cacheManager.getFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
     resultFiles.addAll(Arrays.asList(allWordsFiles));
     filterMaskedFiles(resultFiles, fileMaskRegExp);
 
@@ -527,7 +533,6 @@ public class FindInProjectUtil {
     // into words
     return findModel.isWholeWordsOnly()
            && !findModel.isRegularExpressions()
-           && !DumbService.getInstance().isDumb()
            && findModel.getStringToFind().indexOf('$') < 0
            && (findModel.getCustomScope() == null || findModel.getCustomScope() instanceof GlobalSearchScope)
       ;
