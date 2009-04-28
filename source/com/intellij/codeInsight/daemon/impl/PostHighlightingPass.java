@@ -496,12 +496,23 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     //search usages if it cheap
     //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
-    if (count[0] == 0) return true;
+    if (count[0] == 0 && !canbeReferencedViaWeirdNames(member)) return true;
 
     Query<PsiReference> query = member instanceof PsiMethod
                                 ? MethodReferencesSearch.search((PsiMethod)member, scope, false)
                                 : ReferencesSearch.search(member, scope, true);
     return query.findFirst() == null;
+  }
+
+  private static boolean canbeReferencedViaWeirdNames(PsiMember member) {
+    if (member instanceof PsiClass) return false;
+    PsiFile containingFile = member.getContainingFile();
+    if (!(containingFile instanceof PsiJavaFile)) return true;  // Groovy field can be referenced from Java by getter
+    if (member instanceof PsiField) return false;  //Java field cannot be referenced by anything but its name
+    if (member instanceof PsiMethod) {
+      return PropertyUtil.isSimplePropertyAccessor((PsiMethod)member);  //Java accessors can be referenced by field name from Groovy
+    }
+    return false;
   }
 
   @Nullable
