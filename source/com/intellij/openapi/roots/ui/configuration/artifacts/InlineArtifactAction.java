@@ -39,6 +39,10 @@ public class InlineArtifactAction extends AnAction {
 
     final Function<PackagingElement<?>,PackagingElement<?>> map = tree.ensureRootIsWritable();
     CompositePackagingElement<?> parent = (CompositePackagingElement<?>)map.fun(((PackagingElementNode)parentNode).getPackagingElement());
+    if (parent == null) {
+      //todo[nik] parent from included content
+      return;
+    }
     parent.removeChild(map.fun(element));
     final Artifact artifact = ((ArtifactPackagingElement)element).findArtifact(myEditor.getContext());
     if (artifact != null) {

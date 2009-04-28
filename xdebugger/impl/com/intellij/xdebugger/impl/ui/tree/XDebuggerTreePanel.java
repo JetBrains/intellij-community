@@ -47,7 +47,7 @@ public class XDebuggerTreePanel implements DnDSource {
     AnAction setValueAction = actionManager.getAction(XDebuggerActions.SET_VALUE);
     setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), myTree);
     AnAction jumpToSourceAction = actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE);
-    jumpToSourceAction.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myTree);
+    jumpToSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree);
     myTree.addMouseListener(myPopupHandler);
   }
 

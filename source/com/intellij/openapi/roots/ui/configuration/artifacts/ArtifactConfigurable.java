@@ -17,9 +17,10 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
   private final Artifact myOriginalArtifact;
   private final PackagingEditorContext myPackagingEditorContext;
   private final ArtifactsEditorImpl myEditor;
+  private boolean myIsInUpdateName;
 
-  public ArtifactConfigurable(Artifact originalArtifact, PackagingEditorContext packagingEditorContext) {
-    super(true, null);
+  public ArtifactConfigurable(Artifact originalArtifact, PackagingEditorContext packagingEditorContext, final Runnable updateTree) {
+    super(true, updateTree);
     myOriginalArtifact = originalArtifact;
     myPackagingEditorContext = packagingEditorContext;
     myEditor = new ArtifactsEditorImpl(packagingEditorContext, originalArtifact);
@@ -27,8 +28,19 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
 
   public void setDisplayName(String name) {
     final String oldName = getArtifact().getName();
-    if (name != null && !name.equals(oldName)) {
+    if (name != null && !name.equals(oldName) && !myIsInUpdateName) {
       myPackagingEditorContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
+    }
+  }
+
+  @Override
+  public void updateName() {
+    myIsInUpdateName = true;
+    try {
+      super.updateName();
+    }
+    finally {
+      myIsInUpdateName = false;
     }
   }
 

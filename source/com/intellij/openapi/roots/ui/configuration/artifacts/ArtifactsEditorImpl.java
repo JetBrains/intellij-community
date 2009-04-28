@@ -142,9 +142,12 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
       popupActionGroup.add(createAction);
     }
     popupActionGroup.add(createAddAction(true));
-    popupActionGroup.add(new RemovePackagingElementAction(this));
+    final RemovePackagingElementAction removeAction = new RemovePackagingElementAction(this);
+    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myPackagingElementsTree.getTreePanel());
+    popupActionGroup.add(removeAction);
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));
+    popupActionGroup.add(new RenameCompositeElementAction(this));
     popupActionGroup.add(new MyNavigateAction());
     popupActionGroup.add(new MyFindUsagesAction());
 
@@ -198,7 +201,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   private class MyNavigateAction extends AnAction {
     private MyNavigateAction() {
       super(ProjectBundle.message("action.name.facet.navigate"));
-      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myPackagingElementsTree.getTree());
+      registerCustomShortcutSet(CommonShortcuts.getEditSource(), myPackagingElementsTree.getTree());
     }
 
     public void update(final AnActionEvent e) {

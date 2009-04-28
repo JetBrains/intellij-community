@@ -269,7 +269,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private class MyNavigateAction extends AnAction {
     private MyNavigateAction() {
       super(ProjectBundle.message("action.name.facet.navigate"));
-      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myTree);
+      registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree);
     }
 
     public void update(final AnActionEvent e) {

@@ -17,4 +17,6 @@ public interface ArtifactsEditor extends Disposable {
   void addNewPackagingElement(@Nullable CompositePackagingElementType<?> parentType, @NotNull PackagingElementType<?> type);
 
   void removeSelectedElements();
+
+  PackagingElementsTree getPackagingElementsTree();
 }

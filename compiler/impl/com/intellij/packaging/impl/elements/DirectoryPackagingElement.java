@@ -44,6 +44,16 @@ public class DirectoryPackagingElement extends CompositePackagingElement<Directo
     myDirectoryName = state.getDirectoryName();
   }
 
+
+  public void rename(@NotNull String newName) {
+    myDirectoryName = newName;
+  }
+
+  @Override
+  public String getName() {
+    return myDirectoryName;
+  }
+
   @Override
   public boolean canBeMergedWith(@NotNull PackagingElement<?> element) {
     return element instanceof DirectoryPackagingElement && ((DirectoryPackagingElement)element).getDirectoryName().equals(myDirectoryName);

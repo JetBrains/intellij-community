@@ -53,7 +53,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
   private MyNode addArtifactNode(final Artifact artifact) {
-    final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext));
+    final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER));
     addNode(node, myRoot);
     return node;
   }

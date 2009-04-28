@@ -27,6 +27,10 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
     return myChildren;
   }
 
+  public abstract String getName();
+
+  public abstract void rename(@NotNull String newName);
+
   public boolean canBeMergedWith(@NotNull PackagingElement<?> element) {
     return false;
   }

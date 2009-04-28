@@ -16,6 +16,12 @@ public class RemovePackagingElementAction extends AnAction {
     myArtifactsEditor = artifactsEditor;
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(myArtifactsEditor.getPackagingElementsTree().getSelectedNodes().length > 0
+                                   && !myArtifactsEditor.getPackagingElementsTree().isEditing());
+  }
+
   public void actionPerformed(AnActionEvent e) {
     myArtifactsEditor.removeSelectedElements();
   }

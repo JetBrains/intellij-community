@@ -83,7 +83,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   @Nullable
   public CompositePackagingElement<?> createDirectories(@NotNull @NonNls String path) {
-    path = StringUtil.trimEnd(path, "/");
+    path = StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/");
     if (path.length() == 0) return null;
     int index = path.lastIndexOf('/');
     String lastName = path.substring(index + 1);
@@ -113,11 +113,11 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   }
 
   @NotNull
-  private static String suggestFileName(@NotNull CompositePackagingElement<?> parent, @NotNull String defaultName) {
-    String name = defaultName;
+  private static String suggestFileName(@NotNull CompositePackagingElement<?> parent, @NotNull String prefix, @NotNull String suffix) {
+    String name = prefix + suffix;
     int i = 2;
     while (findArchiveOrDirectoryByName(parent, name) != null) {
-      name = defaultName + i++;
+      name = prefix + i++ + suffix;
     }
     return name;
   }
@@ -151,7 +151,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     public DirectoryPackagingElement createComposite(@NotNull PackagingEditorContext context, CompositePackagingElement<?> parent) {
-      final String initialValue = suggestFileName(parent, "folder");
+      final String initialValue = suggestFileName(parent, "folder", "");
       final String name = Messages.showInputDialog(context.getProject(), "Enter directory name: ", "New Directory", null, initialValue, null);
       if (name == null) return null;
       return new DirectoryPackagingElement(name);
@@ -180,7 +180,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     public ArchivePackagingElement createComposite(@NotNull PackagingEditorContext context, CompositePackagingElement<?> parent) {
-      final String initialValue = suggestFileName(parent, "archive.jar");
+      final String initialValue = suggestFileName(parent, "archive", ".jar");
       final String name = Messages.showInputDialog(context.getProject(), "Enter archive name: ", "New Archive", null, initialValue, null);
       if (name == null) return null;
       return new ArchivePackagingElement(name);

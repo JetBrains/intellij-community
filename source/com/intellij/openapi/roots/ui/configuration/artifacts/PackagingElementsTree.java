@@ -5,29 +5,31 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ui.configuration.packaging.PackagingTreeParameters;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
+import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -68,7 +70,7 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
     myOriginalArtifact = originalArtifact;
     myRoot = new PackagingElementNode(getArtifact().getRootElement(), myContext);
     myTreeModel = new DefaultTreeModel(myRoot);
-    myTree = new Tree(myTreeModel) {
+    myTree = new SimpleTree(myTreeModel) {
       @Override
       public String getToolTipText(final MouseEvent event) {
         TreePath path = myTree.getPathForLocation(event.getX(), event.getY());
@@ -77,7 +79,42 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
         }
         return super.getToolTipText();
       }
+
+      @Override
+      protected void configureUiHelper(TreeUIHelper helper) {
+        new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTOR, true);
+        helper.installToolTipHandler(this);
+      }
     };
+    myTree.setCellEditor(new DefaultCellEditor(new JTextField()) {
+      @Override
+      public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
+        final Component component = super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
+        final PackagingElement<?> element = ((PackagingElementNode)value).getPackagingElement();
+        ((JTextField)component).setText(((CompositePackagingElement)element).getName());
+        return component;
+      }
+
+      @Override
+      public boolean stopCellEditing() {
+        final String newValue = ((JTextField)editorComponent).getText();
+        final TreePath path = myTree.getEditingPath();
+        final Object node = path.getLastPathComponent();
+        CompositePackagingElement currentElement = null;
+        if (node instanceof PackagingElementNode) {
+          final PackagingElement<?> element = ((PackagingElementNode)node).getPackagingElement();
+          if (element instanceof CompositePackagingElement) {
+            currentElement = (CompositePackagingElement)element;
+          }
+        }
+        final boolean stopped = super.stopCellEditing();
+        if (stopped && currentElement != null) {
+          currentElement.rename(newValue);
+          myTreeModel.nodeChanged((TreeNode)node);
+        }
+        return stopped;
+      }
+    });
     myTree.setRootVisible(true);
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new ArtifactsTreeCellRenderer());
@@ -90,7 +127,6 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
     myTreePanel = new JPanel(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     myTreePanel.add(myPropertiesPanel, BorderLayout.SOUTH);
-    new TreeSpeedSearch(myTree, SPEED_SEARCH_CONVERTOR, true);
     myTree.addMouseListener(new ArtifactsTreeMouseListener());
     DnDManager.getInstance().registerTarget(this, myTree);
   }
@@ -201,6 +237,10 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
   public void addNewPackagingElement(@Nullable CompositePackagingElementType<?> parentType, @NotNull PackagingElementType<?> type) {
     final CompositePackagingElement<?> oldParent = getParent();
     CompositePackagingElement<?> parent = (CompositePackagingElement<?>)ensureRootIsWritable().fun(oldParent);
+    if (parent == null) {
+      //todo[nik] parent from included content
+      return;
+    }
     if (parentType != null) {
       final CompositePackagingElement<?> element = parentType.createComposite(myContext, parent);
       if (element == null) return;
@@ -213,6 +253,10 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
       parent.addChild(child);
     }
     myArtifactsEditor.rebuildTries();
+    final PackagingElementNode node = findNode(parent);
+    if (node != null) {
+      myTree.expandPath(TreeUtil.getPathFromRoot(node));
+    }
     selectElements(children);
   }
 
@@ -312,6 +356,10 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
     if (object instanceof PackagingElementDraggingObject) {
       final PackagingElementDraggingObject draggingObject = (PackagingElementDraggingObject)object;
       CompositePackagingElement<?> target = (CompositePackagingElement<?>)ensureRootIsWritable().fun(draggingObject.getTarget());
+      if (target == null) {
+        //todo[nik] target from included content
+        return;
+      }
       for (PackagingSourceItem item : draggingObject.getSourceItems()) {
         final PackagingElement element = item.createElement();
         target.addChild(element);
@@ -340,6 +388,14 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
   }
 
   public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+  }
+
+  public void rename(PackagingElementNode node) {
+    myTree.startEditingAtPath(TreeUtil.getPathFromRoot(node));
+  }
+
+  public boolean isEditing() {
+    return myTree.isEditing();
   }
 
   private class ArtifactsTreeMouseListener extends MouseAdapter {

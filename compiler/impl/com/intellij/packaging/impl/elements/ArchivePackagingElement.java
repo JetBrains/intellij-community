@@ -68,6 +68,16 @@ public class ArchivePackagingElement extends CompositePackagingElement<ArchivePa
   }
 
   @Override
+  public String getName() {
+    return myArchiveFileName;
+  }
+
+  @Override
+  public void rename(@NotNull String newName) {
+    myArchiveFileName = newName;
+  }
+
+  @Override
   public boolean canBeMergedWith(@NotNull PackagingElement<?> element) {
     return element instanceof ArchivePackagingElement && ((ArchivePackagingElement)element).getArchiveFileName().equals(myArchiveFileName);
   }

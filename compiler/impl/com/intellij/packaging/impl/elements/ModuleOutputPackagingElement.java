@@ -13,19 +13,19 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputPackagingElement> {
-  private String myName;
+  private String myModuleName;
 
   public ModuleOutputPackagingElement() {
     super(ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE);
   }
 
-  public ModuleOutputPackagingElement(String name) {
+  public ModuleOutputPackagingElement(String moduleName) {
     super(ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE);
-    myName = name;
+    myModuleName = moduleName;
   }
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
-    return new ModuleElementPresentation(myName, findModule(context));
+    return new ModuleElementPresentation(myModuleName, findModule(context));
   }
 
   public ModuleOutputPackagingElement getState() {
@@ -33,20 +33,20 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
   }
 
   public void loadState(ModuleOutputPackagingElement state) {
-    myName = state.getName();
+    myModuleName = state.getModuleName();
   }
 
   @Attribute("name")
-  public String getName() {
-    return myName;
+  public String getModuleName() {
+    return myModuleName;
   }
 
-  public void setName(String name) {
-    myName = name;
+  public void setModuleName(String moduleName) {
+    myModuleName = moduleName;
   }
 
   @Nullable
   public Module findModule(PackagingElementResolvingContext context) {
-    return context.getModulesProvider().getModule(myName);
+    return context.getModulesProvider().getModule(myModuleName);
   }
 }

@@ -27,6 +27,7 @@ public class ArtifactPostprocessingPanel {
   }
 
   public void updateProcessors(@NotNull Artifact artifact) {
+    myMainPanel.removeAll();
     final ArtifactProcessorProvider[] providers = Extensions.getExtensions(ArtifactProcessorProvider.EP_NAME);
     for (ArtifactProcessorProvider provider : providers) {
       final ArtifactProcessor processor = provider.createProcessor(artifact, myContext);

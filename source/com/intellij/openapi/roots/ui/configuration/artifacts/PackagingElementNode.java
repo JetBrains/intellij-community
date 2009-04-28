@@ -4,6 +4,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureCo
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 
 /**
  * @author nik
@@ -26,6 +27,9 @@ public class PackagingElementNode extends ArtifactsTreeNode {
   }
 
   public void navigate(ModuleStructureConfigurable structureConfigurable) {
+    if (myPackagingElement instanceof ModuleOutputPackagingElement) {
+      structureConfigurable.selectModuleTab(((ModuleOutputPackagingElement)myPackagingElement).getModuleName(), null);
+    }
   }
 
   public boolean canNavigate() {
