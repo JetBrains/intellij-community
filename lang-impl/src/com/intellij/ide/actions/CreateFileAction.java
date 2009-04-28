@@ -25,6 +25,11 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     super(text, description, icon);
   }
 
+  @Override
+  protected boolean isDumbAware() {
+    return CreateFileAction.class.equals(getClass());
+  }
+
   @NotNull
   protected PsiElement[] invokeDialog(final Project project, PsiDirectory directory) {
     MyInputValidator validator = new MyValidator(project, directory);

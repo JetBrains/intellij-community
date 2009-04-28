@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
@@ -98,7 +99,15 @@ public abstract class CreateElementActionBase extends AnAction {
     presentation.setEnabled(enabled);
   }
 
+  protected boolean isDumbAware() {
+    return true;
+  }
+
   protected boolean isAvailable(final DataContext dataContext) {
+    if (DumbService.getInstance().isDumb() && !isDumbAware()) {
+      return false;
+    }
+
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return false;
