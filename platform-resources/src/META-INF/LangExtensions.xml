@@ -447,4 +447,5 @@
               factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
+  <projectConfigurable implementation="com.intellij.openapi.vfs.encoding.FileEncodingConfigurable"/>
 </extensions>
