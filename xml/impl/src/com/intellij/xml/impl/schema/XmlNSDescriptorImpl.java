@@ -982,4 +982,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     initSubstitutes();
     return mySubstitutions != null && mySubstitutions.size() > 0;
   }
+
+  public boolean isValid() {
+    return myFile != null && getDeclaration().isValid();
+  }
 }
