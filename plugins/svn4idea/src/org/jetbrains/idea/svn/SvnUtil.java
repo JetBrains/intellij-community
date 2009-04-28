@@ -525,7 +525,7 @@ public class SvnUtil {
     final String adminName = SVNFileUtil.getAdminDirectoryName();
     final VirtualFile[] children = file.getChildren();
     for (VirtualFile child : children) {
-      if (adminName.equals(child.getName())) {
+      if (adminName.equals(child.getName()) && child.isDirectory()) {
         return true;
       }
     }
