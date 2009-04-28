@@ -252,7 +252,7 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
         separator = " ";
       }
       if (ignored> 0) {
-        myCounters.append(separator + ExecutionBundle.message("junit.runing.info.ignored.count.message", ignored), DEFECT_ATTRIBUTE);
+        myCounters.append(separator + ExecutionBundle.message("junit.runing.info.ignored.count.message", ignored), TERMINATED_ATTRIBUTE);
         separator = " ";
       }
       if (passed > 0) {
