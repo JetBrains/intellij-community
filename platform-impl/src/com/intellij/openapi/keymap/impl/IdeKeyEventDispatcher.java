@@ -6,14 +6,19 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor;
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
@@ -37,6 +42,7 @@ import java.awt.event.KeyEvent;
 import java.awt.im.InputContext;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is automaton with finite number of state.
@@ -237,11 +243,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
         throw new IllegalStateException("not found method with name getCachedStrokeMethod");
       }
       Object[] getCachedStrokeMethodArgs=new Object[]{originalKeyStroke.getKeyChar(), originalKeyStroke.getKeyCode(), modifier, originalKeyStroke.isOnKeyRelease()};
-      KeyStroke keyStroke=(KeyStroke)getCachedStrokeMethod.invoke(
-        originalKeyStroke,
-        getCachedStrokeMethodArgs
+      return (KeyStroke)getCachedStrokeMethod.invoke(originalKeyStroke, getCachedStrokeMethodArgs
       );
-      return keyStroke;
     }catch(Exception exc){
       throw new IllegalStateException(exc.getMessage());
     }
@@ -281,7 +284,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private boolean inProcessedState() {
-    KeyEvent e = (KeyEvent)myContext.getInputEvent();
+    KeyEvent e = myContext.getInputEvent();
 
     // ignore typed events which come after processed pressed event
     if (KeyEvent.KEY_TYPED == e.getID() && myPressedWasProcessed) {
@@ -300,7 +303,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Component focusOwner = myContext.getFocusOwner();
     boolean isModalContext = myContext.isModalContext();
     DataContext dataContext = myContext.getDataContext();
-    KeyEvent e = (KeyEvent)myContext.getInputEvent();
+    KeyEvent e = myContext.getInputEvent();
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) {
@@ -445,22 +448,32 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   public boolean processAction(final InputEvent e, ActionProcessor processor) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    final boolean dumb = DumbServiceImpl.getInstance().isDumb();
+    List<AnActionEvent> nonDumbAwareAction = new ArrayList<AnActionEvent>();
     for (final AnAction action : myContext.getActions()) {
       final Presentation presentation = myPresentationFactory.getPresentation(action);
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
       final AnActionEvent actionEvent =
         processor.createEvent(e, myContext.getDataContext(), ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance());
-      action.beforeActionPerformedUpdate(actionEvent);
-      if (!presentation.isEnabled()) {
+
+      final boolean indexProblems = ActionUtil.performDumbAwareUpdate(action, actionEvent, true);
+
+      if (!indexProblems && !presentation.isEnabled()) {
         continue;
       }
+
+      if (dumb && !(action instanceof DumbAware)) {
+        nonDumbAwareAction.add(actionEvent);
+        continue;
+      }
+
 
       processor.onUpdatePassed(e, action, actionEvent);
 
       ((DataManagerImpl.MyDataContext)myContext.getDataContext()).setEventCount(IdeEventQueue.getInstance().getEventCount());
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext());
-      Component component = (Component)actionEvent.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
+      Component component = (Component)actionEvent.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT);
       if (component != null && !component.isShowing()) {
         return true;
       }
@@ -470,7 +483,23 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return true;
     }
 
+    if (!nonDumbAwareAction.isEmpty()) {
+      showDumbModeWarningLaterIfNobodyConsumesEvent(e, nonDumbAwareAction.toArray(new AnActionEvent[nonDumbAwareAction.size()]));
+    }
+
     return false;
+  }
+
+  private static void showDumbModeWarningLaterIfNobodyConsumesEvent(final InputEvent e, final AnActionEvent... actionEvents) {
+    if (ModalityState.current() == ModalityState.NON_MODAL) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (e.isConsumed()) return;
+
+            ActionUtil.showDumbModeWarning(actionEvents);
+          }
+        });
+      }
   }
 
   /**

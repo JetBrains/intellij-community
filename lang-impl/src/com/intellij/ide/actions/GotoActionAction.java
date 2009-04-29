@@ -9,10 +9,11 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 
 import java.awt.*;
 import java.util.Map;
@@ -40,10 +41,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
               final AnActionEvent event = new AnActionEvent(e.getInputEvent(), DataManager.getInstance().getDataContext(component),
                                                             e.getPlace(), e.getPresentation(), ActionManager.getInstance(),
                                                             e.getModifiers());
-              action.beforeActionPerformedUpdate(event);
-              action.update(event);
 
-              if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
+              if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
                 action.actionPerformed(event);
               }
             }
@@ -52,4 +51,5 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       }
     }, ModalityState.current(), true);
   }
+
 }

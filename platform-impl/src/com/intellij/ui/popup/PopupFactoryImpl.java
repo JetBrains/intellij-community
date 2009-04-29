@@ -7,7 +7,9 @@ package com.intellij.ui.popup;
 import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,8 +25,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.FocusTrackback;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
@@ -35,11 +37,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.HyperlinkListener;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -506,6 +508,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
   }
 
+  @Nullable
   public JBPopup getChildPopup(@NotNull final Component component) {
     return FocusTrackback.getChildPopup(component);
   }
@@ -551,6 +554,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? new EmptyIcon(myMaxIconWidth, myMaxIconHeight) : null;
 
       appendActionsFromGroup(actionGroup);
+
+      if (myListModel.isEmpty()) {
+        myListModel.add(new ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, false, null, false, null));
+      }
     }
 
     private void calcMaxIconSize(final ActionGroup actionGroup) {
@@ -619,7 +626,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                               ActionManager.getInstance(),
                                               0);
 
-      action.beforeActionPerformedUpdate(event);
+      ActionUtil.performDumbAwareUpdate(action, event, true);
       if ((myShowDisabled || presentation.isEnabled()) && presentation.isVisible()) {
         String text = presentation.getText();
         if (myShowNumbers) {

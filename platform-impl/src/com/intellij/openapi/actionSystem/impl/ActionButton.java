@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
@@ -91,7 +92,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
       ActionManager.getInstance(),
       e.getModifiers()
     );
-    myAction.beforeActionPerformedUpdate(event);
+    if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
+      return;
+    }
+
     if (isButtonEnabled()) {
       final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
       final DataContext dataContext = event.getDataContext();

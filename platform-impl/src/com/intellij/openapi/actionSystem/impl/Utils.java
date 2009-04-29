@@ -1,10 +1,14 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbServiceImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -15,6 +19,23 @@ import java.util.ArrayList;
  */
 public class Utils{
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.actionSystem.impl.Utils");
+  @NonNls public static final String NOTHING_HERE = "Nothing here";
+  public static final AnAction EMPTY_MENU_FILLER = new AnAction(NOTHING_HERE) {
+
+    {
+      getTemplatePresentation().setEnabled(false);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(false);
+      super.update(e);
+    }
+  };
 
   private Utils() {}
 
@@ -29,7 +50,7 @@ public class Utils{
   }
 
   /**
-   * @param actionManager
+   * @param actionManager manager
    * @param list this list contains expanded actions.
    */
   public static void expandActionGroup(@NotNull ActionGroup group,
@@ -93,10 +114,11 @@ public class Utils{
   // returns false if exception was thrown and handled
   private static boolean doUpdate(final AnAction action, final AnActionEvent e, final Presentation presentation) throws ProcessCanceledException {
     if (ApplicationManager.getApplication().isDisposed()) return false;
-    
+
     long startTime = System.currentTimeMillis();
+    final boolean result;
     try {
-      action.update(e);
+      result = !ActionUtil.performDumbAwareUpdate(action, e, false);
     }
     catch (ProcessCanceledException ex) {
       throw ex;
@@ -109,7 +131,7 @@ public class Utils{
     if (endTime - startTime > 10 && LOG.isDebugEnabled()) {
       LOG.debug("Action " + action + ": updated in " + (endTime-startTime) + " ms");
     }
-    return true;
+    return result;
   }
 
   private static boolean hasVisibleChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
@@ -118,6 +140,9 @@ public class Utils{
     AnAction[] children = group.getChildren(event);
     for (AnAction anAction : children) {
       if (anAction instanceof Separator) {
+        continue;
+      }
+      if (DumbServiceImpl.getInstance().isDumb() && !(anAction instanceof DumbAware) && !(anAction instanceof ActionGroup)) {
         continue;
       }
 
@@ -173,6 +198,10 @@ public class Utils{
       else {
         component.add(new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics));
       }
+    }
+
+    if (list.isEmpty()) {
+      component.add(new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER), place, context, enableMnemonics));
     }
   }
 }

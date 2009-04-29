@@ -2,6 +2,7 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.InplaceButton;
@@ -69,7 +70,7 @@ class ActionButton extends IconButton implements ActionListener {
   }
 
 
-  private boolean areEqual(Presentation p1, Presentation p2) {
+  private static boolean areEqual(Presentation p1, Presentation p2) {
     if (p1 == null || p2 == null) return false;
 
     return ObjectUtils.equals(p1.getText(), p2.getText())
@@ -82,11 +83,8 @@ class ActionButton extends IconButton implements ActionListener {
 
   public void actionPerformed(final ActionEvent e) {
     AnActionEvent event = createAnEvent(null);
-    if (event != null) {
-      myAction.beforeActionPerformedUpdate(event);
-      if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-        myAction.actionPerformed(event);
-      }
+    if (event != null && ActionUtil.lastUpdateAndCheckDumb(myAction, event, true)) {
+      myAction.actionPerformed(event);
     }
   }
 

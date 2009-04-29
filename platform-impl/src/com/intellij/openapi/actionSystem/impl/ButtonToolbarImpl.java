@@ -19,7 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.TimerListener;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ModalityState;
 
 import javax.swing.*;
@@ -33,7 +33,6 @@ import java.util.ArrayList;
  * extended by fabrique
  */
 public class ButtonToolbarImpl extends JPanel {
-  private final MyTimerListener myTimerListener;
 
   private final DataManager myDataManager;
   private final String myPlace;
@@ -47,14 +46,13 @@ public class ButtonToolbarImpl extends JPanel {
     super(new GridBagLayout());
     myPlace = place;
     myPresentationFactory = new PresentationFactory();
-    myTimerListener = new MyTimerListener();
     myDataManager = dataManager;
 
     initButtons(actionGroup);
 
     updateActions();
     //
-    actionManager.addTimerListener(500, new WeakTimerListener(actionManager, myTimerListener));
+    actionManager.addTimerListener(500, new WeakTimerListener(actionManager, new MyTimerListener()));
     enableEvents(MouseEvent.MOUSE_MOTION_EVENT_MASK | MouseEvent.MOUSE_EVENT_MASK);
 
   }
@@ -72,6 +70,7 @@ public class ButtonToolbarImpl extends JPanel {
                                        new Insets(8, 0, 0, 0), 0, 0));
       if (actions.length > 0) {
         JPanel buttonsPanel = createButtons(actions);
+        //noinspection UnusedAssignment
         add(buttonsPanel,
                   new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                          new Insets(8, 0, 0, 0), 0, 0));
@@ -82,8 +81,7 @@ public class ButtonToolbarImpl extends JPanel {
 
   private JPanel createButtons(AnAction[] actions) {
     JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, 5, 0));
-    for (int i = 0; i < actions.length; i++) {
-      final AnAction action = actions[i];
+    for (final AnAction action : actions) {
       ActionJButton button = new ActionJButton(action);
       myActions.add(button);
       buttonsPanel.add(button);
@@ -114,11 +112,9 @@ public class ButtonToolbarImpl extends JPanel {
             ActionManager.getInstance(),
             e.getModifiers()
           );
-          action.beforeActionPerformedUpdate(event);
-          if (action.getTemplatePresentation().isEnabled()) {
+          if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
             action.actionPerformed(event);
           }
-
         }
       });
 
@@ -146,7 +142,7 @@ public class ButtonToolbarImpl extends JPanel {
     }
 
     public void run() {
-      if (!ButtonToolbarImpl.this.isShowing()) {
+      if (!isShowing()) {
         return;
       }
 

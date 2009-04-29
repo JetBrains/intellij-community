@@ -4,6 +4,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Disposer;
@@ -141,6 +143,7 @@ public class ActionMenuItem extends JMenuItem {
 
   private final class ActionTransmitter implements ActionListener {
     /**
+     * @param component component
      * @return whether the component in Swing tree or not. This method is more
      *         weak then {@link Component#isShowing() }
      */
@@ -158,11 +161,10 @@ public class ActionMenuItem extends JMenuItem {
       AnActionEvent event = new AnActionEvent(
         new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
         myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers());
-      myAction.beforeActionPerformedUpdate(event);
-      if (myPresentation.isEnabled()) {
+      if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
         ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
         actionManager.fireBeforeActionPerformed(myAction, myContext);
-        Component component = ((Component)event.getDataContext().getData(DataConstants.CONTEXT_COMPONENT));
+        Component component = ((Component)event.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT));
         if (component != null && !isInTree(component)) {
           return;
         }
@@ -223,24 +225,24 @@ public class ActionMenuItem extends JMenuItem {
         if (Presentation.PROP_VISIBLE.equals(name)) {
           final boolean visible = myPresentation.isVisible();
           if (!visible && SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
-            ActionMenuItem.this.setEnabled(false);
+            setEnabled(false);
           }
           else {
-            ActionMenuItem.this.setVisible(visible);
+            setVisible(visible);
           }
         }
         else if (Presentation.PROP_ENABLED.equals(name)) {
-          ActionMenuItem.this.setEnabled(myPresentation.isEnabled());
+          setEnabled(myPresentation.isEnabled());
           updateIcon();
         }
         else if (Presentation.PROP_MNEMONIC_KEY.equals(name)) {
-          ActionMenuItem.this.setMnemonic(myPresentation.getMnemonic());
+          setMnemonic(myPresentation.getMnemonic());
         }
         else if (Presentation.PROP_MNEMONIC_INDEX.equals(name)) {
-          ActionMenuItem.this.setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
+          setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
         }
         else if (Presentation.PROP_TEXT.equals(name)) {
-          ActionMenuItem.this.setText(myPresentation.getText());
+          setText(myPresentation.getText());
         }
         else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {
           updateIcon();

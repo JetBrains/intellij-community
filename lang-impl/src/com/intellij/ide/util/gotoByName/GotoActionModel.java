@@ -4,15 +4,16 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ArrayUtil;
 import org.apache.oro.text.regex.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -101,8 +102,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
           final AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(myContextComponent),
                                                         ActionPlaces.UNKNOWN, presentation, ActionManager.getInstance(),
                                                         0);
-          anAction.beforeActionPerformedUpdate(event);
-          anAction.update(event);
+
+          ActionUtil.performDumbAwareUpdate(anAction, event, false);
+          ActionUtil.performDumbAwareUpdate(anAction, event, true);
 
           final Color fg = isSelected ? UIUtil.getListSelectionForeground() :
                            presentation.isEnabled() && presentation.isVisible() ? UIUtil.getListForeground() : UIUtil.getInactiveTextColor();
