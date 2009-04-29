@@ -320,6 +320,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return ret.toArray(new ResolveResult[ret.size()]);
   }
 
+  private static boolean USE_CACHE = true; // change to false in debug time to switch off caching
+
   /**
    * Resolves reference to possible referred elements.
    * First element is always what resolve() would return.
@@ -332,7 +334,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiManager manager = getElement().getManager();
-    if (manager instanceof PsiManagerImpl) {
+    if (USE_CACHE && manager instanceof PsiManagerImpl) {
       final ResolveCache cache = ((PsiManagerImpl)manager).getResolveCache();
       return cache.resolveWithCaching(this, CachingResolver.INSTANCE, false, incompleteCode);
     }

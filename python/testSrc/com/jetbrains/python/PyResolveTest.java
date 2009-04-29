@@ -88,6 +88,11 @@ public class PyResolveTest extends ResolveTestCase {
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
+  public void testQualifiedFalseTarget() throws Exception {
+    PsiElement targetElement = resolve();
+    assertNull(targetElement);
+  }
+
   public void testInnerFuncVar() throws Exception {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);

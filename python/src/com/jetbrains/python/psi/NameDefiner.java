@@ -127,9 +127,13 @@ public interface NameDefiner extends PsiElement {
     public static PyElement findName(Iterable<PyElement> it, String name) {
       PyElement ret = null;
       for (PyElement elt : it) {
-        if ((elt != null) && (name.equals(elt.getName()))) {
-          ret = elt;
-          break;
+        if (elt != null) {
+          // qualified refs don't match by last name, and we're not checking FQNs here
+          if (elt instanceof PyQualifiedExpression && ((PyQualifiedExpression)elt).getQualifier() != null) continue;
+          if (name.equals(elt.getName())) { // plain name matches
+            ret = elt;
+            break;
+          }
         }
       }
       return ret;
