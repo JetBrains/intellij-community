@@ -982,7 +982,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           if (pushFilteringFurther && ownSearch != null) {
             ownSearch.run();
           }
-          fireNeedsRepaint(myContentWrapper);
+          fireNeedsRepaint(myOwnDetails.getComponent());
         } else {
           myVisible = false;
         }
