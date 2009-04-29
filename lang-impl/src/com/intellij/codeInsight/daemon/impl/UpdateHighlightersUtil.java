@@ -345,7 +345,7 @@ public class UpdateHighlightersUtil {
       for (LineMarkerInfo info : oldMarkers) {
         RangeHighlighter highlighter = info.highlighter;
         boolean toRemove = !highlighter.isValid() || info.updatePass == group
-                           && startOffset <= highlighter.getEndOffset() && highlighter.getStartOffset() <= endOffset;
+                           && startOffset <= highlighter.getStartOffset() && (highlighter.getEndOffset() < endOffset || highlighter.getEndOffset() == document.getTextLength());
 
         if (toRemove) {
           markupModel.removeHighlighter(highlighter);
@@ -360,14 +360,15 @@ public class UpdateHighlightersUtil {
     for (LineMarkerInfo info : markers) {
       PsiElement element = info.getElement();
       TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, element.getTextRange());
-      if (startOffset > elementRange.getEndOffset() || elementRange.getStartOffset() > endOffset) continue;
-      RangeHighlighter marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                info.textAttributesKey != null ? colorsScheme.getAttributes(info.textAttributesKey) : null, HighlighterTargetArea.EXACT_RANGE);
-      marker.setGutterIconRenderer(info.createGutterRenderer());
-      marker.setLineSeparatorColor(info.separatorColor);
-      marker.setLineSeparatorPlacement(info.separatorPlacement);
-      info.highlighter = marker;
-      array.add(info);
+      if (startOffset <= elementRange.getStartOffset() && elementRange.getEndOffset() <= endOffset) {
+        RangeHighlighter marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, info.textAttributesKey != null ? colorsScheme
+          .getAttributes(info.textAttributesKey) : null, HighlighterTargetArea.EXACT_RANGE);
+        marker.setGutterIconRenderer(info.createGutterRenderer());
+        marker.setLineSeparatorColor(info.separatorColor);
+        marker.setLineSeparatorPlacement(info.separatorPlacement);
+        info.highlighter = marker;
+        array.add(info);
+      }
     }
 
     DaemonCodeAnalyzerImpl.setLineMarkers(document, array, project);

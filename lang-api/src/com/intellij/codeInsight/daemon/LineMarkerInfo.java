@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   private final Icon myIcon;
   private final WeakReference<T> elementRef;
   public final int startOffset;
-  public int endOffset;
+  public final int endOffset;
   public Color separatorColor;
   public SeparatorPlacement separatorPlacement;
   public RangeHighlighter highlighter;
@@ -48,15 +49,22 @@ public class LineMarkerInfo<T extends PsiElement> {
     this.updatePass = updatePass;
     endOffset = startOffset;
   }
-  public LineMarkerInfo(T element,
-                        PsiElement range,
+  public LineMarkerInfo(@NotNull T element,
+                        @NotNull TextRange range,
                         Icon icon,
                         int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         GutterIconRenderer.Alignment alignment) {
-    this(element, range.getTextRange().getStartOffset(),icon, updatePass, tooltipProvider, navHandler,alignment);
-    endOffset = range.getTextRange().getEndOffset();
+    myIcon = icon;
+    myTooltipProvider = tooltipProvider;
+    myIconAlignment = alignment;
+    elementRef = new WeakReference<T>(element);
+    myNavigationHandler = navHandler;
+    startOffset = range.getStartOffset();
+    this.updatePass = updatePass;
+
+    endOffset = range.getEndOffset();
   }
 
   public LineMarkerInfo(T element,
@@ -71,7 +79,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   @Nullable
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
-    return new LineMarkerGutterIconRenderer(this);
+    return new LineMarkerGutterIconRenderer<T>(this);
   }
 
   @Nullable
@@ -134,5 +142,10 @@ public class LineMarkerInfo<T extends PsiElement> {
     public Alignment getAlignment() {
       return myInfo.myIconAlignment;
     }
+  }
+
+  @Override
+  public String toString() {
+    return "("+startOffset+","+endOffset+") -> "+elementRef.get();
   }
 }

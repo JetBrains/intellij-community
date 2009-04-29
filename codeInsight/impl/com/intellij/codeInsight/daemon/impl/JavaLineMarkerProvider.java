@@ -51,7 +51,6 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
   public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element.getParent();
-      int offset = element.getTextRange().getStartOffset();
       MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superSignature != null) {
         boolean overrides =
@@ -59,7 +58,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
 
         final Icon icon = overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON;
         final MarkerType type = MarkerType.OVERRIDING_METHOD;
-        return new LineMarkerInfo<PsiMethod>(method, element, icon, Pass.UPDATE_ALL, type.getTooltip(), type.<PsiMethod>getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
+        return new LineMarkerInfo<PsiMethod>(method, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(), type.<PsiMethod>getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
       }
     }
 
@@ -84,7 +83,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
         }
 
         if (drawSeparator) {
-          LineMarkerInfo info = new LineMarkerInfo<PsiElement>(element, element, null, Pass.UPDATE_ALL, NullableFunction.NULL, null, GutterIconRenderer.Alignment.RIGHT);
+          LineMarkerInfo info = new LineMarkerInfo<PsiElement>(element, element.getTextRange(), null, Pass.UPDATE_ALL, NullableFunction.NULL, null, GutterIconRenderer.Alignment.RIGHT);
           EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
@@ -117,7 +116,6 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
   public void collectSlowLineMarkers(final List<PsiElement> elements, final Collection<LineMarkerInfo> result) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
@@ -146,7 +144,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
         final MarkerType type = MarkerType.SUBCLASSED_CLASS;
         PsiElement range = aClass.getNameIdentifier();
         if (range == null) range = aClass;
-        LineMarkerInfo info = new LineMarkerInfo<PsiClass>(aClass, range, icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.<PsiClass>getNavigationHandler(),
+        LineMarkerInfo info = new LineMarkerInfo<PsiClass>(aClass, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.<PsiClass>getNavigationHandler(),
                                                            GutterIconRenderer.Alignment.RIGHT);
         result.add(info);
       }
@@ -182,7 +180,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       final MarkerType type = MarkerType.OVERRIDEN_METHOD;
       PsiElement range = method.getNameIdentifier();
       if (range == null) range = method;
-      LineMarkerInfo info = new LineMarkerInfo<PsiMethod>(method, range, icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.<PsiMethod>getNavigationHandler(),
+      LineMarkerInfo info = new LineMarkerInfo<PsiMethod>(method, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.<PsiMethod>getNavigationHandler(),
                                                           GutterIconRenderer.Alignment.RIGHT);
       result.add(info);
     }

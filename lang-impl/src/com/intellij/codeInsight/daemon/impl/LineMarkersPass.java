@@ -72,7 +72,6 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
 
   public void addLineMarkers(List<PsiElement> elements, final List<LineMarkerProvider> providers, final List<LineMarkerInfo> result) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
 
@@ -107,14 +106,13 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
               TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
               Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
               LineMarkerInfo converted =
-                  new LineMarkerInfo<PsiElement>(injectedMarker.getElement(), hostRange.getStartOffset(), icon, injectedMarker.updatePass,
+                  new LineMarkerInfo<PsiElement>(injectedMarker.getElement(), hostRange, icon, injectedMarker.updatePass,
                                      new Function<PsiElement, String>() {
                                        public String fun(PsiElement element) {
                                          return injectedMarker.getLineMarkerTooltip();
                                        }
-                                     }, injectedMarker.getNavigationHandler());
+                                     }, injectedMarker.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
               converted.textAttributesKey = injectedMarker.textAttributesKey;
-              converted.endOffset = hostRange.getEndOffset();
               result.add(converted);
             }
           }

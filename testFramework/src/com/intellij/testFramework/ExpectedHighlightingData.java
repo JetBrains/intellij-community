@@ -13,10 +13,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -101,12 +103,11 @@ public class ExpectedHighlightingData {
       int startOffset = rangeMarker.getStartOffset();
       int endOffset = rangeMarker.getEndOffset();
       final LineMarkerInfo value = entry.getValue();
-      LineMarkerInfo markerInfo = new LineMarkerInfo(value.getElement(), startOffset, null, value.updatePass, new Function() {
-        public Object fun(Object o) {
+      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(value.getElement(), new TextRange(startOffset,endOffset), null, value.updatePass, new Function<PsiElement,String>() {
+        public String fun(PsiElement psiElement) {
           return value.getLineMarkerTooltip();
         }
-      }, null);
-      markerInfo.endOffset = endOffset;
+      }, null, GutterIconRenderer.Alignment.RIGHT);
       entry.setValue(markerInfo);
     }
   }
@@ -136,12 +137,11 @@ public class ExpectedHighlightingData {
       document.replaceString(startOffset, endOffset, content);
       endOffset -= endTag.length();
 
-      LineMarkerInfo markerInfo = new LineMarkerInfo(myFile, startOffset, null, Pass.LINE_MARKERS, new Function() {
-        public Object fun(Object o) {
+      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset,endOffset), null, Pass.LINE_MARKERS, new Function<PsiElement,String>() {
+        public String fun(PsiElement psiElement) {
           return descr;
         }
-      }, null);
-      markerInfo.endOffset = endOffset;
+      }, null, GutterIconRenderer.Alignment.RIGHT);
 
       lineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
       text = document.getText();
