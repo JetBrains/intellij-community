@@ -14,11 +14,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class StartUseVcsDialog extends DialogWrapper {
-  private final StartUseVcsAction.Data myData;
+  private final VcsDataWrapper myData;
   private VcsCombo myVcsCombo;
   private String mySelected;
 
-  public StartUseVcsDialog(final StartUseVcsAction.Data data) {
+  public StartUseVcsDialog(final VcsDataWrapper data) {
     super(data.getProject(), true);
     myData = data;
     setTitle(VcsBundle.message("dialog.enable.version.control.integration.title"));

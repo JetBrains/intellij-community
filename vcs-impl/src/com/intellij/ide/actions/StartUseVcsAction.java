@@ -1,25 +1,18 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.impl.VcsEP;
-import com.intellij.openapi.extensions.Extensions;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class StartUseVcsAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
-    final Data data = new Data(e);
+    final VcsDataWrapper data = new VcsDataWrapper(e);
     final boolean enabled = data.enabled();
 
     final Presentation presentation = e.getPresentation();
@@ -31,7 +24,7 @@ public class StartUseVcsAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Data data = new Data(e);
+    final VcsDataWrapper data = new VcsDataWrapper(e);
     final boolean enabled = data.enabled();
     if (! enabled) {
       return;
@@ -48,63 +41,4 @@ public class StartUseVcsAction extends AnAction implements DumbAware {
     }
   }
 
-  static class Data {
-    private final Project myProject;
-    private final ProjectLevelVcsManager myManager;
-    private Map<String, String> myVcses;
-
-    Data(final AnActionEvent e) {
-      final DataContext dataContext = e.getDataContext();
-      myProject = PlatformDataKeys.PROJECT.getData(dataContext);
-      if (myProject == null || myProject.isDefault()) {
-        myManager = null;
-        myVcses = null;
-        return;
-      }
-      myManager = ProjectLevelVcsManager.getInstance(myProject);
-    }
-
-    boolean enabled() {
-      if (myProject == null || myProject.isDefault() || myManager == null) {
-        return false;
-      }
-      if (checkMappings()) {
-        return false;
-      }
-      if (Extensions.getExtensions(VcsEP.EP_NAME, myProject).length == 0) {
-        return false;
-      }
-      return true;
-    }
-
-    private boolean checkMappings() {
-      final List<VcsDirectoryMapping> mappings = myManager.getDirectoryMappings();
-      for (VcsDirectoryMapping mapping : mappings) {
-        final String vcs = mapping.getVcs();
-        if (vcs != null && vcs.length() > 0) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    public Project getProject() {
-      return myProject;
-    }
-
-    public ProjectLevelVcsManager getManager() {
-      return myManager;
-    }
-
-    public Map<String, String> getVcses() {
-      if (myVcses == null && myProject != null && !myProject.isDefault()) {
-        final AbstractVcs[] allVcss = myManager.getAllVcss();
-        myVcses = new HashMap<String, String>(allVcss.length, 1);
-        for (AbstractVcs vcs : allVcss) {
-          myVcses.put(vcs.getDisplayName(), vcs.getName());
-        }
-      }
-      return myVcses;
-    }
-  }
 }
