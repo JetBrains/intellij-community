@@ -89,6 +89,10 @@ public class SvnMapping {
     return myUrl2FileMap.get(url);
   }
 
+  public boolean isEmpty() {
+    return myUrl2FileMap.isEmpty();
+  }
+
   /*public List<VirtualFile> getPhysicalCopies() {
     return myPhysicalCopies;
   }*/

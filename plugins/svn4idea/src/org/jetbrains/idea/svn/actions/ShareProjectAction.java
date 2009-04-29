@@ -4,6 +4,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -12,20 +15,18 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnWorkingCopyFormatHolder;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 
@@ -56,7 +57,7 @@ public class ShareProjectAction extends BasicAction {
     boolean visible = false;
     if (files.length == 1 && files [0].isDirectory()) {
       visible = true;
-      if (!SVNWCUtil.isVersionedDirectory(new File(files [0].getPath()))) {
+      if (! SvnStatusUtil.isUnderControl(project, files[0])) {
         enabled = true;
       }
     }
@@ -72,7 +73,16 @@ public class ShareProjectAction extends BasicAction {
     return true;
   }
 
+  public static boolean share(final Project project, final VirtualFile file) throws VcsException {
+    return performImpl(project, SvnVcs.getInstance(project), file);
+  }
+
   protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context) throws VcsException {
+    performImpl(project, activeVcs, file);
+  }
+
+  private static boolean performImpl(final Project project, final SvnVcs activeVcs, final VirtualFile file) throws
+                                                                                                                              VcsException {
     ShareDialog shareDialog = new ShareDialog(project);
     shareDialog.show();
 
@@ -86,6 +96,8 @@ public class ShareProjectAction extends BasicAction {
           ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
             public void run() {
               try {
+                final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+
                 final File path = new File(file.getPath());
                 if (! SvnCheckoutProvider.promptForWCopyFormat(path, project)) {
                   // action cancelled
@@ -93,10 +105,20 @@ public class ShareProjectAction extends BasicAction {
                   return;
                 }
                 SVNURL url = SVNURL.parseURIEncoded(parent).appendPath(file.getName(), false);
+                final String urlText = url.toString();
+                if (indicator != null) {
+                  indicator.checkCanceled();
+                  indicator.setText(SvnBundle.message("share.directory.create.dir.progress.text", urlText));
+                }
                 SVNCommitInfo info = activeVcs.createCommitClient().doMkDir(new SVNURL[] {url},
                                                                             SvnBundle.message("share.directory.commit.message", file.getName(),
                                                                                               ApplicationNamesInfo.getInstance().getFullProductName()));
                 SVNRevision revision = SVNRevision.create(info.getNewRevision());
+
+                if (indicator != null) {
+                  indicator.checkCanceled();
+                  indicator.setText(SvnBundle.message("share.directory.checkout.back.progress.text", urlText));
+                }
                 activeVcs.createUpdateClient().doCheckout(url, path, SVNRevision.UNDEFINED, revision, true);
                 SvnWorkingCopyFormatHolder.setPresetFormat(null);
 
@@ -108,7 +130,7 @@ public class ShareProjectAction extends BasicAction {
                 SvnWorkingCopyFormatHolder.setPresetFormat(null);
               }
             }
-          }, SvnBundle.message("share.directory.title"), false, project);
+          }, SvnBundle.message("share.directory.title"), true, project);
         }
       });
 
@@ -119,7 +141,9 @@ public class ShareProjectAction extends BasicAction {
         Messages.showInfoMessage(project, SvnBundle.message("share.directory.info.message", file.getName()),
                                  SvnBundle.message("share.directory.title"));
       }
+      return true;
     }
+    return false;
   }
 
   @Override
@@ -127,11 +151,16 @@ public class ShareProjectAction extends BasicAction {
     VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
   }
 
-  private void addRecursively(final SvnVcs activeVcs, final VirtualFile file) throws SVNException {
+  private static void addRecursively(final SvnVcs activeVcs, final VirtualFile file) throws SVNException {
     final SVNWCClient wcClient = activeVcs.createWCClient();
     final SvnExcludingIgnoredOperation operation = new SvnExcludingIgnoredOperation(activeVcs.getProject(), new SvnExcludingIgnoredOperation.Operation() {
       public void doOperation(final VirtualFile virtualFile) throws SVNException {
         final File ioFile = new File(virtualFile.getPath());
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) {
+          indicator.checkCanceled();
+          indicator.setText(SvnBundle.message("share.or.import.add.progress.text", virtualFile.getPath()));
+        }
         wcClient.doAdd(ioFile, true, false, false, SVNDepth.EMPTY, false, false);
       }
     }, SVNDepth.INFINITY);

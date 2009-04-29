@@ -274,6 +274,12 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
     return myHelper.executeDefended();
   }
 
+  public boolean isEmpty() {
+    synchronized (myMonitor) {
+      return myMapping.isEmpty();
+    }
+  }
+
   public SvnMappingSavedPart getState() {
     final SvnMappingSavedPart result = new SvnMappingSavedPart();
 

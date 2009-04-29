@@ -29,4 +29,6 @@ public interface SvnFileUrlMapping extends AbstractVcs.RootsConvertor {
   boolean rootsDiffer();
 
   VirtualFile[] getNotFilteredRoots();
+
+  boolean isEmpty();
 }

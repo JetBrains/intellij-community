@@ -25,8 +25,8 @@
     <group id="SubversionFileGroup">
       <separator/>
       <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction"/>
-      <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction"
-        />
+      <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction"/>
+      <action id="Subversion.ShareWholeProject" class="org.jetbrains.idea.svn.actions.ShareWholeProject"/>
       <separator/>
       <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
     </group>
