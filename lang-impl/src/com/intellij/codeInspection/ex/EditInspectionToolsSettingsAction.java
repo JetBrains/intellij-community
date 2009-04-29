@@ -51,11 +51,9 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
-    final boolean canChooseDifferentProfiles = false;
     InspectionProfile inspectionProfile = projectProfileManager.getInspectionProfile();
     editToolSettings(project,
-                     inspectionProfile,
-                     canChooseDifferentProfiles,
+                     inspectionProfile, true,
                      myShortName);
   }
 
