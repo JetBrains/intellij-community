@@ -49,10 +49,6 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return myModule;
   }
 
-  public void init() {
-    myModule.init();
-  }
-
   public void setModule(final Module module) {
     if (module == null) return;
     myModule.setModule(module);
@@ -84,8 +80,9 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     try {
       writeExternal(element);
       final ModuleBasedConfiguration configuration = createInstance();
-      configuration.init();
+
       configuration.readExternal(element);
+
       return configuration;
     } catch (InvalidDataException e) {
       LOG.error(e);

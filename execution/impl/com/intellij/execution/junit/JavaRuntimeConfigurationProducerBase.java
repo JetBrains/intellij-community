@@ -78,7 +78,7 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
         configuration.setModule(predefinedModule);
         return true;
       }
-      else if (contextModule != null) {
+      else if (configuration.getConfigurationModule().getModule() == null && contextModule != null) {
         configuration.setModule(contextModule);
         return true;
       }
