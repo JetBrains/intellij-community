@@ -2,22 +2,21 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.ProfilingUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.embedder.MavenConsole;
 
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
 
 public class MavenProjectsTreeTest extends MavenImportingTestCase {
-  private static final MavenConsole NULL_CONSOLE = NULL_MAVEN_CONSOLE;
-
-  protected MavenProjectsTree myTree = new MavenProjectsTree();
+  private MavenProjectsTree myTree = new MavenProjectsTree();
 
   public void testTwoRootProjects() throws Exception {
     VirtualFile m1 = createModulePom("m1",
@@ -1528,11 +1527,31 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     List<MavenProject> roots = read.getRootProjects();
     assertEquals(1, roots.size());
-    assertEquals(myProjectPom, roots.get(0).getFile());
 
-    assertEquals(2, read.getModules(roots.get(0)).size());
-    assertEquals(m1, read.getModules(roots.get(0)).get(0).getFile());
-    assertEquals(m2, read.getModules(roots.get(0)).get(1).getFile());
+    MavenProject rootProject = roots.get(0);
+    assertEquals(myProjectPom, rootProject.getFile());
+
+    assertEquals(2, read.getModules(rootProject).size());
+    assertEquals(m1, read.getModules(rootProject).get(0).getFile());
+    assertEquals(m2, read.getModules(rootProject).get(1).getFile());
+
+    assertNull(read.findAggregator(rootProject));
+    assertEquals(rootProject, read.findAggregator(read.findProject(m1)));
+    assertEquals(rootProject, read.findAggregator(read.findProject(m2)));
+  }
+
+  public void testPerformanceTest() throws Exception {
+    VirtualFile pom = LocalFileSystem.getInstance().findFileByPath("C:\\projects\\mvn\\_projects\\geronimo\\pom.xml");
+
+    long before = System.currentTimeMillis();
+    ProfilingUtil.startCPUProfiling();
+    updateAll(pom);
+    System.out.println(ProfilingUtil.captureCPUSnapshot());
+    ProfilingUtil.stopCPUProfiling();
+
+    long after = System.currentTimeMillis();
+
+    System.out.println("delta:" + (after - before));
   }
 
   private void updateAll(VirtualFile... files) throws MavenProcessCanceledException, MavenException {
@@ -1541,15 +1560,15 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
   private void updateAll(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException, MavenException {
     myTree.resetManagedFilesAndProfiles(asList(files), profiles);
-    myTree.updateAll(getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 
   private void update(VirtualFile file) throws MavenProcessCanceledException {
-    myTree.update(asList(file), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
+    myTree.update(asList(file), getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 
   private void deleteProject(VirtualFile file) throws MavenProcessCanceledException {
-    myTree.delete(asList(file), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
+    myTree.delete(asList(file), getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 
   private void updateTimestamps(VirtualFile... files) throws IOException {

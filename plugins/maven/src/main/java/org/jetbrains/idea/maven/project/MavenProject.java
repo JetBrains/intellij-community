@@ -417,32 +417,40 @@ public class MavenProject implements Serializable {
     return myFilters;
   }
 
-  public void read(MavenGeneralSettings generalSettings, List<String> profiles, MavenProjectReaderProjectLocator locator) {
-    set(new MavenProjectReader().readProject(generalSettings, myFile, profiles, locator), false);
+  public void read(MavenGeneralSettings generalSettings,
+                   List<String> profiles,
+                   MavenProjectReader reader,
+                   MavenProjectReaderProjectLocator locator) {
+    set(reader.readProject(generalSettings, myFile, profiles, locator), false);
   }
 
   public org.apache.maven.project.MavenProject resolve(MavenGeneralSettings generalSettings,
                                                        MavenEmbedderWrapper embedder,
+                                                       MavenProjectReader reader,
                                                        MavenProjectReaderProjectLocator locator,
                                                        MavenProcess process) throws MavenProcessCanceledException {
-    MavenProjectReaderResult result = new MavenProjectReader().resolveProject(generalSettings,
-                                                                              embedder,
-                                                                              getFile(),
-                                                                              getActiveProfilesIds(),
-                                                                              locator,
-                                                                              process);
+    MavenProjectReaderResult result = reader.resolveProject(generalSettings,
+                                                            embedder,
+                                                            getFile(),
+                                                            getActiveProfilesIds(),
+                                                            locator,
+                                                            process);
     set(result, result.isValid);
     return result.nativeMavenProject;
   }
 
-  public void generateSources(MavenEmbedderWrapper embedder, MavenImportingSettings importingSettings, MavenConsole console, MavenProcess p)
+  public void generateSources(MavenEmbedderWrapper embedder,
+                              MavenImportingSettings importingSettings,
+                              MavenProjectReader reader,
+                              MavenConsole console,
+                              MavenProcess p)
     throws MavenProcessCanceledException {
-    MavenProjectReaderResult result = new MavenProjectReader().generateSources(embedder,
-                                                                               importingSettings,
-                                                                               getFile(),
-                                                                               getActiveProfilesIds(),
-                                                                               console,
-                                                                               p);
+    MavenProjectReaderResult result = reader.generateSources(embedder,
+                                                             importingSettings,
+                                                             getFile(),
+                                                             getActiveProfilesIds(),
+                                                             console,
+                                                             p);
     if (result != null && result.isValid) setFolders(result);
   }
 

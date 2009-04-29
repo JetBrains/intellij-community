@@ -32,11 +32,11 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProcess process)
     throws MavenProcessCanceledException {
     if (myFilesToUpdate == null) {
-      myTree.updateAll(mySettings, console, process);
+      myTree.updateAll(mySettings, process);
     }
     else {
-      myTree.delete(myFilesToDelete, mySettings, console, process);
-      myTree.update(myFilesToUpdate, mySettings, console, process);
+      myTree.delete(myFilesToDelete, mySettings, process);
+      myTree.update(myFilesToUpdate, mySettings, process);
     }
   }
 

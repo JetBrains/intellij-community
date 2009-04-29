@@ -42,8 +42,7 @@ import java.util.*;
 
 public class MavenProjectReader {
   private static final String UNKNOWN = "Unknown";
-
-  //private final Map<VirtualFile, Pair<Model, List<Profile>>> myRawModelsCache = new HashMap<VirtualFile, Pair<Model, List<Profile>>>();
+  private final Map<VirtualFile, Model> myRawModelsCache = new HashMap<VirtualFile, Model>();
 
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
                                               VirtualFile file,
@@ -82,25 +81,24 @@ public class MavenProjectReader {
     return new File(file.getParent().getPath());
   }
 
-  private Pair<Model, List<Profile>> doReadProjectModel(final MavenGeneralSettings generalSettings,
-                                                        final VirtualFile file,
+  private Pair<Model, List<Profile>> doReadProjectModel(MavenGeneralSettings generalSettings,
+                                                        VirtualFile file,
                                                         File localRepository,
                                                         List<String> activeProfiles,
                                                         Set<VirtualFile> recursionGuard,
                                                         MavenProjectReaderProjectLocator locator) {
-    //Pair<Model, List<Profile>> cached = myRawModelsCache.get(file);
-    //if (cached != null) return cached;
-
-    Model mavenModel = doReadProjectModel(file, generalSettings);
+    Model mavenModel = myRawModelsCache.get(file);
+    if (mavenModel == null) {
+      mavenModel = doReadProjectModel(file, generalSettings);
+      myRawModelsCache.put(file, mavenModel);
+    }
 
     List<Profile> activatedProfiles = applyProfiles(mavenModel, getBaseDir(file), activeProfiles);
     repairModelHeader(mavenModel);
     resolveInheritance(generalSettings, mavenModel, file, localRepository, activeProfiles, recursionGuard, locator);
     repairModelBody(mavenModel);
 
-    Pair<Model, List<Profile>> result = Pair.create(mavenModel, activatedProfiles);
-    //myRawModelsCache.put(file, result);
-    return result;
+    return Pair.create(mavenModel, activatedProfiles);
   }
 
   private Model doReadProjectModel(VirtualFile file, MavenGeneralSettings generalSettings) {

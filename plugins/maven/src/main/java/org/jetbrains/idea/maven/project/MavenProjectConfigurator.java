@@ -111,12 +111,12 @@ public class MavenProjectConfigurator {
     if (matcher.find()) {
       String currentValue = MavenProject.normalizeCompilerLevel(matcher.group(2));
 
-      if (compareCompilerLevel(level, currentValue) < 0) {
+      if (currentValue == null || compareCompilerLevel(level, currentValue) < 0) {
         StringBuffer buffer = new StringBuffer();
         matcher.appendReplacement(buffer, "-target " + level);
         matcher.appendTail(buffer);
         options = buffer.toString();
-  }
+      }
     }
     else {
       if (!StringUtil.isEmptyOrSpaces(options)) options += " ";
@@ -126,21 +126,21 @@ public class MavenProjectConfigurator {
   }
 
   private String calcTargetLevel() {
-    String resultSource = null;
-    String resultTarget = null;
+    String maxSource = null;
+    String minTarget = null;
     for (MavenProject each : myMavenTree.getProjects()) {
       String source = each.getSourceLevel();
       String target = each.getTargetLevel();
-      if (resultSource == null || compareCompilerLevel(source, resultSource) > 0) resultSource = source;
-      if (compareCompilerLevel(target, resultTarget) < 0) resultTarget = target;
+      if (source != null && (maxSource == null || compareCompilerLevel(maxSource, source) < 0)) maxSource = source;
+      if (target != null && (minTarget == null || compareCompilerLevel(minTarget, target) > 0)) minTarget = target;
     }
-    return resultSource != null && compareCompilerLevel(resultSource, resultTarget) > 0 ? resultSource : resultTarget;
+    return (maxSource != null && compareCompilerLevel(minTarget, maxSource) < 0) ? maxSource : minTarget;
   }
 
   private int compareCompilerLevel(String left, String right) {
     if (left == null && right == null) return 0;
-    if (left == null) return 1;
-    if (right == null) return -1;
+    if (left == null) return -1;
+    if (right == null) return 1;
     return left.compareTo(right);
   }
 
@@ -181,7 +181,8 @@ public class MavenProjectConfigurator {
     return obsolete;
   }
 
-  private void configModules(List<MavenProjectsProcessorPostConfigurationTask> postTasks, final MavenModuleModelsProvider rootModelsProvider) {
+  private void configModules(List<MavenProjectsProcessorPostConfigurationTask> postTasks,
+                             final MavenModuleModelsProvider rootModelsProvider) {
     List<MavenProject> projects = getMavenProjectsToConfigure();
     Set<MavenProject> projectsWithNewlyCreatedModules = new HashSet<MavenProject>();
 
@@ -289,11 +290,11 @@ public class MavenProjectConfigurator {
         if (module == null) {
           // todo: IDEADEV-30669 hook
           String message = "Module " + name + "not found.";
-          message += "\nmavenProject="+each.getFile();
+          message += "\nmavenProject=" + each.getFile();
           module = myMavenProjectToModule.get(each);
           message += "\nmyMavenProjectToModule=" + (module == null ? null : module.getName());
-          message += "\nmyMavenProjectToModuleName=" +myMavenProjectToModuleName.get(each);
-          message += "\nmyMavenProjectToModulePath=" +myMavenProjectToModulePath.get(each);
+          message += "\nmyMavenProjectToModuleName=" + myMavenProjectToModuleName.get(each);
+          message += "\nmyMavenProjectToModulePath=" + myMavenProjectToModulePath.get(each);
           MavenLog.LOG.warn(message);
           return;
         }

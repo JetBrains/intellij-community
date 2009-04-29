@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.FileFinder;
 import org.jetbrains.idea.maven.utils.MavenId;
 
@@ -133,14 +132,17 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     process.setText(ProjectBundle.message("maven.searching.profiles"));
 
     Set<String> uniqueProfiles = new LinkedHashSet<String>();
+    MavenProjectReader reader = new MavenProjectReader();
+    MavenGeneralSettings generalSettings = getGeneralSettings();
+    MavenProjectReaderProjectLocator locator = new MavenProjectReaderProjectLocator() {
+      public VirtualFile findProjectFile(MavenId coordinates) {
+        return null;
+      }
+    };
     for (VirtualFile f : getParameters().myFiles) {
       MavenProject project = new MavenProject(f);
       process.setText2(ProjectBundle.message("maven.reading.pom", f.getPath()));
-      project.read(getGeneralSettings(), Collections.EMPTY_LIST, new MavenProjectReaderProjectLocator() {
-        public VirtualFile findProjectFile(MavenId coordinates) {
-          return null;
-        }
-      });
+      project.read(generalSettings, Collections.EMPTY_LIST, reader, locator);
       uniqueProfiles.addAll(project.getProfilesIds());
     }
     getParameters().myProfiles = new ArrayList<String>(uniqueProfiles);
@@ -180,7 +182,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   private void readMavenProjectTree(MavenProcess process) throws MavenProcessCanceledException {
     MavenProjectsTree tree = new MavenProjectsTree();
     tree.addManagedFilesWithProfiles(getParameters().myFiles, getParameters().mySelectedProfiles);
-    tree.updateAll(getGeneralSettings(), new SoutMavenConsole(), process);
+    tree.updateAll(getGeneralSettings(), process);
     getParameters().myMavenProjectTree = tree;
   }
 
