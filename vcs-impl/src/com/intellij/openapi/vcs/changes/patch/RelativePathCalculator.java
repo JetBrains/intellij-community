@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -17,15 +18,15 @@ public class RelativePathCalculator {
   private boolean myRename;
 
   public RelativePathCalculator(final String base, final String shifted) {
-    myShifted = getLowerPathIfPossible(shifted);
-    myBase = getLowerPathIfPossible(base);
+    myShifted = shifted;
+    myBase = base;
   }
 
-  private String getLowerPathIfPossible(final String path) {
+  private static boolean stringEqual(@NotNull final String s1, @NotNull final String s2) {
     if (! SystemInfo.isFileSystemCaseSensitive) {
-      return path.toLowerCase();
+      return s1.equalsIgnoreCase(s2);
     }
-    return path;
+    return s1.equals(s2);
   }
 
   public void execute() {
@@ -33,7 +34,7 @@ public class RelativePathCalculator {
       myResult = null;
       return;
     }
-    if (myShifted.equals(myBase)) {
+    if (stringEqual(myShifted, myBase)) {
       myResult = ".";
       myRename = false;
       return;
@@ -49,7 +50,7 @@ public class RelativePathCalculator {
         // means that directory moved to a file or vise versa -> error
         return;
       }
-      if (! baseParts[cnt].equals(shiftedParts[cnt])) {
+      if (! stringEqual(baseParts[cnt], shiftedParts[cnt])) {
         break;
       }
       ++ cnt;
@@ -83,7 +84,7 @@ public class RelativePathCalculator {
   private boolean checkRename(final String[] baseParts, final String[] shiftedParts) {
     if (baseParts.length == shiftedParts.length) {
       for (int i = 0; i < baseParts.length; i++) {
-        if (! baseParts[i].equals(shiftedParts[i])) {
+        if (! stringEqual(baseParts[i], shiftedParts[i])) {
           return i == (baseParts.length - 1);
         }
       }
@@ -97,7 +98,7 @@ public class RelativePathCalculator {
 
   @Nullable
   public static String getMovedString(final String beforeName, final String afterName) {
-    if ((beforeName != null) && (afterName != null) && (! beforeName.equals(afterName))) {
+    if ((beforeName != null) && (afterName != null) && (! stringEqual(beforeName, afterName))) {
       final RelativePathCalculator calculator = new RelativePathCalculator(beforeName, afterName);
       calculator.execute();
       final String key = (calculator.isRename()) ? "change.file.renamed.to.text" : "change.file.moved.to.text";
