@@ -20,9 +20,11 @@ import com.intellij.facet.ui.ProjectSettingsContext;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantIcons;
+import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager;
 
 import javax.swing.*;
@@ -32,7 +34,8 @@ import javax.swing.*;
  */
 public class GantLibraryManager extends AbstractGroovyLibraryManager {
   public boolean managesLibrary(@NotNull Library library, LibrariesContainer container) {
-    return GantConfigUtils.containsGantJar(container.getLibraryFiles(library, OrderRootType.CLASSES));
+    VirtualFile[] files = container.getLibraryFiles(library, OrderRootType.CLASSES);
+    return GantConfigUtils.containsGantJar(files) && !GrailsConfigUtils.containsGrailsJar(files);
   }
 
   @Nls

@@ -56,7 +56,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -149,16 +152,7 @@ public class GroovyFacetTab extends FacetEditorTab {
       }
     });
 
-    final MultiMap<LibraryManager, ManagedLibrary> libs = new MultiMap<LibraryManager, ManagedLibrary>() {
-      @Override
-      protected Map<LibraryManager, Collection<ManagedLibrary>> createMap() {
-        return new TreeMap<LibraryManager, Collection<ManagedLibrary>>(new Comparator<LibraryManager>() {
-          public int compare(LibraryManager o1, LibraryManager o2) {
-            return Arrays.asList(myManagers).indexOf(o2) - Arrays.asList(myManagers).indexOf(o1);
-          }
-        });
-      }
-    };
+    final MultiMap<LibraryManager, ManagedLibrary> libs = new MultiMap<LibraryManager, ManagedLibrary>();
 
     final List<Object> toAdd = CollectionFactory.arrayList();
     final Map<Object, ListSeparator> separators = CollectionFactory.newTroveMap();
@@ -172,8 +166,12 @@ public class GroovyFacetTab extends FacetEditorTab {
       }
     }
 
-    for (final LibraryManager manager : libs.keySet()) {
+    for (int i = myManagers.length - 1; i >= 0; i--) {
+      LibraryManager manager = myManagers[i];
       if (mainOnly && !isGroovyOrGrails(manager)) {
+        continue;
+      }
+      if (usedManagers.contains(manager)) {
         continue;
       }
 
@@ -184,6 +182,9 @@ public class GroovyFacetTab extends FacetEditorTab {
           separatorSet = true;
         }
         toAdd.add(library);
+      }
+      if (!separatorSet) {
+        separators.put(manager, new ListSeparator(manager.getLibraryCategoryName()));
       }
       toAdd.add(manager);
     }
