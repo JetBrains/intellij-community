@@ -74,7 +74,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (indicator != null) {
-      if (indicator.getHandler().getClass().equals(getClass())) {
+      if (indicator.getParameters().getCompletionType().equals(myCompletionType)) {
         if (!indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
           return;
         }
