@@ -1,0 +1,43 @@
+<idea-plugin version="2">
+  <name>SpellChecker</name>
+  <description>Spell checker plugin</description>
+  <version>1.0</version>
+  <vendor>JetBrains</vendor>
+  <idea-version since-build="10204"/>
+
+  <application-components>
+
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+  </project-components>
+
+  <actions>
+    <!-- Add your actions here -->
+
+    <action id="SpellCheckerCompletion" class="com.intellij.spellchecker.actions.CompleteWordFromDictionaryAction"
+            text="Complete Word From Dictionary"
+            description="Complete word from spelling dictionaries">
+      <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt d"/>
+      <add-to-group group-id="CodeCompletionGroup" anchor="after" relative-to-action="WordCompletion"/>
+    </action>
+    <group id="com.intellij.spellchecker.actions.SpellingPopupActionGroup"
+           class="com.intellij.spellchecker.actions.SpellingPopupActionGroup" text="Spelling" popup="true">
+      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+    </group>
+
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.spellchecker.options.SpellCheckerConfiguration"
+                        serviceImplementation="com.intellij.spellchecker.options.SpellCheckerConfiguration"/>
+    <applicationService serviceInterface="com.intellij.spellchecker.SpellCheckerManager"
+                        serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
+    <applicationConfigurable implementation="com.intellij.spellchecker.options.SpellCheckerConfigurable"/>
+    <inspectionToolProvider
+        implementation="com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider"/>
+    <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.DictionarySuggestionProvider"/>
+  </extensions>
+</idea-plugin>
+        
