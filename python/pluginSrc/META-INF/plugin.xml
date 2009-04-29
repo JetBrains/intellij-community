@@ -13,6 +13,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
+    <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
     <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>
   </extensions>
 
@@ -21,4 +22,17 @@
     <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
   </extensions>
+
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.python.facet.PythonSdkTableListener</implementation-class>
+    </component>
+  </application-components>
+
+  <module-components>
+    <component>
+      <implementation-class>com.jetbrains.python.facet.PythonFacetListener</implementation-class>
+    </component>
+  </module-components>
+
 </idea-plugin>
