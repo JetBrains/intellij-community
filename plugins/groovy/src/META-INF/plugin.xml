@@ -208,6 +208,9 @@
     <projectService serviceInterface="org.jetbrains.plugins.grails.console.GrailsConsole"
                     serviceImplementation="org.jetbrains.plugins.grails.console.GrailsConsole"/>
 
+    <moduleService serviceInterface="org.jetbrains.plugins.grails.plugins.control.GrailsPluginManager"
+                   serviceImplementation="org.jetbrains.plugins.grails.plugins.control.GrailsPluginManagerImpl"/>
+
     <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.grails.lang.gsp.completion.GspXmlFileNSInfoProvider"/>
 
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsTagSelectioner"/>
@@ -433,10 +436,6 @@
   <module-components>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.config.GrailsFacetListener</implementation-class>
-    </component>
-    <component>
-      <interface-class>org.jetbrains.plugins.grails.plugins.control.GrailsPluginManager</interface-class>
-      <implementation-class>org.jetbrains.plugins.grails.plugins.control.GrailsPluginManagerImpl</implementation-class>
     </component>
   </module-components>
 
