@@ -22,11 +22,10 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -54,7 +53,10 @@ public class PythonFoldingBuilder implements FoldingBuilder {
                             new TextRange(colon.getStartOffset() + 1, node.getStartOffset() + node.getTextLength())));
                 }
                 else {
-                    descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+                    TextRange range = node.getTextRange();
+                    if (range.getStartOffset() < range.getEndOffset()-1) { // only for ranges at leas 1 char wide
+                        descriptors.add(new FoldingDescriptor(node, range));
+                    }
                 }
             }
         }
