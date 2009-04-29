@@ -432,9 +432,6 @@
 
   <module-components>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.GrailsModuleActions</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.grails.config.GrailsFacetListener</implementation-class>
     </component>
     <component>
