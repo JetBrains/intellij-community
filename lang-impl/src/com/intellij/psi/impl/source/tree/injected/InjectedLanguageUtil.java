@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ParameterizedCachedValueImpl;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -40,6 +41,13 @@ public class InjectedLanguageUtil {
   }
 
   public static void forceInjectionOnElement(@NotNull final PsiElement host) {
+    PsiFile file = host.getContainingFile();
+    if (file instanceof DummyHolder) {
+      PsiElement context = file.getContext();
+      if (context != null) {
+        context.getContainingFile().getNode();
+      }
+    }
     enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
       }
