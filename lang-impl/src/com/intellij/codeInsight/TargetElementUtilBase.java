@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomDeclarationSearcher;
@@ -63,6 +64,10 @@ public class TargetElementUtilBase {
 
   @Nullable
   public static PsiReference findReference(Editor editor) {
+    if (caretInVirtualSpace(editor)) {
+      return null;
+    }
+
     return findReference(editor, editor.getCaretModel().getOffset());
   }
 
@@ -104,8 +109,17 @@ public class TargetElementUtilBase {
   @Nullable
   public static PsiElement findTargetElement(Editor editor, int flags) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    int offset = editor.getCaretModel().getOffset();
-    return getInstance().findTargetElement(editor, flags, offset);
+
+    if (caretInVirtualSpace(editor)) {
+      return null;
+    }
+
+    return getInstance().findTargetElement(editor, flags, editor.getCaretModel().getOffset());
+  }
+
+  public static boolean caretInVirtualSpace(Editor editor) {
+    final LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
+    return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
   }
 
   @Nullable

@@ -67,7 +67,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     PsiElement[] targets = null;
 
     if (target == null) {
-      PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      PsiReference ref = TargetElementUtilBase.findReference(editor);
 
       if (ref instanceof PsiPolyVariantReference) {
         ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);

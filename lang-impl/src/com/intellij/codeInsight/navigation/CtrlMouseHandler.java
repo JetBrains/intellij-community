@@ -315,6 +315,10 @@ public class CtrlMouseHandler implements ProjectComponent {
     if (file == null) return null;
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
+    if (TargetElementUtilBase.caretInVirtualSpace(editor)) {
+      return null;
+    }
+
     final int offset = editor.logicalPositionToOffset(pos);
 
     int selStart = editor.getSelectionModel().getSelectionStart();

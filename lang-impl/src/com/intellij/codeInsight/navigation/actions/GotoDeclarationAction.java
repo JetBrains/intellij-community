@@ -83,7 +83,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   // returns true if processor is run or is going to be run after showing popup
   public static boolean chooseAmbiguousTarget(final Editor editor, int offset, PsiElementProcessor<PsiElement> processor,
                                               String titlePattern) {
-    final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
+    final PsiReference reference = TargetElementUtilBase.findReference(editor);
     final Collection<PsiElement> candidates = suggestCandidates(reference);
     if (candidates.size() == 1) {
       PsiElement element = candidates.iterator().next();
@@ -128,6 +128,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
 
     int flags = TargetElementUtilBase.getInstance().getAllAccepted() & ~TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
-    return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
+    return TargetElementUtilBase.findTargetElement(editor, flags);
   }
 }
