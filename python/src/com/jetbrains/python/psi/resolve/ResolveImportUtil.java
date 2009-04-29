@@ -177,15 +177,7 @@ public class ResolveImportUtil {
         if (!visitor.visitRoot(project_root)) return;
       }
       // else look in SDK roots
-      RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
-        @Nullable
-        public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
-          if (value != null) return value;  // for chaining in processOrder()
-          visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
-          return null;
-        }
-      };
-      rootManager.processOrder(resolvePolicy, null);
+      rootManager.processOrder(new SdkRootVisitingPolicy(visitor), null);
     }
     else {
       // no module, another way to look in SDK roots
@@ -193,9 +185,7 @@ public class ResolveImportUtil {
       if (elt_psifile != null) {  // formality
         final VirtualFile elt_vfile = elt_psifile.getVirtualFile();
         if (elt_vfile != null) { // reality
-          for (OrderEntry entry: ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile
-            )
-          ) {
+          for (OrderEntry entry: ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile)) {
             if (!visitGivenRoots(entry.getFiles(OrderRootType.SOURCES), visitor)) break;
           }
         }
@@ -260,17 +250,9 @@ public class ResolveImportUtil {
         if (ret != null) return ret;
       }
       // else look in SDK roots
-      RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
-        @Nullable
-        public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
-          if (value != null) return value;
-          LookupRootVisitor visitor = new LookupRootVisitor(refName, elt.getManager());
-          visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
-          return visitor.getResult();
-        }
-      };
-      PsiElement ret = rootManager.processOrder(resolvePolicy, null);
-      if (ret != null) return ret;
+      LookupRootVisitor visitor = new LookupRootVisitor(refName, elt.getManager());
+      rootManager.processOrder(new SdkRootVisitingPolicy(visitor), null);
+      return visitor.getResult();
     }
     else {
       // no module, another way to look in SDK roots
@@ -358,6 +340,7 @@ public class ResolveImportUtil {
     }
 
     public boolean visitRoot(final VirtualFile root) {
+      if (result != null) return false;
       final VirtualFile childFile = root.findChild(name + PY_SUFFIX);
       if (childFile != null) {
         result = psimgr.findFile(childFile);
@@ -534,15 +517,7 @@ public class ResolveImportUtil {
     final CollectingRootVisitor visitor = new CollectingRootVisitor(partial_ref.getManager());
     final Module module = ModuleUtil.findModuleForPsiElement(partial_ref);
     if (module != null) {
-      RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
-        @Nullable
-        public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
-          if (value != null) return value;
-          visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
-          return null;
-        }
-      };
-      ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
+      ModuleRootManager.getInstance(module).processOrder(new SdkRootVisitingPolicy(visitor), null);
       variants.addAll(visitor.getResult());
     }
 
@@ -607,5 +582,26 @@ public class ResolveImportUtil {
   }
 
 
+  private static class SdkRootVisitingPolicy extends RootPolicy<PsiElement> {
+    private final SdkRootVisitor myVisitor;
 
+    public SdkRootVisitingPolicy(SdkRootVisitor visitor) {
+      myVisitor = visitor;
+    }
+
+    @Nullable
+    public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
+      if (value != null) return value;  // for chaining in processOrder()
+      visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), myVisitor);
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public PsiElement visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, PsiElement value) {
+      if (value != null) return value;  // for chaining in processOrder()
+      visitGivenRoots(libraryOrderEntry.getRootFiles(OrderRootType.SOURCES), myVisitor);
+      return null;
+    }
+  }
 }
