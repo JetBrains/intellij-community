@@ -16,6 +16,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -128,8 +129,12 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     if (parent == null) throw new PsiInvalidElementAccessException(this);
     final PsiElement parentParent = parent.getParent();
     if (!(parentParent instanceof PsiTypeParameterListOwner)) {
-      LOG.assertTrue(false, parentParent + "\n\n" + DebugUtil.psiToString(parentParent, true));
+      // Might be an error element;
+      final PsiTypeParameterListOwner result = PsiTreeUtil.getParentOfType(this, PsiTypeParameterListOwner.class);
+      LOG.assertTrue(result != null, DebugUtil.psiTreeToString(getContainingFile(), true));
+      return result;
     }
+
     return (PsiTypeParameterListOwner) parentParent;
   }
 
