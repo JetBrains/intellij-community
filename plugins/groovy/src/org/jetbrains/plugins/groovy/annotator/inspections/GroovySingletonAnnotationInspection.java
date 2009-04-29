@@ -18,20 +18,23 @@ package org.jetbrains.plugins.groovy.annotator.inspections;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 
 /**
  * User: Dmitry.Krasilschikov
- * Date: 28.04.2009
+ * Date: 29.04.2009
  */
-public class GroovyImmutableAnnotationInspection extends BaseInspection {
-  public static final String IMMUTABLE = "groovy.lang.Immutable";
+public class GroovySingletonAnnotationInspection extends BaseInspection {
+  public static final String SINGLETON = "groovy.lang.Singleton";
 
   protected BaseInspectionVisitor buildVisitor() {
     return new Visitor();
@@ -50,19 +53,30 @@ public class GroovyImmutableAnnotationInspection extends BaseInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Check '@Immutable' annotation conventions";
+    return "Check '@Singleton' annotation conventions";
   }
 
   private static class Visitor extends BaseInspectionVisitor {
-    public void visitAnnotation(GrAnnotation grAnnotation) {
-      super.visitAnnotation(grAnnotation);
+    public void visitAnnotation(GrAnnotation annotation) {
+      super.visitAnnotation(annotation);
 
-      PsiElement parent = grAnnotation.getParent().getParent();
+      PsiElement parent = annotation.getParent().getParent();
       if (parent == null || !(parent instanceof GrTypeDefinition)) return;
 
-      if (IMMUTABLE.equals(grAnnotation.getQualifiedName())) {
-        if (!((GrTypeDefinition)parent).hasModifierProperty(PsiModifier.FINAL)) {
-          registerClassError(((GrTypeDefinition)parent));
+      if (SINGLETON.equals(annotation.getQualifiedName())) {
+        GrTypeDefinition typeDefinition = (GrTypeDefinition)parent;
+
+        PsiMethod[] methods = typeDefinition.getMethods();
+        for (PsiMethod method : methods) {
+          if (method.isConstructor()) {
+            assert method instanceof GrConstructor;
+
+            GrModifierList modifierList = ((GrConstructor)method).getModifierList();
+
+            if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
+              registerClassError(typeDefinition);
+            }
+          }
         }
       }
     }
@@ -70,6 +84,6 @@ public class GroovyImmutableAnnotationInspection extends BaseInspection {
 
   @Override
   protected String buildErrorString(Object... args) {
-    return GroovyBundle.message("immutable.class.should.be.final");
+    return GroovyBundle.message("singleton.class.should.have.private.constructor");
   }
 }

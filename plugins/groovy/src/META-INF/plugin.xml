@@ -38,6 +38,7 @@
   <extensions defaultExtensionNs="org.intellij.groovy">
     <nonCodeProcessor implementation="org.jetbrains.plugins.grails.references.domain.GrailsNonCodeMembersProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.ImmutableAnnotationProcessor"/>
+    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.SingletonAnnotationProcessor"/>
     <libraryManager implementation="org.jetbrains.plugins.gant.config.GantLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.grails.config.GrailsLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager" order="last"/>

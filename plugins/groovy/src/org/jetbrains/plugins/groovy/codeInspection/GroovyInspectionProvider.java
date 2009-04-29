@@ -18,6 +18,8 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection;
+import org.jetbrains.plugins.groovy.annotator.inspections.GroovySingletonAnnotationInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.*;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.*;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.*;
@@ -36,7 +38,6 @@ import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyDuplicateSwitchBranchInspection;
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyMethodWithInconsistentReturnsInspection;
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyUnreachableStatementInspection;
-import org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection;
 
 /**
  * @author ilyas
@@ -156,7 +157,8 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
         GroovyUntypedAccessInspection.class,
         GroovyUnresolvedAccessInspection.class,
 
-        GroovyImmutableAnnotationInspection.class
+        GroovyImmutableAnnotationInspection.class,
+        GroovySingletonAnnotationInspection.class      
     };
   }
 
