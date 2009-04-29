@@ -184,6 +184,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       Disposer.register(this, new Disposable() {
         public void dispose() {
         }
+
+        @Override
+        public String toString() {
+          return "[ui]";
+        }
       }, "ui");
     }
   }

@@ -24,7 +24,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
-import com.intellij.util.ui.update.ComponentDisposable;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;

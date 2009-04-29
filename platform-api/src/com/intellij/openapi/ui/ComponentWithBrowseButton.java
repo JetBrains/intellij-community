@@ -28,7 +28,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +39,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
+public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel implements Disposable {
   private final Comp myComponent;
   private final FixedSizeButton myBrowseButton;
   private boolean myButtonEnabled = true;
@@ -105,17 +107,19 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
   }
 
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener) {
-    if (project == null) {
-      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    }
-    if (project != null) {
-      Disposer.register(project, new Disposable(){
-        public void dispose() {
-          removeActionListener(actionListener);
-        }
-      });
-    }
-    addActionListener(actionListener);
+    new LazyUiDisposable<ComponentWithBrowseButton<Comp>>(null, this, this) {
+      protected void initialize(@NotNull Disposable parent, @NotNull ComponentWithBrowseButton<Comp> child, @Nullable Project project) {
+        addActionListener(actionListener);
+        Disposer.register(child, new Disposable() {
+          public void dispose() {
+            removeActionListener(actionListener);
+          }
+        });
+      }
+    };
+  }
+
+  public void dispose() {
   }
 
   public FixedSizeButton getButton() {

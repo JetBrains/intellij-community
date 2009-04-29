@@ -3,6 +3,7 @@ package com.intellij.openapi.fileChooser.ex;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,13 +16,13 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.update.DisposerUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.update.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -139,22 +140,11 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myCancelAction = new CancelAction();
 
 
-    new UiNotifyConnector.Once(myPathTextField, new Activatable() {
-      public void showNotify() {
-        final Disposable actual = DisposerUtil.findDisposable(parent);
-
-        if (!headless) {
-          Disposer.register(FileTextFieldImpl.this, myUiUpdater);
-        }
-        if (assigned == null) {
-          Disposer.register(actual, FileTextFieldImpl.this);
-        }
+    new LazyUiDisposable<FileTextFieldImpl>(parent, field, this) {
+      protected void initialize(@NotNull Disposable parent, @NotNull FileTextFieldImpl child, @Nullable Project project) {
+        Disposer.register(child, myUiUpdater);
       }
-
-      public void hideNotify() {
-      }
-    });
-
+    };
   }
 
   public void dispose() {

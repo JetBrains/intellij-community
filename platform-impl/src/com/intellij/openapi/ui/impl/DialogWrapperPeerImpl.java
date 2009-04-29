@@ -565,7 +565,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         public void windowDeactivated(final WindowEvent e) {
           if (!isModal()) {
             final Ref<IdeFocusManager> focusManager = new Ref<IdeFocusManager>(null);
-            if (myProject != null && myProject.get() != null) {
+            if (myProject != null && myProject.get() != null && !myProject.get().isDisposed()) {
               focusManager.set(IdeFocusManager.getInstance(myProject.get()));
               focusManager.get().doWhenFocusSettlesDown(new Runnable() {
                 public void run() {

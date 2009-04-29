@@ -19,6 +19,7 @@ import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -207,6 +208,42 @@ public class JBTabsImpl extends JComponent
 
     add(mySingleRowLayout.myLeftGhost);
     add(mySingleRowLayout.myRightGhost);
+
+
+    new LazyUiDisposable<JBTabsImpl>(parent, this, this, project) {
+      protected void initialize(@NotNull Disposable parent, @NotNull JBTabsImpl child, @Nullable Project project) {
+        myProject = project;
+
+        Disposer.register(child, myAnimator);
+        Disposer.register(child, new Disposable() {
+          public void dispose() {
+            removeTimerUpdate();
+          }
+        });
+
+        if (!myTestMode) {
+          final IdeGlassPane gp = IdeGlassPaneUtil.find(child);
+          if (gp != null) {
+            gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, child);
+            myGlassPane = gp;
+          }
+
+          UIUtil.addAwtListener(new AWTEventListener() {
+            public void eventDispatched(final AWTEvent event) {
+              if (mySingleRowLayout.myMorePopup != null) return;
+              processFocusChange();
+            }
+          }, AWTEvent.FOCUS_EVENT_MASK, child);
+
+          myDragHelper = new DragHelper(child);
+          myDragHelper.start();
+        }
+
+        if (myProject != null && myFocusManager == PassThroughtIdeFocusManager.getInstance()) {
+          myFocusManager = IdeFocusManager.getInstance(myProject);
+        }
+      }
+    };
   }
 
 
@@ -277,67 +314,8 @@ public class JBTabsImpl extends JComponent
 
   public void addNotify() {
     super.addNotify();
-
-    try {
-      if (myActionManager != null && !myListenerAdded) {
-        myActionManager.addTimerListener(500, this);
-        myListenerAdded = true;
-      }
-
-      initialize();
-    }
-    finally {
-      myWasEverShown = true;
-    }
+    addTimerUpdate();
   }
-
-  private void initialize() {
-    if (myProject == null) {
-      myProject = tryToFindProject();
-    }
-
-    if (myParent == null) {
-      myParent = tryToFindUiDisposable();
-      if (myParent != null) {
-        Disposer.register(myParent, this);
-      }
-    }
-
-    if (myParent != null) {
-      Disposer.register(this, new Disposable() {
-        public void dispose() {
-          removeTimerUpdate();
-        }
-      });
-
-      Disposer.register(this, myAnimator);
-
-      if (!myTestMode) {
-        final IdeGlassPane gp = IdeGlassPaneUtil.find(this);
-        if (gp != null) {
-          gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, this);
-          myGlassPane = gp;
-        }
-      }
-
-      if (!myWasEverShown) {
-        UIUtil.addAwtListener(new AWTEventListener() {
-          public void eventDispatched(final AWTEvent event) {
-            if (mySingleRowLayout.myMorePopup != null) return;
-            processFocusChange();
-          }
-        }, AWTEvent.FOCUS_EVENT_MASK, this);
-
-        myDragHelper = new DragHelper(this);
-        myDragHelper.start();
-      }
-
-      if (myProject != null && myFocusManager == PassThroughtIdeFocusManager.getInstance()) {
-        myFocusManager = IdeFocusManager.getInstance(myProject);
-      }
-    }
-  }
-
 
   public void removeNotify() {
     super.removeNotify();
@@ -349,6 +327,20 @@ public class JBTabsImpl extends JComponent
     if (myGlassPane != null) {
       myGlassPane.removeMouseMotionPreprocessor(myTabActionsAutoHideListener);
       myGlassPane = null;
+    }
+  }
+
+  private void addTimerUpdate() {
+    if (myActionManager != null && !myListenerAdded) {
+      myActionManager.addTimerListener(500, this);
+      myListenerAdded = true;
+    }
+  }
+
+  private void removeTimerUpdate() {
+    if (myActionManager != null && myListenerAdded) {
+      myActionManager.removeTimerListener(this);
+      myListenerAdded = false;
     }
   }
 
@@ -410,12 +402,6 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  private void removeTimerUpdate() {
-    if (myActionManager != null && myListenerAdded) {
-      myActionManager.removeTimerListener(this);
-      myListenerAdded = false;
-    }
-  }
 
   public ModalityState getModalityState() {
     return ModalityState.stateForComponent(this);
@@ -2574,18 +2560,6 @@ public class JBTabsImpl extends JComponent
 
   public TimedDeadzone.Length getTabActionsMouseDeadzone() {
     return myTabActionsMouseDeadzone;
-  }
-
-  @Nullable
-  private Project tryToFindProject() {
-    if (ApplicationManager.getApplication() == null) return null;
-    return (Project)DataManager.getInstance().getDataContext(this).getData(DataConstants.PROJECT);
-  }
-
-  @Nullable
-  private Disposable tryToFindUiDisposable() {
-    if (ApplicationManager.getApplication() == null) return null;
-    return PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
   }
 
   public JBTabsPresentation setTabDraggingEnabled(boolean enabled) {
