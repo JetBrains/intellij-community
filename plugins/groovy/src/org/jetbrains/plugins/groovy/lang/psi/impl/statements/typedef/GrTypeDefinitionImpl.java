@@ -642,7 +642,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       final PsiClass clazz = method.getContainingClass();
       if (clazz == null) continue;
       PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(clazz, this, PsiSubstitutor.EMPTY);
-      assert superSubstitutor != null;
+      if (superSubstitutor == null) continue;
+
       final MethodSignature signature = method.getSignature(superSubstitutor);
       if (signature.equals(patternSignature)) //noinspection unchecked
       {
