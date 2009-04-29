@@ -57,7 +57,7 @@ public class Packet extends PacketWriter {
 
   public Packet addThrowable(Throwable throwable) {
     String filteredTrace = BaseTestRunner.getFilteredTrace(throwable);
-    String message = makeNewLinesCompatibleWithJUnit(throwableToString(throwable));
+    String message = BaseTestRunner.getPreference("filterstack").equals("true") ? makeNewLinesCompatibleWithJUnit(throwableToString(throwable)) : throwableToString(throwable);
     addLimitedString(message);
     if (filteredTrace.startsWith(message))
       filteredTrace = filteredTrace.substring(message.length());
