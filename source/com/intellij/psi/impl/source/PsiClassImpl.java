@@ -567,7 +567,9 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       }
     }
     else {
-      LOG.assertTrue(classesInScope.length == 1);
+      if (classesInScope.length != 1) {
+        LOG.assertTrue(classesInScope.length == 1, "Parent stub: "+parentStub.getStubType() +"; children: "+parentStub.getChildrenStubs()+"; \ntext:"+context.getText());
+      }
       LOG.assertTrue(classesInScope[0] == aClass);
     }
 
