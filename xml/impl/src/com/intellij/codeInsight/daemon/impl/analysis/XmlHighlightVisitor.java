@@ -78,7 +78,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override public void visitXmlToken(XmlToken token) {
-    if (token.getTokenType() == XmlTokenType.XML_NAME) {
+    if (token.getTokenType() == XmlTokenType.XML_NAME || token.getTokenType() == XmlTokenType.XML_TAG_NAME) {
       PsiElement element = token.getPrevSibling();
       while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
 
