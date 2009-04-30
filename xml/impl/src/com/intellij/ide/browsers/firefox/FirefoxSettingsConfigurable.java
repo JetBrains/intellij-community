@@ -21,15 +21,8 @@ import java.util.List;
  * @author nik
  */
 public class FirefoxSettingsConfigurable implements Configurable {
-  private static final FileChooserDescriptor PROFILES_INI_CHOOSER_DESCRIPTOR = new FileChooserDescriptor(true, false, false, false, false, false) {
-    @Override
-    public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-      if (!file.isDirectory() && !file.getName().equals(FirefoxUtil.PROFILES_INI_FILE)) {
-        return false;
-      }
-      return super.isFileVisible(file, showHiddenFiles);
-    }
-  };
+  private static final FileChooserDescriptor PROFILES_INI_CHOOSER_DESCRIPTOR = createProfilesIniChooserDescriptor();
+
   private JPanel myMainPanel;
   private JComboBox myProfileCombobox;
   private TextFieldWithBrowseButton myProfilesIniPathField;
@@ -40,14 +33,25 @@ public class FirefoxSettingsConfigurable implements Configurable {
 
   public FirefoxSettingsConfigurable(FirefoxSettings settings) {
     mySettings = settings;
-    myProfilesIniPathField.addBrowseFolderListener(XmlBundle.message("chooser.title.select.profiles.ini.file"), null, null,
-                                                   PROFILES_INI_CHOOSER_DESCRIPTOR);
+    myProfilesIniPathField.addBrowseFolderListener(XmlBundle.message("chooser.title.select.profiles.ini.file"), null, null, PROFILES_INI_CHOOSER_DESCRIPTOR);
     myProfilesIniPathField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         updateProfilesList();
       }
     });
+  }
+
+  public static FileChooserDescriptor createProfilesIniChooserDescriptor() {
+    return new FileChooserDescriptor(true, false, false, false, false, false) {
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        if (!file.isDirectory() && !file.getName().equals(FirefoxUtil.PROFILES_INI_FILE)) {
+          return false;
+        }
+        return super.isFileVisible(file, showHiddenFiles);
+      }
+    };
   }
 
   public JComponent createComponent() {

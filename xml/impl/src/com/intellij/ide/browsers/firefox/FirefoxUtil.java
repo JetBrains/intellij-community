@@ -145,13 +145,16 @@ public class FirefoxUtil {
     return Collections.emptyList();
   }
 
-  public static File[] getProfilesDirs() {
+  private static File[] getProfilesDirs() {
     final String userHome = SystemProperties.getUserHome();
     if (SystemInfo.isUnix) {
       return new File[] {new File(userHome, ".mozilla" + File.separator + "firefox")};
     }
     if (SystemInfo.isMac) {
-      return new File[] {new File(userHome, "Library" + File.separator + "Mozilla" + File.separator + "Firefox")};
+      return new File[] {
+          new File(userHome, "Library" + File.separator + "Mozilla" + File.separator + "Firefox"),
+          new File(userHome, "Library" + File.separator + "Application Support" + File.separator + "Firefox"),
+      };
     }
     return new File[] {
       new File(userHome, "Application Data" + File.separator + "Mozilla" + File.separator + "Firefox")

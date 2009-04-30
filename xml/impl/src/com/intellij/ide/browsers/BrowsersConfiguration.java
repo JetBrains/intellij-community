@@ -136,12 +136,12 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
     }
   }
 
-  void updateBrowserValue(final BrowserFamily family, final String path, boolean isActive) {
+  public void updateBrowserValue(final BrowserFamily family, final String path, boolean isActive) {
     final WebBrowserSettings settings = getBrowserSettings(family);
     myBrowserToSettingsMap.put(family, new WebBrowserSettings(path, isActive, settings.getBrowserSpecificSettings()));
   }
 
-  void updateBrowserSpecificSettings(BrowserFamily family, BrowserSpecificSettings specificSettings) {
+  public void updateBrowserSpecificSettings(BrowserFamily family, BrowserSpecificSettings specificSettings) {
     final WebBrowserSettings settings = getBrowserSettings(family);
     myBrowserToSettingsMap.put(family, new WebBrowserSettings(settings.getPath(), settings.isActive(), specificSettings));
   }
