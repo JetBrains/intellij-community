@@ -4,11 +4,12 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
-public class HighlightUsagesAction extends AnAction {
+public class HighlightUsagesAction extends AnAction implements DumbAware {
 
   public HighlightUsagesAction() {
     setInjectedContext(true);
