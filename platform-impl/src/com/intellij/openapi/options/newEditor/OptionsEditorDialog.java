@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +115,8 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     }
 
     saveCurrentConfigurable();
+
+    ApplicationManager.getApplication().saveAll();
 
     super.doOKAction();
   }

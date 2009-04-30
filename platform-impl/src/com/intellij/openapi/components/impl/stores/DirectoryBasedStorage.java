@@ -272,12 +272,21 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
       for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
         if (pair.second == DirectoryBasedStorage.this) {
-          containsSelf = true;
-          break;
+          VirtualFile file = pair.first;
+          if ("xml".equalsIgnoreCase(file.getExtension()) && myDir.getChild(file.getName()).exists()) {
+            containsSelf = true;
+            break;
+          }
         }
       }
 
       if (!containsSelf) return Collections.emptySet();
+
+      if (myStorageData.getComponentNames().size() == 0) {
+        // no state yet, so try to initialize it now
+        final MyStorageData storageData = loadState();
+        return new HashSet<String>(storageData.getComponentNames());
+      }
 
       return new HashSet<String>(myStorageData.getComponentNames());
     }

@@ -1,6 +1,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
@@ -95,6 +96,8 @@ public class SingleConfigurableEditor extends DialogWrapper {
   protected void doOKAction() {
     try {
       if (myConfigurable.isModified()) myConfigurable.apply();
+
+      ApplicationManager.getApplication().saveAll();
     }
     catch (ConfigurationException e) {
       if (e.getMessage() != null) {
