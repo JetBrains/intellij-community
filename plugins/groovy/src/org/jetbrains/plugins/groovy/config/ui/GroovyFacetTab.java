@@ -28,11 +28,14 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
@@ -56,10 +59,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -76,6 +76,7 @@ public class GroovyFacetTab extends FacetEditorTab {
   private JButton myRemoveButton;
   private JList myLibraryList;
   private JButton myModuleDeps;
+  private JCheckBox myIsGrails;
   private final ProjectSettingsContext myEditorContext;
 
   private final GroovyFacetConfiguration myConfiguration;
@@ -98,6 +99,14 @@ public class GroovyFacetTab extends FacetEditorTab {
     ((FacetEditorContextBase)editorContext).addFacetContextChangeListener(new FacetContextChangeListener() {
       public void moduleRootsChanged(ModifiableRootModel rootModel) {
         updateLibraryList();
+        final boolean hasGrails = hasGrailsLibrary();
+        if (!myIsGrails.isEnabled() && hasGrails) {
+          myIsGrails.setEnabled(true);
+          myIsGrails.setSelected(true);
+        } else if (!hasGrails) {
+          myIsGrails.setEnabled(false);
+          myIsGrails.setSelected(false);
+        }
       }
 
       public void facetModelChanged(@NotNull Module module) {
@@ -139,13 +148,17 @@ public class GroovyFacetTab extends FacetEditorTab {
     });
   }
 
+  private boolean hasGrailsLibrary() {
+    for (ManagedLibrary library : getUsedLibraries()) {
+      if (library.manager instanceof GrailsLibraryManager) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void performAddAction(final JComponent component, boolean mainOnly) {
     final Set<ManagedLibrary> managed = getUsedLibraries();
-    final Set<LibraryManager> usedManagers = ContainerUtil.map2Set(managed, new Function<ManagedLibrary, LibraryManager>() {
-      public LibraryManager fun(ManagedLibrary managedLibrary) {
-        return managedLibrary.manager;
-      }
-    });
     final Set<Library> usedLibraries = ContainerUtil.map2Set(managed, new Function<ManagedLibrary, Library>() {
       public Library fun(ManagedLibrary managedLibrary) {
         return managedLibrary.library;
@@ -160,7 +173,7 @@ public class GroovyFacetTab extends FacetEditorTab {
     for (Library library : myLibrariesContainer.getAllLibraries()) {
       if (!usedLibraries.contains(library)) {
         final LibraryManager manager = findManagerFor(library);
-        if (manager != null && !usedManagers.contains(manager)) {
+        if (manager != null) {
           libs.putValue(manager, new ManagedLibrary(library, manager));
         }
       }
@@ -169,9 +182,6 @@ public class GroovyFacetTab extends FacetEditorTab {
     for (int i = myManagers.length - 1; i >= 0; i--) {
       LibraryManager manager = myManagers[i];
       if (mainOnly && !isGroovyOrGrails(manager)) {
-        continue;
-      }
-      if (usedManagers.contains(manager)) {
         continue;
       }
 
@@ -201,6 +211,11 @@ public class GroovyFacetTab extends FacetEditorTab {
     for (final Object value : myLibraryList.getSelectedValues()) {
       toDelete.add(((ManagedLibrary) value).library);
     }
+    doRemoveLibraries(toDelete);
+    updateLibraryList();
+  }
+
+  private void doRemoveLibraries(Set<Library> toDelete) {
     final ModifiableRootModel rootModel = myEditorContext.getModifiableRootModel();
     for (OrderEntry entry : rootModel.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {
@@ -211,7 +226,6 @@ public class GroovyFacetTab extends FacetEditorTab {
         }
       }
     }
-    updateLibraryList();
   }
 
   private void setUpLibraryList() {
@@ -312,11 +326,13 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   private void updateLibraryList() {
     myListModel.clear();
+    Set<LibraryManager> usedManagers = new HashSet<LibraryManager>();
     for (final ManagedLibrary library : getUsedLibraries()) {
       myListModel.addElement(library);
+      usedManagers.add(library.manager);
     }
 
-    myAddButton.setEnabled(getUsedLibraries().size() < myManagers.length);
+    myAddButton.setEnabled(usedManagers.size() < myManagers.length);
     myValidatorsManager.validate();
   }
 
@@ -333,6 +349,9 @@ public class GroovyFacetTab extends FacetEditorTab {
     if (myCompile.isSelected() != myConfiguration.isCompileGroovyFiles()) {
       return true;
     }
+    if (isGrailsApplication() != myConfiguration.getGrailsApplication()) {
+      return true;
+    }
 
     return false;
   }
@@ -344,10 +363,19 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void apply() throws ConfigurationException {
     myConfiguration.setCompileGroovyFiles(myCompile.isSelected());
+    myConfiguration.setGrailsApplication(isGrailsApplication());
+  }
+
+  @Nullable
+  private Boolean isGrailsApplication() {
+    return myIsGrails.isEnabled() ? myIsGrails.isSelected() : null;
   }
 
   public void reset() {
     (myConfiguration.isCompileGroovyFiles() ? myCompile : myCopyToOutput).setSelected(true);
+    final Boolean isGrails = myConfiguration.getGrailsApplication();
+    myIsGrails.setEnabled(isGrails != null);
+    myIsGrails.setSelected(isGrails != null && isGrails.booleanValue());
     updateLibraryList();
   }
 
@@ -406,19 +434,48 @@ public class GroovyFacetTab extends FacetEditorTab {
     }
 
     @Override
-    public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
-      if (selectedValue instanceof ManagedLibrary) {
-        myEditorContext.getModifiableRootModel().addLibraryEntry(((ManagedLibrary)selectedValue).library);
-      }
-      else if (selectedValue instanceof LibraryManager) {
-        final Library library = ((LibraryManager)selectedValue).createLibrary(myEditorContext);
-        if (library == null) {
-          return FINAL_CHOICE;
+    public PopupStep onChosen(final Object selectedValue, boolean finalChoice) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (selectedValue instanceof ManagedLibrary) {
+            final ManagedLibrary managedLibrary = (ManagedLibrary)selectedValue;
+            final LibraryManager manager = managedLibrary.manager;
+            for (ManagedLibrary existing : getUsedLibraries()) {
+              if (existing.manager == manager) {
+                @SuppressWarnings({"NonConstantStringShouldBeStringBuffer"})
+                String message = "There is already a " + manager.getLibraryCategoryName() + " library";
+                final String version = manager.getLibraryVersion(existing.library, myLibrariesContainer);
+                if (StringUtil.isNotEmpty(version)) {
+                  message += " of version " + version;
+                }
+                message += ".\n Do you want to replace the existing one?";
+                final String replace = "&Replace";
+                final int result =
+                  Messages.showDialog(myPanel, message, "Library already exists", new String[]{replace, "&Add", "&Cancel"}, 0, null);
+                if (result == 2 || result < 0) {
+                  return; //cancel
+                }
+
+                if (result == 0) {
+                  doRemoveLibraries(Collections.singleton(existing.library));
+                }
+              }
+            }
+
+            myEditorContext.getModifiableRootModel().addLibraryEntry(managedLibrary.library);
+          }
+          else if (selectedValue instanceof LibraryManager) {
+            final Library library = ((LibraryManager)selectedValue).createLibrary(myEditorContext);
+            if (library == null) {
+              return;
+            }
+            myEditorContext.getModifiableRootModel().addLibraryEntry(library);
+          }
+
+          updateLibraryList();
         }
-        myEditorContext.getModifiableRootModel().addLibraryEntry(library);
-      }
-      //todo reorder
-      updateLibraryList();
+      }, ModalityState.stateForComponent(myPanel));
+
       return FINAL_CHOICE;
     }
   }
