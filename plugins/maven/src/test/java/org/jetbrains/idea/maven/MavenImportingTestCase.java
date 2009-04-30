@@ -54,6 +54,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    myMavenProjectsManager.projectClosed();
     removeFromLocalRepository("test");
     super.tearDown();
   }

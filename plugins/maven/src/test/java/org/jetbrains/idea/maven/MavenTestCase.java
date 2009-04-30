@@ -3,19 +3,16 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import junit.framework.TestCase;
@@ -302,15 +299,7 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   private void setFileContent(VirtualFile file, String content) throws IOException {
-    FileDocumentManager manager = FileDocumentManager.getInstance();
-    Document doc = manager.getCachedDocument(file);
-    if (doc != null) {
-      doc.setText(content);
-      PsiDocumentManager.getInstance(myProject).commitDocument(doc);
-      manager.saveDocument(doc);
-    } else {
-      file.setBinaryContent(content.getBytes());
-    }
+    file.setBinaryContent(content.getBytes());
   }
 
   protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
