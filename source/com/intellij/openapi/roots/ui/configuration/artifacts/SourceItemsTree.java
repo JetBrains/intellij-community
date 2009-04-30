@@ -6,12 +6,12 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
-import com.intellij.packaging.elements.PackagingElementFactory;
-import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.PackagingDragAndDropSourceItemsProvider;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.PackagingSourceItemsGroup;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
@@ -52,8 +52,8 @@ public class SourceItemsTree implements DnDSource, Disposable{
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        if (value instanceof ProviderNode) {
-          append(((ProviderNode)value).myProvider.getGroupName());
+        if (value instanceof SourceItemGroupNode) {
+          ((SourceItemGroupNode)value).getGroup().render(this);
         }
         else if (value instanceof SourceItemNode) {
           ((SourceItemNode)value).getSourceItem().render(this);
@@ -65,22 +65,29 @@ public class SourceItemsTree implements DnDSource, Disposable{
 
   public void rebuildTree() {
     myRoot.removeAllChildren();
-    final PackagingElementType<?>[] types = PackagingElementFactory.getInstance().getAllElementTypes();
-    for (PackagingElementType<?> type : types) {
-      final PackagingDragAndDropSourceItemsProvider provider = type.getDragAndDropSourceItemsProvider();
-      if (provider != null) {
-        final Collection<? extends PackagingSourceItem> items = provider.getSourceItems(myEditorContext, myArtifactsEditor.getArtifact());
-        if (!items.isEmpty()) {
-          ProviderNode providerNode = new ProviderNode(provider);
-          for (PackagingSourceItem item : items) {
-            providerNode.add(new SourceItemNode(item));
+    addChildren(null, myRoot);
+    myTreeModel.nodeStructureChanged(myRoot);
+    TreeUtil.expandAll(myTree);
+  }
+
+  private void addChildren(final PackagingSourceItemsGroup parent, final DefaultMutableTreeNode node) {
+    final PackagingDragAndDropSourceItemsProvider[] providers = Extensions.getExtensions(PackagingDragAndDropSourceItemsProvider.EP_NAME);
+    for (PackagingDragAndDropSourceItemsProvider provider : providers) {
+      final Collection<? extends PackagingSourceItemsGroup> items = provider.getSourceItems(myEditorContext, myArtifactsEditor.getArtifact(),
+                                                                                            parent);
+      for (PackagingSourceItemsGroup item : items) {
+        if (item instanceof PackagingSourceItem) {
+          node.add(new SourceItemNode((PackagingSourceItem)item));
+        }
+        else {
+          final DefaultMutableTreeNode child = new SourceItemGroupNode(item);
+          addChildren(item, child);
+          if (child.getChildCount() > 0) {
+            node.add(child);
           }
-          myRoot.add(providerNode);
         }
       }
     }
-    myTreeModel.nodeStructureChanged(myRoot);
-    TreeUtil.expandAll(myTree);
   }
 
   public Tree getTree() {
@@ -122,11 +129,15 @@ public class SourceItemsTree implements DnDSource, Disposable{
   public void dropActionChanged(int gestureModifiers) {
   }
 
-  public static class ProviderNode extends DefaultMutableTreeNode {
-    private final PackagingDragAndDropSourceItemsProvider myProvider;
+  public static class SourceItemGroupNode extends DefaultMutableTreeNode {
+    private final PackagingSourceItemsGroup myGroup;
 
-    public ProviderNode(PackagingDragAndDropSourceItemsProvider provider) {
-      myProvider = provider;
+    public SourceItemGroupNode(PackagingSourceItemsGroup group) {
+      myGroup = group;
+    }
+
+    public PackagingSourceItemsGroup getGroup() {
+      return myGroup;
     }
   }
 

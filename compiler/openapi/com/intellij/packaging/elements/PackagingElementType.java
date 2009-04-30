@@ -2,10 +2,9 @@ package com.intellij.packaging.elements;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.PackagingDragAndDropSourceItemsProvider;
-import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,11 +44,6 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
 
   @NotNull
   public abstract E createEmpty();
-
-  @Nullable
-  public PackagingDragAndDropSourceItemsProvider getDragAndDropSourceItemsProvider() {
-    return null;
-  }
 
   protected static <T extends PackagingElementType<?>> T getInstance(final Class<T> aClass) {
     for (PackagingElementType type : Extensions.getExtensions(EP_NAME)) {

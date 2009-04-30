@@ -13,14 +13,16 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureCo
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.CompositePackagingElementType;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -65,6 +67,19 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     myPostprocessingPanel = new ArtifactPostprocessingPanel(myContext);
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myPackagingElementsTree);
+    myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
+    final String outputPath = artifact.getOutputPath();
+    myOutputDirectoryField.setText(outputPath != null ? FileUtil.toSystemDependentName(outputPath) : null);
+  }
+
+  public void apply() {
+    final ModifiableArtifact modifiableArtifact = myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
+    modifiableArtifact.setBuildOnMake(myBuildOnMakeCheckBox.isSelected());
+    String outputPath = FileUtil.toSystemIndependentName(myOutputDirectoryField.getText().trim());
+    if (outputPath.length() == 0) {
+      outputPath = null;
+    }
+    modifiableArtifact.setOutputPath(outputPath);
   }
 
   public void addListener(@NotNull final ArtifactsEditorListener listener) {

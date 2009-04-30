@@ -89,10 +89,14 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
     myTree.setCellEditor(new DefaultCellEditor(new JTextField()) {
       @Override
       public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
-        final Component component = super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
+        final JTextField field = (JTextField)super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
         final PackagingElement<?> element = ((PackagingElementNode)value).getPackagingElement();
-        ((JTextField)component).setText(((CompositePackagingElement)element).getName());
-        return component;
+        final String name = ((CompositePackagingElement)element).getName();
+        field.setText(name);
+        int i = name.lastIndexOf('.');
+        field.setSelectionStart(0);
+        field.setSelectionEnd(i != -1 ? i : name.length());
+        return field;
       }
 
       @Override
@@ -189,7 +193,7 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
     }
   }
 
-  private void addNode(ArtifactsTreeNode parent, PackagingElement<?> child) {
+  private void addNode(@NotNull ArtifactsTreeNode parent, @NotNull PackagingElement<?> child) {
     if (child instanceof ComplexPackagingElement && myTreeParameters.isShowIncludedContent()) {
       final Collection<? extends PackagingElement<?>> substitution = ((ComplexPackagingElement<?>)child).getSubstitution(myContext);
       addNodes(parent, substitution);
@@ -206,7 +210,7 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
     return myRoot;
   }
 
-  private PackagingElementNode findNodeToMergeOrCreate(ArtifactsTreeNode parent, PackagingElement<?> element) {
+  private PackagingElementNode findNodeToMergeOrCreate(@NotNull ArtifactsTreeNode parent, @NotNull PackagingElement<?> element) {
     for (ArtifactsTreeNode node : parent.getChildren()) {
       if (node instanceof PackagingElementNode) {
         final PackagingElementNode packagingElementNode = (PackagingElementNode)node;
@@ -348,7 +352,7 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
         aEvent.setDropPossible(true, null);
       }
     }
-    return true;
+    return false;
   }
 
   public void drop(DnDEvent aEvent) {
@@ -361,8 +365,8 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
         return;
       }
       for (PackagingSourceItem item : draggingObject.getSourceItems()) {
-        final PackagingElement element = item.createElement();
-        target.addChild(element);
+        final List<? extends PackagingElement<?>> elements = item.createElements();
+        target.addChildren(elements);
       }
       myArtifactsEditor.rebuildTries();
     }

@@ -2,8 +2,9 @@ package com.intellij.packaging.elements;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -15,11 +16,15 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
     super(type);
   }
 
-  public void addChild(PackagingElement<?> child) {
+  public void addChild(@NotNull PackagingElement<?> child) {
     myChildren.add(child);
   }
 
-  public void removeChild(PackagingElement<?> child) {
+  public void addChildren(Collection<? extends PackagingElement<?>> children) {
+    myChildren.addAll(children);
+  }
+
+  public void removeChild(@NotNull PackagingElement<?> child) {
     myChildren.remove(child);
   }
 

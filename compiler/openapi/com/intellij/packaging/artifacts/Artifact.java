@@ -2,6 +2,7 @@ package com.intellij.packaging.artifacts;
 
 import com.intellij.packaging.elements.ArtifactRootElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -14,6 +15,6 @@ public interface Artifact {
   @NotNull
   ArtifactRootElement<?> getRootElement();
 
-
+  @Nullable
   String getOutputPath();
 }

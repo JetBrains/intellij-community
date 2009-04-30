@@ -11,7 +11,7 @@ import org.jdom.Element;
 public class ArtifactState {
   private String myName;
   private String myOutputPath;
-  private boolean myEnabled;
+  private boolean myBuildOnMake;
   private Element myRootElement;
 
   @Attribute("name")
@@ -19,9 +19,9 @@ public class ArtifactState {
     return myName;
   }
 
-  @Attribute("enabled")
-  public boolean isEnabled() {
-    return myEnabled;
+  @Attribute("build-on-make")
+  public boolean isBuildOnMake() {
+    return myBuildOnMake;
   }
 
   @Tag("output-path")
@@ -42,8 +42,8 @@ public class ArtifactState {
     myOutputPath = outputPath;
   }
 
-  public void setEnabled(boolean enabled) {
-    myEnabled = enabled;
+  public void setBuildOnMake(boolean buildOnMake) {
+    myBuildOnMake = buildOnMake;
   }
 
   public void setRootElement(Element rootElement) {

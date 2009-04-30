@@ -60,7 +60,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     final ArtifactManagerState state = new ArtifactManagerState();
     for (Artifact artifact : getArtifacts()) {
       final ArtifactState artifactState = new ArtifactState();
-      artifactState.setEnabled(artifact.isBuildOnMake());
+      artifactState.setBuildOnMake(artifact.isBuildOnMake());
       artifactState.setName(artifact.getName());
       artifactState.setOutputPath(artifact.getOutputPath());
       artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
@@ -112,7 +112,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       else {
         rootElement = new ArtifactRootElementImpl();
       }
-      artifacts.add(new ArtifactImpl(state.getName(), state.isEnabled(), rootElement, state.getOutputPath()));
+      artifacts.add(new ArtifactImpl(state.getName(), state.isBuildOnMake(), rootElement, state.getOutputPath()));
     }
     commit(artifacts);
   }

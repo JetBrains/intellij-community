@@ -76,10 +76,10 @@ public class ArtifactUtil {
                                                                          final boolean processSubstituions) {
     for (PackagingElement<?> element : elements) {
       if (!processElements(element, type, processor, resolvingContext, processSubstituions)) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   private static <E extends PackagingElement<?>> boolean processElements(@NotNull PackagingElement<?> element, @NotNull PackagingElementType<E> type,

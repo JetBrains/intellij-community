@@ -4,22 +4,23 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
-import com.intellij.openapi.roots.ui.configuration.artifacts.dragAndDrop.LibrariesSourceItemsProvider;
 import com.intellij.openapi.roots.ui.configuration.packaging.ChooseLibrariesDialog;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.ui.PackagingDragAndDropSourceItemsProvider;
+import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.util.Icons;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.io.File;
+import java.util.*;
 
 /**
 * @author nik
@@ -36,28 +37,35 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
     return Icons.LIBRARY_ICON;
   }
 
-  @Override
-  public PackagingDragAndDropSourceItemsProvider getDragAndDropSourceItemsProvider() {
-    return new LibrariesSourceItemsProvider();
-  }
-
-  public static List<? extends Library> getNotAddedLibraries(@NotNull final PackagingEditorContext context, @NotNull Artifact artifact) {
-    final HashSet<Library> libraries = new HashSet<Library>();
-    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries()));
-    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable(context.getProject()).getLibraries()));
-    ArtifactUtil.processPackagingElements(artifact, LIBRARY_ELEMENT_TYPE, new Processor<LibraryPackagingElement>() {
-      public boolean process(LibraryPackagingElement libraryPackagingElement) {
-        libraries.remove(libraryPackagingElement.findLibrary(context));
+  public static List<? extends Library> getNotAddedLibraries(@NotNull final PackagingEditorContext context, @NotNull Artifact artifact,
+                                                             List<Library> librariesList) {
+    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    ArtifactUtil.processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, new Processor<FileCopyPackagingElement>() {
+      public boolean process(FileCopyPackagingElement fileCopyPackagingElement) {
+        final String url = VfsUtil.getUrlForLibraryRoot(new File(FileUtil.toSystemDependentName(fileCopyPackagingElement.getFilePath())));
+        final VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+        if (root != null) {
+          roots.add(root);
+        }
         return true;
       }
     }, context, true);
-    return new ArrayList<Library>(libraries);
+    final List<Library> result = new ArrayList<Library>();
+    for (Library library : librariesList) {
+      if (!roots.containsAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)))) {
+        result.add(library);
+      }
+    }
+    return result;
   }
 
   @NotNull
   public List<? extends LibraryPackagingElement> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact,
                                                                   CompositePackagingElement<?> parent) {
-    ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(context.getProject(), getNotAddedLibraries(context, artifact),
+    List<Library> libraries = new ArrayList<Library>();
+    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries()));
+    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable(context.getProject()).getLibraries()));
+    ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(context.getProject(), getNotAddedLibraries(context, artifact, libraries),
                                                              ProjectBundle.message("dialog.title.packaging.choose.library"), "");
     dialog.show();
     final List<Library> selected = dialog.getChosenElements();
