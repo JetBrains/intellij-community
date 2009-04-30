@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
- * Implementations of this interface exposed as ApplicationComponent add default mappings
+ * Implementations of this interface add default mappings
  * for namespace prefixes to namespaces for any xml file.
  */
 public interface XmlFileNSInfoProvider {
