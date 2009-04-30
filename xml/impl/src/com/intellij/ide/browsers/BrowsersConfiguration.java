@@ -207,7 +207,13 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
   public static void launchBrowser(@NonNls @NotNull String path, @NonNls String... parameters) throws IOException {
     String[] command;
     if (SystemInfo.isMac) {
-      command = new String[]{"open", "-a", path};
+      if (parameters.length > 1) {
+        //open -a command doesn't support additional parameters 
+        command = new String[] {path};
+      }
+      else {
+        command = new String[]{"open", "-a", path};
+      }
     }
     else if (SystemInfo.isWindows9x) {
       if (path.indexOf(File.separatorChar) != -1) {
