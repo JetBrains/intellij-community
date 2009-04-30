@@ -39,6 +39,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JScrollPane2;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
@@ -96,7 +97,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final CommandProcessor myCommandProcessor;
   private MyScrollBar myVerticalScrollBar;
 
-  private final CopyOnWriteArrayList<EditorMouseListener> myMouseListeners = new CopyOnWriteArrayList<EditorMouseListener>();
+  private final CopyOnWriteArrayList<EditorMouseListener> myMouseListeners = ContainerUtil.createEmptyCOWList();
   private final CopyOnWriteArrayList<EditorMouseMotionListener> myMouseMotionListeners;
 
   private int myCharHeight = -1;
@@ -216,7 +217,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCommandProcessor = CommandProcessor.getInstance();
 
     myEditorDocumentAdapter = new EditorDocumentAdapter();
-    myMouseMotionListeners = new CopyOnWriteArrayList<EditorMouseMotionListener>();
+    myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
     myMarkupModelListener = new MarkupModelListener() {
       public void rangeHighlighterChanged(MarkupModelEvent event) {
@@ -412,7 +413,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingModel.dispose();
     myGutterComponent.dispose();
     clearCaretThread();
-//    myFoldingModel.dispose();
+    //myFoldingModel.dispose(); TODO rangemarker tree
   }
 
   private void clearCaretThread() {
@@ -3004,7 +3005,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myTimer = new Timer(TIMER_PERIOD, new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          myCommandProcessor.executeCommand(myProject, new Runnable() {
+          myCommandProcessor.executeCommand(myProject, new DocumentRunnable(getDocument(), getProject()) {
             public void run() {
               int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
               LogicalPosition caretPosition = getCaretModel().getLogicalPosition();
