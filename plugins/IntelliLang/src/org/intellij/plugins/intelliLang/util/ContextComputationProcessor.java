@@ -84,7 +84,8 @@ public class ContextComputationProcessor {
     }
     else if (expression instanceof PsiLanguageInjectionHost &&
              (firstChild = expression.getFirstChild()) instanceof PsiJavaToken &&
-             ((PsiJavaToken)firstChild).getTokenType() == JavaTokenType.STRING_LITERAL) {
+             (((PsiJavaToken)firstChild).getTokenType() == JavaTokenType.STRING_LITERAL ||
+              ((PsiJavaToken)firstChild).getTokenType() == JavaTokenType.CHARACTER_LITERAL)) {
       result.add(expression);
     }
     else {
