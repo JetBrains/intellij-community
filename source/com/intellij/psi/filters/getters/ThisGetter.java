@@ -25,8 +25,11 @@ public class ThisGetter implements ContextGetter{
     final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
 
+    PsiElement prev = context;
+    context = context.getContext();
+
     while(context != null){
-      if(context instanceof PsiClass){
+      if(context instanceof PsiClass && !(prev instanceof PsiExpressionList)){
         final String expressionText;
         if(first){
           first = false;
@@ -41,6 +44,7 @@ public class ThisGetter implements ContextGetter{
       if(context instanceof PsiModifierListOwner){
         if(((PsiModifierListOwner)context).hasModifierProperty(PsiModifier.STATIC)) break;
       }
+      prev = context;
       context = context.getContext();
     }
     return expressions;
