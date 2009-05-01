@@ -38,7 +38,6 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
@@ -57,7 +56,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private static boolean ourDoJaxpTesting;
 
-  @NonNls private static final String XML = "xml";
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new TextAttributes() {
     public boolean isEmpty() {
       return false;
@@ -87,21 +85,17 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
         if (parent instanceof XmlTag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
           XmlTag tag = (XmlTag)parent;
-          checkTag(tag, token);
+          checkTag(tag);
         }
       }
     }
   }
 
-  private void checkTag(XmlTag tag, final XmlToken token) {
+  private void checkTag(XmlTag tag) {
     if (ourDoJaxpTesting) return;
 
     if (myResult == null) {
       checkTagByDescriptor(tag);
-    }
-
-    if (myResult == null) {
-//      checkUnboundNamespacePrefix(tag, tag, tag.getNamespacePrefix(), token);
     }
 
     if (myResult == null) {
@@ -117,60 +111,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         }
 
         checkReferences(tag);
-      }
-    }
-  }
-
-  private void checkUnboundNamespacePrefix(final XmlElement element,
-                                           final XmlTag context,
-                                           String namespacePrefix, final XmlToken token) {
-
-    if (namespacePrefix.length() > 0 || element instanceof XmlTag && element.getParent() instanceof XmlDocument) {
-      final String namespaceByPrefix = context.getNamespaceByPrefix(namespacePrefix);
-
-      if (namespaceByPrefix.length() == 0) {
-        final XmlFile containingFile = (XmlFile)context.getContainingFile();
-        if (!HighlightLevelUtil.shouldInspect(containingFile)) return;
-
-        if (!XML.equals(namespacePrefix) ) {
-
-          final XmlExtension extension = XmlExtension.getExtension(containingFile);
-          if (extension.isPrefixDeclared(context, namespacePrefix)) {
-            return;
-          }
-          final String localizedMessage = XmlErrorMessages.message("unbound.namespace", namespacePrefix);
-
-          if (namespacePrefix.length() == 0) {
-            final XmlTag tag = (XmlTag)element;
-            if (!XmlUtil.JSP_URI.equals(tag.getNamespace())) {
-              addElementsForTag(tag,
-                localizedMessage,
-                HighlightInfoType.INFORMATION,
-                new CreateNSDeclarationIntentionFix(context, namespacePrefix, token)
-              );
-            }
-
-            return;
-          }
-
-          final HighlightInfoType infoType = extension.getHighlightInfoType(containingFile);
-
-          final int messageLength = namespacePrefix.length();
-          if (element instanceof XmlTag) {
-            bindMessageToTag(
-              (XmlTag)element,
-              infoType, messageLength,
-              localizedMessage, null, new CreateNSDeclarationIntentionFix(context, namespacePrefix, token)
-            );
-          } else {
-            bindMessageToAstNode(
-              element,
-              infoType,
-              0,
-              messageLength,
-              localizedMessage);
-          }
-        }
       }
     }
   }
@@ -227,7 +167,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if (parentDescriptor != null) {
-        elementDescriptor = XmlExtension.getExtension((XmlFile)tag.getContainingFile()).getElementDescriptor(tag, parentTag, parentDescriptor);
+        elementDescriptor = XmlExtension.getExtension(tag.getContainingFile()).getElementDescriptor(tag, parentTag, parentDescriptor);
       }
 
       if (parentDescriptor != null &&
@@ -284,7 +224,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     if (requiredAttributes != null) {
       for (final String attrName : requiredAttributes) {
         if (tag.getAttribute(attrName, "") == null &&
-            !XmlExtension.getExtension((XmlFile)tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
+            !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
           final InsertRequiredAttributeFix insertRequiredAttributeIntention = new InsertRequiredAttributeFix(
               tag, attrName, null);
@@ -309,6 +249,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
 
     if (elementDescriptor instanceof Validator) {
+      //noinspection unchecked
       ((Validator<XmlTag>)elementDescriptor).validate(tag,this);
     }
   }
@@ -455,7 +396,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     ProgressManager progressManager = ProgressManager.getInstance();
     final PsiFile containingFile = tag.getContainingFile();
     final XmlExtension extension = containingFile instanceof XmlFile ?
-                                   XmlExtension.getExtension((XmlFile)containingFile) :
+                                   XmlExtension.getExtension(containingFile) :
                                    XmlExtension.DEFAULT_EXTENSION;
     for (XmlAttribute tagAttribute : attributes) {
       progressManager.checkCanceled();
@@ -481,6 +422,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     if (document.getLanguage() == DTDLanguage.INSTANCE) {
       final PsiMetaData psiMetaData = document.getMetaData();
       if (psiMetaData instanceof Validator) {
+        //noinspection unchecked
         ((Validator<XmlDocument>)psiMetaData).validate(document, this);
       }
     }
@@ -565,6 +507,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
     }
     else {
+      //noinspection UnresolvedPropertyKey
       message = PsiBundle.message("cannot.resolve.symbol");
     }
 
@@ -602,7 +545,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   public void addMessage(PsiElement context, String message, int type) {
     if (message != null && message.length() > 0) {
-      if (context instanceof XmlTag && XmlExtension.getExtension((XmlFile)context.getContainingFile()).shouldBeHighlightedAsTag((XmlTag)context)) {
+      if (context instanceof XmlTag && XmlExtension.getExtension(context.getContainingFile()).shouldBeHighlightedAsTag((XmlTag)context)) {
         addElementsForTag((XmlTag)context, message, type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO, null);
       }
       else {
