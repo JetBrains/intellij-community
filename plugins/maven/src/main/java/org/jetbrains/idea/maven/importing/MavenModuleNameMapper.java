@@ -1,12 +1,14 @@
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.importing;
 
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ide.highlighter.ModuleFileType;
+import gnu.trove.THashMap;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +75,7 @@ public class MavenModuleNameMapper {
 
   private static Map<String, Integer> collectNamesCounts(MavenProjectsTree mavenTree,
                                                          Map<MavenProject, String> mavenProjectToModuleName) {
-    Map<String, Integer> result = new HashMap<String, Integer>();
+    Map<String, Integer> result = new THashMap<String, Integer>();
 
     for (MavenProject each : mavenTree.getProjects()) {
       String name = mavenProjectToModuleName.get(each);

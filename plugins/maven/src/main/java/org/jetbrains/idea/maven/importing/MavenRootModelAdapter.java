@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -13,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenArtifact;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 import java.text.MessageFormat;
@@ -24,7 +27,7 @@ public class MavenRootModelAdapter {
 
   public MavenRootModelAdapter(MavenProject p, Module module, final MavenModuleModelsProvider rootModelsProvider) {
     myMavenProject = p;
-    myRootModel = rootModelsProvider.getRootModel(module);
+    myRootModel = rootModelsProvider.getModifiableRootModel(module);
   }
 
   public void init(boolean isNewlyCreatedModule) {
@@ -212,7 +215,6 @@ public class MavenRootModelAdapter {
       provider.commit(libraryModel);
     }
 
-    provider.markLibraryAsUsed(library);
     myRootModel.addLibraryEntry(library).setExported(isExportable);
 
     removeOldLibraryDependency(artifact);

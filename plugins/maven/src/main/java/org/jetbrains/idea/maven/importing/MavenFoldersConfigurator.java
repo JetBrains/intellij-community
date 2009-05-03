@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -7,6 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
 import org.jetbrains.idea.maven.facets.FacetImporter;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenImportingSettings;
+import org.jetbrains.idea.maven.project.MavenResource;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 import java.util.ArrayList;

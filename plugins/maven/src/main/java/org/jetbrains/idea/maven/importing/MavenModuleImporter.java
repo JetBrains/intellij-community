@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -6,11 +6,12 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facets.FacetImporter;
+import org.jetbrains.idea.maven.project.*;
 
 import java.util.List;
 import java.util.Map;
 
-public class MavenModuleConfigurator {
+public class MavenModuleImporter {
   private final Module myModule;
   private final ModifiableModuleModel myModuleModel;
   private final MavenProjectsTree myMavenTree;
@@ -21,7 +22,7 @@ public class MavenModuleConfigurator {
   private final ProjectLibrariesProvider myLibrariesProvider;
   private MavenRootModelAdapter myRootModelAdapter;
 
-  public MavenModuleConfigurator(Module module,
+  public MavenModuleImporter(Module module,
                                  ModifiableModuleModel moduleModel,
                                  MavenProjectsTree mavenTree,
                                  MavenProject mavenProject,
