@@ -97,6 +97,14 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     myPassThrough = passThrough;
   }
 
+  public void activate() {
+    showNotify();
+  }
+
+  public void deactivate() {
+    hideNotify();
+  }
+
   public void hideNotify() {
     if (!myActive) {
       return;
@@ -113,10 +121,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
     restartTimer();
     myActive = true;
-    flush();
+    //flush();
   }
 
-  private void restartTimer() {
+  public void restartTimer() {
     clearWaiter();
     myWaiterForMerge.addRequest(this, myMergingTimeSpan, getMergerModailityState());
   }
