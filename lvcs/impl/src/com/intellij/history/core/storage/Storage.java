@@ -84,7 +84,7 @@ public class Storage {
     }
   }
 
-  private IContentStorage createContentStorage() throws IOException {
+  protected IContentStorage createContentStorage() throws IOException {
     return ContentStorage.createContentStorage(new File(myDir, CONTENTS_FILE));
   }
 
@@ -191,7 +191,6 @@ public class Storage {
 
   private void markAsBroken(BrokenStorageException cause) {
     LOG.warn("Local History storage is broken. It will be rebuilt on project reopen.", cause);
-
     isBroken = true;
     try {
       myDir.mkdirs();

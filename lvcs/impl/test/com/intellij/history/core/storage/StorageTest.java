@@ -150,16 +150,13 @@ public class StorageTest extends TempDirTestCase {
 
   @Test
   public void testRecreationOfStorageOnContentLoadingError() {
-    StoredContent c = (StoredContent)s.storeContent(b("abc"));
     m.myEntryCounter = 10;
     s.saveState(m);
-    s.purgeContent(c);
-
     s.close();
 
-    initStorage();
+    initStorage(new MyBrokenStorage());
     try {
-      s.loadContentData(c.getId());
+      s.loadContentData(666);
       fail();
     }
     catch (BrokenStorageException e) {
@@ -173,15 +170,17 @@ public class StorageTest extends TempDirTestCase {
 
   @Test
   public void testThrowingExceptionForGoodContentWhenContentStorageIsBroken() {
-    StoredContent c = (StoredContent)s.storeContent(b("abc"));
+    initStorage(new MyBrokenStorage());
+
     try {
-      s.loadContentData(123);
+      s.loadContentData(666);
+      fail();
     }
     catch (BrokenStorageException e) {
     }
 
     try {
-      s.loadContentData(c.getId());
+      s.loadContentData(1);
       fail();
     }
     catch (BrokenStorageException e) {
@@ -190,8 +189,9 @@ public class StorageTest extends TempDirTestCase {
 
   @Test
   public void testReturningUnavailableContentWhenContentStorageIsBroken() {
+    initStorage(new MyBrokenStorage());
     try {
-      s.loadContentData(123);
+      s.loadContentData(666);
     }
     catch (BrokenStorageException e) {
     }
@@ -211,11 +211,57 @@ public class StorageTest extends TempDirTestCase {
 
   private void initStorage(final int version) {
     if (s != null) s.close();
-    s = new Storage(tempDir) {
+    initStorage(new Storage(tempDir) {
       @Override
       protected int getVersion() {
         return version;
       }
-    };
+    });
+  }
+
+  private void initStorage(Storage storage) {
+    if (s != null) s.close();
+    s = storage;
+  }
+
+  private class MyBrokenStorage extends Storage {
+    public MyBrokenStorage() {
+      super(StorageTest.this.tempDir);
+    }
+
+    @Override
+    protected IContentStorage createContentStorage() throws IOException {
+      return new IContentStorage() {
+        public void save() {
+        }
+
+        public void close() {
+        }
+
+        public int store(byte[] content) throws BrokenStorageException {
+          return 1;
+        }
+
+        public byte[] load(int id) throws BrokenStorageException {
+          if (id == 1) {
+            return new byte[0];
+          }
+          else {
+            throw new BrokenStorageException();
+          }
+        }
+
+        public void remove(int id) {
+
+        }
+
+        public void setVersion(int version) {
+        }
+
+        public int getVersion() {
+          return 1;
+        }
+      };
+    }
   }
 }
