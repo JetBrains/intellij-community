@@ -16,7 +16,7 @@ public class ToggleOfflineAction extends ToggleAction {
   public void setSelected(AnActionEvent e, boolean state){
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if(project != null){
-      MavenProjectsManager.getInstance(project).getGeneralSettings().setWorkOffline(state);        
+      MavenProjectsManager.getInstance(project).getGeneralSettings().setWorkOffline(state);
     }
   }
 }

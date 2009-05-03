@@ -15,7 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class MavenProjectsProcessor {
-  private static final NullTask STOP_TASK = new NullTask();
+  private static final int QUEUE_POLL_INTERVAL = 100;
 
   private final Project myProject;
   private final MavenEmbeddersManager myEmbeddersManager;
@@ -42,17 +42,7 @@ public class MavenProjectsProcessor {
     myThread.start(); // rework if make inheritance
   }
 
-  protected void scheduleTask(MavenProjectsProcessorTask task) {
-    if (isUnitTestMode() && task.immediateInTestMode()) {
-      try {
-        doPerform(task);
-      }
-      catch (MavenProcessCanceledException e) {
-        throw new RuntimeException(e);
-      }
-      return;
-    }
-
+  public void scheduleTask(MavenProjectsProcessorTask task) {
     if (myQueue.contains(task)) return;
     myQueue.add(task);
     fireQueueChanged(myQueue.size());
@@ -80,8 +70,9 @@ public class MavenProjectsProcessor {
         return false;
       }
     });
+
     while (true) {
-      if (isStopped || semaphore.waitFor(100)) return;
+      if (isStopped || semaphore.waitFor(QUEUE_POLL_INTERVAL) || myQueue.isEmpty()) return;
     }
   }
 
@@ -94,7 +85,6 @@ public class MavenProjectsProcessor {
 
     try {
       isStopped = true;
-      myQueue.put(STOP_TASK);
       myThread.join();
     }
     catch (InterruptedException e) {
@@ -105,30 +95,32 @@ public class MavenProjectsProcessor {
   public boolean doRunCycle() {
     MavenProjectsProcessorTask task;
     try {
-      task = myQueue.poll(100, TimeUnit.MILLISECONDS);
+      task = myQueue.poll(QUEUE_POLL_INTERVAL, TimeUnit.MILLISECONDS);
       fireQueueChanged(myQueue.size());
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
     if (isStopped) return false;
-    if (task == null || task == STOP_TASK) return true;
 
-    try {
-      doPerform(task);
-    }
-    catch (MavenProcessCanceledException e) {
-      return false;
-    }
-    catch (Throwable e) {
-      MavenLog.LOG.error(e);
+    if (task != null) {
+      try {
+        doPerform(task);
+      }
+      catch (Throwable e) {
+        MavenLog.LOG.error(e);
+      }
     }
     return true;
   }
 
-  private void doPerform(final MavenProjectsProcessorTask task) throws MavenProcessCanceledException {
-    // todo console and cancelation
-    task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), new MavenProcess(new EmptyProgressIndicator()));
+  private void doPerform(final MavenProjectsProcessorTask task) {
+    try {
+      task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), new MavenProcess(new EmptyProgressIndicator()));
+    }
+    catch (MavenProcessCanceledException ignore) {
+      // todo console and cancelation
+    }
   }
 
   private void fireQueueChanged(int size) {
@@ -143,17 +135,6 @@ public class MavenProjectsProcessor {
 
   public Handler getHandler() {
     return myHandler;
-  }
-
-  private static class NullTask implements MavenProjectsProcessorTask {
-    public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProcess process)
-      throws MavenProcessCanceledException {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean immediateInTestMode() {
-      throw new UnsupportedOperationException();
-    }
   }
 
   public class Handler {

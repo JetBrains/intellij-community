@@ -8,6 +8,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
@@ -16,8 +18,10 @@ import org.apache.maven.extension.ExtensionScanningException;
 import org.apache.maven.model.*;
 import org.apache.maven.profiles.activation.*;
 import org.apache.maven.profiles.injection.DefaultProfileInjector;
-import org.apache.maven.project.*;
+import org.apache.maven.project.InvalidProjectModelException;
+import org.apache.maven.project.JBMavenProjectHelper;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
 import org.apache.maven.project.interpolation.RegexBasedModelInterpolator;
@@ -42,7 +46,7 @@ import java.util.*;
 
 public class MavenProjectReader {
   private static final String UNKNOWN = "Unknown";
-  private final Map<VirtualFile, Model> myRawModelsCache = new HashMap<VirtualFile, Model>();
+  private final Map<VirtualFile, Model> myRawModelsCache = new THashMap<VirtualFile, Model>();
 
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
                                               VirtualFile file,
@@ -54,7 +58,7 @@ public class MavenProjectReader {
                                                                file,
                                                                localRepository,
                                                                activeProfiles,
-                                                               new HashSet<VirtualFile>(),
+                                                               new THashSet<VirtualFile>(),
                                                                locator);
 
     File basedir = getBaseDir(file);
@@ -437,6 +441,10 @@ public class MavenProjectReader {
 
     if (parentModel == null) {
       parentFile = file.getParent().findFileByRelativePath(parent.getRelativePath());
+      if (parentFile != null && parentFile.isDirectory()) {
+        parentFile = parentFile.findFileByRelativePath(MavenConstants.POM_XML);
+      }
+      
       if (parentFile != null) {
         parentModel = doReadProjectModel(generalSettings,
                                          parentFile,
@@ -487,8 +495,9 @@ public class MavenProjectReader {
       return model;
     }
 
-    Map context = new HashMap();
-    Map overrideContext = new HashMap();
+
+    Map context = MavenEmbedderFactory.collectSystemProperties();
+    Map overrideContext = new THashMap();
 
     try {
       model = interpolator.interpolate(model, context, overrideContext, basedir, false);
@@ -520,7 +529,7 @@ public class MavenProjectReader {
     MavenProject mavenProject = null;
     boolean isValid = true;
     List<MavenProjectProblem> problems = new ArrayList<MavenProjectProblem>();
-    Set<MavenId> unresolvedArtifactsIds = new HashSet<MavenId>();
+    Set<MavenId> unresolvedArtifactsIds = new THashSet<MavenId>();
 
     String path = f.getPath();
 

@@ -4,17 +4,17 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
 import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -34,7 +34,7 @@ public class MavenIgnoreConfigurable implements Configurable {
   public MavenIgnoreConfigurable(MavenProjectsManager manager) {
     myManager = manager;
 
-    myOriginalFiles = new HashSet<VirtualFile>();
+    myOriginalFiles = new THashSet<VirtualFile>();
     for (MavenProject each : myManager.getProjects()) {
       if (myManager.getIgnoredFlag(each)) {
         myOriginalFiles.add(each.getFile());

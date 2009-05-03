@@ -39,9 +39,9 @@ public class ArchetypeInfo {
 
     ArchetypeInfo that = (ArchetypeInfo)o;
 
-    if (artifactId != null ? !artifactId.equals(that.artifactId) : that.artifactId != null) return false;
-    if (description != null ? !description.equals(that.description) : that.description != null) return false;
     if (groupId != null ? !groupId.equals(that.groupId) : that.groupId != null) return false;
+    if (artifactId != null ? !artifactId.equals(that.artifactId) : that.artifactId != null) return false;
+    if (version != null ? !version.equals(that.version) : that.version != null) return false;
 
     return true;
   }

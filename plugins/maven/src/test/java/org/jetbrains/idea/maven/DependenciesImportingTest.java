@@ -908,6 +908,28 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertTrue(file.exists());
   }
 
+  public void testDoNotRemoveLibrariesOnImportIfProjectWasNotChanged() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertProjectLibraries("Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
+
+    myMavenProjectsManager.importProjects();
+
+    assertProjectLibraries("Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
+  }
+
   public void testDoNotCreateSameLibraryTwice() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

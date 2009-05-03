@@ -3,18 +3,18 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
+import org.jetbrains.idea.maven.project.MavenRemoteRepository;
 import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -83,7 +83,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   }
 
   private Set<String> collectRemoteRepositories() {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new THashSet<String>();
 
     for (MavenProject each : getMavenProjectManager().getProjects()) {
       for (MavenRemoteRepository eachRepository : each.getRemoteRepositories()) {
@@ -181,7 +181,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   }
 
   public Set<ArtifactInfo> search(Query query, int maxResult) {
-    Set<ArtifactInfo> result = new HashSet<ArtifactInfo>();
+    Set<ArtifactInfo> result = new THashSet<ArtifactInfo>();
 
     for (MavenIndex each : myProjectIndices.get()) {
       int remained = maxResult - result.size();
@@ -193,7 +193,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   }
 
   private Set<String> getProjectGroupIds() {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new THashSet<String>();
     for (MavenId each : getProjectsIds()) {
       result.add(each.groupId);
     }
@@ -201,7 +201,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   }
 
   private Set<String> getProjectArtifactIds(String groupId) {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new THashSet<String>();
     for (MavenId each : getProjectsIds()) {
       if (groupId.equals(each.groupId)) {
         result.add(each.artifactId);
@@ -211,7 +211,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   }
 
   private Set<String> getProjectVersions(String groupId, String artifactId) {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new THashSet<String>();
     for (MavenId each : getProjectsIds()) {
       if (groupId.equals(each.groupId) && artifactId.equals(each.artifactId)) {
         result.add(each.version);
@@ -233,7 +233,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   }
 
   private Set<MavenId> getProjectsIds() {
-    Set<MavenId> result = new HashSet<MavenId>();
+    Set<MavenId> result = new THashSet<MavenId>();
     for (MavenProject each : MavenProjectsManager.getInstance(myProject).getProjects()) {
       result.add(each.getMavenId());
     }

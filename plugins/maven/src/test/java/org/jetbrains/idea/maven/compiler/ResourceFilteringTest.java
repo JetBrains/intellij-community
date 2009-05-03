@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.compiler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.project.DefaultMavenModuleModelsProvider;
-import org.jetbrains.idea.maven.project.MavenRootModelAdapter;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
+import org.jetbrains.idea.maven.importing.DefaultMavenModuleModelsProvider;
 
 import java.io.IOException;
 
@@ -151,6 +151,46 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     compileModules("project");
 
     assertResult("target/test-classes/file.properties", "value=1");
+  }
+
+  public void testExcludesAndIncludes() throws Exception {
+    createProjectSubFile("src/main/resources/file1.properties", "value=${project.artifactId}");
+    createProjectSubFile("src/main/resources/file2.properties", "value=${project.artifactId}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>src/main/resources</directory>" +
+                  "      <excludes>" +
+                  "        <exclude>file1.properties</exclude>" +
+                  "      </excludes>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "    <resource>" +
+                  "      <directory>src/main/resources</directory>" +
+                  "      <includes>" +
+                  "        <include>file1.properties</include>" +
+                  "      </includes>" +
+                  "      <filtering>false</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+    assertResult("target/classes/file1.properties", "value=${project.artifactId}");
+    assertResult("target/classes/file2.properties", "value=project");
+
+    compileModules();
+    assertResult("target/classes/file1.properties", "value=${project.artifactId}");
+    assertResult("target/classes/file2.properties", "value=project");
+
+    compileModules("project");
+    assertResult("target/classes/file1.properties", "value=${project.artifactId}");
+    assertResult("target/classes/file2.properties", "value=project");
   }
 
   public void testWorkCorrectlyIfFoldersMarkedAsSource() throws Exception {

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -145,7 +146,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
 
   public void disposeUIResources() {
     myRepaintTimer.stop();
-    myUpdatingIcon.dispose();
+    Disposer.dispose(myUpdatingIcon);
   }
 
   private class MyTableModel extends AbstractTableModel {

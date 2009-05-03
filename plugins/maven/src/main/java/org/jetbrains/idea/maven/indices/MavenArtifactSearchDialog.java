@@ -2,14 +2,14 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import gnu.trove.THashMap;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.event.KeyEvent;
 import java.util.Map;
-import java.util.HashMap;
 
 public class MavenArtifactSearchDialog extends DialogWrapper {
   private MavenId myResult;
@@ -18,7 +18,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   private MavenArtifactSearchPanel myArtifactsPanel;
   private MavenArtifactSearchPanel myClassesPanel;
 
-  private final Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new HashMap<MavenArtifactSearchPanel, Boolean>();
+  private final Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new THashMap<MavenArtifactSearchPanel, Boolean>();
 
   public static MavenId searchForClass(Project project, String className) {
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, className, true);

@@ -9,13 +9,14 @@ import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter;
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution;
-import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomParameter;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
 import java.util.*;
 
@@ -46,7 +47,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
       }
     }
 
-    Map<String, MavenDomParameter> namesWithParameters = new HashMap<String, MavenDomParameter>();
+    Map<String, MavenDomParameter> namesWithParameters = new THashMap<String, MavenDomParameter>();
 
     for (MavenDomMojo eachMojo : pluginModel.getMojos().getMojos()) {
       String goal = eachMojo.getGoal().getStringValue();

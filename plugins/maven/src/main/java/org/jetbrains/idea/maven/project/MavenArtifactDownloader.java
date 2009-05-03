@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import gnu.trove.THashMap;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenConstants;
@@ -76,7 +77,7 @@ public class MavenArtifactDownloader {
   }
 
   private Map<MavenArtifact, Set<MavenRemoteRepository>> collectArtifactsToDownload() {
-    Map<MavenArtifact, Set<MavenRemoteRepository>> result = new HashMap<MavenArtifact, Set<MavenRemoteRepository>>();
+    Map<MavenArtifact, Set<MavenRemoteRepository>> result = new THashMap<MavenArtifact, Set<MavenRemoteRepository>>();
 
     for (MavenProject each : myMavenProjects) {
       List<MavenRemoteRepository> repositories = each.getRemoteRepositories();

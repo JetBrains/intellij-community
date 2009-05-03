@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
   private Project myProject;
   private ProjectFileIndex myFileIndex;
-  private Map<String, Set<String>> myOutputItemsCache = new HashMap<String, Set<String>>();
+  private Map<String, Set<String>> myOutputItemsCache = new THashMap<String, Set<String>>();
 
   public MavenResourceCompiler(Project project) {
     myProject = project;
@@ -61,7 +62,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       try {
         if (in.readInt() != CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION) return;
         int modulesSize = in.readInt();
-        HashMap<String, Set<String>> temp = new HashMap<String, Set<String>>();
+        Map<String, Set<String>> temp = new THashMap<String, Set<String>>();
         while (modulesSize-- > 0) {
           String module = CompilerIOUtil.readString(in);
           int pathsSize = in.readInt();
@@ -350,7 +351,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
 
     Set<String> cachedPaths = null;
-    Set<String> otherModulesCachedPaths = new HashSet<String>();
+    Set<String> otherModulesCachedPaths = new THashSet<String>();
     for (Map.Entry<String, Set<String>> eachEntry : myOutputItemsCache.entrySet()) {
       if (eachEntry.getKey().equals(module.getName())) cachedPaths = eachEntry.getValue();
       else otherModulesCachedPaths.addAll(eachEntry.getValue());
@@ -364,12 +365,12 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private void removeObsoleteModulesFromCache() {
-    Set<String> existingModules = new HashSet<String>();
+    Set<String> existingModules = new THashSet<String>();
     for (Module each : ModuleManager.getInstance(myProject).getModules()) {
       existingModules.add(each.getName());
     }
 
-    for (String each : new HashSet<String>(myOutputItemsCache.keySet())) {
+    for (String each : new THashSet<String>(myOutputItemsCache.keySet())) {
       if (!existingModules.contains(each)) {
         myOutputItemsCache.remove(each);
       }

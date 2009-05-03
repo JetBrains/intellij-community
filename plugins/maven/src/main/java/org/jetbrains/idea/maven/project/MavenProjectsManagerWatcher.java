@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,17 +20,22 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
+import gnu.trove.THashSet;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class MavenProjectsManagerWatcher {
-  private static final int DOCUMENT_SAVE_DELAY = 700;
+  private static final int DOCUMENT_SAVE_DELAY = 1000;
 
   private final Project myProject;
   private final MavenProjectsTree myTree;
@@ -37,13 +43,18 @@ public class MavenProjectsManagerWatcher {
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private MessageBusConnection myBusConnection;
+  private final MessageBusConnection myBusConnection;
+
   private DocumentAdapter myDocumentListener;
   private MavenGeneralSettings.Listener mySettingsPathsChangesListener;
   private List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<VirtualFilePointer>();
 
-  private final Alarm myChangedDocumentsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Set<Document> myChangedDocuments = new HashSet<Document>();
+  private final Set<Document> myChangedDocuments = new THashSet<Document>();
+  private final MergingUpdateQueue myChangedDocumentsQueue = new MergingUpdateQueue(getClass() + ": Document changes queue",
+                                                                                    DOCUMENT_SAVE_DELAY,
+                                                                                    false,
+                                                                                    MergingUpdateQueue.ANY_COMPONENT,
+                                                                                    null);
 
   public MavenProjectsManagerWatcher(Project project,
                                      MavenProjectsTree tree,
@@ -55,13 +66,16 @@ public class MavenProjectsManagerWatcher {
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
     myEmbeddersManager = embeddersManager;
+
+    myBusConnection = myProject.getMessageBus().connect();
   }
 
   public synchronized void start() {
-    myBusConnection = myProject.getMessageBus().connect();
-
     myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new MyFileChangeListener());
     myBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
+
+    MavenUserAwareUpdatingQueueHelper.attachTo(myChangedDocumentsQueue);
+    myChangedDocumentsQueue.activate();
 
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent event) {
@@ -74,18 +88,18 @@ public class MavenProjectsManagerWatcher {
                               || isSettingsFile(file);
         if (!isMavenFile) return;
 
-        myChangedDocumentsAlarm.cancelAllRequests();
-
         synchronized (myChangedDocuments) {
           myChangedDocuments.add(doc);
         }
-
-        myChangedDocumentsAlarm.addRequest(new Runnable() {
+        System.out.println("scheduling");
+        myChangedDocumentsQueue.queue(new Update(this) {
           public void run() {
+            System.out.println("executing!!");
+
             Set<Document> copy;
 
             synchronized (myChangedDocuments) {
-              copy = new HashSet<Document>(myChangedDocuments);
+              copy = new THashSet<Document>(myChangedDocuments);
               myChangedDocuments.clear();
             }
 
@@ -93,7 +107,7 @@ public class MavenProjectsManagerWatcher {
               FileDocumentManager.getInstance().saveDocument(each);
             }
           }
-        }, DOCUMENT_SAVE_DELAY);
+        });
       }
     };
     getDocumentEventMulticaster().addDocumentListener(myDocumentListener);
@@ -127,6 +141,7 @@ public class MavenProjectsManagerWatcher {
   }
 
   public synchronized void stop() {
+    Disposer.dispose(myChangedDocumentsQueue);
     getDocumentEventMulticaster().removeDocumentListener(myDocumentListener);
     myGeneralSettings.removeListener(mySettingsPathsChangesListener);
     mySettingsFilesPointers.clear();

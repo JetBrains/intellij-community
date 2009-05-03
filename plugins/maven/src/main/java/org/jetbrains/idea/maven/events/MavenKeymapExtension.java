@@ -10,17 +10,18 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.project.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenPlugin;
 import org.jetbrains.idea.maven.runner.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 
 import javax.swing.*;
@@ -44,7 +45,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     String[] ids = actionManager.getActionIds(getActionPrefix(project, null));
     Arrays.sort(ids);
 
-    Map<String, KeymapGroup> pomPathToActionId = new HashMap<String, KeymapGroup>();
+    Map<String, KeymapGroup> pomPathToActionId = new THashMap<String, KeymapGroup>();
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
     for (String eachId : ids) {
@@ -145,7 +146,7 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   private static Collection<String> collectGoals(MavenProject project, File repository) {
-    Collection<String> result = new HashSet<String>();
+    Collection<String> result = new THashSet<String>();
     result.addAll(MavenEmbedderFactory.getStandardGoalsList());
 
     for (MavenPlugin each : project.getPlugins()) {

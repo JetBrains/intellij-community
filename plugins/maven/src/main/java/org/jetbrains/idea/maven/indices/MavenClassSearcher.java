@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.Pair;
+import gnu.trove.THashMap;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -8,7 +9,10 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.sonatype.nexus.index.ArtifactInfo;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -55,7 +59,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       return Collections.emptyList();
     }
 
-    Map<String, MavenClassSearchResult> result = new HashMap<String, MavenClassSearchResult>();
+    Map<String, MavenClassSearchResult> result = new THashMap<String, MavenClassSearchResult>();
     for (ArtifactInfo each : infos) {
       if (each.classNames == null) continue;
 

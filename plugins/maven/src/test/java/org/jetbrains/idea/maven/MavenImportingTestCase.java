@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.runner.MavenExecutor;
 import org.jetbrains.idea.maven.runner.MavenExternalExecutor;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -333,7 +334,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     initMavenProjectsManager(false);
     myMavenProjectsManager.resetManagedFilesAndProfilesInTests(files, myProfilesList);
-    myMavenProjectsManager.waitForQuickResolvingCompletionAndImport();
+    myMavenProjectsManager.waitForQuickResolvingCompletion();
+    myMavenProjectsManager.scheduleImportInTests(files);
+    myMavenProjectsManager.importProjects();
     myMavenTree = myMavenProjectsManager.getProjectsTreeForTests();
   }
 

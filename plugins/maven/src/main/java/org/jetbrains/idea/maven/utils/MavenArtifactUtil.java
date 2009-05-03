@@ -1,13 +1,17 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -15,7 +19,7 @@ public class MavenArtifactUtil extends SimpleProjectComponent {
   public static final String[] DEFAULT_GROUPS = new String[]{"org.apache.maven.plugins", "org.codehaus.mojo"};
   public static final String MAVEN_PLUGIN_DESCRIPTOR = "META-INF/maven/plugin.xml";
 
-  private static final Map<File, MavenPluginInfo> ourPluginInfoCache = Collections.synchronizedMap(new HashMap<File, MavenPluginInfo>());
+  private static final Map<File, MavenPluginInfo> ourPluginInfoCache = Collections.synchronizedMap(new THashMap<File, MavenPluginInfo>());
 
   @Nullable
   public static MavenPluginInfo readPluginInfo(File localRepository, MavenId mavenId) {

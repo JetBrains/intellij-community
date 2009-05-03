@@ -4,8 +4,8 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.project.MavenRootModelAdapter;
-import org.jetbrains.idea.maven.project.DefaultMavenModuleModelsProvider;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
+import org.jetbrains.idea.maven.importing.DefaultMavenModuleModelsProvider;
 import org.jetbrains.idea.maven.utils.Path;
 
 import java.io.File;

@@ -4,13 +4,17 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import gnu.trove.THashSet;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
 import org.apache.maven.archetype.source.ArchetypeDataSource;
@@ -273,7 +277,7 @@ public class MavenIndicesManager implements ApplicationComponent {
   public synchronized Set<ArchetypeInfo> getArchetypes() {
     ensureInitialized();
     PlexusContainer container = myEmbedder.getPlexusContainer();
-    Set<ArchetypeInfo> result = new HashSet<ArchetypeInfo>();
+    Set<ArchetypeInfo> result = new THashSet<ArchetypeInfo>();
     result.addAll(getArchetypesFrom(container, "internal-catalog"));
     result.addAll(getArchetypesFrom(container, "nexus"));
     result.addAll(myUserArchetypes);

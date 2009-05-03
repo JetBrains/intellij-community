@@ -28,7 +28,6 @@ public class AddingDependencyTest extends MavenImportingTestCase {
     assertEquals(1, deps.size());
     assertEquals(new File(getRepositoryPath(), "junit/junit/4.0/junit-4.0.jar"),
                  deps.get(0).getFile());
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
     importProject();
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
@@ -45,6 +44,8 @@ public class AddingDependencyTest extends MavenImportingTestCase {
     assertEquals(1, deps.size());
     assertEquals(new File(getRepositoryPath(), "junit/junit/4.0/junit-4.0.jar"),
                  deps.get(0).getFile());
+
+    importProject();
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 

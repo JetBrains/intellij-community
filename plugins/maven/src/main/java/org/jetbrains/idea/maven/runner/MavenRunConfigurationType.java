@@ -16,7 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -174,6 +174,6 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   }
 
   private static void resetBeforeRunTasks(RunManager runManager, MavenRunConfiguration runConfiguration) {
-    ((RunManagerImpl)runManager).setCompileMethodBeforeRun(runConfiguration, new HashMap<String, Boolean>());
+    ((RunManagerImpl)runManager).setCompileMethodBeforeRun(runConfiguration, new THashMap<String, Boolean>());
   }
 }

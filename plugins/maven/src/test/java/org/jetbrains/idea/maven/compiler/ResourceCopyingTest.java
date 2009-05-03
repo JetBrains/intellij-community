@@ -5,8 +5,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.project.DefaultMavenModuleModelsProvider;
-import org.jetbrains.idea.maven.project.MavenRootModelAdapter;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
+import org.jetbrains.idea.maven.importing.DefaultMavenModuleModelsProvider;
 
 public class ResourceCopyingTest extends MavenImportingTestCase {
   public void testBasic() throws Exception {

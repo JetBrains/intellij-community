@@ -12,6 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.DefaultMavenModuleModelsProvider;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.FileFinder;
 import org.jetbrains.idea.maven.utils.MavenId;
@@ -80,17 +81,27 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     manager.waitForReadingCompletion();
 
     return manager.importProjects(new DefaultMavenModuleModelsProvider(project) {
+      @Override
       public ModifiableModuleModel getModuleModel() {
         if (model != null) return model;
         return super.getModuleModel();
       }
 
-      public ModifiableRootModel getRootModel(Module module) {
+      @Override
+      public ModuleRootModel getRootModel(Module module) {
         ModuleRootModel rootModel = modulesProvider.getRootModel(module);
-        if (rootModel instanceof ModifiableRootModel) return (ModifiableRootModel)rootModel;
-        return super.getRootModel(module);
+        if (rootModel != null) return rootModel;
+        return super.getModifiableRootModel(module);
       }
 
+      @Override
+      public ModifiableRootModel getModifiableRootModel(Module module) {
+        ModuleRootModel rootModel = modulesProvider.getRootModel(module);
+        if (rootModel instanceof ModifiableRootModel) return (ModifiableRootModel)rootModel;
+        return super.getModifiableRootModel(module);
+      }
+
+      @Override
       public void commit(ModifiableModuleModel modulModel, ModifiableRootModel[] rootModels) {
         if (model == null) super.commit(modulModel, rootModels);
       }

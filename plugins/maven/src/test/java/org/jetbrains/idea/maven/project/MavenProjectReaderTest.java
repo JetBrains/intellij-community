@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenProjectReaderQuickReadTest extends MavenTestCase {
+public class MavenProjectReaderTest extends MavenTestCase {
   public void testBasics() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -282,6 +282,15 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
     assertEquals("value12", p.getPackaging());
   }
 
+  public void testExpandingSystemAndEnvProperties() throws Exception {
+    createProjectPom("<name>${java.home}</name>" +
+                     "<packaging>${env.TEMP}</packaging>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    assertEquals(System.getProperty("java.home"), p.getName());
+    assertEquals(System.getenv("TEMP"), p.getPackaging());
+  }
+
   public void testExpandingPropertiesFromProfiles() throws Exception {
     createProjectPom("<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>" +
@@ -448,6 +457,29 @@ public class MavenProjectReaderQuickReadTest extends MavenTestCase {
                                          "  <artifactId>parent</artifactId>" +
                                          "  <version>1</version>" +
                                          "  <relativePath>../parent/pom.xml</relativePath>" +
+                                         "</parent>" +
+                                         "<name>${prop}</name>");
+
+    org.apache.maven.project.MavenProject p = readProject(module);
+    assertEquals("value", p.getName());
+  }
+
+  public void testExpandingPropertiesFromParentInSpecifiedLocationWithoutFile() throws Exception {
+    createModulePom("parent",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>parent</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<properties>" +
+                    "  <prop>value</prop>" +
+                    "</properties>");
+
+    VirtualFile module = createModulePom("module",
+                                         "<parent>" +
+                                         "  <groupId>test</groupId>" +
+                                         "  <artifactId>parent</artifactId>" +
+                                         "  <version>1</version>" +
+                                         "  <relativePath>../parent</relativePath>" +
                                          "</parent>" +
                                          "<name>${prop}</name>");
 

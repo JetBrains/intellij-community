@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -15,7 +16,10 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -52,7 +56,7 @@ public class IdeaAPIHelper {
   }
 
   private static <T> Collection<T> setize(final Collection<T> collection) {
-    return (collection instanceof Set ? collection : new HashSet<T>(collection));
+    return (collection instanceof Set ? collection : new THashSet<T>(collection));
   }
 
   public static void installCheckboxRenderer(final SimpleTree tree, final CheckboxHandler handler) {

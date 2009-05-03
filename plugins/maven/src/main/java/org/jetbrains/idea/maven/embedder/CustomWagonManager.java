@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.embedder;
 
+import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.manager.DefaultWagonManager;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
@@ -10,7 +11,6 @@ import org.apache.maven.wagon.WagonException;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -19,7 +19,7 @@ public class CustomWagonManager extends DefaultWagonManager {
   private boolean myUseRemoteRepository;
   private boolean myFailOnUnresolved;
 
-  private Set<MavenId> myUnresolvedIds = new HashSet<MavenId>();
+  private Set<MavenId> myUnresolvedIds = new THashSet<MavenId>();
   private int myOpenCount;
   private boolean myInProcess = false;
 
@@ -35,7 +35,7 @@ public class CustomWagonManager extends DefaultWagonManager {
 
   public Set<MavenId> retrieveUnresolvedIds() {
     Set<MavenId> result = myUnresolvedIds;
-    myUnresolvedIds = new HashSet<MavenId>();
+    myUnresolvedIds = new THashSet<MavenId>();
     return result;
   }
 

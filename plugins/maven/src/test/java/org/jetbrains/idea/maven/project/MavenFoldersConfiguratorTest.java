@@ -7,6 +7,9 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.importing.DefaultMavenModuleModelsProvider;
+import org.jetbrains.idea.maven.importing.MavenFoldersConfigurator;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
 import java.io.File;
 

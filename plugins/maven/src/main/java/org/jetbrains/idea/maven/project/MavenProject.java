@@ -5,6 +5,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.*;
 import org.jdom.Element;
@@ -299,7 +301,7 @@ public class MavenProject implements Serializable {
 
   private List<String> collectProfilesIds(Model mavenModel) {
     List<Profile> profiles = collectProfiles(mavenModel);
-    Set<String> result = new HashSet<String>(profiles.size());
+    Set<String> result = new THashSet<String>(profiles.size());
     for (Profile each : profiles) {
       result.add(each.getId());
     }
@@ -671,7 +673,7 @@ public class MavenProject implements Serializable {
   }
 
   private static class CompilerLevelTable {
-    public static Map<String, String> table = new HashMap<String, String>();
+    public static Map<String, String> table = new THashMap<String, String>();
 
     static {
       table.put("1.1", "1.1");
@@ -700,5 +702,10 @@ public class MavenProject implements Serializable {
 
   public synchronized List<FacetImporter> getSuitableFacetImporters() {
     return FacetImporter.getSuitableFacetImporters(this);
+  }
+
+  @Override
+  public String toString() {
+    return getMavenId().toString();
   }
 }

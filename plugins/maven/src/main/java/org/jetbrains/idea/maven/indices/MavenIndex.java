@@ -6,13 +6,18 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TopDocs;
 import org.apache.maven.wagon.proxy.ProxyInfo;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexContextInInconsistentStateException;
 import org.sonatype.nexus.index.context.IndexingContext;
@@ -354,12 +359,12 @@ public class MavenIndex {
 
   private void doUpdateIndexData(IndexData data,
                                  ProgressIndicator progress) throws IOException, IndexContextInInconsistentStateException {
-    Set<String> groups = new HashSet<String>();
-    Set<String> groupsWithArtifacts = new HashSet<String>();
-    Set<String> groupsWithArtifactsWithVersions = new HashSet<String>();
+    Set<String> groups = new THashSet<String>();
+    Set<String> groupsWithArtifacts = new THashSet<String>();
+    Set<String> groupsWithArtifactsWithVersions = new THashSet<String>();
 
-    Map<String, Set<String>> groupToArtifactMap = new HashMap<String, Set<String>>();
-    Map<String, Set<String>> groupWithArtifactToVersionMap = new HashMap<String, Set<String>>();
+    Map<String, Set<String>> groupToArtifactMap = new THashMap<String, Set<String>>();
+    Map<String, Set<String>> groupWithArtifactToVersionMap = new THashMap<String, Set<String>>();
 
     IndexReader r = data.context.getIndexReader();
     int total = r.numDocs();
@@ -398,7 +403,7 @@ public class MavenIndex {
   private <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
     Set<T> result = map.get(key);
     if (result == null) {
-      result = new HashSet<T>();
+      result = new THashSet<T>();
       map.put(key, result);
     }
     return result;
@@ -483,7 +488,7 @@ public class MavenIndex {
 
   private void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
     Set<String> values = cache.get(key);
-    if (values == null) values = new HashSet<String>();
+    if (values == null) values = new THashSet<String>();
     values.add(value);
     cache.put(key, values);
   }
@@ -491,7 +496,7 @@ public class MavenIndex {
   public synchronized Set<String> getGroupIds() {
     return doIndexTask(new IndexTask<Set<String>>() {
       public Set<String> doTask() throws Exception {
-        final Set<String> result = new HashSet<String>();
+        final Set<String> result = new THashSet<String>();
         myData.groups.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
           public boolean process(int record) throws IOException {
             result.add(myData.groups.valueOf(record));
@@ -571,7 +576,7 @@ public class MavenIndex {
 
         if (docs.scoreDocs.length == 0) return Collections.emptySet();
 
-        Set<ArtifactInfo> result = new HashSet<ArtifactInfo>();
+        Set<ArtifactInfo> result = new THashSet<ArtifactInfo>();
 
         for (int i = 0; i < docs.scoreDocs.length; i++) {
           int docIndex = docs.scoreDocs[i].doc;
@@ -625,9 +630,9 @@ public class MavenIndex {
     final PersistentHashMap<String, Set<String>> groupToArtifactMap;
     final PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
 
-    final Map<String, Boolean> hasGroupCache = new HashMap<String, Boolean>();
-    final Map<String, Boolean> hasArtifactCache = new HashMap<String, Boolean>();
-    final Map<String, Boolean> hasVersionCache = new HashMap<String, Boolean>();
+    final Map<String, Boolean> hasGroupCache = new THashMap<String, Boolean>();
+    final Map<String, Boolean> hasArtifactCache = new THashMap<String, Boolean>();
+    final Map<String, Boolean> hasVersionCache = new THashMap<String, Boolean>();
 
     final IndexingContext context;
 
@@ -707,7 +712,7 @@ public class MavenIndex {
 
     public Set<String> read(DataInput s) throws IOException {
       int count = s.readInt();
-      Set<String> result = new HashSet<String>(count);
+      Set<String> result = new THashSet<String>(count);
       while (count-- > 0) {
         result.add(s.readUTF());
       }

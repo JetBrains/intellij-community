@@ -8,6 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
@@ -32,12 +34,12 @@ public class MavenProjectsTree {
 
   private List<MavenProject> myRootProjects = new ArrayList<MavenProject>();
 
-  private Map<MavenProject, MavenProjectTimestamp> myTimestamps = new HashMap<MavenProject, MavenProjectTimestamp>();
+  private Map<MavenProject, MavenProjectTimestamp> myTimestamps = new THashMap<MavenProject, MavenProjectTimestamp>();
 
-  private Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new HashMap<VirtualFile, MavenProject>();
-  private Map<MavenId, MavenProject> myMavenIdToProjectMapping = new HashMap<MavenId, MavenProject>();
-  private Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new HashMap<MavenProject, List<MavenProject>>();
-  private Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new HashMap<MavenProject, MavenProject>();
+  private Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new THashMap<VirtualFile, MavenProject>();
+  private Map<MavenId, MavenProject> myMavenIdToProjectMapping = new THashMap<MavenId, MavenProject>();
+  private Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new THashMap<MavenProject, List<MavenProject>>();
+  private Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new THashMap<MavenProject, MavenProject>();
 
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
@@ -283,7 +285,7 @@ public class MavenProjectsTree {
 
     List<MavenProject> prevModules = getModules(mavenProject);
     Set<MavenProject> prevInheritors = isNew
-                                       ? new HashSet<MavenProject>()
+                                       ? new THashSet<MavenProject>()
                                        : findInheritors(mavenProject);
 
     // todo hook for IDEADEV-31568
@@ -432,7 +434,7 @@ public class MavenProjectsTree {
     long userSettingsTimestamp = getFileTimestamp(userSettings);
     long globalSettingsTimestamp = getFileTimestamp(globalSettings);
 
-    int profilesHashCode = new HashSet<String>(activeProfiles).hashCode();
+    int profilesHashCode = new THashSet<String>(activeProfiles).hashCode();
 
     return new MavenProjectTimestamp(pomTimestamp,
                                      parentLastReadStamp,
@@ -684,7 +686,7 @@ public class MavenProjectsTree {
   }
 
   private Set<MavenProject> findInheritors(MavenProject project) {
-    Set<MavenProject> result = new HashSet<MavenProject>();
+    Set<MavenProject> result = new THashSet<MavenProject>();
     MavenId id = project.getMavenId();
 
     for (MavenProject each : getProjects()) {
@@ -775,12 +777,6 @@ public class MavenProjectsTree {
     finally {
       embeddersManager.release(embedder);
     }
-  }
-
-  public MavenDomDependency addDependency(Project project,
-                                          MavenProject mavenProject,
-                                          MavenArtifact artifact) throws MavenProcessCanceledException {
-    return mavenProject.addDependency(project, artifact);
   }
 
   public MavenArtifact downloadArtifact(MavenProject mavenProject,

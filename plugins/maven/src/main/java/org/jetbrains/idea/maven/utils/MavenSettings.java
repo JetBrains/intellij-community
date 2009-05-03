@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.runner.MavenRunnerConfigurable;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.MavenRunner;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
 import java.util.ArrayList;

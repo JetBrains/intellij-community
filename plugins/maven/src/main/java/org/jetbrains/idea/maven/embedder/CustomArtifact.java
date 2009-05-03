@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashMap;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
@@ -16,12 +17,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class CustomArtifact implements Artifact {
-  private static final Map<String, File> ourCache = new HashMap<String, File>();
+  private static final Map<String, File> ourCache = new THashMap<String, File>();
 
   private final Artifact myWrapee;
   private boolean isStub;

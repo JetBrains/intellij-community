@@ -130,18 +130,46 @@ public class ReimportingTest extends MavenImportingTestCase {
   }
 
   public void testRemovingAndCreatingModulesForAggregativeProjects() throws Exception {
-    assertModules("project", "m1", "m2");
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+                          "<packaging>pom</packaging>");
+    importProject();
 
-    getMavenImporterSettings().setCreateModulesForAggregators(false);
+    assertModules("project", "m1", "m2");
 
     configMessagesForYesAnswer();
-    importProject();
 
-    assertModules("m1", "m2");
+    getMavenImporterSettings().setCreateModulesForAggregators(false);
+    myMavenProjectsManager.importProjects(); // using raw call to ignore emulation of project file change
+    assertModules("m2");
 
     getMavenImporterSettings().setCreateModulesForAggregators(true);
-    importProject();
+    myMavenProjectsManager.importProjects();
     assertModules("project", "m1", "m2");
+  }
+
+  public void testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() throws Exception {
+    getMavenImporterSettings().setCreateModulesForAggregators(false);
+    configMessagesForYesAnswer();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "  <module>m3</module>" +
+                     "</modules>");
+
+    createModulePom("m3", "<groupId>test</groupId>" +
+                          "<artifactId>m3</artifactId>" +
+                          "<version>1</version>" +
+                          "<packaging>pom</packaging>");
+    importProject();
+    assertModules("m1", "m2");
   }
 
   public void testReimportingWithProfiles() throws Exception {
@@ -180,7 +208,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("project", "m2");
   }
 
-  public void testReimportingWhenModuleHaveRootOfThePraent() throws Exception {
+  public void testReimportingWhenModuleHaveRootOfTheParent() throws Exception {
     createProjectSubDir("m1/res");
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

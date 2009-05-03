@@ -13,6 +13,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
@@ -210,7 +211,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
   private int getStandardGoalOrder(String goal) {
     if (standardGoalOrder == null) {
-      standardGoalOrder = new HashMap<String, Integer>();
+      standardGoalOrder = new THashMap<String, Integer>();
       int i = 0;
       for (String aGoal : MavenEmbedderFactory.getStandardGoalsList()) {
         standardGoalOrder.put(aGoal, i++);

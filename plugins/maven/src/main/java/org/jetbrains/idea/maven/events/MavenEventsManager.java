@@ -27,6 +27,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,10 +67,10 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
   private final MavenRunner myRunner;
 
   private MavenEventsState myState = new MavenEventsState();
-  private Map<Pair<String, Integer>, MavenTask> myBeforeRunMap = new HashMap<Pair<String, Integer>, MavenTask>();
+  private Map<Pair<String, Integer>, MavenTask> myBeforeRunMap = new THashMap<Pair<String, Integer>, MavenTask>();
 
   private MyKeymapListener myKeymapListener;
-  private final Collection<Listener> myListeners = new HashSet<Listener>();
+  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
   private TaskSelector myTaskSelector;
 
   private final Alarm myKeymapUpdaterAlarm;
@@ -132,7 +134,7 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
 
   @NotNull
   public MavenEventsState getState() {
-    HashMap<String, MavenTask> map = new HashMap<String, MavenTask>();
+    Map<String, MavenTask> map = new THashMap<String, MavenTask>();
 
     for (Map.Entry<Pair<String, Integer>, MavenTask> each : myBeforeRunMap.entrySet()) {
       Pair<String, Integer> key = each.getKey();
@@ -156,7 +158,7 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
   }
 
   public void loadState(MavenEventsState state) {
-    HashMap<Pair<String, Integer>, MavenTask> map = new HashMap<Pair<String, Integer>, MavenTask>();
+    Map<Pair<String, Integer>, MavenTask> map = new THashMap<Pair<String, Integer>, MavenTask>();
 
     for (Map.Entry<String, MavenTask> each : state.beforeRun.entrySet()) {
       String key = each.getKey();

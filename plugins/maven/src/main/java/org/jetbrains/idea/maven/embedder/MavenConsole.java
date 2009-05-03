@@ -2,10 +2,10 @@ package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.THashMap;
 import org.apache.maven.plugin.AbstractMojoExecutionException;
 
 import java.text.MessageFormat;
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class MavenConsole {
@@ -28,8 +28,8 @@ public abstract class MavenConsole {
   private final boolean myPrintStrackTrace;
   private boolean isFinished;
 
-  private static final Map<String, Integer> PREFIX_TO_LEVEL = new HashMap<String, Integer>();
-  private static final Map<Integer, String> LEVEL_TO_PREFIX = new HashMap<Integer, String>();
+  private static final Map<String, Integer> PREFIX_TO_LEVEL = new THashMap<String, Integer>();
+  private static final Map<Integer, String> LEVEL_TO_PREFIX = new THashMap<Integer, String>();
 
   static {
     map("DEBUG", LEVEL_DEBUG);

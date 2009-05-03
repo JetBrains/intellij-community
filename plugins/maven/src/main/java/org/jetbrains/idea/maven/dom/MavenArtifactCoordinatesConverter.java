@@ -12,6 +12,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,6 @@ import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> {
@@ -263,7 +263,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Override
     public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager) {
       if (StringUtil.isEmpty(id.groupId)) {
-        Set<String> result = new HashSet<String>();
+        Set<String> result = new THashSet<String>();
         for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
           id.groupId = each;
           result.addAll(super.getVariants(id, manager));
