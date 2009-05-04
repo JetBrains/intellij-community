@@ -63,6 +63,8 @@ public final class CustomLanguageInjector implements ProjectComponent {
   @SuppressWarnings({"unchecked"})
   private final List<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> myTempPlaces = new CopyOnWriteArrayList<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>>();
   static final Key<Boolean> HAS_UNPARSABLE_FRAGMENTS = Key.create("HAS_UNPARSABLE_FRAGMENTS");
+  private final MyLanguageInjector myInjector = new MyLanguageInjector(this);
+  private final LanguageReferenceProvider myProvider = new LanguageReferenceProvider();
 
   public CustomLanguageInjector(Project project, Configuration configuration) {
     myProject = project;
@@ -70,9 +72,12 @@ public final class CustomLanguageInjector implements ProjectComponent {
   }
 
   public void initComponent() {
-    InjectedLanguageManager.getInstance(myProject).registerMultiHostInjector(new MyLanguageInjector(this));
-    ReferenceProvidersRegistry.getInstance(myProject)
-        .registerReferenceProvider(TrueFilter.INSTANCE, PsiLiteralExpression.class, new LanguageReferenceProvider());
+    InjectedLanguageManager.getInstance(myProject).registerMultiHostInjector(myInjector);
+    ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(TrueFilter.INSTANCE, PsiLiteralExpression.class, myProvider);
+  }
+  public void disposeComponent() {
+    InjectedLanguageManager.getInstance(myProject).unregisterMultiHostInjector(myInjector);
+    ReferenceProvidersRegistry.getInstance(myProject).unregisterReferenceProvider(PsiLiteralExpression.class, myProvider);
   }
 
   private void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
@@ -199,9 +204,6 @@ public final class CustomLanguageInjector implements ProjectComponent {
       }
     }
     return false;
-  }
-
-  public void disposeComponent() {
   }
 
   @NotNull
