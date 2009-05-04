@@ -1,6 +1,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -132,7 +133,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu {
 
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
         MyMenu.this.removeAll();
-        Utils.fillMenu(myGroup, MyMenu.this, true, myPresentationFactory, myContext, myPlace);
+        Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().DISABLE_MNEMONICS, myPresentationFactory, myContext, myPlace);
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
     }
