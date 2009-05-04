@@ -82,6 +82,11 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
     return name != null ? name : super.getLibraryName(name);
   }
 
+  @Override
+  public String getTitle() {
+    return "Groovy/Grails";
+  }
+
   @NotNull
   public LibraryInfo[] getLibraries(String selectedVersion) {
     return super.getLibraries(selectedVersion);

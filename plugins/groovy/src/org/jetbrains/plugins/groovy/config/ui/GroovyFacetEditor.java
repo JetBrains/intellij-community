@@ -27,10 +27,12 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import javax.swing.*;
@@ -74,7 +76,8 @@ public class GroovyFacetEditor {
   }
 
   private static Library[] getGroovyLibraries(final Project project) {
-    final Library[] versions = GroovyConfigUtils.getInstance().getAllSDKLibraries(project);
+    Library[] versions = GroovyConfigUtils.getInstance().getAllSDKLibraries(project);
+    versions = ArrayUtil.mergeArrays(versions, GrailsConfigUtils.getInstance().getAllSDKLibraries(project), Library.class);
     Arrays.sort(versions, new Comparator<Library>() {
       public int compare(Library o1, Library o2) {
         final String name1 = o1.getName();
