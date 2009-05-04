@@ -34,26 +34,49 @@ public class MavenTasksManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p2, "clean");
   }
 
-  public void testRefreshingOnProjectProjectRead() throws Exception {
+  public void testRefreshingOnProjectRead() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertKeymapContains(myProjectPom, "clean");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-surefire-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertKeymapContains(myProjectPom, "clean");
+  }
+
+  public void testRefreshingOnPluginResolve() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
     assertKeymapDoesNotContain(myProjectPom, "surefire:test");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-                     "<build>" +
-                     "  <plugins>" +
-                     "    <plugin>" +
-                     "      <groupId>org.apache.maven.plugins</groupId>" +
-                     "      <artifactId>maven-surefire-plugin</artifactId>" +
-                     "    </plugin>" +
-                     "  </plugins>" +
-                     "</build>");
-    waitForQuickResolvingCompletion();
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-surefire-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    resolvePlugins();
 
     assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
   }
@@ -62,7 +85,6 @@ public class MavenTasksManagerTest extends MavenImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
-
 
     VirtualFile m = createModulePom("module", "<groupId>test</groupId>" +
                                               "<artifactId>module</artifactId>" +

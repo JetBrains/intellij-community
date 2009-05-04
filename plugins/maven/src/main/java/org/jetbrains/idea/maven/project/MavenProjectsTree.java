@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.RuntimeInterruptedException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,7 +11,6 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
@@ -721,30 +719,31 @@ public class MavenProjectsTree {
     }
   }
 
-  public void downloadPlugins(MavenProject project,
-                              org.apache.maven.project.MavenProject nativeMavenProject,
-                              MavenEmbeddersManager embeddersManager,
-                              MavenConsole console,
-                              MavenProcess process) throws MavenProcessCanceledException {
+  public void resolvePlugins(MavenProject mavenProject,
+                             org.apache.maven.project.MavenProject nativeMavenProject,
+                             MavenEmbeddersManager embeddersManager,
+                             MavenConsole console,
+                             MavenProcess process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder();
     embedder.customizeForResolve(console, process);
     try {
-      for (MavenPlugin each : project.getPlugins()) {
+      for (MavenPlugin each : mavenProject.getPlugins()) {
         process.checkCanceled();
         process.setText(ProjectBundle.message("maven.downloading.artifact", each + " plugin"));
         embedder.resolvePlugin(each, nativeMavenProject, process);
       }
+      firePluginsResolved(mavenProject);
     }
     finally {
       embeddersManager.release(embedder);
     }
   }
 
-  public void generateSources(MavenProject mavenProject,
-                              MavenEmbeddersManager embeddersManager,
-                              MavenImportingSettings importingSettings,
-                              MavenConsole console,
-                              MavenProcess process) throws MavenProcessCanceledException {
+  public void resolveFolders(MavenProject mavenProject,
+                             MavenEmbeddersManager embeddersManager,
+                             MavenImportingSettings importingSettings,
+                             MavenConsole console,
+                             MavenProcess process) throws MavenProcessCanceledException {
     if (mavenProject.isAggregator()) return;
 
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder();
@@ -754,7 +753,8 @@ public class MavenProjectsTree {
       process.checkCanceled();
       process.setText(ProjectBundle.message("maven.updating.folders.pom", FileUtil.toSystemDependentName(mavenProject.getPath())));
       process.setText2("");
-      mavenProject.generateSources(embedder, importingSettings, new MavenProjectReader(), console, process);
+      mavenProject.resolveFolders(embedder, importingSettings, new MavenProjectReader(), console, process);
+      fireFoldersResolved(mavenProject);
     }
     finally {
       embeddersManager.release(embedder);
@@ -773,6 +773,7 @@ public class MavenProjectsTree {
 
     try {
       MavenArtifactDownloader.download(this, Collections.singletonList(mavenProject), downloadingSettings, true, embedder, process);
+      fireArtifactsDownloaded(mavenProject);
     }
     finally {
       embeddersManager.release(embedder);
@@ -884,6 +885,24 @@ public class MavenProjectsTree {
   private void fireProjectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
     for (Listener each : myListeners) {
       each.projectResolved(quickResolve, project, nativeMavenProject);
+    }
+  }
+
+  private void firePluginsResolved(MavenProject project) {
+    for (Listener each : myListeners) {
+      each.pluginsResolved(project);
+    }
+  }
+
+  private void fireFoldersResolved(MavenProject project) {
+    for (Listener each : myListeners) {
+      each.foldersResolved(project);
+    }
+  }
+
+  private void fireArtifactsDownloaded(MavenProject project) {
+    for (Listener each : myListeners) {
+      each.artifactsDownloaded(project);
     }
   }
 
@@ -1007,6 +1026,12 @@ public class MavenProjectsTree {
     void projectRemoved(MavenProject project);
 
     void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject);
+
+    void pluginsResolved(MavenProject project);
+
+    void foldersResolved(MavenProject project);
+
+    void artifactsDownloaded(MavenProject project);
   }
 
   public static class ListenerAdapter implements Listener {
@@ -1019,13 +1044,22 @@ public class MavenProjectsTree {
     public void projectRead(MavenProject project) {
     }
 
-    public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-    }
-
     public void projectAggregatorChanged(MavenProject project) {
     }
 
     public void projectRemoved(MavenProject project) {
+    }
+
+    public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+    }
+
+    public void pluginsResolved(MavenProject project) {
+    }
+
+    public void foldersResolved(MavenProject project) {
+    }
+
+    public void artifactsDownloaded(MavenProject project) {
     }
   }
 }

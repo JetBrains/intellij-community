@@ -163,8 +163,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
           FileUtil.copyDir(new File(workingDir, myProjectId.artifactId), new File(myContentRootPath));
         }
         catch (IOException e) {
-          throw new RuntimeException(e);
+          MavenLog.LOG.warn("Cannot generate archetype", e);
+          return;
         }
+
+        FileUtil.delete(workingDir);
 
         pom.refresh(false, false);
         updateProjectPom(project, pom);

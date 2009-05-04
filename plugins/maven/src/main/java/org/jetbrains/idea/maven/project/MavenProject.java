@@ -441,12 +441,11 @@ public class MavenProject implements Serializable {
     return result.nativeMavenProject;
   }
 
-  public void generateSources(MavenEmbedderWrapper embedder,
+  public void resolveFolders(MavenEmbedderWrapper embedder,
                               MavenImportingSettings importingSettings,
                               MavenProjectReader reader,
                               MavenConsole console,
-                              MavenProcess p)
-    throws MavenProcessCanceledException {
+                              MavenProcess p) throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.generateSources(embedder,
                                                              importingSettings,
                                                              getFile(),

@@ -91,11 +91,8 @@ public class MavenProjectsManagerWatcher {
         synchronized (myChangedDocuments) {
           myChangedDocuments.add(doc);
         }
-        System.out.println("scheduling");
         myChangedDocumentsQueue.queue(new Update(this) {
           public void run() {
-            System.out.println("executing!!");
-
             Set<Document> copy;
 
             synchronized (myChangedDocuments) {

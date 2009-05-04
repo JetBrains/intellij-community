@@ -349,20 +349,17 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myMavenProjectsManager.waitForReadingCompletion();
   }
 
-  protected void waitForQuickResolvingCompletion() {
-    myMavenProjectsManager.waitForQuickResolvingCompletion();
-  }
-
   protected void resolveDependenciesAndImport() {
     myMavenProjectsManager.waitForResolvingCompletionAndImport();
   }
 
-  protected void updateFoldersAndImport() {
-    myMavenProjectsManager.waitForFoldersUpdatingCompletionAndImport();
+  protected void resolveFoldersAndImport() {
+    myMavenProjectsManager.scheduleFoldersResolving();
+    myMavenProjectsManager.waitForFoldersResolvingCompletionAndImport();
   }
 
-  protected void downloadPlugins() {
-    myMavenProjectsManager.waitForPluginsDownloadingCompletion();
+  protected void resolvePlugins() {
+    myMavenProjectsManager.waitForPluginsResolvingCompletion();
   }
 
   protected void downloadArtifacts() {

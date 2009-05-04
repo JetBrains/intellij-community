@@ -281,6 +281,15 @@ public class MavenProjectsNavigator extends MavenProjectsStructure
       onProjectChange(project);
     }
 
+    public void pluginsResolved(MavenProject project) {
+    }
+
+    public void foldersResolved(MavenProject project) {
+    }
+
+    public void artifactsDownloaded(MavenProject project) {
+    }
+
     private void onProjectChange(final MavenProject project) {
       scheduleUpdateTask(new Runnable() {
         public void run() {

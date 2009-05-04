@@ -648,8 +648,7 @@ public class MavenProjectReader {
                                                   VirtualFile f,
                                                   List<String> profiles,
                                                   MavenConsole console,
-                                                  MavenProcess p)
-    throws MavenProcessCanceledException {
+                                                  MavenProcess p) throws MavenProcessCanceledException {
     try {
       MavenExecutionRequest request = createRequest(embedder, f.getPath(), profiles);
       request.setGoals(Arrays.asList(importingSettings.getUpdateFoldersOnImportPhase()));
@@ -665,6 +664,8 @@ public class MavenProjectReader {
 
       MavenProject project = result.first.getProject();
       if (project == null) return null;
+
+
 
       return new MavenProjectReaderResult(true,
                                           profiles,

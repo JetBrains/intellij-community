@@ -58,17 +58,18 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private MavenProjectsProcessor myReadingProcessor;
   private MavenProjectsProcessor myQuickResolvingProcessor;
   private MavenProjectsProcessor myResolvingProcessor;
-  private MavenProjectsProcessor myPluginDownloadingProcessor;
-  private MavenProjectsProcessor myFoldersUpdatingProcessor;
+  private MavenProjectsProcessor myPluginsResolvingProcessor;
+  private MavenProjectsProcessor myFoldersResolvingProcessor;
   private MavenProjectsProcessor myArtifactsDownloadingProcessor;
   private MavenProjectsProcessor myPostProcessor;
 
   private MergingUpdateQueue myImportingQueue;
-  private final Set<MavenProject> myImportingQueueProjects = new THashSet<MavenProject>();
+  private final Set<MavenProject> myProjectsToImport = new THashSet<MavenProject>();
 
   private Pattern myIgnoredFilesPatternCache;
 
-  private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher = EventDispatcher.create(MavenProjectsTree.Listener.class);
+  private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher
+    = EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createEmptyCOWList();
 
   public static MavenProjectsManager getInstance(Project p) {
@@ -202,10 +203,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myReadingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.reading"), myEmbeddersManager);
     myQuickResolvingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.resolving"), myEmbeddersManager);
     myResolvingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.resolving"), myEmbeddersManager);
-    myPluginDownloadingProcessor = new MavenProjectsProcessor(myProject,
-                                                              ProjectBundle.message("maven.downloading.plugins"),
-                                                              myEmbeddersManager);
-    myFoldersUpdatingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.updating.folders"), myEmbeddersManager);
+    myPluginsResolvingProcessor = new MavenProjectsProcessor(myProject,
+                                                             ProjectBundle.message("maven.downloading.plugins"),
+                                                             myEmbeddersManager);
+    myFoldersResolvingProcessor = new MavenProjectsProcessor(myProject,
+                                                             ProjectBundle.message("maven.updating.folders"),
+                                                             myEmbeddersManager);
     myArtifactsDownloadingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.downloading"), myEmbeddersManager);
     myPostProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.post.processing"), myEmbeddersManager);
 
@@ -221,7 +224,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       public void projectsRead(List<MavenProject> projects) {
         for (MavenProject each : projects) {
           scheduleResolvingTasks(each);
-          scheduleFoldersUpdating(each);
         }
         scheduleImport(projects);
       }
@@ -229,7 +231,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
         if (!project.isValid()) return;
         if (quickResolve) {
-          schedulePluginDownloading(project, nativeMavenProject);
+          schedulePluginsResolving(project, nativeMavenProject);
         }
         scheduleImport(project);
       }
@@ -255,8 +257,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myReadingProcessor.cancelAndStop();
     myQuickResolvingProcessor.cancelAndStop();
     myResolvingProcessor.cancelAndStop();
-    myPluginDownloadingProcessor.cancelAndStop();
-    myFoldersUpdatingProcessor.cancelAndStop();
+    myPluginsResolvingProcessor.cancelAndStop();
+    myFoldersResolvingProcessor.cancelAndStop();
     myArtifactsDownloadingProcessor.cancelAndStop();
     myPostProcessor.cancelAndStop();
 
@@ -384,50 +386,36 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleResolvingTasks(final MavenProject project) {
-    MavenUtil.invokeInDispatchThread(myProject, new Runnable() {
-      public void run() {
-        myQuickResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(true,
-                                                                                       project,
-                                                                                       myProjectsTree,
-                                                                                       getGeneralSettings()));
-        myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(false,
-                                                                                  project,
-                                                                                  myProjectsTree,
-                                                                                  getGeneralSettings()));
-      }
-    });
+    myQuickResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(true,
+                                                                                   project,
+                                                                                   myProjectsTree,
+                                                                                   getGeneralSettings()));
+    myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(false,
+                                                                              project,
+                                                                              myProjectsTree,
+                                                                              getGeneralSettings()));
   }
 
-  private void scheduleFoldersUpdating(final MavenProject project) {
-    MavenUtil.invokeInDispatchThread(myProject, new Runnable() {
-      public void run() {
-        myFoldersUpdatingProcessor.scheduleTask(new MavenProjectsProcessorFoldersUpdatingTask(project,
+  public void scheduleFoldersResolving() {
+    for (MavenProject each : getProjects()) {
+      myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each, 
                                                                                               getImportingSettings(),
                                                                                               myProjectsTree));
-      }
-    });
+    }
   }
 
-  private void schedulePluginDownloading(final MavenProject project, final org.apache.maven.project.MavenProject nativeMavenProject) {
-    MavenUtil.invokeInDispatchThread(myProject, new Runnable() {
-      public void run() {
-        myPluginDownloadingProcessor.scheduleTask(new MavenProjectsProcessorPluginDownloadingTask(project,
-                                                                                                  nativeMavenProject,
-                                                                                                  myProjectsTree));
-      }
-    });
+  private void schedulePluginsResolving(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+    myPluginsResolvingProcessor.scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project,
+                                                                                            nativeMavenProject,
+                                                                                            myProjectsTree));
   }
 
   public void scheduleArtifactsDownloading() {
     for (MavenProject each : getProjects()) {
-      scheduleArtifactsDownloading(each);
+      myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each,
+                                                                                                      myProjectsTree,
+                                                                                                      getDownloadingSettings()));
     }
-  }
-
-  private void scheduleArtifactsDownloading(MavenProject project) {
-    myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(project,
-                                                                                                    myProjectsTree,
-                                                                                                    getDownloadingSettings()));
   }
 
   private void scheduleImport(MavenProject project) {
@@ -435,8 +423,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleImport(List<MavenProject> projects) {
-    synchronized (myImportingQueueProjects) {
-      myImportingQueueProjects.addAll(projects);
+    synchronized (myProjectsToImport) {
+      myProjectsToImport.addAll(projects);
     }
 
     if (!isUnitTestMode()) {
@@ -467,12 +455,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private void unscheduleAllTasks(MavenProject project) {
     MavenProjectsProcessorEmptyTask dummyTask = new MavenProjectsProcessorEmptyTask(project);
 
-    myImportingQueueProjects.remove(project);
+    myProjectsToImport.remove(project);
 
     myQuickResolvingProcessor.removeTask(dummyTask);
     myResolvingProcessor.removeTask(dummyTask);
-    myPluginDownloadingProcessor.removeTask(dummyTask);
-    myFoldersUpdatingProcessor.removeTask(dummyTask);
+    myPluginsResolvingProcessor.removeTask(dummyTask);
+    myFoldersResolvingProcessor.removeTask(dummyTask);
     myArtifactsDownloadingProcessor.removeTask(dummyTask);
     myPostProcessor.removeTask(dummyTask);
   }
@@ -493,16 +481,16 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     waitForTasksCompletionAndImport(myResolvingProcessor);
   }
 
-  public void waitForFoldersUpdatingCompletionAndImport() {
-    waitForTasksCompletionAndDo(myFoldersUpdatingProcessor, new Runnable() {
+  public void waitForFoldersResolvingCompletionAndImport() {
+    waitForTasksCompletionAndDo(myFoldersResolvingProcessor, new Runnable() {
       public void run() {
         updateProjectFolders(false);
       }
     });
   }
 
-  public void waitForPluginsDownloadingCompletion() {
-    waitForTasksCompletionAndDo(myPluginDownloadingProcessor, null);
+  public void waitForPluginsResolvingCompletion() {
+    waitForTasksCompletionAndDo(myPluginsResolvingProcessor, null);
   }
 
   public void waitForArtifactsDownloadingCompletion() {
@@ -566,9 +554,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     List<Module> result = new WriteAction<List<Module>>() {
       protected void run(Result<List<Module>> result) throws Throwable {
         Set<MavenProject> projectsToImport;
-        synchronized (myImportingQueueProjects) {
-          projectsToImport = new THashSet<MavenProject>(myImportingQueueProjects);
-          myImportingQueueProjects.clear();
+        synchronized (myProjectsToImport) {
+          projectsToImport = new THashSet<MavenProject>(myProjectsToImport);
+          myProjectsToImport.clear();
         }
 
         MavenProjectImporter importer = new MavenProjectImporter(myProject,
@@ -719,11 +707,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public MavenProjectsProcessor.Handler getFoldersUpdatingProcessorHandler() {
-    return myFoldersUpdatingProcessor.getHandler();
+    return myFoldersResolvingProcessor.getHandler();
   }
 
   public MavenProjectsProcessor.Handler getPluginDownloadingProcessorHandler() {
-    return myPluginDownloadingProcessor.getHandler();
+    return myPluginsResolvingProcessor.getHandler();
   }
 
   private void fireActivated() {

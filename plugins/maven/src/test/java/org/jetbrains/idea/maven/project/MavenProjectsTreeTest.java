@@ -1611,5 +1611,14 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
       log += "resolved " + project.getMavenId().artifactId + " ";
     }
+
+    public void pluginsResolved(MavenProject project) {
+    }
+
+    public void foldersResolved(MavenProject project) {
+    }
+
+    public void artifactsDownloaded(MavenProject project) {
+    }
   }
 }
