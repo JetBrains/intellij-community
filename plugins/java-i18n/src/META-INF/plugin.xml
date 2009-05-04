@@ -19,12 +19,6 @@
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder" />
     <gotoDeclarationHandler implementation="com.intellij.codeInspection.i18n.folding.I18nMessageGotoDeclarationHandler" order="FIRST"/>
   </extensions>
-  <!--<project-components>-->
-    <!--<component>-->
-      <!--<implementation-class>com.intellij.codeInspection.i18n.folding.I18nMessageFoldingPassFactory</implementation-class>-->
-      <!--<skipForDummyProject/>-->
-    <!--</component>-->
-  <!--</project-components>-->
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">
       <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="ExtractInclude" />
