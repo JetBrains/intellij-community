@@ -457,4 +457,10 @@ public class ArrayUtil {
   public static String[] newStringArray(int count) {
     return count == 0 ? EMPTY_STRING_ARRAY : new String[count];
   }
+
+  public static <E> E[] ensureExactSize(int count, E[] sample) {
+    if (count == sample.length) return sample;
+
+    return (E[])Array.newInstance(sample.getClass().getComponentType(), count);
+  }
 }

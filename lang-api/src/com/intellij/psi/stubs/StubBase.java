@@ -10,11 +10,10 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase implements StubElement<T> {
@@ -72,72 +71,93 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     return psi;
   }
 
-  public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final E[] array) {
-    List<E> result = filterChildren(elementType);
 
-    if (result == null) {
-      if (array.length == 0) return array;
-      result = new ArrayList<E>(0);
-    }
+  public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, E[] array) {
+    final int count = countChildren(elementType);
 
-    return result.toArray(array);
+    array = ArrayUtil.ensureExactSize(count, array);
+    if (count == 0) return array;
+    fillFilteredChildren(elementType, array);
+
+    return array;
   }
 
-  public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, final E[] array) {
-    List<E> result = filterChildren(filter);
+  public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, E[] array) {
+    final int count = countChildren(filter);
 
-    if (result == null) {
-      if (array.length == 0) return array;
-      result = Collections.emptyList();
-    }
+    array = ArrayUtil.ensureExactSize(count, array);
+    if (count == 0) return array;
+    fillFilteredChildren(filter, array);
 
-    return result.toArray(array);
-  }
-
-  @Nullable
-  private <E extends PsiElement> List<E> filterChildren(final TokenSet filter) {
-    List<E> result = null;
-    for(StubElement childStub: getChildrenStubs()) {
-      if (filter.contains(childStub.getStubType())) {
-        if (result == null) {
-          result = new ArrayList<E>();
-        }
-        //noinspection unchecked
-        result.add((E)childStub.getPsi());
-      }
-    }
-    return result;
+    return array;
   }
 
   public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final ArrayFactory<E> f) {
-    List<E> result = filterChildren(elementType);
-    return result != null ? result.toArray(f.create(result.size())) : f.create(0);
-  }
+    int count = countChildren(elementType);
 
-  @Nullable
-  private <E extends PsiElement> List<E> filterChildren(final IElementType elementType) {
-    List<E> result = null;
-    for(StubElement childStub: getChildrenStubs()) {
-      if (childStub.getStubType() == elementType) {
-        if (result == null) {
-          result = new ArrayList<E>();
-        }
-        //noinspection unchecked
-        result.add((E)childStub.getPsi());
-      }
-    }
+    E[] result = f.create(count);
+    if (count > 0) fillFilteredChildren(elementType, result);
+
     return result;
   }
 
+  private int countChildren(final IElementType elementType) {
+    int count = 0;
+    for (StubElement childStub : getChildrenStubs()) {
+      if (childStub.getStubType() == elementType) count++;
+    }
+
+    return count;
+  }
+
+  private int countChildren(final TokenSet types) {
+    int count = 0;
+    for (StubElement childStub : getChildrenStubs()) {
+      if (types.contains(childStub.getStubType())) count++;
+    }
+
+    return count;
+  }
+
+  private <E extends PsiElement> void fillFilteredChildren(IElementType type, E[] result) {
+    int count = 0;
+    for (StubElement childStub : getChildrenStubs()) {
+      if (childStub.getStubType() == type) {
+        //noinspection unchecked
+        result[count++] = (E)childStub.getPsi();
+      }
+    }
+
+    assert count == result.length;
+  }
+
+  private <E extends PsiElement> void fillFilteredChildren(TokenSet set, E[] result) {
+    int count = 0;
+    for (StubElement childStub : getChildrenStubs()) {
+      if (set.contains(childStub.getStubType())) {
+        //noinspection unchecked
+        result[count++] = (E)childStub.getPsi();
+      }
+    }
+
+    assert count == result.length;
+  }
+
   public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, final ArrayFactory<E> f) {
-    List<E> result = filterChildren(filter);
-    return result != null ? result.toArray(f.create(result.size())) : f.create(0);
+    final int count = countChildren(filter);
+
+    E[] array = f.create(count);
+    if (count == 0) return array;
+
+    fillFilteredChildren(filter, array);
+
+    return array;
   }
 
   @Nullable
   public <E extends PsiElement> E getParentStubOfType(final Class<E> parentClass) {
     StubElement parent = myParent;
-    while(parent != null) {
+    while (parent != null) {
       PsiElement psi = parent.getPsi();
       if (parentClass.isInstance(psi)) {
         //noinspection unchecked
