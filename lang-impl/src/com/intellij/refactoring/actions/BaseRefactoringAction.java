@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +83,7 @@ public abstract class BaseRefactoringAction extends AnAction {
       }
       final boolean isEnabled = element != null &&
                                 !(element instanceof SyntheticElement) &&
-                                isAvailableForLanguage(element.getLanguage()) &&
+                                isAvailableForLanguage(PsiUtilBase.getLanguageInEditor(editor, project)) &&
                                 isAvailableOnElementInEditor(element, editor);
       if (!isEnabled) {
         disableAction(e);
