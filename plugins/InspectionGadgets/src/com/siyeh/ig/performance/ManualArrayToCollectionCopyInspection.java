@@ -147,11 +147,16 @@ public class ManualArrayToCollectionCopyInspection
             }
             final PsiDeclarationStatement declaration =
                     (PsiDeclarationStatement)initialization;
-            if (declaration.getDeclaredElements().length != 1) {
+            final PsiElement[] declaredElements =
+                    declaration.getDeclaredElements();
+            if (declaredElements.length != 1) {
                 return null;
             }
-            final PsiLocalVariable variable = (PsiLocalVariable)
-                    declaration.getDeclaredElements()[0];
+            final PsiElement declaredElement = declaredElements[0];
+            if (!(declaredElement instanceof PsiLocalVariable)) {
+                return null;
+            }
+            final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
             final PsiExpressionStatement body = getBody(forStatement);
             if (body == null) {
                 return null;
@@ -302,20 +307,21 @@ public class ManualArrayToCollectionCopyInspection
     private static class ManualArrayToCollectionCopyVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(
+                @NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
-            final PsiStatement initialization =
-                    statement.getInitialization();
+            final PsiStatement initialization = statement.getInitialization();
             if (!(initialization instanceof PsiDeclarationStatement)) {
                 return;
             }
             final PsiDeclarationStatement declaration =
                     (PsiDeclarationStatement)initialization;
-            if (declaration.getDeclaredElements().length != 1) {
+            final PsiElement[] declaredElements =
+                    declaration.getDeclaredElements();
+            if (declaredElements.length != 1) {
                 return;
             }
-            final PsiElement declaredElement =
-                    declaration.getDeclaredElements()[0];
+            final PsiElement declaredElement = declaredElements[0];
             if (!(declaredElement instanceof PsiLocalVariable)) {
                 return;
             }

@@ -116,11 +116,16 @@ public class ManualArrayCopyInspection extends BaseInspection {
             }
             final PsiDeclarationStatement declaration =
                     (PsiDeclarationStatement)initialization;
-            if (declaration.getDeclaredElements().length != 1) {
+            final PsiElement[] declaredElements =
+                    declaration.getDeclaredElements();
+            if (declaredElements.length != 1) {
                 return null;
             }
-            final PsiLocalVariable variable = (PsiLocalVariable)
-                    declaration.getDeclaredElements()[0];
+            final PsiElement declaredElement = declaredElements[0];
+            if (!(declaredElement instanceof PsiLocalVariable)) {
+                return null;
+            }
+            final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
             final String lengthText = getLengthText(limit, variable);
             final PsiExpressionStatement body = getBody(forStatement);
             if (body == null) {
@@ -280,11 +285,16 @@ public class ManualArrayCopyInspection extends BaseInspection {
             }
             final PsiDeclarationStatement declaration =
                     (PsiDeclarationStatement)initialization;
-            if (declaration.getDeclaredElements().length != 1) {
+            final PsiElement[] declaredElements =
+                    declaration.getDeclaredElements();
+            if (declaredElements.length != 1) {
                 return;
             }
-            final PsiLocalVariable variable = (PsiLocalVariable)
-                    declaration.getDeclaredElements()[0];
+            final PsiElement declaredElement = declaredElements[0];
+            if (!(declaredElement instanceof PsiLocalVariable)) {
+                return;
+            }
+            final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
             final PsiExpression initialValue = variable.getInitializer();
             if (initialValue == null) {
                 return;
