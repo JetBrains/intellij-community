@@ -1773,7 +1773,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     fixStickingDialogs();
 
-    LaterInvocator.invokeLater(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (checkForRejectOrByPass(command, forced, result)) return;
 
