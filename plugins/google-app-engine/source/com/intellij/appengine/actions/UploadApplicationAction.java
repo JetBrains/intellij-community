@@ -1,0 +1,31 @@
+package com.intellij.appengine.actions;
+
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.project.Project;
+import com.intellij.javaee.serverInstances.ApplicationServersManager;
+import com.intellij.javaee.appServerIntegrations.ApplicationServer;
+import com.intellij.appengine.server.integration.AppEngineServerIntegration;
+
+import java.util.List;
+
+/**
+ * @author nik
+ */
+public class UploadApplicationAction extends AnAction {
+  @Override
+  public void update(AnActionEvent e) {
+    final Project project = e.getData(DataKeys.PROJECT);
+    final List<ApplicationServer> servers = ApplicationServersManager.getInstance().getApplicationServers(AppEngineServerIntegration.getInstance());
+    e.getPresentation().setVisible(!servers.isEmpty());
+    e.getPresentation().setEnabled(project != null);
+  }
+
+  public void actionPerformed(AnActionEvent e) {
+    final Project project = e.getData(DataKeys.PROJECT);
+    if (project != null) {
+      new UploadApplicationDialog(project).show();
+    }
+  }
+}
