@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,10 +48,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -69,7 +66,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final HashMap<String, FloatingDecorator> myId2FloatingDecorator;
   private final HashMap<String, StripeButton> myId2StripeButton;
   private final HashMap<String, FocusWatcher> myId2FocusWatcher;
-  private final Set<String> myDumbAwareIds = CollectionFactory.newTroveSet();
+  private final Set<String> myDumbAwareIds = Collections.synchronizedSet(CollectionFactory.<String>newTroveSet());
 
   private final EditorComponentFocusWatcher myEditorComponentFocusWatcher;
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener;
@@ -731,7 +728,29 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        @NotNull final JComponent component,
                                        @NotNull final ToolWindowAnchor anchor) {
-    return registerToolWindow(id, component, anchor, false, false, false);
+    return registerToolWindow(id, component, anchor, false);
+  }
+
+  public ToolWindow registerToolWindow(@NotNull final String id,
+                                       @NotNull JComponent component,
+                                       @NotNull ToolWindowAnchor anchor,
+                                       Disposable parentDisposable) {
+    return registerToolWindow(id, component, anchor, parentDisposable, false);
+  }
+
+  public ToolWindow registerToolWindow(@NotNull final String id,
+                                       @NotNull JComponent component,
+                                       @NotNull ToolWindowAnchor anchor,
+                                       Disposable parentDisposable,
+                                       boolean canWorkInDumbMode) {
+    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, canWorkInDumbMode));
+  }
+
+  private ToolWindow registerToolWindow(@NotNull final String id,
+                                        @NotNull final JComponent component,
+                                        @NotNull final ToolWindowAnchor anchor,
+                                        boolean canWorkInDumbMode) {
+    return registerToolWindow(id, component, anchor, false, false, canWorkInDumbMode);
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
@@ -810,13 +829,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandsList);
     fireToolWindowRegistered(id);
     return toolWindow;
-  }
-
-  public ToolWindow registerToolWindow(@NotNull final String id,
-                                       @NotNull JComponent component,
-                                       @NotNull ToolWindowAnchor anchor,
-                                       Disposable parentDisposable) {
-    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor));
   }
 
   private ToolWindow registerDisposable(final String id, final Disposable parentDisposable, final ToolWindow window) {

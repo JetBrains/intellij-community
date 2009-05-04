@@ -211,6 +211,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return HEADLESS_WINDOW;
   }
 
+  public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable, boolean canWorkInDumbMode) {
+    return HEADLESS_WINDOW;
+  }
+
   public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable) {
     return HEADLESS_WINDOW;
   }

@@ -32,7 +32,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   public static final JComponent ANY_COMPONENT = new JComponent() {};
 
-  private boolean myActive;
+  private volatile boolean myActive;
+  private volatile boolean mySuspended;
 
   private final Map<Update, Update> mySheduledUpdates = new TreeMap<Update, Update>();
 
@@ -105,6 +106,15 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     hideNotify();
   }
 
+  public void suspend() {
+    mySuspended = true;
+  }
+
+  public void resume() {
+    mySuspended = false;
+    restartTimer();
+  }
+
   public void hideNotify() {
     if (!myActive) {
       return;
@@ -121,16 +131,19 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
     restartTimer();
     myActive = true;
-    //flush();
+    flush();
   }
 
   public void restartTimer() {
+    if (!myActive) return;
+
     clearWaiter();
     myWaiterForMerge.addRequest(this, myMergingTimeSpan, getMergerModailityState());
   }
 
 
   public void run() {
+    if (mySuspended) return;
     flush();
   }
 
