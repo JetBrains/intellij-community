@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.events;
+package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.*;
@@ -37,7 +37,7 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   public KeymapGroup createGroup(Condition<AnAction> condition, Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(
-        EventsBundle.message("maven.event.action.group.name"), CLOSED_ICON, OPEN_ICON);
+        TasksBundle.message("maven.event.action.group.name"), CLOSED_ICON, OPEN_ICON);
 
     if (project == null) return result;
 
@@ -81,7 +81,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     }
 
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    MavenEventsManager eventsHandler = MavenEventsManager.getInstance(project);
+    MavenTasksManager eventsHandler = MavenTasksManager.getInstance(project);
 
     List<MavenGoalAction> actionList = new ArrayList<MavenGoalAction>();
     for (MavenProject eachProject : projectsManager.getProjects()) {
@@ -100,14 +100,14 @@ public class MavenKeymapExtension implements KeymapExtension {
     }
 
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    MavenEventsManager eventsHandler = MavenEventsManager.getInstance(project);
+    MavenTasksManager eventsHandler = MavenTasksManager.getInstance(project);
 
     doUpdateActions(actionIdPrefix,  collectActions(mavenProject, projectsManager, eventsHandler));
   }
 
   private static List<MavenGoalAction> collectActions(MavenProject eachProject,
                                                       MavenProjectsManager projectsManager,
-                                                      MavenEventsManager eventsHandler) {
+                                                      MavenTasksManager eventsHandler) {
     List<MavenGoalAction> result = new ArrayList<MavenGoalAction>();
     String projectName = eachProject.getDisplayName();
     String pomPath = eachProject.getPath();
@@ -123,7 +123,7 @@ public class MavenKeymapExtension implements KeymapExtension {
   @TestOnly
   static String getActionPrefix(Project project, MavenProject mavenProject) {
     String pomPath = mavenProject == null ? null : mavenProject.getPath();
-    return MavenEventsManager.getInstance(project).getActionId(pomPath, null);
+    return MavenTasksManager.getInstance(project).getActionId(pomPath, null);
   }
 
   private static void doUpdateActions(String actionIdPrefix, Collection<MavenGoalAction> actionList) {
@@ -142,7 +142,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     if (n != null) {
       return n.getName();
     }
-    return EventsBundle.message("maven.event.unknown.project");
+    return TasksBundle.message("maven.event.unknown.project");
   }
 
   private static Collection<String> collectGoals(MavenProject project, File repository) {
@@ -177,7 +177,7 @@ public class MavenKeymapExtension implements KeymapExtension {
 
       Presentation template = getTemplatePresentation();
       template.setText(goal, false);
-      template.setDescription(EventsBundle.message("maven.event.action.description", goal, mavenProjectName));
+      template.setDescription(TasksBundle.message("maven.event.action.description", goal, mavenProjectName));
     }
 
     public void actionPerformed(AnActionEvent e) {

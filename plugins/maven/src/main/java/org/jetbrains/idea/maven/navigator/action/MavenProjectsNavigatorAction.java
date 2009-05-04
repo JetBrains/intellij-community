@@ -2,13 +2,13 @@ package org.jetbrains.idea.maven.navigator.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorSettings;
+import org.jetbrains.idea.maven.utils.MavenToggleAction;
 
-public abstract class MavenProjectsNavigatorAction extends ToggleAction {
+public abstract class MavenProjectsNavigatorAction extends MavenToggleAction {
   public void update(final AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(getNavigator(e) != null);

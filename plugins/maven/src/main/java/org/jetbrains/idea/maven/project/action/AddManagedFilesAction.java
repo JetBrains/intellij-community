@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project.action;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -10,10 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenAction;
 
 import java.util.Arrays;
 
-public class AddManagedFilesAction extends AnAction {
+public class AddManagedFilesAction extends MavenAction {
   public void actionPerformed(AnActionEvent e) {
     Project p = e.getData(PlatformDataKeys.PROJECT);
     VirtualFile selectedFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);

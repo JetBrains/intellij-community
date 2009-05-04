@@ -1,21 +1,28 @@
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public abstract class SimpleProjectComponent implements ProjectComponent {
-  @NonNls private final String myComponentName;
+  protected final Project myProject;
 
-  protected SimpleProjectComponent(@NonNls final String componentName) {
-    myComponentName = componentName;
+  protected SimpleProjectComponent(Project project) {
+    myProject = project;
   }
 
-  protected SimpleProjectComponent() {
-    this(null);
+  @NotNull
+  @NonNls
+  public String getComponentName() {
+    return getClass().getSimpleName();
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
   }
 
   public void projectOpened() {
@@ -24,19 +31,19 @@ public abstract class SimpleProjectComponent implements ProjectComponent {
   public void projectClosed() {
   }
 
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    if (myComponentName != null) {
-      return myComponentName;
-    }
-    final String name = getClass().getName();
-    return name.substring(name.lastIndexOf(".") +1);
+  protected boolean isNormalProject() {
+    return !isUnitTestMode() && !isHeadless() && !isDefault();
   }
 
-  public void initComponent() {
+  protected boolean isUnitTestMode() {
+    return ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  public void disposeComponent() {
+  protected boolean isHeadless() {
+    return ApplicationManager.getApplication().isHeadlessEnvironment();
+  }
+
+  protected boolean isDefault() {
+    return myProject.isDefault();
   }
 }

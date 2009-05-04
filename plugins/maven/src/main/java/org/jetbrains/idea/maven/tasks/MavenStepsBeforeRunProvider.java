@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.events;
+package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.StepsBeforeRunProvider;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -24,11 +24,11 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public String getStepName() {
-    return MavenEventsManager.RUN_MAVEN_STEP;
+    return MavenTasksManager.RUN_MAVEN_STEP;
   }
 
   public String getStepDescription(final RunConfiguration runConfiguration) {
-    return MavenEventsManager.getInstance(myProject).getRunStepDescription(runConfiguration);
+    return MavenTasksManager.getInstance(myProject).getRunStepDescription(runConfiguration);
   }
 
   public boolean hasTask(RunConfiguration configuration) {
@@ -40,7 +40,7 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         new Task.Modal(PlatformDataKeys.PROJECT.getData(context),
-                       EventsBundle.message("execute.before.launch.steps.title"),
+                       TasksBundle.message("execute.before.launch.steps.title"),
                        true) {
           public void run(@NotNull ProgressIndicator indicator) {
             final MavenTask task = getEventsHandler().getTask(configuration.getType(), configuration);
@@ -70,10 +70,10 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public String configureStep(final RunConfiguration runConfiguration) {
-    return MavenEventsManager.getInstance(myProject).configureRunStep(runConfiguration);
+    return MavenTasksManager.getInstance(myProject).configureRunStep(runConfiguration);
   }
 
-  private MavenEventsManager getEventsHandler() {
-    return myProject.getComponent(MavenEventsManager.class);
+  private MavenTasksManager getEventsHandler() {
+    return myProject.getComponent(MavenTasksManager.class);
   }
 }

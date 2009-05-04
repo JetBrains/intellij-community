@@ -46,7 +46,7 @@ public class MavenIndicesTestFixture {
   }
 
   public void tearDown() throws Exception {
-    getIndicesManager().doShutdown();
+    getIndicesManager().doShutdownInTests();
   }
 
   public MavenIndicesManager getIndicesManager() {

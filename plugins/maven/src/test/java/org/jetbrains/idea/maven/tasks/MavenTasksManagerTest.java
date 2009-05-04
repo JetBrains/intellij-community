@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.events;
+package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -7,13 +7,13 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import java.util.Arrays;
 import java.util.List;
 
-public class MavenEventsManagerTest extends MavenImportingTestCase {
-  private MavenEventsManager myEventsManager;
+public class MavenTasksManagerTest extends MavenImportingTestCase {
+  private MavenTasksManager myEventsManager;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myEventsManager = MavenEventsManager.getInstance(myProject);
+    myEventsManager = MavenTasksManager.getInstance(myProject);
     myEventsManager.doInit();
     initMavenProjectsManager(true);
   }

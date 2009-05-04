@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.events;
+package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;

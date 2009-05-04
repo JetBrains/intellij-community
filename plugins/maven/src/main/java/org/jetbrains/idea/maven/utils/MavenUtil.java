@@ -4,13 +4,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
@@ -45,6 +46,16 @@ public class MavenUtil {
           r.run();
         }
       }, state);
+    }
+  }
+
+  public static void runWhenInitialized(Project project, Runnable r) {
+    if (project.isInitialized()
+        || ApplicationManager.getApplication().isUnitTestMode()) {
+      r.run();
+    }
+    else {
+      StartupManager.getInstance(project).registerPostStartupActivity(r);
     }
   }
 

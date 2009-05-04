@@ -1541,6 +1541,8 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
   }
 
   public void testPerformanceTest() throws Exception {
+    if (ignore()) return;
+
     VirtualFile pom = LocalFileSystem.getInstance().findFileByPath("C:\\projects\\mvn\\_projects\\geronimo\\pom.xml");
 
     long before = System.currentTimeMillis();

@@ -16,7 +16,6 @@
 
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -26,18 +25,13 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import java.util.List;
 
 public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
-  private final Project myProject;
-
   public MavenEditorTabTitleUpdater(Project project) {
-    myProject = project;
+    super(project);
   }
 
   @Override
   public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()
-        || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return;
-    }
+    if (!isNormalProject()) return;
 
     MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override

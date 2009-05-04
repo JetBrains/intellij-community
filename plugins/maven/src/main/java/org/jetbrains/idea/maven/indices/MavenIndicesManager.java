@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
@@ -71,6 +72,11 @@ public class MavenIndicesManager implements ApplicationComponent {
   }
 
   public void initComponent() {
+    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+      public void run() {
+        doShutdown();
+      }
+    });
   }
 
   @TestOnly
@@ -110,8 +116,7 @@ public class MavenIndicesManager implements ApplicationComponent {
     doShutdown();
   }
 
-  @TestOnly
-  public void doShutdown() {
+  private synchronized void doShutdown() {
     if (myIndices != null) {
       try {
         myIndices.close();
@@ -131,6 +136,11 @@ public class MavenIndicesManager implements ApplicationComponent {
       }
       myEmbedder = null;
     }
+  }
+
+  @TestOnly
+  public void doShutdownInTests() {
+    doShutdown();
   }
 
   public List<MavenIndex> getIndices() {
@@ -298,7 +308,7 @@ public class MavenIndicesManager implements ApplicationComponent {
     try {
       File file = getUserArchetypesFile();
       if (!file.exists()) return;
-      
+
       Document doc = JDOMUtil.loadDocument(file);
       Element root = doc.getRootElement();
       if (root == null) return;
@@ -311,8 +321,10 @@ public class MavenIndicesManager implements ApplicationComponent {
         String description = each.getAttributeValue(ELEMENT_DESCRIPTION);
 
         if (StringUtil.isEmptyOrSpaces(groupId)
-          || StringUtil.isEmptyOrSpaces(artifactId)
-          || StringUtil.isEmptyOrSpaces(version)) continue;
+            || StringUtil.isEmptyOrSpaces(artifactId)
+            || StringUtil.isEmptyOrSpaces(version)) {
+          continue;
+        }
 
         result.add(new ArchetypeInfo(groupId, artifactId, version, repository, description));
       }

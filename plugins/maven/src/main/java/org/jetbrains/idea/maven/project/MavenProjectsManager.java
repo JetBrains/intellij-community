@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -12,9 +11,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -47,7 +46,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
                                                                             SettingsSavingComponent {
   private static final int IMPORT_DELAY = 1000;
 
-  private final Project myProject;
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
@@ -78,7 +76,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public MavenProjectsManager(Project project) {
-    myProject = project;
+    super(project);
   }
 
   public MavenProjectsManagerState getState() {
@@ -112,7 +110,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   @Override
   public void initComponent() {
-    if (isUnitTestMode()) return;
+    if (!isNormalProject()) return;
 
     StartupManagerEx.getInstanceEx(myProject).registerStartupActivity(new Runnable() {
       public void run() {
@@ -154,7 +152,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     if (isUnitTestMode()) return;
 
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
         listenForExternalChanges();
         fireActivated();
@@ -263,10 +261,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myPostProcessor.cancelAndStop();
 
     myEmbeddersManager.release();
-  }
-
-  private boolean isUnitTestMode() {
-    return ApplicationManager.getApplication().isUnitTestMode();
   }
 
   private boolean isInitialized() {
@@ -588,7 +582,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
         result.setResult(importer.getCreatedModules());
       }
     }.execute().getResultObject();
-    VirtualFileManager.getInstance().refresh(false);
+    VirtualFileManager.getInstance().refresh(isNormalProject());
     return result;
   }
 

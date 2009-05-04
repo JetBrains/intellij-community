@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.events.MavenEventsManager;
+import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorSettings;
 import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.*;
@@ -67,7 +67,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectsStructure.RootNode createMavenTree() {
     MavenProjectsStructure s = new MavenProjectsStructure(myProject,
                                                           myMavenProjectsManager,
-                                                          myProject.getComponent(MavenEventsManager.class)) {
+                                                          myProject.getComponent(MavenTasksManager.class)) {
       {
         for (MavenProject each : myMavenProjectsManager.getProjects()) {
           this.myRoot.addUnder(new MavenProjectsStructure.PomNode(each));

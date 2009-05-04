@@ -27,8 +27,8 @@
 
     <projectConfigurable implementation="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
 
-    <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.events.MavenStepsBeforeRunProvider"/>
-    <keymapExtension implementation="org.jetbrains.idea.maven.events.MavenKeymapExtension"/>
+    <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenStepsBeforeRunProvider"/>
+    <keymapExtension implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.runner.MavenRunConfigurationType"/>
 
@@ -92,7 +92,7 @@
       <implementation-class>org.jetbrains.idea.maven.indices.MavenProjectIndicesManager</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.events.MavenEventsManager</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.tasks.MavenTasksManager</implementation-class>
     </component>
   </project-components>
 
@@ -187,20 +187,20 @@
 
     <group id="Maven.EventsGroup">
       <action id="Maven.BeforeCompile"
-              class="org.jetbrains.idea.maven.events.actions.BeforeCompileAction" text="Execute before Make"
+              class="org.jetbrains.idea.maven.tasks.actions.BeforeCompileAction" text="Execute before Make"
               description="Execute this goal before IntelliJ IDEA Make">
       </action>
       <action id="Maven.AfterCompile"
-              class="org.jetbrains.idea.maven.events.actions.AfterCompileAction" text="Execute after Make"
+              class="org.jetbrains.idea.maven.tasks.actions.AfterCompileAction" text="Execute after Make"
               description="Execute this goal after IntelliJ IDEA Make">
       </action>
       <action id="Maven.BeforeRun"
-              class="org.jetbrains.idea.maven.events.actions.BeforeRunAction" text="Execute before Run/debug..."
+              class="org.jetbrains.idea.maven.tasks.actions.BeforeRunAction" text="Execute before Run/debug..."
               description="Execute this goal before launching Run/Debug configuration">
       </action>
       <separator/>
       <action id="Maven.AssignShortcut"
-              class="org.jetbrains.idea.maven.events.actions.AssignShortcutAction" text="Assign shortcut..."
+              class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign shortcut..."
               description="Assign shortcut">
       </action>
     </group>

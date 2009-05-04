@@ -10,7 +10,6 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -82,7 +81,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
     updateProjectPom(project, pom);
 
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+    MavenUtil.runWhenInitialized(project, new Runnable() {
       public void run() {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         manager.addManagedFiles(Collections.singletonList(pom));

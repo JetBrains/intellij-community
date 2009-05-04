@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.events;
+package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -19,8 +19,8 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,6 +40,7 @@ import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
 import java.io.File;
@@ -49,24 +50,23 @@ import java.util.*;
  * @author Vladislav.Kaznacheev
  */
 @State(name = "MavenEventsHandler", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenEventsManager extends SimpleProjectComponent implements PersistentStateComponent<MavenEventsState> {
-  public static MavenEventsManager getInstance(Project project) {
-    return project.getComponent(MavenEventsManager.class);
+public class MavenTasksManager extends SimpleProjectComponent implements PersistentStateComponent<MavenTasksState> {
+  public static MavenTasksManager getInstance(Project project) {
+    return project.getComponent(MavenTasksManager.class);
   }
 
   @NonNls private static final String ACTION_ID_PREFIX = "Maven_";
 
-  public static final String RUN_MAVEN_STEP = EventsBundle.message("maven.event.before.run");
+  public static final String RUN_MAVEN_STEP = TasksBundle.message("maven.event.before.run");
 
-  private static final String BEFORE_MAKE = EventsBundle.message("maven.event.text.before.make");
-  private static final String AFTER_MAKE = EventsBundle.message("maven.event.text.after.make");
-  private static final String BEFORE_RUN = EventsBundle.message("maven.event.text.before.run");
+  private static final String BEFORE_MAKE = TasksBundle.message("maven.event.text.before.make");
+  private static final String AFTER_MAKE = TasksBundle.message("maven.event.text.after.make");
+  private static final String BEFORE_RUN = TasksBundle.message("maven.event.text.before.run");
 
-  private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
   private final MavenRunner myRunner;
 
-  private MavenEventsState myState = new MavenEventsState();
+  private MavenTasksState myState = new MavenTasksState();
   private Map<Pair<String, Integer>, MavenTask> myBeforeRunMap = new THashMap<Pair<String, Integer>, MavenTask>();
 
   private MyKeymapListener myKeymapListener;
@@ -75,8 +75,8 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
 
   private final Alarm myKeymapUpdaterAlarm;
 
-  public MavenEventsManager(Project project, MavenProjectsManager projectsManager, MavenRunner runner) {
-    myProject = project;
+  public MavenTasksManager(Project project, MavenProjectsManager projectsManager, MavenRunner runner) {
+    super(project);
     myProjectsManager = projectsManager;
     myRunner = runner;
     myKeymapUpdaterAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, project);
@@ -84,9 +84,9 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
 
   @Override
   public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (!isNormalProject()) return;
 
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
         doInit();
       }
@@ -104,12 +104,12 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     compilerManager.addBeforeTask(new CompileTask() {
       public boolean execute(CompileContext context) {
-        return MavenEventsManager.this.execute(getState().beforeCompile, context.getProgressIndicator());
+        return MavenTasksManager.this.execute(getState().beforeCompile, context.getProgressIndicator());
       }
     });
     compilerManager.addAfterTask(new CompileTask() {
       public boolean execute(CompileContext context) {
-        return MavenEventsManager.this.execute(getState().afterCompile, context.getProgressIndicator());
+        return MavenTasksManager.this.execute(getState().afterCompile, context.getProgressIndicator());
       }
     });
   }
@@ -133,7 +133,7 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
   }
 
   @NotNull
-  public MavenEventsState getState() {
+  public MavenTasksState getState() {
     Map<String, MavenTask> map = new THashMap<String, MavenTask>();
 
     for (Map.Entry<Pair<String, Integer>, MavenTask> each : myBeforeRunMap.entrySet()) {
@@ -157,7 +157,7 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
     return myState;
   }
 
-  public void loadState(MavenEventsState state) {
+  public void loadState(MavenTasksState state) {
     Map<Pair<String, Integer>, MavenTask> map = new THashMap<Pair<String, Integer>, MavenTask>();
 
     for (Map.Entry<String, MavenTask> each : state.beforeRun.entrySet()) {
@@ -191,7 +191,7 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
       }
       parametersList.add(runnerParameters);
     }
-    return myRunner.runBatch(parametersList, null, null, EventsBundle.message("maven.event.executing"), indicator);
+    return myRunner.runBatch(parametersList, null, null, TasksBundle.message("maven.event.executing"), indicator);
   }
 
   public String getActionId(@Nullable String pomPath, @Nullable String goal) {
@@ -271,7 +271,7 @@ public class MavenEventsManager extends SimpleProjectComponent implements Persis
     final MavenTask mavenTask = getTask(runConfiguration.getType(), runConfiguration);
 
     if (!myTaskSelector.select(project, mavenTask != null ? mavenTask.pomPath : null, mavenTask != null ? mavenTask.goal : null,
-                               EventsBundle.message("maven.event.select.goal.title"))) {
+                               TasksBundle.message("maven.event.select.goal.title"))) {
       return mavenTask;
     }
 

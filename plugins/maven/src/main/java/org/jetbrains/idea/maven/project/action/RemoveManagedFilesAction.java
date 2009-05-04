@@ -1,15 +1,15 @@
 package org.jetbrains.idea.maven.project.action;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenAction;
 
 import java.util.Arrays;
 
-public class RemoveManagedFilesAction extends AnAction {
+public class RemoveManagedFilesAction extends MavenAction {
   @Override
   public void update(AnActionEvent e) {
     Project p = e.getData(PlatformDataKeys.PROJECT);

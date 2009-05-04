@@ -7,7 +7,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.events.MavenEventsManager;
+import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -76,7 +76,7 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
     public PopupMavenProjectsStructure(final Project project) {
       super(project,
             MavenProjectsManager.getInstance(project),
-            MavenEventsManager.getInstance(project));
+            MavenTasksManager.getInstance(project));
       myTreeViewSettings = MavenProjectsNavigator.getInstance(project).getTreeViewSettings();
     }
 

@@ -25,8 +25,6 @@ import java.util.List;
 
 @State(name = "MavenRunner", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
 public class MavenRunner extends SimpleProjectComponent implements PersistentStateComponent<MavenRunnerSettings> {
-  private final Project myProject;
-
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
 
   public static MavenRunner getInstance(Project project) {
@@ -34,8 +32,7 @@ public class MavenRunner extends SimpleProjectComponent implements PersistentSta
   }
 
   public MavenRunner(final Project project) {
-    super("MavenRunner");
-    myProject = project;
+    super(project);
   }
 
   public MavenRunnerSettings getState() {

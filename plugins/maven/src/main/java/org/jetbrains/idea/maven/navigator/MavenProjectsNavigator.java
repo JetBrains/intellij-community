@@ -19,11 +19,11 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.events.MavenEventsManager;
+import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
 
 import javax.swing.*;
@@ -40,7 +40,8 @@ import java.util.List;
 import java.util.Map;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenProjectsNavigator extends MavenProjectsStructure implements ProjectComponent, PersistentStateComponent<MavenProjectsNavigatorSettings> {
+public class MavenProjectsNavigator extends MavenProjectsStructure
+  implements ProjectComponent, PersistentStateComponent<MavenProjectsNavigatorSettings> {
   public static final String TOOL_WINDOW_ID = "Maven Projects";
   private static final Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
 
@@ -60,15 +61,15 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
   }
 
   public MavenProjectsNavigator(Project project,
-                               MavenProjectsManager projectsManager,
-                               MavenEventsManager eventsHandler) {
+                                MavenProjectsManager projectsManager,
+                                MavenTasksManager eventsHandler) {
     super(project, projectsManager, eventsHandler);
   }
 
   @NotNull
   @NonNls
   public String getComponentName() {
-    return "MavenProjectNavigator";
+    return getClass().getSimpleName();
   }
 
   public void initComponent() {
@@ -86,7 +87,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
     initStatusPanel();
     initToolWindow();
     listenForChanges();
-}
+  }
 
   public void projectClosed() {
   }
@@ -94,8 +95,8 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
   private void initProjectsTree() {
     myTree = new SimpleTree() {
       private final JLabel myLabel = new JLabel(ProjectBundle.message("maven.navigator.nothing.to.display",
-                                                                formatHtmlImage(ADD_ICON_URL),
-                                                                formatHtmlImage(SYNC_ICON_URL)));
+                                                                      formatHtmlImage(ADD_ICON_URL),
+                                                                      formatHtmlImage(SYNC_ICON_URL)));
 
       @Override
       protected void paintComponent(Graphics g) {
@@ -157,7 +158,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
     myProjectsManager.addManagerListener(projectsListener);
     myProjectsManager.addProjectsTreeListener(projectsListener);
 
-    myEventsHandler.addListener(new MavenEventsManager.Listener() {
+    myTasksManager.addListener(new MavenTasksManager.Listener() {
       public void updateShortcuts(@Nullable String actionId) {
         for (PomNode pomNode : myFileToNode.values()) {
           pomNode.updateShortcuts(actionId);
@@ -165,7 +166,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
       }
     });
 
-    myEventsHandler.installTaskSelector(new MavenEventsManager.TaskSelector() {
+    myTasksManager.installTaskSelector(new MavenTasksManager.TaskSelector() {
       SelectMavenGoalDialog dialog;
 
       public boolean select(final Project project,
@@ -188,11 +189,11 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
   }
 
   private void initToolWindow() {
-    final JPanel navigatorPanel = new MavenProjectsNavigatorPanel(myProject, myTree, myStatusPanel);
+    JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree, myStatusPanel);
 
-    ToolWindow pomToolWindow = ToolWindowManager.getInstance(myProject)
-        .registerToolWindow(TOOL_WINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, myProject);
-    pomToolWindow.setIcon(ICON);
+    ToolWindowManager manager = ToolWindowManager.getInstance(myProject);
+    ToolWindow toolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
+    toolWindow.setIcon(ICON);
   }
 
   public MavenProjectsNavigatorSettings getTreeViewSettings() {

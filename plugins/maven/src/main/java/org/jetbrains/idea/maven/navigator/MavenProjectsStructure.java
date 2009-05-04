@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.events.MavenEventsManager;
+import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -56,7 +56,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
   private static final CustomNode[] EMPTY_NODES_ARRAY = new CustomNode[0];
   protected final Project myProject;
   protected final MavenProjectsManager myProjectsManager;
-  protected final MavenEventsManager myEventsHandler;
+  protected final MavenTasksManager myTasksManager;
 
   protected final RootNode myRoot = new RootNode();
 
@@ -65,10 +65,10 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
   public MavenProjectsStructure(Project project,
                             MavenProjectsManager projectsManager,
-                            MavenEventsManager eventsHandler) {
+                            MavenTasksManager tasksManager) {
     myProject = project;
     myProjectsManager = projectsManager;
-    myEventsHandler = eventsHandler;
+    myTasksManager = tasksManager;
   }
 
   public Object getRootElement() {
@@ -569,7 +569,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       updateNameAndDescription();
 
       savedPath = myMavenProject.getFile().getPath();
-      actionIdPrefix = myEventsHandler.getActionId(savedPath, null);
+      actionIdPrefix = myTasksManager.getActionId(savedPath, null);
 
       lifecycleNode.updateGoals();
       createPluginsNode();
@@ -932,7 +932,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     @Override
     protected void updateNameAndDescription() {
       actionId = pomNode.actionIdPrefix + goal;
-      String hint = myEventsHandler.getActionDescription(pomNode.savedPath, goal);
+      String hint = myTasksManager.getActionDescription(pomNode.savedPath, goal);
       setNameAndDescription(displayName, null, hint);
     }
 

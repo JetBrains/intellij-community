@@ -1,13 +1,13 @@
 package org.jetbrains.idea.maven.project.action;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.utils.MavenDataKeys;
+import org.jetbrains.idea.maven.utils.MavenAction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +15,7 @@ import java.util.List;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class ToggleProfileAction extends AnAction {
-
+public class ToggleProfileAction extends MavenAction {
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final MavenProjectsManager projectsManager = project != null ? project.getComponent(MavenProjectsManager.class) : null;

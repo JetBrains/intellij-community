@@ -1,19 +1,19 @@
-package org.jetbrains.idea.maven.events.actions;
+package org.jetbrains.idea.maven.tasks.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.MavenDataKeys;
-import org.jetbrains.idea.maven.events.MavenEventsManager;
+import org.jetbrains.idea.maven.tasks.MavenTasksManager;
+import org.jetbrains.idea.maven.utils.MavenAction;
 import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 import java.util.List;
 
-public class AssignShortcutAction extends AnAction {
+public class AssignShortcutAction extends MavenAction {
   public void update(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     String actionId = getGoalActionId(e, project);
@@ -36,7 +36,7 @@ public class AssignShortcutAction extends AnAction {
 
     List<String> goals = MavenDataKeys.MAVEN_GOALS_KEY.getData(e.getDataContext());
     String goal = (goals == null || goals.size() != 1) ? null : goals.get(0);
-    return MavenEventsManager.getInstance(project).getActionId(file.getPath(), goal);
+    return MavenTasksManager.getInstance(project).getActionId(file.getPath(), goal);
   }
 }
 

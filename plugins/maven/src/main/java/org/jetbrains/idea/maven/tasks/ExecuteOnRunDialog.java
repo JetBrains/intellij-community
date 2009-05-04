@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.events;
+package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ConfigurationType;

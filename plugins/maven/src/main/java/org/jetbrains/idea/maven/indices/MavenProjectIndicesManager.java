@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MavenProjectIndicesManager extends SimpleProjectComponent {
-  private final Project myProject;
   private final AtomicReference<List<MavenIndex>> myProjectIndices = new AtomicReference<List<MavenIndex>>(new ArrayList<MavenIndex>());
 
   public static MavenProjectIndicesManager getInstance(Project p) {
@@ -28,15 +27,12 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   }
 
   public MavenProjectIndicesManager(Project p) {
-    myProject = p;
+    super(p);
   }
 
   @Override
   public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    if (myProject.isDefault()) return;
-
+    if (!isNormalProject()) return;
     doInit();
   }
 
