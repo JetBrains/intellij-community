@@ -245,7 +245,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             final long fileStamp = file.getTimeStamp();
             info.updateTimestamp(projectId, fileStamp);
             saveSourceInfo(file, info);
-            removeSourceForRecompilation(projectId, getFileId(file));
+            removeSourceForRecompilation(projectId, Math.abs(getFileId(file)));
             if ((fileStamp > compilationStartStamp && !((CompileContextEx) context).isGenerated(file)) || forceRecompile.contains(file)) {
               // changes were made during compilation, need to re-schedule compilation
               // it is important to invoke removeSourceForRecompilation() before to make sure
@@ -880,13 +880,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                   for (int projectId : srcInfo.getProjectIds().toArray()) {
                     if (srcInfo.isAssociated(projectId, filePath)) {
                       addSourceForRecompilation(projectId, srcFile, srcInfo);
-                      break;
                     }
                   }
                 }
               }
             }
-  
+
             final SourceFileInfo srcInfo = loadSourceInfo(file);
             if (srcInfo != null) {
               final TIntHashSet projects = srcInfo.getProjectIds();
@@ -993,7 +992,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         set = new TIntHashSet();
         mySourcesToRecompile.put(projectId, set);
       }
-      alreadyMarked = !set.add(getFileId(srcFile));
+      alreadyMarked = !set.add(Math.abs(getFileId(srcFile)));
       if (!alreadyMarked && LOG.isDebugEnabled()) {
         LOG.debug("Scheduled recompilation " + srcFile.getPresentableUrl());
       }
