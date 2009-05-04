@@ -17,7 +17,6 @@ package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 import java.util.HashSet;
@@ -26,12 +25,7 @@ import java.util.HashSet;
  * @author peter
  */
 public abstract class FactoryMap<K,V> implements Map<K, V> {
-  static final Object NULL = new Object() {
-    @NonNls
-    public String toString() {
-      return "NULL";
-    }
-  };
+  static final Object NULL = new Object();
   protected Map<K,V> myMap;
 
   protected Map<K, V> createMap() {
