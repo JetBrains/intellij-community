@@ -64,10 +64,6 @@ public class TargetElementUtilBase {
 
   @Nullable
   public static PsiReference findReference(Editor editor) {
-    if (caretInVirtualSpace(editor)) {
-      return null;
-    }
-
     return findReference(editor, editor.getCaretModel().getOffset());
   }
 
@@ -110,15 +106,18 @@ public class TargetElementUtilBase {
   public static PsiElement findTargetElement(Editor editor, int flags) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (caretInVirtualSpace(editor)) {
-      return null;
-    }
-
     return getInstance().findTargetElement(editor, flags, editor.getCaretModel().getOffset());
   }
 
-  public static boolean caretInVirtualSpace(Editor editor) {
-    final LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
+  public static boolean inVirtualSpace(Editor editor, int offset) {
+    if (offset == editor.getCaretModel().getOffset()) {
+      return inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
+    }
+
+    return inVirtualSpace(editor, editor.offsetToLogicalPosition(offset));
+  }
+
+  public static boolean inVirtualSpace(Editor editor, LogicalPosition logicalPosition) {
     return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
   }
 

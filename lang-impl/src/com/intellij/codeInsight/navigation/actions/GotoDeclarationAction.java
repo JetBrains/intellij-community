@@ -83,7 +83,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   // returns true if processor is run or is going to be run after showing popup
   public static boolean chooseAmbiguousTarget(final Editor editor, int offset, PsiElementProcessor<PsiElement> processor,
                                               String titlePattern) {
-    final PsiReference reference = TargetElementUtilBase.findReference(editor);
+    if (TargetElementUtilBase.inVirtualSpace(editor, offset)) {
+      return false;
+    }
+
+    final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
     final Collection<PsiElement> candidates = suggestCandidates(reference);
     if (candidates.size() == 1) {
       PsiElement element = candidates.iterator().next();
@@ -114,13 +118,17 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Nullable
   public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
+    if (TargetElementUtilBase.inVirtualSpace(editor, offset)) {
+      return null;
+    }
+
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       return null;
     }
     PsiElement elementAt = file.findElementAt(offset);
 
-    for(GotoDeclarationHandler handler: Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
+    for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
       PsiElement result = handler.getGotoDeclarationTarget(elementAt);
       if (result != null) {
         return result;
@@ -128,6 +136,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
 
     int flags = TargetElementUtilBase.getInstance().getAllAccepted() & ~TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
-    return TargetElementUtilBase.findTargetElement(editor, flags);
+    return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
   }
 }
