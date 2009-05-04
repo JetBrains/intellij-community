@@ -1,9 +1,9 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
@@ -231,7 +232,7 @@ final class EditorTabbedContainer implements Disposable {
 
   }
 
-  private class CloseTab extends AnAction {
+  private class CloseTab extends AnAction implements DumbAware {
 
     ShadowAction myShadow;
     private final TabInfo myTabInfo;
