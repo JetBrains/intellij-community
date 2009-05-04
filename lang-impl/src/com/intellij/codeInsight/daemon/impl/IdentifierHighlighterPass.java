@@ -63,7 +63,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       return;
     }
 
-    final PsiElement myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, myCaretOffset);
+    final PsiElement myTarget = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     if (myTarget != null) {
       final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(myTarget);
       ReferencesSearch.search(myTarget, new LocalSearchScope(myFile)).forEach(new Processor<PsiReference>() {
