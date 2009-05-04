@@ -107,6 +107,7 @@ public class ConfigurationManager {
       for (final Object pattern : patterns) {
         final Element childElement = (Element)pattern;
         final Configuration config = readConfiguration(childElement);
+        if (config == null) continue;
 
         if (childElement.getAttribute(SAVE_HISTORY_ATTR_NAME) != null) {
           historyConfigurations.add(config);
@@ -119,10 +120,10 @@ public class ConfigurationManager {
   }
 
   public static Configuration readConfiguration(final Element childElement) {
+    String s = childElement.getName();
     final Configuration config =
-      childElement.getName().equals(SEARCH_TAG_NAME) ? new SearchConfiguration() : new ReplaceConfiguration();
-
-    config.readExternal(childElement);
+      s.equals(SEARCH_TAG_NAME) ? new SearchConfiguration() : s.equals(REPLACE_TAG_NAME) ? new ReplaceConfiguration():null;
+    if (config != null) config.readExternal(childElement);
     return config;
   }
 
