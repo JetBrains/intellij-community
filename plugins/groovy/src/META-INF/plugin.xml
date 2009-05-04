@@ -39,6 +39,7 @@
     <nonCodeProcessor implementation="org.jetbrains.plugins.grails.references.domain.GrailsNonCodeMembersProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.SingletonAnnotationProcessor"/>
+    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.BindableAnnotationProcessor"/>
     <libraryManager implementation="org.jetbrains.plugins.gant.config.GantLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.grails.config.GrailsLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager" order="last"/>
