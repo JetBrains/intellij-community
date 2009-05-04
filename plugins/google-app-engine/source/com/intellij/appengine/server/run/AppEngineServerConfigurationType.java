@@ -38,7 +38,7 @@ public class AppEngineServerConfigurationType extends J2EEConfigurationType {
 
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
-    return new ConfigurationFactory[] {getLocalFactory()};
+    return new ConfigurationFactory[] {super.getConfigurationFactories()[0]};
   }
 
   @Override
