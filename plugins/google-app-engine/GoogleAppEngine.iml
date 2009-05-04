@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="web-openapi" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="debugger-openapi" />
   </component>
 </module>
 
