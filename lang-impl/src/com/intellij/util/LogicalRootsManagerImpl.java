@@ -152,7 +152,9 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
       return Collections.emptyList();
     }
 
-    return new ArrayList<T>((Collection<T>) map.get(type));
+    Collection<LogicalRoot> collection = map.get(type);
+    if (collection == null) return Collections.emptyList();
+    return new ArrayList<T>((Collection<T>)collection);
   }
 
   @NotNull
