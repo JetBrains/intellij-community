@@ -910,9 +910,6 @@
     <action id="PopupHector">
       <keyboard-shortcut first-keystroke="ctrl alt shift H"/>
     </action>
-    <action id="UiDebugger">
-      <keyboard-shortcut first-keystroke="ctrl alt U"/>
-    </action>
   </keymap>
 
   <!-- ############################################################################## -->
