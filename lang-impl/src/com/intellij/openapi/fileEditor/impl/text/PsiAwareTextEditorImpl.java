@@ -5,6 +5,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -37,6 +38,13 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
                                         @NotNull final TextEditorImpl textEditor) {
       super(project, file, textEditor);
       myProject = project;
+      CodeFoldingManager.getInstance(project).buildInitialFoldings(getEditor());
+    }
+
+    @Override
+    void dispose() {
+      CodeFoldingManager.getInstance(myProject).releaseFoldings(getEditor());
+      super.dispose();
     }
 
     public Object getData(final String dataId) {

@@ -30,4 +30,7 @@ public abstract class CodeFoldingManager {
   
   public abstract void writeFoldingState(@NotNull CodeFoldingState state, @NotNull Element element) throws WriteExternalException;
   public abstract CodeFoldingState readFoldingState(@NotNull Element element, @NotNull Document document);
+
+  public abstract void releaseFoldings(Editor editor);
+  public abstract void buildInitialFoldings(Editor editor);
 }

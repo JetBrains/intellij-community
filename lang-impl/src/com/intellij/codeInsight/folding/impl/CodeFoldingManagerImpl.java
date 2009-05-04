@@ -8,13 +8,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -34,7 +36,6 @@ import java.awt.event.MouseEvent;
 public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent {
   private final Project myProject;
 
-  private EditorFactoryListener myEditorFactoryListener;
   private EditorMouseMotionAdapter myMouseMotionListener;
 
   private final WeakList<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
@@ -67,67 +68,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   public void projectOpened() {
-    myEditorFactoryListener = new EditorFactoryListener() {
-      public void editorCreated(EditorFactoryEvent event) {
-        final Editor editor = event.getEditor();
-        final Project project = editor.getProject();
-        if (project != null && !project.equals(myProject)) return;
-
-        final Document document = editor.getDocument();
-        //Do not save/restore folding for code fragments
-        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (file == null || !file.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) return;
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) return;
-            if (project.isDisposed() || editor.isDisposed() || !file.isValid()) return;
-
-            PsiDocumentManager.getInstance(myProject).commitDocument(document);
-
-            Runnable operation = new Runnable() {
-              public void run() {
-                Runnable runnable = updateFoldRegions(editor, true);
-                if (runnable != null) {
-                  runnable.run();
-                }
-
-                DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
-                Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-                for (Editor otherEditor : editors) {
-                  if (otherEditor == editor) continue;
-                  documentFoldingInfo.loadFromEditor(otherEditor);
-                  break;
-                }
-                documentFoldingInfo.setToEditor(editor);
-
-                documentFoldingInfo.clear();
-              }
-            };
-            editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
-          }
-        });
-      }
-
-      public void editorReleased(EditorFactoryEvent event) {
-        Editor editor = event.getEditor();
-
-        final Project project = editor.getProject();
-        if (project != null && !project.equals(myProject)) return;
-
-        Document document = editor.getDocument();
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (file == null || !file.getViewProvider().isPhysical() || !file.isValid()) return;
-        PsiDocumentManager.getInstance(myProject).commitDocument(document);
-
-        Editor[] otherEditors = EditorFactory.getInstance().getEditors(document, myProject);
-        if (otherEditors.length == 0) {
-          getDocumentFoldingInfo(document).loadFromEditor(editor);
-        }
-        EditorFoldingInfo.get(editor).dispose();
-      }
-    };
-
     myMouseMotionListener = new EditorMouseMotionAdapter() {
       LightweightHint myCurrentHint = null;
       FoldRegion myCurrentFold = null;
@@ -181,14 +121,66 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
-        EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
         EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(myMouseMotionListener);
       }
     });
   }
 
+  @Override
+  public void releaseFoldings(Editor editor) {
+    final Project project = editor.getProject();
+    if (project != null && !project.equals(myProject)) return;
+
+    Document document = editor.getDocument();
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    if (file == null || !file.getViewProvider().isPhysical() || !file.isValid()) return;
+    PsiDocumentManager.getInstance(myProject).commitDocument(document);
+
+    Editor[] otherEditors = EditorFactory.getInstance().getEditors(document, myProject);
+    if (otherEditors.length == 0) {
+      getDocumentFoldingInfo(document).loadFromEditor(editor);
+    }
+    EditorFoldingInfo.get(editor).dispose();
+  }
+
+  @Override
+  public void buildInitialFoldings(final Editor editor) {
+    final Project project = editor.getProject();
+    if (project == null || !project.equals(myProject)) return;
+
+    final Document document = editor.getDocument();
+    //Do not save/restore folding for code fragments
+    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    if (file == null || !file.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) return;
+    if (project.isDisposed() || editor.isDisposed() || !file.isValid()) return;
+
+    PsiDocumentManager.getInstance(myProject).commitDocument(document);
+
+    Runnable operation = new Runnable() {
+      public void run() {
+        Runnable runnable = updateFoldRegions(editor, true);
+        if (runnable != null) {
+          runnable.run();
+        }
+
+        DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+        Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
+        for (Editor otherEditor : editors) {
+          if (otherEditor == editor) continue;
+          documentFoldingInfo.loadFromEditor(otherEditor);
+          break;
+        }
+        documentFoldingInfo.setToEditor(editor);
+
+        documentFoldingInfo.clear();
+      }
+    };
+    editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
+  }
+
   public void projectClosed() {
-    EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
     EditorFactory.getInstance().getEventMulticaster().removeEditorMouseMotionListener(myMouseMotionListener);
   }
 
