@@ -9,8 +9,12 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.injection.*;
+import com.intellij.lang.injection.ConcatenationAwareInjector;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.MultiHostInjector;
+import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
@@ -62,14 +66,29 @@ public class MyTestInjector {
         if (variable == null) return;
         if (!varName.equals(variable.getName())) return;
         if (!(operands[0] instanceof PsiLiteralExpression)) return;
-        injectionPlacesRegistrar.startInjecting(language);
+        boolean started = false;
+        String prefixFromPrev="";
         for (int i = 0; i < operands.length; i++) {
           PsiElement operand = operands[i];
-          if (!(operand instanceof PsiLanguageInjectionHost)) continue;
+          if (!(operand instanceof PsiLiteralExpression)) {
+            continue;
+          }
+          Object value = ((PsiLiteralExpression)operand).getValue();
+          if (!(value instanceof String)) {
+            prefixFromPrev += value;
+            continue;
+          }
           TextRange textRange = textRangeToInject((PsiLanguageInjectionHost)operand);
-          injectionPlacesRegistrar.addPlace(i == 0 ? null : prefix, i == operands.length - 1 ? null : suffix, (PsiLanguageInjectionHost)operand, textRange);
+          if (!started) {
+            injectionPlacesRegistrar.startInjecting(language);
+            started = true;
+          }
+          injectionPlacesRegistrar.addPlace(prefixFromPrev + (i == 0 ? "" : prefix==null?"":prefix), i == operands.length - 1 ? null : suffix, (PsiLanguageInjectionHost)operand, textRange);
+          prefixFromPrev = "";
         }
-        injectionPlacesRegistrar.doneInjecting();
+        if (started) {
+          injectionPlacesRegistrar.doneInjecting();
+        }
       }
     };
     JavaConcatenationInjectorManager.getInstance(project).registerConcatenationInjector(injector);
@@ -254,16 +273,16 @@ public class MyTestInjector {
 
   public static TextRange textRangeToInject(PsiLanguageInjectionHost host) {
     ASTNode[] children = ((ASTNode)host).getChildren(null);
-    TextRange insideQuotes = new TextRange(0, host.getTextLength());
+    TextRange insideQuotes = new ProperTextRange(0, host.getTextLength());
 
     if (children.length > 1 && children[0].getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
-      insideQuotes = new TextRange(children[1].getTextRange().getStartOffset() - host.getTextRange().getStartOffset(), insideQuotes.getEndOffset());
+      insideQuotes = new ProperTextRange(children[1].getTextRange().getStartOffset() - host.getTextRange().getStartOffset(), insideQuotes.getEndOffset());
     }
     if (children.length > 1 && children[children.length-1].getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
-      insideQuotes = new TextRange(insideQuotes.getStartOffset(), children[children.length-2].getTextRange().getEndOffset() - host.getTextRange().getStartOffset());
+      insideQuotes = new ProperTextRange(insideQuotes.getStartOffset(), children[children.length-2].getTextRange().getEndOffset() - host.getTextRange().getStartOffset());
     }
     if (host instanceof PsiLiteralExpression) {
-      insideQuotes = new TextRange(1, host.getTextLength()-1);
+      insideQuotes = new ProperTextRange(1, host.getTextLength()-1);
     }
     return insideQuotes;
   }

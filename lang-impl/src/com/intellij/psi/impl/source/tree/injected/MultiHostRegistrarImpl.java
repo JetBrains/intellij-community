@@ -155,9 +155,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     return this;
   }
 
-  //public static int count;
   public void doneInjecting() {
-    //count++;
     try {
       if (shreds.isEmpty()) {
         throw new IllegalStateException("Seems you haven't called addPlace()");
@@ -260,7 +258,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     return msg + ".\n" +
            "Language: " +myLanguage+";\n "+
            "Host file: "+myHostPsiFile+" in '" + myHostVirtualFile.getPresentableUrl() + "'\n" +
-           "Context element "+myContextElement.getTextRange() + ": " + myContextElement +
+           "Context element "+myContextElement.getTextRange() + ": '" + myContextElement +"'; "+
            "Ranges: "+shreds;
   }
 

@@ -36,6 +36,7 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
   private final AtomicReference<MultiHostInjector> myRegisteredConcatenationAdapter = new AtomicReference<MultiHostInjector>();
   private final InjectedLanguageManager myInjectedLanguageManager;
   private volatile long myModificationCounter;
+  private static final ConcatenationPsiCachedValueProvider CONCATENATION_PSI_CACHED_VALUE_PROVIDER = new ConcatenationPsiCachedValueProvider();
 
   public JavaConcatenationInjectorManager(Project project, InjectedLanguageManager injectedLanguageManager, PsiManagerEx psiManagerEx) {
     myInjectedLanguageManager = injectedLanguageManager;
@@ -86,7 +87,7 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
     return myModificationCounter;
   }
 
-  private class ConcatenationPsiCachedValueProvider implements ParameterizedCachedValueProvider<Places, PsiElement> {
+  private static class ConcatenationPsiCachedValueProvider implements ParameterizedCachedValueProvider<Places, PsiElement> {
     public CachedValueProvider.Result<Places> compute(PsiElement context) {
       PsiElement element = context;
       PsiElement parent = context.getParent();
@@ -107,12 +108,14 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
         anchor = context;
       }
       Project project = context.getProject();
-      MultiHostRegistrarImpl registrar = new MultiHostRegistrarImpl(project, context.getContainingFile(), context);
-      for (ConcatenationAwareInjector concatenationInjector : myConcatenationInjectors) {
+
+      MultiHostRegistrarImpl registrar = new MultiHostRegistrarImpl(project, context.getContainingFile(), anchor);
+      JavaConcatenationInjectorManager concatenationInjectorManager = getInstance(project);
+      for (ConcatenationAwareInjector concatenationInjector : concatenationInjectorManager.myConcatenationInjectors) {
         concatenationInjector.getLanguagesToInject(registrar, operands);
       }
 
-      CachedValueProvider.Result<Places> result = new CachedValueProvider.Result<Places>(registrar.result, PsiModificationTracker.MODIFICATION_COUNT, JavaConcatenationInjectorManager.this);
+      CachedValueProvider.Result<Places> result = new CachedValueProvider.Result<Places>(registrar.result, PsiModificationTracker.MODIFICATION_COUNT, concatenationInjectorManager);
 
       if (registrar.result != null) {
         // store this everywhere
@@ -138,8 +141,7 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
       ParameterizedCachedValue<Places, PsiElement> cachedValue = context.getUserData(INJECTED_PSI_IN_CONCATENATION);
       Places result;
       if (cachedValue == null) {
-        ConcatenationPsiCachedValueProvider provider = new ConcatenationPsiCachedValueProvider();
-        CachedValueProvider.Result<Places> res = provider.compute(context);
+        CachedValueProvider.Result<Places> res = CONCATENATION_PSI_CACHED_VALUE_PROVIDER.compute(context);
         result = res == null ? null : res.getValue();
       }
       else {
