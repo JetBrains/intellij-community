@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -16,9 +17,9 @@ public class ManuallySetupExtResourceAction extends BaseExtResourceAction {
     return "manually.setup.external.resource";
   }
 
-  protected void doInvoke(final PsiFile file, final int offset, final String uri, final Editor editor) throws IncorrectOperationException {
+  protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
     ExternalResourceManager.getInstance().addResource(uri,"");
-    final ExternalResourceConfigurable component = ShowSettingsUtil.getInstance().findApplicationConfigurable(ExternalResourceConfigurable.class);
+    final ExternalResourceConfigurable component = ShowSettingsUtil.getInstance().findProjectConfigurable(file.getProject(), ExternalResourceConfigurable.class);
     ShowSettingsUtil.getInstance().editConfigurable(
       file.getProject(),
       component,
