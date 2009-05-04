@@ -315,7 +315,7 @@ public class CtrlMouseHandler implements ProjectComponent {
     if (file == null) return null;
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    if (TargetElementUtilBase.inVirtualSpace(editor, pos)) {
+    if (TargetElementUtilBase.caretInVirtualSpace(editor)) {
       return null;
     }
 
