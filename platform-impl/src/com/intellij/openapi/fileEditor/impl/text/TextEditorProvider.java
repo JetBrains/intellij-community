@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
@@ -33,7 +34,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class TextEditorProvider implements FileEditorProvider {
+public class TextEditorProvider implements FileEditorProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorProvider");
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
 

@@ -22,7 +22,9 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.startup.StartupManager;
@@ -37,6 +39,8 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -50,9 +54,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -63,6 +65,7 @@ import java.util.List;
 public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<LocalFileSystem.WatchRequest> WATCH_REQUEST_KEY = Key.create("WATCH_REQUEST_KEY");
+  private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
 
   private static final FileEditor[] EMPTY_EDITOR_ARRAY = new FileEditor[]{};
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = new FileEditorProvider[]{};
@@ -103,6 +106,26 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myVirtualFileListener = new MyVirtualFileListener();
     myUISettingsListener = new MyUISettingsListener();
     myListenerList = new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
+
+    project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      public void beforeEnteringDumbMode() {
+        Set<VirtualFile> toClose = new HashSet<VirtualFile>();
+        for (FileEditor editor : getAllEditors()) {
+          if (editor.getUserData(DUMB_AWARE) != Boolean.TRUE) {
+            ContainerUtil.addIfNotNull(getFile(editor), toClose);
+          }
+        }
+        for (final VirtualFile file : toClose) {
+          closeFile(file);
+        }
+      }
+
+      public void enteredDumbMode() {
+      }
+
+      public void exitDumbMode() {
+      }
+    });
   }
 
   //-------------------------------------------------------------------------------
@@ -459,6 +482,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       // and select the created EditorComposite.
       final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
       providers = editorProviderManager.getProviders(myProject, file);
+      if (DumbService.getInstance().isDumb()) {
+        final List<FileEditorProvider> dumbAware = ContainerUtil.findAll(providers, new Condition<FileEditorProvider>() {
+          public boolean value(FileEditorProvider fileEditorProvider) {
+            return fileEditorProvider instanceof DumbAware;
+          }
+        });
+        providers = dumbAware.toArray(new FileEditorProvider[dumbAware.size()]);
+      }
 
       if (providers.length == 0) {
         return Pair.create(EMPTY_EDITOR_ARRAY, EMPTY_PROVIDER_ARRAY);
@@ -478,6 +509,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
           // Register PropertyChangeListener into editor
           editor.addPropertyChangeListener(myEditorPropertyChangeListener);
+          editor.putUserData(DUMB_AWARE, provider instanceof DumbAware);
         }
         catch (Exception e) {
           LOG.error(e);
