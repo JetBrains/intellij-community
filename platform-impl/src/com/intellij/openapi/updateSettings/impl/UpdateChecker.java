@@ -10,6 +10,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.reporter.ConnectionException;
+import com.intellij.licensecommon.license.LicenseDataImpl;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -246,7 +247,7 @@ public final class UpdateChecker {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
-          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuildNumber());
+          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuildNumber() + hackedParameter());
           final InputStream inputStream = requestUrl.openStream();
           try {
             document[0] = JDOMUtil.loadDocument(inputStream);
@@ -277,6 +278,12 @@ public final class UpdateChecker {
 
     if (exception[0] != null) throw exception[0];
     return document[0];
+  }
+
+  private static String hackedParameter() {
+    if (!LicenseDataImpl.HACKED) return "";
+
+    return "&version=" + ApplicationInfo.getInstance().getMajorVersion();
   }
 
   public static void showNoUpdatesDialog(boolean enableLink, final List<PluginDownloader> updatePlugins) {
