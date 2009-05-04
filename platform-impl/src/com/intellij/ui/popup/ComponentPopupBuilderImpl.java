@@ -4,10 +4,12 @@
 
 package com.intellij.ui.popup;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -163,6 +165,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     if (myUserData != null) {
       popup.setUserData(myUserData);
     }
+    //default disposable parent
+    Disposer.register(ApplicationManager.getApplication(), popup);
     return popup;
   }
 
