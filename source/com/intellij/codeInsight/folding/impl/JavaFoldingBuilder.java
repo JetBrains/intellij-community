@@ -339,6 +339,11 @@ public class JavaFoldingBuilder implements FoldingBuilder {
 
   private void addMethodGenericParametersFolding(PsiMethodCallExpression expression, List<FoldingDescriptor> foldElements, Document document) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    final PsiReferenceParameterList list = methodExpression.getParameterList();
+    if (list == null || list.getTextLength() <= 5) {
+      return;
+    }
+
     PsiMethodCallExpression element = expression;
     while (true) {
       if (!resolvesCorrectly(element.getMethodExpression())) return;
@@ -347,10 +352,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
       element = (PsiMethodCallExpression)parent.getParent();
     }
 
-    final PsiReferenceParameterList list = methodExpression.getParameterList();
-    if (list != null) {
-      addTypeParametersFolding(foldElements, document, list, 3);
-    }
+    addTypeParametersFolding(foldElements, document, list, 3);
   }
 
   private static boolean resolvesCorrectly(PsiReferenceExpression expression) {
