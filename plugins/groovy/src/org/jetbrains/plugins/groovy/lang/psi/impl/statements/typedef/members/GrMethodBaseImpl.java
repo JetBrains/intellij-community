@@ -154,6 +154,11 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     private PsiType getInferredType(GrMethod method) {
       final GrOpenBlock block = method.getBlock();
       if (block == null) return null;
+
+      if (GroovyPsiManager.getInstance(method.getProject()).isTypeBeingInferred(method)) {
+        return null;
+      }
+
       return GroovyPsiManager.getInstance(method.getProject()).inferType(method, new MethodTypeInferencer(block));
     }
 

@@ -75,4 +75,8 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testRecursiveMethodTypeInference() throws Throwable {
+    doTest();
+  }
+
 }
