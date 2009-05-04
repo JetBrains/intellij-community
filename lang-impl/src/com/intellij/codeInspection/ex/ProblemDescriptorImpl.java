@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -51,8 +52,10 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
     myHighlightType = highlightType;
     final Project project = startElement.getProject();
-    myStartSmartPointer = SmartPointerManager.getInstance(project).createLazyPointer(startElement);
-    myEndSmartPointer = startElement == endElement ? null : SmartPointerManager.getInstance(project).createLazyPointer(endElement);
+    final boolean useLazy = ApplicationManager.getApplication().isHeadlessEnvironment();
+    final SmartPointerManager manager = SmartPointerManager.getInstance(project);
+    myStartSmartPointer = useLazy? manager.createLazyPointer(startElement) : manager.createSmartPsiElementPointer(startElement);
+    myEndSmartPointer = startElement == endElement ? null : useLazy ? manager.createLazyPointer(endElement) : manager.createSmartPsiElementPointer(endElement);
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
