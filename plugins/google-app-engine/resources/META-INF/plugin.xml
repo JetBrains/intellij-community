@@ -3,11 +3,19 @@
   <id>com.intellij.appengine</id>
   <description>Provides support for developing Google App Engine applications</description>
   <version>0.1</version>
-  <idea-version since-build="9300"/>
+  <idea-version since-build="9000"/>
   <depends>com.intellij.java-i18n</depends>
   <depends>com.intellij.javaee</depends>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <category>Web/JavaEE Technologies</category>
+  <change-notes>
+    <![CDATA[
+    This plugin provides the following features:
+    <p>
+    - run configuration for Google App Engine Dev server<br>
+    - action for uploading an application to Google (Tools | Upload App Engine Application...)
+    </p>
+   ]]></change-notes>
 
   <extensions defaultExtensionNs="com.intellij">
     <javaee.appServerIntegration implementation="com.intellij.appengine.server.integration.AppEngineServerIntegration"/>
@@ -16,7 +24,7 @@
 
   <actions>
     <action class="com.intellij.appengine.actions.UploadApplicationAction" id="AppEngine.UploadApplication"
-            text="Upload App Engine Application...">
+            text="Upload App Engine Application..." icon="/icons/appEngine.png">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>
