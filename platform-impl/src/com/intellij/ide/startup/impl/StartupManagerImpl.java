@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -106,12 +107,13 @@ public class StartupManagerImpl extends StartupManagerEx {
       DumbService.getInstance().runWhenSmart(new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
-          
+
           runActivities(myPostStartupActivities);
           myPostStartupActivities.clear();
         }
       });
-    } else {
+    }
+    else {
       runActivities(myPostStartupActivities);
       myPostStartupActivities.clear();
     }
@@ -140,21 +142,28 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void runWhenProjectIsInitialized(final Runnable action) {
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(action);
-      }
-    };
+    final Runnable runnable;
+
+    if (action instanceof DumbAware) {
+      runnable = new DumbAwareRunnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(action);
+        }
+      };
+    }
+    else {
+      runnable = new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(action);
+        }
+      };
+    }
 
     if (myProject.isInitialized()) {
       runnable.run();
     }
     else {
-      registerPostStartupActivity(new Runnable(){
-        public void run() {
-          runnable.run();
-        }
-      });
+      registerPostStartupActivity(runnable);
     }
   }
 }
