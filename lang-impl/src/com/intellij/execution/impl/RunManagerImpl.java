@@ -556,7 +556,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public void makeStable(final RunConfiguration configuration) {
     RunnerAndConfigurationSettingsImpl settings = getSettings(configuration);
     if (settings != null) {
-      settings.setTemporary(true);
+      settings.setTemporary(false);
     }
   }
 
