@@ -6,9 +6,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -98,7 +99,7 @@ class MemoryUsagePanel extends JPanel implements StatusBarPatch{
     super.removeNotify();
   }
 
-  private final class RunCGAction extends AnAction {
+  private final class RunCGAction extends AnAction implements DumbAware {
     public RunCGAction() {
       super(UIBundle.message("memory.usage.panel.run.garbage.collector.action.name"),
             UIBundle.message("memory.usage.panel.run.garbage.collector.action.description"), ourRunGCButtonIcon);
