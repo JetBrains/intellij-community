@@ -20,6 +20,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -150,7 +151,7 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         precompile.run();
       } else {
-        ApplicationManager.getApplication().invokeLater(precompile, ModalityState.NON_MODAL);
+        DumbService.getInstance().smartInvokeLater(precompile, ModalityState.NON_MODAL);
       }
     }
   }
