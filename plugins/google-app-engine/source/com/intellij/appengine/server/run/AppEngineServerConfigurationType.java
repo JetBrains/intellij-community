@@ -8,6 +8,7 @@ import com.intellij.javaee.appServerIntegrations.AppServerIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.appengine.server.integration.AppEngineServerIntegration;
 import com.intellij.appengine.server.instance.AppEngineServerModel;
+import com.intellij.appengine.util.AppEngineUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public class AppEngineServerConfigurationType extends J2EEConfigurationType {
 
   @Nullable
   public Icon getIcon() {
-    return AppEngineServerIntegration.getInstance().getIcon();
+    return AppEngineUtil.APP_ENGINE_ICON;
   }
 
   @Override

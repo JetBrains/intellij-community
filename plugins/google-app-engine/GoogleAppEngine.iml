@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="debugger-openapi" />
+    <orderEntry type="module" module-name="idea" />
   </component>
 </module>
 

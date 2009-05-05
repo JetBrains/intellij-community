@@ -7,7 +7,7 @@ import com.intellij.javaee.facet.JavaeeFacet;
 import com.intellij.javaee.facet.JavaeeFacetUtil;
 import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.javaee.openapi.ex.AppServerIntegrationsManager;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.appengine.util.AppEngineUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,7 +17,6 @@ import java.util.Collection;
  * @author nik
  */
 public class AppEngineServerIntegration extends AppServerIntegration {
-  private static final Icon APP_ENGINE_ICON = IconLoader.getIcon("/icons/appEngine.png");
   private final AppEngineServerHelper myServerHelper;
 
   public static AppEngineServerIntegration getInstance() {
@@ -30,7 +29,7 @@ public class AppEngineServerIntegration extends AppServerIntegration {
 
   @Override
   public Icon getIcon() {
-    return APP_ENGINE_ICON;
+    return AppEngineUtil.APP_ENGINE_ICON;
   }
 
   public String getPresentableName() {

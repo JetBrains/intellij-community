@@ -19,6 +19,13 @@
   <extensions defaultExtensionNs="com.intellij">
     <javaee.appServerIntegration implementation="com.intellij.appengine.server.integration.AppEngineServerIntegration"/>
     <configurationType implementation="com.intellij.appengine.server.run.AppEngineServerConfigurationType"/>
+
+    <applicationService serviceInterface="com.intellij.appengine.sdk.AppEngineSdkManager"
+                        serviceImplementation="com.intellij.appengine.sdk.impl.AppEngineSdkManagerImpl"/>
+
+    <inspectionToolProvider implementation="com.intellij.appengine.inspections.AppEngineInspectionsProvider"/>
+    <frameworkSupport implementation="com.intellij.appengine.config.AppEngineSupportProvider"/>
+    <fileTemplateGroup implementation="com.intellij.appengine.config.AppEngineTemplateGroupDescriptorFactory"/>
   </extensions>
 
   <actions>

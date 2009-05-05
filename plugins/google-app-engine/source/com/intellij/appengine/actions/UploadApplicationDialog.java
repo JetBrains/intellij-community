@@ -69,7 +69,7 @@ public class UploadApplicationDialog extends DialogWrapper {
         final Component renderer = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value instanceof ApplicationServer) {
           setText(((ApplicationServer)value).getName());
-          setIcon(AppEngineServerIntegration.getInstance().getIcon());
+          setIcon(AppEngineUtil.APP_ENGINE_ICON);
         }
         return renderer;
       }
