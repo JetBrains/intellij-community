@@ -135,12 +135,8 @@ public class CodeCompletionPanel {
         value = CASE_SENSITIVE_NONE;
       break;
 
-      case CodeInsightSettings.FIRST_LETTER:
+      default:
         value = CASE_SENSITIVE_FIRST_LETTER;
-      break;
-
-      case CodeInsightSettings.UPPERCASE_LETTERS:
-        value = CASE_SENSITIVE_UPPERCASE_LETTERS;
       break;
     }
     myCaseSensitiveCombo.setSelectedItem(value);
@@ -283,11 +279,8 @@ public class CodeCompletionPanel {
     else if (CASE_SENSITIVE_NONE.equals(value)){
       return CodeInsightSettings.NONE;
     }
-    else if (CASE_SENSITIVE_FIRST_LETTER.equals(value)){
-      return CodeInsightSettings.FIRST_LETTER;
-    }
     else {
-      return CodeInsightSettings.UPPERCASE_LETTERS;
+      return CodeInsightSettings.FIRST_LETTER;
     }
   }
 }

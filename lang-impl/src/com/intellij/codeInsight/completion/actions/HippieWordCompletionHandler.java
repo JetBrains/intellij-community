@@ -2,6 +2,8 @@ package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -11,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -47,7 +50,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     String oldPrefix = completionState.oldPrefix;
     CompletionVariant lastProposedVariant = completionState.lastProposedVariant;
 
-    if (lastProposedVariant == null || oldPrefix == null || !currentPrefix.startsWith(oldPrefix) || oldPrefix.length() == 0 ||
+    if (lastProposedVariant == null || oldPrefix == null || !new CamelHumpMatcher(oldPrefix).prefixMatches(currentPrefix) || oldPrefix.length() == 0 ||
         !currentPrefix.equals(lastProposedVariant.variant)) {
       //we are starting over
       oldPrefix = currentPrefix;
@@ -84,7 +87,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
   @Nullable
   private CompletionVariant computeNextVariant(final Editor editor,
-                                               final String prefix,
+                                               @Nullable final String prefix,
                                                @Nullable CompletionVariant lastProposedVariant,
                                                final CompletionData data) {
     final List<CompletionVariant> variants = computeVariants(editor, prefix);
@@ -166,7 +169,9 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static List<CompletionVariant> computeVariants(final Editor editor, final String prefix) {
+  private static List<CompletionVariant> computeVariants(@NotNull final Editor editor, @Nullable final String prefix) {
+    final PrefixMatcher matcher = new CamelHumpMatcher(prefix == null ? "" : prefix); 
+
     final CharSequence chars = editor.getDocument().getCharsSequence();
 
     final ArrayList<CompletionVariant> words = new ArrayList<CompletionVariant>();
@@ -178,7 +183,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
         if (start <= caretOffset && end >= caretOffset) return; //skip prefix itself
 
         final String word = chars.subSequence(start, end).toString();
-        if (prefix != null && !word.startsWith(prefix)) return;
+        if (!matcher.prefixMatches(word)) return;
         final CompletionVariant v = new CompletionVariant(word, start);
 
         if (end > caretOffset) {

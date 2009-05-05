@@ -151,8 +151,6 @@ public class CamelHumpMatcher extends PrefixMatcher {
         return NameUtil.buildRegexp(myPrefix, 1, true, true);
       case CodeInsightSettings.ALL:
         return NameUtil.buildRegexp(myPrefix, 0, false, false);
-      case CodeInsightSettings.UPPERCASE_LETTERS:
-        return NameUtil.buildRegexp(myPrefix, 1, true, false);
       default:
         return NameUtil.buildRegexp(myPrefix, 0, true, false);
     }

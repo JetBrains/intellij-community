@@ -104,6 +104,7 @@ public class NameUtil {
 
     @NonNls final StringBuffer buffer = new StringBuffer();
     boolean lastIsUppercase = false;
+    boolean prevIsUppercase = false;
     final boolean endsWithSpace = StringUtil.endsWithChar(pattern, ' ');
     pattern = pattern.trim();
     exactPrefixLen = Math.min(exactPrefixLen, pattern.length());
@@ -111,6 +112,10 @@ public class NameUtil {
     if (uppercaseOnly) {
       allowToLower = false;
     }*/
+    if (exactPrefixLen > 0) {
+      char c = pattern.charAt(exactPrefixLen - 1);
+      prevIsUppercase = Character.isUpperCase(c) || Character.isDigit(c);
+    }
 
     for (int i = 0; i != exactPrefixLen; ++i) {
       final char c = pattern.charAt(i);
@@ -137,8 +142,13 @@ public class NameUtil {
       final char c = pattern.charAt(i);
       lastIsUppercase = false;
       if (Character.isLetterOrDigit(c)) {
+        prevIsUppercase = false;
+
         // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
         if (Character.isUpperCase(c) || Character.isDigit(c)) {
+          prevIsUppercase = true;
+          lastIsUppercase = true;
+
           buffer.append('(');
 
           if (!firstIdentifierLetter) {
@@ -158,7 +168,6 @@ public class NameUtil {
             buffer.append("))");
           }
           buffer.append(')');
-          lastIsUppercase = true;
         }
         else if (Character.isLowerCase(c) && allowToUpper) {
           buffer.append('[');
@@ -193,6 +202,10 @@ public class NameUtil {
         firstIdentifierLetter = true;
       }
       else {
+        if (prevIsUppercase) {
+          buffer.append("[A-Za-z\\s0-9\\$]*");
+        }
+
         firstIdentifierLetter = true;
         // for standard RegExp engine
         // buffer.append("\\u");
