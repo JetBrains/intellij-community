@@ -122,14 +122,14 @@ public class HotSwapManager implements ProjectComponent{
     return project.getComponent(HotSwapManager.class);
   }
 
-  private void reloadClasses(DebuggerSession session, HashMap<String, HotSwapFile> classesToReload, HotSwapProgress progress) {
+  private void reloadClasses(DebuggerSession session, Map<String, HotSwapFile> classesToReload, HotSwapProgress progress) {
     final long newSwapTime = System.currentTimeMillis();
     new ReloadClassesWorker(session, progress).reloadClasses(classesToReload);
     setTimeStamp(session, newSwapTime);
   }
 
-  public static HashMap<DebuggerSession, HashMap<String, HotSwapFile>> getModifiedClasses(final List<DebuggerSession> sessions, final HotSwapProgress swapProgress) {
-    final HashMap<DebuggerSession, HashMap<String, HotSwapFile>> modifiedClasses = new HashMap<DebuggerSession, HashMap<String, HotSwapFile>>();
+  public static Map<DebuggerSession, Map<String, HotSwapFile>> getModifiedClasses(final List<DebuggerSession> sessions, final HotSwapProgress swapProgress) {
+    final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = new HashMap<DebuggerSession, Map<String, HotSwapFile>>();
 
     final MultiProcessCommand scanClassesCommand = new MultiProcessCommand();
 
@@ -157,10 +157,10 @@ public class HotSwapManager implements ProjectComponent{
     swapProgress.setTitle(DebuggerBundle.message("progress.hotswap.scanning.classes"));
     scanClassesCommand.run();
 
-    return swapProgress.isCancelled() ? new HashMap<DebuggerSession, HashMap<String, HotSwapFile>>() : modifiedClasses;
+    return swapProgress.isCancelled() ? new HashMap<DebuggerSession, Map<String, HotSwapFile>>() : modifiedClasses;
   }
 
-  public static void reloadModifiedClasses(final HashMap<DebuggerSession, HashMap<String, HotSwapFile>> modifiedClasses, final HotSwapProgress reloadClassesProgress) {
+  public static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, final HotSwapProgress reloadClassesProgress) {
     final MultiProcessCommand reloadClassesCommand = new MultiProcessCommand();
 
     reloadClassesProgress.setCancelWorker(new Runnable() {

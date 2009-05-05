@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.MessageCategory;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +87,7 @@ class ReloadClassesWorker {
     }
   }
 
-  public void reloadClasses(final HashMap<String, HotSwapFile> modifiedClasses) {
+  public void reloadClasses(final Map<String, HotSwapFile> modifiedClasses) {
     if(modifiedClasses == null || modifiedClasses.size() == 0) {
       myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, DebuggerBundle.message("status.hotswap.loaded.classes.up.to.date"));
       return;
