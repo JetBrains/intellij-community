@@ -210,6 +210,7 @@ public class MatcherImpl {
    */
   protected void findMatches(MatchResultSink sink, final MatchOptions options) throws MalformedPatternException, UnsupportedPatternException
   {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     CompiledPattern compiledPattern = prepareMatching(sink, options);
     if (compiledPattern== null) {
       return;
@@ -345,8 +346,6 @@ public class MatcherImpl {
         matchContext.getOptions().hashCode() == matchContext.getPattern().getOptionsHashStamp()) {
       savedPattern = matchContext.getPattern();
     }
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     matchContext.clear();
     matchContext.setSink(
