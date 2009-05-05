@@ -100,10 +100,13 @@ public class LegacyCompletionContributor extends CompletionContributor {
 
   private static void processReference(final CompletionResultSet result, final int startOffset, final PairConsumer<PsiReference, CompletionResultSet> consumer,
                                        final PsiReference reference) {
-    int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
-    final CompletionResultSet resultSet = result.withPrefixMatcher(
-        reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement));
-    consumer.consume(reference, resultSet);
+    final int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
+    final String prefix = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement);
+      }
+    });
+    consumer.consume(reference, result.withPrefixMatcher(prefix));
   }
 
 
