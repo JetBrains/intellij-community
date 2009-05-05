@@ -35,7 +35,7 @@ public class AnalyzeStacktraceUtil {
   private AnalyzeStacktraceUtil() {
   }
 
-  static void printStacktrace(final ConsoleView consoleView, final String unscrambledTrace) {
+  public static void printStacktrace(final ConsoleView consoleView, final String unscrambledTrace) {
     consoleView.clear();
     consoleView.print(unscrambledTrace+"\n", ConsoleViewContentType.ERROR_OUTPUT);
     consoleView.performWhenNoDeferredOutput(

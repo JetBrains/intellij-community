@@ -16,7 +16,12 @@
 
 package com.intellij.openapi.options.binding;
 
+import com.intellij.ui.DocumentAdapter;
+
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 /**
  * @author Dmitry Avdeev
@@ -27,8 +32,8 @@ public abstract class ValueAccessor<V> {
   public abstract void setValue(V value);
   public abstract Class<V> getType();
 
-  public static ValueAccessor textFieldAccessor(final JTextField from) {
-    return new ValueAccessor<String>() {
+  public static ControlValueAccessor textFieldAccessor(final JTextField from) {
+    return new ControlValueAccessor<String>() {
       public String getValue() {
         return from.getText();
       }
@@ -40,11 +45,24 @@ public abstract class ValueAccessor<V> {
       public Class<String> getType() {
         return String.class;
       }
+
+      public boolean isEnabled() {
+        return from.isEnabled();
+      }
+
+      public void addChangeListener(final Runnable listener) {
+        from.getDocument().addDocumentListener(new DocumentAdapter() {
+          @Override
+          protected void textChanged(DocumentEvent e) {
+            listener.run();
+          }
+        });
+      }
     };
   }
 
-  public static ValueAccessor checkBoxAccessor(final JCheckBox from) {
-    return new ValueAccessor<Boolean>() {
+  public static ControlValueAccessor checkBoxAccessor(final JCheckBox from) {
+    return new ControlValueAccessor<Boolean>() {
 
       public Boolean getValue() {
         return from.isSelected();
@@ -56,6 +74,19 @@ public abstract class ValueAccessor<V> {
 
       public Class<Boolean> getType() {
         return Boolean.class;
+      }
+
+      public boolean isEnabled() {
+        return from.isEnabled();
+      }
+
+      @Override
+      public void addChangeListener(final Runnable listener) {
+        from.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            listener.run();
+          }
+        });
       }
     };
   }

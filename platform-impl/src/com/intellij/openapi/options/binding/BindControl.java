@@ -11,5 +11,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
 public @interface BindControl {
-  String value() default "";  
+  String value() default "";
+  boolean instant() default false;
 }

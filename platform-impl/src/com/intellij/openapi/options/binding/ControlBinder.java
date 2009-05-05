@@ -32,14 +32,14 @@ public class ControlBinder {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.options.binding.ControlBinder");
 
   private final Object myBean;
-  private final List<Pair<ValueAccessor, BeanValueAccessor>> myBindings = new ArrayList<Pair<ValueAccessor, BeanValueAccessor>>();
+  private final List<Pair<ControlValueAccessor, BeanValueAccessor>> myBindings = new ArrayList<Pair<ControlValueAccessor, BeanValueAccessor>>();
 
   public ControlBinder(Object bean) {
     myBean = bean;
   }
 
-  public void bindControl(JComponent control, String propertyName) {    
-    final ValueAccessor controlAccessor;
+  public void bindControl(JComponent control, String propertyName, boolean instant) {
+    final ControlValueAccessor controlAccessor;
     if (control instanceof JCheckBox) {
       controlAccessor = ValueAccessor.checkBoxAccessor((JCheckBox)control);
     }
@@ -47,18 +47,29 @@ public class ControlBinder {
       controlAccessor = ValueAccessor.textFieldAccessor((JTextField)control);
     } else {
       throw new IllegalArgumentException("Cannot bind control of type " + control.getClass() + ".\n" +
-                                         "Use bindControl(ValueAccessor, String) instead.");
+                                         "Use bindControl(ControlValueAccessor, String) instead.");
     }
-    bindControl(controlAccessor, propertyName);
+    bindControl(controlAccessor, propertyName, instant);
   }
 
-  public void bindControl(ValueAccessor controlAccessor, String propertyName) {
+  public void bindControl(ControlValueAccessor controlAccessor, String propertyName, boolean instant) {
     BeanValueAccessor beanAccessor = BeanValueAccessor.createAccessor(myBean, propertyName);
-    myBindings.add(Pair.create(controlAccessor, beanAccessor));
+    final Pair<ControlValueAccessor, BeanValueAccessor> binding = Pair.create(controlAccessor, beanAccessor);
+    myBindings.add(binding);
+    if (instant) {
+      controlAccessor.addChangeListener(new Runnable() {
+        public void run() {
+          apply(binding);
+        }
+      });
+    }
   }
 
   public void reset() {
-    for (Pair<ValueAccessor, BeanValueAccessor> binding : myBindings) {
+    for (Pair<ControlValueAccessor, BeanValueAccessor> binding : myBindings) {
+      if (!binding.first.isEnabled()) {
+        continue;
+      }
       Object value = binding.second.getValue();
       try {
         value = convert(value, binding.first.getType());
@@ -71,20 +82,30 @@ public class ControlBinder {
   }
 
   public void apply() {
-    for (Pair<ValueAccessor, BeanValueAccessor> binding : myBindings) {
-      Object value = binding.first.getValue();
-      try {
-        value = convert(value, binding.second.getType());
-        binding.second.setValue(value);
-      }
-      catch (IllegalArgumentException e) {
-        LOG.debug(e);
-      }
+    for (Pair<ControlValueAccessor, BeanValueAccessor> binding : myBindings) {
+      apply(binding);
+    }
+  }
+
+  private void apply(Pair<ControlValueAccessor, BeanValueAccessor> binding) {
+    if (!binding.first.isEnabled()) {
+      return;
+    }
+    Object value = binding.first.getValue();
+    try {
+      value = convert(value, binding.second.getType());
+      binding.second.setValue(value);
+    }
+    catch (IllegalArgumentException e) {
+      LOG.debug(e);
     }
   }
 
   public boolean isModified() {
-    for (Pair<ValueAccessor, BeanValueAccessor> binding : myBindings) {
+    for (Pair<ControlValueAccessor, BeanValueAccessor> binding : myBindings) {
+      if (!binding.first.isEnabled()) {
+        continue;
+      }
       Object value = binding.first.getValue();
       try {
         value = convert(value, binding.second.getType());
@@ -130,7 +151,7 @@ public class ControlBinder {
         }
         try {
           field.setAccessible(true);
-          bindControl((JComponent)field.get(form), name);
+          bindControl((JComponent)field.get(form), name, annotation.instant());
         }
         catch (IllegalAccessException e) {
           throw new RuntimeException(e);

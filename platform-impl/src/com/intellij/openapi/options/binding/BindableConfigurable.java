@@ -36,12 +36,12 @@ public abstract class BindableConfigurable implements UnnamedConfigurable {
     myBinder.bindAnnotations(this);
   }
 
-  protected void bindControl(JComponent control, String propertyName) {
-    myBinder.bindControl(control, propertyName);
+  protected void bindControl(JComponent control, String propertyName, boolean instant) {
+    myBinder.bindControl(control, propertyName, instant);
   }
 
-  protected void bindControl(ValueAccessor controlAccessor, String propertyName) {
-    myBinder.bindControl(controlAccessor, propertyName);
+  protected void bindControl(ControlValueAccessor controlAccessor, String propertyName, boolean instant) {
+    myBinder.bindControl(controlAccessor, propertyName, instant);
   }
 
   public boolean isModified() {
@@ -56,3 +56,4 @@ public abstract class BindableConfigurable implements UnnamedConfigurable {
     myBinder.reset();
   }
 }
+                                        
