@@ -31,10 +31,11 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
   private boolean myOpeningInProgress;
   private final MessagePool myMessagePool;
   private boolean myNotificationPopupAlreadyShown = false;
+  private final Icon myIcon = IconLoader.getIcon("/general/ideFatalError.png");
 
   public IdeMessagePanel(MessagePool messagePool) {
     super(new BorderLayout());
-    myIdeFatal = new IconPane(IconLoader.getIcon("/general/ideFatalError.png"),
+    myIdeFatal = new IconPane(myIcon,
                               DiagnosticBundle.message("error.notification.empty.text"), new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         openFatals();
@@ -176,7 +177,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             final JLabel label = new JLabel(INTERNAL_ERROR_NOTICE);
-            label.setIcon(IconLoader.getIcon("/general/ideFatalError.png"));
+            label.setIcon(myIcon);
             new NotificationPopup(IdeMessagePanel.this, label, LightColors.RED, false, new ActionListener() {
               public void actionPerformed(ActionEvent e) {
                 _openFatals();
