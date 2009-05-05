@@ -201,6 +201,10 @@ public final class UpdateChecker {
     }
 
     Element root = document.getRootElement();
+    if (root == null) {
+      LOG.info("cannot read " + getUpdateUrl());
+      return null;
+    }
     final String availBuild = root.getChild(ELEMENT_BUILD).getTextTrim();
     final String availVersion = root.getChild(ELEMENT_VERSION).getTextTrim();
     String ourBuild = ApplicationInfo.getInstance().getBuildNumber().trim();
