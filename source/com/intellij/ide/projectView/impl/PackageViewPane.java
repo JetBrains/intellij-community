@@ -28,6 +28,7 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,11 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   @Override
   protected PsiElement getPSIElement(@Nullable final Object element) {
     if (element instanceof PackageElement) {
-      PsiPackage aPackage = ((PackageElement)element).getPackage();
+      final PackageElement packageElement = (PackageElement)element;
+      PsiPackage aPackage = packageElement.getPackage();
+      if (packageElement.getModule() != null) {      //todo
+        return aPackage.getDirectories(GlobalSearchScope.moduleScope(packageElement.getModule()))[0];
+      }
       return aPackage != null && aPackage.isValid() ? aPackage : null;
     }
     return super.getPSIElement(element);
