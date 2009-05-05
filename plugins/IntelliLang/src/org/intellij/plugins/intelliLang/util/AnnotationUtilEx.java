@@ -18,10 +18,10 @@ package org.intellij.plugins.intelliLang.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,65 +55,67 @@ public class AnnotationUtilEx {
    */
   @Nullable
   public static PsiModifierListOwner getAnnotatedElementFor(@Nullable PsiElement element, LookupType type) {
-    if (element == null) return null;
-
-    if (type == LookupType.PREFER_DECLARATION || type == LookupType.DECLRARATION_ONLY) {
-      if (element instanceof PsiReferenceExpression) {
-        final PsiElement e = ((PsiReferenceExpression)element).resolve();
-        if (e instanceof PsiModifierListOwner) {
-          return (PsiModifierListOwner)e;
-        }
-        if (type == LookupType.DECLRARATION_ONLY) {
-          return null;
-        }
-      }
-    }
-
-    final PsiElement parent = element.getParent();
-
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
-      if (p.getRExpression() == element) {
-        return getAnnotatedElementFor(p.getLExpression(), type);
-      }
-    }
-    else if (parent instanceof PsiExpression) {
-      return getAnnotatedElementFor((PsiExpression)parent, type);
-    }
-    else if (parent instanceof PsiReturnStatement) {
-      final PsiMethod m = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-      if (m != null) {
-        return m;
-      }
-    }
-    else if (parent instanceof PsiModifierListOwner) {
-      return (PsiModifierListOwner)parent;
-    }
-    else if (parent instanceof PsiArrayInitializerMemberValue) {
-      final PsiArrayInitializerMemberValue value = (PsiArrayInitializerMemberValue)parent;
-      final PsiElement pair = value.getParent();
-      if (pair instanceof PsiNameValuePair) {
-        return getAnnotationMethod((PsiNameValuePair)pair, element);
-      }
-    }
-    else if (parent instanceof PsiNameValuePair) {
-      return getAnnotationMethod((PsiNameValuePair)parent, element);
-    }
-    else {
-      return PsiUtilEx.getParameterForArgument(element);
-    }
-
-    // If no annotation has been found through the usage context, check if the element
-    // (i.e. the element the reference refers to) is annotated itself
-    if (type != LookupType.DECLRARATION_ONLY) {
-      if (element instanceof PsiReferenceExpression) {
-        final PsiElement e = ((PsiReferenceExpression)element).resolve();
-        if (e instanceof PsiModifierListOwner) {
-          return (PsiModifierListOwner)e;
+    while (element != null) {
+      if (type == LookupType.PREFER_DECLARATION || type == LookupType.DECLRARATION_ONLY) {
+        if (element instanceof PsiReferenceExpression) {
+          final PsiElement e = ((PsiReferenceExpression)element).resolve();
+          if (e instanceof PsiModifierListOwner) {
+            return (PsiModifierListOwner)e;
+          }
+          if (type == LookupType.DECLRARATION_ONLY) {
+            return null;
+          }
         }
       }
-    }
 
+      final PsiElement parent = element.getParent();
+
+      if (parent instanceof PsiAssignmentExpression) {
+        final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
+        if (p.getRExpression() == element) {
+          element = p.getLExpression();
+          continue;
+        }
+      }
+      else if (parent instanceof PsiExpression) {
+        element = (PsiExpression)parent;
+        continue;
+      }
+      else if (parent instanceof PsiReturnStatement) {
+        final PsiMethod m = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+        if (m != null) {
+          return m;
+        }
+      }
+      else if (parent instanceof PsiModifierListOwner) {
+        return (PsiModifierListOwner)parent;
+      }
+      else if (parent instanceof PsiArrayInitializerMemberValue) {
+        final PsiArrayInitializerMemberValue value = (PsiArrayInitializerMemberValue)parent;
+        final PsiElement pair = value.getParent();
+        if (pair instanceof PsiNameValuePair) {
+          return getAnnotationMethod((PsiNameValuePair)pair, element);
+        }
+      }
+      else if (parent instanceof PsiNameValuePair) {
+        return getAnnotationMethod((PsiNameValuePair)parent, element);
+      }
+      else {
+        return PsiUtilEx.getParameterForArgument(element);
+      }
+
+      // If no annotation has been found through the usage context, check if the element
+      // (i.e. the element the reference refers to) is annotated itself
+      if (type != LookupType.DECLRARATION_ONLY) {
+        if (element instanceof PsiReferenceExpression) {
+          final PsiElement e = ((PsiReferenceExpression)element).resolve();
+          if (e instanceof PsiModifierListOwner) {
+            return (PsiModifierListOwner)e;
+          }
+        }
+      }
+      return null;
+    }
     return null;
   }
 
