@@ -55,8 +55,7 @@ public class MavenUtil {
   }
 
   public static void runWhenInitialized(Project project, Runnable r) {
-    if (project.isInitialized()
-        || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (project.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) {
       r.run();
     }
     else {

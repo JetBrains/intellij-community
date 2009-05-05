@@ -3,11 +3,11 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -81,9 +82,9 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
     updateProjectPom(project, pom);
 
-    MavenUtil.runWhenInitialized(project, new Runnable() {
+    MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
       public void run() {
-        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+        final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         manager.addManagedFiles(Collections.singletonList(pom));
 
         if (myArchetype == null) {
@@ -96,11 +97,17 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
           }
         }
 
-        reimportMavenProjects(project);
+        // execute when current dialog is closed (e.g. Project Structure)
+        MavenUtil.invokeInDispatchThread(project, ModalityState.NON_MODAL, new Runnable() {
+          public void run() {
+            manager.waitForReadingCompletion();
+            manager.importProjects();
 
-        EditorHelper.openInEditor(getPsiFile(project, pom));
+            EditorHelper.openInEditor(getPsiFile(project, pom));
 
-        if (myArchetype != null) generateFromArchetype(project, pom);
+            if (myArchetype != null) generateFromArchetype(project, pom);
+          }
+        });
       }
     });
   }
@@ -173,21 +180,8 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
         updateProjectPom(project, pom);
 
         LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
-        MavenUtil.invokeInDispatchThread(project, new Runnable() {
-          public void run() {
-            reimportMavenProjects(project);
-          }
-        });
       }
     });
-  }
-
-  private void reimportMavenProjects(Project project) {
-    // under UnitTest mode invokeLater runs the Runnable immediatly and clashes
-    // with ModuleBuilder logic that doesn't expect setupRootModel to commit the models.
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      MavenProjectsManager.getInstance(project).waitForQuickResolvingCompletionAndImport();
-    }
   }
 
   public ModuleType getModuleType() {

@@ -398,7 +398,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   public void scheduleFoldersResolving() {
     for (MavenProject each : getProjects()) {
-      myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each, 
+      myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each,
                                                                                               getImportingSettings(),
                                                                                               myProjectsTree));
     }
@@ -501,7 +501,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myPostProcessor.waitForCompletion();
   }
 
-  public void waitForTasksCompletionAndImport(MavenProjectsProcessor processor) {
+  private void waitForTasksCompletionAndImport(MavenProjectsProcessor processor) {
     waitForTasksCompletionAndDo(processor, new Runnable() {
       public void run() {
         MavenUtil.invokeInDispatchThread(myProject, new Runnable() {
@@ -513,11 +513,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  public void waitForTasksCompletionAndDo(MavenProjectsProcessor processor, Runnable runnable) {
+  private void waitForTasksCompletionAndDo(MavenProjectsProcessor processor, Runnable runnable) {
     waitForTasksCompletionAndDo(Collections.singletonList(processor), runnable);
   }
 
-  public void waitForTasksCompletionAndDo(List<MavenProjectsProcessor> processors, Runnable runnable) {
+  private void waitForTasksCompletionAndDo(List<MavenProjectsProcessor> processors, Runnable runnable) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     myReadingProcessor.waitForCompletion();
@@ -541,9 +541,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  public void findAndImportAllAvailablePomFiles() {
-    addManagedFiles(collectAllAvailablePomFiles());
-    waitForQuickResolvingCompletionAndImport();
+  public void importProjectOrAllAvailablePomFiles() {
+    if (!isMavenizedProject()) {
+      addManagedFiles(collectAllAvailablePomFiles());
+    }
+    waitForReadingCompletion();
+    importProjects();
   }
 
   public List<Module> importProjects() {
@@ -594,7 +597,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   public MavenDomDependency addDependency(final MavenProject mavenProject, final MavenId id) {
     final MavenArtifact[] artifact = new MavenArtifact[1];
-    
+
     try {
       MavenUtil.run(myProject, "Downloading dependency...", new MavenTask() {
         public void run(MavenProgressIndicator process) throws MavenProcessCanceledException {
