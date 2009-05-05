@@ -5,12 +5,14 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.revertion.SelectionReverter;
 import com.intellij.history.integration.ui.models.SelectionCalculator;
+import com.intellij.history.integration.IdeaGateway;
 import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Date;
+import java.util.ArrayList;
 
 public class SelectionReverterTest extends IntegrationTestCase {
   private VirtualFile f;
@@ -21,7 +23,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
     f = root.createChildData(null, "f.txt");
   }
 
-  public void testFoo() throws IOException {
+  public void testBasics() throws IOException {
     String before = "public class Bar {\n" +
                     "  public String foo() {\n" +
                     "    return \"old\";\n" +
@@ -61,13 +63,43 @@ public class SelectionReverterTest extends IntegrationTestCase {
     assertEquals("Revert of selection to 11.02.01 12:30", rr.get(0).getCauseChangeName());
   }
 
+  public void testAskingForReadOnlyStatusClearingOnlyForTheSpecifiedFile() throws Exception {
+    root.createChildData(null, "foo1.txt");
+    f.setBinaryContent("one".getBytes());
+    root.createChildData(null, "foo2.txt");
+    f.setBinaryContent("two".getBytes());
+    root.createChildData(null, "foo3.txt");
+
+    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    gateway = new IdeaGateway(myProject) {
+      @Override
+      public boolean ensureFilesAreWritable(List<VirtualFile> ff) {
+        files.addAll(ff);
+        return true;
+      }
+    };
+
+    List<String> errors = checkCanRevertToPreviousRevision();
+    assertTrue(errors.isEmpty());
+
+    assertEquals(1, files.size());
+    assertEquals(f, files.get(0));
+  }
+
   private void revertToPreviousRevision(int from, int to) throws IOException {
+    createReverter(from, to).revert();
+  }
+
+  private List<String> checkCanRevertToPreviousRevision() throws IOException {
+    return createReverter(0, 0).checkCanRevert();
+  }
+
+  private SelectionReverter createReverter(int from, int to) {
     List<Revision> rr = getVcsRevisionsFor(f);
     SelectionCalculator c = new SelectionCalculator(gateway, rr, from, to);
     Revision leftRev = rr.get(1);
     Entry right = getVcsEntry(f);
 
-    SelectionReverter r = new SelectionReverter(getVcs(), gateway, c, leftRev, right, from, to);
-    r.revert();
+    return new SelectionReverter(getVcs(), gateway, c, leftRev, right, from, to);
   }
 }

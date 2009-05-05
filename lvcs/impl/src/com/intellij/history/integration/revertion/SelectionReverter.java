@@ -1,17 +1,20 @@
 package com.intellij.history.integration.revertion;
 
+import com.intellij.diff.Block;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.FormatUtil;
+import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
-import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.history.integration.ui.models.Progress;
+import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.openapi.editor.Document;
-import com.intellij.diff.Block;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 public class SelectionReverter extends Reverter {
   private final SelectionCalculator myCalculator;
@@ -38,6 +41,12 @@ public class SelectionReverter extends Reverter {
   protected String formatCommandName() {
     String date = FormatUtil.formatTimestamp(myLeftRevision.getTimestamp());
     return LocalHistoryBundle.message("system.label.revert.of.selection.to.date", date);
+  }
+
+  @Override
+  protected List<VirtualFile> getFilesToClearROStatus() throws IOException {
+    VirtualFile file = myGateway.findVirtualFile(myRightEntry.getPath());
+    return Collections.singletonList(file);
   }
 
   protected void doRevert() throws IOException {
