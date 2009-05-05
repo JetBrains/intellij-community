@@ -14,7 +14,6 @@ import com.intellij.compiler.impl.javaCompiler.api.CompilerAPICompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.compiler.impl.javaCompiler.jikes.JikesCompiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -49,7 +48,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEPENDENCY_FORMAT_VERSION = 50;
-  @NonNls private static final String PROPERTY_IDEA_USE_EMBEDDED_JAVAC = "idea.use.embedded.javac";
 
   @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
   @NotNull private BackendCompiler myDefaultJavaCompiler;
@@ -68,6 +66,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
   private BackendCompiler JAVAC_EXTERNAL_BACKEND;
   private final Perl5Matcher myPatternMatcher = new Perl5Matcher();
+  private CompilerAPICompiler myInprocessJavaCompiler;
 
   {
     loadDefaultWildcardPatterns();
@@ -201,8 +200,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
       if (ApplicationManagerEx.getApplicationEx().isInternal()) {
         try {
-          CompilerAPICompiler compiler = new CompilerAPICompiler(myProject);
-          myRegisteredCompilers.add(compiler);
+          myInprocessJavaCompiler = new CompilerAPICompiler(myProject);
+          myRegisteredCompilers.add(myInprocessJavaCompiler);
         }
         catch (NoClassDefFoundError e) {
           // wrong JDK
@@ -222,6 +221,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public Collection<BackendCompiler> getRegisteredJavaCompilers() {
     return myRegisteredCompilers;
+  }
+
+  public CompilerAPICompiler getInprocessJavaCompiler() {
+    return myInprocessJavaCompiler;
   }
 
   public String[] getResourceFilePatterns() {
