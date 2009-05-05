@@ -430,7 +430,7 @@ public class MavenProject implements Serializable {
                                                        MavenEmbedderWrapper embedder,
                                                        MavenProjectReader reader,
                                                        MavenProjectReaderProjectLocator locator,
-                                                       MavenProcess process) throws MavenProcessCanceledException {
+                                                       MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.resolveProject(generalSettings,
                                                             embedder,
                                                             getFile(),
@@ -445,7 +445,7 @@ public class MavenProject implements Serializable {
                               MavenImportingSettings importingSettings,
                               MavenProjectReader reader,
                               MavenConsole console,
-                              MavenProcess p) throws MavenProcessCanceledException {
+                              MavenProgressIndicator p) throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.generateSources(embedder,
                                                              importingSettings,
                                                              getFile(),

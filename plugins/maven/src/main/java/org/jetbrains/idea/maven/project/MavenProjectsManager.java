@@ -216,7 +216,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     myImportingQueue = new MergingUpdateQueue(getClass().getName() + ": Importing queue",
                                               IMPORT_DELAY, true, MergingUpdateQueue.ANY_COMPONENT);
-    MavenUserAwareUpdatingQueueHelper.attachTo(myImportingQueue);
+    MavenUserAwareUpdatingQueueHelper.attachTo(myProject, myImportingQueue);
   }
 
   private void listenForProjectsTreeChanges() {
@@ -594,9 +594,10 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   public MavenDomDependency addDependency(final MavenProject mavenProject, final MavenId id) {
     final MavenArtifact[] artifact = new MavenArtifact[1];
+    
     try {
-      MavenProcess.run(myProject, "Downloading dependency...", new MavenProcess.MavenTask() {
-        public void run(MavenProcess process) throws MavenProcessCanceledException {
+      MavenUtil.run(myProject, "Downloading dependency...", new MavenTask() {
+        public void run(MavenProgressIndicator process) throws MavenProcessCanceledException {
           artifact[0] = myProjectsTree.downloadArtifact(mavenProject, id, myEmbeddersManager, new SoutMavenConsole(), process);
         }
       });

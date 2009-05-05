@@ -34,10 +34,7 @@ import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenConsoleHelper;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.utils.MavenId;
-import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -525,7 +522,7 @@ public class MavenProjectReader {
                                                  VirtualFile f,
                                                  List<String> activeProfiles,
                                                  MavenProjectReaderProjectLocator locator,
-                                                 MavenProcess process) throws MavenProcessCanceledException {
+                                                 MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenProject mavenProject = null;
     boolean isValid = true;
     List<MavenProjectProblem> problems = new ArrayList<MavenProjectProblem>();
@@ -572,9 +569,9 @@ public class MavenProjectReader {
                                                             String path,
                                                             List<String> profiles,
                                                             List<MavenProjectProblem> problems,
-                                                            MavenProcess p) throws MavenProcessCanceledException {
+                                                            MavenProgressIndicator p) throws MavenProcessCanceledException {
     MavenExecutionRequest request = createRequest(embedder, path, profiles);
-    Pair<MavenExecutionResult, Set<MavenId>> result = embedder.readProject(request, p);
+    Pair<MavenExecutionResult, Set<MavenId>> result = embedder.resolveProject(request, p);
     if (!validate(result.first, problems)) return null;
     return Pair.create(result.first.getProject(), result.second);
   }
@@ -648,7 +645,7 @@ public class MavenProjectReader {
                                                   VirtualFile f,
                                                   List<String> profiles,
                                                   MavenConsole console,
-                                                  MavenProcess p) throws MavenProcessCanceledException {
+                                                  MavenProgressIndicator p) throws MavenProcessCanceledException {
     try {
       MavenExecutionRequest request = createRequest(embedder, f.getPath(), profiles);
       request.setGoals(Arrays.asList(importingSettings.getUpdateFoldersOnImportPhase()));

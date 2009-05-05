@@ -19,6 +19,7 @@ import junit.framework.TestCase;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.util.List;
 
 public abstract class MavenTestCase extends TestCase {
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
-  protected static final MavenProcess EMPTY_MAVEN_PROCESS = new MavenProcess(new EmptyProgressIndicator());
+  protected static final MavenProgressIndicator EMPTY_MAVEN_PROCESS = new MavenProgressIndicator(new EmptyProgressIndicator());
 
   private static File ourTempDir;
 

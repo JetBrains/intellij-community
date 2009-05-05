@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ProfilingUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 import java.io.File;
 import java.io.IOException;

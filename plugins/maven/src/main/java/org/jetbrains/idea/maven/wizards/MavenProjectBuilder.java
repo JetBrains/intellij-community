@@ -14,8 +14,7 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.DefaultMavenModuleModelsProvider;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.utils.FileFinder;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -120,8 +119,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     getParameters().myImportRoot = FileFinder.refreshRecursively(root);
     if (getImportRoot() == null) return false;
 
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProcess.MavenTask() {
-      public void run(MavenProcess process) throws MavenProcessCanceledException {
+    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+      public void run(MavenProgressIndicator process) throws MavenProcessCanceledException {
         process.setText(ProjectBundle.message("maven.locating.files"));
         getParameters().myFiles = FileFinder.findPomFiles(getImportRoot().getChildren(),
                                                           getImportingSettings().isLookForNested(),
@@ -139,7 +138,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     });
   }
 
-  private void collectProfiles(MavenProcess process) {
+  private void collectProfiles(MavenProgressIndicator process) {
     process.setText(ProjectBundle.message("maven.searching.profiles"));
 
     Set<String> uniqueProfiles = new LinkedHashSet<String>();
@@ -171,17 +170,17 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     getParameters().myMavenProjectTree = null;
     getParameters().mySelectedProfiles = profiles;
 
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProcess.MavenTask() {
-      public void run(MavenProcess process) throws MavenProcessCanceledException {
+    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+      public void run(MavenProgressIndicator process) throws MavenProcessCanceledException {
         readMavenProjectTree(process);
         process.setText2("");
       }
     });
   }
 
-  private boolean runConfigurationProcess(String message, MavenProcess.MavenTask p) throws ConfigurationException {
+  private boolean runConfigurationProcess(String message, MavenTask p) throws ConfigurationException {
     try {
-      MavenProcess.run(null, message, p);
+      MavenUtil.run(null, message, p);
     }
     catch (MavenProcessCanceledException e) {
       return false;
@@ -190,7 +189,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     return true;
   }
 
-  private void readMavenProjectTree(MavenProcess process) throws MavenProcessCanceledException {
+  private void readMavenProjectTree(MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenProjectsTree tree = new MavenProjectsTree();
     tree.addManagedFilesWithProfiles(getParameters().myFiles, getParameters().mySelectedProfiles);
     tree.updateAll(getGeneralSettings(), process);

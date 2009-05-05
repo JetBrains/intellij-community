@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
     myFilesToDelete = filesToDelete;
   }
 
-  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProcess process)
+  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator process)
     throws MavenProcessCanceledException {
     if (myFilesToUpdate == null) {
       myTree.updateAll(mySettings, process);

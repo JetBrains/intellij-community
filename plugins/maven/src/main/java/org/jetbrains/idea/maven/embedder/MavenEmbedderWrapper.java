@@ -15,7 +15,6 @@ import org.apache.maven.embedder.*;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.extension.ExtensionManager;
-import org.apache.maven.model.Model;
 import org.apache.maven.monitor.event.DefaultEventMonitor;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.PlexusContainer;
@@ -24,8 +23,9 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -41,16 +41,8 @@ public class MavenEmbedderWrapper {
     myEmbedder = embedder;
   }
 
-  public Model readModel(final String path, MavenProcess p) throws MavenProcessCanceledException {
-    return doExecute(new Executor<Model>() {
-      public Model execute() throws Exception {
-        return myEmbedder.readModel(new File(path));
-      }
-    }, p);
-  }
-
-  public Pair<MavenExecutionResult, Set<MavenId>> readProject(MavenExecutionRequest request,
-                                                              MavenProcess p) throws MavenProcessCanceledException {
+  public Pair<MavenExecutionResult, Set<MavenId>> resolveProject(MavenExecutionRequest request,
+                                                                 MavenProgressIndicator p) throws MavenProcessCanceledException {
     return doExecute(request, new RequestExecutor() {
       public MavenExecutionResult execute(MavenExecutionRequest request) {
         return myEmbedder.readProjectWithDependencies(request);
@@ -62,7 +54,7 @@ public class MavenEmbedderWrapper {
     return this.<CustomWagonManager>getComponent(WagonManager.class).retrieveUnresolvedIds();
   }
 
-  public void resolve(final Artifact artifact, final List<MavenRemoteRepository> remoteRepositories, MavenProcess process)
+  public void resolve(final Artifact artifact, final List<MavenRemoteRepository> remoteRepositories, MavenProgressIndicator process)
     throws MavenProcessCanceledException {
     doExecute(new Executor<Object>() {
       public Object execute() throws Exception {
@@ -93,7 +85,7 @@ public class MavenEmbedderWrapper {
     return result;
   }
 
-  public boolean resolvePlugin(final MavenPlugin plugin, final MavenProject nativeMavenProject, MavenProcess process)
+  public boolean resolvePlugin(final MavenPlugin plugin, final MavenProject nativeMavenProject, MavenProgressIndicator process)
     throws MavenProcessCanceledException {
     return doExecute(new Executor<Boolean>() {
       public Boolean execute() throws Exception {
@@ -131,7 +123,7 @@ public class MavenEmbedderWrapper {
     }
   }
 
-  public Pair<MavenExecutionResult, Set<MavenId>> execute(MavenExecutionRequest request, MavenProcess p)
+  public Pair<MavenExecutionResult, Set<MavenId>> execute(MavenExecutionRequest request, MavenProgressIndicator p)
     throws MavenProcessCanceledException {
     request.addEventMonitor(new DefaultEventMonitor(new PlexusLoggerAdapter(myEmbedder.getLogger())));
     return doExecute(request, new RequestExecutor() {
@@ -168,7 +160,7 @@ public class MavenEmbedderWrapper {
 
   private Pair<MavenExecutionResult, Set<MavenId>> doExecute(final MavenExecutionRequest request,
                                                              final RequestExecutor executor,
-                                                             final MavenProcess p) throws MavenProcessCanceledException {
+                                                             final MavenProgressIndicator p) throws MavenProcessCanceledException {
     return doExecute(new Executor<Pair<MavenExecutionResult, Set<MavenId>>>() {
       public Pair<MavenExecutionResult, Set<MavenId>> execute() throws Exception {
         request.setTransferListener(new TransferListenerAdapter(p.getIndicator()));
@@ -178,7 +170,7 @@ public class MavenEmbedderWrapper {
     }, p);
   }
 
-  private <T> T doExecute(final Executor<T> executor, MavenProcess p) throws MavenProcessCanceledException {
+  private <T> T doExecute(final Executor<T> executor, MavenProgressIndicator p) throws MavenProcessCanceledException {
     final Ref<T> result = new Ref<T>();
     final boolean[] cancelled = new boolean[1];
     final Throwable[] exception = new Throwable[1];
@@ -221,20 +213,20 @@ public class MavenEmbedderWrapper {
   }
 
   public void customizeForResolve(MavenConsole console,
-                                  MavenProcess process) {
+                                  MavenProgressIndicator process) {
     doCustomize(null, true, false, console, process);
   }
 
   public void customizeForResolve(boolean quickResolve,
                                   MavenProjectsTree tree,
                                   MavenConsole console,
-                                  MavenProcess process) {
+                                  MavenProgressIndicator process) {
     doCustomize(tree, !quickResolve, false, console, process);
   }
 
   public void customizeForStrictResolve(MavenProjectsTree tree,
                                         MavenConsole console,
-                                        MavenProcess process) {
+                                        MavenProgressIndicator process) {
     doCustomize(tree, true, true, console, process);
   }
 
@@ -242,7 +234,7 @@ public class MavenEmbedderWrapper {
                            boolean useRemoteRepository,
                            boolean failOnUnresolved,
                            MavenConsole console,
-                           MavenProcess process) {
+                           MavenProgressIndicator process) {
     this.<CustomArtifactFactory>getComponent(ArtifactFactory.class).customize();
     if (tree != null) {
       this.<CustomArtifactResolver>getComponent(ArtifactResolver.class).customize(tree);
@@ -253,7 +245,7 @@ public class MavenEmbedderWrapper {
     setConsoleAndLogger(console, process);
   }
 
-  private void setConsoleAndLogger(MavenConsole console, MavenProcess process) {
+  private void setConsoleAndLogger(MavenConsole console, MavenProgressIndicator process) {
     ((MavenConsoleLogger)myEmbedder.getLogger()).setConsole(console);
 
     myEmbedder.getDefaultRequest().setTransferListener(

@@ -1,6 +1,8 @@
 package org.jetbrains.idea.maven.project;
 
 import org.jetbrains.idea.maven.embedder.MavenConsole;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import com.intellij.openapi.project.Project;
 
 public class MavenProjectsProcessorResolvingTask extends MavenProjectsProcessorBasicTask {
@@ -13,7 +15,7 @@ public class MavenProjectsProcessorResolvingTask extends MavenProjectsProcessorB
     myGeneralSettings = generalSettings;
   }
 
-  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProcess process)
+  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator process)
     throws MavenProcessCanceledException {
     myTree.resolve(myQuickResolve, myGeneralSettings, myMavenProject, embeddersManager, console, process);
   }

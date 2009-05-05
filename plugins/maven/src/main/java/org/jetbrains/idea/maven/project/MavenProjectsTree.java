@@ -14,10 +14,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.utils.MavenId;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
 import java.util.*;
@@ -184,7 +181,7 @@ public class MavenProjectsTree {
   }
 
   public void updateAll(MavenGeneralSettings generalSettings,
-                        MavenProcess process) throws MavenProcessCanceledException {
+                        MavenProgressIndicator process) throws MavenProcessCanceledException {
     List<VirtualFile> managedFiles = getExistingManagedFiles();
     MavenProjectReader projectReader = new MavenProjectReader();
     update(projectReader, managedFiles,
@@ -199,14 +196,14 @@ public class MavenProjectsTree {
 
   public void update(Collection<VirtualFile> files,
                      MavenGeneralSettings generalSettings,
-                     MavenProcess process) throws MavenProcessCanceledException {
+                     MavenProgressIndicator process) throws MavenProcessCanceledException {
     update(new MavenProjectReader(), files, generalSettings, process, false);
   }
 
   private void update(MavenProjectReader projectReader,
                       Collection<VirtualFile> files,
                       MavenGeneralSettings generalSettings,
-                      MavenProcess process,
+                      MavenProgressIndicator process,
                       boolean recursive) throws MavenProcessCanceledException {
     if (files.isEmpty()) return;
 
@@ -238,7 +235,7 @@ public class MavenProjectsTree {
                      Map<VirtualFile, MavenProject> readProjects,
                      Stack<MavenProject> updateStack,
                      MavenGeneralSettings generalSettings,
-                     MavenProcess process,
+                     MavenProgressIndicator process,
                      boolean recursuve) throws MavenProcessCanceledException {
     MavenProject newMavenProject = new MavenProject(f);
 
@@ -268,10 +265,8 @@ public class MavenProjectsTree {
                         Map<VirtualFile, MavenProject> readProjects,
                         Stack<MavenProject> updateStack,
                         MavenGeneralSettings generalSettings,
-                        MavenProcess process,
+                        MavenProgressIndicator process,
                         boolean recursive) throws MavenProcessCanceledException {
-    process.checkCanceled();
-
     if (updateStack.contains(mavenProject)) {
       MavenLog.LOG.info("Recursion detected in " + mavenProject.getFile());
       return;
@@ -500,22 +495,20 @@ public class MavenProjectsTree {
 
   public void delete(List<VirtualFile> files,
                      MavenGeneralSettings generalSettings,
-                     MavenProcess process) throws MavenProcessCanceledException {
+                     MavenProgressIndicator process) throws MavenProcessCanceledException {
     delete(new MavenProjectReader(), files, generalSettings, process);
   }
 
   private void delete(MavenProjectReader projectReader,
                       List<VirtualFile> files,
                       MavenGeneralSettings generalSettings,
-                      MavenProcess process) throws MavenProcessCanceledException {
+                      MavenProgressIndicator process) throws MavenProcessCanceledException {
     if (files.isEmpty()) return;
 
     List<MavenProject> projectsToUpdate = new ArrayList<MavenProject>();
     List<MavenProject> removedProjects = new ArrayList<MavenProject>();
 
     for (VirtualFile each : files) {
-      process.checkCanceled();
-
       MavenProject mavenProject = findProject(each);
       if (mavenProject == null) return;
 
@@ -699,7 +692,7 @@ public class MavenProjectsTree {
                       MavenProject mavenProject,
                       MavenEmbeddersManager embeddersManager,
                       MavenConsole console,
-                      MavenProcess process) throws MavenProcessCanceledException {
+                      MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder();
     embedder.customizeForResolve(quickResolve, this, console, process);
 
@@ -723,7 +716,7 @@ public class MavenProjectsTree {
                              org.apache.maven.project.MavenProject nativeMavenProject,
                              MavenEmbeddersManager embeddersManager,
                              MavenConsole console,
-                             MavenProcess process) throws MavenProcessCanceledException {
+                             MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder();
     embedder.customizeForResolve(console, process);
     try {
@@ -743,7 +736,7 @@ public class MavenProjectsTree {
                              MavenEmbeddersManager embeddersManager,
                              MavenImportingSettings importingSettings,
                              MavenConsole console,
-                             MavenProcess process) throws MavenProcessCanceledException {
+                             MavenProgressIndicator process) throws MavenProcessCanceledException {
     if (mavenProject.isAggregator()) return;
 
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder();
@@ -765,7 +758,7 @@ public class MavenProjectsTree {
                                 MavenDownloadingSettings downloadingSettings,
                                 MavenEmbeddersManager embeddersManager,
                                 MavenConsole console,
-                                MavenProcess process) throws MavenProcessCanceledException {
+                                MavenProgressIndicator process) throws MavenProcessCanceledException {
     if (mavenProject.isAggregator()) return;
 
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder();
@@ -784,7 +777,7 @@ public class MavenProjectsTree {
                                         MavenId id,
                                         MavenEmbeddersManager embeddersManager,
                                         MavenConsole console,
-                                        MavenProcess process) throws MavenProcessCanceledException {
+                                        MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder();
     embedder.customizeForResolve(console, process);
 

@@ -8,11 +8,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MavenProjectsProcessor {
   private static final int QUEUE_POLL_INTERVAL = 100;
@@ -23,6 +26,7 @@ public class MavenProjectsProcessor {
   private final Thread myThread;
   private final BlockingQueue<MavenProjectsProcessorTask> myQueue = new LinkedBlockingQueue<MavenProjectsProcessorTask>();
   private volatile boolean isStopped;
+  private final AtomicReference<MavenProgressIndicator> myCurrentProgressIndicator = new AtomicReference<MavenProgressIndicator>();
 
   private final Handler myHandler = new Handler();
   private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
@@ -61,7 +65,7 @@ public class MavenProjectsProcessor {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     scheduleTask(new MavenProjectsProcessorTask() {
-      public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProcess process)
+      public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator process)
         throws MavenProcessCanceledException {
         semaphore.up();
       }
@@ -78,6 +82,8 @@ public class MavenProjectsProcessor {
 
   public void cancelNonBlocking() {
     myQueue.clear();
+    MavenProgressIndicator indicator = myCurrentProgressIndicator.get();
+    if (indicator != null) indicator.getIndicator().cancel();
   }
 
   public void cancelAndStop() {
@@ -85,6 +91,7 @@ public class MavenProjectsProcessor {
 
     try {
       isStopped = true;
+      cancelNonBlocking();
       myThread.join();
     }
     catch (InterruptedException e) {
@@ -114,12 +121,13 @@ public class MavenProjectsProcessor {
     return true;
   }
 
-  private void doPerform(final MavenProjectsProcessorTask task) {
+  private void doPerform(MavenProjectsProcessorTask task) {
     try {
-      task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), new MavenProcess(new EmptyProgressIndicator()));
+      // todo console
+      myCurrentProgressIndicator.set(new MavenProgressIndicator(new EmptyProgressIndicator()));
+      task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), myCurrentProgressIndicator.get());
     }
     catch (MavenProcessCanceledException ignore) {
-      // todo console and cancelation
     }
   }
 

@@ -6,6 +6,8 @@ import gnu.trove.THashMap;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 import java.io.File;
 import java.util.*;
@@ -13,7 +15,7 @@ import java.util.*;
 public class MavenArtifactDownloader {
   private final MavenDownloadingSettings mySettings;
   private final MavenEmbedderWrapper myEmbedder;
-  private final MavenProcess myProgress;
+  private final MavenProgressIndicator myProgress;
   private final MavenProjectsTree myProjectsTree;
   private final List<MavenProject> myMavenProjects;
 
@@ -22,7 +24,7 @@ public class MavenArtifactDownloader {
                               MavenDownloadingSettings settings,
                               boolean demand,
                               MavenEmbedderWrapper embedder,
-                              MavenProcess p) throws MavenProcessCanceledException {
+                              MavenProgressIndicator p) throws MavenProcessCanceledException {
     new MavenArtifactDownloader(projectsTree, mavenProjects, settings, embedder, p).download(demand);
   }
 
@@ -30,7 +32,7 @@ public class MavenArtifactDownloader {
                                   List<MavenProject> mavenProjects,
                                   MavenDownloadingSettings settings,
                                   MavenEmbedderWrapper embedder,
-                                  MavenProcess p) {
+                                  MavenProgressIndicator p) {
     myProjectsTree = projectsTree;
     myMavenProjects = mavenProjects;
     mySettings = settings;

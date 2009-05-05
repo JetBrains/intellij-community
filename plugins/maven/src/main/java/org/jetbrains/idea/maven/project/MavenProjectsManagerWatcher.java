@@ -74,7 +74,7 @@ public class MavenProjectsManagerWatcher {
     myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new MyFileChangeListener());
     myBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
 
-    MavenUserAwareUpdatingQueueHelper.attachTo(myChangedDocumentsQueue);
+    MavenUserAwareUpdatingQueueHelper.attachTo(myProject, myChangedDocumentsQueue);
     myChangedDocumentsQueue.activate();
 
     myDocumentListener = new DocumentAdapter() {

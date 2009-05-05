@@ -3,6 +3,10 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,6 +21,7 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.maven.model.Model;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 import java.io.File;
@@ -158,5 +163,25 @@ public class MavenUtil {
     catch (IllegalAccessException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static void run(Project project, String title, final MavenTask task) throws MavenProcessCanceledException {
+    final Exception[] canceledEx = new Exception[1];
+
+    ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
+      public void run(@NotNull ProgressIndicator i) {
+        try {
+          task.run(new MavenProgressIndicator(i));
+        }
+        catch (MavenProcessCanceledException e) {
+          canceledEx[0] = e;
+        }
+        catch (ProcessCanceledException e) {
+          canceledEx[0] = e;
+        }
+      }
+    });
+    if (canceledEx[0] instanceof MavenProcessCanceledException) throw (MavenProcessCanceledException)canceledEx[0];
+    if (canceledEx[0] instanceof ProcessCanceledException) throw new MavenProcessCanceledException();
   }
 }
