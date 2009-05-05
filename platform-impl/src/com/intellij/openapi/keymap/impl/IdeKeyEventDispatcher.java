@@ -461,17 +461,20 @@ public final class IdeKeyEventDispatcher implements Disposable {
       final AnActionEvent actionEvent =
         processor.createEvent(e, myContext.getDataContext(), ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance());
 
-      final boolean indexProblems = ActionUtil.performDumbAwareUpdate(action, actionEvent, true);
-
-      if (!indexProblems && !presentation.isEnabled()) {
-        continue;
-      }
+      ActionUtil.performDumbAwareUpdate(action, actionEvent, true);
 
       if (dumb && !(action instanceof DumbAware)) {
+        if (Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
+          continue;
+        }
+
         nonDumbAwareAction.add(actionEvent);
         continue;
       }
 
+      if (!presentation.isEnabled()) {
+        continue;
+      }
 
       processor.onUpdatePassed(e, action, actionEvent);
 

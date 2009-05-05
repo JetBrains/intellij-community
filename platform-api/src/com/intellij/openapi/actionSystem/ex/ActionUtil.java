@@ -23,6 +23,8 @@ import java.util.List;
 
 public class ActionUtil {
   @NonNls private static final String WAS_ENABLED_BEFORE_DUMB = "WAS_ENABLED_BEFORE_DUMB";
+  @NonNls public static final String WOULD_BE_ENABLED_IF_NOT_DUMB_MODE = "WOULD_BE_ENABLED_IF_NOT_DUMB_MODE";
+  @NonNls private static final String WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE = "WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE";
 
   private ActionUtil() {
   }
@@ -102,14 +104,15 @@ public class ActionUtil {
   public static boolean performDumbAwareUpdate(AnAction action, AnActionEvent e, boolean beforeActionPerformed) {
     final Presentation presentation = e.getPresentation();
     final Boolean wasEnabledBefore = (Boolean)presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
-    if (wasEnabledBefore != null) {
+    final boolean dumbMode = DumbService.getInstance().isDumb();
+    if (wasEnabledBefore != null && !dumbMode) {
       presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null);
       presentation.setEnabled(wasEnabledBefore.booleanValue());
       presentation.setVisible(true);
     }
     final boolean enabledBeforeUpdate = presentation.isEnabled();
 
-    final boolean notAllowed = DumbService.getInstance().isDumb() && !(action instanceof DumbAware) && !(action instanceof ActionGroup);
+    final boolean notAllowed = dumbMode && !(action instanceof DumbAware) && !(action instanceof ActionGroup);
 
     try {
       if (beforeActionPerformed) {
@@ -118,6 +121,8 @@ public class ActionUtil {
       else {
         action.update(e);
       }
+      presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, notAllowed && presentation.isEnabled());
+      presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, notAllowed && presentation.isVisible());
     }
     catch (IndexNotReadyException e1) {
       if (notAllowed) {
@@ -137,22 +142,26 @@ public class ActionUtil {
   }
 
   public static boolean lastUpdateAndCheckDumb(AnAction action, AnActionEvent e, boolean visibilityMatters) {
-    final boolean indexProblems = performDumbAwareUpdate(action, e, true);
-
-    if (!indexProblems) {
-      if (!e.getPresentation().isEnabled()) {
-        return false;
-      }
-      if (visibilityMatters && !e.getPresentation().isVisible()) {
-        return false;
-      }
-    }
+    performDumbAwareUpdate(action, e, true);
 
     if (DumbService.getInstance().isDumb() && !(action instanceof DumbAware)) {
+      if (Boolean.FALSE.equals(e.getPresentation().getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
+        return false;
+      }
+      if (visibilityMatters && Boolean.FALSE.equals(e.getPresentation().getClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE))) {
+        return false;
+      }
+
       showDumbModeWarning(e);
       return false;
     }
 
+    if (!e.getPresentation().isEnabled()) {
+      return false;
+    }
+    if (visibilityMatters && !e.getPresentation().isVisible()) {
+      return false;
+    }
 
     return true;
   }
