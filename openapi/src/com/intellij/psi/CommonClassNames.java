@@ -49,6 +49,7 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_COMPARATOR = "java.util.Comparator";
 
   @NonNls String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
+  @NonNls String JAVA_IO_EXTERNALIZABLE = "java.io.Externalizable";
 
   @NonNls String JAVA_LANG_NUMBER = "java.lang.Number";
 
