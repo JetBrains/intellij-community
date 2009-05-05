@@ -10,10 +10,12 @@
   <change-notes>
     <![CDATA[
     This plugin provides the following features:
-    <p>
-    - run configuration for Google App Engine Dev server<br>
-    - action for uploading an application to Google (Tools | Upload App Engine Application...)
-    </p>
+    <ul>
+     <li> option on "Technologies" page of the module wizard to create Web Application with appengine-web.xml descriptor
+     <li> inspection to report forbidden code in App Engine application
+     <li> run configuration for Google App Engine Dev server
+     <li> action for uploading an application to Google (Tools | Upload App Engine Application...)
+    </ul>
    ]]></change-notes>
 
   <extensions defaultExtensionNs="com.intellij">

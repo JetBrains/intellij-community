@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,10 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitDocComment(PsiDocComment comment) {
+      }
+
+      @Override
+      public void visitJspFile(JspFile file) {
       }
 
       @Override
