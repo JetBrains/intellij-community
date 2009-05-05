@@ -378,5 +378,10 @@ public abstract class AbstractVcs {
     FilterDescendantVirtualFiles.filter(in);
     return in;
   }
+
+  @Nullable
+  public VcsExceptionsHotFixer getVcsExceptionsHotFixer() {
+    return null;
+  }
 }
 

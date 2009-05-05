@@ -16,9 +16,9 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.MessageView;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ui.MutableErrorTreeView;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +30,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
-public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, ErrorTreeView {
+public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.errorTreeView.NewErrorTreeViewPanel");
   private String myProgressText = "";
   private final boolean myCreateExitAction;
@@ -550,5 +551,25 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     public String getPreviousOccurenceActionName() {
       return IdeBundle.message("action.previous.message");
     }
+  }
+
+  public List<Object> getGroupChildrenData(final String groupName) {
+    return myErrorViewStructure.getGroupChildrenData(groupName);
+  }
+
+  public void removeGroup(final String name) {
+    myErrorViewStructure.removeGroup(name);
+  }
+
+  public void addFixedHotfixGroup(String text, List<SimpleErrorData> children) {
+    myErrorViewStructure.addFixedHotfixGroup(text, children);
+  }
+
+  public void addHotfixGroup(HotfixData hotfixData, List<SimpleErrorData> children) {
+    myErrorViewStructure.addHotfixGroup(hotfixData, children, this);
+  }
+
+  public void reload() {
+    myBuilder.updateTree();
   }
 }

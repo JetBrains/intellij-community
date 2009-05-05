@@ -3,39 +3,23 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.util.ui.TreeWithEmptyText;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 
 /**
  * @author yole
 */
-public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionListener {
+public class TreeLinkMouseListener extends LinkMouseListenerBase {
   private final ColoredTreeCellRenderer myRenderer;
   protected DefaultMutableTreeNode myLastHitNode;
 
   public TreeLinkMouseListener(final ColoredTreeCellRenderer renderer) {
     myRenderer = renderer;
-  }
-
-  public void mouseClicked(final MouseEvent e) {
-    if (!e.isPopupTrigger() && e.getButton() == 1) {
-      Object tag = getTagAt(e);
-      handleTagClick(tag);
-    }
-  }
-
-  protected void handleTagClick(final Object tag) {
-    if (tag instanceof Runnable) {
-      ((Runnable) tag).run();
-    }
   }
 
   protected void showTooltip(final JTree tree, final MouseEvent e, final HaveTooltip launcher) {
@@ -46,8 +30,8 @@ public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionLi
     }
   }
 
-  @Nullable
-  private Object getTagAt(final MouseEvent e) {
+  @Nullable @Override
+  protected Object getTagAt(final MouseEvent e) {
     JTree tree = (JTree) e.getSource();
     Object tag = null;
     HaveTooltip haveTooltip = null;
@@ -70,26 +54,6 @@ public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionLi
     }
     showTooltip(tree, e, haveTooltip);
     return tag;
-  }
-
-  public void mouseDragged(MouseEvent e) {
-  }
-
-  public void mouseMoved(MouseEvent e) {
-    JTree tree = (JTree) e.getSource();
-    if (tree instanceof TreeWithEmptyText && ((TreeWithEmptyText) tree).isModelEmpty()) return;
-    Object tag = getTagAt(e);
-    if (tag != null) {
-      tree.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    }
-    else {
-      tree.setCursor(Cursor.getDefaultCursor());
-    }
-  }
-
-  public void install(final JTree tree) {
-    tree.addMouseListener(this);
-    tree.addMouseMotionListener(this);
   }
 
   public static class BrowserLauncher implements Runnable {

@@ -4,6 +4,9 @@
  */
 package com.intellij.ide.errorTreeView;
 
+import com.intellij.ui.CustomizeColoredTreeCellRenderer;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Nov 12, 2004
@@ -33,4 +36,14 @@ public abstract class ErrorTreeElement {
   }
 
   public abstract String getExportTextPrefix();
+
+  @Nullable
+  public CustomizeColoredTreeCellRenderer getLeftSelfRenderer() {
+    return null;
+  }
+
+  @Nullable
+  public CustomizeColoredTreeCellRenderer getRightSelfRenderer() {
+    return null;
+  }
 }

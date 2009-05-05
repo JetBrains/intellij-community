@@ -9,11 +9,16 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.CustomizeColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.MutableErrorTreeView;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -147,6 +152,54 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
+  public List<Object> getGroupChildrenData(final String groupName) {
+    synchronized (myGroupNameToMessagesMap) {
+      final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(groupName);
+      if (children != null && (! children.isEmpty())) {
+        final List<Object> result = new ArrayList<Object>();
+        for (NavigatableMessageElement child : children) {
+          final Object data = child.getData();
+          if (data != null) {
+            result.add(data);
+          }
+        }
+        return result;
+      } else {
+        return Collections.emptyList();
+      }
+    }
+  }
+
+  public void addFixedHotfixGroup(final String text, final List<SimpleErrorData> children) {
+    final FixedHotfixGroupElement group = new FixedHotfixGroupElement(text, null, null);
+
+    addGroupPlusElements(text, group, children);
+  }
+
+  public void addHotfixGroup(final HotfixData hotfixData, final List<SimpleErrorData> children, final MutableErrorTreeView view) {
+    final String text = hotfixData.getErrorText();
+    final HotfixGroupElement group = new HotfixGroupElement(text, null, null, hotfixData.getFix(), hotfixData.getFixComment(), view);
+
+    addGroupPlusElements(text, group, children);
+  }
+
+  private void addGroupPlusElements(String text, GroupingElement group, List<SimpleErrorData> children) {
+    synchronized (myGroupNameToMessagesMap) {
+      myGroupNames.add(text);
+      myGroupNameToElementMap.put(text, group);
+
+      List<NavigatableMessageElement> elements =  new ArrayList<NavigatableMessageElement>();
+      myGroupNameToMessagesMap.put(text, elements);
+
+      for (SimpleErrorData child : children) {
+        VirtualFile vf = child.getVf();
+        elements.add(new MyNavigatableWithDataElement(myProject, child.getKind(), group, child.getMessages(), vf,
+                                                   NewErrorTreeViewPanel.createExportPrefix(-1),
+                                                   NewErrorTreeViewPanel.createRendererPrefix(-1, -1)));
+      }
+    }
+  }
+
   public void addMessage(ErrorTreeElementKind kind, String[] text, Object data) {
     addSimpleMessage(kind, text, data);
   }
@@ -164,14 +217,6 @@ public class ErrorViewStructure extends AbstractTreeStructure {
         getGroupingElement(groupName, data, file),
         message, navigatable, exportText, rendererTextPrefix)
       );
-    }
-  }
-  public void clearGroupChildren(GroupingElement groupingElement) {
-    synchronized (myGroupNameToMessagesMap) {
-      List<NavigatableMessageElement> elements = myGroupNameToMessagesMap.get(groupingElement.getName());
-      if (elements != null) {
-        elements.clear();
-      }
     }
   }
 
@@ -241,5 +286,56 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     public String getExportTextPrefix() {
       return "";
     }  
+  }
+
+  public void removeGroup(final String name) {
+    synchronized (myGroupNameToMessagesMap) {
+      myGroupNames.remove(name);
+      myGroupNameToElementMap.remove(name);
+      myGroupNameToMessagesMap.remove(name);
+    }
+  }
+
+  private static class MyNavigatableWithDataElement extends NavigatableMessageElement {
+    private final static Icon ourFileIcon = IconLoader.getIcon("/fileTypes/unknown.png");
+    private final VirtualFile myVf;
+    private final CustomizeColoredTreeCellRenderer myCustomizeColoredTreeCellRenderer;
+
+    private MyNavigatableWithDataElement(final Project project,
+                                        ErrorTreeElementKind kind,
+                                         GroupingElement parent,
+                                         String[] message,
+                                         final VirtualFile vf,
+                                         String exportText,
+                                         String rendererTextPrefix) {
+      super(kind, parent, message, vf == null ? null : new OpenFileDescriptor(project, vf, -1, -1), exportText, rendererTextPrefix);
+      myVf = vf;
+      myCustomizeColoredTreeCellRenderer = new CustomizeColoredTreeCellRenderer() {
+        public void customizeCellRenderer(SimpleColoredComponent renderer,
+                                          JTree tree,
+                                          Object value,
+                                          boolean selected,
+                                          boolean expanded,
+                                          boolean leaf,
+                                          int row,
+                                          boolean hasFocus) {
+          final Icon icon = myVf.getFileType().getIcon();
+          renderer.setIcon(icon);
+          final String[] messages = getText();
+          final String text = ((messages == null) || (messages.length == 0)) ? vf.getPath() : messages[0];
+          renderer.append(text);
+        }
+      };
+    }
+
+    @Override
+    public Object getData() {
+      return myVf;
+    }
+
+    @Override
+    public CustomizeColoredTreeCellRenderer getLeftSelfRenderer() {
+      return myCustomizeColoredTreeCellRenderer;
+    }
   }
 }

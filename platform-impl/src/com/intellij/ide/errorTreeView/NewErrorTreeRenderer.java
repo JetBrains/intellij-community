@@ -1,11 +1,18 @@
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.changes.issueLinks.ClickableTreeCellRenderer;
+import com.intellij.openapi.vcs.changes.issueLinks.TreeNodePartListener;
+import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.MultilineTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 /**
@@ -17,11 +24,109 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   private final static Icon ourWarningIcon = IconLoader.getIcon("/compiler/warning.png");
   private final static Icon ourInfoIcon = IconLoader.getIcon("/compiler/information.png");
 
+  private final MyWrapperRenderer myWrapperRenderer;
+  private final CallingBackColoredTreeCellRenderer myColoredTreeCellRenderer;
+  private final MyNotSelectedColoredTreeCellRenderer myRightCellRenderer;
+
   private NewErrorTreeRenderer() {
+    myColoredTreeCellRenderer = new CallingBackColoredTreeCellRenderer();
+    myRightCellRenderer = new MyNotSelectedColoredTreeCellRenderer();
+    myWrapperRenderer = new MyWrapperRenderer(myColoredTreeCellRenderer, myRightCellRenderer);
   }
 
   public static JScrollPane install(JTree tree) {
-    return MultilineTreeCellRenderer.installRenderer(tree, new NewErrorTreeRenderer());
+    final NewErrorTreeRenderer renderer = new NewErrorTreeRenderer();
+    //new TreeLinkMouseListener(renderer.myColoredTreeCellRenderer).install(tree);
+    new TreeNodePartListener(renderer.myRightCellRenderer).install(tree);
+    return MultilineTreeCellRenderer.installRenderer(tree, renderer);
+  }
+
+  @Override
+  public Component getTreeCellRendererComponent(JTree tree,
+                                                Object value,
+                                                boolean selected,
+                                                boolean expanded,
+                                                boolean leaf,
+                                                int row,
+                                                boolean hasFocus) {
+    final ErrorTreeElement element = getElement(value);
+    if (element != null) {
+      final CustomizeColoredTreeCellRenderer leftSelfRenderer = element.getLeftSelfRenderer();
+      final CustomizeColoredTreeCellRenderer rightSelfRenderer = element.getRightSelfRenderer();
+      if (leftSelfRenderer != null || rightSelfRenderer != null) {
+        myColoredTreeCellRenderer.setCurrentCallback(leftSelfRenderer);
+        myRightCellRenderer.setCurrentCallback(rightSelfRenderer);
+        return myWrapperRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+      }
+    }
+    return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+  }
+
+  private static class MyNotSelectedColoredTreeCellRenderer extends SimpleColoredComponent implements ClickableTreeCellRenderer {
+    private CustomizeColoredTreeCellRenderer myCurrentCallback;
+
+    public Component getTreeCellRendererComponent(JTree tree,
+                                                  Object value,
+                                                  boolean selected,
+                                                  boolean expanded,
+                                                  boolean leaf,
+                                                  int row,
+                                                  boolean hasFocus) {
+      clear();
+      setBackground(UIUtil.getBgFillColor(tree));
+
+      if (myCurrentCallback != null) {
+        myCurrentCallback.customizeCellRenderer(this, tree, value, selected, expanded, leaf, row, hasFocus);
+      }
+
+      if (getFont() == null) {
+        setFont(tree.getFont());
+      }
+      return this;
+    }
+
+    @Nullable
+    public Object getTag() {
+      return myCurrentCallback == null? null : myCurrentCallback.getTag();
+    }
+
+    public void setCurrentCallback(final CustomizeColoredTreeCellRenderer currentCallback) {
+      myCurrentCallback = currentCallback;
+    }
+  }
+
+  private static class MyWrapperRenderer implements TreeCellRenderer {
+    private final TreeCellRenderer myLeft;
+    private final TreeCellRenderer myRight;
+    private final JPanel myPanel;
+
+    public TreeCellRenderer getLeft() {
+      return myLeft;
+    }
+
+    public TreeCellRenderer getRight() {
+      return myRight;
+    }
+
+    public MyWrapperRenderer(final TreeCellRenderer left, final TreeCellRenderer right) {
+      myLeft = left;
+      myRight = right;
+
+      myPanel = new JPanel(new BorderLayout());
+    }
+
+    public Component getTreeCellRendererComponent(JTree tree,
+                                                  Object value,
+                                                  boolean selected,
+                                                  boolean expanded,
+                                                  boolean leaf,
+                                                  int row,
+                                                  boolean hasFocus) {
+      myPanel.setBackground(tree.getBackground());
+      myPanel.add(myLeft.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.WEST);
+      myPanel.add(myRight.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.EAST);
+      return myPanel;
+    }
   }
 
   protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {

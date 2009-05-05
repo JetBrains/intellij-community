@@ -1,6 +1,9 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.ide.errorTreeView.HotfixData;
+import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
+import com.intellij.ide.errorTreeView.SimpleErrorData;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
@@ -42,6 +46,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.MessageView;
+import com.intellij.util.Consumer;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.ErrorTreeView;
@@ -54,9 +59,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
@@ -187,15 +190,41 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showErrors(final List<VcsException> abstractVcsExceptions, @NotNull final String tabDisplayName) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !abstractVcsExceptions.isEmpty()) {
-      throw new RuntimeException(abstractVcsExceptions.get(0));
+    showErrorsImpl(abstractVcsExceptions.isEmpty(), new Getter<VcsException>() {
+      public VcsException get() {
+        return abstractVcsExceptions.get(0);
+      }
+    }, tabDisplayName, new Consumer<VcsErrorViewPanel>() {
+      public void consume(VcsErrorViewPanel vcsErrorViewPanel) {
+        addDirectMessages(vcsErrorViewPanel, abstractVcsExceptions);
+      }
+    });
+  }
+
+  private void addDirectMessages(VcsErrorViewPanel vcsErrorViewPanel, List<VcsException> abstractVcsExceptions) {
+    for (final VcsException exception : abstractVcsExceptions) {
+      String[] messages = getExceptionMessages(exception);
+      vcsErrorViewPanel.addMessage(getErrorCategory(exception), messages, exception.getVirtualFile(), -1, -1, null);
+    }
+  }
+
+  private String[] getExceptionMessages(VcsException exception) {
+    String[] messages = exception.getMessages();
+    if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
+    return messages;
+  }
+
+  private void showErrorsImpl(final boolean isEmpty, final Getter<VcsException> firstGetter, @NotNull final String tabDisplayName,
+                              final Consumer<VcsErrorViewPanel> viewFiller) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !isEmpty) {
+      throw new RuntimeException(firstGetter.get());
     } else if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
-        if (abstractVcsExceptions.isEmpty()) {
+        if (isEmpty) {
           removeContents(null, tabDisplayName);
           return;
         }
@@ -203,10 +232,34 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         final VcsErrorViewPanel errorTreeView = new VcsErrorViewPanel(myProject);
         openMessagesView(errorTreeView, tabDisplayName);
 
-        for (final VcsException exception : abstractVcsExceptions) {
-          String[] messages = exception.getMessages();
-          if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
-          errorTreeView.addMessage(getErrorCategory(exception), messages, exception.getVirtualFile(), -1, -1, null);
+        viewFiller.consume(errorTreeView);
+      }
+    });
+  }
+
+  @Override
+  public void showErrors(final Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull final String tabDisplayName) {
+    showErrorsImpl(exceptionGroups.isEmpty(), new Getter<VcsException>() {
+      public VcsException get() {
+        final List<VcsException> exceptionList = exceptionGroups.values().iterator().next();
+        return exceptionList == null ? null : (exceptionList.isEmpty() ? null : exceptionList.get(0));
+      }
+    }, tabDisplayName, new Consumer<VcsErrorViewPanel>() {
+      public void consume(VcsErrorViewPanel vcsErrorViewPanel) {
+        for (Map.Entry<HotfixData, List<VcsException>> entry : exceptionGroups.entrySet()) {
+          if (entry.getKey() == null) {
+            addDirectMessages(vcsErrorViewPanel, entry.getValue());
+          } else {
+            final List<VcsException> exceptionList = entry.getValue();
+            final List<SimpleErrorData> list = new ArrayList<SimpleErrorData>(exceptionList.size());
+            for (VcsException exception : exceptionList) {
+              final String[] messages = getExceptionMessages(exception);
+              list.add(new SimpleErrorData(
+                ErrorTreeElementKind.convertMessageFromCompilerErrorType(getErrorCategory(exception)), messages, exception.getVirtualFile()));
+            }
+
+            vcsErrorViewPanel.addHotfixGroup(entry.getKey(), list);
+          }
         }
       }
     });

@@ -34,6 +34,7 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -301,12 +302,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     private UpdatedFiles myUpdatedFiles;
     private final FilePath[] myRoots;
     private final Map<AbstractVcs, Collection<FilePath>> myVcsToVirtualFiles;
-    private final ArrayList<VcsException> myVcsExceptions;
+    private final Map<HotfixData, List<VcsException>> myGroupedExceptions;
     private final List<UpdateSession> myUpdateSessions;
     private int myUpdateNumber;
 
     // vcs name, context object
-    private final Map<String, SequentialUpdatesContext> myContextInfo;
+    private final Map<AbstractVcs, SequentialUpdatesContext> myContextInfo;
     private VcsDirtyScopeManager myDirtyScopeManager;
 
     private Label myBefore;
@@ -321,17 +322,17 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       myVcsToVirtualFiles = vcsToVirtualFiles;
 
       myUpdatedFiles = UpdatedFiles.create();
-      myVcsExceptions = new ArrayList<VcsException>();
+      myGroupedExceptions = new HashMap<HotfixData, List<VcsException>>();
       myUpdateSessions = new ArrayList<UpdateSession>();
 
       // create from outside without any context; context is created by vcses
-      myContextInfo = new HashMap<String, SequentialUpdatesContext>();
+      myContextInfo = new HashMap<AbstractVcs, SequentialUpdatesContext>();
       myUpdateNumber = 1;
     }
 
     private void reset() {
       myUpdatedFiles = UpdatedFiles.create();
-      myVcsExceptions.clear();
+      myGroupedExceptions.clear();
       myUpdateSessions.clear();
       ++ myUpdateNumber;
     }
@@ -381,16 +382,17 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           updateEnvironment.fillGroups(myUpdatedFiles);
           Collection<FilePath> files = myVcsToVirtualFiles.get(vcs);
 
-          final SequentialUpdatesContext context = myContextInfo.get(vcs.getName());
+          final SequentialUpdatesContext context = myContextInfo.get(vcs);
           final Ref<SequentialUpdatesContext> refContext = new Ref<SequentialUpdatesContext>(context);
           UpdateSession updateSession =
             updateEnvironment.updateDirectories(files.toArray(new FilePath[files.size()]), myUpdatedFiles, progressIndicator, refContext);
-          myContextInfo.put(vcs.getName(), refContext.get());
+          myContextInfo.put(vcs, refContext.get());
           processed++;
           if (progressIndicator != null) {
             progressIndicator.setFraction((double)processed / (double)toBeProcessed);
           }
-          myVcsExceptions.addAll(updateSession.getExceptions());
+          final List<VcsException> exceptionList = updateSession.getExceptions();
+          gatherExceptions(vcs, exceptionList);
           myUpdateSessions.add(updateSession);
         }
       } finally {
@@ -405,6 +407,31 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
         }
       }
+    }
+
+    private void gatherExceptions(final AbstractVcs vcs, final List<VcsException> exceptionList) {
+      final VcsExceptionsHotFixer fixer = vcs.getVcsExceptionsHotFixer();
+      if (fixer == null) {
+        putExceptions(null, exceptionList);
+      } else {
+        putExceptions(fixer.groupExceptions(ActionType.update, exceptionList));
+      }
+    }
+
+    private void putExceptions(final Map<HotfixData, List<VcsException>> map) {
+      for (Map.Entry<HotfixData, List<VcsException>> entry : map.entrySet()) {
+        putExceptions(entry.getKey(), entry.getValue());
+      }
+    }
+
+    private void putExceptions(final HotfixData key, @NotNull final List<VcsException> list) {
+      if (list.isEmpty()) return;
+      List<VcsException> exceptionList = myGroupedExceptions.get(key);
+      if (exceptionList == null) {
+        exceptionList = new ArrayList<VcsException>();
+        myGroupedExceptions.put(key, exceptionList);
+      }
+      exceptionList.addAll(list);
     }
 
     private void doVfsRefresh() {
@@ -484,7 +511,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         myDirtyScopeManager.filesDirty(files, null);
       }
 
-      final boolean updateSuccess = (! someSessionWasCancelled) && (myVcsExceptions.isEmpty());
+      final boolean updateSuccess = (! someSessionWasCancelled) && (myGroupedExceptions.isEmpty());
 
       if (! someSessionWasCancelled) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -493,11 +520,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
               ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
               return;
             }
-            if (! myVcsExceptions.isEmpty()) {
+            if (! myGroupedExceptions.isEmpty()) {
               if (continueChainFinal) {
-                myVcsExceptions.add(contextInterruptedMessages());
+                gatherContextInterruptedMessages();
               }
-              AbstractVcsHelper.getInstance(myProject).showErrors(myVcsExceptions, VcsBundle.message("message.title.vcs.update.errors",
+              AbstractVcsHelper.getInstance(myProject).showErrors(myGroupedExceptions, VcsBundle.message("message.title.vcs.update.errors",
                                                                                                      getTemplatePresentation().getText()));
             }
             else {
@@ -508,7 +535,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             }
 
             final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
-            if (myUpdatedFiles.isEmpty() && myVcsExceptions.isEmpty()) {
+            if (myUpdatedFiles.isEmpty() && myGroupedExceptions.isEmpty()) {
               ToolWindowManager.getInstance(myProject).notifyByBalloon(
                 ChangesViewContentManager.TOOLWINDOW_ID, MessageType.INFO, getAllFilesAreUpToDateMessage(myRoots));
             }
@@ -540,23 +567,18 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     private void showContextInterruptedError() {
-      AbstractVcsHelper.getInstance(myProject).showErrors(Collections.singletonList(contextInterruptedMessages()),
+      gatherContextInterruptedMessages();
+      AbstractVcsHelper.getInstance(myProject).showErrors(myGroupedExceptions,
                                     VcsBundle.message("message.title.vcs.update.errors", getTemplatePresentation().getText()));
     }
 
-    @NotNull
-    private VcsException contextInterruptedMessages() {
-      final List<String> strings = new ArrayList<String>();
-      strings.add("Update operation not completed:");
-      for (Map.Entry<String, SequentialUpdatesContext> entry : myContextInfo.entrySet()) {
+    private void gatherContextInterruptedMessages() {
+      for (Map.Entry<AbstractVcs, SequentialUpdatesContext> entry : myContextInfo.entrySet()) {
         final SequentialUpdatesContext context = entry.getValue();
-        if (context != null) {
-          strings.add(context.getMessageWhenInterruptedBeforeStart());
-        }
+        if (context == null) continue;
+        final VcsException exception = new VcsException(context.getMessageWhenInterruptedBeforeStart());
+        gatherExceptions(entry.getKey(), Collections.singletonList(exception));
       }
-      final VcsException vcsException = new VcsException(strings);
-      vcsException.setIsWarning(true);
-      return vcsException;
     }
 
     private void showUpdateTree(final boolean willBeContinued) {

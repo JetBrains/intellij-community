@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -38,6 +39,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Component which provides means to invoke different VCS-related services.
@@ -57,6 +59,8 @@ public abstract class AbstractVcsHelper {
   }
 
   public abstract void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName);
+
+  public abstract void showErrors(Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull String tabDisplayName);
 
   /**
    * Runs the runnable inside the vcs transaction (if needed), collects all exceptions, commits/rollbacks transaction
