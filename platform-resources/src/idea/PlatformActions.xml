@@ -102,8 +102,13 @@
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
         </group>
         <separator/>
-        <group id="FileSettingsGroup">
+        <group id="FileMainSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="/general/ideOptions.png"/>
+          <group id="FileOtherSettingsGroup" popup="true">
+              <group id="FileSettingsGroup"/>
+              <separator/>
+              <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
+          </group>
         </group>
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
