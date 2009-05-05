@@ -19,11 +19,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
@@ -33,6 +34,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -41,9 +44,9 @@ import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.ui.GuiUtils;
-import com.intellij.usageView.AsyncFindUsagesProcessListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -59,11 +62,6 @@ public class FindInProjectUtil {
   private static final int USAGES_LIMIT = 1000;
   private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
   private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
-
-  private static final int SKIP = 0;
-  private static final int PROCESS_FILE = 1;
-  private static final int SKIP_ALL = 2;
-  private static final int PROCESS_ALL = 3;
 
   private FindInProjectUtil() {}
 
@@ -143,24 +141,11 @@ public class FindInProjectUtil {
 
   @NotNull
   public static List<UsageInfo> findUsages(final FindModel findModel, final PsiDirectory psiDirectory, final Project project) {
-    class MyAsyncUsageConsumer implements AsyncFindUsagesProcessListener {
-      final ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
 
-      public void foundUsage(UsageInfo info) {
-        usages.add(info);
-      }
+    final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<UsageInfo>();
+    findUsages(findModel, psiDirectory, project, collector);
 
-      public int getCount() {
-        return usages.size();
-      }
-
-      public void findUsagesCompleted() {
-      }
-    }
-
-    MyAsyncUsageConsumer consumer = new MyAsyncUsageConsumer();
-    findUsages(findModel, psiDirectory, project, consumer);
-    return consumer.usages;
+    return new ArrayList<UsageInfo>(collector.getResults());
   }
 
   @Nullable
@@ -173,21 +158,18 @@ public class FindInProjectUtil {
   public static void findUsages(final FindModel findModel,
                                 final PsiDirectory psiDirectory,
                                 final Project project,
-                                final AsyncFindUsagesProcessListener consumer) {
+                                final Processor<UsageInfo> consumer) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
     final Collection<PsiFile> psiFiles = getFilesToSearchIn(findModel, project, psiDirectory);
-    final FileDocumentManager manager = FileDocumentManager.getInstance();
     try {
       final SearchScope customScope = findModel.getCustomScope();
+      final Set<PsiFile> largeFiles = new THashSet<PsiFile>();
       
       int i = 0;
       long totalFilesSize = 0;
-      final int[] count = {0};
+      int count = 0;
       boolean warningShown = false;
-
-      boolean skipAllLarge = false;
-      boolean processAllLarge = false;
 
       final UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
       for (final PsiFile psiFile : psiFiles) {
@@ -209,60 +191,21 @@ public class FindInProjectUtil {
         if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) continue;
 
         if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
-          if (skipAllLarge) continue;
-          if (!processAllLarge) {
-            int retCode = showMessage(project, FindBundle.message("find.skip.large.file.prompt",
-                                                                  ApplicationNamesInfo.getInstance().getProductName(),
-                                                                  getPresentablePath(virtualFile), presentableSize(fileLength)),
-                                      FindBundle.message("find.skip.large.file.title"),
-                                      new String[] {
-                                        FindBundle.message("find.skip.large.file.skip.file"),
-                                        FindBundle.message("find.skip.large.file.scan.file"),
-                                        FindBundle.message("find.skip.large.file.skip.all"),
-                                        FindBundle.message("find.skip.large.file.scan.all")
-                                      });
-            if (retCode == SKIP_ALL) {
-              skipAllLarge = true;
-              continue;
-            }
-            else if (retCode == SKIP) {
-              continue;
-            }
-            else if (retCode == PROCESS_ALL) {
-              processAllLarge = true;
-            }
-            else {
-              if (retCode == -1) retCode = PROCESS_FILE; //ESC pressed
-              assert retCode == PROCESS_FILE : retCode;
-            }
-          }
+          largeFiles.add(psiFile);
+          continue;
         }
 
-        int countBefore = count[0];
+        if (progress != null) {
+          progress.setFraction((double)index / psiFiles.size());
+          String text = FindBundle.message("find.searching.for.string.in.file.progress",
+                                           findModel.getStringToFind(), virtualFile.getPresentableUrl());
+          progress.setText(text);
+          progress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
+        }
 
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            if (virtualFile.isValid()) {
-              // Check once more if valid and text since we're in new read action and things might have been changed.
-              if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return; // do not decompile .class files
-              final Document document = manager.getDocument(virtualFile);
-              if (document != null) {
-                addToUsages(project, document, consumer, findModel, psiFile, count, usageViewManager);
+        int countInFile = processUsagesInFile(psiFile, findModel, consumer);
 
-                if (progress != null) {
-                  progress.setFraction((double)index / psiFiles.size());
-                  String text = FindBundle.message("find.searching.for.string.in.file.progress",
-                                                   findModel.getStringToFind(), virtualFile.getPresentableUrl());
-                  progress.setText(text);
-                  int size = consumer.getCount();
-                  progress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", size));
-                }
-              }
-            }
-          }
-        });
-
-        if (countBefore < count[0]) {
+        if (countInFile > 0) {
           totalFilesSize += fileLength;
           if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown) {
             showTooManyUsagesWaring(project, FindBundle.message("find.excessive.total.size.prompt", presentableSize(totalFilesSize),
@@ -271,10 +214,49 @@ public class FindInProjectUtil {
           }
         }
 
-        if (count[0] > USAGES_LIMIT && !warningShown) {
-          showTooManyUsagesWaring(project, FindBundle.message("find.excessive.usage.count.prompt", count[0]));
+        count += countInFile;
+        if (count > USAGES_LIMIT && !warningShown) {
+          showTooManyUsagesWaring(project, FindBundle.message("find.excessive.usage.count.prompt", count));
           warningShown = true;
         }
+      }
+
+      if (!largeFiles.isEmpty()) {
+        final StringBuilder message = new StringBuilder();
+        message.append("<html><body>");
+        if (largeFiles.size() == 1) {
+          final VirtualFile vFile = largeFiles.iterator().next().getVirtualFile();
+          message.
+            append("File '").
+            append(getPresentablePath(vFile)).
+            append("'&nbsp;(").
+            append(presentableSize(getFileLength(vFile))).
+            append(") is ");
+        }
+        else {
+          message.append("Files<br> ");
+
+          int counter = 0;
+          for (PsiFile file : largeFiles) {
+            final VirtualFile vFile = file.getVirtualFile();
+            message.
+              append(getPresentablePath(vFile)).
+              append("&nbsp;(").
+              append(presentableSize(getFileLength(vFile))).
+              append(")<br> ");
+            if (counter++ > 10) break;
+          }
+
+          message.append("are ");
+        }
+
+        message.append("too large and cannot be scanned</body></html>");
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.FIND, MessageType.WARNING, message.toString());
+          }
+        });
       }
     }
     catch (ProcessCanceledException e) {
@@ -284,8 +266,25 @@ public class FindInProjectUtil {
     if (progress != null) {
       progress.setText(FindBundle.message("find.progress.search.completed"));
     }
+  }
 
-    consumer.findUsagesCompleted();
+  private static int processUsagesInFile(final PsiFile psiFile, final FindModel findModel, final Processor<UsageInfo> consumer) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+      public Integer compute() {
+        VirtualFile virtualFile = psiFile.getVirtualFile();
+
+        if (virtualFile.isValid()) {
+          // Check once more if valid and text since we're in new read action and things might have been changed.
+          if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return 0; // do not decompile .class files
+          final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+          if (document != null) {
+            return addToUsages(document, consumer, findModel, psiFile);
+          }
+        }
+
+        return 0;
+      }
+    }).intValue();
   }
 
   private static String getPresentablePath(final VirtualFile virtualFile) {
@@ -538,13 +537,18 @@ public class FindInProjectUtil {
       ;
   }
 
-  private static void addToUsages(@NotNull Project project, @NotNull Document document, @NotNull AsyncFindUsagesProcessListener consumer,
-                                     @NotNull FindModel findModel, @NotNull final PsiFile psiFile, @NotNull final int[] count,
-                                     UsageViewManager usageViewManager) {
+  private static int addToUsages(@NotNull Document document, @NotNull Processor<UsageInfo> consumer, @NotNull FindModel findModel,
+                                 @NotNull final PsiFile psiFile) {
+
+    int count = 0;
     CharSequence text = document.getCharsSequence();
-    if (text == null) return;
+    if (text == null) return 0;
     int textLength = document.getTextLength();
     int offset = 0;
+
+    Project project = psiFile.getProject();
+
+    UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
     FindManager findManager = FindManager.getInstance(project);
     while (offset < textLength) {
       usageViewManager.checkSearchCanceled();
@@ -552,8 +556,8 @@ public class FindInProjectUtil {
       if (!result.isStringFound()) break;
 
       UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
-      consumer.foundUsage(info);
-      count[0]++;
+      consumer.process(info);
+      count++;
 
       final int prevOffset = offset;
       offset = result.getEndOffset();
@@ -563,6 +567,7 @@ public class FindInProjectUtil {
         ++offset;
       }
     }
+    return count;
   }
 
   private static String getTitleForScope(final FindModel findModel) {
@@ -693,27 +698,6 @@ public class FindInProjectUtil {
 
     public boolean canNavigateToSource() {
       return false;
-    }
-  }
-
-  public static class AsyncFindUsagesProcessListener2ProcessorAdapter implements AsyncFindUsagesProcessListener {
-    private final Processor<Usage> processor;
-    private int count;
-
-    public AsyncFindUsagesProcessListener2ProcessorAdapter(Processor<Usage> processor) {
-      this.processor = processor;
-    }
-
-    public void foundUsage(UsageInfo info) {
-      ++count;
-      processor.process(new UsageInfo2UsageAdapter(info));
-    }
-
-    public void findUsagesCompleted() {
-    }
-
-    public int getCount() {
-      return count;
     }
   }
 }

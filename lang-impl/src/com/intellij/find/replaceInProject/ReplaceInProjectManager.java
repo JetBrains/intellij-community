@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.UsageInFile;
+import com.intellij.util.AdapterProcessor;
 import com.intellij.util.Processor;
 
 import javax.swing.*;
@@ -118,8 +119,7 @@ public class ReplaceInProjectManager {
               findModelCopy,
               psiDirectory,
               myProject,
-              new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor)
-              );
+              new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER));
             }
             finally {
               myIsFindInProgress = false;

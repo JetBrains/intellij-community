@@ -36,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,13 @@ import java.util.List;
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage, Comparable<UsageInfo2UsageAdapter>, RenameableUsage,
                                                TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.UsageInfo2UsageAdapter");
+
+  public static final NotNullFunction<UsageInfo, Usage> CONVERTER = new NotNullFunction<UsageInfo, Usage>() {
+    @NotNull
+    public Usage fun(UsageInfo usageInfo) {
+      return new UsageInfo2UsageAdapter(usageInfo);
+    }
+  };
 
   private final UsageInfo myUsageInfo;
   private int myLineNumber;

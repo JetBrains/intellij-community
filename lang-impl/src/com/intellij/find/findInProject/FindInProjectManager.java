@@ -13,8 +13,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.content.Content;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
+import com.intellij.util.AdapterProcessor;
 import com.intellij.util.Processor;
 
 public class FindInProjectManager {
@@ -91,9 +93,8 @@ public class FindInProjectManager {
               myIsFindInProgress = true;
 
               try {
-                FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter consumer =
-                  new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor);
-                FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, consumer);
+                FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject,
+                                             new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER));
               }
               finally {
                 myIsFindInProgress = false;
