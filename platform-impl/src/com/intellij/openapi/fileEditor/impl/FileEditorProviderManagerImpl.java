@@ -9,6 +9,8 @@ import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,9 +53,10 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     // Collect all possible editors
     mySharedProviderList.clear();
     boolean doNotShowTextEditor = false;
+    final boolean dumb = DumbService.getInstance().isDumb();
     for(int i = myProviders.size() -1 ; i >= 0; i--){
       FileEditorProvider provider=myProviders.get(i);
-      if(provider.accept(project, file)){
+      if((!dumb || provider instanceof DumbAware) && provider.accept(project, file)){
         mySharedProviderList.add(provider);
         doNotShowTextEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
       }
