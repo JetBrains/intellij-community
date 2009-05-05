@@ -43,7 +43,8 @@ public class PatternCompiler {
     StringToConstraintsTransformer.transformOldPattern(options);
   }
 
-  public static CompiledPattern compilePattern(final Project project, final MatchOptions options) {
+  public static CompiledPattern compilePattern(final Project project, final MatchOptions options) throws MalformedPatternException,
+                                                                                                         UnsupportedOperationException {
     return new WriteAction<CompiledPattern>() {
       protected void run(Result<CompiledPattern> result) throws Throwable {
         result.setResult(compilePatternImpl(project, options));

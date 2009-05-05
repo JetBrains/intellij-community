@@ -196,9 +196,12 @@ public class MatcherImpl {
       MatchOptions matchOptions = configuration.getMatchOptions();
       matchContext.setOptions(matchOptions);
 
-      CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
-      matchContext.setPattern(compiledPattern);
-      contexts.add(matchContext);
+      try {
+        CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
+        matchContext.setPattern(compiledPattern);
+        contexts.add(matchContext);
+      } catch (UnsupportedPatternException ex) {}
+      catch (MalformedPatternException ex) {}
     }
     return new CompiledOptions(contexts, configurations);
   }
