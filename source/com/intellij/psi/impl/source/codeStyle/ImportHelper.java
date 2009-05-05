@@ -29,10 +29,7 @@ import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ImportHelper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportHelper");
@@ -557,9 +554,13 @@ public class ImportHelper{
                                        Set<String> namesToImportStaticly, PsiFile context){
     if (scope instanceof PsiImportList) return;
 
-    final PsiElement[] children = scope.getChildren();
-    for (PsiElement child : children) {
-      addNamesToImport(names, child, thisPackageName, namesToImportStaticly, context);
+    final LinkedList<PsiElement> stack = new LinkedList<PsiElement>();
+    stack.add(scope);
+    while (!stack.isEmpty()) {
+      final PsiElement child = stack.removeFirst();
+      if (child instanceof PsiImportList) continue;
+      stack.addAll(Arrays.asList(scope.getChildren()));
+
       for(final PsiReference reference : child.getReferences()){
         if (!(reference instanceof PsiJavaReference)) continue;
         final PsiJavaReference javaReference = (PsiJavaReference)reference;
