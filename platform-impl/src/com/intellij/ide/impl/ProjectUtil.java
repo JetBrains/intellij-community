@@ -23,6 +23,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -240,10 +242,25 @@ public class ProjectUtil {
   }
 
   private static boolean isSameProject(String path, Project p) {
-    String projectPath = ((ProjectEx)p).getStateStore().getProjectFilePath();
-    String p1 = FileUtil.toSystemIndependentName(path);
-    String p2 = FileUtil.toSystemIndependentName(projectPath);
-    return FileUtil.pathsEqual(p1, p2);
+    final IProjectStore projectStore = ((ProjectEx)p).getStateStore();
+
+    String toOpen = FileUtil.toSystemIndependentName(path);
+    String existing = FileUtil.toSystemIndependentName(projectStore.getProjectFilePath());
+
+    final VirtualFile existingBaseDir = projectStore.getProjectBaseDir();
+    assert existingBaseDir != null;
+
+    final File openFile = new File(toOpen);
+    if (openFile.isDirectory()) {
+      return FileUtil.pathsEqual(toOpen, existingBaseDir.getPath());
+    } else {
+      if (StorageScheme.DIRECTORY_BASED == projectStore.getStorageScheme()) {
+        // todo: check if IPR is located not under the project base dir
+        return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(openFile.getParentFile().getPath()), existingBaseDir.getPath());
+      }
+    }
+
+    return FileUtil.pathsEqual(toOpen, existing);
   }
 
   private static void focusProjectWindow(Project p) {
