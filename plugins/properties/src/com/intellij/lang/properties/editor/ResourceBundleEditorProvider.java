@@ -2,7 +2,6 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -17,7 +16,7 @@ import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class ResourceBundleEditorProvider extends FileTypeFactory implements FileEditorProvider, ApplicationComponent {
+public class ResourceBundleEditorProvider extends FileTypeFactory implements FileEditorProvider {
   private static final ResourceBundleFileType RESOURCE_BUNDLE_FILE_TYPE = new ResourceBundleFileType();
 
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file){
@@ -65,15 +64,6 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
     return "ResourceBundle";
   }
 
-  @NotNull
-  public String getComponentName(){
-    return "ResourceBundle" + "Provider";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent(){
-  }
 
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     consumer.consume(RESOURCE_BUNDLE_FILE_TYPE, "");

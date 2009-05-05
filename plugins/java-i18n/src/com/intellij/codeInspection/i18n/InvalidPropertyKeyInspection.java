@@ -147,7 +147,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
       if (expression.getParent() instanceof PsiNameValuePair) {
         PsiNameValuePair nvp = (PsiNameValuePair) expression.getParent();
         if (Comparing.equal(nvp.getName(), AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER)) {
-          PropertiesReferenceManager manager = expression.getProject().getComponent(PropertiesReferenceManager.class);
+          PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(expression.getProject());
           Module module = ModuleUtil.findModuleForPsiElement(expression);
           if (module != null) {
             List<PropertiesFile> propFiles = manager.findPropertiesFiles(module, key);

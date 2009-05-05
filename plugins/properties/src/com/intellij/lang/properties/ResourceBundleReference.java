@@ -31,7 +31,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
   }
 
   @NotNull public ResolveResult[] multiResolve(final boolean incompleteCode) {
-    PropertiesReferenceManager referenceManager = myElement.getProject().getComponent(PropertiesReferenceManager.class);
+    PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(myElement.getProject());
     final Module module = ModuleUtil.findModuleForPsiElement(myElement);
     if (module == null) {
       return ResolveResult.EMPTY_ARRAY;
@@ -82,7 +82,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
   }
 
   public Object[] getVariants() {
-    PropertiesReferenceManager referenceManager = myElement.getProject().getComponent(PropertiesReferenceManager.class);
+    PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(getElement().getProject());
     final Module module = ModuleUtil.findModuleForPsiElement(myElement);
     return referenceManager.getPropertyFileBaseNames(module);
   }

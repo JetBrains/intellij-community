@@ -37,7 +37,7 @@ public class I18nUtil {
       Project project = containingFile.getProject();
       final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
       if (module != null) {
-        PropertiesReferenceManager refManager = project.getComponent(PropertiesReferenceManager.class);
+        PropertiesReferenceManager refManager = PropertiesReferenceManager.getInstance(project);
         return refManager.findPropertiesFiles(module, resourceBundleName);
       }
     }
@@ -61,7 +61,7 @@ public class I18nUtil {
   }
 
   public static List<String> defaultGetPropertyFiles(Project project) {
-    Collection<VirtualFile> allPropertiesFiles = PropertiesFilesManager.getInstance().getAllPropertiesFiles();
+    Collection<VirtualFile> allPropertiesFiles = PropertiesFilesManager.getAllPropertiesFiles(project);
     List<String> paths = new ArrayList<String>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (VirtualFile virtualFile : allPropertiesFiles) {

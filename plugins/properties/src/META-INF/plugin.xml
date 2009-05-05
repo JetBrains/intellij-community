@@ -44,20 +44,15 @@
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>
     <todoIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer"/>
+
+    <projectService serviceInterface="com.intellij.lang.properties.PropertiesReferenceManager" serviceImplementation="com.intellij.lang.properties.PropertiesReferenceManager"/>
+
+    <fileEditorProvider implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider"/>
   </extensions>
 
   <application-components>
     <component>
       <implementation-class>com.intellij.lang.properties.PropertiesFilesManager</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.lang.properties.editor.ResourceBundleEditorProvider</implementation-class>
-    </component>
   </application-components>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.lang.properties.PropertiesReferenceManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
-  </project-components>
 </idea-plugin>

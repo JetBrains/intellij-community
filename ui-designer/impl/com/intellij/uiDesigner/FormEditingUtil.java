@@ -447,7 +447,7 @@ public final class FormEditingUtil {
 
   public static Locale[] collectUsedLocales(final Module module, final IRootContainer rootContainer) {
     final Set<Locale> locales = new HashSet<Locale>();
-    final PropertiesReferenceManager propManager = module.getProject().getComponent(PropertiesReferenceManager.class);
+    final PropertiesReferenceManager propManager = PropertiesReferenceManager.getInstance(module.getProject());
     for(String bundleName: collectUsedBundleNames(rootContainer)) {
       List<PropertiesFile> propFiles = propManager.findPropertiesFiles(module, bundleName.replace('/', '.'));
       for(PropertiesFile propFile: propFiles) {

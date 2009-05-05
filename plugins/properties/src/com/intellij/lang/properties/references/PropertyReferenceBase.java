@@ -186,7 +186,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     if (propertiesFileList == null) {
       PsiManager psiManager = myElement.getManager();
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiManager.getProject()).getFileIndex();
-      for (VirtualFile file : PropertiesFilesManager.getInstance().getAllPropertiesFiles()) {
+      for (VirtualFile file : PropertiesFilesManager.getAllPropertiesFiles(myElement.getProject())) {
         if (!file.isValid()) continue;
         if (!fileIndex.isInContent(file)) continue; //multiple opened projects
         PsiFile psiFile = psiManager.findFile(file);

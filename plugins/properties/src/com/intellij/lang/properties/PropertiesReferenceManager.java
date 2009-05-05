@@ -1,22 +1,16 @@
 package com.intellij.lang.properties;
 
-import com.intellij.AppTopics;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.fileTypes.FileTypeEvent;
-import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.PropertyFileIndex;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,76 +23,18 @@ import java.util.Set;
 /**
  * @author max
  */
-public class PropertiesReferenceManager implements ProjectComponent {
+public class PropertiesReferenceManager {
   private final Project myProject;
-  private final PropertiesFilesManager myPropertiesFilesManager;
   private final PsiManager myPsiManager;
-  private final MessageBusConnection myConnection;
 
   public static PropertiesReferenceManager getInstance(Project project) {
-    return project.getComponent(PropertiesReferenceManager.class);
+    return ServiceManager.getService(project, PropertiesReferenceManager.class);
   }
 
-  public PropertiesReferenceManager(Project project, PropertiesFilesManager propertiesFilesManager, PsiManager psiManager) {
+  public PropertiesReferenceManager(Project project, PsiManager psiManager) {
     myProject = project;
-    myPropertiesFilesManager = propertiesFilesManager;
     myPsiManager = psiManager;
-
-    myConnection = project.getMessageBus().connect();
-    myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
-      public void beforeFileTypesChanged(FileTypeEvent event) {
-      }
-
-      public void fileTypesChanged(FileTypeEvent event) {
-        StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable(){
-          public void run() {
-             refreshAllKnownPropertiesFiles();
-          }
-        });
-      }
-    });
   }
-
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        refreshAllKnownPropertiesFiles();
-      }
-    });
-  }
-
-  private void refreshAllKnownPropertiesFiles() {
-    final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
-      public boolean process(VirtualFile fileOrDir) {
-        myPropertiesFilesManager.addNewFile(fileOrDir);
-        return true;
-      }
-    };
-    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
-      public boolean processFile(VirtualFile fileOrDir) {
-        return processor.process(fileOrDir);
-      }
-    });
-    for (VirtualFile virtualFile : EditorHistoryManager.getInstance(myProject).getFiles()) {
-      processor.process(virtualFile);
-    }
-  }
-
-  public void projectClosed() {
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-    myConnection.disconnect();
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "Properties reference manager";
-  }
-
 
   @NotNull
   public List<PropertiesFile> findPropertiesFiles(@NotNull final Module module, final String bundleName) {
@@ -157,7 +93,15 @@ public class PropertiesReferenceManager implements ProjectComponent {
     final Set<Module> dependentModules = new THashSet<Module>();
     ModuleUtil.getDependencies(module, dependentModules);
 
-    for(VirtualFile file: PropertiesFilesManager.getInstance().getAllPropertiesFiles()) {
+    if (PropertyFileIndex.DEBUG) {
+      System.out.println("PropertiesReferenceManager.processPropertiesFiles");
+      System.out.println("PropertiesFileType.FILE_TYPE = " + PropertiesFileType.FILE_TYPE);
+    }
+    for(VirtualFile file: PropertiesFilesManager.getAllPropertiesFiles(myProject)) {
+      if (PropertyFileIndex.DEBUG) {
+        System.out.println("file = " + file.getPath());
+      }
+
       if (!dependentModules.contains(ModuleUtil.findModuleForFile(file, myProject))) {
         continue;
       }
