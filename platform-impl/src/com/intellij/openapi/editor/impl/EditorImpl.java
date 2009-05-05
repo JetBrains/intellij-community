@@ -3003,9 +3003,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myTimer != null) {
         return;
       }
+
+      if (!IJSwingUtilities.hasFocus(getContentComponent())) { // TODO [kirillk]: mouse dragged event on navigation popup action causes scrolling timer to start
+        return;
+      }
+
       myTimer = new Timer(TIMER_PERIOD, new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          myCommandProcessor.executeCommand(myProject, new DocumentRunnable(getDocument(), getProject()) {
+          myCommandProcessor.executeCommand(myProject, new DocumentRunnable(myDocument, myProject) {
             public void run() {
               int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
               LogicalPosition caretPosition = getCaretModel().getLogicalPosition();
@@ -3664,11 +3669,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyMouseAdapter extends MouseAdapter {
     public void mousePressed(MouseEvent e) {
+      System.out.println(e);
       requestFocus();
       runMousePressedCommand(e);
     }
 
     public void mouseReleased(MouseEvent e) {
+      System.out.println(e);
       runMouseReleasedCommand(e);
       if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
           Math.abs(e.getX() - myMousePressedEvent.getX()) < getSpaceWidth(Font.PLAIN) &&
