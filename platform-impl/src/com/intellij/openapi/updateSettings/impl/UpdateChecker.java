@@ -377,7 +377,7 @@ public final class UpdateChecker {
         i.checkCanceled();
         out.write(buffer, 0, count);
         read += count;
-        i.setFraction(read / total);
+        i.setFraction(((double)read) / total);
         i.setText2((read / 1024) + "/" + (total / 1024) + " KB");
       }
     }
