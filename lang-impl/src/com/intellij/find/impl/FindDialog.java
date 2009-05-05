@@ -850,7 +850,7 @@ final class FindDialog extends DialogWrapper {
       if (stringToReplace == null){
         stringToReplace = "";
       }
-      model.setStringToReplace(stringToReplace);
+      model.setStringToReplace(StringUtil.convertLineSeparators(stringToReplace));
     }
 
     if (!model.isMultipleFiles()){
