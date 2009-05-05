@@ -4,12 +4,11 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.TargetElementUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,9 +26,6 @@ public class IdentifierHighlighterPassFactory extends AbstractProjectComponent i
     if (editor.isOneLineMode()) return null;
 
     if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
-      return null;
-    }
-    if (!TargetElementUtilBase.inVirtualSpace(editor, editor.getCaretModel().getOffset())) {
       return null;
     }
 

@@ -114,11 +114,13 @@ public class TargetElementUtilBase {
       return inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
     }
 
-    return inVirtualSpace(editor, editor.offsetToLogicalPosition(offset));
+    return false;
   }
 
   public static boolean inVirtualSpace(Editor editor, LogicalPosition logicalPosition) {
-    return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
+    final Document document = editor.getDocument();
+    if (logicalPosition.line >= document.getLineCount()) return true;
+    return logicalPosition.column > document.getLineEndOffset(logicalPosition.line) - document.getLineStartOffset(logicalPosition.line);
   }
 
   @Nullable

@@ -4,8 +4,8 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
-import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -51,6 +51,10 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
   public void doCollectInformation(final ProgressIndicator progress) {
     if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
+      return;
+    }
+
+    if (TargetElementUtilBase.inVirtualSpace(myEditor, myEditor.getCaretModel().getOffset())) {
       return;
     }
 
