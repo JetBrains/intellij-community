@@ -816,6 +816,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createSpaceInCode(true);
     }    
     else if (myChild2.getElementType() == JavaTokenType.SEMICOLON) {
+      final PsiElement pp = myParent.getParent();
+      if (pp instanceof PsiDeclarationStatement) {
+        final PsiElement ppp = pp.getParent();
+        if (ppp instanceof PsiForStatement) {
+          createSpaceInCode(mySettings.SPACE_BEFORE_SEMICOLON);
+          return;
+        }
+      }
+
       createSpaceProperty(false, false, 0);
     }
   }
@@ -983,6 +992,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       else {
         createParenSpace(mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
                          new TextRange(myChild1.getTextRange().getStartOffset(), rparenth.getTextRange().getEndOffset()));
+        if (myChild2.getElementType() == JavaElementType.EMPTY_STATEMENT) {
+          createSpaceInCode(mySettings.SPACE_BEFORE_SEMICOLON);
+        }
       }
     }
     else if (myRole2 == ChildRole.RPARENTH) {
