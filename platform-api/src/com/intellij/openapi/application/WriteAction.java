@@ -42,6 +42,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
         result.setThrowable(e);
       }
       else {
+        if (e instanceof RuntimeException) throw (RuntimeException)e;
         throw new Error(e);
       }
     }
