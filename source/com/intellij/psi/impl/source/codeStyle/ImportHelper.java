@@ -559,7 +559,7 @@ public class ImportHelper{
     while (!stack.isEmpty()) {
       final PsiElement child = stack.removeFirst();
       if (child instanceof PsiImportList) continue;
-      stack.addAll(Arrays.asList(scope.getChildren()));
+      stack.addAll(Arrays.asList(child.getChildren()));
 
       for(final PsiReference reference : child.getReferences()){
         if (!(reference instanceof PsiJavaReference)) continue;
