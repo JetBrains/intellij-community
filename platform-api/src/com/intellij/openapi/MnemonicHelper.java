@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentTreeWatcher;
-import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -58,6 +60,24 @@ public class MnemonicHelper extends ComponentTreeWatcher {
       final JLabel jLabel = ((JLabel)parentComponent);
       jLabel.addPropertyChangeListener(TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
       DialogUtil.registerMnemonic(jLabel, null);
+
+      if (SystemInfo.isMac) {
+        // hack to make Labels mnemonic work for ALT+KEY_CODE on Macs.
+        // Default implementation uses ALT+CTRL+KEY_CODE (see BasicLabelUI).
+        final InputMap inputMap = jLabel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        if (inputMap != null) {
+          final KeyStroke[] strokes = inputMap.allKeys();
+          if (strokes != null) {
+            for (KeyStroke stroke : strokes) {
+              final int m = stroke.getModifiers();
+              // to be sure if default mnemonic exist
+              if (((m & KeyEvent.ALT_MASK) == KeyEvent.ALT_MASK) && ((m & KeyEvent.CTRL_MASK) == KeyEvent.CTRL_MASK)) {
+                inputMap.put(KeyStroke.getKeyStroke(stroke.getKeyCode(), KeyEvent.ALT_MASK), "release"); // "release" only is OK
+              }
+            }
+          }
+        }
+      }
     }
   }
 

@@ -422,6 +422,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
         final AbstractButton button = (AbstractButton)component;
         if (button.getMnemonic() == keyCode) return true;
       }
+      if (component instanceof JLabel) {
+        final JLabel label = (JLabel)component;
+        if (label.getDisplayedMnemonic() == keyCode) return true;
+      }
       if (component instanceof Container) {
         if (hasMnemonic((Container)component, keyCode)) return true;
       }
