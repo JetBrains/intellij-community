@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TextContainFilter;
+import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.filters.getters.HtmlAttributeValueGetter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.XmlTokenTypeFilter;
@@ -45,7 +46,10 @@ public class HtmlCompletionData extends XmlCompletionData {
   protected ElementFilter createXmlEntityCompletionFilter() {
     if (isCaseInsensitive()) {
       return new AndFilter(
-        new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
+        new OrFilter (
+          new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
+          new XmlTokenTypeFilter(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)
+        ),
         new TextContainFilter("&")
       );
     }
@@ -231,10 +235,14 @@ public class HtmlCompletionData extends XmlCompletionData {
 
     if (prefix == null) {
       prefix = super.findPrefix(insertedElement, offset);
+
+      boolean searchForEntities =
+        insertedElement instanceof XmlToken &&
+        ( ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS ||
+          ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
+        );
       
-      if (insertedElement instanceof XmlToken &&
-          ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS &&
-          prefix != null) {
+      if (searchForEntities && prefix != null) {
         if (prefix.startsWith("&")) {
           prefix = prefix.substring(1);
         } else if (prefix.contains("&")) {
