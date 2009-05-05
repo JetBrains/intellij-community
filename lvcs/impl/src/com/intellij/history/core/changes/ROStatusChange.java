@@ -47,8 +47,8 @@ public class ROStatusChange extends StructuralChange<ROStatusChangeNonAppliedSta
   }
 
   @Override
-  public void revertOn(Entry r) {
-    getEntry(r).setReadOnly(getAppliedState().myOldStatus);
+  public void doRevertOn(Entry root) {
+    getEntry(root).setReadOnly(getAppliedState().myOldStatus);
   }
 
   private Entry getEntry(Entry r) {

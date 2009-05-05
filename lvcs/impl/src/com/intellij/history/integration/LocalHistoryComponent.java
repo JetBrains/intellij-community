@@ -156,24 +156,24 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   @Override
-  public void putUserLabel(String name) {
-    if (!isInitialized()) return;
+  public Label putUserLabel(String name) {
+    if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
-    myVcs.putUserLabel(name);
+    return myVcs.putUserLabel(name);
   }
 
   @Override
-  public void putUserLabel(VirtualFile f, String name) {
-    if (!isInitialized()) return;
+  public Label putUserLabel(VirtualFile f, String name) {
+    if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
-    myVcs.putUserLabel(f.getPath(), name);
+    return myVcs.putUserLabel(f.getPath(), name);
   }
 
   @Override
-  public void putSystemLabel(String name, int color) {
-    if (!isInitialized()) return;
+  public Label putSystemLabel(String name, int color) {
+    if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
-    myVcs.putSystemLabel(name, color);
+    return myVcs.putSystemLabel(name, color);
   }
 
   @Override

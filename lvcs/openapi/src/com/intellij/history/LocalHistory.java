@@ -25,20 +25,20 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     return getInstance(p).startAction(name);
   }
 
-  public static void putUserLabel(Project p, String name) {
-    getInstance(p).putUserLabel(name);
+  public static Label putUserLabel(Project p, String name) {
+    return getInstance(p).putUserLabel(name);
   }
 
-  public static void putUserLabel(Project p, VirtualFile f, String name) {
-    getInstance(p).putUserLabel(f, name);
+  public static Label putUserLabel(Project p, VirtualFile f, String name) {
+    return getInstance(p).putUserLabel(f, name);
   }
 
-  public static void putSystemLabel(Project p, String name) {
-    getInstance(p).putSystemLabel(name, -1);
+  public static Label putSystemLabel(Project p, String name) {
+    return getInstance(p).putSystemLabel(name);
   }
 
-  public static void putSystemLabel(Project p, String name, int color) {
-    getInstance(p).putSystemLabel(name, color);
+  public static Label putSystemLabel(Project p, String name, int color) {
+    return getInstance(p).putSystemLabel(name, color);
   }
 
   public static Checkpoint putCheckpoint(Project p) {
@@ -63,11 +63,15 @@ public abstract class LocalHistory implements SettingsSavingComponent {
 
   public abstract LocalHistoryAction startAction(String name);
 
-  public abstract void putUserLabel(String name);
+  public abstract Label putUserLabel(String name);
 
-  public abstract void putUserLabel(VirtualFile f, String name);
+  public abstract Label putUserLabel(VirtualFile f, String name);
 
-  public abstract void putSystemLabel(String name, int color);
+  public abstract Label putSystemLabel(String name, int color);
+
+  public Label putSystemLabel(String name) {
+    return putSystemLabel(name, -1);
+  }
 
   public abstract Checkpoint putCheckpoint();
 

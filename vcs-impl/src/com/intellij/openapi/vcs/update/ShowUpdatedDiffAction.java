@@ -1,7 +1,7 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.history.ByteContent;
-import com.intellij.history.Checkpoint;
+import com.intellij.history.Label;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
@@ -54,7 +54,7 @@ public class ShowUpdatedDiffAction extends AnAction {
 
   private boolean isVisible(final DataContext dc) {
     final Project project = PlatformDataKeys.PROJECT.getData(dc);
-    return (project != null) && (VcsDataKeys.CHECKPOINT_BEFORE.getData(dc) != null) && (VcsDataKeys.CHECKPOINT_AFTER.getData(dc) != null);
+    return (project != null) && (VcsDataKeys.LABEL_BEFORE.getData(dc) != null) && (VcsDataKeys.LABEL_AFTER.getData(dc) != null);
   }
 
   private boolean isEnabled(final DataContext dc) {
@@ -68,8 +68,8 @@ public class ShowUpdatedDiffAction extends AnAction {
 
     final Project project = PlatformDataKeys.PROJECT.getData(dc);
     final Iterable<VirtualFilePointer> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
-    final Checkpoint before = (Checkpoint) VcsDataKeys.CHECKPOINT_BEFORE.getData(dc);
-    final Checkpoint after = (Checkpoint) VcsDataKeys.CHECKPOINT_AFTER.getData(dc);
+    final Label before = (Label) VcsDataKeys.LABEL_BEFORE.getData(dc);
+    final Label after = (Label) VcsDataKeys.LABEL_AFTER.getData(dc);
 
     final String selectedUrl = VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.getData(dc);
 
@@ -101,10 +101,10 @@ public class ShowUpdatedDiffAction extends AnAction {
 
   private static class MyIterableWrapper implements Iterable<Change> {
     private final Iterator<VirtualFilePointer> myVfIterator;
-    private final Checkpoint myBefore;
-    private final Checkpoint myAfter;
+    private final Label myBefore;
+    private final Label myAfter;
 
-    private MyIterableWrapper(Iterator<VirtualFilePointer> vfIterator, final Checkpoint before, final Checkpoint after) {
+    private MyIterableWrapper(Iterator<VirtualFilePointer> vfIterator, final Label before, final Label after) {
       myVfIterator = vfIterator;
       myBefore = before;
       myAfter = after;
@@ -116,17 +116,17 @@ public class ShowUpdatedDiffAction extends AnAction {
   }
 
   private static class MyLoader {
-    private final Checkpoint myCheckpoint;
+    private final Label myLabel;
 
-    private MyLoader(Checkpoint checkpoint) {
-      myCheckpoint = checkpoint;
+    private MyLoader(Label label) {
+      myLabel = label;
     }
 
     @Nullable
     public String convert(final VirtualFilePointer pointer) {
       final String path = pointer.getPresentableUrl();
-      final ByteContent byteContent = myCheckpoint.getByteContentBefore(FileUtil.toSystemIndependentName(path));
-      if (byteContent == null || byteContent.isIsDirectory()) {
+      final ByteContent byteContent = myLabel.getByteContent(FileUtil.toSystemIndependentName(path));
+      if (byteContent.isDirectory() || byteContent.getBytes() == null) {
         return null;
       }
       final VirtualFile vf = pointer.getFile();
@@ -196,7 +196,7 @@ public class ShowUpdatedDiffAction extends AnAction {
     private final MyLoader myAfterLoader;
     private final Iterator<VirtualFilePointer> myVfIterator;
 
-    public MyIteratorWrapper(final Iterator<VirtualFilePointer> vfIterator, final Checkpoint before, final Checkpoint after) {
+    public MyIteratorWrapper(final Iterator<VirtualFilePointer> vfIterator, final Label before, final Label after) {
       myVfIterator = vfIterator;
       myBeforeLoader = new MyLoader(before);
       myAfterLoader = new MyLoader(after);

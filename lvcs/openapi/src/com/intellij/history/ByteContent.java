@@ -9,7 +9,7 @@ public class ByteContent {
     myBytes = bytes;
   }
 
-  public boolean isIsDirectory() {
+  public boolean isDirectory() {
     return myIsDirectory;
   }
 

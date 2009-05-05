@@ -51,8 +51,8 @@ public class RenameChange extends StructuralChange<RenameChangeNonAppliedState, 
   }
 
   @Override
-  public void revertOn(Entry r) {
-    rename(getEntry(r), getAppliedState().myOldName);
+  public void doRevertOn(Entry root) {
+    rename(getEntry(root), getAppliedState().myOldName);
   }
 
   @Override

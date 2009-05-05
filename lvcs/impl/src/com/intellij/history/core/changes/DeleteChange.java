@@ -50,8 +50,8 @@ public class DeleteChange extends StructuralChange<StructuralChangeNonAppliedSta
   }
 
   @Override
-  public void revertOn(Entry r) {
-    Entry parent = getParent(r);
+  public void doRevertOn(Entry root) {
+    Entry parent = getParent(root);
     parent.addChild(getAppliedState().myAffectedEntry.copy());
   }
 

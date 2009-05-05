@@ -97,7 +97,7 @@ public class ChangeSetTest extends LocalVcsTestCase {
     }
 
     @Override
-    public void revertOn(Entry root) {
+    public void doRevertOn(Entry root) {
       log.add(myId);
     }
   }

@@ -46,7 +46,7 @@ public abstract class CreateEntryChange<NON_APPLIED_STATE_TYPE extends CreateEnt
   }
 
   @Override
-  public void revertOn(Entry root) {
+  public void doRevertOn(Entry root) {
     Entry e = root.getEntry(getAffectedIdPath());
     removeEntry(e);
   }

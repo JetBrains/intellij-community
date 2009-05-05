@@ -31,7 +31,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.history.Checkpoint;
+import com.intellij.history.Label;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
@@ -103,8 +103,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   private final TreeExpander myTreeExpander;
   private final MyTreeIterable myTreeIterable;
 
-  private Checkpoint myBefore;
-  private Checkpoint myAfter;
+  private Label myBefore;
+  private Label myAfter;
 
   public UpdateInfoTree(@NotNull ContentManager contentManager,
                         @NotNull Project project,
@@ -257,9 +257,9 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       return mySelectedUrl;
     } else if (VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getName().equals(dataId)) {
       return myTreeIterable;
-    } else if (VcsDataKeys.CHECKPOINT_BEFORE.getName().equals(dataId)) {
+    } else if (VcsDataKeys.LABEL_BEFORE.getName().equals(dataId)) {
       return myBefore;
-    }  else if (VcsDataKeys.CHECKPOINT_AFTER.getName().equals(dataId)) {
+    }  else if (VcsDataKeys.LABEL_AFTER.getName().equals(dataId)) {
       return myAfter;
     }
 
@@ -408,11 +408,11 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     }
   }
 
-  public void setBefore(Checkpoint before) {
+  public void setBefore(Label before) {
     myBefore = before;
   }
 
-  public void setAfter(Checkpoint after) {
+  public void setAfter(Label after) {
     myAfter = after;
   }
 }

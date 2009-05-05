@@ -26,7 +26,17 @@ public abstract class Change {
 
   public abstract void applyTo(Entry r);
 
-  public abstract void revertOn(Entry r);
+  public void revertOn(Entry r) {
+    revertOnUpTo(r, null, false);
+  }
+
+  public boolean revertOnUpTo(Entry r, Change upTo, boolean revertTargetChange) {
+    if (!revertTargetChange && this == upTo) return false;
+    doRevertOn(r);
+    return this != upTo;
+  }
+
+  protected abstract void doRevertOn(Entry root);
 
   public boolean canRevertOn(Entry r) {
     return true;

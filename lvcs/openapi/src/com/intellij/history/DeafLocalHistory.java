@@ -22,13 +22,16 @@ public class DeafLocalHistory extends LocalHistory {
     return Checkpoint.NULL_INSTANCE;
   }
 
-  public void putSystemLabel(final String name, final int color) {
+  public Label putSystemLabel(final String name, final int color) {
+    return Label.NULL_INSTANCE;
   }
 
-  public void putUserLabel(final VirtualFile f, final String name) {
+  public Label putUserLabel(final VirtualFile f, final String name) {
+    return Label.NULL_INSTANCE;
   }
 
-  public void putUserLabel(final String name) {
+  public Label putUserLabel(final String name) {
+    return Label.NULL_INSTANCE;
   }
 
   public LocalHistoryAction startAction(final String name) {

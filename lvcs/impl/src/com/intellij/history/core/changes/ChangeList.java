@@ -140,9 +140,7 @@ public class ChangeList {
 
   public void revertUpTo(Entry r, Change target, boolean revertTargetChange) {
     for (Change c : Reversed.list(myChanges)) {
-      if (!revertTargetChange && c == target) return;
-      c.revertOn(r);
-      if (c == target) return;
+      if (!c.revertOnUpTo(r, target, revertTargetChange)) return;
     }
   }
 

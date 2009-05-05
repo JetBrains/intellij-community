@@ -49,11 +49,11 @@ public class MoveChange extends StructuralChange<MoveChangeNonAppliedState, Move
   }
 
   @Override
-  public void revertOn(Entry r) {
-    Entry e = getEntry(r);
+  public void doRevertOn(Entry root) {
+    Entry e = getEntry(root);
     removeEntry(e);
 
-    Entry oldParent = getOldParent(r);
+    Entry oldParent = getOldParent(root);
     oldParent.addChild(e);
   }
 

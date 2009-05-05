@@ -3,6 +3,7 @@ package com.intellij.history.core;
 import com.intellij.history.core.changes.PutLabelChange;
 import com.intellij.history.core.changes.PutSystemLabelChange;
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.Label;
 import org.junit.Test;
 
 import java.util.List;
@@ -12,8 +13,7 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
 
   @Test
   public void testUserLabels() {
-    long timestamp = -1;
-    vcs.createFile("file", null, timestamp, false);
+    vcs.createFile("file", null, -1, false);
     vcs.putUserLabel("file", "1");
     vcs.changeFileContent("file", null, -1);
     vcs.putUserLabel("file", "2");
@@ -29,10 +29,8 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotIncludeLabelsForAnotherEntry() {
-    long timestamp = -1;
-    vcs.createFile("one", null, timestamp, false);
-    long timestamp1 = -1;
-    vcs.createFile("two", null, timestamp1, false);
+    vcs.createFile("one", null, -1, false);
+    vcs.createFile("two", null, -1, false);
     vcs.putUserLabel("one", "one");
     vcs.putUserLabel("two", "two");
 
@@ -48,8 +46,7 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
   @Test
   public void testLabelTimestamps() {
     setCurrentTimestamp(10);
-    long timestamp = -1;
-    vcs.createFile("file", null, timestamp, false);
+    vcs.createFile("file", null, -1, false);
     setCurrentTimestamp(20);
     vcs.putUserLabel("file", "1");
     setCurrentTimestamp(30);
@@ -63,8 +60,7 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
 
   @Test
   public void testContent() {
-    long timestamp = -1;
-    vcs.createFile("file", cf("old"), timestamp, false);
+    vcs.createFile("file", cf("old"), -1, false);
     vcs.putUserLabel("file", "");
     vcs.changeFileContent("file", cf("new"), -1);
     vcs.putUserLabel("file", "");
@@ -78,8 +74,7 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
   @Test
   public void testLabelsAfterPurge() {
     setCurrentTimestamp(10);
-    long timestamp = -1;
-    vcs.createFile("file", null, timestamp, false);
+    vcs.createFile("file", null, -1, false);
     setCurrentTimestamp(20);
     vcs.putUserLabel("file", "l");
 
@@ -92,11 +87,9 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
 
   @Test
   public void testGlobalUserLabels() {
-    long timestamp = -1;
-    vcs.createFile("one", null, timestamp, false);
+    vcs.createFile("one", null, -1, false);
     vcs.putUserLabel("1");
-    long timestamp1 = -1;
-    vcs.createFile("two", null, timestamp1, false);
+    vcs.createFile("two", null, -1, false);
     vcs.putUserLabel("2");
 
     List<Revision> rr = vcs.getRevisionsFor("one");
@@ -112,8 +105,7 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
   @Test
   public void testGlobalLabelTimestamps() {
     setCurrentTimestamp(10);
-    long timestamp = -1;
-    vcs.createFile("file", null, timestamp, false);
+    vcs.createFile("file", null, -1, false);
     setCurrentTimestamp(20);
     vcs.putUserLabel("");
 
@@ -124,8 +116,7 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
 
   @Test
   public void testLabelsDuringChangeSet() {
-    long timestamp = -1;
-    vcs.createFile("f", null, timestamp, false);
+    vcs.createFile("f", null, -1, false);
     vcs.beginChangeSet();
     vcs.changeFileContent("f", null, -1);
     vcs.putUserLabel("label");
@@ -139,10 +130,8 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
 
   @Test
   public void testSystemLabels() {
-    long timestamp = -1;
-    vcs.createFile("f1", null, timestamp, false);
-    long timestamp1 = -1;
-    vcs.createFile("f2", null, timestamp1, false);
+    vcs.createFile("f1", null, -1, false);
+    vcs.createFile("f2", null, -1, false);
 
     setCurrentTimestamp(123);
     vcs.putSystemLabel("label", 456);
@@ -159,5 +148,35 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
     assertTrue(l.isSystemLabel());
     assertEquals(123, l.getTimestamp());
     assertEquals(456, ((PutSystemLabelChange)l).getColor());
+  }
+
+  @Test
+  public void testGettingByteContent() throws Exception {
+    Label l1 = vcs.putSystemLabel("label", -1);
+    vcs.createFile("f1", cf("one"), -1, false);
+    Label l2 = vcs.putSystemLabel("label", -1);
+    vcs.changeFileContent("f1", cf("two"), -1);
+    vcs.createDirectory("dir");
+    Label l3 = vcs.putSystemLabel("label", -1);
+
+    assertNull(l1.getByteContent("f1").getBytes());
+    assertEquals("one", new String(l2.getByteContent("f1").getBytes()));
+    assertEquals("two", new String(l3.getByteContent("f1").getBytes()));
+
+    assertTrue(l3.getByteContent("dir").isDirectory());
+    assertNull(l3.getByteContent("dir").getBytes());
+  }
+  
+  @Test
+  public void testGettingByteContentInsideChangeSet() throws Exception {
+    vcs.beginChangeSet();
+    vcs.createFile("f1", cf("one"), -1, false);
+    Label l1 = vcs.putSystemLabel("label", -1);
+    vcs.changeFileContent("f1", cf("two"), -1);
+    Label l2 = vcs.putSystemLabel("label", -1);
+    vcs.endChangeSet(null);
+
+    assertEquals("one", new String(l1.getByteContent("f1").getBytes()));
+    assertEquals("two", new String(l2.getByteContent("f1").getBytes()));
   }
 }

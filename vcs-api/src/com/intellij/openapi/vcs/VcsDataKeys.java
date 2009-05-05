@@ -53,6 +53,6 @@ public interface VcsDataKeys {
   DataKey<ChangeRequestChain> DIFF_REQUEST_CHAIN = DataKey.create("diffRequestChain");
   DataKey<String> UPDATE_VIEW_SELECTED_PATH = DataKey.create("AbstractCommonUpdateAction.UpdateViewSelectedPath");
   DataKey<Iterable<VirtualFilePointer>> UPDATE_VIEW_FILES_ITERABLE = DataKey.create("AbstractCommonUpdateAction.UpdatedFilesIterable");
-  DataKey<Object> CHECKPOINT_BEFORE = DataKey.create("CHECKPOINT_BEFORE");
-  DataKey<Object> CHECKPOINT_AFTER = DataKey.create("CHECKPOINT_AFTER");
+  DataKey<Object> LABEL_BEFORE = DataKey.create("LABEL_BEFORE");
+  DataKey<Object> LABEL_AFTER = DataKey.create("LABEL_AFTER");
 }

@@ -31,7 +31,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.history.Checkpoint;
+import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -309,8 +309,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     private final Map<String, SequentialUpdatesContext> myContextInfo;
     private VcsDirtyScopeManager myDirtyScopeManager;
 
-    private Checkpoint myBefore;
-    private Checkpoint myAfter;
+    private Label myBefore;
+    private Label myAfter;
 
     public Updater(final Project project, final FilePath[] roots, final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles) {
       super(project, getTemplatePresentation().getText(), true, VcsConfiguration.getInstance(project).getUpdateOption());
@@ -369,7 +369,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
-      myBefore = LocalHistory.putCheckpoint(myProject);
+      myBefore = LocalHistory.putSystemLabel(myProject, "Before update");
 
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
@@ -401,7 +401,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           }
           doVfsRefresh();
         } finally {
-          myAfter = LocalHistory.putCheckpoint(myProject);
+          myAfter = LocalHistory.putSystemLabel(myProject, "After update");
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
         }
       }

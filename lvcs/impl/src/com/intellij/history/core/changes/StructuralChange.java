@@ -58,7 +58,7 @@ public abstract class StructuralChange<
   protected abstract IdPath doApplyTo(Entry r, APPLIED_STATE_TYPE newState);
 
   @Override
-  public abstract void revertOn(Entry r);
+  public abstract void doRevertOn(Entry root);
 
   protected boolean hasNoSuchEntry(Entry parent, String name) {
     return parent.findChild(name) == null;

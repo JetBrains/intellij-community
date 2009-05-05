@@ -4,6 +4,7 @@ import com.intellij.diagnostic.Diagnostic;
 import com.intellij.history.ByteContent;
 import com.intellij.history.Clock;
 import com.intellij.history.FileRevisionTimestampComparator;
+import com.intellij.history.Label;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.core.revisions.Revision;
@@ -18,7 +19,6 @@ import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -302,45 +302,37 @@ public class LocalVcs {
     }
   }
 
-  public void putSystemLabel(String name, int color) {
+  public Label putSystemLabel(String name, int color) {
+    return applyLabel(new PutSystemLabelChange(name, color, getCurrentTimestamp()));
+  }
+
+  public Label putUserLabel(String name) {
+    return applyLabel(new PutLabelChange(name, getCurrentTimestamp()));
+  }
+
+  public Label putUserLabel(String path, String name) {
+    return applyLabel(new PutEntryLabelChange(path, name, getCurrentTimestamp()));
+  }
+
+  private Label applyLabel(final PutLabelChange c) {
     writeAll();
     try {
-      applyLabel(new PutSystemLabelChange(name, color, getCurrentTimestamp()));
+      c.applyTo(myRoot);
+      addChangeToChangeList(c);
+      return new Label() {
+        public ByteContent getByteContent(String path) {
+          return getByteContentBefore(path, c);
+        }
+      };
     }
     finally {
       unwriteAll();
     }
-  }
-
-  public void putUserLabel(String name) {
-    writeAll();
-    try {
-      applyLabel(new PutLabelChange(name, getCurrentTimestamp()));
-    }
-    finally {
-      unwriteAll();
-    }
-  }
-
-  public void putUserLabel(String path, String name) {
-    writeAll();
-    try {
-      applyLabel(new PutEntryLabelChange(path, name, getCurrentTimestamp()));
-    }
-    finally {
-      unwriteAll();
-    }
-  }
-
-  private void applyLabel(PutLabelChange c) {
-    c.applyTo(myRoot);
-    addChangeToChangeList(c);
   }
 
   private void applyChange(Change c) {
     c.applyTo(myRoot);
 
-    // todo get rid of wrapping changeset here
     beginChangeSet();
     addChangeToChangeList(c);
     endChangeSet(null);
@@ -388,27 +380,14 @@ public class LocalVcs {
     }
   }
 
-  @Nullable
-  public ByteContent getByteContentBefore(String path, Change change) {
+  private ByteContent getByteContentBefore(String path, Change change) {
     readAll();
     try {
-      Change found = null;
-      for (Change each : myChangeList.getChanges()) {
-        for (Change eachSubChange : each.getChanges()) {
-          if (change == eachSubChange) {
-            found = each;
-            break;
-          }
-        }
-      }
-      if (found == null) return null;
-
-      Revision revision = new RevisionAfterChange(myRoot, myRoot, myChangeList, found);
+      Revision revision = new RevisionAfterChange(myRoot, myRoot, myChangeList, change);
       Entry entry = revision.getEntry().findEntry(path);
-      if (entry == null) return null;
-      if (entry.isDirectory()) {
-        return new ByteContent(true, null);
-      }
+      if (entry == null) return new ByteContent(false, null);
+      if (entry.isDirectory()) return new ByteContent(true, null);
+
       return new ByteContent(false, entry.getContent().getBytesIfAvailable());
     }
     finally {

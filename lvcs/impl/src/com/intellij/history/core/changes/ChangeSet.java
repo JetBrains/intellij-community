@@ -79,8 +79,17 @@ public class ChangeSet extends Change {
   }
 
   @Override
-  public void revertOn(Entry e) {
-    for (Change c : Reversed.list(myChanges)) c.revertOn(e);
+  public boolean revertOnUpTo(Entry r, Change upTo, boolean revertTargetChange) {
+    if (!revertTargetChange && this == upTo) return false;
+    for (Change each : Reversed.list(myChanges)) {
+      if (!each.revertOnUpTo(r, upTo, revertTargetChange)) return false;
+    }
+    return this != upTo;
+  }
+
+  @Override
+  protected void doRevertOn(Entry root) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

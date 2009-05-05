@@ -44,7 +44,7 @@ public class PutLabelChange extends Change {
   }
 
   @Override
-  public void revertOn(Entry r) {
+  public void doRevertOn(Entry root) {
   }
 
   @Override

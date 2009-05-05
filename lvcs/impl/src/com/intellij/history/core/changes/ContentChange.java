@@ -60,7 +60,7 @@ public class ContentChange extends StructuralChange<ContentChangeNonAppliedState
   }
 
   @Override
-  public void revertOn(Entry root) {
+  public void doRevertOn(Entry root) {
     Entry e = root.getEntry(getAffectedIdPath());
     e.changeContent(getAppliedState().myOldContent, getAppliedState().myOldTimestamp);
   }
