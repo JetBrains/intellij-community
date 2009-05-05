@@ -828,12 +828,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           try {
 
             final Document document = writeSchemeToDocument(eScheme);
-
-            long newHash = computeHashValue(document);
-
-            Long oldHash = eScheme.getExternalInfo().getHash();
-
-            saveIfNeeded(eScheme, fileName, document, newHash, oldHash);
+            if (document != null) {
+              long newHash = computeHashValue(document);
+              Long oldHash = eScheme.getExternalInfo().getHash();
+              saveIfNeeded(eScheme, fileName, document, newHash, oldHash);
+            }
           }
           catch (final IOException e) {
             Application app = ApplicationManager.getApplication();
