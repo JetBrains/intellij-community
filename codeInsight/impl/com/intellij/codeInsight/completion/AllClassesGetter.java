@@ -38,6 +38,8 @@ public class AllClassesGetter {
     private void _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       final Editor editor = context.getEditor();
       final PsiClass psiClass = item.getObject();
+      if (!psiClass.isValid()) return;
+
       int endOffset = editor.getCaretModel().getOffset();
       final String qname = psiClass.getQualifiedName();
       if (qname == null) return;
