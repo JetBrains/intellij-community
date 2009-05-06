@@ -82,7 +82,10 @@ public class JavaI18nUtil extends I18nUtil {
 
   public static PsiExpression getToplevelExpression(PsiExpression expression) {
     while (expression.getParent() instanceof PsiExpression) {
-      expression = (PsiExpression)expression.getParent();
+      final PsiExpression parent = (PsiExpression)expression.getParent();
+      if (parent instanceof PsiConditionalExpression &&
+          ((PsiConditionalExpression)parent).getCondition() == expression) break;
+      expression = parent;
       if (expression instanceof PsiAssignmentExpression) break;
     }
     return expression;

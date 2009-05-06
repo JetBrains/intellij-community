@@ -9,6 +9,7 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import org.jetbrains.annotations.NotNull;
@@ -134,8 +135,20 @@ public class PropertyFoldingBuilder implements FoldingBuilder {
 
 
   public static boolean isI18nProperty(PsiLiteralExpression expr) {
+    if (!isStringOrCharacterLiteral(expr)) return false;
     final Map<String, Object> annotationParams = new HashMap<String, Object>();
     annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
     return JavaI18nUtil.mustBePropertyKey(expr, annotationParams);
+  }
+
+  public static boolean isStringOrCharacterLiteral(final PsiLiteralExpression place) {
+    final PsiElement child = place.getFirstChild();
+    if (child != null && child instanceof PsiJavaToken) {
+      final IElementType tokenType = ((PsiJavaToken)child).getTokenType();
+      if (tokenType == JavaTokenType.STRING_LITERAL || tokenType == JavaTokenType.CHARACTER_LITERAL) {
+        return true;
+      }
+    }
+    return false;
   }
 }
