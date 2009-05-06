@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -20,7 +21,9 @@ public class GrSourceFilterScope extends GlobalSearchScope {
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
-  public boolean contains(final VirtualFile file) {
+  public boolean contains(@Nullable final VirtualFile file) {
+    if (file == null) return false;
+
     if (myDelegate != null && !myDelegate.contains(file)) {
       return false;
     }
