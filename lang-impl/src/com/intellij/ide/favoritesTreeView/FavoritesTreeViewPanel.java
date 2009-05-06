@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -128,6 +129,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     //add(createActionsToolbar(), BorderLayout.NORTH);
 
     EditSourceOnDoubleClickHandler.install(myTree);
+    EditSourceOnEnterKeyHandler.install(myTree);
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, this) {
       @NotNull
       protected PsiElement[] getSelectedElements() {

@@ -1,10 +1,11 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.navigation.ItemPresentation;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,7 +18,7 @@ import com.intellij.psi.SmartPsiElementPointer;
  * User: anna
  * Date: Feb 15, 2005
  */
-public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode> {
+public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<AbstractTreeNode> {
   private final AbstractTreeNode myElement;
   public static final FavoritesTreeNodeDescriptor[] EMPTY_ARRAY = new FavoritesTreeNodeDescriptor[0];
 
@@ -26,14 +27,9 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
     myElement = element;
   }
 
-  public boolean update() {
+  protected void update(PresentationData presentation) {
     myElement.update();
-    ItemPresentation presentation = myElement.getPresentation();
-    myOpenIcon = presentation.getIcon(true);
-    myClosedIcon = presentation.getIcon(false);
-    myName = presentation.getPresentableText();
-    myColor = myElement.getFileStatus().getColor();
-    return true;
+    presentation.copyFrom(myElement.getPresentation());
   }
 
  /* protected boolean isMarkReadOnly() {
