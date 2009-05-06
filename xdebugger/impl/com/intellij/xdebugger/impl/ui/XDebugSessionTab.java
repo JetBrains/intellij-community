@@ -17,7 +17,6 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -36,15 +35,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author spleaner
  */
-public class XDebugSessionTab implements Disposable {
+public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
   private final String mySessionName;
-  private Project myProject;
   private final RunnerLayoutUi myUi;
   private RunContentDescriptor myRunContentDescriptor;
   private ExecutionConsole myConsole;
@@ -52,7 +50,7 @@ public class XDebugSessionTab implements Disposable {
   private final List<XDebugViewBase> myViews = new ArrayList<XDebugViewBase>();
 
   public XDebugSessionTab(@NotNull final Project project, @NotNull final String sessionName) {
-    myProject = project;
+    super(project);
     mySessionName = sessionName;
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("Debug", "unknown!", sessionName, this);
@@ -116,14 +114,6 @@ public class XDebugSessionTab implements Disposable {
 
   public XDebugSessionData saveData() {
     return new XDebugSessionData(myWatchesView.getWatchExpressions());
-  }
-
-  public void dispose() {
-    myProject = null;
-  }
-
-  public void loadData(final XDebugSessionData sessionData) {
-    
   }
 
   public ExecutionConsole getConsole() {
@@ -216,7 +206,7 @@ public class XDebugSessionTab implements Disposable {
 
     group.addSeparator();
 
-    group.add(new CloseAction(executor, myRunContentDescriptor, myProject));
+    group.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
     group.add(new ContextHelpAction(executor.getHelpId()));
 
     myUi.getOptions().setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
@@ -231,6 +221,10 @@ public class XDebugSessionTab implements Disposable {
     if (action != null) group.add(action);
   }
 
+  public RunnerLayoutUi getUi() {
+    return myUi;
+  }
+
   @Nullable
   public RunContentDescriptor getRunContentDescriptor() {
     return myRunContentDescriptor;
@@ -239,8 +233,8 @@ public class XDebugSessionTab implements Disposable {
   public void toFront() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        WindowManagerEx.getInstanceEx().getFrame(myProject).toFront();
-        ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
+        WindowManagerEx.getInstanceEx().getFrame(getProject()).toFront();
+        ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
       }
     });
   }

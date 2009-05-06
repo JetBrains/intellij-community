@@ -15,10 +15,6 @@ import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.DebuggerLogConsoleManager;
-import com.intellij.diagnostic.logging.LogConsoleImpl;
-import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
@@ -40,34 +36,29 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithActions;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.AlertIcon;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.xdebugger.impl.ui.DebuggerLogConsoleManagerBase;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.io.File;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
-public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable {
+public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
   private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchLastReturnValue.png");
   private static final Icon AUTO_VARS_ICONS = IconLoader.getIcon("/debugger/autoVariablesMode.png");
-
-  private final Project myProject;
 
   private final VariablesPanel myVariablesPanel;
   private final MainWatchPanel myWatchPanel;
@@ -80,11 +71,6 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
 
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
-  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
-  private final Map<AdditionalTabComponent, ContentManagerListener> myContentListeners =
-    new HashMap<AdditionalTabComponent, ContentManagerListener>();
-
-  private final LogFilesManager myManager;
   private final FramesPanel myFramesPanel;
   private final RunnerLayoutUi myUi;
   private ExecutionEnvironment myEnvironment;
@@ -94,8 +80,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
   private final ThreadsPanel myThreadsPanel;
 
   public DebuggerSessionTab(Project project, String sessionName) {
-    myProject = project;
-    myManager = new LogFilesManager(project, this);
+    super(project);
 
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("JavaDebugger", DebuggerBundle.message("title.generic.debug.dialog"), sessionName, this);
@@ -179,7 +164,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
     // variables
-    myVariablesPanel = new VariablesPanel(myProject, myStateManager, this);
+    myVariablesPanel = new VariablesPanel(getProject(), myStateManager, this);
     myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
     Content vars = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, myVariablesPanel, XDebuggerBundle.message("debugger.session.tab.variables.title"),
                                       XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
@@ -214,7 +199,12 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     }, this);
   }
 
-  private void updateStatus(final Content content) {
+  @Override
+  public RunnerLayoutUi getUi() {
+    return myUi;
+  }
+
+  private static void updateStatus(final Content content) {
     if (content.getComponent() instanceof DebuggerView) {
       final DebuggerView view = (DebuggerView)content.getComponent();
       if (content.isSelected()) {
@@ -229,12 +219,13 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     }
   }
 
-  private Project getProject() {
-    return myProject;
-  }
-
   public MainWatchPanel getWatchPanel() {
     return myWatchPanel;
+  }
+
+  @Override
+  public RunContentDescriptor getRunContentDescriptor() {
+    return myRunContentDescriptor;
   }
 
   private RunContentDescriptor initUI(ExecutionResult executionResult) {
@@ -279,7 +270,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
     if (myConfiguration instanceof RunConfigurationBase && ((RunConfigurationBase)myConfiguration).needAdditionalConsole()) {
-      myManager.initLogConsoles((RunConfigurationBase)myConfiguration, myRunContentDescriptor.getProcessHandler());
+      initLogConsoles((RunConfigurationBase)myConfiguration, myRunContentDescriptor.getProcessHandler());
     }
 
     DefaultActionGroup group = new DefaultActionGroup();
@@ -335,43 +326,6 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     group.add(ActionManager.getInstance().getAction(actionId));
   }
 
-  public void addLogConsole(final String name, final String path, final long skippedContent) {
-    final Ref<Content> content = new Ref<Content>();
-
-    final LogConsoleImpl log = new LogConsoleImpl(myProject, new File(path), skippedContent, name, false) {
-      public boolean isActive() {
-        final Content logContent = content.get();
-        return logContent != null && logContent.isSelected();
-      }
-    };
-    log.attachStopLogConsoleTrackingListener(myRunContentDescriptor.getProcessHandler());
-    content.set(addLogComponent(log));
-    final ContentManagerAdapter l = new ContentManagerAdapter() {
-      public void selectionChanged(final ContentManagerEvent event) {
-        log.activate();
-      }
-    };
-    myContentListeners.put(log, l);
-    myUi.addListener(l, this);
-  }
-
-  public void removeLogConsole(final String path) {
-    LogConsoleImpl componentToRemove = null;
-    for (AdditionalTabComponent tabComponent : myAdditionalContent.keySet()) {
-      if (tabComponent instanceof LogConsoleImpl) {
-        final LogConsoleImpl console = (LogConsoleImpl)tabComponent;
-        if (Comparing.strEqual(console.getPath(), path)) {
-          componentToRemove = console;
-          break;
-        }
-      }
-    }
-    if (componentToRemove != null) {
-      myUi.removeListener(myContentListeners.remove(componentToRemove));
-      removeAdditionalTabComponent(componentToRemove);
-    }
-  }
-
   private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action != null) group.add(action);
@@ -384,8 +338,8 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     myVariablesPanel.dispose();
     myWatchPanel.dispose();
     myThreadsPanel.dispose();
-    myManager.unregisterFileMatcher();
     myConsole = null;
+    super.dispose();
   }
 
   private void disposeSession() {
@@ -473,7 +427,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     myConfiguration = env.getRunProfile();
 
     if (myConfiguration instanceof RunConfigurationBase) {
-      myManager.registerFileMatcher((RunConfigurationBase)myConfiguration);
+      registerFileMatcher((RunConfigurationBase)myConfiguration);
     }
 
     session.getContextManager().addListener(new DebuggerContextListener() {
@@ -498,33 +452,6 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
 
   public DebuggerSession getSession() {
     return myDebuggerSession;
-  }
-
-  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
-    addLogComponent(tabComponent);
-  }
-
-  private Content addLogComponent(final AdditionalTabComponent tabComponent) {
-    @NonNls final String id = "Log-" + tabComponent.getTabTitle();
-    final Content logContent = myUi.createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(),
-                                                  IconLoader.getIcon("/fileTypes/text.png"), tabComponent.getPreferredFocusableComponent());
-    logContent.setCloseable(false);
-    logContent.setDescription(tabComponent.getTooltip());
-    myAdditionalContent.put(tabComponent, logContent);
-    myUi.addContent(logContent);
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        removeAdditionalTabComponent(tabComponent);
-      }
-    });
-
-    return logContent;
-  }
-
-  public void removeAdditionalTabComponent(AdditionalTabComponent component) {
-    component.dispose();
-    final Content content = myAdditionalContent.remove(component);
-    myUi.removeContent(content, true);
   }
 
   public void showFramePanel() {
