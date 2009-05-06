@@ -1,14 +1,6 @@
 package org.jetbrains.plugins.gant.completion;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.util.IncorrectOperationException;
-import junit.framework.Test;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.completion.CompletionTestBase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -17,34 +9,28 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  */
 public class GantReferenceCompletionTest extends CompletionTestBase {
 
-  @NonNls
-  private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/testdata/gant/completion";
-  public static final String TEMP_FILE = "temp.gant";
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/gant/completion";
+  }
+
+  @Override
+  protected String getExtension() {
+    return "gant";
+  }
+
+  public void testDep() throws Throwable { doTest(); }
+  public void testInclude() throws Throwable { doTest(); }
+  public void testJavac() throws Throwable { doTest(); }
+  public void testMutual() throws Throwable { doTest(); }
+  public void testUnqual() throws Throwable { doTest(); }
 
   private static final String[] GANT_JARS = new String[]{"gant.jar", "ant.jar", "gant-junit.jar", "commons.jar"};
 
-  public GantReferenceCompletionTest() {
-    super(System.getProperty("path") != null ? System.getProperty("path") : DATA_PATH);
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGrailsLibraryHome(), TestUtils.GROOVY_JAR);
+    moduleBuilder.addLibraryJars("GANT", TestUtils.getTestDataPath() + "/mockGantLib", GANT_JARS);
   }
 
-  protected PsiFile createFile(String fileText) throws IncorrectOperationException {
-    return TestUtils.createPseudoPhysicalFile(myProject, TEMP_FILE, fileText);
-  }
-
-  public static Test suite() {
-    return new GantReferenceCompletionTest();
-  }
-
-  protected IdeaProjectTestFixture createFixture() {
-    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder();
-    JavaModuleFixtureBuilder fixtureBuilder = builder.addModule(JavaModuleFixtureBuilder.class);
-    fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGrailsLibraryHome(), TestUtils.GROOVY_JAR);
-    fixtureBuilder.addLibraryJars("GANT", getMockGantLibraryHome(), GANT_JARS);
-    return builder.getFixture();
-  }
-
-  public static String getMockGantLibraryHome() {
-    return TestUtils.getTestDataPath() + "/mockGantLib";
-  }
 }

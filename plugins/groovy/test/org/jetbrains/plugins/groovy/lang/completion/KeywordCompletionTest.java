@@ -15,27 +15,82 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.openapi.application.PathManager;
-import junit.framework.Test;
-import org.jetbrains.annotations.NonNls;
-
 /**
  * @author ilyas
  */
 public class KeywordCompletionTest extends CompletionTestBase {
 
-  @NonNls
-  private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/testdata/groovy/oldCompletion/keyword";
+  public void testBr1() throws Throwable { doTest(); }
+  public void testCase_return() throws Throwable { doTest(); }
+  public void testClass1() throws Throwable { doTest(); }
+  public void testClass2() throws Throwable { doTest(); }
+  public void testClass3() throws Throwable { doTest(); }
+  public void testClass4() throws Throwable { doTest(); }
+  public void testExpr1() throws Throwable { doTest(); }
+  public void testExpr2() throws Throwable { doTest(); }
+  public void testFile11() throws Throwable { doTest(); }
+  public void testFile12() throws Throwable { doTest(); }
+  public void testFin() throws Throwable { doTest(); }
+  public void testFin2() throws Throwable { doTest(); }
+  public void testGRVY1064() throws Throwable { doTest(); }
+  public void testGrvy1404() throws Throwable { doTest(); }
+  public void testGrvy945() throws Throwable { doTest(); }
+  public void testImp1() throws Throwable { doTest(); }
+  public void testImp2() throws Throwable { doTest(); }
+  public void testImp3() throws Throwable { doTest(); }
+  public void testImp4() throws Throwable { doTest(); }
+  public void testIns1() throws Throwable { doTest(); }
+  public void testIns2() throws Throwable { doTest(); }
+  public void testIns3() throws Throwable { doTest(); }
+  public void testInt1() throws Throwable { doTest(); }
+  public void testLocal1() throws Throwable { doTest(); }
+  public void testMod1() throws Throwable { doTest(); }
+  public void testMod10() throws Throwable { doTest(); }
+  public void testMod11() throws Throwable { doTest(); }
+  public void testMod2() throws Throwable { doTest(); }
+  public void testMod3() throws Throwable { doTest(); }
+  public void testMod4() throws Throwable { doTest(); }
+  public void testMod5() throws Throwable { doTest(); }
+  public void testMod6() throws Throwable { doTest(); }
+  public void testMod7() throws Throwable { doTest(); }
+  public void testMod8() throws Throwable { doTest(); }
+  public void testMod9() throws Throwable { doTest(); }
+  public void testPack1() throws Throwable { doTest(); }
+  public void testSt1() throws Throwable { doTest(); }
+  public void testSwit1() throws Throwable { doTest(); }
+  public void testSwit13() throws Throwable { doTest(); }
+  public void testSwit14() throws Throwable { doTest(); }
+  public void testSwit2() throws Throwable { doTest(); }
+  public void testSwit3() throws Throwable { doTest(); }
+  public void testSwit4() throws Throwable { doTest(); }
+  public void testSwit5() throws Throwable { doTest(); }
+  public void testTag1() throws Throwable { doTest(); }
+  public void testTag2() throws Throwable { doTest(); }
+  public void testTag3() throws Throwable { doTest(); }
+  public void testTag4() throws Throwable { doTest(); }
+  public void testTh1() throws Throwable { doTest(); }
+  public void testTh2() throws Throwable { doTest(); }
+  public void testVar1() throws Throwable { doTest(); }
+  public void testVar10() throws Throwable { doTest(); }
+  public void testVar13() throws Throwable { doTest(); }
+  public void testVar2() throws Throwable { doTest(); }
+  public void testVar3() throws Throwable { doTest(); }
+  public void testVar4() throws Throwable { doTest(); }
+  public void testVar5() throws Throwable { doTest(); }
+  public void testVar6() throws Throwable { doTest(); }
+  public void testVar7() throws Throwable { doTest(); }
+  public void testVar8() throws Throwable { doTest(); }
+  public void testVar9() throws Throwable { doTest(); }
+  public void testWhile55() throws Throwable { doTest(); }
 
-  public KeywordCompletionTest() {
-    super(System.getProperty("path") != null ? System.getProperty("path") : DATA_PATH);
+
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/oldCompletion/keyword";
   }
 
   protected boolean addReferenceVariants() {
     return false;
   }
 
-  public static Test suite() {
-    return new KeywordCompletionTest();
-  }
 }

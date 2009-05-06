@@ -15,13 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import junit.framework.Test;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -29,30 +23,44 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  */
 public class ReferenceCompletionTest extends CompletionTestBase {
 
-  @NonNls
-  private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/testdata/groovy/oldCompletion/reference";
+  public void testEscapedReference() throws Throwable { doTest(); }
+  public void testGrvy1021() throws Throwable { doTest(); }
+  public void testGrvy1021a() throws Throwable { doTest(); }
+  public void testGrvy1021b() throws Throwable { doTest(); }
+  public void testGrvy1156() throws Throwable { doTest(); }
+  public void testGrvy117() throws Throwable { doTest(); }
+  public void testGrvy1272() throws Throwable { doTest(); }
+  public void testGRVY1316() throws Throwable { doTest(); }
+  public void testGrvy194() throws Throwable { doTest(); }
+  public void testGrvy194_1() throws Throwable { doTest(); }
+  public void testGRVY223() throws Throwable { doTest(); }
+  public void testGrvy487() throws Throwable { doTest(); }
+  public void testGrvy491() throws Throwable { doTest(); }
+  public void testGrvy76() throws Throwable { doTest(); }
+  public void testGrvy959() throws Throwable { doTest(); }
+  public void testOnDemand() throws Throwable { doTest(); }
+  public void testStaticMethod() throws Throwable { doTest(); }
+  public void testThrowVariable() throws Throwable { doTest(); }
+  public void testTupleCompl1() throws Throwable { doTest(); }
+  public void testTupleLongListAssign() throws Throwable { doTest(); }
+  public void testTupleObjCompl() throws Throwable { doTest(); }
+  public void testTupleShortListAss() throws Throwable { doTest(); }
+  public void testTupleTypedCompl() throws Throwable { doTest(); }
+  public void testType() throws Throwable { doTest(); }
+  public void testUntyped() throws Throwable { doTest(); }
 
-  protected String myNewDocumentText;
-
-  public ReferenceCompletionTest() {
-    super(System.getProperty("path") != null ?
-            System.getProperty("path") :
-            DATA_PATH
-    );
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/groovy/oldCompletion/reference";
   }
 
   protected boolean addKeywords() {
     return false;
   }
 
-  public static Test suite() {
-    return new ReferenceCompletionTest();
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    moduleBuilder.addJdk(TestUtils.getMockJdkHome());
   }
 
-  protected IdeaProjectTestFixture createFixture() {
-    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder();
-    builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome());
-    return builder.getFixture();
-  }
 }
