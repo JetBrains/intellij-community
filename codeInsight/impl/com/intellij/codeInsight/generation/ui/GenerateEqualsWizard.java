@@ -42,6 +42,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
   private final HashMap<PsiElement, MemberInfo> myFieldsToNonNull;
 
   private final int myTestBoxedStep;
+  private final int myEqualsStepCode;
+  private final int myHashcodeStepCode;
 
   private final MemberInfo[] myClassFields;
   private static final MyMemberInfoFilter MEMBER_INFO_FILTER = new MyMemberInfoFilter();
@@ -101,11 +103,21 @@ public class GenerateEqualsWizard extends AbstractWizard {
       myEqualsPanel.getTable().getModel().addTableModelListener(listener);
       addStep(new InstanceofOptionStep());
       addStep(new MyStep(myEqualsPanel));
+      myEqualsStepCode = 1;
     }
+    else {
+      myEqualsStepCode = -1;
+    }
+
     if (myHashCodePanel != null) {
       myHashCodePanel.getTable().getModel().addTableModelListener(listener);
       addStep(new MyStep(myHashCodePanel));
+      myHashcodeStepCode = myEqualsStepCode > 0 ? myEqualsStepCode + 1 : 1;
     }
+    else {
+      myHashcodeStepCode = -1;
+    }
+
     addStep(new MyStep(myNonNullPanel));
 
     init();
@@ -143,19 +155,14 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   protected void doNextAction() {
-    switch (getCurrentStep()) {
-      case 0:
-        if (myEqualsPanel != null) {
-          equalsFieldsSelected();
-        }
-        else {
-          MemberInfo[] selectedMemberInfos = myHashCodePanel.getTable().getSelectedMemberInfos();
-          updateNonNullMemberInfos(selectedMemberInfos);
-        }
-        break;
-      default:
-        break;
+    if (getCurrentStep() == myEqualsStepCode && myEqualsPanel != null) {
+      equalsFieldsSelected();
     }
+    else if (getCurrentStep() == myHashcodeStepCode && myHashCodePanel != null) {
+      MemberInfo[] selectedMemberInfos = myHashCodePanel.getTable().getSelectedMemberInfos();
+      updateNonNullMemberInfos(selectedMemberInfos);
+    }
+
     super.doNextAction();
     updateStatus();
   }
@@ -213,11 +220,11 @@ public class GenerateEqualsWizard extends AbstractWizard {
   private void updateStatus() {
     boolean finishEnabled = true;
     boolean nextEnabled = true;
-    if (myEqualsPanel != null & getCurrentStep() == 0) {
+    if (myEqualsPanel != null & getCurrentStep() < myEqualsStepCode) {
       finishEnabled = false;
     }
 
-    if (getCurrentStep() == myTestBoxedStep) {
+    if (getCurrentStep() == myTestBoxedStep - 1) {
       boolean anyNonBoxed = false;
       for (MemberInfo classField : myClassFields) {
         if (classField.isChecked()) {
@@ -228,11 +235,10 @@ public class GenerateEqualsWizard extends AbstractWizard {
           }
         }
       }
-      finishEnabled &= !anyNonBoxed;
       nextEnabled = anyNonBoxed;
     }
 
-    if (getCurrentStep() == 0) {
+    if (getCurrentStep() == myEqualsStepCode) {
       boolean anyChecked = false;
       for (MemberInfo classField : myClassFields) {
         if (classField.isChecked()) {
@@ -241,13 +247,14 @@ public class GenerateEqualsWizard extends AbstractWizard {
         }
       }
       finishEnabled &= anyChecked;
-      nextEnabled = !(!nextEnabled || !anyChecked);
+      nextEnabled &= anyChecked;
     }
 
     if (getCurrentStep() == myTestBoxedStep) {
       finishEnabled = true;
       nextEnabled = false;
     }
+
     getFinishButton().setEnabled(finishEnabled);
     getNextButton().setEnabled(nextEnabled);
 
