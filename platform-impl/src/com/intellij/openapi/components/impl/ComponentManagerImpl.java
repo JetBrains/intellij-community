@@ -321,6 +321,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   public synchronized void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myDisposeCompleted = true;
 
     if (myMessageBus != null) {
