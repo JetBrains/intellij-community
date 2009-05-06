@@ -81,7 +81,7 @@ public class PyResolveUtil {
       else { // we were the first subnode
         // find something above the parent node we've not exhausted yet
         seeker = seeker.getParent();
-        if (seeker instanceof PyFile) return null; // all file nodes have been looked up, in vain
+        if (seeker instanceof PsiFile) return null; // all file nodes have been looked up, in vain
       }
       // ??? if (seeker instanceof NameDefiner) return seeker;
       for (Class cls : classes) {
