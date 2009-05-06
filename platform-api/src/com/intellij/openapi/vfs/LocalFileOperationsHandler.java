@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -32,4 +33,5 @@ public interface LocalFileOperationsHandler {
 
   boolean createFile(VirtualFile dir, String name) throws IOException;
   boolean createDirectory(VirtualFile dir, String name) throws IOException;
+  void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker);
 }

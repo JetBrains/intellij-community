@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
@@ -570,6 +571,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return false;
   }
 
+  private void auxNotifyCompleted(final ThrowableConsumer<LocalFileOperationsHandler, IOException> consumer) {
+    for (LocalFileOperationsHandler handler : myHandlers) {
+      handler.afterDone(consumer);
+    }
+  }
+
   @Nullable
   private File auxCopy(VirtualFile file, VirtualFile toDir, final String copyName) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
@@ -642,6 +649,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   public VirtualFile createChildDirectory(final Object requestor, final VirtualFile parent, final String dir) throws IOException {
     final File ioDir = new File(convertToIOFile(parent), dir);
     final boolean succ = auxCreateDirectory(parent, dir) || ioDir.mkdirs();
+    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
+      public void consume(LocalFileOperationsHandler handler) throws IOException {
+        handler.createDirectory(parent, dir);
+      }
+    });
     if (!succ) {
       throw new IOException("Failed to create directory: " + ioDir.getPath());
     }
@@ -652,6 +664,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   public VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException {
     final File ioFile = new File(convertToIOFile(parent), file);
     final boolean succ = auxCreateFile(parent, file) || ioFile.createNewFile();
+    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
+      public void consume(LocalFileOperationsHandler handler) throws IOException {
+        handler.createFile(parent, file);
+      }
+    });
     if (!succ) {
       throw new IOException("Failed to create child file at " + ioFile.getPath());
     }
@@ -663,6 +680,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     if (!auxDelete(file)) {
       delete(convertToIOFile(file));
     }
+    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
+      public void consume(LocalFileOperationsHandler handler) throws IOException {
+        handler.delete(file);
+      }
+    });
   }
 
   public boolean exists(final VirtualFile fileOrDirectory) {
@@ -742,6 +764,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       final File ioParent = convertToIOFile(newParent);
       ioFrom.renameTo(new File(ioParent, file.getName()));
     }
+    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
+      public void consume(LocalFileOperationsHandler handler) throws IOException {
+        handler.move(file, newParent);
+      }
+    });
   }
 
   public void renameFile(final Object requestor, final VirtualFile file, final String newName) throws IOException {
@@ -757,33 +784,45 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         throw new IOException("Destination already exists: " + parent.getPath() + "/" + newName);
       }
     }
+    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
+      public void consume(LocalFileOperationsHandler handler) throws IOException {
+        handler.rename(file, newName);
+      }
+    });
   }
 
   public VirtualFile copyFile(final Object requestor, final VirtualFile vFile, final VirtualFile newParent, final String copyName)
     throws IOException {
     File physicalCopy = auxCopy(vFile, newParent, copyName);
 
-    if (physicalCopy == null) {
-      File physicalFile = convertToIOFile(vFile);
+    try {
+      if (physicalCopy == null) {
+        File physicalFile = convertToIOFile(vFile);
 
-      File newPhysicalParent = convertToIOFile(newParent);
-      physicalCopy = new File(newPhysicalParent, copyName);
+        File newPhysicalParent = convertToIOFile(newParent);
+        physicalCopy = new File(newPhysicalParent, copyName);
 
-      try {
-        if (physicalFile.isDirectory()) {
-          FileUtil.copyDir(physicalFile, physicalCopy);
+        try {
+          if (physicalFile.isDirectory()) {
+            FileUtil.copyDir(physicalFile, physicalCopy);
+          }
+          else {
+            physicalCopy.createNewFile();
+            FileUtil.copy(physicalFile, physicalCopy);
+          }
         }
-        else {
-          physicalCopy.createNewFile();
-          FileUtil.copy(physicalFile, physicalCopy);
+        catch (IOException e) {
+          FileUtil.delete(physicalCopy);
+          throw e;
         }
       }
-      catch (IOException e) {
-        FileUtil.delete(physicalCopy);
-        throw e;
-      }
+    } finally {
+      auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
+        public void consume(LocalFileOperationsHandler handler) throws IOException {
+          handler.copy(vFile, newParent, copyName);
+        }
+      });
     }
-
     return new FakeVirtualFile(newParent, copyName);
   }
 

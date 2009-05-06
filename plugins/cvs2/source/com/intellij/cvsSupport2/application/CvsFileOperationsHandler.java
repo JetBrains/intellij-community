@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -114,5 +115,8 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
 
   public boolean createDirectory(final VirtualFile dir, final String name) throws IOException {
     return false;
+  }
+
+  public void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {
   }
 }
