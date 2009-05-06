@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.MasterDetails;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -33,9 +34,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -686,7 +687,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   protected void onItemDeleted(Object item) {
   }
 
-  protected class MyDeleteAction extends AnAction {
+  protected class MyDeleteAction extends AnAction implements DumbAware {
     private final Condition<Object> myCondition;
 
     public MyDeleteAction(Condition<Object> availableCondition) {
@@ -802,7 +803,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     int getDefaultIndex();
   }
 
-  protected class MyActionGroupWrapper extends AnAction {
+  protected class MyActionGroupWrapper extends AnAction implements DumbAware {
     private ActionGroup myActionGroup;
     private ActionGroupWithPreselection myPreselection;
 

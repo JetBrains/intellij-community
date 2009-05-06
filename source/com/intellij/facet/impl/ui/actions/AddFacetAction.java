@@ -12,13 +12,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.DumbAware;
 
 import java.util.Collection;
 
 /**
  * @author nik
 */
-public class AddFacetAction extends AnAction {
+public class AddFacetAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.actions.AddFacetAction");
   private final FacetEditorFacade myEditor;
   private final FacetType myType;

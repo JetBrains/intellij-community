@@ -23,6 +23,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
@@ -563,7 +564,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
 
-  private class MyGroupAction extends ToggleAction {
+  private class MyGroupAction extends ToggleAction implements DumbAware {
 
     public MyGroupAction() {
       super("", "", COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
@@ -626,11 +627,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return new AbstractAddGroup(ProjectBundle.message("add.new.header.text")) {
       @NotNull
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-        AnAction module = new AnAction(ProjectBundle.message("add.new.module.text.full"), null, IconLoader.getIcon("/actions/modul.png")) {
-          public void actionPerformed(final AnActionEvent e) {
-            addModule();
-          }
-        };
+        AnAction module = new AddModuleAction();
 
         ArrayList<AnAction> result = new ArrayList<AnAction>();
         result.add(module);
@@ -672,7 +669,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return ProjectBundle.message("empty.module.selection.string");
   }
 
-  private class MyCopyAction extends AnAction {
+  private class MyCopyAction extends AnAction implements DumbAware {
     private MyCopyAction() {
       super(CommonBundle.message("button.copy"), CommonBundle.message("button.copy"), COPY_ICON);
     }
@@ -783,4 +780,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
 
+  private class AddModuleAction extends AnAction implements DumbAware {
+    public AddModuleAction() {
+      super(ProjectBundle.message("add.new.module.text.full"), null, IconLoader.getIcon("/actions/modul.png"));
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      addModule();
+    }
+  }
 }

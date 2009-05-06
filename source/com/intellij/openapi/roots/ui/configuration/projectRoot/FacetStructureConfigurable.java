@@ -17,6 +17,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
@@ -266,7 +267,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
-  private class MyNavigateAction extends AnAction {
+  private class MyNavigateAction extends AnAction implements DumbAware {
     private MyNavigateAction() {
       super(ProjectBundle.message("action.name.facet.navigate"));
       registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree);
