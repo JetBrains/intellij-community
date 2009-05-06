@@ -47,6 +47,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   private final ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
   private final FileChooserDescriptor myDescriptor;
   private final ExcludedEntriesConfiguration myConfiguration;
+  private ExcludedEntriesConfigurable.ExcludedEntriesPanel myExcludedEntriesPanel;
 
   public ExcludedEntriesConfigurable(Project project, FileChooserDescriptor descriptor, final ExcludedEntriesConfiguration configuration) {
     myDescriptor = descriptor;
@@ -60,6 +61,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     for (ExcludeEntryDescription description : descriptions) {
       myExcludeEntryDescriptions.add(description.copy(myProject));
     }
+    ((AbstractTableModel)myExcludedEntriesPanel.myExcludedTable.getModel()).fireTableDataChanged();
   }
 
   private void disposeMyDescriptions() {
@@ -91,10 +93,14 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   }
 
   public JComponent createComponent() {
-    return new ExcludedEntriesPanel();
+    if (myExcludedEntriesPanel == null) {
+      myExcludedEntriesPanel = new ExcludedEntriesPanel();
+    }
+    return myExcludedEntriesPanel;
   }
 
   public void disposeUIResources() {
+    myExcludedEntriesPanel = null;
   }
 
   private class ExcludedEntriesPanel extends PanelWithButtons {
@@ -337,9 +343,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       if (value instanceof ExcludeEntryDescription) {
         ExcludeEntryDescription description = (ExcludeEntryDescription)value;
         setText(description.getPresentableUrl());
-        if(!description.isValid()){
-          setForeground(Color.RED);
-        }
+        setForeground(description.isValid()? table.getForeground() : Color.RED);
       }
 
       if (!isSelected) {
