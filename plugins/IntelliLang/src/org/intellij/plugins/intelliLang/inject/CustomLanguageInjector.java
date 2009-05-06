@@ -33,6 +33,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +83,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
   private void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     // optimization
-    if (place instanceof PsiLiteralExpression && !isStringLiteral(place)) return;
+    if (!PsiUtilEx.isStringOrCharacterLiteral(place)) return;
 
     for (Iterator<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> it = myTempPlaces.iterator(); it.hasNext();) {
       final Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage> pair = it.next();
@@ -192,18 +193,6 @@ public final class CustomLanguageInjector implements ProjectComponent {
         o.getInjectedLanguage(myInjectionConfiguration, place, processor);
       }
     }
-  }
-
-  static boolean isStringLiteral(final PsiElement place) {
-    if (place instanceof PsiLiteralExpression) {
-      final PsiElement child = place.getFirstChild();
-      if (child != null && child instanceof PsiJavaToken) {
-        if (((PsiJavaToken)child).getTokenType() == JavaTokenType.STRING_LITERAL) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @NotNull

@@ -82,10 +82,7 @@ public class ContextComputationProcessor {
       collectOperands(binaryExpression.getLOperand(), result, unparsable);
       collectOperands(binaryExpression.getROperand(), result, unparsable);
     }
-    else if (expression instanceof PsiLanguageInjectionHost &&
-             (firstChild = expression.getFirstChild()) instanceof PsiJavaToken &&
-             (((PsiJavaToken)firstChild).getTokenType() == JavaTokenType.STRING_LITERAL ||
-              ((PsiJavaToken)firstChild).getTokenType() == JavaTokenType.CHARACTER_LITERAL)) {
+    else if (PsiUtilEx.isStringOrCharacterLiteral(expression)) {
       result.add(expression);
     }
     else {

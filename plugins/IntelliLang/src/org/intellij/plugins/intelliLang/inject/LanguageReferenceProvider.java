@@ -39,7 +39,7 @@ final class LanguageReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull ProcessingContext context) {
-    if (PsiUtilEx.isStringLiteral(psiElement)) {
+    if (PsiUtilEx.isStringOrCharacterLiteral(psiElement)) {
       final PsiLiteralExpression expression = (PsiLiteralExpression)psiElement;
 
       final PsiNameValuePair valuePair =
