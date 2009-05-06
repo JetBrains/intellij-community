@@ -204,7 +204,8 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
           buf.append("\n");
         }
         final DebugProcessImpl debugProcess = context.getDebugProcess();
-        if (LOG_EXPRESSION_ENABLED && getLogMessage() != null && !"".equals(getLogMessage().getText())) {
+        final TextWithImports expressionToEvaluate = getLogMessage();
+        if (LOG_EXPRESSION_ENABLED && expressionToEvaluate != null && !"".equals(expressionToEvaluate.getText())) {
           if(!debugProcess.isAttached()) {
             return;
           }
@@ -212,18 +213,16 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
           try {
             ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
               public ExpressionEvaluator compute() throws EvaluateException {
-                return EvaluatorBuilderImpl.getInstance().build(getLogMessage(), ContextUtil.getContextElement(context), ContextUtil.getSourcePosition(context));
+                return EvaluatorBuilderImpl.getInstance().build(expressionToEvaluate, ContextUtil.getContextElement(context), ContextUtil.getSourcePosition(context));
               }
             });
-            String result = DebuggerUtils.getValueAsString(context, evaluator.evaluate(context));
-            buf.append(getLogMessage());
-            buf.append(" = ");
+            final String result = DebuggerUtils.getValueAsString(context, evaluator.evaluate(context));
             buf.append(result);
           }
           catch (EvaluateException e) {
             buf.append(DebuggerBundle.message("error.unable.to.evaluate.expression"));
             buf.append(" \"");
-            buf.append(getLogMessage());
+            buf.append(expressionToEvaluate);
             buf.append("\"");
             buf.append(" : ");
             buf.append(e.getMessage());
