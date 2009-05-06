@@ -3,6 +3,8 @@ package com.intellij.appengine.sdk;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -12,7 +14,10 @@ public abstract class AppEngineSdkManager {
     return ServiceManager.getService(AppEngineSdkManager.class);
   }
 
-  public abstract boolean isClassInWhiteList(@NotNull String className);
+  @NotNull
+  public abstract AppEngineSdk findSdk(String sdkPath);
 
-  public abstract boolean isMethodInBlacklist(@NotNull String className, @NotNull String methodName);
+  @NotNull
+  public abstract List<? extends AppEngineSdk> getAllSdk();
+
 }

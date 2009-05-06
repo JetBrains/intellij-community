@@ -1,7 +1,8 @@
 package com.intellij.appengine.server.run;
 
-import com.intellij.appengine.server.integration.AppEngineServerData;
+import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.server.instance.AppEngineServerModel;
+import com.intellij.appengine.server.integration.AppEngineServerData;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
@@ -12,9 +13,8 @@ import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 
 /**
  * @author nik
@@ -70,12 +70,12 @@ public class AppEngineServerStartupPolicy implements JavaCommandLineStartupPolic
 
   public JavaParameters createCommandLine(CommonModel commonModel) throws ExecutionException {
     final AppEngineServerData data = (AppEngineServerData)commonModel.getApplicationServer().getPersistentData();
-    final String sdkHomePath = data.getSdkPath();
-    if (StringUtil.isEmpty(sdkHomePath)) {
+    final AppEngineSdk sdk = data.getSdk();
+    if (!sdk.getToolsApiJarFile().exists()) {
       throw new ExecutionException("Path to App Engine SDK isn't specified");
     }
     final JavaParameters javaParameters = new JavaParameters();
-    javaParameters.getClassPath().add(FileUtil.toSystemDependentName(sdkHomePath + "/lib/appengine-tools-api.jar"));
+    javaParameters.getClassPath().add(sdk.getToolsApiJarFile().getAbsolutePath());
     javaParameters.setMainClass("com.google.appengine.tools.development.DevAppServerMain");
 
     final ServerModel serverModel = commonModel.getServerModel();
@@ -83,11 +83,11 @@ public class AppEngineServerStartupPolicy implements JavaCommandLineStartupPolic
     if (webFacet == null) {
       throw new ExecutionException("Web Facet isn't specified");
     }
-    final Sdk sdk = ModuleRootManager.getInstance(webFacet.getModule()).getSdk();
-    if (sdk == null) {
+    final Sdk jdk = ModuleRootManager.getInstance(webFacet.getModule()).getSdk();
+    if (jdk == null) {
       throw new ExecutionException("JDK isn't specified for module '" + webFacet.getModule().getName() + "'");
     }
-    javaParameters.setJdk(sdk);
+    javaParameters.setJdk(jdk);
 
     final ParametersList parameters = javaParameters.getProgramParametersList();
     parameters.add("-p", String.valueOf(serverModel.getLocalPort()));

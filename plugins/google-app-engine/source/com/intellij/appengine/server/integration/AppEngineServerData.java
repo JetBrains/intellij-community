@@ -1,9 +1,12 @@
 package com.intellij.appengine.server.integration;
 
+import com.intellij.appengine.sdk.AppEngineSdk;
+import com.intellij.appengine.sdk.AppEngineSdkManager;
 import com.intellij.javaee.appServerIntegrations.ApplicationServerPersistentData;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -11,15 +14,21 @@ import org.jdom.Element;
 public class AppEngineServerData implements ApplicationServerPersistentData {
   private String mySdkPath;
 
-  public AppEngineServerData(String sdkPath) {
+  public AppEngineServerData(@NotNull String sdkPath) {
     mySdkPath = sdkPath;
   }
 
+  @NotNull 
   public String getSdkPath() {
     return mySdkPath;
   }
 
-  public void setSdkPath(String sdkPath) {
+  @NotNull
+  public AppEngineSdk getSdk() {
+    return AppEngineSdkManager.getInstance().findSdk(mySdkPath);
+  }
+
+  public void setSdkPath(@NotNull String sdkPath) {
     mySdkPath = sdkPath;
   }
 

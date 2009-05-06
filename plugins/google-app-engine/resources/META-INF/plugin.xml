@@ -2,7 +2,7 @@
   <name>Google App Engine Integration</name>
   <id>com.intellij.appengine</id>
   <description>Provides support for developing Google App Engine applications</description>
-  <version>0.101</version>
+  <version>0.102</version>
   <idea-version since-build="9000"/>
   <depends>com.intellij.javaee</depends>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
@@ -11,10 +11,15 @@
     <![CDATA[
     This plugin provides the following features:
     <ul>
-     <li> option on "Technologies" page of the module wizard to create Web Application with appengine-web.xml descriptor
+     <li> option on "Technologies" page of the module wizard to quickly create:
+       <ul>
+         <li>appengine-web.xml descriptor
+         <li>App Engine Facet
+         <li>App Engine Dev server run configuration
+       </ul>
      <li> inspection to report forbidden code in App Engine application
      <li> run configuration for Google App Engine Dev server
-     <li> action for uploading an application to Google (Tools | Upload App Engine Application...)
+     <li> action for uploading an application to Google (Tools | Upload App Engine Application)
     </ul>
    ]]></change-notes>
 
@@ -26,13 +31,14 @@
                         serviceImplementation="com.intellij.appengine.sdk.impl.AppEngineSdkManagerImpl"/>
 
     <inspectionToolProvider implementation="com.intellij.appengine.inspections.AppEngineInspectionsProvider"/>
-    <frameworkSupport implementation="com.intellij.appengine.config.AppEngineSupportProvider"/>
-    <fileTemplateGroup implementation="com.intellij.appengine.config.AppEngineTemplateGroupDescriptorFactory"/>
+    <frameworkSupport implementation="com.intellij.appengine.facet.AppEngineSupportProvider"/>
+    <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
+    <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
   </extensions>
 
   <actions>
     <action class="com.intellij.appengine.actions.UploadApplicationAction" id="AppEngine.UploadApplication"
-            text="Upload App Engine Application..." icon="/icons/appEngine.png">
+            text="Upload App Engine Application" icon="/icons/appEngine.png">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>

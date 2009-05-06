@@ -1,4 +1,4 @@
-package com.intellij.appengine.config;
+package com.intellij.appengine.facet;
 
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;

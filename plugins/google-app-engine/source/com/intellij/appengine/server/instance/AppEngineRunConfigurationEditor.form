@@ -13,7 +13,8 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Web Facet:"/>
+          <labelFor value="20025"/>
+          <text value="&amp;Web Facet to deploy:"/>
         </properties>
       </component>
       <vspacer id="f11f3">
@@ -21,7 +22,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <component id="20025" class="javax.swing.JComboBox" binding="myWebFacetComboBox">
+      <component id="20025" class="javax.swing.JComboBox" binding="myAppEngineFacetComboBox">
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -32,7 +33,8 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Port:"/>
+          <labelFor value="5c4e6"/>
+          <text value="&amp;Port:"/>
         </properties>
       </component>
       <component id="5c4e6" class="javax.swing.JTextField" binding="myPortField">

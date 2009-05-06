@@ -1,24 +1,22 @@
 package com.intellij.appengine.inspections;
 
-import com.intellij.appengine.sdk.AppEngineSdkManager;
-import com.intellij.appengine.server.integration.AppEngineServerIntegration;
-import com.intellij.appengine.util.AppEngineUtil;
+import com.intellij.appengine.facet.AppEngineFacet;
+import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
-import com.intellij.javaee.appServerIntegrations.ApplicationServer;
+import com.intellij.facet.FacetManager;
 import com.intellij.javaee.facet.JavaeeFacetUtil;
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.jsp.JspFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,20 +30,22 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
 
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
-    final List<ApplicationServer> servers = ApplicationServersManager.getInstance().getApplicationServers(AppEngineServerIntegration.getInstance());
-    if (servers.isEmpty()) {
-      return null;
-    }
-
     final Project project = manager.getProject();
     final WebFacet webFacet = JavaeeFacetUtil.getInstance().getJavaeeFacet(file.getVirtualFile(), WebFacet.ID, project);
     if (webFacet == null) {
       return null;
     }
-    if (!AppEngineUtil.isAppEngineSupportEnabled(webFacet)) return null;
+
+    final AppEngineFacet appEngineFacet = FacetManager.getInstance(webFacet.getModule()).getFacetByType(webFacet, AppEngineFacet.ID);
+    if (appEngineFacet == null) {
+      return null;
+    }
+    final AppEngineSdk appEngineSdk = appEngineFacet.getSdk();
+    if (!appEngineSdk.isValid()) {
+      return null;
+    }
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final AppEngineSdkManager sdkManager = AppEngineSdkManager.getInstance();
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     file.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -73,7 +73,7 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
           final PsiElement resolved = classReference.resolve();
           if (resolved instanceof PsiClass) {
             final String qualifiedName = ((PsiClass)resolved).getQualifiedName();
-            if (qualifiedName != null && sdkManager.isMethodInBlacklist(qualifiedName, "new")) {
+            if (qualifiedName != null && appEngineSdk.isMethodInBlacklist(qualifiedName, "new")) {
               final String message = "App Engine application should not create new instances of '" + qualifiedName + "' class";
               problems.add(manager.createProblemDescriptor(classReference, message, LocalQuickFix.EMPTY_ARRAY,
                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
@@ -98,7 +98,7 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
             if (psiClass != null) {
               final String qualifiedName = psiClass.getQualifiedName();
               final String methodName = method.getName();
-              if (qualifiedName != null && sdkManager.isMethodInBlacklist(qualifiedName, methodName)) {
+              if (qualifiedName != null && appEngineSdk.isMethodInBlacklist(qualifiedName, methodName)) {
                 final String message =
                     "AppEngine application should not call '" + StringUtil.getShortName(qualifiedName) + "." + methodName + "' method";
                 problems.add(manager.createProblemDescriptor(methodExpression, message, LocalQuickFix.EMPTY_ARRAY,
@@ -122,7 +122,7 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
               for (OrderEntry entry : list) {
                 if (entry instanceof JdkOrderEntry) {
                   final String className = ((PsiClass)resolved).getQualifiedName();
-                  if (className != null && !sdkManager.isClassInWhiteList(className)) {
+                  if (className != null && !appEngineSdk.isClassInWhiteList(className)) {
                     problems.add(manager.createProblemDescriptor(reference, "Class '" + className + "' is not included in App Engine JRE White List", LocalQuickFix.EMPTY_ARRAY,
                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
                   }
