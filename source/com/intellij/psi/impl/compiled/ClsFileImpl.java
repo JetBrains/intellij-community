@@ -338,10 +338,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     ClsFileImpl psiFile = null;
     if (provider != null) {
       final PsiFile psi = provider.getPsi(provider.getBaseLanguage());
-      if (!(psi instanceof ClsFileImpl)) {
-        return "Unable to decompile";
+      if (psi instanceof ClsFileImpl) {
+        psiFile = (ClsFileImpl)psi;
       }
-      psiFile = (ClsFileImpl)psi;
     }
 
     if (psiFile == null) {
