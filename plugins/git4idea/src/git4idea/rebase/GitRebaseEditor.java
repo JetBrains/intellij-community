@@ -100,8 +100,8 @@ public class GitRebaseEditor extends DialogWrapper {
     myGitRoot = gitRoot;
     setTitle(GitBundle.getString("rebase.editor.title"));
     if (SystemInfo.isWindows && file.startsWith(CYGDRIVE_PREFIX)) {
-      final int pfx = CYGDRIVE_PREFIX.length();
-      file = file.substring(pfx, pfx + 1) + ":" + file.substring(pfx + 1);
+      final int prefixSize = CYGDRIVE_PREFIX.length();
+      file = file.substring(prefixSize, prefixSize + 1) + ":" + file.substring(prefixSize + 1);
     }
     myFile = file;
     myTableModel = new MyTableModel();
@@ -173,7 +173,7 @@ public class GitRebaseEditor extends DialogWrapper {
       return;
     }
     int i = 0;
-    while(i<entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.skip ) {
+    while (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.skip) {
       i++;
     }
     if (entries.get(i).getAction() == GitRebaseEntry.Action.squash) {
@@ -216,7 +216,7 @@ public class GitRebaseEditor extends DialogWrapper {
   protected String getHelpId() {
     return "reference.VersionControl.Git.RebaseCommits";
   }
-  
+
   /**
    * Cancel rebase
    */
@@ -332,7 +332,7 @@ public class GitRebaseEditor extends DialogWrapper {
       String encoding = GitConfigUtil.getLogEncoding(myProject, myGitRoot);
       final StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(file), encoding)));
       while (s.hasMoreData()) {
-        if (s.isEol() || s.startsWith('#')) {
+        if (s.isEol() || s.startsWith('#') || s.startsWith("noop")) {
           s.nextLine();
           continue;
         }

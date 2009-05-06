@@ -16,7 +16,7 @@
 package git4idea.commands;
 
 /**
- * A parser of strings that is oriented to scanning typlical git outputs
+ * A parser of strings that is oriented to scanning typical git outputs
  */
 public class StringScanner {
   /**
@@ -95,17 +95,17 @@ public class StringScanner {
   }
 
   /**
-   * Gets next token that is ended by {@code bondaryChar} or new line. Consumes {@code bondaryChar} but not a new line.
-   * Start position is the current. So if the string starts with {@code bondaryChar} a empty token is returned.
+   * Gets next token that is ended by {@code boundaryChar} or new line. Consumes {@code boundaryChar} but not a new line.
+   * Start position is the current. So if the string starts with {@code boundaryChar} a empty token is returned.
    *
-   * @param bondaryChar a boundary character
+   * @param boundaryChar a boundary character
    * @return a token
    */
-  public String boundedToken(final char bondaryChar) {
+  public String boundedToken(final char boundaryChar) {
     int start = myPosition;
     for (; myPosition < myText.length(); myPosition++) {
       final char ch = myText.charAt(myPosition);
-      if (ch == bondaryChar) {
+      if (ch == boundaryChar) {
         final String rc = myText.substring(start, myPosition);
         myPosition++;
         return rc;
@@ -120,11 +120,21 @@ public class StringScanner {
   /**
    * Check if the next character is the specified one
    *
-   * @param c the expecte character
+   * @param c the expected character
    * @return true if the character matches expected.
    */
   public boolean startsWith(final char c) {
     return hasMoreData() && myText.charAt(myPosition) == c;
+  }
+
+  /**
+   * Check if the rest of the string starts with the specified text
+   *
+   * @param text the text to check
+   * @return true if the text contains the string.
+   */
+  public boolean startsWith(String text) {
+    return myText.startsWith(text, myPosition);
   }
 
   /**
