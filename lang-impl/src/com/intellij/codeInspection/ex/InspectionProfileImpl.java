@@ -464,7 +464,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
             if (state.getScope() != null) {
               tools.addTool(state.getScope(), inspectionTool, state.isEnabled(), state.getLevel());
             } else {
-              tools.setTool(inspectionTool, state.isEnabled(), state.getLevel());
+              tools.setTool(inspectionTool);
             }
           }
         }
@@ -475,7 +475,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
             tools.addTool(scope, inspectionTool, toolList.isEnabled(), toolList.getLevel());
           } else {
             final HighlightDisplayKey key = HighlightDisplayKey.find(inspectionTool.getShortName());
-            tools.setTool(inspectionTool, profile.isToolEnabled(key), profile.getErrorLevel(key));
+            tools.setTool(inspectionTool);
           }
         }
       }
@@ -624,7 +624,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                 copyToolsConfigurations(inspectionProfile, scope);
                 for (InspectionProfileEntry entry : inspectionProfile.getInspectionTools(null)) {
                   final HighlightDisplayKey key = HighlightDisplayKey.find(entry.getShortName());
-                  addScope(entry, scope, inspectionProfile.getErrorLevel(key, (NamedScope)null), inspectionProfile.isToolEnabled(key));
+                  myTools.get(entry.getShortName())
+                    .addTool(scope, (InspectionTool)entry, inspectionProfile.isToolEnabled(key), inspectionProfile.getErrorLevel(key, (NamedScope)null));
                 }
               }
             }
@@ -636,7 +637,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     for (InspectionProfileEntry tool : tools) {
       final NamedScope allScope = DefaultScopesProvider.getAllScope();
       final ToolsImpl toolsSettings = myTools.get(tool.getShortName());
-      addScope(tool, allScope, toolsSettings.getLevel(), toolsSettings.isEnabled());
+      myTools.get(tool.getShortName()).addTool(allScope, (InspectionTool)tool, toolsSettings.isEnabled(), toolsSettings.getLevel());
     }
   }
 
@@ -694,10 +695,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key, NamedScope scope) {
     final ToolsImpl tools = myTools.get(key.toString());
     return tools != null ? tools.getLevel(scope) : HighlightDisplayLevel.WARNING;
-  }
-
-  public void addScope(InspectionProfileEntry tool, NamedScope scope, HighlightDisplayLevel level, boolean enabled) {
-     myTools.get(tool.getShortName()).addTool(scope, (InspectionTool)tool, enabled, level);
   }
 
   public void addOneMoreScope(InspectionProfileEntry tool, NamedScope scope, HighlightDisplayLevel level, boolean enabled) {

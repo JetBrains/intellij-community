@@ -52,7 +52,7 @@ public class ToolsImpl implements Tools {
     myLevel = level;
   }
 
-  public void addTool(NamedScope scope, InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+  public void addTool(NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
     if (myTools == null) {
       myTools = new ArrayList<ScopeToolState>();
       myTool = null;
@@ -176,7 +176,7 @@ public class ToolsImpl implements Tools {
     return myTools;
   }
 
-  public void setTool(InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+  public void setTool(InspectionProfileEntry tool) {
     myTool = tool;
   }
 
