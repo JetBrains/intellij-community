@@ -51,6 +51,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.vcsUtil.ActionWithTempFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.SelectIgnorePatternsToRemoveOnDeleteDialog;
@@ -494,6 +496,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     myUndoingMove = false;
     final Project project = event.getProject();
     if (project == null) return;
+    commandStarted(project);
+  }
+
+  void commandStarted(final Project project) {
+    myUndoingMove = false;
     myMoveExceptions.remove(project);
     myIgnoredInfo.remove(project);
   }
@@ -504,6 +511,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   public void commandFinished(CommandEvent event) {
     final Project project = event.getProject();
     if (project == null) return;
+    commandFinished(project);
+  }
+
+  void commandFinished(final Project project) {
     if (myAddedFiles.size() > 0) {
       processAddedFiles(project);
     }
@@ -523,7 +534,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       refreshFiles(project);
     }
   }
-
+  
   private void dealWithIgnorePatterns(Project project) {
     final Map<String, IgnoredFileInfo> map = myIgnoredInfo.get(project);
     if (map != null) {
@@ -835,5 +846,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
     Project p = vcs.getProject();
     return UndoManager.getInstance(p).isUndoInProgress();
+  }
+
+  public void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {
   }
 }
