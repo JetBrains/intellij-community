@@ -1336,7 +1336,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final @Nullable RequestHint.SmartStepFilter smartStepFilter) {
       super(suspendContext);
-      myIgnoreFilters = ignoreFilters;
+      myIgnoreFilters = ignoreFilters || smartStepFilter != null;
       mySmartStepFilter = smartStepFilter;
     }
 
