@@ -32,11 +32,14 @@ public class AppEngineSdkManagerImpl extends AppEngineSdkManager {
 
   @NotNull
   @Override
-  public List<? extends AppEngineSdk> getAllSdk() {
+  public List<? extends AppEngineSdk> getValidSdks() {
     final List<ApplicationServer> servers = ApplicationServersManager.getInstance().getApplicationServers(AppEngineServerIntegration.getInstance());
     List<AppEngineSdk> sdkList = new ArrayList<AppEngineSdk>();
     for (ApplicationServer server : servers) {
-      sdkList.add(((AppEngineServerData)server.getPersistentData()).getSdk());
+      final AppEngineSdk sdk = ((AppEngineServerData)server.getPersistentData()).getSdk();
+      if (sdk.isValid()) {
+        sdkList.add(sdk);
+      }
     }
     return sdkList;
   }

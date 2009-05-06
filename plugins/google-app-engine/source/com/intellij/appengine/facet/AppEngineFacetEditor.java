@@ -42,7 +42,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   }
 
   public boolean isModified() {
-    return mySdkEditor.getPath().equals(myFacetConfiguration.getSdkHomePath());
+    return !mySdkEditor.getPath().equals(myFacetConfiguration.getSdkHomePath());
   }
 
   public void apply() throws ConfigurationException {

@@ -1,6 +1,8 @@
 package com.intellij.appengine.facet;
 
 import com.intellij.appengine.util.AppEngineUtil;
+import com.intellij.appengine.sdk.AppEngineSdkManager;
+import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.autodetecting.FacetDetector;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -50,22 +53,27 @@ public class AppEngineFacetType extends FacetType<AppEngineFacet,  AppEngineFace
   @Override
   public void registerDetectors(FacetDetectorRegistry<AppEngineFacetConfiguration> registry) {
     final FacetDetectorRegistryEx<AppEngineFacetConfiguration> registryEx = (FacetDetectorRegistryEx<AppEngineFacetConfiguration>)registry;
-    FacetDetector<VirtualFile, AppEngineFacetConfiguration> detector = new FacetDetector<VirtualFile, AppEngineFacetConfiguration>() {
-      @Override
-      public AppEngineFacetConfiguration detectFacet(VirtualFile source,
-                                                     Collection<AppEngineFacetConfiguration> existentFacetConfigurations) {
-        if (!existentFacetConfigurations.isEmpty()) {
-          return existentFacetConfigurations.iterator().next();
-        }
-        return new AppEngineFacetConfiguration();
-      }
-    };
-    registryEx.registerUniversalDetectorByFileNameAndRootTag(AppEngineUtil.APPENGINE_WEB_XML_NAME, "appengine-web-app", detector,
+    registryEx.registerUniversalDetectorByFileNameAndRootTag(AppEngineUtil.APPENGINE_WEB_XML_NAME, "appengine-web-app", new AppEngineFacetDetector(),
                                                              WebUtilImpl.BY_PARENT_WEB_ROOT_SELECTOR);
   }
 
   @Override
   public Icon getIcon() {
     return AppEngineUtil.APP_ENGINE_ICON;
+  }
+
+  private static class AppEngineFacetDetector extends FacetDetector<VirtualFile, AppEngineFacetConfiguration> {
+    @Override
+    public AppEngineFacetConfiguration detectFacet(VirtualFile source, Collection<AppEngineFacetConfiguration> existentFacetConfigurations) {
+      if (!existentFacetConfigurations.isEmpty()) {
+        return existentFacetConfigurations.iterator().next();
+      }
+      final AppEngineFacetConfiguration configuration = new AppEngineFacetConfiguration();
+      final List<? extends AppEngineSdk> sdks = AppEngineSdkManager.getInstance().getValidSdks();
+      if (!sdks.isEmpty()) {
+        configuration.setSdkHomePath(sdks.get(0).getSdkHomePath());
+      }
+      return configuration;
+    }
   }
 }

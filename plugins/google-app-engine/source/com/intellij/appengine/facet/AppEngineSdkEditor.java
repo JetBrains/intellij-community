@@ -24,7 +24,7 @@ public class AppEngineSdkEditor {
     final JComboBox comboBox = myPathEditor.getComboBox();
     comboBox.setEditable(true);
     comboBox.removeAllItems();
-    for (AppEngineSdk sdk : AppEngineSdkManager.getInstance().getAllSdk()) {
+    for (AppEngineSdk sdk : AppEngineSdkManager.getInstance().getValidSdks()) {
       comboBox.addItem(FileUtil.toSystemDependentName(sdk.getSdkHomePath()));
     }
   }

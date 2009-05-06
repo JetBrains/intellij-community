@@ -11,6 +11,8 @@ import com.intellij.javaee.appServerIntegrations.ApplicationServerInfo;
 import com.intellij.javaee.appServerIntegrations.CantFindApplicationServerJarsException;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -147,7 +149,11 @@ public class AppEngineSdkImpl implements AppEngineSdk {
       return null;
     }
     final ApplicationServer server = model.createNewApplicationServer(serverInfo.getDefaultName(), serverInfo.getDefaultLibraries(), serverData);
-    model.commit();
+    new WriteAction() {
+      protected void run(final Result result) {
+        model.commit();
+      }
+    }.execute();
     return server;
   }
 
