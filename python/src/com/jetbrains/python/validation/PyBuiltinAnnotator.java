@@ -37,11 +37,11 @@ public class PyBuiltinAnnotator extends PyAnnotator {
     }
     else if (node.getQualifier() == null) {
       // things like len()
-      for (ResolveResult resolved : node.multiResolve(false)) { // things like constructors give multiple results
-        if (PyBuiltinCache.hasInBuiltins(resolved.getElement())) {
+      ResolveResult[] resolved = node.multiResolve(false); // constructors, etc give multiple results...
+      if (resolved.length > 0) {
+        if (PyBuiltinCache.hasInBuiltins(resolved[0].getElement())) { // ...but we only care about single-resolvers
           Annotation ann = getHolder().createInfoAnnotation(node, null);
           ann.setTextAttributes(PyHighlighter.PY_BUILTIN_NAME);
-          break;
         }
       }
     }
