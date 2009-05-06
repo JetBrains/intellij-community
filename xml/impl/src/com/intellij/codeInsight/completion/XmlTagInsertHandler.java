@@ -23,9 +23,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -39,9 +37,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-public class XmlTagInsertHandler extends BasicInsertHandler {
-  public XmlTagInsertHandler() {
-  }
+public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
+  public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
   public void handleInsert(InsertionContext context, LookupElement item) {
     Project project = context.getProject();
@@ -54,7 +51,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
     editor.getDocument().deleteString(offset, offset + 1);
     final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
-    if (!isValidTag(tag)) return;
+    if (tag == null) return;
 
     context.setAddCompletionChar(false);
 
@@ -92,14 +89,6 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
     }
-    current = context.getFile().findElementAt(context.getStartOffset());
-    if (current != null && current.getPrevSibling()instanceof XmlToken) {
-      if (!isClosed(current) && ((XmlToken)current.getPrevSibling()).getTokenType() == XmlTokenType.XML_END_TAG_START) {
-        final int insertOffset = current.getTextRange().getEndOffset();
-        editor.getDocument().insertString(insertOffset, ">");
-        editor.getCaretModel().moveToOffset(insertOffset + 1);
-      }
-    }
 
     if (context.getCompletionChar() == ' ' && TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
       return;
@@ -107,26 +96,6 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
 
     final TailType tailType = LookupItem.handleCompletionChar(editor, item, context.getCompletionChar());
     tailType.processTail(editor, editor.getCaretModel().getOffset());
-  }
-
-  protected boolean isValidTag(final XmlTag tag) {
-    return tag != null;
-  }
-
-  private static boolean isClosed(PsiElement current) {
-    PsiElement e = current;
-
-    while (e != null) {
-      if (e instanceof XmlToken) {
-        XmlToken token = (XmlToken)e;
-        if (token.getTokenType() == XmlTokenType.XML_TAG_END) return true;
-        if (token.getTokenType() == XmlTokenType.XML_EMPTY_ELEMENT_END) return true;
-      }
-
-      e = e.getNextSibling();
-    }
-
-    return false;
   }
 
   private static void insertIncompleteTag(char completionChar, final Editor editor, final Project project, XmlElementDescriptor descriptor, XmlTag tag) {
@@ -163,7 +132,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
 
     XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(tag);
     StringBuilder indirectRequiredAttrs = null;
-    final XmlExtension extension = XmlExtension.getExtension((XmlFile)tag.getContainingFile());
+    final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
     if (WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes()) {
       for (XmlAttributeDescriptor attributeDecl : attributes) {
         String attributeName = attributeDecl.getName(tag);

@@ -3,6 +3,9 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.codeInsight.completion.XmlTagInsertHandler;
+import com.intellij.codeInsight.TailType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -15,9 +18,9 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,6 +51,7 @@ public class TagNameReference implements PsiReference {
     return parent instanceof XmlTag ? parent : element;
   }
 
+  @Nullable
   protected XmlTag getTagElement() {
     final PsiElement element = getElement();
     if(element == myNameElement.getPsi()) return null;
@@ -154,24 +158,37 @@ public class TagNameReference implements PsiReference {
   }
 
   public Object[] getVariants(){
-
     final PsiElement element = getElement();
     if(!myStartTagFlag){
       if (element instanceof XmlTag) {
-        return new LookupElement[]{LookupElementFactory.getInstance().createLookupElement(((XmlTag)element).getName()).setAutoCompletionPolicy(
-            AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE)};
-      } else {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
+        return new LookupElement[]{createClosingTagLookupElement((XmlTag)element)};
       }
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     return getTagNameVariants((XmlTag)element);
   }
 
+  protected static MutableLookupElement<String> createClosingTagLookupElement(XmlTag tag) {
+    return LookupElementFactory.getInstance().createLookupElement(tag.getName()).setAutoCompletionPolicy(
+        AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE).setTailType(TailType.createSimpleTailType('>'));
+  }
 
-  public static String[] getTagNameVariants(final XmlTag element) {
+
+  public static MutableLookupElement[] getTagNameVariants(final XmlTag element) {
     final ArrayList<String> namespaces = new ArrayList<String>(Arrays.asList(element.knownNamespaces()));
     namespaces.add(XmlUtil.EMPTY_URI); // empty namespace
-    return getTagNameVariants(element, namespaces, null);
+    final String[] variants = getTagNameVariants(element, namespaces, null);
+    return ContainerUtil.map2Array(variants, MutableLookupElement.class, new Function<String, MutableLookupElement>() {
+      public MutableLookupElement fun(String qname) {
+        final MutableLookupElement<String> lookupElement = LookupElementFactory.getInstance().createLookupElement(qname);
+        final int separator = qname.indexOf(':');
+        if (separator > 0) {
+          lookupElement.addLookupStrings(qname.substring(separator + 1));
+        }
+        lookupElement.setInsertHandler(XmlTagInsertHandler.INSTANCE);
+        return lookupElement;
+      }
+    });
   }
 
   public static String[] getTagNameVariants(final XmlTag element,
@@ -206,7 +223,7 @@ public class TagNameReference implements PsiReference {
     }
 
     final Set<XmlNSDescriptor> visited = new HashSet<XmlNSDescriptor>();
-    final XmlExtension extension = XmlExtension.getExtension((XmlFile)element.getContainingFile());
+    final XmlExtension extension = XmlExtension.getExtension(element.getContainingFile());
     final ArrayList<XmlElementDescriptor> variants = new ArrayList<XmlElementDescriptor>();
     for (final String namespace: namespaces) {
       final int initialSize = variants.size();

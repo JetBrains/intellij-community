@@ -140,7 +140,13 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final CompletionContext newContext = insertedInfo.getFirst();
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
 
-    final CompletionParameters parameters = new CompletionParameters(insertedElement, newContext.file, myCompletionType, newContext.getStartOffset(), invocationCount);
+    PsiFile originalFile = newContext.file;
+    final PsiFile rightLanguagedOriginal = originalFile.getViewProvider().getPsi(insertedElement.getContainingFile().getLanguage());
+    if (rightLanguagedOriginal != null) {
+      originalFile = rightLanguagedOriginal;
+    }
+
+    final CompletionParameters parameters = new CompletionParameters(insertedElement, originalFile, myCompletionType, newContext.getStartOffset(), invocationCount);
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();

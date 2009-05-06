@@ -3,16 +3,12 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
@@ -23,10 +19,8 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +45,6 @@ public class XmlCompletionData extends CompletionData {
       final CompletionVariant variant = new CompletionVariant(createTagCompletionFilter());
       variant.includeScopeClass(XmlTag.class);
       variant.addCompletionFilter(TrueFilter.INSTANCE);
-      variant.setInsertHandler(createTagInsertHandler());
       registerVariant(variant);
     }
 
@@ -59,7 +52,6 @@ public class XmlCompletionData extends CompletionData {
       final CompletionVariant variant = new CompletionVariant(createAttributeCompletionFilter());
       variant.includeScopeClass(XmlAttribute.class);
       variant.addCompletionFilter(TrueFilter.INSTANCE);
-      variant.setInsertHandler(new XmlAttributeInsertHandler());
       registerVariant(variant);
     }
 
@@ -111,10 +103,6 @@ public class XmlCompletionData extends CompletionData {
     }
   }
 
-  protected XmlTagInsertHandler createTagInsertHandler() {
-    return new XmlTagInsertHandler();
-  }
-
   protected ElementFilter createXmlEntityCompletionFilter() {
     return new AndFilter(new LeftNeighbour(new XmlTextFilter("&")), new OrFilter(new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
                                                                                  new XmlTokenTypeFilter(
@@ -162,42 +150,6 @@ public class XmlCompletionData extends CompletionData {
     return tailOffset;
   }
 
-
-  private static class XmlAttributeInsertHandler extends BasicInsertHandler {
-    public XmlAttributeInsertHandler() {
-    }
-
-    public void handleInsert(InsertionContext context, LookupElement item) {
-      super.handleInsert(context, item);
-
-      final Editor editor = context.getEditor();
-
-      final Document document = editor.getDocument();
-      final int caretOffset = editor.getCaretModel().getOffset();
-      if (PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document).getLanguage() == HTMLLanguage.INSTANCE &&
-          HtmlUtil.isSingleHtmlAttribute((String)((MutableLookupElement)item).getObject())) {
-        return;
-      }
-
-      final CharSequence chars = document.getCharsSequence();
-      if (!CharArrayUtil.regionMatches(chars, caretOffset, "=\"") && !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {
-        if (caretOffset >= document.getTextLength() || "/> \n\t\r".indexOf(document.getCharsSequence().charAt(caretOffset)) < 0) {
-          document.insertString(caretOffset, "=\"\" ");
-        }
-        else {
-          document.insertString(caretOffset, "=\"\"");
-        }
-
-        if ('=' == context.getCompletionChar()) {
-          context.setAddCompletionChar(false); // IDEA-19449
-        }
-      }
-      
-      editor.getCaretModel().moveToOffset(caretOffset + 2);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      editor.getSelectionModel().removeSelection();
-    }
-  }
 
   private static class SimpleTagContentEnumerationValuesGetter implements ContextGetter {
     public Object[] get(final PsiElement context, CompletionContext completionContext) {

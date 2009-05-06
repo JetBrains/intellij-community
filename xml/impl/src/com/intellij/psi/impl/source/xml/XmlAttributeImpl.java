@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.codeInsight.completion.XmlAttributeInsertHandler;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -379,13 +380,14 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     private void addVariants(final Collection<MutableLookupElement<String>> variants, final XmlAttribute[] attributes, final XmlAttributeDescriptor[] descriptors) {
       final XmlTag tag = getParent();
-      final XmlExtension extension = XmlExtension.getExtension((XmlFile)tag.getContainingFile());
+      final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
       for (XmlAttributeDescriptor descriptor : descriptors) {
         if (isValidVariant(descriptor, attributes, extension)) {
           final MutableLookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(descriptor.getName(tag));
           if (descriptor instanceof PsiPresentableMetaData) {
             element.setIcon(((PsiPresentableMetaData)descriptor).getIcon());
           }
+          element.setInsertHandler(XmlAttributeInsertHandler.INSTANCE);
           variants.add(element);
         }
       }
