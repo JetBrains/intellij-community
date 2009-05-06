@@ -21,7 +21,7 @@ public class IgnoreProjectAction extends MavenAction {
 
     final boolean enabled = projectsManager != null && nodes != null && isEnabled(projectsManager, nodes);
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setText((enabled && projectsManager.getIgnoredFlag(nodes.get(0)))
+    e.getPresentation().setText((enabled && projectsManager.getIgnoredState(nodes.get(0)))
                                 ? ProjectBundle.message("maven.ignore.clear")
                                 : (enabled && projectsManager.isIgnored(nodes.get(0)))
                                   ? ProjectBundle.message("maven.ignore.edit")
@@ -34,10 +34,10 @@ public class IgnoreProjectAction extends MavenAction {
     final List<MavenProject> nodes = e.getData(MavenDataKeys.MAVEN_PROJECT_NODES);
 
     if (projectsManager != null && nodes != null && isEnabled(projectsManager, nodes)) {
-      final boolean flag = projectsManager.getIgnoredFlag(nodes.get(0));
+      final boolean flag = projectsManager.getIgnoredState(nodes.get(0));
       if (flag == projectsManager.isIgnored(nodes.get(0))) {
         for (MavenProject each : nodes) {
-          projectsManager.setIgnoredFlag(each, !flag);
+          projectsManager.setIgnoredState(each, !flag);
         }
       }
       else {
@@ -54,7 +54,7 @@ public class IgnoreProjectAction extends MavenAction {
       if (projectsManager.isIgnored(each)) {
         ignoredCount++;
       }
-      if (projectsManager.getIgnoredFlag(each)) {
+      if (projectsManager.getIgnoredState(each)) {
         individuallyIgnoredCount++;
       }
     }

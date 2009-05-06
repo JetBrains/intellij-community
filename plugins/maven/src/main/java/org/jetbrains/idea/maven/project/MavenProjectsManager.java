@@ -39,7 +39,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 @State(name = "MavenProjectsManager", storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
 public class MavenProjectsManager extends SimpleProjectComponent implements PersistentStateComponent<MavenProjectsManagerState>,
@@ -66,10 +65,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private MergingUpdateQueue myImportingQueue;
   private final Set<MavenProject> myProjectsToImport = new THashSet<MavenProject>();
 
-  private Pattern myIgnoredFilesPatternCache;
-
-  private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher
-    = EventDispatcher.create(MavenProjectsTree.Listener.class);
+  private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher = EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createEmptyCOWList();
 
   public static MavenProjectsManager getInstance(Project p) {
@@ -82,15 +78,17 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   public MavenProjectsManagerState getState() {
     if (isInitialized()) {
-      myState.originalFiles = myProjectsTree.getManagedFilesPaths();
-      myState.activeProfiles = myProjectsTree.getActiveProfiles();
+      applyTreeToState();
     }
     return myState;
   }
 
   public void loadState(MavenProjectsManagerState state) {
     myState = state;
-    myIgnoredFilesPatternCache = null;
+    if (isInitialized()) {
+      applyStateToTree();
+      scheduleReadAllProjects();
+    }
   }
 
   public MavenGeneralSettings getGeneralSettings() {
@@ -107,6 +105,10 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   private MavenWorkspaceSettings getWorkspaceSettings() {
     return MavenWorkspaceSettingsComponent.getInstance(myProject).getState();
+  }
+
+  public File getLocalRepository() {
+    return getGeneralSettings().getEffectiveLocalRepository();
   }
 
   @Override
@@ -175,9 +177,21 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     }
 
     if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree();
-
-    myProjectsTree.resetManagedFilesPathsAndProfiles(myState.originalFiles, myState.activeProfiles);
+    applyStateToTree();
     myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster());
+  }
+
+  private void applyTreeToState() {
+    myState.originalFiles = myProjectsTree.getManagedFilesPaths();
+    myState.activeProfiles = myProjectsTree.getActiveProfiles();
+    myState.ignoredFiles = new THashSet<String>(myProjectsTree.getIgnoredFilesPaths());
+    myState.ignoredPathMasks = myProjectsTree.getIgnoredFilesPatterns();
+  }
+
+  private void applyStateToTree() {
+    myProjectsTree.resetManagedFilesPathsAndProfiles(myState.originalFiles, myState.activeProfiles);
+    myProjectsTree.setIgnoredFilesPaths(new ArrayList<String>(myState.ignoredFiles));
+    myProjectsTree.setIgnoredFilesPatterns(myState.ignoredPathMasks);
   }
 
   public void save() {
@@ -215,7 +229,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor, myEmbeddersManager);
 
     myImportingQueue = new MergingUpdateQueue(getClass().getName() + ": Importing queue",
-                                              IMPORT_DELAY, true, MergingUpdateQueue.ANY_COMPONENT);
+                                              IMPORT_DELAY, !isUnitTestMode(), MergingUpdateQueue.ANY_COMPONENT);
+    myImportingQueue.setPassThrough(false); // by default in unit-test mode it executes request right-away 
     MavenUserAwareUpdatingQueueHelper.attachTo(myProject, myImportingQueue);
   }
 
@@ -238,6 +253,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       public void projectRemoved(MavenProject project) {
         unscheduleAllTasks(project);
+      }
+
+      @Override
+      public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
+        scheduleImport(Collections.EMPTY_LIST);
       }
     });
   }
@@ -376,6 +396,41 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return myProjectsTree.isModuleOf(parentNode, moduleNode);
   }
 
+  public List<String> getIgnoredFilesPaths() {
+    if (!isInitialized()) return Collections.emptyList();
+    return myProjectsTree.getIgnoredFilesPaths();
+  }
+
+  public void setIgnoredFilesPaths(List<String> paths) {
+    if (!isInitialized()) return;
+    myProjectsTree.setIgnoredFilesPaths(paths);
+  }
+
+  public boolean getIgnoredState(MavenProject project) {
+    if (!isInitialized()) return false;
+    return myProjectsTree.getIgnoredState(project);
+  }
+
+  public void setIgnoredState(MavenProject project, boolean ignored) {
+    if (!isInitialized()) return;
+    myProjectsTree.setIgnoredState(project, ignored);
+  }
+
+  public List<String> getIgnoredFilesPatterns() {
+    if (!isInitialized()) return Collections.emptyList();
+    return myProjectsTree.getIgnoredFilesPatterns();
+  }
+
+  public void setIgnoredFilesPatterns(List<String> patterns) {
+    if (!isInitialized()) return;
+    myProjectsTree.setIgnoredFilesPatterns(patterns);
+  }
+
+  public boolean isIgnored(MavenProject project) {
+    if (!isInitialized()) return false;
+    return myProjectsTree.isIgnored(project);
+  }
+
   @TestOnly
   public MavenProjectsTree getProjectsTreeForTests() {
     return myProjectsTree;
@@ -427,13 +482,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       myProjectsToImport.addAll(projects);
     }
 
-    if (!isUnitTestMode()) {
-      myImportingQueue.queue(new Update(this) {
-        public void run() {
-          importProjects();
-        }
-      });
-    }
+    myImportingQueue.queue(new Update(this) {
+      public void run() {
+        importProjects();
+      }
+    });
   }
 
   @TestOnly
@@ -526,6 +579,10 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     }
 
     if (runnable != null) runnable.run();
+  }
+
+  public void flushPendingImportRequestsInTests() {
+    myImportingQueue.flush();
   }
 
   public void updateProjectTargetFolders() {
@@ -621,79 +678,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return result;
   }
 
-  public List<String> getIgnoredPathMasks() {
-    return myState.ignoredPathMasks;
-  }
-
-  public void setIgnoredPathMasks(List<String> masks) {
-    if (myState.ignoredPathMasks.equals(masks)) {
-      return;
-    }
-
-    Collection<VirtualFile> oldIgnored = new HashSet<VirtualFile>();
-    for (MavenProject each : getProjects()) {
-      if (isIgnored(each)) {
-        oldIgnored.add(each.getFile());
-      }
-    }
-
-    myState.ignoredPathMasks.clear();
-    myState.ignoredPathMasks.addAll(masks);
-    myIgnoredFilesPatternCache = null;
-
-    for (MavenProject each : getProjects()) {
-      final boolean newIgnored = isIgnored(each);
-      if (newIgnored != oldIgnored.contains(each.getFile())) {
-        for (Listener listener : myManagerListeners) {
-          listener.setIgnored(each, newIgnored);
-        }
-      }
-    }
-  }
-
-  public boolean getIgnoredFlag(MavenProject n) {
-    return isIgnoredIndividually(n.getFile().getPath());
-  }
-
-  public void setIgnoredFlag(MavenProject project, boolean on) {
-    String path = project.getPath();
-
-    if (on == isIgnoredIndividually(path)) {
-      return;
-    }
-
-    if (on) {
-      myState.ignoredFiles.add(path);
-    }
-    else {
-      myState.ignoredFiles.remove(path);
-    }
-
-    for (Listener listener : myManagerListeners) {
-      listener.setIgnored(project, on);
-    }
-  }
-
-  public boolean isIgnored(MavenProject project) {
-    final String path = project.getPath();
-    return isIgnoredIndividually(path) || isIgnoredByMask(path);
-  }
-
-  private boolean isIgnoredIndividually(final String path) {
-    return myState.ignoredFiles.contains(path);
-  }
-
-  private boolean isIgnoredByMask(String path) {
-    if (myIgnoredFilesPatternCache == null) {
-      myIgnoredFilesPatternCache = Pattern.compile(Strings.translateMasks(myState.ignoredPathMasks));
-    }
-    return myIgnoredFilesPatternCache.matcher(path).matches();
-  }
-
-  public File getLocalRepository() {
-    return getGeneralSettings().getEffectiveLocalRepository();
-  }
-
   public void addManagerListener(Listener listener) {
     myManagerListeners.add(listener);
   }
@@ -726,7 +710,5 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   public interface Listener {
     void activated();
-
-    void setIgnored(MavenProject project, boolean on);
   }
 }

@@ -92,7 +92,8 @@ public class MavenProjectImporter {
   }
 
   private boolean shouldCreateModuleFor(MavenProject project) {
-    return myImportingSettings.isCreateModulesForAggregators() || !project.isAggregator();
+    if (myProjectsTree.isIgnored(project)) return false;
+    return !project.isAggregator() || myImportingSettings.isCreateModulesForAggregators();
   }
 
   public List<MavenProjectsProcessorPostConfigurationTask> importProject() {

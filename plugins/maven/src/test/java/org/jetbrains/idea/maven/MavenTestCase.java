@@ -147,6 +147,14 @@ public abstract class MavenTestCase extends TestCase {
     return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
   }
 
+  protected MavenImportingSettings getMavenImporterSettings() {
+    return MavenProjectsManager.getInstance(myProject).getImportingSettings();
+  }
+
+  protected MavenDownloadingSettings getMavenDownloadingSettings() {
+    return MavenProjectsManager.getInstance(myProject).getDownloadingSettings();
+  }
+
   protected String getRepositoryPath() {
     String path = getRepositoryFile().getPath();
     return FileUtil.toSystemIndependentName(path);

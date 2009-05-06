@@ -431,8 +431,10 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
       scheduleKeymapUpdate(null, false);
     }
 
-    public void setIgnored(MavenProject project, boolean on) {
-      scheduleKeymapUpdate(Collections.singletonList(project), on);
+    @Override
+    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
+      scheduleKeymapUpdate(unignored, false);
+      scheduleKeymapUpdate(ignored, true);
     }
 
     @Override

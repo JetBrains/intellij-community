@@ -36,12 +36,12 @@ public class MavenIgnoreConfigurable implements Configurable {
 
     myOriginalFiles = new THashSet<VirtualFile>();
     for (MavenProject each : myManager.getProjects()) {
-      if (myManager.getIgnoredFlag(each)) {
+      if (myManager.getIgnoredState(each)) {
         myOriginalFiles.add(each.getFile());
       }
     }
 
-    myOriginalMasks = Strings.detokenize(myManager.getIgnoredPathMasks(), SEPARATOR);
+    myOriginalMasks = Strings.detokenize(myManager.getIgnoredFilesPatterns(), SEPARATOR);
   }
 
   private void createUIComponents() {
@@ -80,10 +80,10 @@ public class MavenIgnoreConfigurable implements Configurable {
   public void apply() throws ConfigurationException {
     final List<VirtualFile> marked = myFileChooser.getMarkedElements();
     for (MavenProject each : myManager.getProjects()) {
-      myManager.setIgnoredFlag(each, marked.contains(each.getFile()));
+      myManager.setIgnoredState(each, marked.contains(each.getFile()));
     }
 
-    myManager.setIgnoredPathMasks(Strings.tokenize(myMaskEditor.getText(), Strings.WHITESPACE + SEPARATOR));
+    myManager.setIgnoredFilesPatterns(Strings.tokenize(myMaskEditor.getText(), Strings.WHITESPACE + SEPARATOR));
   }
 
   public void reset() {

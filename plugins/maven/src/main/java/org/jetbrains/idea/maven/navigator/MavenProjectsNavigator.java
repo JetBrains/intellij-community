@@ -246,12 +246,21 @@ public class MavenProjectsNavigator extends MavenProjectsStructure
       isActivated = true;
     }
 
-    public void setIgnored(MavenProject project, boolean on) {
+    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
       if (!isActivated) return;
 
-      final PomNode pomNode = myFileToNode.get(project);
+      for (MavenProject each : ignored) {
+        setIgnored(each, true);
+      }
+      for (MavenProject each : ignored) {
+        setIgnored(each, false);
+      }
+    }
+
+    private void setIgnored(MavenProject project, boolean ignored) {
+      PomNode pomNode = myFileToNode.get(project);
       if (pomNode != null) {
-        pomNode.setIgnored(on);
+        pomNode.setIgnored(ignored);
       }
     }
 

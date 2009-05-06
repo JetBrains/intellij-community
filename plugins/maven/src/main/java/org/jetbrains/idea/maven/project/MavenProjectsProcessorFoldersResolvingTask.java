@@ -15,6 +15,6 @@ public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsPro
 
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator process)
     throws MavenProcessCanceledException {
-    myTree.resolveFolders(myMavenProject, embeddersManager, myImportingSettings, console, process);
+    myTree.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, process);
   }
 }

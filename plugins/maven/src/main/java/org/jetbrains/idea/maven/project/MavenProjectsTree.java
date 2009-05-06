@@ -18,14 +18,21 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class MavenProjectsTree {
-  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".2";
+  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".3";
 
-  private ReentrantWriterPreferenceReadWriteLock myLock = new ReentrantWriterPreferenceReadWriteLock();
+  private final ReentrantWriterPreferenceReadWriteLock myStructureLock = new ReentrantWriterPreferenceReadWriteLock();
+  private final Object myIgnoresLock = new Object();
 
+  // TODO replace with sets
   private List<String> myManagedFilesPaths = new ArrayList<String>();
+  private List<String> myIgnoredFilesPaths = new ArrayList<String>();
+  private List<String> myIgnoredFilesPatterns = new ArrayList<String>();
   private List<String> myActiveProfiles = new ArrayList<String>();
+
+  private Pattern myIgnoredFilesPatternsCache;
 
   private List<MavenProject> myRootProjects = new ArrayList<MavenProject>();
 
@@ -36,7 +43,7 @@ public class MavenProjectsTree {
   private Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new THashMap<MavenProject, List<MavenProject>>();
   private Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new THashMap<MavenProject, MavenProject>();
 
-  private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
     public VirtualFile findProjectFile(MavenId coordinates) {
@@ -54,6 +61,8 @@ public class MavenProjectsTree {
       try {
         if (!STORAGE_VERSION.equals(in.readUTF())) return null;
         result.myManagedFilesPaths = readList(in);
+        result.myIgnoredFilesPaths = readList(in);
+        result.myIgnoredFilesPatterns = readList(in);
         result.myActiveProfiles = readList(in);
         result.myRootProjects = readProjectsRecursively(in, result);
       }
@@ -110,6 +119,8 @@ public class MavenProjectsTree {
       try {
         out.writeUTF(STORAGE_VERSION);
         writeList(out, myManagedFilesPaths);
+        writeList(out, myIgnoredFilesPaths);
+        writeList(out, myIgnoredFilesPatterns);
         writeList(out, myActiveProfiles);
         writeProjectsRecursively(out, myRootProjects);
       }
@@ -171,6 +182,104 @@ public class MavenProjectsTree {
     return result;
   }
 
+  public List<String> getIgnoredFilesPaths() {
+    synchronized (myIgnoresLock) {
+      return myIgnoredFilesPaths;
+    }
+  }
+
+  public void setIgnoredFilesPaths(final List<String> paths) {
+    doChangeIgnoreStatus(new Runnable() {
+      public void run() {
+        myIgnoredFilesPaths = new ArrayList<String>(paths);
+      }
+    });
+  }
+
+  public boolean getIgnoredState(MavenProject project) {
+    synchronized (myIgnoresLock) {
+      return myIgnoredFilesPaths.contains(project.getPath());
+    }
+  }
+
+  public void setIgnoredState(MavenProject project, boolean ignored) {
+    boolean changed;
+    synchronized (myIgnoresLock) {
+      if (ignored) {
+        changed = myIgnoredFilesPaths.add(project.getPath());
+      }
+      else {
+        changed = myIgnoredFilesPaths.remove(project.getPath());
+      }
+    }
+
+    if (changed) {
+      List<MavenProject> projects = Collections.singletonList(project);
+      List<MavenProject> empty = Collections.EMPTY_LIST;
+      fireProjectsIgnoredStateChanged(ignored ? projects : empty, ignored ? empty : projects);
+    }
+  }
+
+  public List<String> getIgnoredFilesPatterns() {
+    synchronized (myIgnoresLock) {
+      return myIgnoredFilesPatterns;
+    }
+  }
+
+  public void setIgnoredFilesPatterns(final List<String> patterns) {
+    doChangeIgnoreStatus(new Runnable() {
+      public void run() {
+        myIgnoredFilesPatternsCache = null;
+        myIgnoredFilesPatterns = patterns;
+      }
+    });
+  }
+
+  private void doChangeIgnoreStatus(Runnable runnable) {
+    List<MavenProject> ignoredBefore;
+    List<MavenProject> ignoredAfter;
+
+    synchronized (myIgnoresLock) {
+      ignoredBefore = getIgnoredProjects();
+      runnable.run();
+      ignoredAfter = getIgnoredProjects();
+    }
+
+    List<MavenProject> ignored = new ArrayList<MavenProject>(ignoredAfter);
+    ignored.removeAll(ignoredBefore);
+
+    List<MavenProject> unignored = new ArrayList<MavenProject>(ignoredBefore);
+    unignored.removeAll(ignoredAfter);
+
+    if (ignoredBefore.isEmpty() && ignoredAfter.isEmpty()) return;
+
+    fireProjectsIgnoredStateChanged(ignored, unignored);
+  }
+
+  private List<MavenProject> getIgnoredProjects() {
+    List<MavenProject> result = new ArrayList<MavenProject>();
+    for (MavenProject each : getProjects()) {
+      if (isIgnored(each)) result.add(each);
+    }
+    return result;
+  }
+
+  public boolean isIgnored(MavenProject project) {
+    String path = project.getPath();
+    synchronized (myIgnoresLock) {
+      return myIgnoredFilesPaths.contains(path) || matchesIgnoredFilesPatterns(path);
+    }
+  }
+
+  private boolean matchesIgnoredFilesPatterns(String path) {
+    synchronized (myIgnoresLock) {
+      if (myIgnoredFilesPatternsCache == null) {
+        myIgnoredFilesPatternsCache = Pattern.compile(Strings.translateMasks(myIgnoredFilesPatterns));
+      }
+      return myIgnoredFilesPatternsCache.matcher(path).matches();
+    }
+  }
+
   public List<String> getActiveProfiles() {
     return myActiveProfiles;
   }
@@ -180,8 +289,7 @@ public class MavenProjectsTree {
     fireProfilesChanged(myActiveProfiles);
   }
 
-  public void updateAll(MavenGeneralSettings generalSettings,
-                        MavenProgressIndicator process) throws MavenProcessCanceledException {
+  public void updateAll(MavenGeneralSettings generalSettings, MavenProgressIndicator process) {
     List<VirtualFile> managedFiles = getExistingManagedFiles();
     MavenProjectReader projectReader = new MavenProjectReader();
     update(projectReader, managedFiles,
@@ -196,7 +304,7 @@ public class MavenProjectsTree {
 
   public void update(Collection<VirtualFile> files,
                      MavenGeneralSettings generalSettings,
-                     MavenProgressIndicator process) throws MavenProcessCanceledException {
+                     MavenProgressIndicator process) {
     update(new MavenProjectReader(), files, generalSettings, process, false);
   }
 
@@ -204,7 +312,7 @@ public class MavenProjectsTree {
                       Collection<VirtualFile> files,
                       MavenGeneralSettings generalSettings,
                       MavenProgressIndicator process,
-                      boolean recursive) throws MavenProcessCanceledException {
+                      boolean recursive) {
     if (files.isEmpty()) return;
 
     Map<VirtualFile, MavenProject> readProjects = new LinkedHashMap<VirtualFile, MavenProject>();
@@ -236,7 +344,7 @@ public class MavenProjectsTree {
                      Stack<MavenProject> updateStack,
                      MavenGeneralSettings generalSettings,
                      MavenProgressIndicator process,
-                     boolean recursuve) throws MavenProcessCanceledException {
+                     boolean recursuve) {
     MavenProject newMavenProject = new MavenProject(f);
 
     MavenProject intendedAggregator = visit(new Visitor<MavenProject>() {
@@ -266,7 +374,7 @@ public class MavenProjectsTree {
                         Stack<MavenProject> updateStack,
                         MavenGeneralSettings generalSettings,
                         MavenProgressIndicator process,
-                        boolean recursive) throws MavenProcessCanceledException {
+                        boolean recursive) {
     if (updateStack.contains(mavenProject)) {
       MavenLog.LOG.info("Recursion detected in " + mavenProject.getFile());
       return;
@@ -495,14 +603,14 @@ public class MavenProjectsTree {
 
   public void delete(List<VirtualFile> files,
                      MavenGeneralSettings generalSettings,
-                     MavenProgressIndicator process) throws MavenProcessCanceledException {
+                     MavenProgressIndicator process) {
     delete(new MavenProjectReader(), files, generalSettings, process);
   }
 
   private void delete(MavenProjectReader projectReader,
                       List<VirtualFile> files,
                       MavenGeneralSettings generalSettings,
-                      MavenProgressIndicator process) throws MavenProcessCanceledException {
+                      MavenProgressIndicator process) {
     if (files.isEmpty()) return;
 
     List<MavenProject> projectsToUpdate = new ArrayList<MavenProject>();
@@ -526,8 +634,7 @@ public class MavenProjectsTree {
     update(projectReader, filesToUpdate, generalSettings, process, false);
   }
 
-  private void doRemove(MavenProject aggregator, MavenProject project, List<MavenProject> removedProjects)
-    throws MavenProcessCanceledException {
+  private void doRemove(MavenProject aggregator, MavenProject project, List<MavenProject> removedProjects) {
     for (MavenProject each : getModules(project)) {
       doRemove(project, each, removedProjects);
     }
@@ -687,9 +794,9 @@ public class MavenProjectsTree {
     return result;
   }
 
-  public void resolve(boolean quickResolve,
+  public void resolve(MavenProject mavenProject,
+                      boolean quickResolve,
                       MavenGeneralSettings generalSettings,
-                      MavenProject mavenProject,
                       MavenEmbeddersManager embeddersManager,
                       MavenConsole console,
                       MavenProgressIndicator process) throws MavenProcessCanceledException {
@@ -733,8 +840,8 @@ public class MavenProjectsTree {
   }
 
   public void resolveFolders(MavenProject mavenProject,
-                             MavenEmbeddersManager embeddersManager,
                              MavenImportingSettings importingSettings,
+                             MavenEmbeddersManager embeddersManager,
                              MavenConsole console,
                              MavenProgressIndicator process) throws MavenProcessCanceledException {
     if (mavenProject.isAggregator()) return;
@@ -817,7 +924,7 @@ public class MavenProjectsTree {
 
   private void writeLock() {
     try {
-      myLock.writeLock().acquire();
+      myStructureLock.writeLock().acquire();
     }
     catch (InterruptedException e) {
       throw new RuntimeInterruptedException(e);
@@ -825,12 +932,12 @@ public class MavenProjectsTree {
   }
 
   private void writeUnlock() {
-    myLock.writeLock().release();
+    myStructureLock.writeLock().release();
   }
 
   private void readLock() {
     try {
-      myLock.readLock().acquire();
+      myStructureLock.readLock().acquire();
     }
     catch (InterruptedException e) {
       throw new RuntimeInterruptedException(e);
@@ -838,7 +945,7 @@ public class MavenProjectsTree {
   }
 
   private void readUnlock() {
-    myLock.readLock().release();
+    myStructureLock.readLock().release();
   }
 
   public void addListener(Listener l) {
@@ -848,6 +955,12 @@ public class MavenProjectsTree {
   private void fireProfilesChanged(List<String> profiles) {
     for (Listener each : myListeners) {
       each.profilesChanged(profiles);
+    }
+  }
+
+  private void fireProjectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
+    for (Listener each : myListeners) {
+      each.projectsIgnoredStateChanged(ignored, unignored);
     }
   }
 
@@ -1010,6 +1123,8 @@ public class MavenProjectsTree {
   public interface Listener extends EventListener {
     void profilesChanged(List<String> profiles);
 
+    void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored);
+
     void projectsRead(List<MavenProject> projects);
 
     void projectRead(MavenProject project);
@@ -1029,6 +1144,9 @@ public class MavenProjectsTree {
 
   public static class ListenerAdapter implements Listener {
     public void profilesChanged(List<String> profiles) {
+    }
+
+    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
     }
 
     public void projectsRead(List<MavenProject> projects) {

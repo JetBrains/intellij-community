@@ -3,10 +3,10 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class MavenProjectsManagerTest extends MavenImportingTestCase {
@@ -470,5 +470,63 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     waitForReadingCompletion();
 
     assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size());
+  }
+
+  public void testSavingAndLoadingState() throws Exception {
+    MavenProjectsManagerState state = myMavenProjectsManager.getState();
+    assertTrue(state.originalFiles.isEmpty());
+    assertTrue(state.activeProfiles.isEmpty());
+    assertTrue(state.ignoredFiles.isEmpty());
+    assertTrue(state.ignoredPathMasks.isEmpty());
+
+    VirtualFile p1 = createModulePom("project1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>project1</artifactId>" +
+                                     "<version>1</version>");
+
+    VirtualFile p2 = createModulePom("project2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>project2</artifactId>" +
+                                     "<version>1</version>" +
+                                     "<packaging>pom</packaging>" +
+
+                                     "<modules>" +
+                                     "  <module>../project3</module>" +
+                                     "</modules>");
+
+    VirtualFile p3 = createModulePom("project3",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>project3</artifactId>" +
+                                     "<version>1</version>");
+
+    importProjects(p1, p2);
+    myMavenProjectsManager.setActiveProfiles(Arrays.asList("one", "two"));
+    myMavenProjectsManager.setIgnoredFilesPaths(Arrays.asList(p1.getPath()));
+    myMavenProjectsManager.setIgnoredFilesPatterns(Arrays.asList("*.xxx"));
+    
+    state = myMavenProjectsManager.getState();
+    assertUnorderedElementsAreEqual(state.originalFiles, p1.getPath(), p2.getPath());
+    assertUnorderedElementsAreEqual(state.activeProfiles, "one", "two");
+    assertUnorderedElementsAreEqual(state.ignoredFiles, p1.getPath());
+    assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx");
+
+    MavenProjectsManagerState newState = new MavenProjectsManagerState();
+
+    newState.originalFiles = Arrays.asList(p1.getPath(), p3.getPath());
+    newState.activeProfiles = Arrays.asList("three");
+    newState.ignoredFiles = Collections.singleton(p1.getPath());
+    newState.ignoredPathMasks = Arrays.asList("*.zzz");
+
+    myMavenProjectsManager.loadState(newState);
+
+    assertUnorderedElementsAreEqual(myMavenProjectsManager.getProjectsTreeForTests().getManagedFilesPaths(),
+                                    p1.getPath(), p3.getPath());
+    assertUnorderedElementsAreEqual(myMavenProjectsManager.getActiveProfiles(), "three");
+    assertUnorderedElementsAreEqual(myMavenProjectsManager.getIgnoredFilesPaths(), p1.getPath());
+    assertUnorderedElementsAreEqual(myMavenProjectsManager.getIgnoredFilesPatterns(), "*.zzz");
+
+    waitForReadingCompletion();
+    assertUnorderedElementsAreEqual(myMavenProjectsManager.getProjectsTreeForTests().getRootProjectsFiles(),
+                                    p1, p3);
   }
 }

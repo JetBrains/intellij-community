@@ -4,21 +4,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.ProfilingUtil;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import com.intellij.util.Function;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
-import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenProjectsTreeTest extends MavenImportingTestCase {
-  private MavenProjectsTree myTree = new MavenProjectsTree();
-
+public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   public void testTwoRootProjects() throws Exception {
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
@@ -1557,34 +1551,8 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     System.out.println("delta:" + (after - before));
   }
 
-  private void updateAll(VirtualFile... files) throws MavenProcessCanceledException, MavenException {
-    updateAll(Collections.<String>emptyList(), files);
-  }
-
-  private void updateAll(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException, MavenException {
-    myTree.resetManagedFilesAndProfiles(asList(files), profiles);
-    myTree.updateAll(getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-  }
-
-  private void update(VirtualFile file) throws MavenProcessCanceledException {
-    myTree.update(asList(file), getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-  }
-
-  private void deleteProject(VirtualFile file) throws MavenProcessCanceledException {
-    myTree.delete(asList(file), getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-  }
-
-  private void updateTimestamps(VirtualFile... files) throws IOException {
-    for (VirtualFile each : files) {
-      each.setBinaryContent(each.contentsToByteArray());
-    }
-  }
-
-  private static class MyLoggingListener implements MavenProjectsTree.Listener {
+  private static class MyLoggingListener extends MavenProjectsTree.ListenerAdapter {
     String log = "";
-
-    public void profilesChanged(List<String> profiles) {
-    }
 
     public void projectsRead(List<MavenProject> projects) {
       log += "projectsRead ";
@@ -1611,15 +1579,6 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
       log += "resolved " + project.getMavenId().artifactId + " ";
-    }
-
-    public void pluginsResolved(MavenProject project) {
-    }
-
-    public void foldersResolved(MavenProject project) {
-    }
-
-    public void artifactsDownloaded(MavenProject project) {
     }
   }
 }

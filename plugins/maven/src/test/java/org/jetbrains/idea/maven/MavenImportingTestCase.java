@@ -60,10 +60,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     super.tearDown();
   }
 
-  protected MavenImportingSettings getMavenImporterSettings() {
-    return myMavenProjectsManager.getImportingSettings();
-  }
-
   protected MavenProjectsStructure.RootNode createMavenTree() {
     MavenProjectsStructure s = new MavenProjectsStructure(myProject,
                                                           myMavenProjectsManager,
