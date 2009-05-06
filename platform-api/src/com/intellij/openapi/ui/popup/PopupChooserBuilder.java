@@ -31,12 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 /**
@@ -159,7 +154,7 @@ public class PopupChooserBuilder {
       @Override
       public void mousePressed(MouseEvent e) {
         if (UIUtil.isActionClick(e) && !isSelectionButtonDown(e) && !e.isConsumed()) {
-          closePopup(true);
+          closePopup(true, e);
         }
       }
     });
@@ -224,13 +219,13 @@ public class PopupChooserBuilder {
   private void regsiterClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {
     myChooserComponent.registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        closePopup(shouldPerformAction);
+        closePopup(shouldPerformAction, null);
       }
     }, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
-  private void closePopup(boolean shouldPerformAction) {
-    myPopup.cancel();
+  private void closePopup(boolean shouldPerformAction, MouseEvent e) {
+    myPopup.cancel(e);
 
     if (shouldPerformAction) {
       if (myItemChoosenRunnable != null) {

@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.ui.popup;
 
+import java.awt.event.InputEvent;
+
 /**
  * A popup window displaying a list of items (or other actions).
  *
@@ -41,6 +43,8 @@ public interface ListPopup extends JBPopup {
    * is opened (as if the right arrow key was pressed). 
    */
   void handleSelect(boolean handleFinalChoices);
+
+  void handleSelect(boolean handleFinalChoices, InputEvent e);
 
   /**
    * If default selection is set, then handleSelect is invoked without showing a popup

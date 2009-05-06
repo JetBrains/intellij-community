@@ -22,12 +22,14 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.InputEvent;
 
 /**
  * Base interface for popup windows.
@@ -104,6 +106,13 @@ public interface JBPopup extends Disposable, LightweightWindow {
    */
   void cancel();
 
+
+  /**
+   * Cancels the popup as a response to some mouse action. All the subsequent mouse events originated from the event's point
+   * will be consumed.
+   * @param e
+   */
+  void cancel(@Nullable InputEvent e);
   /**
    * Checks if it's currently allowed to close the popup.
    *

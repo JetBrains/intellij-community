@@ -106,7 +106,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   private void disposeAll() {
     WizardPopup root = PopupDispatcher.getActiveRoot();
-    disposeAllParents();
+    disposeAllParents(null);
     root.getStep().canceled();
   }
 
@@ -207,8 +207,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   protected abstract JComponent getPreferredFocusableComponent();
 
-  public void cancel() {
-    super.cancel();
+  public void cancel(InputEvent e) {
+    super.cancel(e);
     disposeChildren();
     Disposer.dispose(this);
     getStep().canceled();
@@ -219,10 +219,11 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return super.isCancelKeyEnabled() && !mySpeedSearch.isHoldingFilter();
   }
 
-  protected void disposeAllParents() {
+  protected void disposeAllParents(InputEvent e) {
+    myDisposeEvent = e;
     dispose();
     if (myParent != null) {
-      myParent.disposeAllParents();
+      myParent.disposeAllParents(null);
     }
   }
 

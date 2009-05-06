@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.JBAwtEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -92,6 +93,8 @@ public class AbstractPopup implements JBPopup, Disposable {
   protected Component myRequestorComponent;
   private boolean myHeaderAlwaysFocusable;
   private JComponent myHeaderComponent;
+
+  protected InputEvent myDisposeEvent;
 
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown = false;
@@ -396,7 +399,11 @@ public class AbstractPopup implements JBPopup, Disposable {
     return relativePoint;
   }
 
-  public void cancel() {
+  public final void cancel() {
+    cancel(null);
+  }
+
+  public void cancel(InputEvent e) {
     if (isDisposed()) return;
 
     if (myPopup != null) {
@@ -412,6 +419,10 @@ public class AbstractPopup implements JBPopup, Disposable {
             storeLocation(popupWindow.getLocationOnScreen());
           }
         }
+      }
+
+      if (e instanceof MouseEvent) {
+        JBAwtEventQueue.getInstance().blockNextEvents(((MouseEvent)e));
       }
 
       myPopup.hide();
@@ -834,7 +845,7 @@ public class AbstractPopup implements JBPopup, Disposable {
     assert ApplicationManager.getApplication().isDispatchThread();
 
     if (myPopup != null) {
-      cancel();
+      cancel(myDisposeEvent);
     }
 
     if (myContent != null) {

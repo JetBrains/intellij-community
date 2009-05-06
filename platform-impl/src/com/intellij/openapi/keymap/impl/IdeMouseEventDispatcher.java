@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,12 +87,15 @@ public final class IdeMouseEventDispatcher{
    * to normal event dispatching.
    */
   public boolean dispatchMouseEvent(MouseEvent e){
+    boolean toIgnore = false;
+
     if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
           e.getID() == MouseEvent.MOUSE_RELEASED ||
-          e.getID() == MouseEvent.MOUSE_CLICKED)) return false;
+          e.getID() == MouseEvent.MOUSE_CLICKED)) {
+      toIgnore = true;
+    }
 
 
-    boolean toIgnore = false;
     if(
       e.isConsumed()||
       e.isPopupTrigger()||
@@ -103,14 +107,8 @@ public final class IdeMouseEventDispatcher{
     }
 
 
-    Window window = e.getComponent() instanceof Window ? (Window)e.getComponent() : SwingUtilities.getWindowAncestor(e.getComponent());
-    JRootPane root = null;
-    if (window instanceof JFrame) {
-      root = ((JFrame)window).getRootPane();
-    } else if (window instanceof JDialog) {
-      root = ((JDialog)window).getRootPane();
-    }
-    
+    JRootPane root = findRoot(e);
+
     if (root != null) {
       final Integer lastId = myRootPane2BlockedId.get(root);
       if (lastId != null) {
@@ -118,7 +116,7 @@ public final class IdeMouseEventDispatcher{
           myRootPane2BlockedId.remove(root);
         } else {
           myRootPane2BlockedId.put(root, e.getID());
-          return false;
+          return true;
         }
       }
     }
@@ -166,12 +164,22 @@ public final class IdeMouseEventDispatcher{
   }
 
   public void blockNextEvents(final MouseEvent e) {
-    if (!(e.getComponent() instanceof JComponent)) return;
-
-    final JComponent c = (JComponent)e.getComponent();
-    final JRootPane root = c.getRootPane();
+    JRootPane root = findRoot(e);
     if (root == null) return;
 
     myRootPane2BlockedId.put(root, e.getID());
+  }
+
+  private JRootPane findRoot(MouseEvent e) {
+    Component parent = UIUtil.findUltimateParent(e.getComponent());
+    JRootPane root = null;
+    if (parent instanceof JWindow) {
+      root = ((JWindow)parent).getRootPane();
+    } else if (parent instanceof JDialog) {
+      root = ((JDialog)parent).getRootPane();
+    } else if (parent instanceof JFrame) {
+      root = ((JFrame)parent).getRootPane();
+    }
+    return root;
   }
 }

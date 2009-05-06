@@ -105,7 +105,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
         if (!popup.canClose()){
           return false;
         }
-        popup.cancel();
+        popup.cancel(mouseEvent);
       }
 
       if (myStack.isEmpty()) {

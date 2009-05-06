@@ -89,7 +89,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
     registerAction("select", KeyEvent.VK_ENTER, 0, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        handleSelect(true);
+        handleSelect(true, null);
       }
     });
 
@@ -104,7 +104,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
       public void actionPerformed(ActionEvent e) {
         final TreePath path = myWizardTree.getSelectionPath();
         if (path != null && 0 == myWizardTree.getModel().getChildCount(path.getLastPathComponent())) {
-          handleSelect(false);
+          handleSelect(false, null);
           return;
         }
         oldExpandAction.actionPerformed(e);
@@ -263,7 +263,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
       final Object selected = path.getLastPathComponent();
 
       if (getTreeStep().isSelectable(selected, extractUserObject(selected))) {
-        handleSelect(true);
+        handleSelect(true, e);
       }
       else {
         if (!isLocationInExpandControl(myWizardTree, path, e.getPoint().x, e.getPoint().y)) {
@@ -292,7 +292,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     }
   }
 
-  private void handleSelect(boolean handleFinalChoices) {
+  private void handleSelect(boolean handleFinalChoices, MouseEvent e) {
     final boolean pathIsAlreadySelected = myShowingChildPath != null && myShowingChildPath.equals(myWizardTree.getSelectionPath());
     if (pathIsAlreadySelected) return;
 
@@ -312,7 +312,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
         final PopupStep queriedStep = myStep.onChosen(userObject, handleFinalChoices);
         if (queriedStep == PopupStep.FINAL_CHOICE || !hasNextStep) {
-          disposeAllParents();
+          disposeAllParents(e);
         }
         else {
           myShowingChildPath = myWizardTree.getSelectionPath();
@@ -399,7 +399,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
   }
 
   protected void onAutoSelectionTimer() {
-    handleSelect(false);
+    handleSelect(false, null);
   }
 
   protected JComponent getPreferredFocusableComponent() {

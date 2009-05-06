@@ -2,6 +2,9 @@
   <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   <appStarter implementation="com.intellij.openapi.diff.DiffApplication"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.actionSystem.JBAwtEventQueue"
+                      serviceImplementation="com.intellij.openapi.actionSystem.impl.JBAwtEventQueueImpl"/>
+
   <applicationService serviceInterface="com.intellij.openapi.vfs.tracker.VirtualFileTracker"
                       serviceImplementation="com.intellij.openapi.vfs.tracker.VirtualFileTrackerImpl"/>
 

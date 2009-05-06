@@ -12,18 +12,14 @@ import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.ClosableByLeftArrow;
-import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.PopupIcons;
+import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup {
 
@@ -97,9 +93,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     if (getListStep().isAutoSelectionEnabled()) {
       if (!isVisible() && getSelectableCount() == 1) {
-        return _handleSelect(handleFinalChoices);
+        return _handleSelect(handleFinalChoices, null);
       } else if (isVisible() && hasSingleSelectableItemWithSubmenu()) {
-        return _handleSelect(handleFinalChoices);
+        return _handleSelect(handleFinalChoices, null);
       }
     }
 
@@ -260,10 +256,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   }
 
   public void handleSelect(boolean handleFinalChoices) {
-    _handleSelect(handleFinalChoices);
+    _handleSelect(handleFinalChoices, null);
   }
 
-  private boolean _handleSelect(final boolean handleFinalChoices) {
+  public void handleSelect(boolean handleFinalChoices, InputEvent e) {
+    _handleSelect(handleFinalChoices, e);
+  }
+
+  private boolean _handleSelect(final boolean handleFinalChoices, InputEvent e) {
     if (myList.getSelectedIndex() == -1) return false;
 
     if (getSpeedSearch().isHoldingFilter() && myList.getModel().getSize() == 0) return false;
@@ -280,14 +280,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     disposeChildren();
 
     if (myListModel.getSize() == 0) {
-      disposeAllParents();
+      disposeAllParents(e);
       setIndexForShowingChild(-1);
       return true;
     }
 
     valueSelected(selectedValue);
 
-    return handleNextStep(myStep.onChosen(selectedValue, handleFinalChoices), selectedValue);
+    return handleNextStep(myStep.onChosen(selectedValue, handleFinalChoices), selectedValue, e);
   }
 
   private void valueSelected(final Object value) {
@@ -298,7 +298,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     }
   }
 
-  private boolean handleNextStep(final PopupStep nextStep, Object parentValue) {
+  private boolean handleNextStep(final PopupStep nextStep, Object parentValue, InputEvent e) {
     if (nextStep != PopupStep.FINAL_CHOICE) {
       final Point point = myList.indexToLocation(myList.getSelectedIndex());
       SwingUtilities.convertPointToScreen(point, myList);
@@ -315,7 +315,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       return false;
     }
     else {
-      disposeAllParents();
+      disposeAllParents(e);
       setIndexForShowingChild(-1);
       return true;
     }
@@ -356,7 +356,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
           handleFinalChoices = false;
         }
       }
-      handleSelect(handleFinalChoices);
+      handleSelect(handleFinalChoices, e);
       stopTimer();
     }
   }

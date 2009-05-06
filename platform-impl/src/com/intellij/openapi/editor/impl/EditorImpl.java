@@ -3004,9 +3004,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      if (!IJSwingUtilities.hasFocus(getContentComponent())) { // TODO: [kirillk] mouse dragged event on navigation popup action causes scrolling timer to start
-        return;
-      }
 
       myTimer = new Timer(TIMER_PERIOD, new ActionListener() {
         public void actionPerformed(ActionEvent e) {
