@@ -12,8 +12,9 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.CompositeCompletionData;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
@@ -62,7 +63,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
     try {
       performAction(myProject, new Runnable() {
         public void run() {
-          new CodeCompletionAction().getHandler().invoke(myProject, myEditor, myFile);
+          new CodeCompletionAction().getHandler().invoke(myProject, myEditor, PsiUtilBase.getPsiFileInEditor(myEditor, myProject));
         }
       });
 
