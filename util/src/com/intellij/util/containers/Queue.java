@@ -63,6 +63,7 @@ public class Queue<T> {
 
     public T pullFirst() {
       T result = (T)myArray[myFirst];
+      myArray[myFirst] = null;
       myFirst++;
       if (myFirst == myArray.length) {
         myFirst = 0;
