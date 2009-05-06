@@ -19,7 +19,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -46,8 +45,8 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.DebuggerLogConsoleManagerBase;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -269,9 +268,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     }
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
-    if (myConfiguration instanceof RunConfigurationBase && ((RunConfigurationBase)myConfiguration).needAdditionalConsole()) {
-      initLogConsoles((RunConfigurationBase)myConfiguration, myRunContentDescriptor.getProcessHandler());
-    }
+    initLogConsoles(myConfiguration, myRunContentDescriptor.getProcessHandler());
 
     DefaultActionGroup group = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
@@ -426,9 +423,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     myEnvironment = env;
     myConfiguration = env.getRunProfile();
 
-    if (myConfiguration instanceof RunConfigurationBase) {
-      registerFileMatcher((RunConfigurationBase)myConfiguration);
-    }
+    registerFileMatcher(myConfiguration);
 
     session.getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {

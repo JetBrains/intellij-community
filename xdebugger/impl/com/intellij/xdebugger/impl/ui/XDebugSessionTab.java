@@ -5,6 +5,7 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -210,6 +211,12 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
     group.add(new ContextHelpAction(executor.getHelpId()));
 
     myUi.getOptions().setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
+
+    if (environment != null) {
+      final RunProfile runConfiguration = environment.getRunProfile();
+      registerFileMatcher(runConfiguration);
+      initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler());
+    }
 
     rebuildViews();
 

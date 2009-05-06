@@ -4,10 +4,11 @@ import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.diagnostic.logging.DebuggerLogConsoleManager;
 import com.intellij.diagnostic.logging.LogConsoleImpl;
 import com.intellij.diagnostic.logging.LogFilesManager;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
@@ -43,12 +44,16 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
 
   public abstract RunnerLayoutUi getUi();
 
-  protected void registerFileMatcher(final RunConfigurationBase runConfiguration) {
-    myManager.registerFileMatcher(runConfiguration);
+  protected void registerFileMatcher(final RunProfile runConfiguration) {
+    if (runConfiguration instanceof RunConfigurationBase) {
+      myManager.registerFileMatcher((RunConfigurationBase)runConfiguration);
+    }
   }
 
-  protected void initLogConsoles(final RunConfigurationBase runConfiguration, final ProcessHandler processHandler) {
-    myManager.initLogConsoles(runConfiguration, processHandler);
+  protected void initLogConsoles(final RunProfile runConfiguration, final ProcessHandler processHandler) {
+    if (runConfiguration instanceof RunConfigurationBase && ((RunConfigurationBase)runConfiguration).needAdditionalConsole()) {
+      myManager.initLogConsoles((RunConfigurationBase)runConfiguration, processHandler);
+    }
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent) {
