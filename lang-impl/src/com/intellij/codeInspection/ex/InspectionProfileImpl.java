@@ -437,7 +437,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   private HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
-    return myTools.get(key.toString()).getLevel();
+    final ToolsImpl tools = myTools.get(key.toString());
+    LOG.assertTrue(tools != null, "source: " + mySource + " key:" + key);
+    return tools.getLevel();
   }
 
   @NotNull
