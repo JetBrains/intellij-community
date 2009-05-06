@@ -1,7 +1,10 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
@@ -23,6 +26,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,12 +159,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   public void dispose() {
     myDisposed = true;
     myDiffUpdater.dispose();
-    myScrollSupport.dispose();
-    myData.dispose();
+    Disposer.dispose(myScrollSupport);
+    Disposer.dispose(myData);
     myPanel.cancelScrollEditors();
     JComponent component = myPanel.getBottomComponent();
     if (component instanceof Disposable) {
-      ((Disposable) component).dispose();
+      Disposer.dispose(((Disposable)component));
     }
     myPanel.setBottomComponent(null);
   }
@@ -212,7 +216,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
     DiffSideView viewSide = getSideView(source.getSide());
     viewSide.setEditorSource(source);
-    myScrollSupport.dispose();
+    Disposer.dispose(myScrollSupport);
     if (editor == null) {
       if (!myDisposed) {
         rediff();
@@ -300,7 +304,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     final JComponent oldBottomComponent = myPanel.getBottomComponent();
     if (oldBottomComponent instanceof Disposable) {
-      ((Disposable) oldBottomComponent).dispose();
+      Disposer.dispose(((Disposable)oldBottomComponent));
     }
     final JComponent newBottomComponent = data.getBottomComponent();
     myPanel.setBottomComponent(newBottomComponent);

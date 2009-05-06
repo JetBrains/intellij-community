@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -162,7 +163,7 @@ public abstract class DiffMarkup implements EditorSource {
   protected void disposeEditor() {
     resetHighlighters();
     for (Disposable disposable : myDisposables) {
-      disposable.dispose();
+      Disposer.dispose(disposable);
     }
     myDisposables.clear();
   }
