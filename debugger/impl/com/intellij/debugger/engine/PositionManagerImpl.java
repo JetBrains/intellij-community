@@ -8,6 +8,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -162,6 +163,10 @@ public class PositionManagerImpl implements PositionManager {
     }
     final ReferenceType refType = location.declaringType();
     if (refType == null) {
+      return null;
+    }
+
+    if (DumbService.getInstance().isDumb()) {
       return null;
     }
 
