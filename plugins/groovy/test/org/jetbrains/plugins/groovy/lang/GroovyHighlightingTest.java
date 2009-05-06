@@ -6,6 +6,8 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
+import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
 
 import java.io.IOException;
 
@@ -76,6 +78,11 @@ public class GroovyHighlightingTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testRecursiveMethodTypeInference() throws Throwable {
+    doTest();
+  }
+
+  public void testDontSimplifyString() throws Throwable {
+    myFixture.enableInspections(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection());
     doTest();
   }
 

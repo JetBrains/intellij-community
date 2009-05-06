@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.control;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,11 +31,11 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 
 public class GroovyTrivialIfInspection extends BaseInspection {
 
@@ -242,6 +243,11 @@ public class GroovyTrivialIfInspection extends BaseInspection {
       if (!(condition instanceof GrExpression)) {
         return;
       }
+      final PsiType type = ((GrExpression)condition).getType();
+      if (type == null || !(PsiType.BOOLEAN.isAssignableFrom(type))) {
+        return;
+      }
+
       if (isSimplifiableAssignment(ifStatement)) {
         registerStatementError(ifStatement);
         return;
