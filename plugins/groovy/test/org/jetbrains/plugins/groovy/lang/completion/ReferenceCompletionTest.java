@@ -15,13 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 public class ReferenceCompletionTest extends CompletionTestBase {
 
   @NonNls
-  private static final String DATA_PATH = PathUtil.getDataPath(ReferenceCompletionTest.class) + "/reference";
+  private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/testdata/groovy/oldCompletion/reference";
 
   protected String myNewDocumentText;
 

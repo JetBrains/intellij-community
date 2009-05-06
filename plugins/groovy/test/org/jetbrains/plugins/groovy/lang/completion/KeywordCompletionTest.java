@@ -15,9 +15,9 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.openapi.application.PathManager;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.util.PathUtil;
 
 /**
  * @author ilyas
@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.util.PathUtil;
 public class KeywordCompletionTest extends CompletionTestBase {
 
   @NonNls
-  private static final String DATA_PATH = PathUtil.getDataPath(KeywordCompletionTest.class) + "/keyword";
+  private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/testdata/groovy/oldCompletion/keyword";
 
   public KeywordCompletionTest() {
     super(System.getProperty("path") != null ? System.getProperty("path") : DATA_PATH);

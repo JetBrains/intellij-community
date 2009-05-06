@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 public class GantReferenceCompletionTest extends CompletionTestBase {
 
   @NonNls
-  private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/test/org/jetbrains/plugins/gant/completion/data";
+  private static final String DATA_PATH = PathManager.getHomePath() + "/svnPlugins/groovy/testdata/gant/completion";
   public static final String TEMP_FILE = "temp.gant";
 
   private static final String[] GANT_JARS = new String[]{"gant.jar", "ant.jar", "gant-junit.jar", "commons.jar"};
