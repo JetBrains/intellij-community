@@ -36,8 +36,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private NewVirtualFile findChild(final String name, final boolean createIfNotFound) {
-    final NewVirtualFile result = doFindChild(name, createIfNotFound);
+  private NewVirtualFile findChild(final String name, final boolean createIfNotFound, boolean ensureCanonicalName) {
+    final NewVirtualFile result = doFindChild(name, createIfNotFound, ensureCanonicalName);
     synchronized (this) {
       if (result == null && myChildren instanceof Map) {
         ensureAsMap().put(name, NullVirtualFile.INSTANCE);
@@ -48,7 +48,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private NewVirtualFile doFindChild(String name, final boolean createIfNotFound) {
+  private NewVirtualFile doFindChild(String name, final boolean createIfNotFound, boolean ensureCanonicalName) {
     if (name.length() == 0) {
       return null;
     }
@@ -75,9 +75,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     if (file != null) return (NewVirtualFile)file;
 
-    final NewVirtualFileSystem delegate = getFileSystem();
-    VirtualFile fake = new FakeVirtualFile(this, name);
-    name = delegate.getCanonicallyCasedName(fake);
+    if (ensureCanonicalName) {
+      final NewVirtualFileSystem delegate = getFileSystem();
+      VirtualFile fake = new FakeVirtualFile(this, name);
+      name = delegate.getCanonicallyCasedName(fake);
+    }
 
     synchronized (this) {
       // do not extract getId from under the synchronized block since it will cause a concurrency problem.
@@ -126,7 +128,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   public NewVirtualFile refreshAndFindChild(final String name) {
-    return findChild(name, true);
+    return findChild(name, true, true);
   }
 
   @Nullable
@@ -165,7 +167,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     final String[] names = ourPersistence.listPersisted(this);
     for (String name : names) {
-      findChild(name, false);
+      findChild(name, false, false);
     }
 
     return ensureAsMap().values();
@@ -203,7 +205,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   public NewVirtualFile findChild(@NotNull final String name) {
-    return findChild(name, false);
+    return findChild(name, false, true);
   }
 
   @Nullable
@@ -229,7 +231,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
     }
     String name = ourPersistence.getName(id);
-    return findChild(name);
+    return findChild(name, false, false);
   }
 
   @Nullable
