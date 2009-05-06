@@ -12,6 +12,6 @@ public abstract class ExecutionEvent {
   }
 
   public String writeExternal(Element element, Project project) {
-    return "";
+    return getTypeId();
   }
 }

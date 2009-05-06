@@ -29,7 +29,7 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
       targetNames.add(tokenizer.nextToken().trim());
     }
     myTargetNames = targetNames.toArray(new String[targetNames.size()]);
-    myPresentableName = myCompositeName;
+    myPresentableName = compositeName;
   }
 
   public ExecuteCompositeTargetEvent(String[] targetNames) {
@@ -78,9 +78,8 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
   }
 
   public String writeExternal(Element element, Project project) {
-    super.writeExternal(element, project);
     element.setAttribute(PRESENTABLE_NAME, myPresentableName);
-    return myPresentableName;
+    return myCompositeName;
   }
 
   public boolean equals(Object o) {
