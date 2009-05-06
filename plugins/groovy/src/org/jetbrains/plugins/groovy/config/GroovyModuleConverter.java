@@ -42,7 +42,7 @@ public class GroovyModuleConverter implements ModuleConverter{
           if ("Groovy".equals(facetType)) {
             for (Object o1 : getChildren(facetElement, FacetManagerImpl.FACET_ELEMENT)) {
               final String innerFacetType = ((Element) o1).getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
-              if ("Gant4Groovy".equals(innerFacetType) || "Gant4Grails".equals(innerFacetType)) {
+              if ("Gant_Groovy".equals(innerFacetType) || "Gant_Grails".equals(innerFacetType)) {
                 return true;
               }
             }
@@ -75,7 +75,7 @@ public class GroovyModuleConverter implements ModuleConverter{
           }
           for (Element innerFacet : getChildren(facetElement, FacetManagerImpl.FACET_ELEMENT)) {
             final String innerFacetType = innerFacet.getAttributeValue(FacetManagerImpl.TYPE_ATTRIBUTE);
-            if ("Gant4Groovy".equals(innerFacetType) || "Gant4Grails".equals(innerFacetType)) {
+            if ("Gant_Groovy".equals(innerFacetType) || "Gant_Grails".equals(innerFacetType)) {
               innerFacet.detach();
             }
           }
