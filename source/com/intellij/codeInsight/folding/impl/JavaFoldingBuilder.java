@@ -569,8 +569,9 @@ public class JavaFoldingBuilder extends FoldingBuilderEx {
 
     if (!baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
 
-    boolean hasEmptyConstructor = false;
-    for (final PsiMethod method : baseClass.getConstructors()) {
+    final PsiMethod[] constructors = baseClass.getConstructors();
+    boolean hasEmptyConstructor = constructors.length == 0;
+    for (final PsiMethod method : constructors) {
       if (method.getParameterList().getParametersCount() == 0) {
         hasEmptyConstructor = true;
         break;
