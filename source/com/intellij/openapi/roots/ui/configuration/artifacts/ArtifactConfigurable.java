@@ -45,7 +45,7 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
   }
 
   private Artifact getArtifact() {
-    return myPackagingEditorContext.getArtifactModel().getModifiableOrOriginal(myOriginalArtifact);
+    return myPackagingEditorContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
   }
 
   public Artifact getEditableObject() {

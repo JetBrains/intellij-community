@@ -14,5 +14,5 @@ public interface ArtifactModel {
   Artifact findArtifact(@NotNull String name);
 
   @NotNull
-  Artifact getModifiableOrOriginal(@NotNull Artifact artifact);
+  Artifact getArtifactByOriginal(@NotNull Artifact artifact);
 }

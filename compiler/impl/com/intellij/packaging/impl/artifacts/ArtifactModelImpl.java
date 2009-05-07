@@ -1,48 +1,60 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactListener;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
-import com.intellij.packaging.artifacts.ArtifactListener;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author nik
  */
 public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableArtifactModel {
-  private final List<ArtifactImpl> myArtifacts;
+  private final List<ArtifactImpl> myOriginalArtifacts;
   private final ArtifactManagerImpl myArtifactManager;
   private final Map<ArtifactImpl, ArtifactImpl> myArtifact2ModifiableCopy = new HashMap<ArtifactImpl, ArtifactImpl>();
+  private final Map<ArtifactImpl, ArtifactImpl> myModifiable2Original = new HashMap<ArtifactImpl, ArtifactImpl>();
   private final EventDispatcher<ArtifactListener> myDispatcher = EventDispatcher.create(ArtifactListener.class);
 
   public ArtifactModelImpl(ArtifactManagerImpl artifactManager) {
     myArtifactManager = artifactManager;
-    myArtifacts = new ArrayList<ArtifactImpl>();
+    myOriginalArtifacts = new ArrayList<ArtifactImpl>();
   }
 
   public void addArtifacts(List<ArtifactImpl> artifacts) {
     for (ArtifactImpl artifact : artifacts) {
-      myArtifacts.add(artifact);
+      myOriginalArtifacts.add(artifact);
     }
     artifactsChanged();
   }
 
   protected List<? extends Artifact> getArtifactsList() {
-    return computeArtifactsList();
+    final List<ArtifactImpl> list = new ArrayList<ArtifactImpl>();
+    for (ArtifactImpl artifact : myOriginalArtifacts) {
+      final ArtifactImpl copy = myArtifact2ModifiableCopy.get(artifact);
+      if (copy != null) {
+        list.add(copy);
+      }
+      else {
+        list.add(artifact);
+      }
+    }
+    return list;
   }
 
   @NotNull
   public ModifiableArtifact addArtifact(final String name) {
     final ArtifactImpl artifact = new ArtifactImpl(name, true, new ArtifactRootElementImpl(), null);
-    myArtifacts.add(artifact);
+    myOriginalArtifacts.add(artifact);
     myArtifact2ModifiableCopy.put(artifact, artifact);
+    myModifiable2Original.put(artifact, artifact);
     artifactsChanged();
     myDispatcher.getMulticaster().artifactAdded(artifact);
     return artifact;
@@ -57,49 +69,58 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
   }
 
   public void removeArtifact(@NotNull Artifact artifact) {
-    myArtifacts.remove(artifact);
-    myArtifact2ModifiableCopy.remove(artifact);
+    final ArtifactImpl artifactImpl = (ArtifactImpl)artifact;
+    ArtifactImpl original = myModifiable2Original.remove(artifactImpl);
+    if (original != null) {
+      myOriginalArtifacts.remove(original);
+    }
+    else {
+      original = artifactImpl;
+    }
+    myArtifact2ModifiableCopy.remove(original);
+    myOriginalArtifacts.remove(original);
     artifactsChanged();
-    myDispatcher.getMulticaster().artifactRemoved(artifact);
+    myDispatcher.getMulticaster().artifactRemoved(original);
   }
 
   @NotNull
   public ModifiableArtifact getOrCreateModifiableArtifact(@NotNull Artifact artifact) {
     final ArtifactImpl artifactImpl = (ArtifactImpl)artifact;
+    if (myModifiable2Original.containsKey(artifactImpl)) {
+      return artifactImpl;
+    }
+
     ArtifactImpl modifiableCopy = myArtifact2ModifiableCopy.get(artifactImpl);
     if (modifiableCopy == null) {
       modifiableCopy = artifactImpl.createCopy();
       myArtifact2ModifiableCopy.put(artifactImpl, modifiableCopy);
+      myModifiable2Original.put(modifiableCopy, artifactImpl);
       artifactsChanged();
     }
     return modifiableCopy;
   }
 
   @NotNull
-  public Artifact getModifiableOrOriginal(@NotNull Artifact artifact) {
-    final ArtifactImpl copy = myArtifact2ModifiableCopy.get(artifact);
-    return copy != null ? copy : artifact;
+  public ArtifactImpl getArtifactByOriginal(@NotNull Artifact artifact) {
+    final ArtifactImpl artifactImpl = (ArtifactImpl)artifact;
+    final ArtifactImpl copy = myArtifact2ModifiableCopy.get(artifactImpl);
+    return copy != null ? copy : artifactImpl;
   }
 
   public boolean isModified() {
-    return !myArtifacts.equals(myArtifactManager.getArtifactsList()) || !myArtifact2ModifiableCopy.isEmpty();
+    return !myOriginalArtifacts.equals(myArtifactManager.getArtifactsList()) || !myArtifact2ModifiableCopy.isEmpty();
   }
 
   public void commit() {
-    myArtifactManager.commit(computeArtifactsList());
+    myArtifactManager.commit(this);
   }
 
-  private List<ArtifactImpl> computeArtifactsList() {
-    final List<ArtifactImpl> list = new ArrayList<ArtifactImpl>();
-    for (ArtifactImpl artifact : myArtifacts) {
-      final ArtifactImpl copy = myArtifact2ModifiableCopy.get(artifact);
-      if (copy != null) {
-        list.add(copy);
-      }
-      else {
-        list.add(artifact);
-      }
-    }
-    return list;
+  public boolean isChanged(@NotNull ArtifactImpl artifact) {
+    final ArtifactImpl modifiable = myArtifact2ModifiableCopy.get(artifact);
+    return modifiable != null && !modifiable.equals(artifact);
+  }
+
+  public List<ArtifactImpl> getOriginalArtifacts() {
+    return myOriginalArtifacts;
   }
 }

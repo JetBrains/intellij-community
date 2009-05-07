@@ -1,24 +1,24 @@
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactListener;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
-import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.facet.impl.DefaultFacetsProvider;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -31,10 +31,12 @@ import java.util.List;
     }
 )
 public class ArtifactManagerImpl extends ArtifactManager implements ProjectComponent, PersistentStateComponent<ArtifactManagerState> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.artifacts.ArtifactManagerImpl");
   @NonNls public static final String COMPONENT_NAME = "ArtifactManager";
   private final ArtifactManagerModel myModel = new ArtifactManagerModel();
   private final Project myProject;
   private final DefaultPackagingElementResolvingContext myResolvingContext;
+  private boolean myInsideCommit = false;
 
   public ArtifactManagerImpl(Project project) {
     myProject = project;
@@ -51,8 +53,8 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   @NotNull
-  public Artifact getModifiableOrOriginal(@NotNull Artifact artifact) {
-    return myModel.getModifiableOrOriginal(artifact);
+  public Artifact getArtifactByOriginal(@NotNull Artifact artifact) {
+    return myModel.getArtifactByOriginal(artifact);
   }
 
   public ArtifactManagerState getState() {
@@ -113,7 +115,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       }
       artifacts.add(new ArtifactImpl(state.getName(), state.isBuildOnMake(), rootElement, state.getOutputPath()));
     }
-    commit(artifacts);
+    myModel.setArtifactsList(artifacts);
   }
 
   public void disposeComponent() {
@@ -149,8 +151,47 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     return myModel.myArtifactsList;
   }
 
-  public void commit(List<ArtifactImpl> artifacts) {
-    myModel.setArtifactsList(artifacts);
+  public void commit(ArtifactModelImpl artifactModel) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    LOG.assertTrue(!myInsideCommit, "Recusive commit");
+
+    myInsideCommit = true;
+    try {
+
+      final List<ArtifactImpl> allArtifacts = artifactModel.getOriginalArtifacts();
+
+      Set<ArtifactImpl> removed = new THashSet<ArtifactImpl>(myModel.myArtifactsList);
+      List<ArtifactImpl> added = new ArrayList<ArtifactImpl>();
+      List<ArtifactImpl> changed = new ArrayList<ArtifactImpl>();
+
+      List<ArtifactImpl> newArtifacts = new ArrayList<ArtifactImpl>();
+      for (ArtifactImpl artifact : allArtifacts) {
+        final boolean isAdded = !removed.remove(artifact);
+        final ArtifactImpl newArtifact = artifactModel.getArtifactByOriginal(artifact);
+        if (isAdded) {
+          added.add(newArtifact);
+        }
+        else if (artifactModel.isChanged(artifact)) {
+          changed.add(artifact);
+        }
+        newArtifacts.add(newArtifact);
+      }
+
+      myModel.setArtifactsList(newArtifacts);
+      final ArtifactListener publisher = myProject.getMessageBus().syncPublisher(TOPIC);
+      for (ArtifactImpl artifact : added) {
+        publisher.artifactAdded(artifact);
+      }
+      for (ArtifactImpl artifact : removed) {
+        publisher.artifactRemoved(artifact);
+      }
+      for (ArtifactImpl artifact : changed) {
+        publisher.artifactChanged(artifact, artifactModel.getArtifactByOriginal(artifact));
+      }
+    }
+    finally {
+      myInsideCommit = false;
+    }
   }
 
   private static class ArtifactManagerModel extends ArtifactModelBase {
@@ -166,33 +207,4 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     }
   }
 
-  private static class DefaultPackagingElementResolvingContext implements PackagingElementResolvingContext {
-    private final Project myProject;
-    private final DefaultModulesProvider myModulesProvider;
-
-    public DefaultPackagingElementResolvingContext(Project project) {
-      myProject = project;
-      myModulesProvider = new DefaultModulesProvider(myProject);
-    }
-
-    @NotNull
-    public Project getProject() {
-      return myProject;
-    }
-
-    @NotNull
-    public ArtifactModel getArtifactModel() {
-      return getInstance(myProject);
-    }
-
-    @NotNull
-    public ModulesProvider getModulesProvider() {
-      return myModulesProvider;
-    }
-
-    @NotNull
-    public FacetsProvider getFacetsProvider() {
-      return DefaultFacetsProvider.INSTANCE;
-    }
-  }
 }

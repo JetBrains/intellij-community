@@ -37,7 +37,7 @@ public abstract class ArtifactModelBase implements ArtifactModel {
   }
 
   @NotNull
-  public Artifact getModifiableOrOriginal(@NotNull Artifact artifact) {
+  public Artifact getArtifactByOriginal(@NotNull Artifact artifact) {
     return artifact;
   }
 

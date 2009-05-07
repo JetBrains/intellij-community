@@ -104,7 +104,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   }
 
   public Artifact getArtifact() {
-    return myContext.getArtifactModel().getModifiableOrOriginal(myOriginalArtifact);
+    return myContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
   }
 
   public void rebuildTries() {

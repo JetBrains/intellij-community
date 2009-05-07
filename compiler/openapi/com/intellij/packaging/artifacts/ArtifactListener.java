@@ -13,6 +13,6 @@ public interface ArtifactListener extends EventListener {
 
   void artifactRemoved(@NotNull Artifact artifact);
 
-  void artifactChanged(@NotNull Artifact artifact);
+  void artifactChanged(@NotNull Artifact original, Artifact modified);
 
 }
