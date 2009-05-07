@@ -62,15 +62,14 @@ public final class CommandProcessor implements Runnable {
         }
         // max. I'm not actually quite sure this should have NON_MODAL modality but it should
         // definitely have some since runnables in command list may (and do) request some PSI activity
-
         final boolean queueNext = myCommandCount > 0;
+        if (queueNext) {
         ApplicationManager.getApplication().getInvokator().invokeLater(command, ModalityState.NON_MODAL, expire == null ? Condition.FALSE : expire).doWhenDone(new Runnable() {
           public void run() {
-            if (queueNext) {
-              CommandProcessor.this.run();
-            }
+            CommandProcessor.this.run();
           }
         });
+        }
       }
     }
   }
