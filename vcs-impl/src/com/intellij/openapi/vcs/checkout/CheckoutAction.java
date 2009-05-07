@@ -5,10 +5,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 
-public class CheckoutAction extends AnAction {
+public class CheckoutAction extends AnAction implements DumbAware {
   private final CheckoutProvider myProvider;
 
   public CheckoutAction(final CheckoutProvider provider) {
