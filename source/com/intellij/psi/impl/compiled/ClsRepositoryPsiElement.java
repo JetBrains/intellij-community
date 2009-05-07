@@ -19,9 +19,7 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
   }
 
   public PsiElement getParent() {
-    final PsiElement parentPsi = myStub.getParentStub().getPsi();
-    if (parentPsi == null) throw new PsiInvalidElementAccessException(this);
-    return parentPsi;
+    return myStub.getParentStub().getPsi();
   }
 
   public PsiManager getManager() {

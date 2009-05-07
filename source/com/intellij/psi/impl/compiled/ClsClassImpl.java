@@ -456,7 +456,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
         if (name.equals(aClass.getName())) return aClass;
       }
     }
-    else {
+    else if (parent != null) {
       ClsClassImpl parentClass = (ClsClassImpl)parent;
       PsiClass parentSourceMirror = parentClass.getSourceMirrorClass();
       if (parentSourceMirror == null) return null;
@@ -464,6 +464,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
       for (PsiClass innerClass : innerClasses) {
         if (name.equals(innerClass.getName())) return innerClass;
       }
+    }
+    else {
+      throw new PsiInvalidElementAccessException(this);
     }
 
     return null;
