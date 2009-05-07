@@ -30,10 +30,13 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   public PyArgumentList findElementForParameterInfo(final CreateParameterInfoContext context) {
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
-      PyArgumentList.AnalysisResult result = arglist.analyzeCall();  
-      context.setItemsToShow(new Object[] { result });
+      PyArgumentList.AnalysisResult result = arglist.analyzeCall();
+      if (result != null) {
+        context.setItemsToShow(new Object[] { result });
+        return arglist;
+      }
     }
-    return arglist;
+    return null;
   }
 
   private static PyArgumentList findArgumentList(final ParameterInfoContext context) {
