@@ -1,6 +1,9 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -26,6 +29,8 @@ public class MavenImportingSettings implements Cloneable {
   private boolean useMavenOutput = true;
   private boolean updateFoldersOnImport = true;
   private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
+
+  private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
   @NotNull
   public String getDedicatedModuleDir() {
@@ -58,6 +63,7 @@ public class MavenImportingSettings implements Cloneable {
 
   public void setCreateModuleGroups(boolean createModuleGroups) {
     this.createModuleGroups = createModuleGroups;
+    fireCreateModuleGroupsChanged();
   }
 
   public boolean isCreateModulesForAggregators() {
@@ -66,6 +72,7 @@ public class MavenImportingSettings implements Cloneable {
 
   public void setCreateModulesForAggregators(boolean createModulesForAggregators) {
     this.createModulesForAggregators = createModulesForAggregators;
+    fireCreateModuleForAggregatorsChanged();
   }
 
   public boolean isUseMavenOutput() {
@@ -131,10 +138,37 @@ public class MavenImportingSettings implements Cloneable {
   @Override
   public MavenImportingSettings clone() {
     try {
-      return (MavenImportingSettings)super.clone();
+      MavenImportingSettings result = (MavenImportingSettings)super.clone();
+      result.myListeners = ContainerUtil.createEmptyCOWList();
+      return result;
     }
     catch (CloneNotSupportedException e) {
       throw new Error(e);
     }
+  }
+
+  public void addListener(Listener l) {
+    myListeners.add(l);
+  }
+
+  public void removeListener(Listener l) {
+    myListeners.remove(l);
+  }
+
+  private void fireCreateModuleGroupsChanged() {
+    for (Listener each : myListeners) {
+      each.createModuleGroupsChanged();
+    }
+  }
+
+  private void fireCreateModuleForAggregatorsChanged() {
+    for (Listener each : myListeners) {
+      each.createModuleForAggregatorsChanged();
+    }
+  }
+
+  public interface Listener {
+    void createModuleGroupsChanged();
+    void createModuleForAggregatorsChanged();
   }
 }

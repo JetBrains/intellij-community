@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,7 +9,6 @@ import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -30,7 +30,7 @@ public class MavenGeneralSettings implements Cloneable {
 
   private File myEffectiveLocalRepositoryCache;
 
-  private List<Listener> myListeners = new ArrayList<Listener>();
+  private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public boolean getPluginUpdatePolicy() {
     return pluginUpdatePolicy;
@@ -195,7 +195,9 @@ public class MavenGeneralSettings implements Cloneable {
   @Override
   public MavenGeneralSettings clone() {
     try {
-      return (MavenGeneralSettings)super.clone();
+      MavenGeneralSettings result = (MavenGeneralSettings)super.clone();
+      result.myListeners = ContainerUtil.createEmptyCOWList();
+      return result;
     }
     catch (CloneNotSupportedException e) {
       throw new Error(e);

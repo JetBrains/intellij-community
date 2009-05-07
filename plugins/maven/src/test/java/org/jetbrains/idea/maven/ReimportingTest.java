@@ -141,11 +141,11 @@ public class ReimportingTest extends MavenImportingTestCase {
     configMessagesForYesAnswer();
 
     getMavenImporterSettings().setCreateModulesForAggregators(false);
-    myMavenProjectsManager.importProjects(); // using raw call to ignore emulation of project file change
+    myMavenProjectsManager.flushPendingImportRequestsInTests();
     assertModules("m2");
 
     getMavenImporterSettings().setCreateModulesForAggregators(true);
-    myMavenProjectsManager.importProjects();
+    myMavenProjectsManager.flushPendingImportRequestsInTests();
     assertModules("project", "m1", "m2");
   }
 

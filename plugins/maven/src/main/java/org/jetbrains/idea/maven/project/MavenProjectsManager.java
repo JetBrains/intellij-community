@@ -149,6 +149,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     initProjectsTree(tryToLoadExistingTree);
 
     initWorkers();
+    listenForSettingsChanges();
     listenForProjectsTreeChanges();
 
     scheduleReadAllProjects();
@@ -234,6 +235,18 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     MavenUserAwareUpdatingQueueHelper.attachTo(myProject, myImportingQueue);
   }
 
+  private void listenForSettingsChanges() {
+    getImportingSettings().addListener(new MavenImportingSettings.Listener() {
+      public void createModuleGroupsChanged() {
+        scheduleImport();
+      }
+
+      public void createModuleForAggregatorsChanged() {
+        scheduleImport();
+      }
+    });
+  }
+
   private void listenForProjectsTreeChanges() {
     myProjectsTree.addListener(new MavenProjectsTree.ListenerAdapter() {
       public void projectsRead(List<MavenProject> projects) {
@@ -257,7 +270,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       @Override
       public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
-        scheduleImport(Collections.EMPTY_LIST);
+        scheduleImport();
       }
     });
   }
@@ -481,7 +494,10 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     synchronized (myProjectsToImport) {
       myProjectsToImport.addAll(projects);
     }
+    scheduleImport();
+  }
 
+  private void scheduleImport() {
     myImportingQueue.queue(new Update(this) {
       public void run() {
         importProjects();

@@ -481,6 +481,39 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("module2", "module1 and modules");
   }
 
+  public void testReimportingProjectWhenCreatingModuleGroupsSettingChanged() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>module1</module>" +
+                     "</modules>");
+
+    createModulePom("module1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>module1</artifactId>" +
+                    "<version>1</version>" +
+                    "<packaging>pom</packaging>" +
+
+                    "<modules>" +
+                    "  <module>module2</module>" +
+                    "</modules>");
+
+    createModulePom("module1/module2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>module2</artifactId>" +
+                    "<version>1</version>");
+    importProject();
+
+    assertModuleGroupPath("module2");
+
+    getMavenImporterSettings().setCreateModuleGroups(true);
+    myMavenProjectsManager.flushPendingImportRequestsInTests();
+    assertModuleGroupPath("module2", "module1 and modules");
+  }
+
   public void testLanguageLevel() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

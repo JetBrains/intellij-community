@@ -349,8 +349,8 @@ public class MavenProjectImporter {
         depth--;
       }
 
-      private boolean shouldCreateGroup(MavenProject node) {
-        return !myProjectsTree.getModules(node).isEmpty()
+      private boolean shouldCreateGroup(MavenProject project) {
+        return !myProjectsTree.getModules(project).isEmpty()
                && (createTopLevelGroup || depth > 1);
       }
     });

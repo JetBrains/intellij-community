@@ -331,6 +331,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     initMavenProjectsManager(false);
     myMavenProjectsManager.resetManagedFilesAndProfilesInTests(files, myProfilesList);
     myMavenProjectsManager.waitForQuickResolvingCompletion();
+    // todo replace with myMavenProjectsManager.flushPendingImportRequestsInTests();
     myMavenProjectsManager.scheduleImportInTests(files);
     myMavenProjectsManager.importProjects();
     myMavenTree = myMavenProjectsManager.getProjectsTreeForTests();
