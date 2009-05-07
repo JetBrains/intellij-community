@@ -10,8 +10,6 @@ import com.intellij.packaging.artifacts.ArtifactModel;
  * @author nik
  */
 public interface PackagingElementResolvingContext {
-
-
   @NotNull
   Project getProject();
 

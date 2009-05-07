@@ -2,11 +2,17 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable;
 import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.CopyInstructionCreator;
+import com.intellij.packaging.elements.ArtifactGenerationContext;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.compiler.ant.Generator;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author nik
@@ -39,6 +45,11 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   }
 
   public void rename(@NotNull String newName) {
+  }
+
+  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull CopyInstructionCreator creator,
+                                                   @NotNull ArtifactGenerationContext generationContext) {
+    throw new UnsupportedOperationException("'computeGenerators' not implemented in " + getClass().getName());
   }
 
   @Override

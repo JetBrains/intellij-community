@@ -19,6 +19,7 @@ package com.intellij.compiler.ant;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -76,7 +77,8 @@ public class Tag extends CompositeGenerator {
     }
   }
 
-  protected static Pair<String, String> pair(@NonNls String v1, @NonNls String v2) {
+  @Nullable
+  protected static Pair<String, String> pair(@NonNls String v1, @Nullable @NonNls String v2) {
     if (v2 == null) {
       return null;
     }

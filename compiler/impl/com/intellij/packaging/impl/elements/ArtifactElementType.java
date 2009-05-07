@@ -16,7 +16,7 @@ import java.util.*;
 /**
 * @author nik
 */
-class ArtifactElementType extends PackagingElementType<ArtifactPackagingElement> {
+public class ArtifactElementType extends PackagingElementType<ArtifactPackagingElement> {
   public static final ArtifactElementType ARTIFACT_ELEMENT_TYPE = new ArtifactElementType();
 
   ArtifactElementType() {

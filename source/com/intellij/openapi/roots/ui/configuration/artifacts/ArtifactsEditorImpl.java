@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.packaging.PackagingTreeParameters;
@@ -12,6 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProje
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -69,17 +71,24 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     Disposer.register(this, myPackagingElementsTree);
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
     final String outputPath = artifact.getOutputPath();
+    myOutputDirectoryField.addBrowseFolderListener("Output Directory for Artifact", "Select output directory for '" + getArtifact().getName() + "' artifact",
+                                                   myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myOutputDirectoryField.setText(outputPath != null ? FileUtil.toSystemDependentName(outputPath) : null);
   }
 
   public void apply() {
     final ModifiableArtifact modifiableArtifact = myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
     modifiableArtifact.setBuildOnMake(myBuildOnMakeCheckBox.isSelected());
+    modifiableArtifact.setOutputPath(getConfiguredOutputPath());
+  }
+
+  @Nullable
+  private String getConfiguredOutputPath() {
     String outputPath = FileUtil.toSystemIndependentName(myOutputDirectoryField.getText().trim());
     if (outputPath.length() == 0) {
       outputPath = null;
     }
-    modifiableArtifact.setOutputPath(outputPath);
+    return outputPath;
   }
 
   public void addListener(@NotNull final ArtifactsEditorListener listener) {
@@ -201,9 +210,9 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   }
 
   public boolean isModified() {
-    if (getArtifact().getRootElement() == myOriginalArtifact.getRootElement()) return false;
-
-    return true;//todo[nik]
+    return getArtifact().getRootElement() != myOriginalArtifact.getRootElement()
+        || myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
+        || !Comparing.equal(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath());
   }
 
   public void dispose() {

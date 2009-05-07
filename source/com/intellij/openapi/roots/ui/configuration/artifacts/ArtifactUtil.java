@@ -61,7 +61,7 @@ public class ArtifactUtil {
     return copy;
   }
 
-  public static <E extends PackagingElement<?>> boolean processPackagingElements(@NotNull Artifact artifact, @NotNull PackagingElementType<E> type,
+  public static <E extends PackagingElement<?>> boolean processPackagingElements(@NotNull Artifact artifact, @Nullable PackagingElementType<E> type,
                                                                                  @NotNull Processor<E> processor,
                                                                                  final @NotNull PackagingElementResolvingContext resolvingContext,
                                                                                  final boolean processSubstituions) {
@@ -70,7 +70,7 @@ public class ArtifactUtil {
   }
 
   private static <E extends PackagingElement<?>> boolean processElements(final List<? extends PackagingElement<?>> elements,
-                                                                         PackagingElementType<E> type,
+                                                                         @Nullable PackagingElementType<E> type,
                                                                          @NotNull Processor<E> processor,
                                                                          final @NotNull PackagingElementResolvingContext resolvingContext,
                                                                          final boolean processSubstituions) {
@@ -82,11 +82,11 @@ public class ArtifactUtil {
     return true;
   }
 
-  private static <E extends PackagingElement<?>> boolean processElements(@NotNull PackagingElement<?> element, @NotNull PackagingElementType<E> type,
+  private static <E extends PackagingElement<?>> boolean processElements(@NotNull PackagingElement<?> element, @Nullable PackagingElementType<E> type,
                                                                          @NotNull Processor<E> processor,
                                                                          @NotNull PackagingElementResolvingContext resolvingContext,
                                                                          final boolean processSubstituions) {
-    if (element.getType().equals(type)) {
+    if (type == null || element.getType().equals(type)) {
       if (!processor.process((E)element)) {
         return false;
       }

@@ -1,5 +1,6 @@
 package com.intellij.packaging.elements;
 
+import com.intellij.compiler.ant.Generator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -38,5 +39,15 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
 
   public boolean canBeMergedWith(@NotNull PackagingElement<?> element) {
     return false;
+  }
+
+  protected List<? extends Generator> computeChildrenGenerators(PackagingElementResolvingContext resolvingContext,
+                                                                final CopyInstructionCreator copyInstructionCreator,
+                                                                final ArtifactGenerationContext generationContext) {
+    final List<Generator> generators = new ArrayList<Generator>();
+    for (PackagingElement<?> child : myChildren) {
+      generators.addAll(child.computeCopyInstructions(resolvingContext, copyInstructionCreator, generationContext));
+    }
+    return generators;
   }
 }

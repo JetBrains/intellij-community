@@ -1,13 +1,20 @@
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.compiler.ant.Generator;
+import com.intellij.openapi.module.Module;
+import com.intellij.packaging.elements.ArtifactGenerationContext;
+import com.intellij.packaging.elements.CopyInstructionCreator;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -26,6 +33,13 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
     return new ModuleElementPresentation(myModuleName, findModule(context));
+  }
+
+  @Override
+  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
+                                                           @NotNull CopyInstructionCreator creator,
+                                                           @NotNull ArtifactGenerationContext generationContext) {
+    return Collections.singletonList(creator.createDirectoryContentCopyInstruction(generationContext.getModuleOutputPath(myModuleName)));
   }
 
   public ModuleOutputPackagingElement getState() {

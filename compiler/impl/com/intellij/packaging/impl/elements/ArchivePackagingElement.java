@@ -1,13 +1,19 @@
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.compiler.ant.BuildProperties;
+import com.intellij.compiler.ant.Generator;
+import com.intellij.compiler.ant.artifacts.ArchiveCopyInstructionCreator;
+import com.intellij.compiler.ant.taskdefs.Jar;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -28,6 +34,19 @@ public class ArchivePackagingElement extends CompositePackagingElement<ArchivePa
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
     return new ArchiveElementPresentation(this);
+  }
+
+  @Override
+  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull CopyInstructionCreator creator,
+                                                   @NotNull ArtifactGenerationContext generationContext) {
+    final String tempJarProperty = generationContext.createNewTempFileProperty("temp.jar.path." + myArchiveFileName, myArchiveFileName);
+    String jarPath = BuildProperties.propertyRef(tempJarProperty);
+    final Jar jar = new Jar(jarPath, "preserve");
+    for (Generator generator : computeChildrenGenerators(resolvingContext, new ArchiveCopyInstructionCreator(""), generationContext)) {
+      jar.add(generator);
+    }
+    generationContext.runBeforeCurrentArtifact(jar);
+    return Collections.singletonList(creator.createFileCopyInstruction(jarPath, myArchiveFileName));
   }
 
   public ArchivePackagingElement getState() {

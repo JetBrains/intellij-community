@@ -1,12 +1,15 @@
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.compiler.ant.Generator;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.DirectoryElementPresentation;
-import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -25,6 +28,20 @@ public class DirectoryPackagingElement extends CompositePackagingElement<Directo
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
     return new DirectoryElementPresentation(this); 
+  }
+
+  @Override
+  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
+                                                           @NotNull CopyInstructionCreator creator,
+                                                           @NotNull ArtifactGenerationContext generationContext) {
+
+    final List<Generator> children = new ArrayList<Generator>();
+    final Generator command = creator.createSubFolderCommand(myDirectoryName);
+    if (command != null) {
+      children.add(command);
+    }
+    children.addAll(computeChildrenGenerators(resolvingContext, creator.subFolder(myDirectoryName), generationContext));
+    return children;
   }
 
   public DirectoryPackagingElement getState() {

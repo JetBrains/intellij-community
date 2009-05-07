@@ -17,7 +17,6 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.Tag;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -27,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
 public class FileSet extends Tag{
 
   public FileSet(@NonNls final String dir) {
-    super("fileset", new Pair[] {pair("dir", dir)});
+    super("fileset", pair("dir", dir));
   }
 
 }

@@ -1,9 +1,9 @@
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.compiler.ant.Generator;
+import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.ComplexPackagingElement;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,6 +38,18 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
       return elements;
     }
     return null;
+  }
+
+  @Override
+  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
+                                                           @NotNull CopyInstructionCreator creator,
+                                                           @NotNull ArtifactGenerationContext generationContext) {
+    final Artifact artifact = findArtifact(resolvingContext);
+    if (artifact != null) {
+      final String outputPath = BuildProperties.propertyRef(generationContext.getArtifactOutputProperty(artifact));
+      return Collections.singletonList(creator.createDirectoryContentCopyInstruction(outputPath));
+    }
+    return Collections.emptyList();
   }
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {

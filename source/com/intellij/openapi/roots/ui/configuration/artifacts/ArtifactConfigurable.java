@@ -78,6 +78,7 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
   }
 
   public void apply() throws ConfigurationException {
+    myEditor.apply();
   }
 
   public void reset() {

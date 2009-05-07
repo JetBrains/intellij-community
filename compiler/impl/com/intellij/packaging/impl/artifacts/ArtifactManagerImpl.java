@@ -1,21 +1,23 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.elements.PackagingElementFactory;
-import com.intellij.packaging.elements.PackagingElementType;
+import com.intellij.packaging.artifacts.ArtifactModel;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.facet.impl.DefaultFacetsProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -31,6 +33,13 @@ import java.util.List;
 public class ArtifactManagerImpl extends ArtifactManager implements ProjectComponent, PersistentStateComponent<ArtifactManagerState> {
   @NonNls public static final String COMPONENT_NAME = "ArtifactManager";
   private final ArtifactManagerModel myModel = new ArtifactManagerModel();
+  private final Project myProject;
+  private final DefaultPackagingElementResolvingContext myResolvingContext;
+
+  public ArtifactManagerImpl(Project project) {
+    myProject = project;
+    myResolvingContext = new DefaultPackagingElementResolvingContext(myProject);
+  }
 
   @NotNull
   public Artifact[] getArtifacts() {
@@ -44,16 +53,6 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   @NotNull
   public Artifact getModifiableOrOriginal(@NotNull Artifact artifact) {
     return myModel.getModifiableOrOriginal(artifact);
-  }
-
-  public Collection<? extends Artifact> getEnabledArtifacts() {
-    final List<Artifact> enabled = new ArrayList<Artifact>();
-    for (Artifact artifact : getArtifacts()) {
-      if (artifact.isBuildOnMake()) {
-        enabled.add(artifact);
-      }
-    }
-    return enabled;
   }
 
   public ArtifactManagerState getState() {
@@ -141,6 +140,11 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     return model;
   }
 
+  @Override
+  public PackagingElementResolvingContext getResolvingContext() {
+    return myResolvingContext;
+  }
+
   public List<ArtifactImpl> getArtifactsList() {
     return myModel.myArtifactsList;
   }
@@ -159,6 +163,36 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
     protected List<? extends Artifact> getArtifactsList() {
       return myArtifactsList;
+    }
+  }
+
+  private static class DefaultPackagingElementResolvingContext implements PackagingElementResolvingContext {
+    private final Project myProject;
+    private final DefaultModulesProvider myModulesProvider;
+
+    public DefaultPackagingElementResolvingContext(Project project) {
+      myProject = project;
+      myModulesProvider = new DefaultModulesProvider(myProject);
+    }
+
+    @NotNull
+    public Project getProject() {
+      return myProject;
+    }
+
+    @NotNull
+    public ArtifactModel getArtifactModel() {
+      return getInstance(myProject);
+    }
+
+    @NotNull
+    public ModulesProvider getModulesProvider() {
+      return myModulesProvider;
+    }
+
+    @NotNull
+    public FacetsProvider getFacetsProvider() {
+      return DefaultFacetsProvider.INSTANCE;
     }
   }
 }

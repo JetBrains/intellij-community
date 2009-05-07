@@ -1,12 +1,15 @@
 package com.intellij.compiler.ant;
 
+import com.intellij.compiler.ant.artifacts.ArtifactsGenerator;
 import com.intellij.compiler.ant.taskdefs.AntProject;
 import com.intellij.compiler.ant.taskdefs.Target;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -50,6 +53,20 @@ public abstract class ProjectBuild extends Generator {
     initTarget.add(new Comment(CompilerBundle.message("generated.ant.build.initialization.section.comment")));
     myAntProject.add(initTarget, 1);
     myAntProject.add(new CleanProject(genOptions), 1);
+
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      ArtifactsGenerator artifactsGenerator = new ArtifactsGenerator(project, genOptions);
+      List<Generator> generators = artifactsGenerator.generate();
+      for (Generator generator : generators) {
+        myAntProject.add(generator, 1);
+      }
+
+      if (alltargetNames.length() > 0) {
+        alltargetNames.append(", ");
+      }
+      alltargetNames.append(ArtifactsGenerator.BUILD_ALL_ARTIFACTS_TARGET);
+    }
+
     myAntProject.add(new Target(BuildProperties.TARGET_ALL, alltargetNames.toString(),
                                 CompilerBundle.message("generated.ant.build.build.all.target.name"), null), 1);
   }

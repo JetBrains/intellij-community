@@ -100,6 +100,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
+    super.apply();
     if (myModifiableModel != null) {
       myModifiableModel.commit();
       myModifiableModel = null;
