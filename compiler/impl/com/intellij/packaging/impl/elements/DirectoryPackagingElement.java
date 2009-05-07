@@ -72,7 +72,7 @@ public class DirectoryPackagingElement extends CompositePackagingElement<Directo
   }
 
   @Override
-  public boolean canBeMergedWith(@NotNull PackagingElement<?> element) {
+  public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof DirectoryPackagingElement && ((DirectoryPackagingElement)element).getDirectoryName().equals(myDirectoryName);
   }
 }

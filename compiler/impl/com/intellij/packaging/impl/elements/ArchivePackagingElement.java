@@ -97,7 +97,7 @@ public class ArchivePackagingElement extends CompositePackagingElement<ArchivePa
   }
 
   @Override
-  public boolean canBeMergedWith(@NotNull PackagingElement<?> element) {
+  public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof ArchivePackagingElement && ((ArchivePackagingElement)element).getArchiveFileName().equals(myArchiveFileName);
   }
 }

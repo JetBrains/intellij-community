@@ -215,7 +215,7 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
       if (node instanceof PackagingElementNode) {
         final PackagingElementNode packagingElementNode = (PackagingElementNode)node;
         final PackagingElement<?> packagingElement = packagingElementNode.getPackagingElement();
-        if (packagingElement instanceof CompositePackagingElement && ((CompositePackagingElement<?>)packagingElement).canBeMergedWith(element)) {
+        if (packagingElement.isEqualTo(element)) {
           return packagingElementNode;
         }
       }

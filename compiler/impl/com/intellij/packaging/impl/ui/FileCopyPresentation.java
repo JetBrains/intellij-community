@@ -64,6 +64,6 @@ public class FileCopyPresentation extends PackagingElementPresentation {
 
   @Override
   public double getWeight() {
-    return myIsDirectory ? PackagingElementWeights.DIRECTORY : PackagingElementWeights.FILE;
+    return myIsDirectory ? PackagingElementWeights.DIRECTORY + 0.5 : PackagingElementWeights.FILE;
   }
 }

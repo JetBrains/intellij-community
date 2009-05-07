@@ -26,4 +26,6 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
 
   public abstract List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
                                                             @NotNull CopyInstructionCreator creator, @NotNull ArtifactGenerationContext generationContext);
+
+  public abstract boolean isEqualTo(@NotNull PackagingElement<?> element);
 }

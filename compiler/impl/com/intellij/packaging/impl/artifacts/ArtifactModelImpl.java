@@ -51,7 +51,7 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
 
   @NotNull
   public ModifiableArtifact addArtifact(final String name) {
-    final ArtifactImpl artifact = new ArtifactImpl(name, true, new ArtifactRootElementImpl(), null);
+    final ArtifactImpl artifact = new ArtifactImpl(name, false, new ArtifactRootElementImpl(), null);
     myOriginalArtifacts.add(artifact);
     myArtifact2ModifiableCopy.put(artifact, artifact);
     myModifiable2Original.put(artifact, artifact);

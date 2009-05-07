@@ -37,10 +37,6 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
 
   public abstract void rename(@NotNull String newName);
 
-  public boolean canBeMergedWith(@NotNull PackagingElement<?> element) {
-    return false;
-  }
-
   protected List<? extends Generator> computeChildrenGenerators(PackagingElementResolvingContext resolvingContext,
                                                                 final CopyInstructionCreator copyInstructionCreator,
                                                                 final ArtifactGenerationContext generationContext) {

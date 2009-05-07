@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author nik
@@ -99,5 +100,38 @@ public class ArtifactUtil {
       return processElements(substitution, type, processor, resolvingContext, processSubstituions);
     }
     return true;
+  }
+
+  public static void removeDuplicates(@NotNull CompositePackagingElement<?> parent) {
+    List<PackagingElement<?>> prevChildren = new ArrayList<PackagingElement<?>>();
+
+    List<PackagingElement<?>> toRemove = new ArrayList<PackagingElement<?>>();
+    for (PackagingElement<?> child : parent.getChildren()) {
+      if (child instanceof CompositePackagingElement<?>) {
+        removeDuplicates((CompositePackagingElement<?>)child);
+      }
+      boolean merged = false;
+      for (PackagingElement<?> prevChild : prevChildren) {
+        if (child.isEqualTo(prevChild)) {
+          if (child instanceof CompositePackagingElement<?>) {
+            for (PackagingElement<?> childElement : ((CompositePackagingElement<?>)child).getChildren()) {
+              ((CompositePackagingElement<?>)prevChild).addChild(childElement);
+            }
+          }
+          merged = true;
+          break;
+        }
+      }
+      if (merged) {
+        toRemove.add(child);
+      }
+      else {
+        prevChildren.add(child);
+      }
+    }
+
+    for (PackagingElement<?> child : toRemove) {
+      parent.removeChild(child);
+    }
   }
 }

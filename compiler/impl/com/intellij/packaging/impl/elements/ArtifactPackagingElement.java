@@ -1,7 +1,7 @@
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.compiler.ant.Generator;
 import com.intellij.compiler.ant.BuildProperties;
+import com.intellij.compiler.ant.Generator;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
@@ -62,6 +62,12 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
 
   public void loadState(ArtifactPackagingElement state) {
     myArtifactName = state.getArtifactName();
+  }
+
+  @Override
+  public boolean isEqualTo(@NotNull PackagingElement<?> element) {
+    return element instanceof ArtifactPackagingElement && myArtifactName != null
+           && myArtifactName.equals(((ArtifactPackagingElement)element).getArtifactName());
   }
 
   @Attribute("artifact-name")

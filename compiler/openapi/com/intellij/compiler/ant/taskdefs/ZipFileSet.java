@@ -47,7 +47,10 @@ public class ZipFileSet extends Tag{
       final String parent = new File(relativePath).getParent();
       path = parent == null ? "" : FileUtil.toSystemIndependentName(parent);
     }
-    return path != null ? StringUtil.trimStart(path, "/") : null;
+    if (path != null) {
+      path = StringUtil.trimStart(path, "/");
+    }
+    return !StringUtil.isEmpty(path) ? path : null;
   }
 
 }

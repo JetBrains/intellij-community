@@ -1,6 +1,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.Generator;
+import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.openapi.module.Module;
 import com.intellij.packaging.elements.ArtifactGenerationContext;
 import com.intellij.packaging.elements.CopyInstructionCreator;
@@ -39,7 +40,14 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
   public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
                                                            @NotNull CopyInstructionCreator creator,
                                                            @NotNull ArtifactGenerationContext generationContext) {
-    return Collections.singletonList(creator.createDirectoryContentCopyInstruction(generationContext.getModuleOutputPath(myModuleName)));
+    final String moduleOutput = BuildProperties.propertyRef(generationContext.getModuleOutputPath(myModuleName));
+    return Collections.singletonList(creator.createDirectoryContentCopyInstruction(moduleOutput));
+  }
+
+  @Override
+  public boolean isEqualTo(@NotNull PackagingElement<?> element) {
+    return element instanceof ModuleOutputPackagingElement && myModuleName != null
+           && myModuleName.equals(((ModuleOutputPackagingElement)element).getModuleName());
   }
 
   public ModuleOutputPackagingElement getState() {

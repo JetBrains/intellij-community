@@ -52,6 +52,12 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
     return Collections.singletonList(generator);
   }
 
+  @Override
+  public boolean isEqualTo(@NotNull PackagingElement<?> element) {
+    return element instanceof FileCopyPackagingElement && myFilePath != null
+           && myFilePath.equals(((FileCopyPackagingElement)element).getFilePath());
+  }
+
   public FileCopyPackagingElement getState() {
     return this;
   }

@@ -53,6 +53,17 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     return new LibraryElementPresentation(myLevel, myName, findLibrary(context));
   }
 
+  @Override
+  public boolean isEqualTo(@NotNull PackagingElement<?> element) {
+    if (!(element instanceof LibraryPackagingElement)) {
+      return false;
+    }
+
+    LibraryPackagingElement packagingElement = (LibraryPackagingElement)element;
+    return myLevel != null && myName != null && myLevel.equals(packagingElement.getLevel())
+           && myName.equals(packagingElement.getName());
+  }
+
   public LibraryPackagingElement getState() {
     return this;
   }
