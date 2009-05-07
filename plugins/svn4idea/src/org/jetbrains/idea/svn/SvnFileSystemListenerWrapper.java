@@ -118,7 +118,7 @@ public class SvnFileSystemListenerWrapper {
         }
       }
       //dont return null for auto unboxing to not face NPE 
-      return Boolean.TRUE;
+      return "boolean".equals(method.getReturnType().getName()) ? Boolean.TRUE : null;
     }
 
     public void register(final Method method, final Object[] args) {
@@ -152,7 +152,14 @@ public class SvnFileSystemListenerWrapper {
         }
       }
 
-      myParent.register(method, args);
+      if (LocalFileOperationsHandler.class.equals(method.getDeclaringClass())) {
+        myParent.register(method, args);
+      }
+      if ("equals".equals(method.getName())) {
+        return args[0].equals(this);
+      } else if ("hashCode".equals(method.getName())) {
+        return 1;
+      }
       return method.invoke(myDelegate, args);
     }
   }
