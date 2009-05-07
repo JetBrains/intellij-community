@@ -832,14 +832,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final FileElement fileElement = (FileElement)calcTreeElement();
       StubTree tree = fileElement.getUserData(STUB_TREE_IN_PARSED_TREE);
       if (tree == null) {
-        try {
-          final StubElement currentStubTree = ((IStubFileElementType)getContentElementType()).getBuilder().buildStubTree(this);
-          tree = new StubTree((PsiFileStub)currentStubTree);
-          bindFakeStubsToTree(tree);
-          fileElement.putUserData(STUB_TREE_IN_PARSED_TREE, tree);
-        } catch (ClassCastException ex) {
-          int a = 1;
-        }
+        final StubElement currentStubTree = ((IStubFileElementType)getContentElementType()).getBuilder().buildStubTree(this);
+        tree = new StubTree((PsiFileStub)currentStubTree);
+        bindFakeStubsToTree(tree);
+        fileElement.putUserData(STUB_TREE_IN_PARSED_TREE, tree);
       }
       return tree;
     }
