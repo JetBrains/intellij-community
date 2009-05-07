@@ -16,15 +16,19 @@
 
 package org.jetbrains.plugins.groovy.intentions.removeParenthesis;
 
+import com.intellij.idea.Bombed;
 import junit.framework.Test;
 import org.jetbrains.plugins.groovy.intentions.conversions.RemoveParenthesesFromMethodCallIntention;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.PathUtil;
 
+import java.util.Calendar;
+
 /**
  * User: Dmitry.Krasilschikov
  * Date: 30.01.2009
  */
+@Bombed(month = Calendar.MAY, day = 30)
 public class RemoveUnnecessaryParenthesisTest extends SimpleGroovyFileSetTestCase {
   protected static final String DATA_PATH = PathUtil.getDataPath(RemoveUnnecessaryParenthesisTest.class);
 
