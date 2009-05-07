@@ -1,13 +1,11 @@
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,8 +22,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-class LookupCellRenderer implements ListCellRenderer {
-  private final int myIconFlags;
+public class LookupCellRenderer implements ListCellRenderer {
   private Icon myEmptyIcon = new EmptyIcon(5);
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
@@ -54,13 +51,12 @@ class LookupCellRenderer implements ListCellRenderer {
   private final JPanel myPanel;
 
   private final LookupElementPresentationImpl myLookupElementPresentation = new LookupElementPresentationImpl();
+  public static final Color PREFERRED_BACKGROUND_COLOR = new Color(220, 245, 220);
 
   public LookupCellRenderer(LookupImpl lookup) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     NORMAL_FONT = scheme.getFont(EditorFontType.PLAIN);
     BOLD_FONT = scheme.getFont(EditorFontType.BOLD);
-
-    myIconFlags = CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ? Iconable.ICON_FLAG_VISIBILITY : 0;
 
     myLookup = lookup;
     myNameComponent = new MySimpleColoredComponent();
@@ -104,7 +100,7 @@ class LookupCellRenderer implements ListCellRenderer {
     final Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
     final int preferredCount = myLookup.getPreferredItemsCount();
     if (index <= preferredCount - 1 && preferredCount < list.getModel().getSize() - 1) {
-      background = isSelected ? SELECTED_BACKGROUND_COLOR : new Color(220, 245, 220);
+      background = isSelected ? SELECTED_BACKGROUND_COLOR : PREFERRED_BACKGROUND_COLOR;
     }
 
     myLookupElementPresentation.setContext(item, background, foreground, list, isSelected);
