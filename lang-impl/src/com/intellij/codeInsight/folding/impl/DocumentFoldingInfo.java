@@ -127,7 +127,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiFile.getLanguage());
     final ASTNode node = psiFile.getNode();
     if (node == null) return Collections.emptyMap();
-    final FoldingDescriptor[] descriptors = foldingBuilder.buildFoldRegions(node, editor.getDocument());
+    final FoldingDescriptor[] descriptors = LanguageFolding.buildFoldingDescriptors(foldingBuilder, psiFile, editor.getDocument(), true);
     Map<PsiElement, FoldingDescriptor> ranges = new HashMap<PsiElement, FoldingDescriptor>();
     for (FoldingDescriptor descriptor : descriptors) {
       final ASTNode ast = descriptor.getElement();

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,10 @@ public class FoldingDescriptor {
    */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range) {
     this(node, range, null);
+  }
+
+  public FoldingDescriptor(@NotNull PsiElement element, @NotNull TextRange range) {
+    this(ObjectUtils.assertNotNull(element.getNode()), range, null);
   }
 
   /**

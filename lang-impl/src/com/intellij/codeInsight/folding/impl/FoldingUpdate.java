@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -36,7 +35,7 @@ class FoldingUpdate {
   }
 
   @Nullable
-  public static Runnable updateFoldRegions(@NotNull final Editor editor, @NotNull PsiFile file, boolean applyDefaultState) {
+  static Runnable updateFoldRegions(@NotNull final Editor editor, @NotNull PsiFile file, boolean applyDefaultState, final boolean quick) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Project project = file.getProject();
@@ -52,32 +51,33 @@ class FoldingUpdate {
     }
 
     final TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
-    getFoldingsFor(file, document, elementsToFoldMap);
+    getFoldingsFor(file, document, elementsToFoldMap, quick);
 
     List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
     for (DocumentWindow injectedDocument : injectedDocuments) {
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument);
       if (psiFile == null || !psiFile.isValid()) continue;
-      getFoldingsFor(psiFile, injectedDocument, elementsToFoldMap);
+      getFoldingsFor(psiFile, injectedDocument, elementsToFoldMap, quick);
     }
 
     final Runnable operation = new UpdateFoldRegionsOperation(editor, elementsToFoldMap, applyDefaultState);
     return new Runnable() {
       public void run() {
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
-        editor.putUserData(LAST_UPDATE_STAMP_KEY, timeStamp);
+        if (!quick) {
+          editor.putUserData(LAST_UPDATE_STAMP_KEY, timeStamp);
+        }
       }
     };
   }
 
-  private static void getFoldingsFor(PsiFile file, Document document, TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap) {
+  private static void getFoldingsFor(PsiFile file, Document document, TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap, boolean quick) {
     final FileViewProvider viewProvider = file.getViewProvider();
     for (final Language language : viewProvider.getLanguages()) {
       final PsiFile psi = viewProvider.getPsi(language);
       final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
       if (psi != null && foldingBuilder != null) {
-        final ASTNode node = psi.getNode();
-        for (FoldingDescriptor descriptor : foldingBuilder.buildFoldRegions(node, document)) {
+        for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptors(foldingBuilder, psi, document, quick)) {
           elementsToFoldMap.put(descriptor.getElement().getPsi(), descriptor);
         }
       }

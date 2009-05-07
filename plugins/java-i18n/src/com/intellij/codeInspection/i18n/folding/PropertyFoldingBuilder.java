@@ -4,7 +4,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Document;
@@ -22,11 +22,11 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class PropertyFoldingBuilder implements FoldingBuilder {
+public class PropertyFoldingBuilder extends FoldingBuilderEx {
+
   @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
-    final PsiElement element = node.getPsi();
-    if (!(element instanceof PsiJavaFile)) {
+  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
+    if (!(element instanceof PsiJavaFile) || quick) {
       return FoldingDescriptor.EMPTY;
     }
     final PsiJavaFile file = (PsiJavaFile) element;
@@ -57,13 +57,13 @@ public class PropertyFoldingBuilder implements FoldingBuilder {
                 }
               }
               if (ok) {
-                result.add(new FoldingDescriptor(parent.getParent().getNode(), parent.getParent().getTextRange()));
+                result.add(new FoldingDescriptor(parent.getParent(), parent.getParent().getTextRange()));
                 return;
               }
             }
           }
 
-          result.add(new FoldingDescriptor(expression.getNode(), expression.getTextRange()));
+          result.add(new FoldingDescriptor(expression, expression.getTextRange()));
         }
       }
     });

@@ -18,6 +18,9 @@ package com.intellij.lang.folding;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.Language;
+import com.intellij.psi.PsiElement;
+import com.intellij.openapi.editor.Document;
+import com.intellij.util.ObjectUtils;
 
 import java.util.List;
 
@@ -57,5 +60,12 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
 
     l.putUserData(getLanguageCache(), result);
     return result;
+  }
+
+  public static FoldingDescriptor[] buildFoldingDescriptors(FoldingBuilder builder, PsiElement root, Document document, boolean quick) {
+    if (builder instanceof FoldingBuilderEx) {
+      return ((FoldingBuilderEx)builder).buildFoldRegions(root, document, quick);
+    }
+    return builder.buildFoldRegions(ObjectUtils.assertNotNull(root.getNode()), document);
   }
 }

@@ -28,6 +28,6 @@ public class CodeFoldingPassFactory extends AbstractProjectComponent implements 
 
   @NotNull
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    return new CodeFoldingPass(myProject, editor);
+    return new CodeFoldingPass(myProject, editor, file);
   }
 }

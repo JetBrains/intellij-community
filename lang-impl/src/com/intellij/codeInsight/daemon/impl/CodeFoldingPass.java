@@ -5,19 +5,26 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 class CodeFoldingPass extends TextEditorHighlightingPass {
+  private static final Key<Boolean> THE_FIRST_TIME = Key.create("FirstFoldingPass");
   private Runnable myRunnable;
   private final Editor myEditor;
+  private final PsiFile myFile;
 
-  CodeFoldingPass(@NotNull Project project, @NotNull Editor editor) {
+  CodeFoldingPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     super(project, editor.getDocument());
     myEditor = editor;
+    myFile = file;
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    Runnable runnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor);
+    final boolean firstTime = myFile.getUserData(THE_FIRST_TIME) == null || myEditor.getUserData(THE_FIRST_TIME) == null;
+    Runnable runnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor, firstTime);
     synchronized (this) {
       myRunnable = runnable;
     }
@@ -30,6 +37,11 @@ class CodeFoldingPass extends TextEditorHighlightingPass {
     }
     if (runnable != null){
       runnable.run();
+    }
+
+    if (InjectedLanguageUtil.getTopLevelFile(myFile) == myFile) {
+      myFile.putUserData(THE_FIRST_TIME, Boolean.FALSE);
+      myEditor.putUserData(THE_FIRST_TIME, Boolean.FALSE);
     }
   }
 }

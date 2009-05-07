@@ -160,7 +160,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
     Runnable operation = new Runnable() {
       public void run() {
-        Runnable runnable = updateFoldRegions(editor, true);
+        Runnable runnable = updateFoldRegions(editor, true, true);
         if (runnable != null) {
           runnable.run();
         }
@@ -194,7 +194,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   public void updateFoldRegions(@NotNull Editor editor) {
     PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
-    Runnable runnable = updateFoldRegions(editor, false);
+    Runnable runnable = updateFoldRegions(editor, false, false);
     if (runnable != null) {
       runnable.run();
     }
@@ -203,7 +203,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   @Override
   public void forceDefaultState(@NotNull final Editor editor) {
     PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
-    Runnable runnable = updateFoldRegions(editor, true);
+    Runnable runnable = updateFoldRegions(editor, true, false);
     if (runnable != null) {
       runnable.run();
     }
@@ -222,16 +222,16 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   @Nullable
-  public Runnable updateFoldRegionsAsync(@NotNull Editor editor) {
-    return updateFoldRegions(editor, false);
+  public Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime) {
+    return updateFoldRegions(editor, firstTime, false);
   }
 
   @Nullable
-  private Runnable updateFoldRegions(Editor editor, boolean applyDefaultState) {
+  private Runnable updateFoldRegions(Editor editor, boolean applyDefaultState, boolean quick) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     if (file != null) {
       editor.getDocument().putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
-      return FoldingUpdate.updateFoldRegions(editor, file, applyDefaultState);
+      return FoldingUpdate.updateFoldRegions(editor, file, applyDefaultState, quick);
     }
     else {
       return null;

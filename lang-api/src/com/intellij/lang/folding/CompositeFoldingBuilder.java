@@ -19,6 +19,7 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ import java.util.List;
  * @see com.intellij.lang.folding.LanguageFolding
  * @since 9.0
  */
-public class CompositeFoldingBuilder implements FoldingBuilder {
+public class CompositeFoldingBuilder extends FoldingBuilderEx {
   public static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<FoldingBuilder>("FOLDING_BUILDER");
   private final List<FoldingBuilder> myBuilders;
 
@@ -41,11 +42,11 @@ public class CompositeFoldingBuilder implements FoldingBuilder {
   }
 
   @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
+  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     final List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
 
     for (FoldingBuilder builder : myBuilders) {
-      for (FoldingDescriptor descriptor : builder.buildFoldRegions(node, document)) {
+      for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptors(builder, root, document, quick)) {
         descriptor.getElement().putUserData(FOLDING_BUILDER, builder);
         descriptors.add(descriptor);
       }

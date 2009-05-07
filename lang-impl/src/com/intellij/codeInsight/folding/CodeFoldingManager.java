@@ -20,7 +20,7 @@ public abstract class CodeFoldingManager {
   public abstract void forceDefaultState(@NotNull Editor editor);
 
   @Nullable
-  public abstract Runnable updateFoldRegionsAsync(@NotNull Editor editor);
+  public abstract Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime);
 
   public abstract FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset);
   public abstract FoldRegion[] getFoldRegionsAtOffset(@NotNull Editor editor, int offset);
