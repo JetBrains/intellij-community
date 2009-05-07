@@ -104,7 +104,12 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return element instanceof Property && Comparing.strEqual(((Property)element).getUnescapedKey(), getKeyText());
+    if(!(element instanceof Property)) return false;
+    for (ResolveResult result : multiResolve(false)) {
+      final PsiElement el = result.getElement();
+      if (el != null && el.isEquivalentTo(element)) return true;
+    }
+    return false;
   }
 
   protected void addKey(Object property, Set<Object> variants) {
