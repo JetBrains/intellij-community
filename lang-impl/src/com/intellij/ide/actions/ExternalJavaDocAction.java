@@ -14,6 +14,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class ExternalJavaDocAction extends AnAction {
 
+  public ExternalJavaDocAction() {
+    setInjectedContext(true);
+  }
+
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
