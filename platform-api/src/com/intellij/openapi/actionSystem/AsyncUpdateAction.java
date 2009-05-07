@@ -17,6 +17,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ConcurrencyUtil;
 
 import javax.swing.*;
@@ -36,7 +37,7 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
   public final void update(AnActionEvent e) {
     final T data = prepareDataFromContext(e);
     final Presentation originalPresentation = e.getPresentation();
-    if (!forceSyncUpdate(e)) {
+    if (!forceSyncUpdate(e) && this instanceof DumbAware) {
       final Presentation realPresentation = (Presentation)originalPresentation.clone();
       ourUpdaterService.submit(new Runnable() {
         public void run() {
