@@ -145,11 +145,7 @@ public class SelectBranchPopup {
         });
       }
       else {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            showBranchPopup(selectedValue, true);
-          }
-        });
+        showBranchPopup(selectedValue, true);
       }
       return null;
     }
@@ -157,7 +153,7 @@ public class SelectBranchPopup {
     @Nullable
     private List<SvnBranchItem> loadBranches(final String selectedBranchesHolder, final boolean cached) {
       try {
-        return cached ? myConfiguration.getBranches(selectedBranchesHolder, myProject, true, false) :
+        return cached ? myConfiguration.getBranches(selectedBranchesHolder, myProject, true, true) :
             myConfiguration.reloadBranches(selectedBranchesHolder, myProject, myVcsRoot);
       }
       catch (SVNException e) {

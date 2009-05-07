@@ -206,7 +206,7 @@ public class SvnBranchConfiguration {
 
       for (String branchUrl : myBranchUrls) {
         // use more exact comparison first (paths longer)
-        final List<SvnBranchItem> children = getBranches(branchUrl, myProject, false, false);
+        final List<SvnBranchItem> children = getBranches(branchUrl, myProject, false, true);
         for (SvnBranchItem child : children) {
           if (listener.accept(child.getUrl())) {
             return;
