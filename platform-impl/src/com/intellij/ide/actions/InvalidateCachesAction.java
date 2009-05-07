@@ -6,13 +6,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 
 /**
  * @author yole
  */
-public class InvalidateCachesAction extends AnAction {
+public class InvalidateCachesAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     FSRecords.invalidateCaches();
     final Application app = ApplicationManager.getApplication();

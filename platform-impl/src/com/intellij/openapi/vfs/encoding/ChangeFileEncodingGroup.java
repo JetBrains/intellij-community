@@ -1,6 +1,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public class ChangeFileEncodingGroup extends ActionGroup{
     return children.toArray(new AnAction[children.size()]);
   }
 
-  private static class More extends AnAction {
+  private static class More extends AnAction implements DumbAware {
     private final VirtualFile myVirtualFile;
 
     private More(VirtualFile virtualFile) {

@@ -5,9 +5,10 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
-public class SynchronizeAction extends AnAction {
+public class SynchronizeAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
