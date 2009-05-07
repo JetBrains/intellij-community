@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -177,7 +178,6 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
      */
     private ElementsChooser<FileType> createFileTypeChooser(final GotoFileModel gotoFileModel) {
       List<FileType> elements = new ArrayList<FileType>();
-      elements.add(FileTypes.UNKNOWN);
       elements.addAll(Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes()));
       Collections.sort(elements, FileTypeComparator.INSTANCE);
       final ElementsChooser<FileType> chooser = new ElementsChooser<FileType>(elements, true) {
@@ -196,7 +196,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
       final int count = chooser.getElementCount();
       for (int i = 0; i < count; i++) {
         FileType type = chooser.getElementAt(i);
-        if (!config.isFileTypeVisible(type)) {
+        if (!DumbService.getInstance().isDumb() && !config.isFileTypeVisible(type)) {
           chooser.setElementMarked(type, false);
         }
       }

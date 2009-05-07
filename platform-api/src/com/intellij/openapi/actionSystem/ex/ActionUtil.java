@@ -80,16 +80,7 @@ public class ActionUtil {
       message = "None of the following actions will" + beAvailableUntil + ": " + StringUtil.join(actionNames, ", ");
     }
 
-    bus.syncPublisher(Notifications.TOPIC).notify("dumb", message, "", NotificationType.INFORMATION, new NotificationListener() {
-      @NotNull
-      public Continue perform() {
-        return Continue.REMOVE;
-      }
-
-      public Continue onRemove() {
-        return Continue.REMOVE;
-      }
-    });
+    bus.syncPublisher(Notifications.TOPIC).notify("dumb", message, "", NotificationType.INFORMATION, NotificationListener.REMOVE);
   }
 
   /**
