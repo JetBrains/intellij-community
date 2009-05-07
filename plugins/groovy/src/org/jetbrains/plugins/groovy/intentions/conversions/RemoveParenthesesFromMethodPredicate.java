@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -39,6 +40,6 @@ class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement parent = element.getParent();
-    return parent instanceof GrOpenBlock || parent instanceof GroovyFile;
+    return parent instanceof GrOpenBlock || parent instanceof GroovyFile || parent instanceof GrClosableBlock;
   }
 }
