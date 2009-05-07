@@ -437,7 +437,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void finishLookup(final char completionChar) {
-    if (myShownStamp > 0 && System.currentTimeMillis() - myShownStamp < 101 && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myShownStamp > 0 && System.currentTimeMillis() - myShownStamp < 42 && !ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
