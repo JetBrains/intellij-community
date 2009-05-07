@@ -393,17 +393,25 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
 
     public void finishSave() {
-      getStateStorageManager().finishSave(myStorageManagerSaveSession);
-      myStorageManagerSaveSession = null;
-      ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
-      mySession = null;
+      try {
+        getStateStorageManager().finishSave(myStorageManagerSaveSession);
+        myStorageManagerSaveSession = null;
+      }
+      finally {
+        ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
+        mySession = null;
+      }
     }
 
     public void reset() {
-      getStateStorageManager().reset();
-      myStorageManagerSaveSession = null;
-      ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
-      mySession = null;
+      try {
+        getStateStorageManager().reset();
+        myStorageManagerSaveSession = null;
+      }
+      finally {
+        ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
+        mySession = null;
+      }
     }
 
     protected void commit() throws StateStorage.StateStorageException {

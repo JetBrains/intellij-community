@@ -102,19 +102,25 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     }
 
     public void finishSave() {
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        moduleSaveSession.finishSave();
+      try {
+        for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+          moduleSaveSession.finishSave();
+        }
       }
-
-      super.finishSave();
+      finally {
+        super.finishSave();
+      }
     }
 
     public void reset() {
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        moduleSaveSession.reset();
+      try {
+        for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+          moduleSaveSession.reset();
+        }
       }
-
-      super.reset();
+      finally {
+        super.reset();
+      }
     }
 
     protected void beforeSave() throws IOException {
