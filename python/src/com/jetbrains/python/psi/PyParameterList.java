@@ -20,18 +20,29 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
+ * Represents function parameter list.
  * Date: 29.05.2005
- * Time: 23:03:11
- * To change this template use File | Settings | File Templates.
  */
 public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParameterListStub>, NameDefiner {
+
+  /**
+   * Extracts the individual parameters.
+   * Note that tuple parameters are flattened by this method.
+   * @return a possibly empty array of named paramaters.
+   */
   PyParameter[] getParameters();
 
   /**
    * Adds a paramter to list, after all other parameters.
-   * @param param
+   * @param param what to add
    */
   void addParameter(PyParameter param);
+
+  /**
+   * Python 2.x allows for declarations like {@code def foo(a, (b, c))} that auto-unpack complex tuple parameters.
+   * From caller side, such functions contain a smaller number of parameters, some of them unnamed and structurally constrained.  
+   * (This is considered evil and eschewed in Py3k.)
+   * @return true if the parameter list contains a tuple-based declaration.
+   */
+  boolean containsTuples();
 }

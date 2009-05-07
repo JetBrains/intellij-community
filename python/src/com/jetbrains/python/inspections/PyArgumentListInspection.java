@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
@@ -138,36 +139,41 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
 
   public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder) {
     PyArgumentList.AnalysisResult result = node.analyzeCall();
-    for (Map.Entry<PyExpression, EnumSet<PyArgumentList.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
-      EnumSet<PyArgumentList.ArgFlag> flags = arg_entry.getValue();
-      if (!flags.isEmpty()) { // something's wrong
-        PyExpression arg = arg_entry.getKey();
-        if (flags.contains(PyArgumentList.ArgFlag.IS_DUP)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
+    if (result != null) {
+      for (Map.Entry<PyExpression, EnumSet<PyArgumentList.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
+        EnumSet<PyArgumentList.ArgFlag> flags = arg_entry.getValue();
+        if (!flags.isEmpty()) { // something's wrong
+          PyExpression arg = arg_entry.getKey();
+          if (flags.contains(PyArgumentList.ArgFlag.IS_DUP)) {
+            holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
+          }
+          if (flags.contains(PyArgumentList.ArgFlag.IS_DUP_KWD)) {
+            holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
+          }
+          if (flags.contains(PyArgumentList.ArgFlag.IS_DUP_TUPLE)) {
+            holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
+          }
+          if (flags.contains(PyArgumentList.ArgFlag.IS_POS_PAST_KWD)) {
+            holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"));
+          }
+          if (flags.contains(PyArgumentList.ArgFlag.IS_UNMAPPED)) {
+            holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
+          }
         }
-        if (flags.contains(PyArgumentList.ArgFlag.IS_DUP_KWD)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
-        }
-        if (flags.contains(PyArgumentList.ArgFlag.IS_DUP_TUPLE)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
-        }
-        if (flags.contains(PyArgumentList.ArgFlag.IS_POS_PAST_KWD)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"));
-        }
-        if (flags.contains(PyArgumentList.ArgFlag.IS_UNMAPPED)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
+      }
+      // show unfilled params
+      ASTNode our_node = node.getNode();
+      if (our_node != null) {
+        ASTNode close_paren = our_node.findChildByType(PyTokenTypes.RPAR);
+        if (close_paren != null) {
+          for (PyParameter param : result.getUnmappedParams()) {
+            holder.registerProblem(close_paren.getPsi(), PyBundle.message("INSP.parameter.$0.unfilled", param.getName()));
+          }
         }
       }
     }
-    // show unfilled params
-    ASTNode our_node = node.getNode();
-    if (our_node != null) {
-      ASTNode close_paren = our_node.findChildByType(PyTokenTypes.RPAR);
-      if (close_paren != null) {
-        for (PyParameter param : result.getUnmappedParams()) {
-          holder.registerProblem(close_paren.getPsi(), PyBundle.message("INSP.parameter.$0.unfilled", param.getName()));
-        }
-      }
+    else if (! node.getTextRange().isEmpty()) {
+      holder.registerProblem(node, PyBundle.message("INSP.cannot.analyze"), ProblemHighlightType.INFO);
     }
   }
 

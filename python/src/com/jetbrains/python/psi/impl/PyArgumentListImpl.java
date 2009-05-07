@@ -258,7 +258,9 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       ret.my_marked_func = resolved_callee;
       if (resolved_callee != null) {
         PyFunction func = resolved_callee.getFunction();
-        PyParameter[] params = func.getParameterList().getParameters();
+        PyParameterList paramlist = func.getParameterList();
+        if (paramlist.containsTuples()) return null; // NOTE: we're not ready to handle this yet.  
+        PyParameter[] params = paramlist.getParameters();
         // prepare args and slots
         List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
         Collections.addAll(unmatched_args, arguments);
