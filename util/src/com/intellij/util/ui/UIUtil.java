@@ -608,7 +608,7 @@ public class UIUtil {
 
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert SwingUtilities.isEventDispatchThread();
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
