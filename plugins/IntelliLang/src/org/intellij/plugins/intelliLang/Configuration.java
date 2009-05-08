@@ -32,10 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Configuration that holds configured xml tag, attribute and method parameter
@@ -353,5 +350,36 @@ public final class Configuration implements PersistentStateComponent<Element> {
 
   public InstrumentationType getInstrumentation() {
     return myInstrumentationType;
+  }
+
+  private long myCacheModificationCount;
+  private MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> myMethodCache;
+
+  private MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> getMethodCache() {
+    if (myMethodCache != null && getModificationCount() == myCacheModificationCount) {
+      return myMethodCache;
+    }
+    myCacheModificationCount = getModificationCount();
+    final MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> tmpMap =
+      new MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection>();
+    for (MethodParameterInjection injection : getParameterInjections()) {
+      for (MethodParameterInjection.MethodInfo info : injection.getMethodInfos()) {
+        final boolean[] flags = info.getParamFlags();
+        for (int i = 0; i < flags.length; i++) {
+          if (!flags[i]) continue;
+          tmpMap.put(Trinity.create(info.getMethodName(), flags.length, i), injection);
+        }
+        if (info.isReturnFlag()) {
+          tmpMap.put(Trinity.create(info.getMethodName(), 0, -1), injection);
+        }
+      }
+    }
+    myMethodCache = tmpMap;
+    return tmpMap;
+  }
+
+  public Collection<MethodParameterInjection> getPossibleCachedInjections(final Trinity<String, Integer, Integer> key) {
+    final Collection<MethodParameterInjection> list = getMethodCache().get(key);
+    return list == null? Collections.<MethodParameterInjection>emptyList() : list;
   }
 }

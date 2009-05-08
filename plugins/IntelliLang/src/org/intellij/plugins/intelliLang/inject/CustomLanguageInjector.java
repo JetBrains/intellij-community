@@ -30,12 +30,13 @@ import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.*;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
+import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -85,14 +86,16 @@ public final class CustomLanguageInjector implements ProjectComponent {
     // optimization
     if (place instanceof PsiLiteralExpression && !PsiUtilEx.isStringOrCharacterLiteral(place)) return;
 
-    for (Iterator<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> it = myTempPlaces.iterator(); it.hasNext();) {
-      final Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage> pair = it.next();
-      final PsiLanguageInjectionHost element = pair.first.getElement();
-      if (element == null) {
-        it.remove();
+    myTempPlaces.removeAll(ContainerUtil.findAll(myTempPlaces, new Condition<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>>() {
+      public boolean value(final Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage> pair) {
+        return pair.first.getElement() == null;
       }
-      else if (element == place) {
-        processor.process(pair.second.getLanguage(), Collections.singletonList(Trinity.create(element, pair.second, ElementManipulators.getManipulator(element).getRangeInElement(element))));
+    }));
+    for (final Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage> pair : myTempPlaces) {
+      if (pair.first.getElement() == place) {
+        final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)place;
+        processor.process(pair.second.getLanguage(), Collections.singletonList(
+          Trinity.create(host, pair.second, ElementManipulators.getManipulator(host).getRangeInElement(host))));
         return;
       }
     }

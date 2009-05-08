@@ -133,7 +133,9 @@ public class InjectLanguageAction implements IntentionAction {
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != target) continue;
       break;
     }
-    if (parent instanceof PsiReturnStatement || parent instanceof PsiMethod) {
+    if (parent instanceof PsiReturnStatement ||
+        parent instanceof PsiMethod ||
+        parent instanceof PsiNameValuePair) {
       return doInjectInJavaMethod(project, findPsiMethod(parent), -1, languageId);
     }
     else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
@@ -210,6 +212,21 @@ public class InjectLanguageAction implements IntentionAction {
 
   @Nullable
   private static PsiMethod findPsiMethod(final PsiElement parent) {
+    if (parent instanceof PsiNameValuePair) {
+      final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(parent, PsiAnnotation.class);
+      if (annotation != null) {
+        final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+        if (referenceElement != null) {
+          PsiElement resolved = referenceElement.resolve();
+          if (resolved != null) {
+            PsiMethod[] methods = ((PsiClass)resolved).findMethodsByName(((PsiNameValuePair)parent).getName(), false);
+            if (methods.length == 1) {
+              return methods[0];
+            }
+          }
+        }
+      }
+    }
     final PsiMethod first;
     if (parent.getParent() instanceof PsiMethodCallExpression) {
       first = ((PsiMethodCallExpression)parent.getParent()).resolveMethod();

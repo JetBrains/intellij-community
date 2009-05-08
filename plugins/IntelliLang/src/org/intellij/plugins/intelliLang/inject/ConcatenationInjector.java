@@ -3,7 +3,6 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -15,6 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
@@ -29,8 +29,6 @@ import java.util.*;
  */
 public class ConcatenationInjector implements ConcatenationAwareInjector {
   private final Configuration myInjectionConfiguration;
-  private long myConfigurationModificationCount;
-  private MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> myMethodCache;
 
   public ConcatenationInjector(Configuration configuration) {
     myInjectionConfiguration = configuration;
@@ -63,8 +61,44 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
     return false;
   }
+
   private void processLiteralExpressionInjections(final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor,
                                                   final PsiElement... operands) {
+    processLiteralExpressionInjectionsInner(myInjectionConfiguration, new Processor<Info>() {
+      public boolean process(final Info info) {
+        if (processAnnotationInjections(info.owner, processor, operands)) return false; // annotated element
+        for (MethodParameterInjection injection : info.injections) {
+          if (injection.isApplicable(info.method)) {
+            processInjectionWithContext(info.unparsable, injection, processor, operands);
+            if (injection.isTerminal()) {
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+    }, operands);
+  }
+
+  public static class Info {
+    PsiModifierListOwner owner;
+    PsiMethod method;
+    Collection<MethodParameterInjection> injections;
+    boolean unparsable;
+
+    public Info(final PsiModifierListOwner owner,
+                final PsiMethod method,
+                final Collection<MethodParameterInjection> injections,
+                final boolean unparsable) {
+      this.owner = owner;
+      this.method = method;
+      this.injections = injections;
+      this.unparsable = unparsable;
+    }
+  }
+
+  public static void processLiteralExpressionInjectionsInner(final Configuration configuration, final Processor<Info> processor,
+                                                              final PsiElement... operands) {
     if (operands.length == 0) return;
     final PsiElement firstOperand = operands[0];
     final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstOperand, null);
@@ -78,7 +112,6 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final PsiElement curPlace = places.removeFirst();
       final PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(curPlace, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
       if (owner == null) continue;
-      if (processAnnotationInjections(owner, processor, operands)) return; // annotated element
 
       final PsiMethod psiMethod;
       final Trinity<String, Integer, Integer> trin;
@@ -94,7 +127,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         psiMethod = (PsiMethod)owner;
         trin = Trinity.create(psiMethod.getName(), psiMethod.getParameterList().getParametersCount(), -1);
       }
-      else if (myInjectionConfiguration.isResolveReferences() &&
+      else if (configuration.isResolveReferences() &&
                owner instanceof PsiVariable && visitedVars.add(owner)) {
         final PsiVariable variable = (PsiVariable)owner;
         for (PsiReference psiReference : ReferencesSearch.search(variable, searchScope).findAll()) {
@@ -107,21 +140,17 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
             }
           }
         }
-        continue;
+        trin = null;
+        psiMethod = null;
       }
       else {
-        continue;
+        trin = null;
+        psiMethod = null;
       }
-      final Collection<MethodParameterInjection> injections = getMethodCache().get(trin);
-      if (injections == null) return;
-      for (MethodParameterInjection injection : injections) {
-        if (injection.isApplicable(psiMethod)) {
-          processInjectionWithContext(unparsable, injection, processor, operands);
-          if (injection.isTerminal()) {
-            return;
-          }
-        }
-      }
+      final Collection<MethodParameterInjection> injections =
+        trin == null? Collections.<MethodParameterInjection>emptyList() : configuration.getPossibleCachedInjections(trin);
+      final Info info = new Info(owner, psiMethod, injections, unparsable);
+      if (!processor.process(info)) return;
     }
   }
 
@@ -201,27 +230,5 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       return true;
     }
     return false;
-  }
-  private MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> getMethodCache() {
-    if (myMethodCache != null && myInjectionConfiguration.getModificationCount() == myConfigurationModificationCount) {
-      return myMethodCache;
-    }
-    myConfigurationModificationCount = myInjectionConfiguration.getModificationCount();
-    final MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> tmpMap =
-        new MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection>();
-    for (MethodParameterInjection injection : myInjectionConfiguration.getParameterInjections()) {
-      for (MethodParameterInjection.MethodInfo info : injection.getMethodInfos()) {
-        final boolean[] flags = info.getParamFlags();
-        for (int i = 0; i < flags.length; i++) {
-          if (!flags[i]) continue;
-          tmpMap.put(Trinity.create(info.getMethodName(), flags.length, i), injection);
-        }
-        if (info.isReturnFlag()) {
-          tmpMap.put(Trinity.create(info.getMethodName(), 0, -1), injection);
-        }
-      }
-    }
-    myMethodCache = tmpMap;
-    return tmpMap;
   }
 }
