@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -717,7 +718,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   @NotNull
   public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws FileNotFoundException {
     final File ioFile = convertToIOFile(file);
-    return new BufferedOutputStream(new FileOutputStream(ioFile)) {
+    final OutputStream stream = requestor instanceof SafeWriteRequestor ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
+    return new BufferedOutputStream(stream) {
       public void close() throws IOException {
         super.close();
         if (timeStamp > 0) {

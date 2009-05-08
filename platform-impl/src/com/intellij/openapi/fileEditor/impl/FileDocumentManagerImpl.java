@@ -51,7 +51,7 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener {
+public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
@@ -241,23 +241,24 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
       LOG.assertTrue(file.isValid());
 
+      String text = document.getText();
+      String lineSeparator = getLineSeparator(document, file);
+      if (!lineSeparator.equals("\n")){
+        text = StringUtil.convertLineSeparators(text, lineSeparator);
+      }
+      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+
       Writer writer = null;
       try{
-        String text = document.getText();
-        String lineSeparator = getLineSeparator(document, file);
-        if (!lineSeparator.equals("\n")){
-          text = StringUtil.convertLineSeparators(text, lineSeparator);
-        }
-        Project project = ProjectLocator.getInstance().guessProjectForFile(file);
         writer = LoadTextUtil.getWriter(project, file, this, text, document.getModificationStamp());
         writer.write(text);
-        committed = true;
       }
       finally{
         if (writer != null){
           writer.close();
         }
       }
+      committed = true;
     }
     catch(IOException e){
       reportErrorOnSave(e);
