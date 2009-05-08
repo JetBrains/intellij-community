@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
@@ -32,7 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExportEclipseProjectsAction extends AnAction {
+public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#" + ExportEclipseProjectsAction.class.getName());
 
   public void update(final AnActionEvent e) {

@@ -32,6 +32,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,7 +148,7 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
         return ApplicationManager.getApplication().getComponent(XPathAppComponent.class);
     }
 
-    class MyFindAction extends AnAction {
+    class MyFindAction extends AnAction implements DumbAware {
         private final AnAction origAction;
         private final boolean isPrev;
         private boolean wrapAround;
