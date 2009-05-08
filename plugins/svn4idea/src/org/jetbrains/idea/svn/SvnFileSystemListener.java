@@ -739,7 +739,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         filesToProcess = (files == null) ? null : new ArrayList<FilePath>(files);
       }
       if (filesToProcess != null) {
-        deletedFiles.removeAll(filesToProcess);
+        //deletedFiles.removeAll(filesToProcess);
 
         List<VcsException> exceptions = new ArrayList<VcsException>();
         SVNWCClient wcClient = vcs.createWCClient();
