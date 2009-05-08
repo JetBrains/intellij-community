@@ -180,6 +180,10 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   }
 
   public JRootPane getRootPane() {
+    if (myDialog == null) {
+      return null;
+    }
+
     return myDialog.getRootPane();
   }
 
