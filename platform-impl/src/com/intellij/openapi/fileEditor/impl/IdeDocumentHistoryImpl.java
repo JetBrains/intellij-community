@@ -21,12 +21,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.xmlb.annotations.Transient;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 @State(
     name = "IdeDocumentHistory",
@@ -63,6 +61,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private PlaceInfo myCommandStartPlace = null;
   private boolean myCurrentCommandIsNavigation = false;
   private boolean myCurrentCommandHasChanges = false;
+  private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<VirtualFile>();
   private boolean myCurrentCommandHasMoves = false;
 
   private DocumentListener myDocumentListener;
@@ -186,8 +185,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   private void onDocumentChanged(DocumentEvent e) {
     Document document = e.getDocument();
-    if (getFileDocumentManager().getFile(document) != null) {
+    final VirtualFile file = getFileDocumentManager().getFile(document);
+    if (file != null) {
       myCurrentCommandHasChanges = true;
+      myChangedFilesInCurrentCommand.add(file);
     }
   }
 
@@ -196,6 +197,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myCurrentCommandIsNavigation = false;
     myCurrentCommandHasChanges = false;
     myCurrentCommandHasMoves = false;
+    myChangedFilesInCurrentCommand.clear();
   }
 
   private PlaceInfo getCurrentPlaceInfo() {
@@ -258,7 +260,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
     final PlaceInfo placeInfo = createPlaceInfo(selectedEditorWithProvider.getFirst(), selectedEditorWithProvider.getSecond ());
 
-    myRecentlyChangedFiles.register(placeInfo.getFile());
+    final VirtualFile file = placeInfo.getFile();
+    if (myChangedFilesInCurrentCommand.contains(file)) {
+      myRecentlyChangedFiles.register(file);
+    }
 
     myCurrentChangePlace = placeInfo;
     if (!myChangePlaces.isEmpty()) {
