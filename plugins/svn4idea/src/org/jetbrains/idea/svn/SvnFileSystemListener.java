@@ -613,7 +613,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   private void filterOutInvalid(final Collection<VirtualFile> files) {
     for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext();) {
       final VirtualFile file = iterator.next();
-      if (! file.isValid()) {
+      if ((! file.isValid()) || (! file.exists())) {
         LOG.info("Refresh root is not valid: " + file.getPath());
         iterator.remove();
       }
