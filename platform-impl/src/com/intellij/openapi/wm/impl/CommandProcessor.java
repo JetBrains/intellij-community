@@ -1,10 +1,10 @@
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -63,13 +63,13 @@ public final class CommandProcessor implements Runnable {
         // max. I'm not actually quite sure this should have NON_MODAL modality but it should
         // definitely have some since runnables in command list may (and do) request some PSI activity
         final boolean queueNext = myCommandCount > 0;
-        if (queueNext) {
         ApplicationManager.getApplication().getInvokator().invokeLater(command, ModalityState.NON_MODAL, expire == null ? Condition.FALSE : expire).doWhenDone(new Runnable() {
           public void run() {
-            CommandProcessor.this.run();
+            if (queueNext) {
+              CommandProcessor.this.run();
+            }
           }
         });
-        }
       }
     }
   }
