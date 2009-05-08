@@ -153,4 +153,5 @@
   <ComponentRoamingType component="PropertiesComponent" type="DISABLED"/>
 
   <progressFunComponentProvider implementation="com.intellij.featureStatistics.ProgressFunProvider"/>
+  <projectConfigurable implementation="com.intellij.javaee.ExternalResourceConfigurable"/>
 </extensions>
