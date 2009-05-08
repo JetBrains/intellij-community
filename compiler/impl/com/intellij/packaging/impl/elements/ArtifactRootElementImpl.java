@@ -1,15 +1,16 @@
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable;
-import com.intellij.packaging.elements.ArtifactRootElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
-import com.intellij.packaging.elements.CopyInstructionCreator;
+import com.intellij.compiler.ant.Generator;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.packaging.elements.ArtifactGenerationContext;
+import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.CopyInstructionCreator;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.compiler.ant.Generator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,13 +27,18 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     return new PackagingElementPresentation() {
       @Override
       public String getPresentableName() {
-        return "<output root>";
+        return CompilerBundle.message("packaging.element.text.output.root");
       }
 
       @Override
       public void render(@NotNull ColoredTreeCellRenderer renderer) {
-        renderer.setIcon(ArtifactsStructureConfigurable.ARTIFACT_ICON);
+        renderer.setIcon(PlainArtifactType.ARTIFACT_ICON);
         renderer.append(getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+
+      @Override
+      public double getWeight() {
+        return 0;
       }
     };
   }

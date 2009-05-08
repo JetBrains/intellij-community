@@ -8,6 +8,9 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public interface Artifact {
+  @NotNull
+  ArtifactType getArtifactType();
+
   String getName();
 
   boolean isBuildOnMake();

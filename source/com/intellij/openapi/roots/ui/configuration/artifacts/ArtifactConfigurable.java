@@ -66,7 +66,7 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
   }
 
   public Icon getIcon() {
-    return ArtifactsStructureConfigurable.ARTIFACT_ICON;
+    return getArtifact().getArtifactType().getIcon();
   }
 
   public String getHelpTopic() {

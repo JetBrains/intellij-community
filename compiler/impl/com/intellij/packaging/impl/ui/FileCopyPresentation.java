@@ -1,5 +1,6 @@
 package com.intellij.packaging.impl.ui;
 
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +47,7 @@ public class FileCopyPresentation extends PackagingElementPresentation {
     if (myFile != null) {
       renderer.setIcon(myIsDirectory ? COPY_OF_FOLDER_ICON : myFile.getIcon());
       if (myIsDirectory) {
-        renderer.append("'" + myFileName + "' directory content", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(CompilerBundle.message("node.text.0.directory.content", myFileName), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       else {
         renderer.append(myFileName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -64,6 +65,6 @@ public class FileCopyPresentation extends PackagingElementPresentation {
 
   @Override
   public double getWeight() {
-    return myIsDirectory ? PackagingElementWeights.DIRECTORY + 0.5 : PackagingElementWeights.FILE;
+    return myIsDirectory ? PackagingElementWeights.DIRECTORY_COPY : PackagingElementWeights.FILE_COPY;
   }
 }

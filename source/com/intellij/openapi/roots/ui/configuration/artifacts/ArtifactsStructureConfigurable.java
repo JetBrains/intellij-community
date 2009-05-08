@@ -2,6 +2,8 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
@@ -10,7 +12,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.artifacts.ArtifactModelImpl;
 import com.intellij.packaging.ui.PackagingEditorContext;
@@ -29,7 +30,6 @@ import javax.swing.*;
     storages = {@Storage(id = "other", file = "$WORKSPACE_FILE$")}
 )
 public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
-  public static final Icon ARTIFACT_ICON = IconLoader.getIcon("/nodes/artifact.png");
   private ModifiableArtifactModel myModifiableModel;
   private final ArtifactsStructureConfigurable.MyPackagingEditorContext myPackagingEditorContext;
   @NonNls private static final String DEFAULT_ARTIFACT_NAME = "unnamed";
@@ -77,24 +77,24 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
       @NotNull
       @Override
       public AnAction[] getChildren(@Nullable AnActionEvent e) {
-        return new AnAction[]{new AnAction(ProjectBundle.message("action.text.add.artifact")) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            addArtifact();
-          }
-        }};
+        final ArtifactType[] types = ArtifactType.getAllTypes();
+        final AnAction[] actions = new AnAction[types.length];
+        for (int i = 0; i < types.length; i++) {
+          actions[i] = new AddArtifactAction(types[i]);
+        }
+        return actions;
       }
     };
   }
 
-  private void addArtifact() {
+  private void addArtifact(@NotNull ArtifactType type) {
     String name = DEFAULT_ARTIFACT_NAME;
     int i = 2;
     while (myPackagingEditorContext.getArtifactModel().findArtifact(name) != null) {
       name = DEFAULT_ARTIFACT_NAME + i;
       i++;
     }
-    final ModifiableArtifact artifact = myPackagingEditorContext.getModifiableArtifactModel().addArtifact(name);
+    final ModifiableArtifact artifact = myPackagingEditorContext.getModifiableArtifactModel().addArtifact(name, type);
     selectNodeInTree(findNodeByObject(myRoot, artifact));
   }
 
@@ -102,7 +102,11 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   public void apply() throws ConfigurationException {
     super.apply();
     if (myModifiableModel != null) {
-      myModifiableModel.commit();
+      new WriteAction() {
+        protected void run(final Result result) {
+          myModifiableModel.commit();
+        }
+      }.execute();
       myModifiableModel = null;
     }
   }
@@ -172,6 +176,20 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     @NotNull
     public FacetsProvider getFacetsProvider() {
       return myContext.getModulesConfigurator().getFacetsConfigurator();
+    }
+  }
+
+  private class AddArtifactAction extends AnAction {
+    private final ArtifactType myType;
+
+    public AddArtifactAction(ArtifactType type) {
+      super(ProjectBundle.message("action.text.add.artifact", type.getPresentableName()));
+      myType = type;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      addArtifact(myType);
     }
   }
 }

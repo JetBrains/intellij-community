@@ -13,6 +13,7 @@ public class ArchiveElementPropertiesPanel extends PackagingElementPropertiesPan
   private JPanel myMainPanel;
   private TextFieldWithBrowseButton myMainClassField;
   private TextFieldWithBrowseButton myClasspathField;
+  private JLabel myTitleLabel;
 
   @NotNull
   public JComponent getComponent() {
@@ -20,6 +21,7 @@ public class ArchiveElementPropertiesPanel extends PackagingElementPropertiesPan
   }
 
   public void loadFrom(@NotNull ArchivePackagingElement element) {
+    myTitleLabel.setText("'" + element.getArchiveFileName() + "' manifest properties:");
     myMainClassField.setText(element.getMainClass());
     myClasspathField.setText(element.getClasspath());
   }

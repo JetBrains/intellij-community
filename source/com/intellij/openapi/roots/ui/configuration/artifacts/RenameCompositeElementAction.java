@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.packaging.elements.CompositePackagingElement;
 
 /**
@@ -12,7 +13,7 @@ public class RenameCompositeElementAction extends AnAction {
   private final ArtifactsEditor myArtifactsEditor;
 
   public RenameCompositeElementAction(ArtifactsEditor artifactsEditor) {
-    super("Rename");
+    super(ProjectBundle.message("action.name.rename.packaging.element"));
     registerCustomShortcutSet(CommonShortcuts.getRename(), artifactsEditor.getPackagingElementsTree().getTreePanel());
     myArtifactsEditor = artifactsEditor;
   }

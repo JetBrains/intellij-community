@@ -46,7 +46,6 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
   private TextFieldWithBrowseButton myOutputDirectoryField;
-  private JPanel myToolbarPanel;
   private JCheckBox myShowIncludedCheckBox;
   private JPanel myEditorPanel;
   private Splitter mySplitter;
@@ -56,7 +55,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   private final PackagingEditorContext myContext;
   private SourceItemsTree mySourceItemsTree;
   private final Artifact myOriginalArtifact;
-  private final PackagingElementsTree myPackagingElementsTree;
+  private final LayoutTreeComponent myLayoutTreeComponent;
   private TabbedPaneWrapper myTabbedPane;
   private ArtifactPostprocessingPanel myPostprocessingPanel;
 
@@ -65,13 +64,15 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     myOriginalArtifact = artifact;
     myProject = context.getProject();
     mySourceItemsTree = new SourceItemsTree(myContext, this);
-    myPackagingElementsTree = new PackagingElementsTree(this, myTreeParameters, myContext, myOriginalArtifact);
+    myLayoutTreeComponent = new LayoutTreeComponent(this, myTreeParameters, myContext, myOriginalArtifact);
     myPostprocessingPanel = new ArtifactPostprocessingPanel(myContext);
     Disposer.register(this, mySourceItemsTree);
-    Disposer.register(this, myPackagingElementsTree);
+    Disposer.register(this, myLayoutTreeComponent);
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
     final String outputPath = artifact.getOutputPath();
-    myOutputDirectoryField.addBrowseFolderListener("Output Directory for Artifact", "Select output directory for '" + getArtifact().getName() + "' artifact",
+    myOutputDirectoryField.addBrowseFolderListener(ProjectBundle.message("dialog.title.output.directory.for.artifact"),
+                                                   ProjectBundle.message("chooser.description.select.output.directory.for.0.artifact",
+                                                                         getArtifact().getName()),
                                                    myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myOutputDirectoryField.setText(outputPath != null ? FileUtil.toSystemDependentName(outputPath) : null);
   }
@@ -108,7 +109,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   }
 
   public void rebuildTries() {
-    myPackagingElementsTree.rebuildTree();
+    myLayoutTreeComponent.rebuildTree();
     mySourceItemsTree.rebuildTree();
     myPostprocessingPanel.updateProcessors(getArtifact());
   }
@@ -119,7 +120,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
 
     mySplitter = new Splitter(false);
     final JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.add(myPackagingElementsTree.getTreePanel(), BorderLayout.CENTER);
+    leftPanel.add(myLayoutTreeComponent.getTreePanel(), BorderLayout.CENTER);
     final Border border = BorderFactory.createEmptyBorder(3, 3, 3, 3);
     leftPanel.setBorder(border);
     mySplitter.setFirstComponent(leftPanel);
@@ -167,7 +168,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     }
     popupActionGroup.add(createAddAction(true));
     final RemovePackagingElementAction removeAction = new RemovePackagingElementAction(this);
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myPackagingElementsTree.getTreePanel());
+    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myLayoutTreeComponent.getTreePanel());
     popupActionGroup.add(removeAction);
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));
@@ -177,15 +178,15 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
 
     popupActionGroup.add(Separator.getInstance());
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    DefaultTreeExpander treeExpander = new DefaultTreeExpander(myPackagingElementsTree.getTree());
-    popupActionGroup.add(actionsManager.createExpandAllAction(treeExpander, myPackagingElementsTree.getTree()));
-    popupActionGroup.add(actionsManager.createCollapseAllAction(treeExpander, myPackagingElementsTree.getTree()));
+    DefaultTreeExpander treeExpander = new DefaultTreeExpander(myLayoutTreeComponent.getTree());
+    popupActionGroup.add(actionsManager.createExpandAllAction(treeExpander, myLayoutTreeComponent.getTree()));
+    popupActionGroup.add(actionsManager.createCollapseAllAction(treeExpander, myLayoutTreeComponent.getTree()));
 
-    PopupHandler.installPopupHandler(myPackagingElementsTree.getTree(), popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    TreeToolTipHandler.install(myPackagingElementsTree.getTree());
-    ToolTipManager.sharedInstance().registerComponent(myPackagingElementsTree.getTree());
+    PopupHandler.installPopupHandler(myLayoutTreeComponent.getTree(), popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    TreeToolTipHandler.install(myLayoutTreeComponent.getTree());
+    ToolTipManager.sharedInstance().registerComponent(myLayoutTreeComponent.getTree());
     rebuildTries();
-    TreeUtil.expandAll(myPackagingElementsTree.getTree());
+    TreeUtil.expandAll(myLayoutTreeComponent.getTree());
     return getMainComponent();
   }
 
@@ -202,11 +203,11 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   }
 
   public void addNewPackagingElement(@Nullable CompositePackagingElementType<?> parentType, @NotNull PackagingElementType<?> type) {
-    myPackagingElementsTree.addNewPackagingElement(parentType, type);
+    myLayoutTreeComponent.addNewPackagingElement(parentType, type);
   }
 
   public void removeSelectedElements() {
-    myPackagingElementsTree.removeSelectedElements();
+    myLayoutTreeComponent.removeSelectedElements();
   }
 
   public boolean isModified() {
@@ -218,23 +219,23 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   public void dispose() {
   }
 
-  public PackagingElementsTree getPackagingElementsTree() {
-    return myPackagingElementsTree;
+  public LayoutTreeComponent getPackagingElementsTree() {
+    return myLayoutTreeComponent;
   }
 
   private class MyNavigateAction extends AnAction {
     private MyNavigateAction() {
       super(ProjectBundle.message("action.name.facet.navigate"));
-      registerCustomShortcutSet(CommonShortcuts.getEditSource(), myPackagingElementsTree.getTree());
+      registerCustomShortcutSet(CommonShortcuts.getEditSource(), myLayoutTreeComponent.getTree());
     }
 
     public void update(final AnActionEvent e) {
-      PackagingElementNode[] treeNodes = myPackagingElementsTree.getSelectedNodes();
+      PackagingElementNode[] treeNodes = myLayoutTreeComponent.getSelectedNodes();
       e.getPresentation().setEnabled(treeNodes.length == 1 && treeNodes[0].canNavigate());
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      PackagingElementNode[] treeNodes = myPackagingElementsTree.getSelectedNodes();
+      PackagingElementNode[] treeNodes = myLayoutTreeComponent.getSelectedNodes();
       if (treeNodes.length == 1) {
         navigate(treeNodes[0]);
       }
@@ -243,25 +244,25 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
 
   private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
     public MyFindUsagesAction() {
-      super(myPackagingElementsTree.getTree(), myProject);
+      super(myLayoutTreeComponent.getTree(), myProject);
     }
 
     protected boolean isEnabled() {
-      PackagingElementNode[] treeNodes = myPackagingElementsTree.getSelectedNodes();
+      PackagingElementNode[] treeNodes = myLayoutTreeComponent.getSelectedNodes();
       return treeNodes.length == 1 && treeNodes[0].getSourceObject() != null;
     }
 
     protected Object getSelectedObject() {
-      PackagingElementNode[] treeNodes = myPackagingElementsTree.getSelectedNodes();
+      PackagingElementNode[] treeNodes = myLayoutTreeComponent.getSelectedNodes();
       return treeNodes.length == 1 ? treeNodes[0].getSourceObject() : null;
     }
 
     protected RelativePoint getPointToShowResults() {
-      final int selectedRow = myPackagingElementsTree.getTree().getSelectionRows()[0];
-      final Rectangle rowBounds = myPackagingElementsTree.getTree().getRowBounds(selectedRow);
+      final int selectedRow = myLayoutTreeComponent.getTree().getSelectionRows()[0];
+      final Rectangle rowBounds = myLayoutTreeComponent.getTree().getRowBounds(selectedRow);
       final Point location = rowBounds.getLocation();
       location.y += rowBounds.height;
-      return new RelativePoint(myPackagingElementsTree.getTree(), location);
+      return new RelativePoint(myLayoutTreeComponent.getTree(), location);
     }
   }
 

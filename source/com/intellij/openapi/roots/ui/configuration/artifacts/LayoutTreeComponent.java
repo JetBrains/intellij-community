@@ -6,6 +6,7 @@ import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ui.configuration.packaging.PackagingTreeParameters;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
@@ -15,13 +16,9 @@ import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,19 +36,10 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
-public class PackagingElementsTree implements DnDTarget, Disposable {
-  private static final Convertor<TreePath, String> SPEED_SEARCH_CONVERTOR = new Convertor<TreePath, String>() {
-    public String convert(final TreePath path) {
-      Object o = path.getLastPathComponent();
-      if (o instanceof ArtifactsTreeNode) {
-        return ((PackagingElementNode)o).getPresentation().getSearchName();
-      }
-      return "";
-    }
-  };
+public class LayoutTreeComponent implements DnDTarget, Disposable {
   @NonNls private static final String EMPTY_CARD = "<empty>";
   private final ArtifactsEditorImpl myArtifactsEditor;
-  private Tree myTree;
+  private LayoutTree myTree;
   private JPanel myTreePanel;
   private final PackagingTreeParameters myTreeParameters;
   private PackagingEditorContext myContext;
@@ -62,7 +50,7 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
   private Map<String, PackagingElementPropertiesPanel<?>> myPropertiesPanels = new HashMap<String, PackagingElementPropertiesPanel<?>>();
   private JPanel myPropertiesPanel;
 
-  public PackagingElementsTree(ArtifactsEditorImpl artifactsEditor, PackagingTreeParameters treeParameters,
+  public LayoutTreeComponent(ArtifactsEditorImpl artifactsEditor, PackagingTreeParameters treeParameters,
                                PackagingEditorContext context, Artifact originalArtifact) {
     myArtifactsEditor = artifactsEditor;
     myTreeParameters = treeParameters;
@@ -70,22 +58,8 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
     myOriginalArtifact = originalArtifact;
     myRoot = new PackagingElementNode(getArtifact().getRootElement(), myContext);
     myTreeModel = new DefaultTreeModel(myRoot);
-    myTree = new SimpleTree(myTreeModel) {
-      @Override
-      public String getToolTipText(final MouseEvent event) {
-        TreePath path = myTree.getPathForLocation(event.getX(), event.getY());
-        if (path != null) {
-          return ((PackagingElementNode)path.getLastPathComponent()).getPresentation().getTooltipText();
-        }
-        return super.getToolTipText();
-      }
-
-      @Override
-      protected void configureUiHelper(TreeUIHelper helper) {
-        new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTOR, true);
-        helper.installToolTipHandler(this);
-      }
-    };
+    myTree = new LayoutTree(myTreeModel);
+    Disposer.register(this, myTree);
     myTree.setCellEditor(new DefaultCellEditor(new JTextField()) {
       @Override
       public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
@@ -466,4 +440,5 @@ public class PackagingElementsTree implements DnDTarget, Disposable {
       }
     }
   }
+
 }

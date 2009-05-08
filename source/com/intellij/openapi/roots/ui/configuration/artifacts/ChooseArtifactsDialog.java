@@ -25,6 +25,6 @@ public class ChooseArtifactsDialog extends ChooseElementsDialog<Artifact> {
   }
 
   protected Icon getItemIcon(Artifact item) {
-    return ArtifactsStructureConfigurable.ARTIFACT_ICON;
+    return item.getArtifactType().getIcon();
   }
 }

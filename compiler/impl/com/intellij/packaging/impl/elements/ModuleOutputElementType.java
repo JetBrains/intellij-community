@@ -1,5 +1,6 @@
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
@@ -22,7 +23,7 @@ public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPa
   public static final ModuleOutputElementType MODULE_OUTPUT_ELEMENT_TYPE = new ModuleOutputElementType();
 
   ModuleOutputElementType() {
-    super("module-output", "Module Output");
+    super("module-output", CompilerBundle.message("element.type.name.module.output"));
   }
 
   @Override

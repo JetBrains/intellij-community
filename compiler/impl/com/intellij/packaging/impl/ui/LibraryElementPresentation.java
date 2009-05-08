@@ -3,6 +3,7 @@ package com.intellij.packaging.impl.ui;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorUtil;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,11 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
     else {
       renderer.append(myName, SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
+  }
+
+  @Override
+  public double getWeight() {
+    return PackagingElementWeights.LIBRARY;
   }
 
 }

@@ -1,9 +1,6 @@
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactListener;
-import com.intellij.packaging.artifacts.ModifiableArtifact;
-import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +47,8 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
   }
 
   @NotNull
-  public ModifiableArtifact addArtifact(final String name) {
-    final ArtifactImpl artifact = new ArtifactImpl(name, false, new ArtifactRootElementImpl(), null);
+  public ModifiableArtifact addArtifact(@NotNull final String name, @NotNull ArtifactType artifactType) {
+    final ArtifactImpl artifact = new ArtifactImpl(name, artifactType, false, new ArtifactRootElementImpl(), null);
     myOriginalArtifacts.add(artifact);
     myArtifact2ModifiableCopy.put(artifact, artifact);
     myModifiable2Original.put(artifact, artifact);

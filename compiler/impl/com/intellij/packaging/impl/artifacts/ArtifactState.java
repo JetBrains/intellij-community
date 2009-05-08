@@ -11,12 +11,18 @@ import org.jdom.Element;
 public class ArtifactState {
   private String myName;
   private String myOutputPath;
+  private String myArtifactType = PlainArtifactType.ID;
   private boolean myBuildOnMake;
   private Element myRootElement;
 
   @Attribute("name")
   public String getName() {
     return myName;
+  }
+
+  @Attribute("type")
+  public String getArtifactType() {
+    return myArtifactType;
   }
 
   @Attribute("build-on-make")
@@ -32,6 +38,10 @@ public class ArtifactState {
   @Tag("root")
   public Element getRootElement() {
     return myRootElement;
+  }
+
+  public void setArtifactType(String artifactType) {
+    myArtifactType = artifactType;
   }
 
   public void setName(String name) {

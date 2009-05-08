@@ -1,12 +1,13 @@
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ChooseArtifactsDialog;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ChooseArtifactsDialog;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,18 +21,19 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
   public static final ArtifactElementType ARTIFACT_ELEMENT_TYPE = new ArtifactElementType();
 
   ArtifactElementType() {
-    super("artifact", "Artifact Output");
+    super("artifact", CompilerBundle.message("element.type.name.artifact"));
   }
 
   @Override
   public Icon getCreateElementIcon() {
-    return ArtifactsStructureConfigurable.ARTIFACT_ICON;
+    return PlainArtifactType.ARTIFACT_ICON;
   }
 
   @NotNull
   public List<? extends ArtifactPackagingElement> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact,
                                                                    CompositePackagingElement<?> parent) {
-    ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(context.getProject(), getNotAddedArtifacts(context, artifact), "Choose Artifacts", "");
+    ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(context.getProject(), getNotAddedArtifacts(context, artifact),
+                                                             CompilerBundle.message("dialog.title.choose.artifacts"), "");
     dialog.show();
     final List<ArtifactPackagingElement> elements = new ArrayList<ArtifactPackagingElement>();
     if (dialog.isOK()) {

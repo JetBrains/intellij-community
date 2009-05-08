@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ModifiableArtifactModel extends ArtifactModel {
 
   @NotNull
-  ModifiableArtifact addArtifact(final String name);
+  ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType);
 
   void removeArtifact(@NotNull Artifact artifact);
 

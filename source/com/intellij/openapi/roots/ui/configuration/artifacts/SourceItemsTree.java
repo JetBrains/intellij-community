@@ -7,11 +7,12 @@ import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.Pair;
-import com.intellij.packaging.ui.PackagingDragAndDropSourceItemsProvider;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.PackagingSourceItemsGroup;
+import com.intellij.packaging.ui.PackagingSourceItemsProvider;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
@@ -71,8 +72,8 @@ public class SourceItemsTree implements DnDSource, Disposable{
   }
 
   private void addChildren(final PackagingSourceItemsGroup parent, final DefaultMutableTreeNode node) {
-    final PackagingDragAndDropSourceItemsProvider[] providers = Extensions.getExtensions(PackagingDragAndDropSourceItemsProvider.EP_NAME);
-    for (PackagingDragAndDropSourceItemsProvider provider : providers) {
+    final PackagingSourceItemsProvider[] providers = Extensions.getExtensions(PackagingSourceItemsProvider.EP_NAME);
+    for (PackagingSourceItemsProvider provider : providers) {
       final Collection<? extends PackagingSourceItemsGroup> items = provider.getSourceItems(myEditorContext, myArtifactsEditor.getArtifact(),
                                                                                             parent);
       for (PackagingSourceItemsGroup item : items) {
@@ -120,7 +121,7 @@ public class SourceItemsTree implements DnDSource, Disposable{
     if (nodes.length == 1) {
       return DnDAwareTree.getDragImage(myTree, TreeUtil.getPathFromRoot(nodes[0]), dragOrigin);
     }
-    return DnDAwareTree.getDragImage(myTree, nodes.length + " elements", dragOrigin);
+    return DnDAwareTree.getDragImage(myTree, ProjectBundle.message("drag.n.drop.text.0.packaging.elements", nodes.length), dragOrigin);
   }
 
   public void dragDropEnd() {

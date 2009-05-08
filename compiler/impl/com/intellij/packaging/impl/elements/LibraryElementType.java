@@ -1,11 +1,12 @@
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.openapi.roots.ui.configuration.packaging.ChooseLibrariesDialog;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +30,7 @@ public class LibraryElementType extends PackagingElementType<LibraryPackagingEle
   public static final LibraryElementType LIBRARY_ELEMENT_TYPE = new LibraryElementType();
 
   LibraryElementType() {
-    super("library", "Library Files");
+    super("library", CompilerBundle.message("element.type.name.library.files"));
   }
 
   @Override

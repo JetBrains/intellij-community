@@ -22,7 +22,5 @@ public abstract class PackagingElementPresentation {
     return null;
   }
 
-  public double getWeight() {
-    return PackagingElementWeights.FILE;
-  }
+  public abstract double getWeight();
 }

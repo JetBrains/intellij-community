@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.ui.PackagingDragAndDropSourceItemsProvider;
+import com.intellij.packaging.ui.PackagingSourceItemsProvider;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItemsGroup;
 import com.intellij.packaging.impl.elements.LibraryElementType;
@@ -21,10 +21,10 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ModulesAndLibrariesSourceItemsProvider extends PackagingDragAndDropSourceItemsProvider {
+public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItemsProvider {
 
   @NotNull
-  public Collection<? extends PackagingSourceItemsGroup> getSourceItems(PackagingEditorContext editorContext, Artifact artifact,
+  public Collection<? extends PackagingSourceItemsGroup> getSourceItems(@NotNull PackagingEditorContext editorContext, @NotNull Artifact artifact,
                                                                   PackagingSourceItemsGroup parent) {
     if (parent == null) {
       return createModuleItems(editorContext, artifact, ArrayUtil.EMPTY_STRING_ARRAY);

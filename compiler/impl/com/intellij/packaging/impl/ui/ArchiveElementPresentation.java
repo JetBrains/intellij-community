@@ -29,6 +29,6 @@ public class ArchiveElementPresentation extends PackagingElementPresentation {
 
   @Override
   public double getWeight() {
-    return PackagingElementWeights.FILE;
+    return PackagingElementWeights.FILE_COPY;
   }
 }

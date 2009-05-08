@@ -4,10 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactListener;
-import com.intellij.packaging.artifacts.ArtifactManager;
-import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -37,6 +34,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   private final Project myProject;
   private final DefaultPackagingElementResolvingContext myResolvingContext;
   private boolean myInsideCommit = false;
+  @NonNls private static final String PACKAGING_ELEMENT_NAME = "element";
 
   public ArtifactManagerImpl(Project project) {
     myProject = project;
@@ -65,13 +63,14 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       artifactState.setName(artifact.getName());
       artifactState.setOutputPath(artifact.getOutputPath());
       artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
+      artifactState.setArtifactType(artifact.getArtifactType().getId());
       state.getArtifacts().add(artifactState);
     }
     return state;
   }
 
   private static Element serializePackagingElement(PackagingElement<?> packagingElement) {
-    Element element = new Element("element");
+    Element element = new Element(PACKAGING_ELEMENT_NAME);
     element.setAttribute("id", packagingElement.getType().getId());
     final Object bean = packagingElement.getState();
     if (bean != null) {
@@ -94,10 +93,10 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       XmlSerializer.deserializeInto(state, element);
       packagingElement.loadState(state);
     }
-    final List children = element.getChildren("element");
+    final List children = element.getChildren(PACKAGING_ELEMENT_NAME);
     //noinspection unchecked
     for (Element child : (List<? extends Element>)children) {
-      ((CompositePackagingElement<?>)packagingElement).addChild(ArtifactManagerImpl.deserializeElement(child));
+      ((CompositePackagingElement<?>)packagingElement).addChild(deserializeElement(child));
     }
     return packagingElement;
   }
@@ -113,7 +112,13 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       else {
         rootElement = new ArtifactRootElementImpl();
       }
-      artifacts.add(new ArtifactImpl(state.getName(), state.isBuildOnMake(), rootElement, state.getOutputPath()));
+      ArtifactType type = ArtifactType.findById(state.getArtifactType());
+      if (type != null) {
+        artifacts.add(new ArtifactImpl(state.getName(), type, state.isBuildOnMake(), rootElement, state.getOutputPath()));
+      }
+      else {
+        LOG.info("Unknown artifact type: " + state.getArtifactType());
+      }
     }
     myModel.setArtifactsList(artifacts);
   }

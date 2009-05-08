@@ -1,9 +1,9 @@
 package com.intellij.packaging.impl.ui;
 
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +25,8 @@ public class ArtifactElementPresentation extends PackagingElementPresentation {
   }
 
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    renderer.setIcon(ArtifactsStructureConfigurable.ARTIFACT_ICON);
-    renderer.append("'" + myName + "' output", myArtifact != null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
+    renderer.setIcon(myArtifact != null ? myArtifact.getArtifactType().getIcon() : PlainArtifactType.ARTIFACT_ICON);
+    renderer.append(myName, myArtifact != null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 
   @Override

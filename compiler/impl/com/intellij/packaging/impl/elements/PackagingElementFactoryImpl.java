@@ -1,5 +1,6 @@
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -175,7 +176,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   }
 
   @NotNull
-  private static String suggestFileName(@NotNull CompositePackagingElement<?> parent, @NotNull String prefix, @NotNull String suffix) {
+  private static String suggestFileName(@NotNull CompositePackagingElement<?> parent, @NonNls @NotNull String prefix, @NonNls @NotNull String suffix) {
     String name = prefix + suffix;
     int i = 2;
     while (findArchiveOrDirectoryByName(parent, name) != null) {
@@ -199,7 +200,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     private static final Icon ICON = IconLoader.getIcon("/actions/newFolder.png");
 
     private DirectoryElementType() {
-      super("directory", "Directory");
+      super("directory", CompilerBundle.message("element.type.name.directory"));
     }
 
     @Override
@@ -222,7 +223,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   private static class ArchiveElementType extends CompositePackagingElementType<ArchivePackagingElement> {
     private ArchiveElementType() {
-      super("archive", "Archive");
+      super("archive", CompilerBundle.message("element.type.name.archive"));
     }
 
     @Override
@@ -280,7 +281,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   private static class ArtifactRootElementType extends PackagingElementType<ArtifactRootElement<?>> {
     protected ArtifactRootElementType() {
-      super("root", "Root");
+      super("root", "");
     }
 
     @NotNull

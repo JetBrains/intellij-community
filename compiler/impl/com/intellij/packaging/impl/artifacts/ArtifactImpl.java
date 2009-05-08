@@ -1,6 +1,7 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,12 +13,19 @@ public class ArtifactImpl implements ModifiableArtifact {
   private String myName;
   private boolean myBuildOnMake;
   private String myOutputPath;
+  private ArtifactType myArtifactType;
 
-  public ArtifactImpl(String name, boolean buildOnMake, @NotNull ArtifactRootElement<?> rootElement, String outputPath) {
+  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull ArtifactRootElement<?> rootElement, String outputPath) {
     myName = name;
+    myArtifactType = artifactType;
     myBuildOnMake = buildOnMake;
     myRootElement = rootElement;
     myOutputPath = outputPath;
+  }
+
+  @NotNull
+  public ArtifactType getArtifactType() {
+    return myArtifactType;
   }
 
   public String getName() {
@@ -38,7 +46,7 @@ public class ArtifactImpl implements ModifiableArtifact {
   }
 
   public ArtifactImpl createCopy() {
-    return new ArtifactImpl(myName, myBuildOnMake, myRootElement, myOutputPath);
+    return new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath);
   }
 
   public void setName(String name) {
