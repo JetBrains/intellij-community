@@ -16,7 +16,7 @@ public class FilterDescendantVirtualFiles {
 
     for (int i = 1; i < in.size(); i++) {
       final VirtualFile child = in.get(i);
-      for (int j = i; j >= 0; --j) {
+      for (int j = i - 1; j >= 0; --j) {
         final VirtualFile parent = in.get(j);
         if (VfsUtil.isAncestor(parent, child, false)) {
           in.remove(i);
