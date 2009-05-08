@@ -226,7 +226,7 @@ public class TestNGUtil implements TestFramework
             for (String s : matches) {
               if (values.contains(s)) {
 
-                results.put(psiClass, new HashSet<PsiMethod>());
+                results.put(psiClass, new LinkedHashSet<PsiMethod>());
                 break OUTER;
               }
             }
@@ -236,7 +236,7 @@ public class TestNGUtil implements TestFramework
         Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
         for (String s : matches) {
           if (values.contains(s)) {
-            results.put(psiClass, new HashSet<PsiMethod>());
+            results.put(psiClass, new LinkedHashSet<PsiMethod>());
             break;
           }
         }
@@ -256,7 +256,7 @@ public class TestNGUtil implements TestFramework
                 for (String s : matches) {
                   if (values.contains(s)) {
                     if (results.get(psiClass) == null)
-                      results.put(psiClass, new HashSet<PsiMethod>());
+                      results.put(psiClass, new LinkedHashSet<PsiMethod>());
                     results.get(psiClass).add(method);
                     break OUTER;
                   }

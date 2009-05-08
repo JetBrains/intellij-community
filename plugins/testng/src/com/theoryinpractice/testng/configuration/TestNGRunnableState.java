@@ -472,7 +472,7 @@ public class TestNGRunnableState extends JavaCommandLineState
       }
       if (includeClasses) {
         for (PsiClass c : classes) {
-          results.put(c, new HashSet<PsiMethod>());
+          results.put(c, new LinkedHashSet<PsiMethod>());
         }
       }
     }
