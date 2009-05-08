@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.debugger.extensions.DisposerDebugger;
+import com.intellij.ui.debugger.extensions.playback.PlaybackDebugger;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
@@ -32,7 +33,7 @@ public class UiDebugger extends JPanel implements Disposable {
       }
     });
 
-    final UiDebuggerExtension[] extensions = {new DisposerDebugger()};
+    final UiDebuggerExtension[] extensions = {new DisposerDebugger(), new PlaybackDebugger()};
     init(extensions);
 
     myDialog = new DialogWrapper((Project)null, true) {

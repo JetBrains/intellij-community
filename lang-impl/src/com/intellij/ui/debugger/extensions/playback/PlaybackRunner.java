@@ -1,0 +1,346 @@
+package com.intellij.ui.debugger.extensions.playback;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.text.StringTokenizer;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+
+public class PlaybackRunner {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.PlaybackRunner");
+
+  private Robot myRobot;
+
+  private String myScript;
+  private StatusCallback myCallback;
+
+  private ArrayList<Command> myCommands = new ArrayList<Command>();
+  private ActionCallback myActionCallback;
+
+  public PlaybackRunner(String script, StatusCallback callback) {
+    myScript = script;
+    myCallback = callback;
+  }
+
+  public ActionCallback run() {
+    try {
+      myActionCallback = new ActionCallback();
+
+      myRobot = new Robot();
+
+      parse();
+
+      new Thread() {
+        @Override
+        public void run() {
+          executeFrom(0);
+        }
+      }.start();
+
+    }
+    catch (AWTException e) {
+      LOG.error(e);
+    }
+
+    return myActionCallback;
+  }
+
+  private void executeFrom(final int cmdIndex) {
+    if (cmdIndex < myCommands.size()) {
+      final Command cmd = myCommands.get(cmdIndex);
+      cmd.execute(myCallback, myRobot).doWhenDone(new Runnable() {
+        public void run() {
+          executeFrom(cmdIndex + 1);
+        }
+      }).doWhenRejected(new Runnable() {
+        public void run() {
+          myActionCallback.setRejected();
+        }
+      });
+    }
+    else {
+      myCallback.message("Finished", myCommands.size());
+      myActionCallback.setDone();
+    }
+  }
+
+  private void parse() {
+    final StringTokenizer tokens = new StringTokenizer(myScript, "\n");
+    int line = 0;
+    while (tokens.hasMoreTokens()) {
+      final String eachLine = tokens.nextToken();
+      final Command cmd = createCommand(eachLine, line++);
+      myCommands.add(cmd);
+
+    }
+  }
+
+  private Command createCommand(String string, int line) {
+    if (string.length() == 0 && string.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
+      return new EmptyCommand(line);
+    }
+
+    if (string.startsWith(DelayCommand.PREFIX)) {
+      return new DelayCommand(string, line);
+    }
+
+    if (string.startsWith(Shortcut.PREFIX)) {
+      return new Shortcut(string, line);
+    }
+
+    return new AlphaNumericType(string, line);
+  }
+
+  private void setDone() {
+    myActionCallback.setDone();
+  }
+
+  public interface StatusCallback {
+    void error(String text, int currentLine);
+
+    void message(String text, int currentLine);
+  }
+
+  private interface Command {
+    ActionCallback execute(StatusCallback cb, Robot robot);
+  }
+
+  private static abstract class AbstractCommand implements Command {
+
+    static String CMD_PREFIX = "%";
+
+    private String myText;
+    private int myLine;
+
+    protected AbstractCommand(String text, int line) {
+      myText = text != null ? text : null;
+      myLine = line;
+    }
+
+    public String getText() {
+      return myText;
+    }
+
+    public int getLine() {
+      return myLine;
+    }
+
+    public final ActionCallback execute(StatusCallback cb, Robot robot) {
+      dumpCommand(cb);
+      return _execute(cb, robot);
+    }
+
+    protected abstract ActionCallback _execute(StatusCallback cb, Robot robot);
+
+    public void dumpCommand(final StatusCallback cb) {
+      cb.message(getText(), getLine());
+    }
+
+    public void dumpError(final StatusCallback cb, final String text) {
+      cb.error(text, getLine());
+    }
+  }
+
+  private static class EmptyCommand extends AbstractCommand {
+    private EmptyCommand(int line) {
+      super("", line);
+    }
+
+    public ActionCallback _execute(StatusCallback cb, Robot robot) {
+      return new ActionCallback.Done();
+    }
+  }
+
+  private static class ErrorCommand extends AbstractCommand {
+
+    private ErrorCommand(String text, int line) {
+      super(text, line);
+    }
+
+    public ActionCallback _execute(StatusCallback cb, Robot robot) {
+      dumpError(cb, getText());
+      return new ActionCallback.Rejected();
+    }
+  }
+
+  private static class DelayCommand extends AbstractCommand {
+    static String PREFIX = CMD_PREFIX + "delay";
+
+    private DelayCommand(String text, int line) {
+      super(text, line);
+    }
+
+    public ActionCallback _execute(StatusCallback cb, Robot robot) {
+      final String s = getText().substring(PREFIX.length()).trim();
+
+      try {
+        final Integer delay = Integer.valueOf(s);
+        robot.delay(delay.intValue());
+      }
+      catch (NumberFormatException e) {
+        dumpError(cb, "Invalid delay value: " + s);
+        return new ActionCallback.Rejected();
+      }
+
+      return new ActionCallback.Done();
+    }
+  }
+
+  private abstract static class TypeCommand extends AbstractCommand {
+
+    private KeyStokeMap myMap = new KeyStokeMap();
+
+    private TypeCommand(String text, int line) {
+      super(text, line);
+    }
+
+    protected void type(Robot robot, KeyStroke keyStroke) {
+      boolean shift = (keyStroke.getModifiers() & KeyEvent.SHIFT_MASK) > 0;
+      boolean alt = (keyStroke.getModifiers() & KeyEvent.ALT_MASK) > 0;
+      boolean control = (keyStroke.getModifiers() & KeyEvent.ALT_MASK) > 0;
+      boolean meta = (keyStroke.getModifiers() & KeyEvent.META_MASK) > 0;
+
+      if (shift) {
+        robot.keyPress(KeyEvent.VK_SHIFT);
+      }
+
+      if (control) {
+        robot.keyPress(KeyEvent.VK_CONTROL);
+      }
+
+      if (alt) {
+        robot.keyPress(KeyEvent.VK_ALT);
+      }
+
+      if (meta) {
+        robot.keyPress(KeyEvent.VK_META);
+      }
+
+      robot.keyPress(keyStroke.getKeyCode());
+      robot.keyRelease(keyStroke.getKeyCode());
+
+      if (shift) {
+        robot.keyRelease(KeyEvent.VK_SHIFT);
+      }
+
+      if (control) {
+        robot.keyRelease(KeyEvent.VK_CONTROL);
+      }
+
+      if (alt) {
+        robot.keyRelease(KeyEvent.VK_ALT);
+      }
+
+      if (meta) {
+        robot.keyRelease(KeyEvent.VK_META);
+      }
+    }
+
+    protected KeyStroke get(char c) {
+      return myMap.get(c);
+    }
+
+    protected KeyStroke getFromShortcut(String sc) {
+      return myMap.get(sc);
+    }
+  }
+
+  private static class Shortcut extends TypeCommand {
+
+    public static String PREFIX = CMD_PREFIX + "[";
+    public static String POSTFIX = CMD_PREFIX + "]";
+
+    private Shortcut(String text, int line) {
+      super(text, line);
+    }
+
+    public ActionCallback _execute(StatusCallback cb, Robot robot) {
+      final String one = getText().substring(PREFIX.length());
+      if (!one.endsWith("]")) {
+        dumpError(cb, "Expected " + "]");
+        return new ActionCallback.Rejected();
+      }
+
+      type(robot, getFromShortcut(one.substring(0, one.length() - 1).trim()));
+
+      return new ActionCallback.Done();
+    }
+  }
+
+  private static class AlphaNumericType extends TypeCommand {
+
+    private AlphaNumericType(String text, int line) {
+      super(text, line);
+    }
+
+    public ActionCallback _execute(StatusCallback cb, Robot robot) {
+      for (int i = 0; i < getText().length(); i++) {
+        type(robot, get(getText().charAt(i)));
+      }
+      return new ActionCallback.Done();
+    }
+  }
+
+  public static void main(String[] args) {
+    final JFrame frame = new JFrame();
+    frame.getContentPane().setLayout(new BorderLayout());
+    final JPanel content = new JPanel(new BorderLayout());
+    frame.getContentPane().add(content, BorderLayout.CENTER);
+
+    final JTextArea textArea = new JTextArea();
+    content.add(textArea, BorderLayout.CENTER);
+
+    frame.setBounds(300, 300, 300, 300);
+    frame.show();
+
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        textArea.requestFocus();
+        start();
+      }
+    });
+  }
+  
+  private static void start() {
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
+      public boolean dispatchKeyEvent(KeyEvent e) {
+        switch (e.getID()) {
+          case KeyEvent.KEY_PRESSED:
+            System.out.print("pressed ");
+            break;
+          case KeyEvent.KEY_RELEASED:
+            System.out.print("  released ");
+            break;
+          case KeyEvent.KEY_TYPED:
+            System.out.print(" typed ");
+            break;
+        }
+
+        System.out.print(e.isShiftDown() ? "shift " : "");
+        System.out.print(e.isControlDown() ? "control " : "");
+        System.out.print(e.isAltDown() ? "alt " : "");
+        System.out.print(e.isMetaDown() ? "meta " : "");
+
+        System.out.println(e.getKeyChar() + " code=" + e.getKeyCode());
+
+        return false;
+      }
+    });
+
+    new PlaybackRunner("%[control alt D]", new StatusCallback() {
+      public void error(String text, int currentLine) {
+        System.out.println("Error: " + currentLine + " " + text);
+      }
+
+      public void message(String text, int currentLine) {
+        System.out.println(currentLine + " " + text);
+      }
+    }).run();
+  }
+
+
+}
