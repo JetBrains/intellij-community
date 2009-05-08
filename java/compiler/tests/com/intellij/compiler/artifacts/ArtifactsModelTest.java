@@ -1,6 +1,7 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,7 +13,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     assertEmpty(getArtifacts());
 
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
-    final ModifiableArtifact artifact = model.addArtifact("new art");
+    final ModifiableArtifact artifact = model.addArtifact("new art", PlainArtifactType.getInstance());
     artifact.setBuildOnMake(true);
     artifact.setOutputPath("/myout");
     artifact.setName("xxx");
@@ -101,7 +102,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
 
   private Artifact addArtifact(String name) {
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
-    final ModifiableArtifact artifact = model.addArtifact(name);
+    final ModifiableArtifact artifact = model.addArtifact(name, PlainArtifactType.getInstance());
     model.commit();
     return artifact;
   }
