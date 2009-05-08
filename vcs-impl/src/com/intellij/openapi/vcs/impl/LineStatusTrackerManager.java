@@ -235,7 +235,8 @@ public class LineStatusTrackerManager implements ProjectComponent {
       final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
       if (status == FileStatus.NOT_CHANGED ||
           status == FileStatus.ADDED ||
-          status == FileStatus.UNKNOWN) {
+          status == FileStatus.UNKNOWN ||
+          status == FileStatus.IGNORED) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("installTracker() for file " + virtualFile.getPath() + " failed: status=" + status);
         }

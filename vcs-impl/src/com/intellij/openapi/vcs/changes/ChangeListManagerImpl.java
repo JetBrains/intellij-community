@@ -393,8 +393,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return new ArrayList<VirtualFile>(myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).getFiles());
   }
 
+  /**
+   * @return only roots for ignored folders, and ignored files
+   */
   List<VirtualFile> getIgnoredFiles() {
-    return new ArrayList<VirtualFile>(myComposite.getVFHolder(FileHolder.HolderType.IGNORED).getFiles());
+    return new ArrayList<VirtualFile>(myComposite.getIgnoredFileHolder().getBranchToFileMap().values());
   }
 
   public List<VirtualFile> getLockedFolders() {
@@ -413,6 +416,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return new ArrayList<FilePath>(myComposite.getDeletedFilesHolder().getFiles());
   }
 
+  /**
+   * @return only roots for switched folders, and switched files
+   */
   MultiMap<String, VirtualFile> getSwitchedFilesMap() {
     return myComposite.getSwitchedFileHolder().getBranchToFileMap();
   }
@@ -590,7 +596,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       if (myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).containsFile(file)) return FileStatus.UNKNOWN;
       if (myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).containsFile(file)) return FileStatus.HIJACKED;
-      if (myComposite.getVFHolder(FileHolder.HolderType.IGNORED).containsFile(file)) return FileStatus.IGNORED;
+      if (myComposite.getIgnoredFileHolder().containsFile(file)) return FileStatus.IGNORED;
 
       final FileStatus status = myWorker.getStatus(file);
       if (status != null) {
@@ -762,16 +768,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private void updateIgnoredFiles(final boolean checkIgnored) {
     synchronized (myDataLock) {
       List<VirtualFile> unversionedFiles = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
-      List<VirtualFile> ignoredFiles = myComposite.getVFHolder(FileHolder.HolderType.IGNORED).getFiles();
+      //List<VirtualFile> ignoredFiles = myComposite.getVFHolder(FileHolder.HolderType.IGNORED).getFiles();
       boolean somethingChanged = false;
       for(VirtualFile file: unversionedFiles) {
         if (isIgnoredFile(file)) {
           somethingChanged = true;
           myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).removeFile(file);
-          myComposite.getVFHolder(FileHolder.HolderType.IGNORED).addFile(file);
+          myComposite.getIgnoredFileHolder().addFile(file, "", false);
         }
       }
-      if (checkIgnored) {
+      /*if (checkIgnored) {
         for(VirtualFile file: ignoredFiles) {
           if (!isIgnoredFile(file)) {
             somethingChanged = true;
@@ -779,7 +785,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
           }
         }
-      }
+      }*/
       if (somethingChanged) {
         myFileStatusManager.fileStatusesChanged();
         myChangesViewManager.scheduleRefresh();

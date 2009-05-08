@@ -6,7 +6,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -21,12 +20,14 @@ import java.util.*;
  * @author max
  */
 public class SwitchedFileHolder implements FileHolder {
+  private final HolderType myHolderType;
   private final Map<VirtualFile, String> myFiles = new HashMap<VirtualFile, String>();
   private List<VirtualFile> mySwitchRoots;
   private final Project myProject;
 
-  public SwitchedFileHolder(Project project) {
+  public SwitchedFileHolder(final Project project, final HolderType holderType) {
     myProject = project;
+    myHolderType = holderType;
   }
 
   public synchronized void cleanAll() {
@@ -57,7 +58,7 @@ public class SwitchedFileHolder implements FileHolder {
   }
 
   public HolderType getType() {
-    return HolderType.SWITCHED;
+    return myHolderType;
   }
 
   private boolean fileDropped(final VirtualFile file) {
@@ -66,19 +67,6 @@ public class SwitchedFileHolder implements FileHolder {
 
   public synchronized void addFile(VirtualFile file, @NotNull String branchName, final boolean recursive) {
     myFiles.put(file, branchName);
-  }
-
-  private void goForChildren(final VirtualFile file, final String branchName) {
-    if (file.isDirectory()) {
-      for(VirtualFile child: file.getChildren()) {
-        if (!FileTypeManager.getInstance().isFileIgnored(child.getName())) {
-          if (! myFiles.containsKey(child)) {
-            myFiles.put(child, branchName);
-            goForChildren(child, branchName);
-          }
-        }
-      }
-    }
   }
 
   // remove switched to same branch decsendants
@@ -128,24 +116,23 @@ public class SwitchedFileHolder implements FileHolder {
     preCheckFiles();
 
     Collections.reverse(mySwitchRoots);
-
-    for (VirtualFile switchRoot : mySwitchRoots) {
-      goForChildren(switchRoot, myFiles.get(switchRoot));
-    }
   }
 
   public synchronized void removeFile(VirtualFile file) {
     myFiles.remove(file);
+    if (mySwitchRoots != null) {
+      mySwitchRoots.remove(file);
+    }
   }
 
   public synchronized SwitchedFileHolder copy() {
-    final SwitchedFileHolder copyHolder = new SwitchedFileHolder(myProject);
+    final SwitchedFileHolder copyHolder = new SwitchedFileHolder(myProject, myHolderType);
     copyHolder.myFiles.putAll(myFiles);
     return copyHolder;
   }
 
   public synchronized boolean containsFile(final VirtualFile file) {
-    return myFiles.containsKey(file);
+    return getBranchForFile(file) != null;
   }
 
   public synchronized MultiMap<String, VirtualFile> getBranchToFileMap() {
@@ -157,7 +144,12 @@ public class SwitchedFileHolder implements FileHolder {
   }
 
   public String getBranchForFile(final VirtualFile file) {
-    return myFiles.get(file);
+    for (VirtualFile vf : myFiles.keySet()) {
+      if (VfsUtil.isAncestor(vf, file, false)) {
+        return myFiles.get(vf);
+      }
+    }
+    return null;
   }
 
   public boolean equals(final Object o) {
