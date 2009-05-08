@@ -32,13 +32,12 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import gnu.trove.THashSet;
 
 public class JavaCompletionUtil {
   static final Key<SmartPsiElementPointer> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
@@ -698,9 +697,7 @@ public class JavaCompletionUtil {
 
   @Nullable
   public static List<? extends PsiElement> getAllPsiElements(final LookupElement item) {
-    if (!(item instanceof LookupItem)) return null;
-
-    List<PsiMethod> allMethods = ((LookupItem<?>)item).getAttribute(ALL_METHODS_ATTRIBUTE);
+    List<PsiMethod> allMethods = item.getUserData(ALL_METHODS_ATTRIBUTE);
     if (allMethods != null) return allMethods;
     if (item.getObject() instanceof PsiElement) return Arrays.asList((PsiElement)item.getObject());
     return null;

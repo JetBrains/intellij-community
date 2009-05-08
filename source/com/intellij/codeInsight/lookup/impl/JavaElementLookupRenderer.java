@@ -85,7 +85,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
 
     if (StringUtil.isEmpty(name)) return "";
 
-    final String prefix = item.getAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE);
+    final String prefix = item.getUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE);
     if (StringUtil.isNotEmpty(prefix)) {
       return prefix + name;
     }
@@ -211,7 +211,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
   }
 
   private static boolean isToStrikeout(LookupItem<?> item) {
-    final List<PsiMethod> allMethods = item.getAttribute(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE);
+    final List<PsiMethod> allMethods = item.getUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE);
     if (allMethods != null){
       for (PsiMethod method : allMethods) {
         if (!method.isValid()) { //?
@@ -234,7 +234,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
 
   private static boolean showSignature(LookupItem item) {
     return CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ||
-           item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
+           item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
   }
 
   private static boolean isDeprecated(PsiElement element) {

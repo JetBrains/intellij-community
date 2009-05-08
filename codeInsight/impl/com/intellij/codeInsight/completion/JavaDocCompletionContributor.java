@@ -68,7 +68,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
                   ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false) != null)) continue;
             }
 
-            ((LookupItem)item).setAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);
+            item.putUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);
             if (isArg) {
               ((LookupItem)item).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
             }

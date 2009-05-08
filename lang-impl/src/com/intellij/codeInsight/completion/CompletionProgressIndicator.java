@@ -76,8 +76,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
         contextOriginal.setStartOffset(myEditor.getCaretModel().getOffset() - item.getLookupString().length());
         CodeCompletionHandlerBase.selectLookupItem(item, CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ||
-                                                         (item instanceof LookupItem &&
-                                                          ((LookupItem)item).getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null),
+                                                         item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
                                                    event.getCompletionChar(), contextOriginal, myLookup.getItems());
       }
 

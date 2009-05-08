@@ -29,7 +29,7 @@ public class PsiTypeLookupItem extends LookupItem {
   }
 
   public int getBracketsCount() {
-    final Integer integer = (Integer)getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
+    final Integer integer = (Integer)getUserData(LookupItem.BRACKETS_COUNT_ATTR);
     return integer == null ? 0 : integer;
   }
 
@@ -66,7 +66,7 @@ public class PsiTypeLookupItem extends LookupItem {
       }
       item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + tail.toString());
       item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
-      item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, dim);
+      item.putUserData(LookupItem.BRACKETS_COUNT_ATTR, dim);
     }
     item.setAttribute(LookupItem.TYPE, original);
     return item;

@@ -360,7 +360,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
         }
         result.addElement(newItem);
       } else {
-        ((LookupItem)item).setAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, beautifulPrefix + ".");
+        ((LookupItem)item).putUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, beautifulPrefix + ".");
         ((LookupItem)item).setLookupString(beautifulPrefix + "." + item.getLookupString());
         result.addElement(item);
       }
@@ -468,7 +468,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
       super(method);
       myQualifier = qualifier;
       setLookupString(qualifier + "." + method.getName());
-      setAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, qualifier + ".");
+      putUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, qualifier + ".");
     }
 
     @Override

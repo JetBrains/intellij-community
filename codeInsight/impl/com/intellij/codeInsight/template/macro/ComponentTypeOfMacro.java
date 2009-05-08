@@ -31,9 +31,9 @@ public class ComponentTypeOfMacro implements Macro {
     for (LookupElement element : lookupItems) {
       if (element instanceof LookupItem) {
         final LookupItem item = (LookupItem)element;
-        Integer bracketsCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
+        Integer bracketsCount = (Integer)item.getUserData(LookupItem.BRACKETS_COUNT_ATTR);
         if (bracketsCount == null) return null;
-        item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, new Integer(bracketsCount.intValue() - 1));
+        item.putUserData(LookupItem.BRACKETS_COUNT_ATTR, new Integer(bracketsCount.intValue() - 1));
       }
     }
 

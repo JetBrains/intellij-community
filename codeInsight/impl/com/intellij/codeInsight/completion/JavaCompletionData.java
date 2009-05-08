@@ -532,17 +532,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     {
-// primitive arrays after new
-      final CompletionVariant variant = new CompletionVariant(PsiExpression.class, new LeftNeighbour(
-        new AndFilter(new TextFilter(PsiKeyword.NEW), new LeftNeighbour(new NotFilter(new TextFilter(".", PsiKeyword.THROW)))))
-      );
-      variant.includeScopeClass(PsiNewExpression.class, true);
-      addPrimitiveTypes(variant);
-      variant.setItemProperty(LookupItem.BRACKETS_COUNT_ATTR, 1);
-      registerVariant(variant);
-    }
-
-    {
 // after new
       final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new TextFilter(PsiKeyword.NEW)));
       variant.includeScopeClass(PsiNewExpression.class, true);

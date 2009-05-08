@@ -31,15 +31,15 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   public static final Object TYPE_TEXT_ATTR = Key.create("typeText");
   public static final Object TAIL_TEXT_ATTR = Key.create("tailText");
   public static final Object TAIL_TEXT_SMALL_ATTR = Key.create("tailTextSmall");
-  public static final Object FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
+  public static final Key<Object> FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
   public static final Key<Object> FORCE_SHOW_FQN_ATTR = Key.create("forseFQNForClasses");
 
   public static final Object DO_NOT_AUTOCOMPLETE_ATTR = Key.create("DO_NOT_AUTOCOMPLETE_ATTR");
   public static final Object DO_AUTOCOMPLETE_ATTR = Key.create("DO_AUTOCOMPLETE_ATTR");
 
   public static final Object GENERATE_ANONYMOUS_BODY_ATTR = Key.create("GENERATE_ANONYMOUS_BODY_ATTR");
-  public static final Object BRACKETS_COUNT_ATTR = Key.create("BRACKETS_COUNT_ATTR");
-  public static final Object OVERWRITE_ON_AUTOCOMPLETE_ATTR = Key.create("OVERWRITE_ON_AUTOCOMPLETE_ATTR");
+  public static final Key<Object> BRACKETS_COUNT_ATTR = Key.create("BRACKETS_COUNT_ATTR");
+  public static final Key<Object> OVERWRITE_ON_AUTOCOMPLETE_ATTR = Key.create("OVERWRITE_ON_AUTOCOMPLETE_ATTR");
   public static final Object NEW_OBJECT_ATTR = Key.create("NEW_OBJECT_ATTR");
   public static final Object DONT_CHECK_FOR_INNERS = Key.create("DONT_CHECK_FOR_INNERS");
   public static final Object FORCE_QUALIFY = Key.create("FORCE_QUALIFY");
@@ -181,20 +181,29 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     }
   }
 
-  @NotNull
-  public static TailType handleCompletionChar(@NotNull final Editor editor, @NotNull final LookupElement lookupElement, final char completionChar) {
-    final LookupItem<?> item = (LookupItem)lookupElement;
+  @Nullable
+  public static TailType getDefaultTailType(final char completionChar) {
     switch(completionChar){
       case '.': return TailType.DOT;
       case ',': return TailType.COMMA;
       case ';': return TailType.SEMICOLON;
       case '=': return TailType.EQ;
       case ' ': return TailType.SPACE;
-      case '!': return TailType.EXCLAMATION;
       case ':': return TailType.CASE_COLON; //?
       case '\'': return TailType.QUOTE;
       case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailType.SMART_COMPLETION;
     }
+    return null;
+  }
+
+  @NotNull
+  public static TailType handleCompletionChar(@NotNull final Editor editor, @NotNull final LookupElement lookupElement, final char completionChar) {
+    final TailType type = getDefaultTailType(completionChar);
+    if (type != null) {
+      return type;
+    }
+
+    final LookupItem<?> item = (LookupItem)lookupElement;
     final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
     return attr != null ? attr : TailType.NONE;
   }

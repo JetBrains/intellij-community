@@ -31,7 +31,7 @@ public abstract class TemplateInsertHandler implements InsertHandler {
   }
 
   protected static boolean isTemplateToBeCompleted(final LookupElement lookupItem) {
-    return lookupItem instanceof LookupItem && ((LookupItem)lookupItem).getObject() instanceof Template
+    return lookupItem instanceof LookupItem && lookupItem.getObject() instanceof Template
            && ((LookupItem)lookupItem).getAttribute(EXPANDED_TEMPLATE_ATTR) == null;
   }
 

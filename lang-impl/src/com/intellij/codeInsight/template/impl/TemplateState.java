@@ -441,7 +441,7 @@ public class TemplateState implements Disposable {
       offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, context.getTailOffset());
       offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, context.getTailOffset());
 
-      Integer bracketCount = item instanceof LookupItem ? (Integer)((LookupItem)item).getAttribute(LookupItem.BRACKETS_COUNT_ATTR) : null;
+      Integer bracketCount = (Integer)item.getUserData(LookupItem.BRACKETS_COUNT_ATTR);
       if (bracketCount != null) {
         final StringBuilder tail = new StringBuilder();
         for (int i = 0; i < bracketCount.intValue(); i++) {

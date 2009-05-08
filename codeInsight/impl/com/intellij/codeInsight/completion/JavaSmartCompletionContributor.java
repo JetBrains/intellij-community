@@ -10,16 +10,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.*;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ElementExtractorFilter;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.GeneratorFilter;
-import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.getters.*;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.AssignableGroupFilter;
@@ -106,8 +104,27 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTypeCastExpression.class)), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         for (final ExpectedTypeInfo type : getExpectedTypes(parameters)) {
-          final LookupItem item = PsiTypeLookupItem.createLookupItem(type.getDefaultType()).setTailType(TailTypes.CAST_RPARENTH)
-            .setAutoCompletionPolicy(AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE);
+          final LookupElement item = new LookupElementDecorator<LookupItem>(PsiTypeLookupItem.createLookupItem(type.getDefaultType())) {
+            @Override
+            public AutoCompletionPolicy getAutoCompletionPolicy() {
+              return AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE;
+            }
+
+            @Override
+            public void handleInsert(InsertionContext context) {
+              final PsiElement position = AnalyzingJavaSmartCompletionContributor.getPosition(context, this);
+              final Editor editor = context.getEditor();
+              if (or(psiElement(PsiParenthesizedExpression.class),
+                     psiElement().afterLeaf(
+                       psiElement().withText("(").withParent(PsiTypeCastExpression.class))).accepts(position)) {
+                editor.getDocument().deleteString(context.getSelectionEndOffset(),
+                                                  context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
+              }
+
+              TailTypes.CAST_RPARENTH.processTail(editor, context.getTailOffset());
+              DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), getDelegate());
+            }
+          };
           item.putUserData(TYPE_CAST, Boolean.TRUE);
           result.addElement(item);
         }
@@ -207,7 +224,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         for (final PsiType type : ExpectedTypesGetter.getExpectedTypes(element, false)) {
           final PsiClass psiClass = PsiUtil.resolveClassInType(type);
           if (psiClass != null && psiClass.isAnnotationType()) {
-            final LookupItem item = LookupItemUtil.objectToLookupItem(type).setTailType(TailType.NONE);
+            final LookupItem item = LookupItemUtil.objectToLookupItem(type);
             if (needQualify) JavaAwareCompletionData.qualify(item);
             result.addElement(item);
           }
@@ -227,7 +244,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           for (PsiClassType ref : method.getThrowsList().getReferencedTypes()) {
             final PsiClass exception = ref.resolve();
             if (exception != null && throwsSet.add(exception)) {
-              result.addElement(LookupItemUtil.objectToLookupItem(exception).setTailType(TailType.SPACE));
+              result.addElement(TailTypeDecorator.createDecorator(new JavaPsiClassReferenceElement(exception).setInsertHandler(new DefaultInsertHandler()), TailType.SPACE));
             }
           }
         }
@@ -245,7 +262,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         if (tryBlock == null) return;
 
         for (final PsiClassType type : ExceptionUtil.getThrownExceptions(tryBlock.getStatements())) {
-          result.addElement(LookupItemUtil.objectToLookupItem(type).setTailType(TailType.SPACE));
+          result.addElement(TailTypeDecorator.createDecorator(PsiTypeLookupItem.createLookupItem(type).setInsertHandler(new DefaultInsertHandler()), TailType.SPACE));
         }
       }
     });
@@ -287,7 +304,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                            .getSubstitutionForTypeParameter(targetParameter, paramSubstitution, argSubstitution, false,
                                                             PsiUtil.getLanguageLevel(context));
                        if (substitution != null && substitution != PsiType.NULL) {
-                         resultSet.addElement(LookupItemUtil.objectToLookupItem(substitution));
+                         resultSet.addElement(PsiTypeLookupItem.createLookupItem(substitution));
                        }
                      }
                    }
@@ -306,7 +323,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
                      if (psiClass == null) return;
 
-                     resultSet.addElement(new JavaPsiClassReferenceElement(psiClass).setTailType(tail));
+                     resultSet.addElement(TailTypeDecorator.createDecorator(new JavaPsiClassReferenceElement(psiClass).setInsertHandler(new DefaultInsertHandler()), tail));
                    }
                  });
 

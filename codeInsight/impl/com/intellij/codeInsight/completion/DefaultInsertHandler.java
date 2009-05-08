@@ -53,7 +53,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   public void handleInsert(final InsertionContext context, LookupElement item) {
     super.handleInsert(context, item);
 
-    if (item instanceof LookupItem && ((LookupItem)item).getAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE) != null) {
+    if (item.getUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE) != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN);
     }
 
@@ -120,6 +120,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       myState.tailOffset += 2;
     }
 
+    myContext.setTailOffset(myState.tailOffset);
     myState.caretOffset = processTail(tailType, myState.caretOffset, myState.tailOffset);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
@@ -174,7 +175,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
   private void qualifyIfNeeded() {
     try{
-      if (myLookupItem.getObject() instanceof PsiField && myLookupItem.getAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE) == null) {
+      if (myLookupItem.getObject() instanceof PsiField && myLookupItem.getUserData(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE) == null) {
         PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
         PsiReference reference = myFile.findReferenceAt(myContext.getStartOffset());
         if (reference instanceof PsiReferenceExpression && !((PsiReferenceExpression) reference).isQualified()) {
@@ -206,7 +207,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
   private void handleBrackets(){
     // brackets
-    final Integer bracketsAttr = (Integer)myLookupItem.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
+    final Integer bracketsAttr = (Integer)myLookupItem.getUserData(LookupItem.BRACKETS_COUNT_ATTR);
     if (bracketsAttr != null){
       int count = bracketsAttr.intValue();
       if(count > 0)
@@ -389,7 +390,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     }
   }
 
-  private TailType getTailType(final char completionChar){
+  protected TailType getTailType(final char completionChar){
     switch(completionChar){
       case '.': return TailType.DOT;
       case ',': return TailType.COMMA;
@@ -405,7 +406,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       case '\"':
       case '[': return TailType.createSimpleTailType(completionChar);
       case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailType.SMART_COMPLETION;
-      case '!': if (!(myLookupItem.getObject() instanceof PsiVariable)) return TailType.EXCLAMATION;
+      //case '!': if (!(myLookupItem.getObject() instanceof PsiVariable)) return TailType.EXCLAMATION;
     }
     final TailType attr = myLookupItem.getTailType();
     return attr == TailType.UNKNOWN ? TailType.NONE : attr;
@@ -538,7 +539,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     JavaCompletionUtil.initOffsets(file, file.getProject(), offsetMap, CompletionType.BASIC);
   }
 
-  private static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
+  public static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
 
     Object o = item.getObject();
@@ -607,7 +608,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     String name = aClass.getName();
     document.replaceString(startOffset, endOffset, name);
-    PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
+    //PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
 
     final RangeMarker toDelete = insertSpace(endOffset, document);
 

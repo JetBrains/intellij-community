@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 public class PreferNonGenericWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
+    if (!(item instanceof LookupItem)) return 0;
+
     final Object object = item.getObject();
     if (object instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)object;

@@ -18,6 +18,7 @@ import com.intellij.psi.filters.TrueFilter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CompletionUtil {
   public static final Key<TailType> TAIL_TYPE_ATTR = LookupItem.TAIL_TYPE_ATTR;
@@ -78,6 +79,7 @@ public class CompletionUtil {
     });
   }
 
+  @Nullable
   public static CompletionData getCompletionDataByFileType(FileType fileType) {
     for(CompletionDataEP ep: Extensions.getExtensions(CompletionDataEP.EP_NAME)) {
       if (ep.fileType.equals(fileType.getName())) {
@@ -92,7 +94,7 @@ public class CompletionUtil {
   static boolean isOverwrite(final LookupElement item, final char completionChar) {
     return completionChar != Lookup.AUTO_INSERT_SELECT_CHAR
       ? completionChar == Lookup.REPLACE_SELECT_CHAR
-      : item instanceof LookupItem && ((LookupItem)item).getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
+      : item.getUserData(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
   }
 
 

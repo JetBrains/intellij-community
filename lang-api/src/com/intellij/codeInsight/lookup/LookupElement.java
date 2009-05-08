@@ -45,7 +45,7 @@ public abstract class LookupElement extends UserDataHolderBase {
     return Collections.singleton(getLookupString());
   }
 
-  public final boolean setPrefixMatcher(@NotNull final PrefixMatcher matcher) {
+  public boolean setPrefixMatcher(@NotNull final PrefixMatcher matcher) {
     myPrefixMatcher = matcher;
     return isPrefixMatched();
   }
