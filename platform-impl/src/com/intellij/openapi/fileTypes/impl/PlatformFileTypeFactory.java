@@ -18,7 +18,6 @@ public class PlatformFileTypeFactory extends FileTypeFactory {
                      new ExtensionFileNameMatcher("policy"),
                      new ExtensionFileNameMatcher("log"),
                      new ExtensionFileNameMatcher("cgi"),
-                     new ExtensionFileNameMatcher("pl"),
                      new ExtensionFileNameMatcher("MF"),
                      new ExtensionFileNameMatcher("sql"),
                      new ExtensionFileNameMatcher("jad"),
