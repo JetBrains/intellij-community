@@ -2,6 +2,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
@@ -105,7 +106,8 @@ public class DeleteDialog extends DialogWrapper {
   }
 
   private void updateControls() {
-    if(myCbSafeDelete.isSelected()) {
+    myCbSafeDelete.setEnabled(!DumbService.getInstance().isDumb());
+    if(deleteSafely()) {
       myCbSearchInComments.makeSelectable();
       myCbSearchInNonJava.makeSelectable();
     }
@@ -123,7 +125,7 @@ public class DeleteDialog extends DialogWrapper {
   protected void doOKAction() {
     final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
     refactoringSettings.SAFE_DELETE_WHEN_DELETE = myCbSafeDelete.isSelected();
-    if (myCbSafeDelete.isSelected()) {
+    if (deleteSafely()) {
       if (myCallback != null) {
         myCallback.run(this);
       } else {
@@ -135,5 +137,9 @@ public class DeleteDialog extends DialogWrapper {
     else {
       super.doOKAction();
     }
+  }
+
+  private boolean deleteSafely() {
+    return myCbSafeDelete.isEnabled() && myCbSafeDelete.isSelected();
   }
 }
