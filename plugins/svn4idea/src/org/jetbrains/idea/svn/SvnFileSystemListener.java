@@ -739,8 +739,6 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         filesToProcess = (files == null) ? null : new ArrayList<FilePath>(files);
       }
       if (filesToProcess != null) {
-        //deletedFiles.removeAll(filesToProcess);
-
         List<VcsException> exceptions = new ArrayList<VcsException>();
         SVNWCClient wcClient = vcs.createWCClient();
         for(FilePath file: filesToProcess) {
@@ -769,6 +767,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         if (parent != null) {
           myFilesToRefresh.add(parent.getVirtualFile());
         }
+      }
+      deletedFiles.removeAll(filesToProcess);
+      for (FilePath file : deletedFiles) {
         FileUtil.delete(file.getIOFile());
       }
     }
