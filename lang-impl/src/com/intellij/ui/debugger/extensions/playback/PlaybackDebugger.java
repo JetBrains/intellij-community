@@ -66,7 +66,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
           }
         };
 
-        myMessage.setText("Starting script...");
+        message("Starting script...", -1);
 
         try {
           sleep(1000);

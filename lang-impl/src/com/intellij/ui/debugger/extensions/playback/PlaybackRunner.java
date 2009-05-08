@@ -80,7 +80,7 @@ public class PlaybackRunner {
   }
 
   private Command createCommand(String string, int line) {
-    if (string.length() == 0 && string.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
+    if (string.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
       return new EmptyCommand(line);
     }
 
@@ -130,8 +130,14 @@ public class PlaybackRunner {
     }
 
     public final ActionCallback execute(StatusCallback cb, Robot robot) {
-      dumpCommand(cb);
-      return _execute(cb, robot);
+      try {
+        dumpCommand(cb);
+        return _execute(cb, robot);
+      }
+      catch (Exception e) {
+        cb.error(e.getMessage(), getLine());
+        return new ActionCallback.Rejected();
+      }
     }
 
     protected abstract ActionCallback _execute(StatusCallback cb, Robot robot);
@@ -196,6 +202,10 @@ public class PlaybackRunner {
 
     private TypeCommand(String text, int line) {
       super(text, line);
+    }
+
+    protected void type(Robot robot, int code, int modfiers) {
+      type(robot, KeyStroke.getKeyStroke(code, modfiers));
     }
 
     protected void type(Robot robot, KeyStroke keyStroke) {
@@ -278,8 +288,32 @@ public class PlaybackRunner {
     }
 
     public ActionCallback _execute(StatusCallback cb, Robot robot) {
-      for (int i = 0; i < getText().length(); i++) {
-        type(robot, get(getText().charAt(i)));
+      final String text = getText();
+      for (int i = 0; i < text.length(); i++) {
+        final char each = text.charAt(i);
+        if ('\\' == each && i + 1 < text.length()) {
+          final char next = text.charAt(i + 1);
+          boolean processed = true;
+          switch (next) {
+            case 'n':
+              type(robot, KeyEvent.VK_ENTER, 0);
+              break;
+            case 't':
+              type(robot, KeyEvent.VK_TAB, 0);
+              break;
+            case 'r':
+              type(robot, KeyEvent.VK_ENTER, 0);
+              break;
+            default:
+              processed = false;
+          }
+
+          if (processed) {
+            i++;
+            continue;
+          }
+        }
+        type(robot, get(each));
       }
       return new ActionCallback.Done();
     }
@@ -331,7 +365,7 @@ public class PlaybackRunner {
       }
     });
 
-    new PlaybackRunner("%[control alt D]", new StatusCallback() {
+    new PlaybackRunner("%[comma]", new StatusCallback() {
       public void error(String text, int currentLine) {
         System.out.println("Error: " + currentLine + " " + text);
       }

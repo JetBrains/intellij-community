@@ -24,18 +24,35 @@ public class KeyStokeMap {
     return myMap.get(new Character(c));
   }
 
-  public KeyStroke get(String s) {
+  public KeyStroke get(String strokeText) {
+    String s = strokeText.trim();
+
     assert s.length() > 0;
 
-    final int beforeSymbol = s.lastIndexOf(" ");
-    boolean haveSymbol = beforeSymbol > 0;
+    final String lowerCaseS = s.toLowerCase();
+    boolean hasModifiers = lowerCaseS.contains("shift") || lowerCaseS.contains("control") || lowerCaseS.contains("alt") || lowerCaseS.contains("meta");
+
     String symbol = null;
+    int beforeSymbol = -1;
+    boolean haveSymbol = false;
     KeyStroke symbolStroke = null;
+
+    if (hasModifiers) {
+      beforeSymbol =  s.lastIndexOf(" ");
+      haveSymbol = beforeSymbol > 0;
+    } else {
+      symbol = s;
+      haveSymbol = true;
+    }
+
     int modifiers = 0;
     if (haveSymbol) {
-      symbol = s.substring(beforeSymbol + 1).toUpperCase();
+      if (symbol == null) {
+        symbol = s.substring(beforeSymbol + 1);
+      }
+
       if (symbol.length() > 1) {
-        final Integer code = (Integer)ReflectionUtil.getField(KeyEvent.class, null, int.class, "VK_" + symbol);
+        final Integer code = (Integer)ReflectionUtil.getField(KeyEvent.class, null, int.class, "VK_" + symbol.toUpperCase());
         if (code == null) {
           return throwUnrecognized(symbol);
         }
