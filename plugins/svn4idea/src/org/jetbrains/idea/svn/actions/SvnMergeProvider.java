@@ -27,13 +27,11 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -111,7 +109,7 @@ public class SvnMergeProvider implements MergeProvider {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     try {
       SVNWCClient client = vcs.createWCClient();
-      client.doResolve(new File(file.getPath()), false);
+      client.doResolve(new File(file.getPath()), SVNDepth.EMPTY, true, false, SVNConflictChoice.MERGED);
     }
     catch (SVNException e) {
       //
