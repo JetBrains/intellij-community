@@ -84,7 +84,7 @@ class XPathInsertHandler implements InsertHandler {
         final int idEndOffset = context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
         final boolean isOverwrite = c != 0
                 ? c == com.intellij.codeInsight.lookup.Lookup.REPLACE_SELECT_CHAR
-                : ((LookupItem)item).getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
+                : ((LookupItem)item).getUserData(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
         if (idEndOffset != context.getSelectionEndOffset() && isOverwrite) {
             context.getEditor().getDocument().deleteString(context.getSelectionEndOffset(), idEndOffset);
         }

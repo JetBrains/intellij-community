@@ -155,7 +155,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
               lookupItem = new LookupItem<PsiElement>(psiElement, string == null ? "" : string);
             }
             lookupItem.setAttribute(LookupItem.DO_AUTOCOMPLETE_ATTR, null);
-            lookupItem.setAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, true);
+            lookupItem.putUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, true);
           }
           return lookupItem != null ? lookupItem : psiElement;
         }
