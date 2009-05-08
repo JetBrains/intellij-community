@@ -111,7 +111,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       public void beforeEnteringDumbMode() {
         Set<VirtualFile> toClose = new HashSet<VirtualFile>();
         for (FileEditor editor : getAllEditors()) {
-          if (editor.getUserData(DUMB_AWARE) != Boolean.TRUE) {
+          if (!Boolean.TRUE.equals(editor.getUserData(DUMB_AWARE))) {
             ContainerUtil.addIfNotNull(getFile(editor), toClose);
           }
         }

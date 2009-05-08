@@ -15,8 +15,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.project.DumbAware;
 
-public class ToggleColumnModeAction extends ToggleAction {
+public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
 
   public void setSelected(AnActionEvent e, boolean state) {
     final EditorEx editor = getEditor(e);

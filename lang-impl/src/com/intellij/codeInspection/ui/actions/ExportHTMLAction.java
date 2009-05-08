@@ -28,6 +28,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -51,7 +52,7 @@ import java.util.*;
  * User: anna
  * Date: 11-Jan-2006
  */
-public class ExportHTMLAction extends AnAction {
+public class ExportHTMLAction extends AnAction implements DumbAware {
   private final InspectionResultsView myView;
   @NonNls private static final String PROBLEMS = "problems";
   @NonNls private static final String HTML = "HTML";
