@@ -33,16 +33,22 @@ import java.util.List;
 public abstract class BaseInspection extends LocalInspectionTool {
 
   private final String m_shortName = null;
-  protected static final String ASSIGNMENT_ISSUES = "Assignment issues (Groovy)";
-  protected static final String CONFUSING_CODE_CONSTRUCTS = "Potentially confusing code constructs (Groovy)";
-  protected static final String CONTROL_FLOW = "Control Flow (Groovy)";
-  protected static final String PROBABLE_BUGS = "Probable bugs (Groovy)";
-  protected static final String ERROR_HANDLING = "Error handling (Groovy)";
-  protected static final String GPATH = "GPath inspections (Groovy)";
-  protected static final String METHOD_METRICS = "Method Metrics (Groovy)";
-  protected static final String THREADING_ISSUES = "Threading issues (Groovy)";
-  protected static final String VALIDITY_ISSUES = "Validity issues (Groovy)";
-  protected static final String ANNOTATIONS_ISSUES = "Annotations verifying (Groovy)";
+  protected static final String ASSIGNMENT_ISSUES = "Assignment issues";
+  protected static final String CONFUSING_CODE_CONSTRUCTS = "Potentially confusing code constructs";
+  protected static final String CONTROL_FLOW = "Control Flow";
+  protected static final String PROBABLE_BUGS = "Probable bugs";
+  protected static final String ERROR_HANDLING = "Error handling";
+  protected static final String GPATH = "GPath inspections";
+  protected static final String METHOD_METRICS = "Method Metrics";
+  protected static final String THREADING_ISSUES = "Threading issues";
+  protected static final String VALIDITY_ISSUES = "Validity issues";
+  protected static final String ANNOTATIONS_ISSUES = "Annotations verifying";
+
+  @NotNull
+  @Override
+  public String[] getGroupPath() {
+    return new String[]{"Groovy", getGroupDisplayName()};
+  }
 
   @NotNull
   public String getShortName() {
