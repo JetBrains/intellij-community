@@ -12,11 +12,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.ProfileEx;
 import com.intellij.profile.ProfileManager;
@@ -152,7 +150,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private static boolean toolSettingsAreEqual(String toolName, InspectionProfileImpl profile1, InspectionProfileImpl profile2) {
     final ToolsImpl toolList1 = profile1.myTools.get(toolName);
-    final Tools toolList2 = profile2.myTools.get(toolName);
+    final ToolsImpl toolList2 = profile2.myTools.get(toolName);
 
     if (toolList1 == null && toolList2 == null) {
       return true;
@@ -167,7 +165,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     final Map<String, Boolean> diffMap = getDisplayLevelMap();
     if (diffMap != null) {
       final ToolsImpl tools = myBaseProfile.myTools.get(key.toString());
-      final Tools currentTools = myTools.get(key.toString());
+      final ToolsImpl currentTools = myTools.get(key.toString());
       if (tools != null && currentTools != null) {
         diffMap.put(key.toString(), tools.equalTo(currentTools));
       } else {
@@ -179,7 +177,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void resetToBase() {
-    copyToolsConfigurations(myBaseProfile, null);
+    copyToolsConfigurations(myBaseProfile);
   }
 
   public void resetToEmpty() {
@@ -430,7 +428,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
           myTools.put(tool.getShortName(), new ToolsImpl(tool, myBaseProfile != null ? myBaseProfile.getErrorLevel(key) : tool.getDefaultLevel(), myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : tool.isEnabledByDefault()));
         }
         if (mySource != null) {
-          copyToolsConfigurations(mySource, null);
+          copyToolsConfigurations(mySource);
         }
       }
     }
@@ -455,29 +453,19 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myBaseProfile = inspectionProfile.myBaseProfile;
   }
 
-  public void copyToolsConfigurations(InspectionProfileImpl profile, NamedScope scope) {
+  public void copyToolsConfigurations(InspectionProfileImpl profile) {
     try {
       initInspectionTools();
       for (ToolsImpl toolList : profile.myTools.values()) {
-        if (toolList.getTools() != null) {
-          for (ScopeToolState state : toolList.getTools()) {
+        final ToolsImpl tools = myTools.get(toolList.getShortName());
+        tools.setTool(copyToolSettings((InspectionTool)toolList.getDeafultState().getTool()));
+        final List<ScopeToolState> nonDefaultToolStates = toolList.getNonDefaultTools();
+        if (nonDefaultToolStates != null) {
+          for (ScopeToolState state : nonDefaultToolStates) {
             final InspectionTool inspectionTool = copyToolSettings((InspectionTool)state.getTool());
-            final ToolsImpl tools = myTools.get(inspectionTool.getShortName());
             if (state.getScope() != null) {
               tools.addTool(state.getScope(), inspectionTool, state.isEnabled(), state.getLevel());
-            } else {
-              tools.setTool(inspectionTool);
             }
-          }
-        }
-        else {
-          final InspectionTool inspectionTool = copyToolSettings((InspectionTool)toolList.getTool());
-          final ToolsImpl tools = myTools.get(inspectionTool.getShortName());
-          if (scope != null) {
-            tools.addTool(scope, inspectionTool, toolList.isEnabled(), toolList.getLevel());
-          } else {
-            final HighlightDisplayKey key = HighlightDisplayKey.find(inspectionTool.getShortName());
-            tools.setTool(inspectionTool);
           }
         }
       }
@@ -604,13 +592,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myVisibleTreeState = state;
   }
 
-  public void convert(Element element, Project project) {
-    final List<InspectionProfileEntry> tools = new ArrayList<InspectionProfileEntry>();
-
-    for (Tools toolList : myTools.values()) { //remember current tools settings
-      tools.add(toolList.getTool());
-    }
-
+  public void convert(Element element) {
     final Element scopes = element.getChild(DefaultProjectProfileManager.SCOPES);
     if (scopes != null) {
       final List children = scopes.getChildren(SCOPE);
@@ -623,23 +605,50 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
             if (inspectionProfile != null) {
               final NamedScope scope = getProfileManager().getScopesManager().getScope(scopeElement.getAttributeValue(NAME));
               if (scope != null) {
-                copyToolsConfigurations(inspectionProfile, scope);
                 for (InspectionProfileEntry entry : inspectionProfile.getInspectionTools(null)) {
                   final HighlightDisplayKey key = HighlightDisplayKey.find(entry.getShortName());
-                  myTools.get(entry.getShortName())
-                    .addTool(scope, (InspectionTool)entry, inspectionProfile.isToolEnabled(key), inspectionProfile.getErrorLevel(key, (NamedScope)null));
+                  try {
+                    myTools.get(entry.getShortName())
+                      .addTool(scope, copyToolSettings((InspectionTool)entry), inspectionProfile.isToolEnabled(key), inspectionProfile.getErrorLevel(key, (NamedScope)null));
+                  }
+                  catch (Exception e) {
+                    LOG.error(e);
+                  }
                 }
               }
             }
           }
         }
+        reduceConvertedScopes();
       }
     }
+  }
 
-    for (InspectionProfileEntry tool : tools) {
-      final NamedScope allScope = DefaultScopesProvider.getAllScope();
-      final ToolsImpl toolsSettings = myTools.get(tool.getShortName());
-      myTools.get(tool.getShortName()).addTool(allScope, (InspectionTool)tool, toolsSettings.isEnabled(), toolsSettings.getLevel());
+  private void reduceConvertedScopes() {
+    for (ToolsImpl tools : myTools.values()) {
+      final ScopeToolState toolState = tools.getDeafultState();
+      final List<ScopeToolState> nonDefaultTools = tools.getNonDefaultTools();
+      if (nonDefaultTools != null) {
+        boolean equal = true;
+        boolean isEnabled = toolState.isEnabled();
+        for (ScopeToolState state : nonDefaultTools) {
+          isEnabled |= state.isEnabled();
+          if (!state.equalTo(toolState)) {
+            equal = false;
+          }
+        }
+        if (isEnabled) {
+          tools.enableTool();
+        } else {
+          tools.disableTool();
+        }
+        if (equal) {
+          final int count = nonDefaultTools.size();
+          for (int i = 0; i < count; i++) {
+            tools.removeScope(0);
+          }
+        }
+      }
     }
   }
 

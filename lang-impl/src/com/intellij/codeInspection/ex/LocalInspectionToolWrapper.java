@@ -125,6 +125,13 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
   }
 
   @NotNull
+   @Override
+   public String[] getGroupPath() {
+     return myTool.getGroupPath();
+   }
+
+
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return myTool.getDefaultLevel();
   }

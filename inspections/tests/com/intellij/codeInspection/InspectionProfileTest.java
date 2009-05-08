@@ -90,7 +90,7 @@ public class InspectionProfileTest extends TestCase {
                                                     "      <option name=\"myVal\" value=\"100\" />\n" +
                                                     "    </server>\n" +
                                                     "  </used_levels>\n" +
-                                                    "  <inspection_tool class=\"JavaDoc\" level=\"WARNING\" enabled=\"false\">\n" +
+                                                    "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
                                                     "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
                                                     "      <value>\n" +
                                                     "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
@@ -126,7 +126,7 @@ public class InspectionProfileTest extends TestCase {
     final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
                                                     "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
                                                     "  <option name=\"myLocal\" value=\"true\" />\n" +
-                                                    "  <inspection_tool class=\"JavaDoc\" level=\"WARNING\" enabled=\"false\">\n" +
+                                                    "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
                                                     "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
                                                     "      <value>\n" +
                                                     "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +

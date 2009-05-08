@@ -16,11 +16,20 @@ import org.jdom.Element;
 import java.io.File;
 import java.util.List;
 
-public class InspectionProfilesConverterTest extends LightIdeaTestCase{
+public class InspectionProfilesConverterTest extends LightIdeaTestCase {
   public void testOptions() throws Exception {
+    doTest("options");
+  }
+
+  public void testScope() throws Exception {
+    doTest("scope");
+  }
+
+  public void doTest(final String dirName) throws Exception {
     try {
+      final String relativePath = "/inspection/converter/";
       final List children =
-        JDOMUtil.loadDocument(new File(PathManagerEx.getTestDataPath() + "/inspection/converter/options/options.ipr")).getRootElement()
+        JDOMUtil.loadDocument(new File(PathManagerEx.getTestDataPath() + relativePath + dirName + "/options.ipr")).getRootElement()
           .getChildren("component");
 
       for (Object child : children) {
@@ -33,7 +42,8 @@ public class InspectionProfilesConverterTest extends LightIdeaTestCase{
           final Element confElement = new Element("config");
           profileManager.writeExternal(confElement);
           assertTrue(new String(JDOMUtil.printDocument(new Document(confElement), "\n")),
-                     JDOMUtil.areElementsEqual(confElement, JDOMUtil.loadDocument(new File(PathManagerEx.getTestDataPath() + "/inspection/converter/options/options.after.xml")).getRootElement()));
+                     JDOMUtil.areElementsEqual(confElement, JDOMUtil.loadDocument(new File(PathManagerEx.getTestDataPath() +
+                                                                                           relativePath + dirName + "/options.after.xml")).getRootElement()));
           break;
         }
       }

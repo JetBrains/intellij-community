@@ -10,8 +10,8 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
@@ -19,8 +19,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,41 +28,30 @@ import java.util.List;
 
 public class ToolsImpl implements Tools {
   private static final Logger LOG = Logger.getInstance("#" + ToolsImpl.class.getName());
+  public static final String ENABLED_TAG = "enabled_by_default";
 
-  private boolean myEnabled;
-  private HighlightDisplayLevel myLevel;
   private String myShortName;
-  private InspectionProfileEntry myTool;
+  private ScopeToolState myDefaultState;
   private List<ScopeToolState> myTools;
+  private boolean myEnabled;
 
   public ToolsImpl(@NotNull InspectionProfileEntry tool, HighlightDisplayLevel level, boolean enabled) {
-    myLevel = level;
-    myEnabled = enabled;
     myShortName = tool.getShortName();
-    myTool = tool;
-  }
-
-
-
-  public void setEnabled(boolean enabled) {
     myEnabled = enabled;
+    myDefaultState = new ScopeToolState(DefaultScopesProvider.getAllScope(), tool, enabled, level);
   }
 
-  public void setLevel(HighlightDisplayLevel level) {
-    myLevel = level;
-  }
 
   public void addTool(NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
     if (myTools == null) {
       myTools = new ArrayList<ScopeToolState>();
-      myTool = null;
     }
     myTools.add(new ScopeToolState(scope, tool, enabled, level));
   }
 
   public InspectionProfileEntry getInspectionTool(PsiElement element) {
-    if (getTools() != null) {
-      for (ScopeToolState state : getTools()) {
+    if (myTools != null) {
+      for (ScopeToolState state : myTools) {
         if (element == null) {
           return state.getTool();
         }
@@ -80,7 +69,7 @@ public class ToolsImpl implements Tools {
         }
       }
     }
-    return getTool();
+    return myDefaultState.getTool();
   }
 
   public String getShortName() {
@@ -88,43 +77,30 @@ public class ToolsImpl implements Tools {
   }
 
   public List<InspectionProfileEntry> getAllTools() {
-    if (getTool() != null) return Collections.singletonList(getTool());
     final List<InspectionProfileEntry> result = new ArrayList<InspectionProfileEntry>();
     for (ScopeToolState state : getTools()) {
-      result.add((InspectionProfileEntry)state.getTool());
+      result.add(state.getTool());
     }
     return result;
   }
 
-  public InspectionProfileEntry getInspectionProfileEntry(NamedScope scope) {
-    if (getTools() != null) {
-      for (ScopeToolState state : getTools()) {
-        if (scope == null || scope.equals(state.getScope())) return (InspectionProfileEntry)state.getTool();
-      }
-    }
-    return getTool();
-  }
-
   public void writeExternal(Element inspectionElement) throws WriteExternalException {
-    inspectionElement.setAttribute(InspectionProfileImpl.LEVEL_TAG, getLevel().toString());
-    inspectionElement.setAttribute(InspectionProfileImpl.ENABLED_TAG, Boolean.toString(isEnabled()));
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
         final NamedScope namedScope = state.getScope();
-
         final Element scopeElement = new Element("scope");
         scopeElement.setAttribute("name", namedScope.getName());
         scopeElement.setAttribute(InspectionProfileImpl.LEVEL_TAG, state.getLevel().toString());
         scopeElement.setAttribute(InspectionProfileImpl.ENABLED_TAG, Boolean.toString(state.isEnabled()));
         InspectionProfileEntry InspectionProfileEntry = state.getTool();
-        LOG.assertTrue(InspectionProfileEntry != null);
         InspectionProfileEntry.writeSettings(scopeElement);
         inspectionElement.addContent(scopeElement);
       }
     }
-    else {
-      myTool.writeSettings(inspectionElement);
-    }
+    inspectionElement.setAttribute(InspectionProfileImpl.ENABLED_TAG, Boolean.toString(isEnabled()));
+    inspectionElement.setAttribute(InspectionProfileImpl.LEVEL_TAG, getLevel().toString());
+    inspectionElement.setAttribute(ENABLED_TAG, Boolean.toString(myDefaultState.isEnabled()));
+    myDefaultState.getTool().writeSettings(inspectionElement);
   }
 
   public void readExternal(Element toolElement, InspectionProfile profile) throws InvalidDataException {
@@ -135,12 +111,15 @@ public class ToolsImpl implements Tools {
     if (level == null || level == HighlightDisplayLevel.DO_NOT_SHOW) {//from old profiles
       level = HighlightDisplayLevel.WARNING;
     }
-    setLevel(level);
-
+    myDefaultState.setLevel(level);
     final String enabled = toolElement.getAttributeValue(InspectionProfileImpl.ENABLED_TAG);
-    setEnabled(enabled != null && Boolean.parseBoolean(enabled));
+    final boolean isEnabled = enabled != null && Boolean.parseBoolean(enabled);
+    myEnabled = isEnabled;
 
-    final InspectionProfileEntry tool = getInspectionProfileEntry((NamedScope)null);
+    final String enabledTool = toolElement.getAttributeValue(ENABLED_TAG);
+    myDefaultState.setEnabled(enabledTool != null ? Boolean.parseBoolean(enabledTool) : isEnabled);
+    final InspectionProfileEntry tool = myDefaultState.getTool();
+    tool.readSettings(toolElement);
     final List children = toolElement.getChildren(InspectionProfileImpl.SCOPE);
     if (!children.isEmpty()) {
       for (Object sO : children) {
@@ -161,23 +140,23 @@ public class ToolsImpl implements Tools {
         }
       }
     }
-    else {
-      tool.readSettings(toolElement);
-    }
   }
 
   public InspectionProfileEntry getTool() {
-    if (myTool == null) return (InspectionProfileEntry)myTools.iterator().next().getTool();
-    return myTool;
+    if (myTools == null) return myDefaultState.getTool();
+    return myTools.iterator().next().getTool();
   }
 
+  @NotNull
   public List<ScopeToolState> getTools() {
-    if (myTools == null) return Collections.singletonList(new ScopeToolState(null, myTool, myEnabled, myLevel));
-    return myTools;
+    if (myTools == null) return Collections.singletonList(myDefaultState);
+    List<ScopeToolState> result = new ArrayList<ScopeToolState>(myTools);
+    result.add(myDefaultState);
+    return result;
   }
 
-  public void setTool(InspectionProfileEntry tool) {
-    myTool = tool;
+  public ScopeToolState getDeafultState() {
+    return myDefaultState;
   }
 
   public List<NamedScope> getScopes() {
@@ -195,10 +174,9 @@ public class ToolsImpl implements Tools {
 
   public void removeScope(int scopeIdx) {
     if (myTools != null && scopeIdx >= 0 && myTools.size() > scopeIdx) {
-      final ScopeToolState state = myTools.remove(scopeIdx);
+      myTools.remove(scopeIdx);
       if (myTools.isEmpty()) {
         myTools = null;
-        myTool = (InspectionProfileEntry)state.getTool();
       }
     }
   }
@@ -221,16 +199,17 @@ public class ToolsImpl implements Tools {
   }
 
   public boolean isEnabled(NamedScope namedScope) {
-    if (myEnabled && myTools != null) {
+    if (!myEnabled) return false;
+    if (myDefaultState.isEnabled() && myTools != null) {
       for (ScopeToolState state : myTools) {
         if (Comparing.equal(namedScope, state.getScope())) return state.isEnabled();
       }
     }
-    return myEnabled;
+    return myDefaultState.isEnabled();
   }
 
   public HighlightDisplayLevel getLevel(PsiElement element) {
-    if (myTools == null || element == null) return myLevel;
+    if (myTools == null || element == null) return myDefaultState.getLevel();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
     for (ScopeToolState state : myTools) {
       final PackageSet set = state.getScope().getValue();
@@ -238,13 +217,13 @@ public class ToolsImpl implements Tools {
         return state.getLevel();
       }
     }
-    return myLevel;
+    return myDefaultState.getLevel();
   }
 
 
 
   public HighlightDisplayLevel getLevel() {
-    return myLevel;
+    return myDefaultState.getLevel();
   }
 
   public boolean isEnabled() {
@@ -253,7 +232,8 @@ public class ToolsImpl implements Tools {
 
 
   public boolean isEnabled(PsiElement element) {
-    if (myTools == null || element == null) return myEnabled;
+    if (!myEnabled) return false;
+    if (myTools == null || element == null) return myDefaultState.isEnabled();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
     for (ScopeToolState state : myTools) {
       final PackageSet set = state.getScope().getValue();
@@ -261,11 +241,13 @@ public class ToolsImpl implements Tools {
         return state.isEnabled();
       }
     }
-    return myEnabled;
+    return myDefaultState.isEnabled();
   }
 
+  @Nullable
   public InspectionTool getEnabledTool(PsiElement element) {
-    if (myTools == null || element == null) return myEnabled ? (InspectionTool)myTool : null;
+    if (!myEnabled) return null;
+    if (myTools == null || element == null) return myDefaultState.isEnabled() ? (InspectionTool)myDefaultState.getTool() : null;
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
     for (ScopeToolState state : myTools) {
       final PackageSet set = state.getScope().getValue();
@@ -273,7 +255,7 @@ public class ToolsImpl implements Tools {
         return state.isEnabled() ? (InspectionTool)state.getTool() : null;
       }
     }
-    return null;
+    return myDefaultState.isEnabled() ? (InspectionTool)myDefaultState.getTool() : null;
   }
 
   public void enableTool() {
@@ -345,43 +327,24 @@ public class ToolsImpl implements Tools {
         }
       }
     }
-    return myLevel;
+    return myDefaultState.getLevel();
   }
 
-   public boolean equalTo(Tools tools) {
-      if (getTools() == null && tools.getTools() != null) return false;
-      if (tools.getTools() == null && getTools() != null) return false;
-      if (getTools() == null && tools.getTools() == null) {
-        return toolSettingsAreEqual(myTool, tools.getTool());
-      }
+   public boolean equalTo(ToolsImpl tools) {
+      if (myEnabled != tools.myEnabled) return false;
       if (getTools().size() != tools.getTools().size()) return false;
       for (int i = 0; i < getTools().size(); i++) {
         final ScopeToolState state = getTools().get(i);
         final ScopeToolState toolState = tools.getTools().get(i);
-        if (!toolSettingsAreEqual(state.getTool(), toolState.getTool())){
+        if (!state.equalTo(toolState)){
           return false;
         }
-        if (state.isEnabled() != toolState.isEnabled()) return false;
-        if (state.getLevel() != toolState.getLevel()) return false;
       }
       return true;
 
   }
 
-  private static boolean toolSettingsAreEqual(InspectionProfileEntry tool1, InspectionProfileEntry tool2) {
-    try {
-      @NonNls String tempRoot = "root";
-      Element oldToolSettings = new Element(tempRoot);
-      tool1.writeSettings(oldToolSettings);
-      Element newToolSettings = new Element(tempRoot);
-      tool2.writeSettings(newToolSettings);
-      return JDOMUtil.areElementsEqual(oldToolSettings, newToolSettings);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    return false;
-  }
+
 
   public void setLevel(HighlightDisplayLevel level, int idx) {
     if (myTools != null && myTools.size() > idx && idx >= 0) {
@@ -389,5 +352,18 @@ public class ToolsImpl implements Tools {
       myTools.remove(idx);
       myTools.add(idx, new ScopeToolState(scopeToolState.getScope(), scopeToolState.getTool(), scopeToolState.isEnabled(), level));
     }
+  }
+
+  public void setTool(InspectionProfileEntry inspectionTool) {
+    myDefaultState.setTool(inspectionTool);
+  }
+
+  public void setLevel(HighlightDisplayLevel level) {
+    myDefaultState.setLevel(level);
+  }
+
+  @Nullable
+  public List<ScopeToolState> getNonDefaultTools() {
+    return myTools;
   }
 }

@@ -41,6 +41,15 @@ public abstract class InspectionProfileEntry {
   @Nls @NotNull
   public abstract String getGroupDisplayName();
 
+  @NotNull
+  public String[] getGroupPath() {
+    String groupDisplayName = getGroupDisplayName();
+    if (groupDisplayName.length() == 0) {
+      groupDisplayName = GENERAL_GROUP_NAME;
+    }
+    return new String[]{groupDisplayName};
+  }
+
   @Nls @NotNull
   public abstract String getDisplayName();
 

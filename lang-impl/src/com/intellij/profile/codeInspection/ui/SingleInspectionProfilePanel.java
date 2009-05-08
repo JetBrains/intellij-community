@@ -595,15 +595,20 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     if (StringUtil.containsIgnoreCase(descriptor.getText(), filter)) {
       return true;
     }
-    if (StringUtil.containsIgnoreCase(descriptor.getGroup(), filter)) {
-      return true;
+    final String[] groupPath = descriptor.getGroup();
+    for (String group : groupPath) {
+      if (StringUtil.containsIgnoreCase(group, filter)) {
+        return true;
+      }
     }
     for (String stripped : quoted) {
       if (StringUtil.containsIgnoreCase(descriptor.getText(),stripped)) {
         return true;
       }
-      if (StringUtil.containsIgnoreCase(descriptor.getGroup(),stripped)) {
-        return true;
+      for (String group : groupPath) {
+        if (StringUtil.containsIgnoreCase(group,stripped)) {
+          return true;
+        }
       }
       final String description = descriptor.getTool().loadDescription();
       if (description != null && StringUtil.containsIgnoreCase(description.toLowerCase(), stripped)) {
@@ -890,11 +895,21 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     myOptionsPanel.validate();
   }
 
+  private static MyTreeNode getGroupNode(MyTreeNode root, String[] groupPath) {
+    MyTreeNode currentRoot = root;
+    for (final String group : groupPath) {
+      currentRoot = getGroupNode(currentRoot, group);
+    }
+    return currentRoot;
+  }
+
   private static MyTreeNode getGroupNode(MyTreeNode root, String group) {
     final int childCount = root.getChildCount();
     for (int i = 0; i < childCount; i++) {
       MyTreeNode child = (MyTreeNode)root.getChildAt(i);
-      if (group.equals(child.getUserObject())) return child;
+      if (group.equals(child.getUserObject())) {
+        return child;
+      }
     }
     MyTreeNode child = new MyTreeNode(group, false, false);
     root.add(child);
@@ -1101,10 +1116,6 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       if (userObject instanceof String) return null;
       assert userObject instanceof List && !(((List)userObject).isEmpty());
       return (Descriptor)((List)userObject).iterator().next();
-    }
-
-    public List<Descriptor> getDesriptors() {
-      return userObject instanceof String ? null : (List<Descriptor>)userObject;
     }
 
     public String getGroupName() {

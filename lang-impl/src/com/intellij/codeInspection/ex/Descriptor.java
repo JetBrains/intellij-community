@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class Descriptor {
   private final String myText;
-  private final String myGroup;
+  private final String[] myGroup;
   private final HighlightDisplayKey myKey;
   
   private final Element myConfig;
@@ -38,7 +38,8 @@ public class Descriptor {
     }
     myConfig = config;
     myText = tool.getDisplayName();
-    myGroup = tool.getGroupDisplayName().length() == 0 ? InspectionProfileEntry.GENERAL_GROUP_NAME : tool.getGroupDisplayName();
+    final String[] groupPath = tool.getGroupPath();
+    myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.GENERAL_GROUP_NAME} : groupPath;
     myKey = HighlightDisplayKey.find(tool.getShortName());
     myLevel = ((InspectionProfileImpl)inspectionProfile).getErrorLevel(myKey, pair.getScope());
     myEnabled = ((InspectionProfileImpl)inspectionProfile).isToolEnabled(myKey, pair.getScope());
@@ -95,7 +96,7 @@ public class Descriptor {
     return myTool.loadDescription();
   }
 
-  public String getGroup() {
+  public String[] getGroup() {
     return myGroup;
   }
 

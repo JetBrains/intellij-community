@@ -67,6 +67,12 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
   }
 
   @NotNull
+  @Override
+  public String[] getGroupPath() {
+    return myTool.getGroupPath();
+  }
+
+  @NotNull
   @NonNls
   public String getShortName() {
     return myTool.getShortName();
