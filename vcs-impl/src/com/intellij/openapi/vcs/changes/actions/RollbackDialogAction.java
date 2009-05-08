@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -17,7 +18,7 @@ import java.util.Arrays;
 /**
  * @author yole
 */
-public class RollbackDialogAction extends AnAction {
+public class RollbackDialogAction extends AnAction implements DumbAware {
   public RollbackDialogAction() {
     super(VcsBundle.message("changes.action.rollback.text"), VcsBundle.message("changes.action.rollback.description"),
           IconLoader.getIcon("/actions/rollback.png"));

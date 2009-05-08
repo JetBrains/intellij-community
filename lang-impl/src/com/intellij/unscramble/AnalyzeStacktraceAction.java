@@ -3,6 +3,7 @@ package com.intellij.unscramble;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -11,7 +12,7 @@ import com.intellij.openapi.project.Project;
  *
  * @author yole
  */
-public class AnalyzeStacktraceAction extends AnAction {
+public class AnalyzeStacktraceAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     AnalyzeStacktraceDialog dialog = new AnalyzeStacktraceDialog(project);

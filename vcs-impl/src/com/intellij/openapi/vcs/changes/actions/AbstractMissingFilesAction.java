@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -27,7 +28,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractMissingFilesAction extends AnAction {
+public abstract class AbstractMissingFilesAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent e) {
     List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
