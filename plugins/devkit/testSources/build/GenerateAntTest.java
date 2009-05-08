@@ -53,7 +53,7 @@ public class GenerateAntTest extends IdeaTestCase {
     dataOutput.flush();
     final String expected = "<target name=\"plugin.build.jar."+ myModule.getName() +"\" description=\"Build plugin archive for module \'" + myModule.getName() + "\'\">\n" +
                             "  <jar destfile=\"${"+ myModule.getName() + ".path.jar}\" duplicate=\"preserve\">\n" +
-                            "    <zipfileset dir=\"${module." + myModule.getName() + ".basedir}/classes\" prefix=\"\"/>\n" +
+                            "    <zipfileset dir=\"${module." + myModule.getName() + ".basedir}/classes\"/>\n" +
                             "    <zipfileset file=\"${module." + myModule.getName() + ".basedir}/META-INF/plugin.xml\" prefix=\"META-INF\"/>\n" +
                             "    <manifest>\n" +
                             "      <attribute name=\"Created-By\" value=\"IntelliJ IDEA\"/>\n" +
