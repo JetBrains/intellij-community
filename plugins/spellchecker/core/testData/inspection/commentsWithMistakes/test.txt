@@ -1,0 +1,1 @@
+simple <weak_warning descr="Word 'ttest' is misspelled">ttest</weak_warning> file (just plain text)

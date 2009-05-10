@@ -1,0 +1,3 @@
+<a attribute="<weak_warning descr="Word 'ttest' is misspelled">ttest</weak_warning> attribute">
+ plain text <weak_warning descr="Word 'gooes' is misspelled">gooes</weak_warning> here
+</a>

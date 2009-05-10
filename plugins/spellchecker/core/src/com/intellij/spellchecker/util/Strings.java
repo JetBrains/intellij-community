@@ -4,8 +4,6 @@ import java.util.List;
 
 /**
  * Text utility.
- *
- * @author Sergiy Dubovik
  */
 public final class Strings {
   private Strings() {
@@ -53,25 +51,11 @@ public final class Strings {
     }
   }
 
-  public static void addPrefix(List<String> words, String prefix) {
-    if (prefix == null) return;
-    for (int i = 0; i < words.size(); i++) {
-      words.set(i, prefix + words.get(i));
-    }
-  }
-
-  public static void addSuffix(List<String> words, String suffix) {
-    if (suffix == null) {
-      return;
-    }
-    for (int i = 0; i < words.size(); i++) {
-      words.set(i, words.get(i) + suffix);
-    }
-  }
-
   public static void upperCase(List<String> words) {
     for (int i = 0; i < words.size(); i++) {
       words.set(i, words.get(i).toUpperCase());
     }
   }
+    
+
 }

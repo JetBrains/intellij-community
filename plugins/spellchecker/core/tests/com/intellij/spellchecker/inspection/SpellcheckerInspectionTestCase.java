@@ -1,22 +1,19 @@
 package com.intellij.spellchecker.inspection;
 
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
-public abstract class SpellcheckerInspectionTestCase extends InspectionTestCase {
+public abstract class SpellcheckerInspectionTestCase extends JavaCodeInsightFixtureTestCase {
 
   @NonNls
-  private String DATA_PATH =
-    FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/plugins/spellchecker/core/tests/testData" + getDataPath();
+  protected String DATA_PATH = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/plugins/spellchecker/core/tests/testData";
 
-  public String getDataPath() {
-    return "";
+  protected void doTest(String file, LocalInspectionTool... tools) throws Throwable {
+    myFixture.enableInspections(tools);
+    myFixture.testHighlighting(false, false, true, file);
   }
 
-  @NonNls
-  protected String getTestDataPath() {
-    return DATA_PATH;
-  }
 }

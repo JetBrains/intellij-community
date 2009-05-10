@@ -7,14 +7,13 @@ import com.intellij.spellchecker.inspections.java.LocalVariableNameWithMistakesI
  * User: Ekaterina Shliakhovetskaja
  */
 public class LocalVariableWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
-  @Override
-  public String getDataPath() {
-    return "/inspection/localVariableNameWithMistakes/data";
+
+   protected String getBasePath() {
+    return "/plugins/spellchecker/core/testData/inspection/localVariableNameWithMistakes";
   }
 
-  public void testJava() throws Exception {
-    doTest(getTestName(true), new LocalVariableNameWithMistakesInspection());
+  public void testJava() throws Throwable {
+    doTest("SPITest3.java", new LocalVariableNameWithMistakesInspection());
   }
-
 
 }

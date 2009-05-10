@@ -12,7 +12,7 @@ public class SpellCheckerInspectionToolProvider implements InspectionToolProvide
   private static final Class[] INSPECTIONS =
     {CommentsWithMistakesInspection.class, ClassNameWithMistakesInspection.class, MethodNameWithMistakesInspection.class,
       FieldNameWithMistakesInspection.class, LocalVariableNameWithMistakesInspection.class, 
-      XmlWithMistakesInspection.class, DocCommentWithMistakesInspection.class};
+      XmlWithMistakesInspection.class, DocCommentWithMistakesInspection.class,StringWithMistakesInspection.class};
 
   public Class[] getInspectionClasses() {
     return INSPECTIONS;

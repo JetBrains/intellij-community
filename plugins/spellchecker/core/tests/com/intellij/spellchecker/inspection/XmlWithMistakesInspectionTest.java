@@ -7,15 +7,20 @@ import com.intellij.spellchecker.inspections.common.XmlWithMistakesInspection;
  * User: Ekaterina Shliakhovetskaja
  */
 public class XmlWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
-  @Override
-  public String getDataPath() {
-    return "/inspection/xmlWithMistakes/data";
-  }
 
-  public void testXml() throws Exception {
-    doTest(getTestName(true), new XmlWithMistakesInspection());
+  protected String getBasePath() {
+    return "/plugins/spellchecker/core/testData/inspection/xmlWithMistakes";
   }
 
   
+  public void testXml() throws Throwable {
+    doTest("test.xml", new XmlWithMistakesInspection());
+  }
+
+  public void testJsp() throws Throwable {
+    doTest("test.jsp", new XmlWithMistakesInspection());
+  }
 
 }
+
+

@@ -7,14 +7,13 @@ import com.intellij.spellchecker.inspections.java.MethodNameWithMistakesInspecti
  * User: Ekaterina Shliakhovetskaja
  */
 public class MethodNameWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
-  @Override
-  public String getDataPath() {
-    return "/inspection/methodNameWithMistakes/data";
+
+   protected String getBasePath() {
+    return "/plugins/spellchecker/core/testData/inspection/methodNameWithMistakes";
   }
 
-  public void testJava() throws Exception {
-    doTest(getTestName(true), new MethodNameWithMistakesInspection());
+  public void testJava() throws Throwable {
+    doTest("SPITest4.java", new MethodNameWithMistakesInspection());
   }
-
 
 }

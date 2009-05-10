@@ -7,13 +7,13 @@ import com.intellij.spellchecker.inspections.java.DocCommentWithMistakesInspecti
  * User: Ekaterina Shliakhovetskaja
  */
 public class DocCommentWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
-  @Override
-  public String getDataPath() {
-    return "/inspection/docCommentWithMistakes/data";
+
+   
+  protected String getBasePath() {
+    return "/plugins/spellchecker/core/testData/inspection/docCommentWithMistakes";
   }
 
-  public void testJava() throws Exception {
-    doTest(getTestName(true), new DocCommentWithMistakesInspection());
+  public void testJava() throws Throwable {
+    doTest("SPITest6.java", new DocCommentWithMistakesInspection());
   }
-
 }
