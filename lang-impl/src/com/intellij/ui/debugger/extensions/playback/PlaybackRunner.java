@@ -20,6 +20,7 @@ public class PlaybackRunner {
 
   private ArrayList<Command> myCommands = new ArrayList<Command>();
   private ActionCallback myActionCallback;
+  private boolean myStopRequested;
 
   public PlaybackRunner(String script, StatusCallback callback) {
     myScript = script;
@@ -27,6 +28,8 @@ public class PlaybackRunner {
   }
 
   public ActionCallback run() {
+    myStopRequested = false;
+
     try {
       myActionCallback = new ActionCallback();
 
@@ -52,6 +55,11 @@ public class PlaybackRunner {
   private void executeFrom(final int cmdIndex) {
     if (cmdIndex < myCommands.size()) {
       final Command cmd = myCommands.get(cmdIndex);
+      if (myStopRequested) {
+        myCallback.message("Stopped", cmdIndex);
+        myActionCallback.setRejected();
+        return;
+      }
       cmd.execute(myCallback, myRobot).doWhenDone(new Runnable() {
         public void run() {
           executeFrom(cmdIndex + 1);
@@ -97,6 +105,10 @@ public class PlaybackRunner {
 
   private void setDone() {
     myActionCallback.setDone();
+  }
+
+  public void stop() {
+    myStopRequested = true;
   }
 
   public interface StatusCallback {

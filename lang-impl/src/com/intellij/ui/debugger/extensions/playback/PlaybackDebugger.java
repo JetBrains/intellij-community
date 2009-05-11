@@ -3,9 +3,12 @@ package com.intellij.ui.debugger.extensions.playback;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.debugger.UiDebuggerExtension;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.WaitFor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +27,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new RunAction());
+    group.add(new RunOnFameActivationAction());
+    group.add(new ActivateFrameAndRun());
+    group.addSeparator();
+    group.add(new StopAction());
 
     myComponent.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
 
@@ -34,10 +40,43 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myComponent.add(myMessage, BorderLayout.SOUTH);
   }
 
-  private class RunAction extends AnAction {
+  private class StopAction extends AnAction {
+    private StopAction() {
+      super("Stop", null, IconLoader.getIcon("/actions/suspend.png"));
+    }
 
-    private RunAction() {
-      super("Run", "", IconLoader.getIcon("/general/run.png"));
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myRunner != null);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      if (myRunner != null) {
+        myRunner.stop();
+        myRunner = null;
+      }
+    }
+  }
+
+  private class ActivateFrameAndRun extends AnAction {
+    private ActivateFrameAndRun() {
+      super("Activate Frame And Run", "", IconLoader.getIcon("/nodes/deploy.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      activateAndRun();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myRunner == null);
+    }
+  }
+
+  private class RunOnFameActivationAction extends AnAction {
+
+    private RunOnFameActivationAction() {
+      super("Run On Frame Activation", "", IconLoader.getIcon("/general/run.png"));
     }
 
     @Override
@@ -46,13 +85,50 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
 
     public void actionPerformed(AnActionEvent e) {
-      run();
+      runOnFrame();
     }
   }
 
-  private void run() {
+  private void activateAndRun() {
     assert myRunner == null;
 
+    final IdeFrameImpl frame = getFrame();
+
+    final Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
+
+    if (c != null) {
+      c.requestFocus();
+    } else {
+      frame.requestFocus();
+    }
+
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        startWhenFrameActive();
+      }
+    });
+
+  }
+
+  private IdeFrameImpl getFrame() {
+    final Frame[] all = Frame.getFrames();
+    for (Frame each : all) {
+      if (each instanceof IdeFrame) {
+        return (IdeFrameImpl)each;
+      }
+    }
+
+    throw new IllegalStateException("Cannot find IdeFrame to run on");
+  }
+
+  private void runOnFrame() {
+    assert myRunner == null;
+
+    startWhenFrameActive();
+  }
+
+  private void startWhenFrameActive() {
     myMessage.setText("Waiting for IDE frame activation");
     myRunner = new PlaybackRunner(myText.getText() != null ? myText.getText() : "", this);
 
@@ -62,9 +138,14 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       public void run() {
         new WaitFor() {
           protected boolean condition() {
-            return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame;
+            return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame || myRunner == null;
           }
-        };
+        };                                            
+
+        if (myRunner == null) {
+          message("Script stopped", -1);
+          return;
+        }
 
         message("Starting script...", -1);
 
@@ -74,6 +155,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         catch (InterruptedException e) {}
 
 
+        if (myRunner == null) {
+          message("Script stopped", -1);
+          return;
+        }
 
         myRunner.run().doWhenProcessed(new Runnable() {
           public void run() {
