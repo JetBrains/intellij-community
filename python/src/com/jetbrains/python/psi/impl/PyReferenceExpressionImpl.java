@@ -144,6 +144,28 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   /**
+   * If argument is a PsiDirectory, turn it into a PsiFile that points to __init__.py in that directory.
+   * If there's no __init__.py there, null is returned, there's no point to resolve to a dir which is not a package.
+   * Alas, resolve() and multiResolve() can't return anything but a PyFile or PsiFileImpl.isPsiUpToDate() would fail.
+   * This is because isPsiUpToDate() relies on identity of objects returned by FileViewProvider.getPsi().
+   * If we ever need to exactly tell a dir from __init__.py, that logic has to change.
+   * @param target a resolve candidate.
+   * @return a PsiFile if target was a PsiDirectory, or null, or target unchanged.
+   */
+  private PsiElement turnDirIntoInit(PsiElement target) {
+    if (target instanceof PsiDirectory) {
+      final PsiDirectory dir = (PsiDirectory)target;
+      final PsiFile file = dir.findFile(ResolveImportUtil.INIT_PY);
+      if (file != null) {
+        file.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE);
+        return file; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
+      }
+      else return null; // dir without __init__.py does not resolve
+    }
+    else return target;
+  }
+
+  /**
    * Does actual resolution of resolve().
    * @return resolution result.
    * @see #resolve()
@@ -159,21 +181,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
       PsiElement target = ResolveImportUtil.resolveImportReference(this);
-      if (target instanceof PsiDirectory) {
-        final PsiDirectory dir = (PsiDirectory)target;
-        final PsiFile file = dir.findFile(ResolveImportUtil.INIT_PY);
-        if (file != null) {
-          target = file; // ResolveImportUtil will extract directory part as needed.
-          file.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE);
-          /* NOTE: can't return anything but a PyFile or PsiFileImpl.isPsiUpToDate() would fail.
-          This is because isPsiUpToDate() relies on identity of objects returned by FileViewProvider.getPsi().
-          If we ever need to exactly tell a dir from __init__.py, that logic has to change.
-          */
-        }
-        else {
-          ret.clear();
-          return ret; // dir without __init__.py does not resolve
-        }
+
+      target = turnDirIntoInit(target);
+      if (target == null) {
+        ret.clear();
+        return ret; // it was a dir without __init__.py, worthless
       }
       ret.poke(target, RatedResolveResult.RATE_HIGH);
       return ret;
@@ -236,7 +248,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (uexpr == null) {
       uexpr = PyResolveUtil.resolveOffContext(this);
     }
-    ret.poke(uexpr, getRate(uexpr));
+    uexpr = turnDirIntoInit(uexpr); // treeCrawlUp might have found a dir
+    if (uexpr != null) ret.poke(uexpr, getRate(uexpr));
     return ret;
   }
 
