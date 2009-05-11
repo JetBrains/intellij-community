@@ -56,8 +56,8 @@ public class GitHistoryProvider implements VcsHistoryProvider {
   /**
    * {@inheritDoc}
    */
-  public ColumnInfo[] getRevisionColumns(com.intellij.openapi.vcs.history.VcsHistorySession vcsHistorySession) {
-    return new ColumnInfo[0];
+  public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
+    return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[0]);
   }
 
   /**
