@@ -138,10 +138,10 @@ public class SdkUtil {
           stdout = stdout_thread.getResult();
           stderr = stderr_thread.getResult();
           if (timed_out.get()){
-            exit_code = process.exitValue();
+            exit_code = ProcessCallInfo.TIMEOUT_CODE;
           }
           else {
-            exit_code = ProcessCallInfo.TIMEOUT_CODE;
+            exit_code = process.exitValue();
           }
         }
         catch (Exception e) {

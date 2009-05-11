@@ -357,7 +357,7 @@ public class PythonSdkType extends SdkType {
       indicator.setText("Generating skeletons of binary libs");
     }
     try {
-      final int RUN_TIMEOUT = 10000; // 10 seconds per call is plenty enough; anything more is clearly wrong.
+      final int RUN_TIMEOUT = 10*1000; // 10 seconds per call is plenty enough; anything more is clearly wrong.
       final String bin_path = getInterpreterPath(sdkPath);
       String text;
       FileWriter out;
@@ -399,13 +399,16 @@ public class PythonSdkType extends SdkType {
               );
               if (gen_result.getExitValue() != 0) {
                 StringBuffer sb = new StringBuffer();
-                for (String err_line : gen_result.getStderr()) {
-                  sb.append(err_line).append("\n");
-                }
+                for (String err_line : gen_result.getStderr()) sb.append(err_line).append("\n");
                 LOG.error(sb.toString());
               }
             }
           }
+        }
+        else {
+          StringBuffer sb = new StringBuffer();
+          for (String err_line : run_result.getStderr()) sb.append(err_line).append("\n");
+          LOG.error("failed to run find_binaries, exit code " + run_result.getExitValue() + ", stderr '" + sb.toString() + "'");
         }
       }
       finally {
