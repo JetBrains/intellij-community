@@ -258,8 +258,8 @@ public class ToolsImpl implements Tools {
     return myDefaultState.isEnabled() ? (InspectionTool)myDefaultState.getTool() : null;
   }
 
-  public void enableTool() {
-    myEnabled = true;
+  public void setEnabled(boolean enabled) {
+    myEnabled = enabled;
   }
 
   public void enableTool(NamedScope namedScope) {
@@ -298,10 +298,6 @@ public class ToolsImpl implements Tools {
     }
   }
 
-  public void disableTool() {
-    myEnabled = false;
-  }
-
 
   public void disableTool(PsiElement element) {
     if (element == null) return;
@@ -315,7 +311,7 @@ public class ToolsImpl implements Tools {
         }
       }
     } else {
-      disableTool();
+      setEnabled(false);
     }
   }
 
@@ -354,8 +350,10 @@ public class ToolsImpl implements Tools {
     }
   }
 
-  public void setTool(InspectionProfileEntry inspectionTool) {
+  public void setDefaultState(InspectionProfileEntry inspectionTool, boolean enabled, HighlightDisplayLevel level) {
     myDefaultState.setTool(inspectionTool);
+    myDefaultState.setLevel(level);
+    myDefaultState.setEnabled(enabled);
   }
 
   public void setLevel(HighlightDisplayLevel level) {

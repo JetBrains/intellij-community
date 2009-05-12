@@ -178,6 +178,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void resetToBase() {
     copyToolsConfigurations(myBaseProfile);
+    myDisplayLevelMap = null;
   }
 
   public void resetToEmpty() {
@@ -458,7 +459,16 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       initInspectionTools();
       for (ToolsImpl toolList : profile.myTools.values()) {
         final ToolsImpl tools = myTools.get(toolList.getShortName());
-        tools.setTool(copyToolSettings((InspectionTool)toolList.getDeafultState().getTool()));
+        final ScopeToolState defaultState = toolList.getDeafultState();
+        tools.setDefaultState(copyToolSettings((InspectionTool)defaultState.getTool()), defaultState.isEnabled(), defaultState.getLevel());
+        final List<ScopeToolState> currentNonDefault = tools.getNonDefaultTools();
+        if (currentNonDefault != null) {
+          final int count = currentNonDefault.size();
+          for (int i = 0; i < count; i++) {
+            tools.removeScope(0);
+          }
+        }
+        tools.setEnabled(toolList.isEnabled());
         final List<ScopeToolState> nonDefaultToolStates = toolList.getNonDefaultTools();
         if (nonDefaultToolStates != null) {
           for (ScopeToolState state : nonDefaultToolStates) {
@@ -502,7 +512,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void enableTool(String inspectionTool) {
-    myTools.get(inspectionTool).enableTool();
+    myTools.get(inspectionTool).setEnabled(true);
   }
 
   public void enableTool(String inspectionTool, NamedScope namedScope) {
@@ -515,7 +525,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
 
   public void disableTool(String inspectionTool) {
-    myTools.get(inspectionTool).disableTool();
+    myTools.get(inspectionTool).setEnabled(false);
   }
 
   public void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level) {
@@ -637,11 +647,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
             equal = false;
           }
         }
-        if (isEnabled) {
-          tools.enableTool();
-        } else {
-          tools.disableTool();
-        }
+        tools.setEnabled(isEnabled);
         if (equal) {
           final int count = nonDefaultTools.size();
           for (int i = 0; i < count; i++) {
