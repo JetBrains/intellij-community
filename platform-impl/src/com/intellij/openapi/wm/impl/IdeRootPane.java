@@ -96,7 +96,7 @@ public class IdeRootPane extends JRootPane{
     myGlassPane.setVisible(false);
     myApplication = application;
 
-    myStatusBar.setCustomComponentsFactory(Arrays.asList(myApplication.getComponents(StatusBarCustomComponentFactory.class)));
+    myStatusBar.setCustomComponentsFactory(Arrays.asList(StatusBarCustomComponentFactory.EP_NAME.getExtensions()));
 
   }
 
