@@ -83,7 +83,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   public boolean isWaitingForSecondKeyStroke(){
-    return getState() == STATE_WAIT_FOR_SECOND_KEYSTROKE || myPressedWasProcessed;
+    return getState() == STATE_WAIT_FOR_SECOND_KEYSTROKE || isPressedWasProcessed();
   }
 
   /**
@@ -131,7 +131,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         // It is needed to ignore ENTER KEY_TYPED events which sometimes can reach editor when an action
         // is invoked from main menu via Enter key.
         setState(STATE_PROCESSED);
-        myPressedWasProcessed=true;
+        setPressedWasProcessed(true);
         return false;
       }
     }
@@ -287,15 +287,15 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyEvent e = myContext.getInputEvent();
 
     // ignore typed events which come after processed pressed event
-    if (KeyEvent.KEY_TYPED == e.getID() && myPressedWasProcessed) {
+    if (KeyEvent.KEY_TYPED == e.getID() && isPressedWasProcessed()) {
       return true;
     }
-    if (KeyEvent.KEY_RELEASED == e.getID() && KeyEvent.VK_ALT == e.getKeyCode() && myPressedWasProcessed) {
+    if (KeyEvent.KEY_RELEASED == e.getID() && KeyEvent.VK_ALT == e.getKeyCode() && isPressedWasProcessed()) {
       //see IDEADEV-8615
       return true;
     }
     setState(STATE_INIT);
-    myPressedWasProcessed = false;
+    setPressedWasProcessed(false);
     return inInitState();
   }
 
@@ -338,7 +338,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         (e.getID() == KeyEvent.KEY_PRESSED && hasMnemonicInWindow(focusOwner, e.getKeyCode()) ||
          e.getID() == KeyEvent.KEY_TYPED && hasMnemonicInWindow(focusOwner, e.getKeyChar())))
       {
-        myPressedWasProcessed = true;
+        setPressedWasProcessed(true);
         setState(STATE_PROCESSED);
         return false;
       }
@@ -441,7 +441,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     public void onUpdatePassed(final InputEvent inputEvent, final AnAction action, final AnActionEvent actionEvent) {
       setState(STATE_PROCESSED);
-      myPressedWasProcessed = inputEvent.getID() == KeyEvent.KEY_PRESSED;
+      setPressedWasProcessed(inputEvent.getID() == KeyEvent.KEY_PRESSED);
     }
 
     public void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent) {
@@ -602,5 +602,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   public void setState(final int state) {
     myState = state;
+  }
+
+  public void resetState() {
+    setState(STATE_INIT);
+    setPressedWasProcessed(false);
+  }
+
+  public boolean isPressedWasProcessed() {
+    return myPressedWasProcessed;
+  }
+
+  public void setPressedWasProcessed(boolean pressedWasProcessed) {
+    myPressedWasProcessed = pressedWasProcessed;
   }
 }

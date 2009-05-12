@@ -35,6 +35,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myComponent.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
 
     myText = new JTextArea();
+    final String text = System.getProperty("idea.playback.script");
+    if (text != null) {
+      myText.setText(text);
+    }
     myComponent.add(new JScrollPane(myText), BorderLayout.CENTER);
 
     myComponent.add(myMessage, BorderLayout.SOUTH);
@@ -196,5 +200,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   public void dispose() {
+    System.setProperty("idea.playback.script", myText.getText());
   }
 }

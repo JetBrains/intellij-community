@@ -14,6 +14,8 @@ public class RegistryValue {
 
   private boolean myChangedSinceStart;
 
+  private String myCachedValue;
+
   RegistryValue(Registry registry, String key) {
     myRegistry = registry;
     myKey = key;
@@ -47,6 +49,14 @@ public class RegistryValue {
   }
 
   private String get(String key, String defaultValue) {
+    if (myCachedValue == null) {
+      myCachedValue = _get(key, defaultValue);
+    }
+
+    return myCachedValue;
+  }
+
+  private String _get(String key, String defaultValue) {
     final String userValue = myRegistry.getUserProperties().get(key);
     if (userValue == null) {
       final String bundleValue = getBundleValue(key);
@@ -65,6 +75,8 @@ public class RegistryValue {
   }
 
   public void setValue(String value) {
+    myCachedValue = null;
+
     for (RegistryValueListener each : myListeners) {
       each.beforeValueChanged(this);
     }

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 public class IdeFocusManagerHeadless extends IdeFocusManager {
 
@@ -35,6 +36,15 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   }
 
   public boolean isFocusTransferInProgress() {
+    return false;
+  }
+
+  public boolean dispatch(KeyEvent e) {
+    return false;
+  }
+
+  @Override
+  public boolean isRedispatching() {
     return false;
   }
 }

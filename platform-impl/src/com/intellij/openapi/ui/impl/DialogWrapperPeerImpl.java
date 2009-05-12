@@ -1,6 +1,7 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
@@ -16,9 +17,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -579,6 +583,24 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           }
         }
       });
+
+      if (Registry.is("actionSystem.fixLostTyping")) {
+        final IdeEventQueue queue = IdeEventQueue.getInstance();
+        if (queue != null) {
+          queue.getKeyEventDispatcher().resetState();
+        }
+
+        if (myProject != null) {
+          Project project = myProject.get();
+          if (project != null && !project.isDisposed()) {
+            IdeFocusManager.getInstance(project).requestFocus(new FocusCommand() {
+              public ActionCallback run() {
+                return new ActionCallback.Done();
+              }
+            }, false);
+          }
+        }
+      }
 
       super.show();
     }

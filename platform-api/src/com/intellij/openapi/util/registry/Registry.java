@@ -1,18 +1,17 @@
 package com.intellij.openapi.util.registry;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.PropertyKey;
-import org.jdom.Element;
-
-import java.util.*;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-
-import com.intellij.util.containers.HashMap;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.containers.HashMap;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
+
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+import java.util.*;
 
 @State(
     name = "Registry",
@@ -43,6 +42,10 @@ public class Registry implements PersistentStateComponent<Element> {
       registry.myValues.put(key, value);
       return value;
     }
+  }
+
+  public static boolean is(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
+    return get(key).asBoolean();
   }
 
   ResourceBundle getBundle() {

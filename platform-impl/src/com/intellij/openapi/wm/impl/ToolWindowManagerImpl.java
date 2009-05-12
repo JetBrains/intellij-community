@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
@@ -44,6 +45,7 @@ import javax.swing.event.EventListenerList;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -102,7 +104,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   };
 
-  private ActiveRunnable myRequestFocusCmd;
+  private FocusCommand myRequestFocusCmd;
+  private FocusCommand myUnforcedRequestFocusCmd;
+
+  private ArrayList<KeyEvent> myToDispatchOnDone = new ArrayList<KeyEvent>();
+  private boolean myRedispatching;
+
   private WeakReference<FocusCommand> myLastForcedRequest = new WeakReference<FocusCommand>(null);
   private Application myApp;
   private AppListener myAppListener;
@@ -1488,6 +1495,28 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void flushIdleRequests() {
+    myRedispatching = true;
+    try {
+      final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
+      if (isFocusTranferInProgress()) return;
+      IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
+
+      for (int i = 0; i < events.length; i++) {
+        KeyEvent each = events[i];
+        if (isFocusTranferInProgress()) return;
+
+        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (owner != null) {
+          IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(), each.getKeyLocation()));
+        }
+
+        myToDispatchOnDone.remove(each);
+      }
+    }
+    finally {
+      myRedispatching = false;
+    }
+
     final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
     myIdleRequests.clear();
     for (Runnable each : all) {
@@ -1496,7 +1525,20 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public boolean isFocusTranferInProgress() {
-    return myRequestFocusCmd != null;
+    return myRequestFocusCmd != null || myUnforcedRequestFocusCmd != null;
+  }
+
+  public boolean dispatch(KeyEvent e) {
+    if (isFocusTranferInProgress() && Registry.is("actionSystem.fixLostTyping")) {
+      myToDispatchOnDone.add(e);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public boolean isRedispatching() {
+    return myRedispatching;
   }
 
 
@@ -1759,8 +1801,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final ActionCallback result = new ActionCallback();
 
     if (!forced) {
-      LaterInvocator.invokeLater(new Runnable() {
+      myUnforcedRequestFocusCmd = command;
+      SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          if (myUnforcedRequestFocusCmd == command) {
+            myUnforcedRequestFocusCmd = null;
+          }
+
           _requestFocus(command, forced, result);
         }
       });
@@ -1778,6 +1825,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     restartIdleAlarm();
 
     myRequestFocusCmd = command;
+
     if (forced) {
       myForcedFocusRequestsAlarm.cancelAllRequests();
       setLastEffectiveForcedRequest(command);

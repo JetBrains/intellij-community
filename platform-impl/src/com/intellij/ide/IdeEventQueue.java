@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -478,6 +479,16 @@ public class IdeEventQueue extends EventQueue {
   private boolean shallEnterSuspendMode() {
     if (peekEvent(WindowEvent.WINDOW_OPENED) != null) return true; // Active window is being changed
 
+    final IdeFocusManager ideFocusManager = getIdeFocusManager();
+    if (ideFocusManager != null) {
+      return ideFocusManager.isFocusTransferInProgress();
+    }
+
+    return false;
+  }
+
+ @Nullable
+  private IdeFocusManager getIdeFocusManager() {
     Window currentWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (currentWindow != null) {
       Component topLevel = UIUtil.findUltimateParent(currentWindow);
@@ -486,12 +497,12 @@ public class IdeEventQueue extends EventQueue {
         Project project = frame.getProject();
 
         if (project != null) {
-          return IdeFocusManager.getInstance(project).isFocusTransferInProgress();
+          return IdeFocusManager.getInstance(project);
         }
       }
     }
 
-    return false;
+    return null;
   }
 
   private boolean processAppActivationEvents(AWTEvent e) {
@@ -520,6 +531,8 @@ public class IdeEventQueue extends EventQueue {
 
   private void defaultDispatchEvent(final AWTEvent e) {
     try {
+      if (dispatchToIdeFocusManager(e)) return;
+
       super.dispatchEvent(e);
     }
     catch (ProcessCanceledException pce) {
@@ -527,6 +540,22 @@ public class IdeEventQueue extends EventQueue {
     } catch (Throwable exc) {
       LOG.error("Error during dispatching of " + e, exc);
     }
+  }
+
+  private boolean dispatchToIdeFocusManager(AWTEvent e) {
+    if (e instanceof KeyEvent) {
+      final KeyEvent event = (KeyEvent)e;
+      if (!event.isConsumed()) {
+        final IdeFocusManager focusManager = getIdeFocusManager();
+        if (focusManager != null) {
+          if (focusManager.isFocusTransferInProgress() && !focusManager.isRedispatching()) {
+            return focusManager.dispatch(event);
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
 
@@ -622,6 +651,10 @@ public class IdeEventQueue extends EventQueue {
 
   public IdePopupManager getPopupManager() {
     return myPopupManager;
+  }
+
+  public IdeKeyEventDispatcher getKeyEventDispatcher() {
+    return myKeyEventDispatcher;
   }
 
   public void blockNextEvents(final MouseEvent e) {

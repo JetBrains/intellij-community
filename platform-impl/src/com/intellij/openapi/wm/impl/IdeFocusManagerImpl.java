@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 public class IdeFocusManagerImpl extends IdeFocusManager {
   private final ToolWindowManagerImpl myToolWindowManager;
@@ -54,5 +55,14 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public boolean isFocusTransferInProgress() {
     return myToolWindowManager.isFocusTranferInProgress();
+  }
+
+  public boolean dispatch(KeyEvent e) {
+    return myToolWindowManager.dispatch(e);
+  }
+
+  @Override
+  public boolean isRedispatching() {
+    return myToolWindowManager.isRedispatching();
   }
 }

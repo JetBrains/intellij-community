@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 public abstract class IdeFocusManager {
 
@@ -62,4 +63,7 @@ public abstract class IdeFocusManager {
   public abstract Component getFocusedDescendantFor(final Component comp);
 
   public abstract boolean isFocusTransferInProgress();
+
+  public abstract boolean dispatch(KeyEvent e);
+  public abstract boolean isRedispatching();
 }
