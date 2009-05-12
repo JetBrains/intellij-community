@@ -916,7 +916,10 @@ public class FileUtil {
       final File file = queue.removeFirst();
       if (!processor.process(file)) return false;
       if (file.isDirectory()) {
-        queue.addAll(Arrays.asList(file.listFiles()));
+        final File[] children = file.listFiles();
+        if (children != null) {
+          queue.addAll(Arrays.asList(children));
+        }
       }
     }
     return true;
