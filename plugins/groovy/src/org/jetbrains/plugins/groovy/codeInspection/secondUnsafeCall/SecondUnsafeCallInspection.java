@@ -19,7 +19,9 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.inspections.SecondUnsafeCallQuickFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -77,7 +79,13 @@ public class SecondUnsafeCallInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return "Probable bugs (Groovy)";
+    return "Probable bugs";
+  }
+
+  @NotNull
+  @Override
+  public String[] getGroupPath() {
+    return new String[]{"Groovy", getGroupDisplayName()};
   }
 
   @Nls

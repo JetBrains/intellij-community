@@ -33,6 +33,12 @@ public class MissingReturnInspection extends LocalInspectionTool {
     return GroovyInspectionBundle.message("groovy.dfa.issues");
   }
 
+  @NotNull
+  @Override
+  public String[] getGroupPath() {
+    return new String[]{"Groovy", getGroupDisplayName()};
+  }
+
   @Nls
   @NotNull
   public String getDisplayName() {
