@@ -8,8 +8,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ide.projectView.PresentationData;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,28 +43,28 @@ public class FileCopyPresentation extends PackagingElementPresentation {
     return myFileName;
   }
 
-  public void render(@NotNull ColoredTreeCellRenderer renderer) {
+  public void render(@NotNull PresentationData presentationData) {
     if (myFile != null) {
-      renderer.setIcon(myIsDirectory ? COPY_OF_FOLDER_ICON : myFile.getIcon());
+      presentationData.setIcons(myIsDirectory ? COPY_OF_FOLDER_ICON : myFile.getIcon());
       if (myIsDirectory) {
-        renderer.append(CompilerBundle.message("node.text.0.directory.content", myFileName), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        presentationData.addText(CompilerBundle.message("node.text.0.directory.content", myFileName), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       else {
-        renderer.append(myFileName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        presentationData.addText(myFileName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-      renderer.append(" (" + myParentPath + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      presentationData.addText(" (" + myParentPath + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
     else {
-      renderer.setIcon(COPY_OF_FOLDER_ICON);
-      renderer.append(myFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
+      presentationData.setIcons(COPY_OF_FOLDER_ICON);
+      presentationData.addText(myFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
       final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(myParentPath));
-      renderer.append("(" + myParentPath + ")",
+      presentationData.addText("(" + myParentPath + ")",
                       parentFile != null ? SimpleTextAttributes.GRAY_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
 
   @Override
-  public double getWeight() {
+  public int getWeight() {
     return myIsDirectory ? PackagingElementWeights.DIRECTORY_COPY : PackagingElementWeights.FILE_COPY;
   }
 }

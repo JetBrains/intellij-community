@@ -53,7 +53,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   }
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
-    return new ArtifactElementPresentation(myArtifactName, findArtifact(context));
+    return new ArtifactElementPresentation(myArtifactName, findArtifact(context), context);
   }
 
   public ArtifactPackagingElement getState() {

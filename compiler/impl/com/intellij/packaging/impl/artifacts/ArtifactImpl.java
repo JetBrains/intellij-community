@@ -1,7 +1,7 @@
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import org.jetbrains.annotations.NotNull;
 

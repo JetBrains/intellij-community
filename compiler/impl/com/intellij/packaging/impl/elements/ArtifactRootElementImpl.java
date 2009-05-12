@@ -1,15 +1,15 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.Generator;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.packaging.elements.ArtifactGenerationContext;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.CopyInstructionCreator;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,13 +31,13 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
       }
 
       @Override
-      public void render(@NotNull ColoredTreeCellRenderer renderer) {
-        renderer.setIcon(PlainArtifactType.ARTIFACT_ICON);
-        renderer.append(getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      public void render(@NotNull PresentationData presentationData) {
+        presentationData.setIcons(PlainArtifactType.ARTIFACT_ICON);
+        presentationData.addText(getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
 
       @Override
-      public double getWeight() {
+      public int getWeight() {
         return 0;
       }
     };

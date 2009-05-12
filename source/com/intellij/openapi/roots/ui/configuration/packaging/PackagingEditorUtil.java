@@ -55,7 +55,7 @@ public class PackagingEditorUtil {
     }
   }
 
-  private static String getLibraryTableComment(final Library library) {
+  public static String getLibraryTableComment(final Library library) {
     LibraryTable libraryTable = library.getTable();
     String displayName;
     if (libraryTable != null) {

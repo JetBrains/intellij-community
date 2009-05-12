@@ -1,8 +1,8 @@
 package com.intellij.packaging.ui;
 
+import com.intellij.ide.projectView.PresentationData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.ui.ColoredTreeCellRenderer;
 
 /**
  * @author nik
@@ -15,12 +15,24 @@ public abstract class PackagingElementPresentation {
     return getPresentableName();
   }
 
-  public abstract void render(@NotNull ColoredTreeCellRenderer renderer);
+  public abstract void render(@NotNull PresentationData presentationData);
 
   @Nullable
   public String getTooltipText() {
     return null;
   }
 
-  public abstract double getWeight();
+  public boolean canNavigateToSource() {
+    return false;
+  }
+
+  public void navigateToSource() {
+  }
+
+  @Nullable
+  public Object getSourceObject() {
+    return null;
+  }
+
+  public abstract int getWeight();
 }

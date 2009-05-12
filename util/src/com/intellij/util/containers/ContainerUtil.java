@@ -356,8 +356,9 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T> boolean intersects(Collection<T> collection1, Collection<T> collection2) {
+  public static <T> boolean intersects(Collection<? extends T> collection1, Collection<? extends T> collection2) {
     for (T t : collection1) {
+      //noinspection SuspiciousMethodCalls
       if (collection2.contains(t)) {
         return true;
       }

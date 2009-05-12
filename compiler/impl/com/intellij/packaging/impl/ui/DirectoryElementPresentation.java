@@ -3,9 +3,9 @@ package com.intellij.packaging.impl.ui;
 import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
+import com.intellij.ide.projectView.PresentationData;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,13 +22,14 @@ public class DirectoryElementPresentation extends PackagingElementPresentation {
     return myElement.getDirectoryName();
   }
 
-  public void render(@NotNull ColoredTreeCellRenderer renderer) {
-    renderer.setIcon(Icons.FOLDER_ICON);
-    renderer.append(myElement.getDirectoryName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  public void render(@NotNull PresentationData presentationData) {
+    presentationData.setOpenIcon(Icons.DIRECTORY_OPEN_ICON);
+    presentationData.setClosedIcon(Icons.DIRECTORY_CLOSED_ICON);
+    presentationData.addText(myElement.getDirectoryName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   @Override
-  public double getWeight() {
+  public int getWeight() {
     return PackagingElementWeights.DIRECTORY;
   }
 }

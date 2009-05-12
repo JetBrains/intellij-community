@@ -1,16 +1,17 @@
-package com.intellij.openapi.roots.ui.configuration.artifacts;
+package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsEditorImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
+import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.util.Function;
-
-import javax.swing.tree.TreeNode;
-import java.util.Collection;
 
 /**
  * @author nik
@@ -25,21 +26,19 @@ public class InlineArtifactAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Collection<? extends PackagingElement> elements = myEditor.getPackagingElementsTree().getSelectedElements();
-    e.getPresentation().setEnabled(elements.size() == 1 && elements.iterator().next() instanceof ArtifactPackagingElement);
+    final LayoutTreeSelection selection = myEditor.getPackagingElementsTree().getSelection();
+    PackagingElement<?> element = selection.getElementIfSingle();
+    e.getPresentation().setEnabled(element instanceof ArtifactPackagingElement);
   }
 
   public void actionPerformed(AnActionEvent e) {
     final LayoutTreeComponent treeComponent = myEditor.getPackagingElementsTree();
-    final PackagingElementNode[] nodes = treeComponent.getSelectedNodes();
-    if (nodes.length != 1) return;
-    final PackagingElement<?> element = nodes[0].getPackagingElement();
+    final LayoutTreeSelection selection = treeComponent.getSelection();
+    final PackagingElement<?> element = selection.getElementIfSingle();
     if (!(element instanceof ArtifactPackagingElement)) return;
-    final TreeNode parentNode = nodes[0].getParent();
-    if (!(parentNode instanceof PackagingElementNode)) return;
 
     final Function<PackagingElement<?>,PackagingElement<?>> map = treeComponent.ensureRootIsWritable();
-    CompositePackagingElement<?> parent = (CompositePackagingElement<?>)map.fun(((PackagingElementNode)parentNode).getPackagingElement());
+    CompositePackagingElement<?> parent = (CompositePackagingElement<?>)map.fun(element);
     if (parent == null) {
       //todo[nik] parent from included content
       return;

@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.elements.CompositePackagingElement;
 
@@ -8,7 +9,8 @@ import com.intellij.packaging.elements.CompositePackagingElement;
  */
 public class PackagingElementDraggingObject {
   private final PackagingSourceItem[] mySourceItems;
-  private CompositePackagingElement<?> myTarget;
+  private PackagingElementNode<?> myTargetNode;
+  private CompositePackagingElement<?> myTargetElement;
 
   public PackagingElementDraggingObject(PackagingSourceItem[] sourceItems) {
     mySourceItems = sourceItems;
@@ -18,11 +20,19 @@ public class PackagingElementDraggingObject {
     return mySourceItems;
   }
 
-  public void setTarget(CompositePackagingElement<?> target) {
-    myTarget = target;
+  public void setTargetNode(PackagingElementNode<?> targetNode) {
+    myTargetNode = targetNode;
   }
 
-  public CompositePackagingElement<?> getTarget() {
-    return myTarget;
+  public PackagingElementNode<?> getTargetNode() {
+    return myTargetNode;
+  }
+
+  public CompositePackagingElement<?> getTargetElement() {
+    return myTargetElement;
+  }
+
+  public void setTargetElement(CompositePackagingElement<?> targetElement) {
+    myTargetElement = targetElement;
   }
 }

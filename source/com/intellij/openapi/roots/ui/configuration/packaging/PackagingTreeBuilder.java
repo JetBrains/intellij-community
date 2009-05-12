@@ -54,12 +54,12 @@ public abstract class PackagingTreeBuilder {
         VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
         List<PackagingTreeNode> nodes = new ArrayList<PackagingTreeNode>();
         for (VirtualFile file : files) {
-          nodes.add(PackagingTreeNodeFactory.createLibraryFileNode(file, library, libraryLink, parent, owner));
+          nodes.add(PackagingTreeNodeFactoryOld.createLibraryFileNode(file, library, libraryLink, parent, owner));
         }
         return nodes;
       }
     }
-    return Collections.singletonList(PackagingTreeNodeFactory.createLibraryNode(libraryLink, parent, owner));
+    return Collections.singletonList(PackagingTreeNodeFactoryOld.createLibraryNode(libraryLink, parent, owner));
   }
                                                                                                                 
   protected static PackagingTreeNode getOrCreateParentNode(final ContainerElement element, final PackagingArtifactNode root, final PackagingArtifact owner) {
@@ -70,16 +70,16 @@ public abstract class PackagingTreeBuilder {
     path = fixPath(element, method, path);
 
     if (method == PackagingMethod.JAR_AND_COPY_FILE) {
-      parent = PackagingTreeNodeFactory.getOrCreateArchiveNode(path, root, owner);
+      parent = PackagingTreeNodeFactoryOld.getOrCreateArchiveNode(path, root, owner);
     }
     else if (method == PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST) {
-      parent = PackagingTreeNodeFactory.getOrCreateArchiveNode(path, root.getParent(), owner);
+      parent = PackagingTreeNodeFactoryOld.getOrCreateArchiveNode(path, root.getParent(), owner);
     }
     else if (method == PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST) {
-      parent = PackagingTreeNodeFactory.getOrCreateDirectoryNode(path, root.getParent(), owner);
+      parent = PackagingTreeNodeFactoryOld.getOrCreateDirectoryNode(path, root.getParent(), owner);
     }
     else {  
-      parent = PackagingTreeNodeFactory.getOrCreateDirectoryNode(path, root, owner);
+      parent = PackagingTreeNodeFactoryOld.getOrCreateDirectoryNode(path, root, owner);
     }
     return parent;
   }
@@ -113,16 +113,16 @@ public abstract class PackagingTreeBuilder {
       if (i != -1) {
         String parentPath = path.substring(0, i);
         if (method == PackagingMethod.JAR_AND_COPY_FILE) {
-          parent = PackagingTreeNodeFactory.getOrCreateDirectoryNode(parentPath, root, owner);
+          parent = PackagingTreeNodeFactoryOld.getOrCreateDirectoryNode(parentPath, root, owner);
         }
         else {
-          parent = PackagingTreeNodeFactory.getOrCreateDirectoryNode(parentPath, root.getParent(), owner);
+          parent = PackagingTreeNodeFactoryOld.getOrCreateDirectoryNode(parentPath, root.getParent(), owner);
         }
       }
-      return PackagingTreeNodeFactory.createPackedModuleOutputNode(moduleLink, jarName, parent, owner);
+      return PackagingTreeNodeFactoryOld.createPackedModuleOutputNode(moduleLink, jarName, parent, owner);
     }
     PackagingTreeNode parent = getOrCreateParentNode(moduleLink, root, owner);
-    return PackagingTreeNodeFactory.createModuleOutputNode(moduleLink, parent, owner);
+    return PackagingTreeNodeFactoryOld.createModuleOutputNode(moduleLink, parent, owner);
   }
 }
 

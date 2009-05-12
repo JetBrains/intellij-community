@@ -301,7 +301,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     PackagingTreeState state = PackagingTreeState.saveState(myTree);
     myRoot.removeAllChildren();
     myRootArtifact = myBuilder.createRootArtifact();
-    PackagingArtifactNode root = PackagingTreeNodeFactory.createArtifactNode(myRootArtifact, myRoot, null);
+    PackagingArtifactNode root = PackagingTreeNodeFactoryOld.createArtifactNode(myRootArtifact, myRoot, null);
     for (ContainerElement element : getPackagedElements()) {
       myBuilder.createNodes(root, element, null, myTreeParameters);
     }

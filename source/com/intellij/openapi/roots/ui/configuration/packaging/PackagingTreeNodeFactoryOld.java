@@ -12,8 +12,8 @@ import java.util.StringTokenizer;
 /**
  * @author nik
  */
-public class PackagingTreeNodeFactory {
-  private PackagingTreeNodeFactory() {
+public class PackagingTreeNodeFactoryOld {
+  private PackagingTreeNodeFactoryOld() {
   }
 
   @NotNull

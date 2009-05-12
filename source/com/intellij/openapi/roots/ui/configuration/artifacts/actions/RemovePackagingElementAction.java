@@ -1,8 +1,9 @@
-package com.intellij.openapi.roots.ui.configuration.artifacts;
+package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsEditor;
 import com.intellij.util.Icons;
 
 /**
@@ -18,7 +19,7 @@ public class RemovePackagingElementAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(myArtifactsEditor.getPackagingElementsTree().getSelectedNodes().length > 0
+    e.getPresentation().setEnabled(!myArtifactsEditor.getPackagingElementsTree().getSelection().getSelectedElements().isEmpty()
                                    && !myArtifactsEditor.getPackagingElementsTree().isEditing());
   }
 

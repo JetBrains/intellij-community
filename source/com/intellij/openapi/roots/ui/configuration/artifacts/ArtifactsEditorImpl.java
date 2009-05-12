@@ -8,9 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ui.configuration.packaging.PackagingTreeParameters;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -18,16 +16,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
-import com.intellij.packaging.elements.CompositePackagingElementType;
 import com.intellij.packaging.elements.PackagingElementType;
+import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeToolTipHandler;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +46,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   private JPanel myEditorPanel;
   private Splitter mySplitter;
   private final Project myProject;
-  private final PackagingTreeParameters myTreeParameters = new PackagingTreeParameters(false, false);
+  private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
   private final EventDispatcher<ArtifactsEditorListener> myDispatcher = EventDispatcher.create(ArtifactsEditorListener.class);
   private final PackagingEditorContext myContext;
   private SourceItemsTree mySourceItemsTree;
@@ -64,7 +60,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     myOriginalArtifact = artifact;
     myProject = context.getProject();
     mySourceItemsTree = new SourceItemsTree(myContext, this);
-    myLayoutTreeComponent = new LayoutTreeComponent(this, myTreeParameters, myContext, myOriginalArtifact);
+    myLayoutTreeComponent = new LayoutTreeComponent(this, mySubstitutionParameters, myContext, myOriginalArtifact);
     myPostprocessingPanel = new ArtifactPostprocessingPanel(myContext);
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myLayoutTreeComponent);
@@ -92,6 +88,10 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     return outputPath;
   }
 
+  public SourceItemsTree getSourceItemsTree() {
+    return mySourceItemsTree;
+  }
+
   public void addListener(@NotNull final ArtifactsEditorListener listener) {
     myDispatcher.addListener(listener);
   }
@@ -108,6 +108,10 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     return myContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
   }
 
+  public ArtifactRootElement<?> getRootElement() {
+    return myLayoutTreeComponent.getRootElement();
+  }
+
   public void rebuildTries() {
     myLayoutTreeComponent.rebuildTree();
     mySourceItemsTree.rebuildTree();
@@ -116,6 +120,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
 
 
   public JComponent createMainComponent() {
+    myLayoutTreeComponent.initTree();
     myMainPanel.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new TypeSafeDataProviderAdapter(new MyDataProvider()));
 
     mySplitter = new Splitter(false);
@@ -136,7 +141,12 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
 
     myShowIncludedCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myTreeParameters.setShowIncludedContent(myShowIncludedCheckBox.isSelected());
+        if (myShowIncludedCheckBox.isSelected()) {
+          mySubstitutionParameters.setSubstituteAll();
+        }
+        else {
+          mySubstitutionParameters.setSubstituteNone();
+        }
         rebuildTries();
       }
     });
@@ -173,8 +183,8 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));
     popupActionGroup.add(new RenameCompositeElementAction(this));
-    popupActionGroup.add(new MyNavigateAction());
-    popupActionGroup.add(new MyFindUsagesAction());
+    popupActionGroup.add(new ArtifactEditorNavigateAction(myLayoutTreeComponent));
+    popupActionGroup.add(new ArtifactEditorFindUsagesAction(myLayoutTreeComponent, myProject));
 
     popupActionGroup.add(Separator.getInstance());
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
@@ -186,7 +196,6 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     TreeToolTipHandler.install(myLayoutTreeComponent.getTree());
     ToolTipManager.sharedInstance().registerComponent(myLayoutTreeComponent.getTree());
     rebuildTries();
-    TreeUtil.expandAll(myLayoutTreeComponent.getTree());
     return getMainComponent();
   }
 
@@ -198,12 +207,9 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     return myMainPanel;
   }
 
-  private void navigate(PackagingElementNode treeNode) {
-    treeNode.navigate(ModuleStructureConfigurable.getInstance(myProject));
-  }
-
-  public void addNewPackagingElement(@Nullable CompositePackagingElementType<?> parentType, @NotNull PackagingElementType<?> type) {
-    myLayoutTreeComponent.addNewPackagingElement(parentType, type);
+  public void addNewPackagingElement(@NotNull PackagingElementType<?> type) {
+    myLayoutTreeComponent.addNewPackagingElement(type);
+    mySourceItemsTree.rebuildTree();
   }
 
   public void removeSelectedElements() {
@@ -211,8 +217,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   }
 
   public boolean isModified() {
-    return getArtifact().getRootElement() != myOriginalArtifact.getRootElement()
-        || myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
+    return myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
         || !Comparing.equal(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath());
   }
 
@@ -221,49 +226,6 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
 
   public LayoutTreeComponent getPackagingElementsTree() {
     return myLayoutTreeComponent;
-  }
-
-  private class MyNavigateAction extends AnAction {
-    private MyNavigateAction() {
-      super(ProjectBundle.message("action.name.facet.navigate"));
-      registerCustomShortcutSet(CommonShortcuts.getEditSource(), myLayoutTreeComponent.getTree());
-    }
-
-    public void update(final AnActionEvent e) {
-      PackagingElementNode[] treeNodes = myLayoutTreeComponent.getSelectedNodes();
-      e.getPresentation().setEnabled(treeNodes.length == 1 && treeNodes[0].canNavigate());
-    }
-
-    public void actionPerformed(final AnActionEvent e) {
-      PackagingElementNode[] treeNodes = myLayoutTreeComponent.getSelectedNodes();
-      if (treeNodes.length == 1) {
-        navigate(treeNodes[0]);
-      }
-    }
-  }
-
-  private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
-    public MyFindUsagesAction() {
-      super(myLayoutTreeComponent.getTree(), myProject);
-    }
-
-    protected boolean isEnabled() {
-      PackagingElementNode[] treeNodes = myLayoutTreeComponent.getSelectedNodes();
-      return treeNodes.length == 1 && treeNodes[0].getSourceObject() != null;
-    }
-
-    protected Object getSelectedObject() {
-      PackagingElementNode[] treeNodes = myLayoutTreeComponent.getSelectedNodes();
-      return treeNodes.length == 1 ? treeNodes[0].getSourceObject() : null;
-    }
-
-    protected RelativePoint getPointToShowResults() {
-      final int selectedRow = myLayoutTreeComponent.getTree().getSelectionRows()[0];
-      final Rectangle rowBounds = myLayoutTreeComponent.getTree().getRowBounds(selectedRow);
-      final Point location = rowBounds.getLocation();
-      location.y += rowBounds.height;
-      return new RelativePoint(myLayoutTreeComponent.getTree(), location);
-    }
   }
 
   private class MyDataProvider implements TypeSafeDataProvider {

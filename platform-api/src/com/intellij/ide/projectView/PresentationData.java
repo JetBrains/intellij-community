@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,6 +210,10 @@ public class PresentationData implements ItemPresentation, ComparableObject {
     myColoredText.add(coloredFragment);
   }
 
+  public void addText(String text, SimpleTextAttributes attributes) {
+    myColoredText.add(new PresentableNodeDescriptor.ColoredFragment(text, attributes));
+  }
+
   public void clearText() {
     myColoredText.clear();
   }
@@ -241,6 +246,9 @@ public class PresentationData implements ItemPresentation, ComparableObject {
   }
 
   public void copyFrom(PresentationData from) {
+    if (from == this) {
+      return;
+    }
     myAttributesKey = from.myAttributesKey;
     myClosedIcon = from.myClosedIcon;
     clearText();

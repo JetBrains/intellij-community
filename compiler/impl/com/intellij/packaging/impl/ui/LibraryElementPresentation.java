@@ -1,11 +1,14 @@
 package com.intellij.packaging.impl.ui;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorUtil;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
-import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,27 +17,46 @@ import org.jetbrains.annotations.NotNull;
 public class LibraryElementPresentation extends PackagingElementPresentation {
   private final Library myLibrary;
   private final String myName;
+  private final PackagingEditorContext myContext;
 
-  public LibraryElementPresentation(String level, String name, Library library) {
+  public LibraryElementPresentation(String level, String name, Library library, PackagingEditorContext context) {
     myLibrary = library;
     myName = name;
+    myContext = context;
   }
 
   public String getPresentableName() {
     return myName;
   }
 
-  public void render(@NotNull ColoredTreeCellRenderer renderer) {
+  @Override
+  public boolean canNavigateToSource() {
+    return myLibrary != null;
+  }
+
+  @Override
+  public Object getSourceObject() {
+    return myLibrary;
+  }
+
+  @Override
+  public void navigateToSource() {
+    ProjectStructureConfigurable.getInstance(myContext.getProject()).selectProjectOrGlobalLibrary(myLibrary, true);
+  }
+
+  public void render(@NotNull PresentationData presentationData) {
     if (myLibrary != null) {
-      PackagingEditorUtil.renderLibraryNode(renderer, myLibrary, SimpleTextAttributes.REGULAR_ATTRIBUTES, SimpleTextAttributes.GRAY_ATTRIBUTES);
+      presentationData.setIcons(Icons.LIBRARY_ICON);
+      presentationData.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      presentationData.addText(PackagingEditorUtil.getLibraryTableComment(myLibrary), SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
     else {
-      renderer.append(myName, SimpleTextAttributes.ERROR_ATTRIBUTES);
+      presentationData.addText(myName, SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
 
   @Override
-  public double getWeight() {
+  public int getWeight() {
     return PackagingElementWeights.LIBRARY;
   }
 

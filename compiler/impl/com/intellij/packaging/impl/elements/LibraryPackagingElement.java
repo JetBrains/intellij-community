@@ -50,7 +50,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
-    return new LibraryElementPresentation(myLevel, myName, findLibrary(context));
+    return new LibraryElementPresentation(myLevel, myName, findLibrary(context), context);
   }
 
   @Override

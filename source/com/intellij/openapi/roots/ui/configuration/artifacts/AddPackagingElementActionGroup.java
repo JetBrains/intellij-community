@@ -41,7 +41,7 @@ public class AddPackagingElementActionGroup extends ActionGroup {
       final AnAction action = new AnAction(type.getPresentableName()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          myArtifactsEditor.addNewPackagingElement(null, type);
+          myArtifactsEditor.addNewPackagingElement(type);
         }
       };
       action.getTemplatePresentation().setIcon(type.getCreateElementIcon());

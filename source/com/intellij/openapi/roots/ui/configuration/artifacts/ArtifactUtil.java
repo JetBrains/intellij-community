@@ -21,12 +21,17 @@ public class ArtifactUtil {
 
   public static void copyRoot(@NotNull ModifiableArtifact artifact, @Nullable Map<PackagingElement<?>,PackagingElement<?>> old2New) {
     final ArtifactRootElement<?> oldRoot = artifact.getRootElement();
-    final ArtifactRootElementImpl newRoot = new ArtifactRootElementImpl();
+    final ArtifactRootElement newRoot = copyFromRoot(oldRoot, old2New);
     artifact.setRootElement(newRoot);
+  }
+
+  public static ArtifactRootElement copyFromRoot(ArtifactRootElement<?> oldRoot, Map<PackagingElement<?>, PackagingElement<?>> old2New) {
+    final ArtifactRootElementImpl newRoot = new ArtifactRootElementImpl();
     if (old2New != null) {
       old2New.put(oldRoot, newRoot);
     }
     copyChildren(oldRoot, newRoot, old2New);
+    return newRoot;
   }
 
 

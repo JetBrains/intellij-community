@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.BackAction;
 import com.intellij.ui.navigation.ForwardAction;
@@ -349,6 +350,18 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public ActionCallback select(@NotNull Sdk sdk, final boolean requestFocus) {
     Place place = new Place().putPath(CATEGORY, myJdkListConfig);
     place.putPath(BaseStructureConfigurable.TREE_NAME, sdk.getName());
+    return navigateTo(place, requestFocus);
+  }
+
+  public ActionCallback selectProjectOrGlobalLibrary(@NotNull Library library, boolean requestFocus) {
+    Place place = new Place().putPath(CATEGORY, getConfigurableFor(library));
+    place.putPath(BaseStructureConfigurable.TREE_NAME, library.getName());
+    return navigateTo(place, requestFocus);
+  }
+
+  public ActionCallback select(@NotNull Artifact artifact, boolean requestFocus) {
+    Place place = new Place().putPath(CATEGORY, myArtifactsStructureConfigurable);
+    place.putPath(BaseStructureConfigurable.TREE_NAME, artifact.getName());
     return navigateTo(place, requestFocus);
   }
 
