@@ -420,7 +420,7 @@ public class SvnChangeProvider implements ChangeProvider {
   private Change createMovedChange(final ContentRevision before, final ContentRevision after, final SVNStatus copiedStatus,
                                    final SVNStatus deletedStatus, @NotNull final SvnChangeProviderContext context) {
     return new ConflictedSvnChange(before, after, ConflictState.mergeState(getState(copiedStatus, context), getState(deletedStatus, context)),
-                                   copiedStatus.getTreeConflict() != null ? after.getFile() : before.getFile());
+                                  ((copiedStatus != null) && (copiedStatus.getTreeConflict() != null)) ? after.getFile() : before.getFile());
   }
 
   private Change createChange(final ContentRevision before, final ContentRevision after, final FileStatus fStatus,
