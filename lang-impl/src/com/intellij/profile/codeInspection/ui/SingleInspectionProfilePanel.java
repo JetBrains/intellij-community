@@ -564,16 +564,10 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     }
   }
 
-  private void updateUpHierarchy(final MyTreeNode node, final MyTreeNode parent) {
+  private static void updateUpHierarchy(final MyTreeNode node, final MyTreeNode parent) {
     if (parent != null) {
-      if (node.isProperSetting) {
-        parent.isProperSetting = true;
-        myRoot.isProperSetting = true;
-      }
-      else {
-        parent.isProperSetting = wasModified(parent);
-        myRoot.isProperSetting = parent.isProperSetting || wasModified(myRoot);
-      }
+      parent.isProperSetting = node.isProperSetting || wasModified(parent);
+      updateUpHierarchy(parent, (MyTreeNode)parent.getParent());
     }
   }
 
@@ -650,9 +644,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final boolean enabled = mySelectedProfile.isToolEnabled(key);
       final boolean properSetting = mySelectedProfile.isProperSetting(key);
       final MyTreeNode node = new MyTreeNode(descriptors, enabled, properSetting);
-      final MyTreeNode groupNode = getGroupNode(myRoot, descriptor.getGroup());
-      groupNode.add(node);
-      groupNode.isProperSetting |= properSetting;
+      getGroupNode(myRoot, descriptor.getGroup(), properSetting).add(node);
       myRoot.setEnabled(myRoot.isEnabled() || enabled);
       myRoot.isProperSetting |= properSetting;
     }
@@ -895,23 +887,24 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     myOptionsPanel.validate();
   }
 
-  private static MyTreeNode getGroupNode(MyTreeNode root, String[] groupPath) {
+  private static MyTreeNode getGroupNode(MyTreeNode root, String[] groupPath, boolean properSetting) {
     MyTreeNode currentRoot = root;
     for (final String group : groupPath) {
-      currentRoot = getGroupNode(currentRoot, group);
+      currentRoot = getGroupNode(currentRoot, group, properSetting);
     }
     return currentRoot;
   }
 
-  private static MyTreeNode getGroupNode(MyTreeNode root, String group) {
+  private static MyTreeNode getGroupNode(MyTreeNode root, String group, boolean properSetting) {
     final int childCount = root.getChildCount();
     for (int i = 0; i < childCount; i++) {
       MyTreeNode child = (MyTreeNode)root.getChildAt(i);
       if (group.equals(child.getUserObject())) {
+        child.isProperSetting |= properSetting;
         return child;
       }
     }
-    MyTreeNode child = new MyTreeNode(group, false, false);
+    MyTreeNode child = new MyTreeNode(group, false, properSetting);
     root.add(child);
     return child;
   }
