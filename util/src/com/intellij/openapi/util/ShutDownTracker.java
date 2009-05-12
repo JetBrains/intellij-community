@@ -65,8 +65,9 @@ public class ShutDownTracker implements Runnable {
       threads = getStopperThreads();
     }
 
-    for (int idx = myShutdownTasks.size() - 1; idx >= 0; idx--) {
-      final Runnable task = myShutdownTasks.remove(idx);
+    while (!myShutdownTasks.isEmpty()) {
+      //  task can change myShutdownTasks
+      final Runnable task = myShutdownTasks.remove(myShutdownTasks.size()-1);
       try {
         task.run();
       }
