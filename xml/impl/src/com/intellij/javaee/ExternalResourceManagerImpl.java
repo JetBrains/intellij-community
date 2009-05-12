@@ -2,9 +2,7 @@ package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -14,7 +12,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -68,26 +65,6 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternals();
 
     myPathMacros = pathMacros;
-
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      final File extResourceFolder = new File(FetchExtResourceAction.getExternalResourcesPath());
-
-      if (extResourceFolder.exists()) {
-        Runnable action = new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                final VirtualFile extResourceDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(extResourceFolder);
-                if (extResourceDir != null) LocalFileSystem.getInstance().addRootToWatch(extResourceDir.getPath(), true);
-              }
-            });
-          }
-        };
-
-        if (ApplicationManager.getApplication().isDispatchThread()) action.run();
-        else ApplicationManager.getApplication().invokeLater(action);
-      }
-    }
   }
 
   protected void addInternals() {

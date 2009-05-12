@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -28,6 +29,7 @@ import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.*;
@@ -40,7 +42,7 @@ import java.util.*;
 /**
  * @author mike
  */
-public class FetchExtResourceAction extends BaseExtResourceAction {
+public class FetchExtResourceAction extends BaseExtResourceAction implements WatchedRootsProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.FetchDtdAction");
   private static final @NonNls String HTML_MIME = "text/html";
   private static final @NonNls String HTTP_PROTOCOL = "http://";
@@ -86,6 +88,11 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
       }
     }
     return uri;
+  }
+
+  @NotNull
+  public Set<String> getRootsToWatch() {
+    return Collections.singleton(getExternalResourcesPath());
   }
 
   static class FetchingResourceIOException extends IOException {
