@@ -140,7 +140,8 @@ public class GitUtil {
   /**
    * Sort files by vcs root
    *
-   * @param files files to delete.
+   * @param project the project file
+   * @param files   files to delete.
    * @return the map from root to the files under the root
    */
   public static Map<VirtualFile, List<FilePath>> sortFilePathsByVcsRoot(Project project, final Collection<FilePath> files) {
@@ -332,6 +333,24 @@ public class GitUtil {
   /**
    * Return a git root for the file path (the parent directory with ".git" subdirectory)
    *
+   * @param filePath a file path
+   * @return git root for the file or null if the file is not under git
+   */
+  @Nullable
+  public static VirtualFile getGitRootOrNull(final FilePath filePath) {
+    File file = filePath.getIOFile();
+    while (file != null && (!file.exists() || !file.isDirectory() || !new File(file, ".git").exists())) {
+      file = file.getParentFile();
+    }
+    if (file == null) {
+      return null;
+    }
+    return LocalFileSystem.getInstance().findFileByIoFile(file);
+  }
+
+  /**
+   * Return a git root for the file path (the parent directory with ".git" subdirectory)
+   *
    * @return git root for the file
    * @throws IllegalArgumentException if the file is not under git
    */
@@ -500,5 +519,26 @@ public class GitUtil {
       }
     }
     return rc;
+  }
+
+  /**
+   * Get git time (unix time) basing on the date object
+   *
+   * @param time the time to convert
+   * @return the time in git format
+   */
+  public static String gitTime(Date time) {
+    long t = time.getTime() / 1000;
+    return Long.toString(t);
+  }
+
+  /**
+   * Format revision number from long to 16-digit abbreviated revision
+   *
+   * @param rev the abbreviated revision number as long
+   * @return the revision string
+   */
+  public static String formatLongRev(long rev) {
+    return String.format("%015x%x", (rev >>> 4), rev & 0xF);
   }
 }

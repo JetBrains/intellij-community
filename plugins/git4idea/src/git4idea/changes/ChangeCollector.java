@@ -131,10 +131,8 @@ class ChangeCollector {
     handler.endOptions();
     try {
       String output = handler.run();
-      String[] lines = output.split("\n");
-      GitChangeUtils
-        .parseChanges(myProject, myVcsRoot, null, GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD"), lines, 0, myChanges,
-                      myUnmergedNames);
+      GitChangeUtils.parseChanges(myProject, myVcsRoot, null, GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD"), output, myChanges,
+                                  myUnmergedNames);
     }
     catch (VcsException ex) {
       if (!GitChangeUtils.isHeadMissing(ex)) {

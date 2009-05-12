@@ -18,6 +18,7 @@ package git4idea;
  */
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
@@ -33,9 +34,9 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.changes.GitChangeProvider;
+import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
@@ -98,7 +99,7 @@ public class GitVcs extends AbstractVcs {
    */
   private final VcsHistoryProvider myHistoryProvider;
   /**
-   * cached instace of vcs manager for the project
+   * cached instance of vcs manager for the project
    */
   private final ProjectLevelVcsManager myVcsManager;
   /**
@@ -118,7 +119,7 @@ public class GitVcs extends AbstractVcs {
    */
   private final GitMergeProvider myMergeProvider;
   /**
-   * a vfs listener
+   * a VFS listener that tracks file addition, deletion, and renaming.
    */
   private GitVFSListener myVFSListener;
   /**
@@ -133,6 +134,10 @@ public class GitVcs extends AbstractVcs {
    * The path to executable at the time of version check
    */
   private String myVersionCheckExcecutable = "";
+  /**
+   * The changelist provider
+   */
+  private GitCommittedChangeListProvider myCommittedChangeListProvider;
 
 
   public static GitVcs getInstance(@NotNull Project project) {
@@ -162,6 +167,16 @@ public class GitVcs extends AbstractVcs {
     myConfigurable = new GitVcsConfigurable(mySettings, myProject);
     myUpdateEnvironment = new GitUpdateEnvironment(myProject);
     myMergeProvider = new GitMergeProvider(myProject);
+    myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public CommittedChangesProvider getCommittedChangesProvider() {
+    // TODO Temporary disabled: return myCommittedChangeListProvider;
+    return null;
   }
 
   /**
@@ -288,18 +303,18 @@ public class GitVcs extends AbstractVcs {
   public VcsRevisionNumber parseRevisionNumber(String revision, FilePath path) {
     if (revision == null || revision.length() == 0) return null;
     if (revision.length() > 40) {    // date & revision-id encoded string
-      String datestr = revision.substring(0, revision.indexOf("["));
+      String dateString = revision.substring(0, revision.indexOf("["));
       String rev = revision.substring(revision.indexOf("[") + 1, 40);
-      Date d = new Date(Date.parse(datestr));
+      Date d = new Date(Date.parse(dateString));
       return new GitRevisionNumber(rev, d);
     }
-    if(path != null) {
+    if (path != null) {
       VirtualFile root = GitUtil.getGitRoot(myProject, path);
       try {
         return GitRevisionNumber.resolve(myProject, root, revision);
       }
       catch (VcsException e) {
-        log.error("Unexpected problem with resolving the git revision number: ",e);
+        log.error("Unexpected problem with resolving the git revision number: ", e);
       }
     }
     return new GitRevisionNumber(revision);
@@ -422,7 +437,7 @@ public class GitVcs extends AbstractVcs {
         return;
       }
       myVersionCheckExcecutable = executable;
-      // this assighment is done to prevent recursive version check
+      // this assignment is done to prevent recursive version check
       myVersion = GitVersion.INVALID;
       final String version;
       try {
@@ -456,8 +471,7 @@ public class GitVcs extends AbstractVcs {
    *
    * @param project the project
    * @return a version of configured git
-   * @throws com.intellij.openapi.vcs.VcsException
-   *          an error if there is a problem with running git
+   * @throws VcsException an error if there is a problem with running git
    */
   public static String version(Project project) throws VcsException {
     final String s;

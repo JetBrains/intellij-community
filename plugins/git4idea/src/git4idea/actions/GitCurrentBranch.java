@@ -47,6 +47,10 @@ public class GitCurrentBranch extends GitRepositoryAction {
                          @NotNull final VirtualFile defaultRoot,
                          final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
-    new CurrentBranchDialog(project, gitRoots, defaultRoot).show();
+    CurrentBranchDialog dialog = new CurrentBranchDialog(project, gitRoots, defaultRoot);
+    dialog.show();
+    if (dialog.isOK()) {
+      dialog.updateTrackedBranch();
+    }
   }
 }

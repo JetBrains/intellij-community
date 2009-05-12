@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.config.GitConfigUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +128,7 @@ public class GitBranch extends GitReference {
                                    final boolean local,
                                    final Collection<String> branches) throws VcsException {
     if (!local && !remote) {
-      // no need to run hanler
+      // no need to run handler
       return;
     }
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.BRANCH);
@@ -154,6 +155,33 @@ public class GitBranch extends GitReference {
   public String getFullName() {
     return (myRemote ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
   }
+
+  /**
+   * Get tracked remote for the branch
+   *
+   * @param project the context project
+   * @param root    the VCS root to investigate
+   * @return the remote name for tracked branch, "." meaning the current repository, or null if no branch is tracked
+   * @throws VcsException if there is a problem with running Git
+   */
+  @Nullable
+  public String getTrackedRemoteName(Project project, VirtualFile root) throws VcsException {
+    return GitConfigUtil.getValue(project, root, trackedRemoteKey());
+  }
+
+  /**
+   * Get tracked the branch
+   *
+   * @param project the context project
+   * @param root    the VCS root to investigate
+   * @return the name of tracked branch
+   * @throws VcsException if there is a problem with running Git
+   */
+  @Nullable
+  public String getTrackedBranchName(Project project, VirtualFile root) throws VcsException {
+    return GitConfigUtil.getValue(project, root, trackedBranchKey());
+  }
+
 
   /**
    * List branches for the git root
@@ -184,5 +212,38 @@ public class GitBranch extends GitReference {
         branches.add(new GitBranch(b, false, true));
       }
     }
+  }
+
+  /**
+   * Set tracked branch
+   *
+   * @param project the context project
+   * @param root    the git root
+   * @param remote  the remote to track (null, for do not track anything, "." for local repository)
+   * @param branch  the branch to track
+   */
+  public void setTrackedBranch(Project project, VirtualFile root, String remote, String branch) throws VcsException {
+    if (remote == null || branch == null) {
+      GitConfigUtil.unsetValue(project, root, trackedRemoteKey());
+      GitConfigUtil.unsetValue(project, root, trackedBranchKey());
+    }
+    else {
+      GitConfigUtil.setValue(project, root, trackedRemoteKey(), remote);
+      GitConfigUtil.setValue(project, root, trackedBranchKey(), branch);
+    }
+  }
+
+  /**
+   * @return the key for the remote of the tracked branch
+   */
+  private String trackedBranchKey() {
+    return "branch." + getName() + ".merge";
+  }
+
+  /**
+   * @return the key for the tracked branch
+   */
+  private String trackedRemoteKey() {
+    return "branch." + getName() + ".remote";
   }
 }

@@ -101,7 +101,7 @@ public class GitConfigUtil {
    * @param project the context project
    * @param root    the git root
    * @param key     the keys to be queried
-   * @return the value associtated with the key or null if the value is not found
+   * @return the value associated with the key or null if the value is not found
    * @throws VcsException an exception
    */
   @Nullable
@@ -125,7 +125,7 @@ public class GitConfigUtil {
    * @param project the context project
    * @param root    the git root
    * @param key     the keys to be queried
-   * @return the value associtated with the key or null if the value is not found, value is not valid integer or boolean
+   * @return the value associated with the key or null if the value is not found, value is not valid integer or boolean
    * @throws VcsException an exception
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -176,7 +176,7 @@ public class GitConfigUtil {
   }
 
   /**
-   * Get log ouput encoding for the specified root
+   * Get log output encoding for the specified root
    *
    * @param project the context project
    * @param root    the project root
@@ -199,11 +199,43 @@ public class GitConfigUtil {
   /**
    * Get encoding that GIT uses for file names.
    *
-   * @return the encoding for file namees
+   * @return the encoding for file names
    */
   public static String getFilenameEncoding() {
-    // FIXME the best guess is that the default encoding is used.
+    // TODO the best guess is that the default encoding is used.
     return Charset.defaultCharset().name();
   }
 
+  /**
+   * Unset the current value
+   *
+   * @param project the project
+   * @param root    the git root
+   * @param key     the key to unset
+   */
+  public static void unsetValue(Project project, VirtualFile root, String key) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.CONFIG);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.ignoreErrorCode(1);
+    h.addParameters("--unset", key);
+    h.run();
+  }
+
+  /**
+   * Set the value
+   *
+   * @param project the project
+   * @param root    the git root
+   * @param key     the key to set
+   * @param value   the value to set
+   */
+  public static void setValue(Project project, VirtualFile root, String key, String value) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.CONFIG);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.ignoreErrorCode(1);
+    h.addParameters(key, value);
+    h.run();
+  }
 }

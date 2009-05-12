@@ -102,6 +102,18 @@ public class StringScanner {
    * @return a token
    */
   public String boundedToken(final char boundaryChar) {
+    return boundedToken(boundaryChar, false);
+  }
+
+  /**
+   * Gets next token that is ended by {@code boundaryChar} or new line. Consumes {@code boundaryChar} but not a new line (if it is not ignored).
+   * Start position is the current. So if the string starts with {@code boundaryChar} a empty token is returned.
+   *
+   * @param boundaryChar a boundary character
+   * @param ignoreEol    if true, the end of line is considered as normal character and consumed
+   * @return a token
+   */
+  public String boundedToken(char boundaryChar, boolean ignoreEol) {
     int start = myPosition;
     for (; myPosition < myText.length(); myPosition++) {
       final char ch = myText.charAt(myPosition);
@@ -110,7 +122,7 @@ public class StringScanner {
         myPosition++;
         return rc;
       }
-      if (isEol()) {
+      if (!ignoreEol && isEol()) {
         return myText.substring(start, myPosition);
       }
     }
@@ -196,5 +208,29 @@ public class StringScanner {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Try consuming a sequence of characters
+   *
+   * @param chars a sequence of characters
+   * @return true if consumed successfully
+   */
+  public boolean tryConsume(String chars) {
+    if (startsWith(chars)) {
+      skipChars(chars.length());
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * @return the next character to be consumed
+   */
+  public char peek() {
+    if (!hasMoreData()) {
+      throw new IllegalStateException("There is no next character");
+    }
+    return myText.charAt(myPosition);
   }
 }

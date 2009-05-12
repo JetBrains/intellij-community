@@ -139,6 +139,33 @@ public final class GitRemote {
   }
 
   /**
+   * Get information about remote stored in locally (remote end is not queried about branches)
+   *
+   * @return a information about remotes
+   */
+  @Nullable
+  public static GitRemote find(Project project, VirtualFile root, String name) throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.REMOTE);
+    handler.setNoSSH(true);
+    handler.setSilent(true);
+    handler.ignoreErrorCode(1);
+    handler.addParameters("show", "-n", name);
+    StringScanner in = new StringScanner(handler.run());
+    if (handler.getExitCode() != 0) {
+      return null;
+    }
+    int i = 0;
+    if (!in.tryConsume("* ") || !name.equals(in.line()) || !in.hasMoreData()) {
+      throw new IllegalStateException("Unexpected format for 'git remote show'");
+    }
+    if (!in.tryConsume(SHOW_URL_PREFIX)) {
+      throw new IllegalStateException("Unexpected format for 'git remote show'");
+    }
+    return new GitRemote(name, in.line());
+  }
+
+
+  /**
    * Get information about remote stored in localy (remote end is not queried about branches)
    *
    * @return a information about remotes
@@ -255,7 +282,7 @@ public final class GitRemote {
      */
     @Nullable
     public String getRemoteForLocal(final String localBranchName) {
-      if(localBranchName == null) {
+      if (localBranchName == null) {
         return null;
       }
       return myBranchMapping.get(localBranchName);

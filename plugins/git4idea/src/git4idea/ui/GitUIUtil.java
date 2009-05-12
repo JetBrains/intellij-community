@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class GitUIUtil {
   /**
-   * Text conaining in the label when there is no current branch
+   * Text containing in the label when there is no current branch
    */
   public static final String NO_CURRENT_BRANCH = GitBundle.getString("common.no.active.branch");
 
@@ -51,7 +51,7 @@ public class GitUIUtil {
   }
 
   /**
-   * @return a list cell renderer for virtual files (it renders prestanble URL
+   * @return a list cell renderer for virtual files (it renders presentable URL)
    */
   public static ListCellRenderer getVirtualFileListCellRenderer() {
     return new DefaultListCellRenderer() {
@@ -86,24 +86,29 @@ public class GitUIUtil {
    */
   public static ListCellRenderer getGitRemoteListCellRenderer(final String defaultRemote) {
     return new DefaultListCellRenderer() {
-      @SuppressWarnings({"HardCodedStringLiteral"})
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
                                                     final int index,
                                                     final boolean isSelected,
                                                     final boolean cellHasFocus) {
         final GitRemote remote = (GitRemote)value;
-        String startName;
-        String endName;
-        if (defaultRemote != null && defaultRemote.equals(remote.name())) {
-          startName = "<b>";
-          endName = "</b>";
+        String text;
+        if (value == null) {
+          text = GitBundle.getString("util.remote.renderer.none");
+        }
+        else if (".".equals(remote.name())) {
+          text = GitBundle.getString("util.remote.renderer.self");
         }
         else {
-          startName = "";
-          endName = "";
+          String key;
+          if (defaultRemote != null && defaultRemote.equals(remote.name())) {
+            key = "util.remote.renderer.default";
+          }
+          else {
+            key = "util.remote.renderer.normal";
+          }
+          text = GitBundle.message(key, remote.name(), remote.url());
         }
-        String text = "<html>" + startName + remote.name() + endName + " (<i>" + remote.url() + "</i>)</html>";
         return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
       }
     };
@@ -112,7 +117,7 @@ public class GitUIUtil {
 
 
   /**
-   * Setup root chooser with specfied elements and link selecto to the current branch label.
+   * Setup root chooser with specified elements and link selection to the current branch label.
    *
    * @param project            a context project
    * @param roots              git roots for the project
@@ -155,6 +160,16 @@ public class GitUIUtil {
   }
 
   /**
+   * Get root from the chooser
+   *
+   * @param gitRootChooser the chooser constructed with {@link #setupRootChooser(Project, List, VirtualFile, JComboBox, JLabel)}.
+   * @return the current selection
+   */
+  public static VirtualFile getRootFromRootChooser(JComboBox gitRootChooser) {
+    return (VirtualFile)gitRootChooser.getSelectedItem();
+  }
+
+  /**
    * Show error associated with the specified operation
    *
    * @param project   the project
@@ -178,7 +193,7 @@ public class GitUIUtil {
 
   /**
    * Setup remotes combobox. The default remote for the current branch is selected by default.
-   * This method gets current branch for the proejct.
+   * This method gets current branch for the project.
    *
    * @param project        the project
    * @param root           the git root
@@ -190,7 +205,7 @@ public class GitUIUtil {
       gitBranch = GitBranch.current(project, root);
     }
     catch (VcsException ex) {
-      // ingore error
+      // ignore error
     }
     final String branch = gitBranch != null ? gitBranch.getName() : null;
     setupRemotes(project, root, branch, remoteCombobox);
