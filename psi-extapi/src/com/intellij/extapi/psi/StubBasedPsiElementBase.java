@@ -4,6 +4,7 @@
 package com.intellij.extapi.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -70,6 +71,12 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   public void setNode(final ASTNode node) {
     myNode = node;
+  }
+
+  @NotNull
+  @Override
+  public Language getLanguage() {
+    return myElementType.getLanguage();
   }
 
   public PsiFile getContainingFile() {
