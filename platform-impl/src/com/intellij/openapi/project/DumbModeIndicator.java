@@ -96,7 +96,7 @@ class DumbModeIndicator extends StatusBarCustomComponentFactory<DumbModeIndicato
                                      "If you prefer IntelliJ IDEA always to be smart, you can disable backgroundable<br>" +
                                      "indexing in 'File | Other Settings | Registry | " + DumbServiceImpl.FILE_INDEX_BACKGROUND + "' and restart.<br>" +
                                      "After restart, the indices will be always updated in a modal dialog." +
-                                     "</html>", "Background index update", DUMB_MODE_ICON);
+                                     "</html>", "Don't panic!", DUMB_MODE_ICON);
         }
       });
       setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
