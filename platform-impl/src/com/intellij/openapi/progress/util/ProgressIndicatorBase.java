@@ -14,10 +14,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorEx {
@@ -74,16 +73,11 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   protected final void enterModality() {
     if (myModalityProgress == this) {
-      if (!EventQueue.isDispatchThread()) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            doEnterModality();
-          }
-        });
-      }
-      else {
-        doEnterModality();
-      }
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        public void run() {
+          doEnterModality();
+        }
+      });
     }
   }
 
@@ -108,16 +102,11 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   protected final void exitModality() {
     if (myModalityProgress == this) {
-      if (!EventQueue.isDispatchThread()) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            doExitModality();
-          }
-        });
-      }
-      else {
-        doExitModality();
-      }
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        public void run() {
+          doExitModality();
+         }
+      });
     }
   }
 

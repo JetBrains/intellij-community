@@ -23,6 +23,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"SSBasedInspection"})
 public class LaterInvocator {
@@ -54,8 +55,8 @@ public class LaterInvocator {
     }
   }
 
-  private static final ArrayList<Object> ourModalEntities = new ArrayList<Object>();
-  private static final ArrayList<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>();
+  private static final List<Object> ourModalEntities = new CopyOnWriteArrayList<Object>();
+  private static final List<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>(); //protected by LOCK
   private static volatile int ourQueueSkipCount = 0; // optimization
   private static final Runnable ourFlushQueueRunnable = new FlushQueue();
 
@@ -259,7 +260,7 @@ public class LaterInvocator {
 
 
       ModalityStateEx currentModality = (ModalityStateEx)(ourModalEntities.isEmpty() ? ApplicationManager.getApplication()
-          .getNoneModalityState() : new ModalityStateEx(ourModalEntities.toArray(new Object[ourModalEntities.size()])));
+          .getNoneModalityState() : new ModalityStateEx(ourModalEntities.toArray()));
 
       while(ourQueueSkipCount < ourQueue.size()){
         RunnableInfo info = ourQueue.get(ourQueueSkipCount);

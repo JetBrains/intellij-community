@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.SwingWorker;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -169,16 +170,11 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     }
 
     private void updateLabel(final JLabel label, final String text) {
-      if (SwingUtilities.isEventDispatchThread()) {
-        label.setText(text);
-      }
-      else {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            label.setText(text);
-          }
-        });
-      }
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        public void run() {
+          label.setText(text);
+        }
+      });
     }
   }
 }
