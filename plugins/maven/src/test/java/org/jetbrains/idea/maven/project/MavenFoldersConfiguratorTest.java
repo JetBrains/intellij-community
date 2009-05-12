@@ -95,7 +95,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
     File sourceDir = new File(myProjectRoot.getPath(), "target/src");
     sourceDir.mkdirs();
 
-    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
+    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
                                                               getModule("project"),
                                                               new DefaultMavenModuleModelsProvider(myProject));
     adapter.addSourceFolder(sourceDir.getPath(), false);
@@ -121,7 +121,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
+    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
                                                               getModule("project"),
                                                               new DefaultMavenModuleModelsProvider(myProject));
     adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),

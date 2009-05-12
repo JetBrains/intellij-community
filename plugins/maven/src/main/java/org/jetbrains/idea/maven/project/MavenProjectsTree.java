@@ -4,7 +4,6 @@ import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -202,22 +201,18 @@ public class MavenProjectsTree {
     }
   }
 
-  public void setIgnoredState(MavenProject project, boolean ignored) {
-    boolean changed;
-    synchronized (myIgnoresLock) {
-      if (ignored) {
-        changed = myIgnoredFilesPaths.add(project.getPath());
+  public void setIgnoredState(List<MavenProject> projects, final boolean ignored) {
+    final List<String> paths = MavenUtil.collectPaths(MavenUtil.collectFiles(projects));
+    doChangeIgnoreStatus(new Runnable() {
+      public void run() {
+        if (ignored) {
+          myIgnoredFilesPaths.addAll(paths);
+        }
+        else {
+          myIgnoredFilesPaths.removeAll(paths);
+        }
       }
-      else {
-        changed = myIgnoredFilesPaths.remove(project.getPath());
-      }
-    }
-
-    if (changed) {
-      List<MavenProject> projects = Collections.singletonList(project);
-      List<MavenProject> empty = Collections.EMPTY_LIST;
-      fireProjectsIgnoredStateChanged(ignored ? projects : empty, ignored ? empty : projects);
-    }
+    });
   }
 
   public List<String> getIgnoredFilesPatterns() {
@@ -281,7 +276,7 @@ public class MavenProjectsTree {
   }
 
   public List<String> getActiveProfiles() {
-    return myActiveProfiles;
+    return new ArrayList<String>(myActiveProfiles);
   }
 
   public void setActiveProfiles(List<String> activeProfiles) {
@@ -671,11 +666,7 @@ public class MavenProjectsTree {
   }
 
   public List<VirtualFile> getRootProjectsFiles() {
-    return ContainerUtil.map(getRootProjects(), new Function<MavenProject, VirtualFile>() {
-      public VirtualFile fun(MavenProject each) {
-        return each.getFile();
-      }
-    });
+    return MavenUtil.collectFiles(getRootProjects());
   }
 
   public List<MavenProject> getProjects() {
@@ -730,10 +721,6 @@ public class MavenProjectsTree {
     finally {
       readUnlock();
     }
-  }
-
-  public boolean isModuleOf(MavenProject aggregator, MavenProject module) {
-    return aggregator.equals(findAggregator(module));
   }
 
   public List<MavenProject> getModules(MavenProject aggregator) {

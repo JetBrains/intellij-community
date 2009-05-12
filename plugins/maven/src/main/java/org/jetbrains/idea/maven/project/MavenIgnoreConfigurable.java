@@ -9,13 +9,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
+import org.jetbrains.idea.maven.utils.MavenUIUtil;
 import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -73,21 +74,30 @@ public class MavenIgnoreConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    return !IdeaAPIHelper.equalAsSets(myOriginalFiles, myFileChooser.getMarkedElements()) ||
+    return !MavenUIUtil.equalAsSets(myOriginalFiles, myFileChooser.getMarkedElements()) ||
            !myOriginalMasks.equals(myMaskEditor.getText());
   }
 
   public void apply() throws ConfigurationException {
-    final List<VirtualFile> marked = myFileChooser.getMarkedElements();
+    List<VirtualFile> ignoredFiles = myFileChooser.getMarkedElements();
+    List<MavenProject> ignoredProjects = new ArrayList<MavenProject>();
+    List<MavenProject> unignoredProjects = new ArrayList<MavenProject>();
+
     for (MavenProject each : myManager.getProjects()) {
-      myManager.setIgnoredState(each, marked.contains(each.getFile()));
+      if (ignoredFiles.contains(each.getFile())) {
+        ignoredProjects.add(each);
+      } else {
+        unignoredProjects.add(each);
+      }
     }
 
+    myManager.setIgnoredState(ignoredProjects, true);
+    myManager.setIgnoredState(unignoredProjects, false);
     myManager.setIgnoredFilesPatterns(Strings.tokenize(myMaskEditor.getText(), Strings.WHITESPACE + SEPARATOR));
   }
 
   public void reset() {
-    IdeaAPIHelper.addElements(myFileChooser, myManager.getProjectsFiles(), myOriginalFiles, new Comparator<VirtualFile>() {
+    MavenUIUtil.addElements(myFileChooser, myManager.getProjectsFiles(), myOriginalFiles, new Comparator<VirtualFile>() {
       public int compare(VirtualFile o1, VirtualFile o2) {
         //noinspection ConstantConditions
         return o1.getParent().getPath().compareTo(o2.getParent().getPath());

@@ -114,22 +114,27 @@
               class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
     </group>
 
-    <group id="Maven.PomTreeView">
-      <action id="Maven.GroupStructurally"
-              class="org.jetbrains.idea.maven.navigator.action.GroupStructurallyAction"
-              text="Group structurally"
-              description="Group Maven projects according to the layout"
+    <group id="Maven.NavigatorSettings">
+      <action id="Maven.GroupModules"
+              class="org.jetbrains.idea.maven.navigator.action.GroupModulesAction"
+              text="Group Modules"
+              description="Group Modules"
               icon="/nodes/folder.png"/>
       <action id="Maven.ShowIgnored"
               class="org.jetbrains.idea.maven.navigator.action.ShowIgnoredProjectsAction"
-              text="Show ignored"
-              description="Show ignored projects"
+              text="Show Ignored Projects"
+              description="Show Ignored Projects"
               icon="/actions/showHiddens.png"/>
+      <action id="Maven.ShowBasicPhasesOnly"
+              class="org.jetbrains.idea.maven.navigator.action.ShowBasicPhasesOnlyAction"
+              text="Show Basic Phases Only"
+              description="Show Basic Phases Only"
+              icon="/images/filterPhases.png"/>
     </group>
 
     <group id="Maven.State">
       <action id="Maven.Ignore"
-              class="org.jetbrains.idea.maven.project.action.IgnoreProjectAction" text="_Ignore"
+              class="org.jetbrains.idea.maven.project.action.ToggleIgnoredProjectsAction" text="_Ignore"
               description="Toggle ignore flag for Maven project">
       </action>
       <action id="Maven.ToggleProfile"
@@ -181,27 +186,27 @@
 
     </group>
 
-    <group id="Maven.EventsGroup">
+    <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.BeforeCompileAction" text="Execute before Make"
+              class="org.jetbrains.idea.maven.tasks.actions.BeforeCompileAction" text="Execute Before Make"
               description="Execute this goal before IntelliJ IDEA Make">
       </action>
       <action id="Maven.AfterCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.AfterCompileAction" text="Execute after Make"
+              class="org.jetbrains.idea.maven.tasks.actions.AfterCompileAction" text="Execute After Make"
               description="Execute this goal after IntelliJ IDEA Make">
       </action>
       <action id="Maven.BeforeRun"
-              class="org.jetbrains.idea.maven.tasks.actions.BeforeRunAction" text="Execute before Run/debug..."
+              class="org.jetbrains.idea.maven.tasks.actions.BeforeRunAction" text="Execute Before Run/debug..."
               description="Execute this goal before launching Run/Debug configuration">
       </action>
       <separator/>
       <action id="Maven.AssignShortcut"
-              class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign shortcut..."
-              description="Assign shortcut">
+              class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign Ahortcut..."
+              description="Assign Shortcut">
       </action>
     </group>
 
-    <group id="Maven.PomTreeToolbar" description="Pom Tree toolbar">
+    <group id="Maven.NavigatorToolbar" description="Maven Projects Navigator Toolbar">
       <reference id="Maven.Reimport"/>
       <reference id="Maven.UpdateFolders"/>
       <reference id="Maven.DownloadArtifacts"/>
@@ -216,7 +221,7 @@
       <reference id="Maven.ToggleOffline"/>
       <reference id="Maven.ToggleSkipTests"/>
       <separator/>
-      <reference id="Maven.PomTreeView"/>
+      <reference id="Maven.NavigatorSettings"/>
       <separator/>
       <reference id="Maven.Help"/>
     </group>
@@ -235,7 +240,7 @@
       <reference id="Maven.RunGoal"/>
       <reference ref="RunContextGroup"/>
       <separator/>
-      <reference ref="Maven.EventsGroup"/>
+      <reference ref="Maven.TasksGroup"/>
     </group>
 
     <group id="Maven.ProfileMenu" popup="true">

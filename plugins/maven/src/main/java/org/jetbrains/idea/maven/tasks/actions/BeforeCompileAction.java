@@ -5,11 +5,10 @@ import org.jetbrains.idea.maven.tasks.MavenTask;
 
 import java.util.Collection;
 
-/**
- * @author Vladislav.Kaznacheev
- */
+
 public class BeforeCompileAction extends IncludeExcludeTaskAction {
-  protected Collection<MavenTask> getCollection(MavenTasksManager eventsHandler) {
-    return eventsHandler.getState().beforeCompile;
+  @Override
+  protected Collection<MavenTask> getAllTasks(MavenTasksManager tasksManager) {
+    return tasksManager.getState().beforeCompile;
   }
 }

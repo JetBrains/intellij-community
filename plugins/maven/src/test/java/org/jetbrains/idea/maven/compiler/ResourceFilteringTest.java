@@ -210,7 +210,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "  </resources>" +
                   "</build>");
 
-    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
+    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
                                                               getModule("project"),
                                                               new DefaultMavenModuleModelsProvider(myProject));
     adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/resources").getPath(), false);

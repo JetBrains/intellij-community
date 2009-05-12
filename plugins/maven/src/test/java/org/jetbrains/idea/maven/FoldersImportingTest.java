@@ -64,7 +64,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myMavenTree.findProject(myProjectPom),
+    MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
                                                               getModule("project"),
                                                               new DefaultMavenModuleModelsProvider(myProject));
     adapter.addSourceFolder(dir1.getPath(), false);

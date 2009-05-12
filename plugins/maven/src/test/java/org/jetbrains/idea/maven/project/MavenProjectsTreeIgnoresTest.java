@@ -29,7 +29,7 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
   }
 
   public void testSendingNotifications() throws Exception {
-    myTree.setIgnoredState(myRoots.get(0), true);
+    myTree.setIgnoredState(Collections.singletonList(myRoots.get(0)), true);
 
     assertEquals("ignored: m1 ", myLog);
     myLog = "";

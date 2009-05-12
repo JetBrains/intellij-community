@@ -14,11 +14,9 @@ import org.jetbrains.idea.maven.utils.MavenAction;
 import java.util.Arrays;
 
 public class AddManagedFilesAction extends MavenAction {
+  @Override
   public void actionPerformed(AnActionEvent e) {
-    Project p = e.getData(PlatformDataKeys.PROJECT);
-    VirtualFile selectedFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-
-    final MavenProjectsManager manager = MavenProjectsManager.getInstance(p);
+    final MavenProjectsManager manager = getProjectsManager(e);
     FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, false, false, false, false, true) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -27,14 +25,16 @@ public class AddManagedFilesAction extends MavenAction {
 
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        if (!file.isDirectory()
-            && !file.getName().equals(MavenConstants.POM_XML)) return false;
+        if (!file.isDirectory() && !file.getName().equals(MavenConstants.POM_XML)) return false;
         return super.isFileVisible(file, showHiddenFiles);
       }
     };
     
-    FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(singlePomSelection, p);
-    VirtualFile[] files = dialog.choose(selectedFile, p);
+    Project project = getProject(e);
+    VirtualFile fileToSelect = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+
+    FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(singlePomSelection, project);
+    VirtualFile[] files = dialog.choose(fileToSelect, project);
     if (files.length == 0) return;
 
     manager.addManagedFiles(Arrays.asList(files));

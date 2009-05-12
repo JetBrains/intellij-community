@@ -7,9 +7,10 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
+import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
+import java.util.List;
 
 public class StructureImportingTest extends MavenImportingTestCase {
   public void testUsingRelativePathForTheProject() throws Exception {
@@ -74,12 +75,14 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m1", "m2");
 
-    MavenProjectsStructure.RootNode r = createMavenTree();
+    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    assertEquals(1, roots.size());
+    assertEquals("project", roots.get(0).getMavenId().artifactId);
 
-    assertEquals(1, r.pomNodes.size());
-    assertEquals("project", r.pomNodes.get(0).getProjectName());
-
-    assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
+    List<MavenProject> modules = myProjectsTree.getModules(roots.get(0));
+    assertEquals(2, modules.size());
+    assertEquals("m1", modules.get(0).getMavenId().artifactId);
+    assertEquals("m2", modules.get(1).getMavenId().artifactId);
   }
 
   public void testModulesAreNamedAfterArtifactIds() throws Exception {
@@ -223,14 +226,14 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m1", "m2");
 
-    MavenProjectsStructure.RootNode r = createMavenTree();
+    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    assertEquals(1, roots.size());
+    assertEquals("project", roots.get(0).getMavenId().artifactId);
 
-    assertEquals(1, r.pomNodes.size());
-    assertEquals("project", r.pomNodes.get(0).getProjectName());
-
-    assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
-    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getProjectName());
-    assertEquals("m2", r.pomNodes.get(0).modulePomsNode.pomNodes.get(1).getProjectName());
+    List<MavenProject> modules = myProjectsTree.getModules(roots.get(0));
+    assertEquals(2, modules.size());
+    assertEquals("m1", modules.get(0).getMavenId().artifactId);
+    assertEquals("m2", modules.get(1).getMavenId().artifactId);
   }
 
   public void testParentWithoutARelativePath() throws Exception {
@@ -260,13 +263,13 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m1");
 
-    MavenProjectsStructure.RootNode r = createMavenTree();
+    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    assertEquals(1, roots.size());
+    assertEquals("project", roots.get(0).getMavenId().artifactId);
 
-    assertEquals(1, r.pomNodes.size());
-    assertEquals("project", r.pomNodes.get(0).getProjectName());
-
-    assertEquals(1, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
-    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getProjectName());
+    List<MavenProject> modules = myProjectsTree.getModules(roots.get(0));
+    assertEquals(1, modules.size());
+    assertEquals("m1", modules.get(0).getMavenId().artifactId);
   }
 
   public void testModuleWithPropertiesWithParentWithoutARelativePath() throws Exception {
@@ -296,13 +299,13 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m1");
 
-    MavenProjectsStructure.RootNode r = createMavenTree();
+    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    assertEquals(1, roots.size());
+    assertEquals("project", roots.get(0).getMavenId().artifactId);
 
-    assertEquals(1, r.pomNodes.size());
-    assertEquals("project", r.pomNodes.get(0).getProjectName());
-
-    assertEquals(1, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
-    assertEquals("m1", r.pomNodes.get(0).modulePomsNode.pomNodes.get(0).getProjectName());
+    List<MavenProject> modules = myProjectsTree.getModules(roots.get(0));
+    assertEquals(1, modules.size());
+    assertEquals("m1", modules.get(0).getMavenId().artifactId);
   }
 
   public void testParentInLocalRepository() throws Exception {
@@ -358,7 +361,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     assertTrue(junitDir.exists());
 
-    assertEquals("junit", myMavenTree.getRootProjects().get(0).getParentId().artifactId);
+    assertEquals("junit", myProjectsTree.getRootProjects().get(0).getParentId().artifactId);
     assertTrue(new File(junitDir, "junit-4.0.pom").exists());
   }
 
@@ -510,7 +513,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("module2");
 
     getMavenImporterSettings().setCreateModuleGroups(true);
-    myMavenProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.flushPendingImportRequestsInTests();
     assertModuleGroupPath("module2", "module1 and modules");
   }
 

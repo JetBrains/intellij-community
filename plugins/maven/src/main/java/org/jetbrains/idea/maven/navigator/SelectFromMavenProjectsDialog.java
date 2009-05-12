@@ -7,9 +7,8 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.tasks.MavenTasksManager;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -23,20 +22,22 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
   private final NodeSelector mySelector;
 
   public SelectFromMavenProjectsDialog(Project project,
-                                   String title,
-                                   final Class<? extends MavenProjectsStructure.CustomNode> nodeClass,
-                                   NodeSelector selector) {
+                                       String title,
+                                       final Class<? extends MavenProjectsStructure.CustomNode> nodeClass,
+                                       NodeSelector selector) {
     super(project, false);
     myProject = project;
     mySelector = selector;
     setTitle(title);
 
     myTree = new SimpleTree();
-    myTree.setRootVisible(false);
-    myTree.setShowsRootHandles(true);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-    PopupMavenProjectsStructure treeStructure = new PopupMavenProjectsStructure(myProject) {
+    MavenProjectsStructure treeStructure = new MavenProjectsStructure(myProject,
+                                                                      MavenProjectsManager.getInstance(myProject),
+                                                                      MavenTasksManager.getInstance(myProject),
+                                                                      MavenProjectsNavigator.getInstance(myProject),
+                                                                      myTree) {
       @Override
       protected Class<? extends CustomNode>[] getVisibleNodesClasses() {
         return new Class[]{nodeClass};
@@ -46,13 +47,20 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
     treeBuilder.initRoot();
     Disposer.register(myProject, treeBuilder);
 
-    SimpleNode nodeToSelect = treeStructure.init();
+    treeStructure.buildTree();
+    SimpleNode selection = null;
+    for (MavenProjectsStructure.ProjectNode each : treeStructure.getProjectNodes()) {
+      if (mySelector != null) {
+        selection = mySelector.findNode(each);
+      }
+      if (selection != null) break;
+    }
 
     treeBuilder.updateFromRoot(true);
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
 
-    if (nodeToSelect != null) {
-      myTree.setSelectedNode(treeBuilder, nodeToSelect, true);
+    if (selection != null) {
+      myTree.setSelectedNode(treeBuilder, selection, true);
       // TODO: does not work because of delayed children creation
     }
 
@@ -70,42 +78,7 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
     return pane;
   }
 
-  private class PopupMavenProjectsStructure extends MavenProjectsStructure {
-    private final MavenProjectsNavigatorSettings myTreeViewSettings;
-
-    public PopupMavenProjectsStructure(final Project project) {
-      super(project,
-            MavenProjectsManager.getInstance(project),
-            MavenTasksManager.getInstance(project));
-      myTreeViewSettings = MavenProjectsNavigator.getInstance(project).getTreeViewSettings();
-    }
-
-    protected MavenProjectsNavigatorSettings getTreeViewSettings() {
-      return myTreeViewSettings;
-    }
-
-    protected void updateTreeFrom(SimpleNode node) {
-    }
-
-    protected boolean isMinimalView() {
-      return true;
-    }
-
-    public SimpleNode init() {
-      SimpleNode result = null;
-      for (MavenProject each : myProjectsManager.getProjects()) {
-        PomNode node = new PomNode(each);
-
-        myRoot.addToStructure(node);
-        if (result == null && mySelector != null) {
-          result = mySelector.findNode(node);
-        }
-      }
-      return result;
-    }
-  }
-
   protected interface NodeSelector {
-    SimpleNode findNode(MavenProjectsStructure.PomNode pomNode);
+    SimpleNode findNode(MavenProjectsStructure.ProjectNode pomNode);
   }
 }

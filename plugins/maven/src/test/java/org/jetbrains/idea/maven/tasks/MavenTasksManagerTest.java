@@ -138,12 +138,12 @@ public class MavenTasksManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p1, "clean");
     assertKeymapContains(p2, "clean");
 
-    myMavenProjectsManager.setIgnoredState(myMavenProjectsManager.findProject(p1), true);
+    myProjectsManager.setIgnoredState(Arrays.asList(myProjectsManager.findProject(p1)), true);
 
     assertKeymapDoesNotContain(p1, "clean");
     assertKeymapContains(p2, "clean");
 
-    myMavenProjectsManager.setIgnoredState(myMavenProjectsManager.findProject(p1), false);
+    myProjectsManager.setIgnoredState(Arrays.asList(myProjectsManager.findProject(p1)), false);
 
     assertKeymapContains(p1, "clean");
     assertKeymapContains(p2, "clean");

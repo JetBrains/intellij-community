@@ -218,11 +218,11 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   }
 
   private void setAggregatorProject(VirtualFile pom) {
-    myBuilder.setAggregatorProject(myMavenProjectsManager.findProject(pom));
+    myBuilder.setAggregatorProject(myProjectsManager.findProject(pom));
   }
 
   private void setParentProject(VirtualFile pom) {
-    myBuilder.setParentProject(myMavenProjectsManager.findProject(pom));
+    myBuilder.setParentProject(myProjectsManager.findProject(pom));
   }
 
   private void setInheritedOptions(boolean groupId, boolean version) {

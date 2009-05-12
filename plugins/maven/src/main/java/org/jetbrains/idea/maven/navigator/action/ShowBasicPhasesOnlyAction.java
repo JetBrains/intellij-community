@@ -2,14 +2,14 @@ package org.jetbrains.idea.maven.navigator.action;
 
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 
-public class ShowIgnoredProjectsAction extends MavenProjectsNavigatorAction {
+public class ShowBasicPhasesOnlyAction extends MavenProjectsNavigatorAction {
   @Override
   public boolean isSelected(MavenProjectsNavigator navigator) {
-    return navigator.getShowIgnored();
+    return navigator.getShowBasicPhasesOnly();
   }
 
   @Override
   public void setSelected(MavenProjectsNavigator navigator, boolean value) {
-    navigator.setShowIgnored(value);
+    navigator.setShowBasicPhasesOnly(value);
   }
 }

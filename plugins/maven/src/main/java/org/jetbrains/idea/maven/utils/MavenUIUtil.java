@@ -24,8 +24,7 @@ import java.util.TreeSet;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class IdeaAPIHelper {
-
+public class MavenUIUtil {
   public static void executeAction(final String actionId, final InputEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction action = actionManager.getAction(actionId);

@@ -17,22 +17,21 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.tasks.MavenTasksManager;
-import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorSettings;
-import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenException;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.runner.MavenExecutor;
 import org.jetbrains.idea.maven.runner.MavenExternalExecutor;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,44 +39,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
-  protected MavenProjectsTree myMavenTree;
-  protected MavenProjectsManager myMavenProjectsManager;
+  protected MavenProjectsTree myProjectsTree;
+  protected MavenProjectsManager myProjectsManager;
   private List<String> myProfilesList;
 
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    myMavenProjectsManager = MavenProjectsManager.getInstance(myProject);
+    myProjectsManager = MavenProjectsManager.getInstance(myProject);
     removeFromLocalRepository("test");
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myMavenProjectsManager.projectClosed();
+    Messages.setTestDialog(TestDialog.DEFAULT);
+    myProjectsManager.projectClosed();
     removeFromLocalRepository("test");
     super.tearDown();
-  }
-
-  protected MavenProjectsStructure.RootNode createMavenTree() {
-    MavenProjectsStructure s = new MavenProjectsStructure(myProject,
-                                                          myMavenProjectsManager,
-                                                          myProject.getComponent(MavenTasksManager.class)) {
-      {
-        for (MavenProject each : myMavenProjectsManager.getProjects()) {
-          this.myRoot.addUnder(new MavenProjectsStructure.PomNode(each));
-        }
-      }
-
-      protected MavenProjectsNavigatorSettings getTreeViewSettings() {
-        return new MavenProjectsNavigatorSettings();
-      }
-
-      protected void updateTreeFrom(@Nullable SimpleNode node) {
-      }
-    };
-    return (MavenProjectsStructure.RootNode)s.getRootElement();
   }
 
   protected void assertModules(String... expectedNames) {
@@ -329,43 +310,43 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myProfilesList = Arrays.asList(profiles);
 
     initMavenProjectsManager(false);
-    myMavenProjectsManager.resetManagedFilesAndProfilesInTests(files, myProfilesList);
-    myMavenProjectsManager.waitForQuickResolvingCompletion();
+    myProjectsManager.resetManagedFilesAndProfilesInTests(files, myProfilesList);
+    myProjectsManager.waitForQuickResolvingCompletion();
     // todo replace with myMavenProjectsManager.flushPendingImportRequestsInTests();
-    myMavenProjectsManager.scheduleImportInTests(files);
-    myMavenProjectsManager.importProjects();
-    myMavenTree = myMavenProjectsManager.getProjectsTreeForTests();
+    myProjectsManager.scheduleImportInTests(files);
+    myProjectsManager.importProjects();
   }
 
   protected void initMavenProjectsManager(boolean enableEventHandling) {
-    myMavenProjectsManager.initForTests();
-    if (enableEventHandling) myMavenProjectsManager.listenForExternalChanges();
+    myProjectsManager.initForTests();
+    myProjectsTree = myProjectsManager.getProjectsTreeForTests();
+    if (enableEventHandling) myProjectsManager.listenForExternalChanges();
   }
 
   protected void waitForReadingCompletion() {
-    myMavenProjectsManager.waitForReadingCompletion();
+    myProjectsManager.waitForReadingCompletion();
   }
 
   protected void resolveDependenciesAndImport() {
-    myMavenProjectsManager.waitForResolvingCompletionAndImport();
+    myProjectsManager.waitForResolvingCompletionAndImport();
   }
 
   protected void resolveFoldersAndImport() {
-    myMavenProjectsManager.scheduleFoldersResolving();
-    myMavenProjectsManager.waitForFoldersResolvingCompletionAndImport();
+    myProjectsManager.scheduleFoldersResolving();
+    myProjectsManager.waitForFoldersResolvingCompletionAndImport();
   }
 
   protected void resolvePlugins() {
-    myMavenProjectsManager.waitForPluginsResolvingCompletion();
+    myProjectsManager.waitForPluginsResolvingCompletion();
   }
 
   protected void downloadArtifacts() {
-    myMavenProjectsManager.scheduleArtifactsDownloading();
-    myMavenProjectsManager.waitForArtifactsDownloadingCompletion();
+    myProjectsManager.scheduleArtifactsDownloading();
+    myProjectsManager.waitForArtifactsDownloadingCompletion();
   }
 
   protected void performPostImportTasks() {
-    myMavenProjectsManager.waitForPostImportTasksCompletion();
+    myProjectsManager.waitForPostImportTasksCompletion();
   }
 
   protected void executeGoal(String relativePath, String goal) {
@@ -447,5 +428,27 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       result += each.getMessage() + " FILE: " + (file == null ? "null" : file.getPath()) + "\n";
     }
     return result;
+  }
+
+  protected AtomicInteger configConfirmationForYesAnswer() {
+    final AtomicInteger counter = new AtomicInteger();
+    Messages.setTestDialog(new TestDialog() {
+      public int show(String message) {
+        counter.set(counter.get() + 1);
+        return 0;
+      }
+    });
+    return counter;
+  }
+
+  protected AtomicInteger configConfirmationForNoAnswer() {
+    final AtomicInteger counter = new AtomicInteger();
+    Messages.setTestDialog(new TestDialog() {
+      public int show(String message) {
+        counter.set(counter.get() + 1);
+        return 1;
+      }
+    });
+    return counter;
   }
 }

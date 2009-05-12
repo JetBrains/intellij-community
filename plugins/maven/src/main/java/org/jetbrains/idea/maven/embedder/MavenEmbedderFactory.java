@@ -33,8 +33,8 @@ public class MavenEmbedderFactory {
 
   @NonNls private static final String LOCAL_REPOSITORY_TAG = "localRepository";
 
-  @NonNls private static final String[] standardPhases = {"clean", "compile", "test", "package", "install", "site"};
-  @NonNls private static final String[] standardGoals = {"clean", "validate", "generate-sources", "process-sources", "generate-resources",
+  @NonNls private static final String[] basicPhases = {"clean", "compile", "test", "package", "install", "deploy", "site"};
+  @NonNls private static final String[] phases = {"clean", "validate", "generate-sources", "process-sources", "generate-resources",
     "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
     "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
     "verify", "install", "site", "deploy"};
@@ -142,12 +142,12 @@ public class MavenEmbedderFactory {
     }
   }
 
-  public static List<String> getStandardPhasesList() {
-    return Arrays.asList(standardPhases);
+  public static List<String> getBasicPhasesList() {
+    return Arrays.asList(basicPhases);
   }
 
-  public static List<String> getStandardGoalsList() {
-    return Arrays.asList(standardGoals);
+  public static List<String> getPhasesList() {
+    return Arrays.asList(phases);
   }
 
   public static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings settings) {

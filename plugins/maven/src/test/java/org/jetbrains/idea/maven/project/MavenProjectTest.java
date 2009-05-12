@@ -359,13 +359,13 @@ public class MavenProjectTest extends MavenImportingTestCase {
 
     importProjects(m1, m2);
 
-    List<MavenRemoteRepository> result = myMavenTree.getRootProjects().get(0).getRemoteRepositories();
+    List<MavenRemoteRepository> result = myProjectsTree.getRootProjects().get(0).getRemoteRepositories();
     assertEquals(3, result.size());
     assertEquals("one", result.get(0).getId());
     assertEquals("two", result.get(1).getId());
     assertEquals("central", result.get(2).getId());
 
-    result = myMavenTree.getRootProjects().get(1).getRemoteRepositories();
+    result = myProjectsTree.getRootProjects().get(1).getRemoteRepositories();
     assertEquals(3, result.size());
     assertEquals("one", result.get(0).getId());
     assertEquals("two", result.get(1).getId());
@@ -411,7 +411,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
   }
 
   private MavenProject getMavenProject() {
-    return myMavenTree.getRootProjects().get(0);
+    return myProjectsTree.getRootProjects().get(0);
   }
 
   private PluginInfo p(String groupId, String artifactId) {

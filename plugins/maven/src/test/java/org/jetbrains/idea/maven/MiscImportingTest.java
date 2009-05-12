@@ -43,8 +43,8 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertSources("m1");
     assertSources("m2");
 
-    assertFalse(myMavenProjectsManager.isMavenizedProject());
-    myMavenProjectsManager.importProjectOrAllAvailablePomFiles();
+    assertFalse(myProjectsManager.isMavenizedProject());
+    myProjectsManager.importProjectOrAllAvailablePomFiles();
 
     assertSources("m1", "src/main/java");
     assertSources("m2", "src/main/java");
@@ -135,7 +135,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     File jarFile = new File(getRepositoryFile(), "junit/junit/4.0/junit-4.0.jar");
     assertTrue(jarFile.exists());
 
-    myMavenProjectsManager.listenForExternalChanges();
+    myProjectsManager.listenForExternalChanges();
 
     // valid password is 'fg3W9' (see http://www.jetbrains.net/confluence/display/JBINT/HTTP+Proxy+with+authorization)
     updateSettingsXml("<proxies>" +

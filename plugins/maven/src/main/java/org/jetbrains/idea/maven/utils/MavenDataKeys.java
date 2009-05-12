@@ -5,11 +5,9 @@ import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.List;
 
-/**
- * @author Vladislav.Kaznacheev
- */
+
 public class MavenDataKeys {
-  public static final DataKey<List<String>> MAVEN_GOALS_KEY = DataKey.create("MAVEN_GOALS");
-  public static final DataKey<List<String>> MAVEN_PROFILES_KEY = DataKey.create("MAVEN_PROFILES");
-  public static final DataKey<List<MavenProject>> MAVEN_PROJECT_NODES = DataKey.create("MAVEN_PROJECT_NODES");
+  public static final DataKey<List<String>> MAVEN_GOALS = DataKey.create("MAVEN_GOALS");
+  public static final DataKey<List<String>> MAVEN_PROFILES = DataKey.create("MAVEN_PROFILES");
+  public static final DataKey<List<MavenProject>> MAVEN_PROJECTS = DataKey.create("MAVEN_PROJECTS");
 }

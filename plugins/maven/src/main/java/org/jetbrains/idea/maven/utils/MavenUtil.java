@@ -23,11 +23,13 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +76,18 @@ public class MavenUtil {
         return file.getPath();
       }
     });
+  }
+
+  public static List<VirtualFile> collectFiles(List<MavenProject> projects) {
+    return ContainerUtil.map(projects, new Function<MavenProject, VirtualFile>() {
+      public VirtualFile fun(MavenProject project ) {
+        return project.getFile();
+      }
+    });
+  }
+
+  public static String formatHtmlImage(URL url) {
+    return "<img src=\"" + url + "\"> ";
   }
 
   public static String makeFileContent(MavenId projectId) {

@@ -266,7 +266,7 @@ public class MavenProjectImporter {
       myRootModelsToCommit.add(each.getRootModel());
     }
 
-    ArrayList<Module> modules = new ArrayList<Module>(myMavenProjectToModule.values());
+    ArrayList<Module> modules = new ArrayList<Module>(moduleImporters.keySet());
     MavenProjectsManager.getInstance(myProject).setMavenizedModules(modules, true);
   }
 

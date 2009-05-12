@@ -635,10 +635,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   private List<MavenProject> getRootProjects() {
-    return myMavenTree.getRootProjects();
+    return myProjectsTree.getRootProjects();
   }
 
   private List<MavenProject> getModules(MavenProject p) {
-    return myMavenTree.getModules(p);
+    return myProjectsTree.getModules(p);
   }
 }

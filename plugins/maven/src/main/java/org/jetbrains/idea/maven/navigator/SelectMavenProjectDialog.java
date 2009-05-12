@@ -12,8 +12,8 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
   private MavenProject myResult;
 
   public SelectMavenProjectDialog(Project project, final MavenProject current) {
-    super(project, "Select Maven Project", MavenProjectsStructure.PomNode.class, new NodeSelector() {
-      public SimpleNode findNode(MavenProjectsStructure.PomNode pomNode) {
+    super(project, "Select Maven Project", MavenProjectsStructure.ProjectNode.class, new NodeSelector() {
+      public SimpleNode findNode(MavenProjectsStructure.ProjectNode pomNode) {
         return pomNode.getMavenProject() == current ? pomNode : null;
       }
     });
@@ -38,11 +38,11 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
     if (node instanceof NullNode) node = null;
 
     if (node != null) {
-      if (!(node instanceof MavenProjectsStructure.PomNode)) {
-        ((MavenProjectsStructure.CustomNode)node).getParent(MavenProjectsStructure.PomNode.class);
+      if (!(node instanceof MavenProjectsStructure.ProjectNode)) {
+        ((MavenProjectsStructure.CustomNode)node).getParent(MavenProjectsStructure.ProjectNode.class);
       }
     }
-    myResult = node != null ? ((MavenProjectsStructure.PomNode)node).getMavenProject() : null;
+    myResult = node != null ? ((MavenProjectsStructure.ProjectNode)node).getMavenProject() : null;
 
     super.doOKAction();
   }

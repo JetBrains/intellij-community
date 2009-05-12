@@ -361,7 +361,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     if (dataContext != null) {
       final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
       if (virtualFile != null && MavenConstants.POM_XML.equals(virtualFile.getName())) {
-        final List<String> goals = MavenDataKeys.MAVEN_GOALS_KEY.getData(dataContext);
+        final List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(dataContext);
         if (goals != null && goals.size() == 1) {
           return new MavenTask(virtualFile.getPath(), goals.get(0));
         }

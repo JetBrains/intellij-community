@@ -147,7 +147,7 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   private static Collection<String> collectGoals(MavenProject project, File repository) {
     Collection<String> result = new THashSet<String>();
-    result.addAll(MavenEmbedderFactory.getStandardGoalsList());
+    result.addAll(MavenEmbedderFactory.getPhasesList());
 
     for (MavenPlugin each : project.getPlugins()) {
       collectGoals(repository, each, result);

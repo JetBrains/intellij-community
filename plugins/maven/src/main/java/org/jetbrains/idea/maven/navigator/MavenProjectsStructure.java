@@ -1,9 +1,10 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
@@ -12,19 +13,21 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.tasks.MavenTasksManager;
-import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenId;
-import org.jetbrains.idea.maven.utils.MavenPluginInfo;
+import org.jetbrains.idea.maven.project.MavenPlugin;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.tasks.MavenTasksManager;
+import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -32,7 +35,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 
-public abstract class MavenProjectsStructure extends SimpleTreeStructure {
+public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final Icon MAVEN_PROJECT_ICON = IconLoader.getIcon("/images/mavenProject.png");
 
   private static final Icon OPEN_PROFILES_ICON = IconLoader.getIcon("/images/profilesOpen.png");
@@ -54,30 +57,187 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
   private static final URL WARNING_ICON_URL = MavenProjectsStructure.class.getResource("/images/warning.png");
 
   private static final CustomNode[] EMPTY_NODES_ARRAY = new CustomNode[0];
-  protected final Project myProject;
-  protected final MavenProjectsManager myProjectsManager;
-  protected final MavenTasksManager myTasksManager;
 
-  protected final RootNode myRoot = new RootNode();
+  private static final Collection<String> BASIC_PHASES = MavenEmbedderFactory.getBasicPhasesList();
+  private static final Collection<String> PHASES = MavenEmbedderFactory.getPhasesList();
 
-  protected final Collection<String> myStandardPhases = MavenEmbedderFactory.getStandardPhasesList();
-  protected final Collection<String> myStandardGoals = MavenEmbedderFactory.getStandardGoalsList();
+  private static final Comparator<SimpleNode> NODE_COMPARATOR = new Comparator<SimpleNode>() {
+    public int compare(SimpleNode o1, SimpleNode o2) {
+      if (o1 instanceof ProfilesNode) return -1;
+      if (o2 instanceof ProfilesNode) return 1;
+      return o1.getName().compareToIgnoreCase(o2.getName());
+    }
+  };
+
+  private final Project myProject;
+  private final MavenProjectsManager myProjectsManager;
+  private final MavenTasksManager myTasksManager;
+  private final MavenProjectsNavigator myProjectsNavigator;
+
+  private final SimpleTreeBuilder myTreeBuilder;
+  private final RootNode myRoot = new RootNode();
+
+  private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new THashMap<MavenProject, ProjectNode>();
 
   public MavenProjectsStructure(Project project,
-                            MavenProjectsManager projectsManager,
-                            MavenTasksManager tasksManager) {
+                                MavenProjectsManager projectsManager,
+                                MavenTasksManager tasksManager,
+                                MavenProjectsNavigator projectsNavigator,
+                                SimpleTree tree) {
     myProject = project;
     myProjectsManager = projectsManager;
     myTasksManager = tasksManager;
+    myProjectsNavigator = projectsNavigator;
+
+    configureTree(tree);
+
+    myTreeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null);
+    Disposer.register(myProject, myTreeBuilder);
+
+    myTreeBuilder.initRoot();
+    myTreeBuilder.expand(myRoot, null);
   }
 
-  public Object getRootElement() {
+  private void configureTree(final SimpleTree tree) {
+    tree.setRootVisible(false);
+    tree.setShowsRootHandles(true);
+
+    MavenUIUtil.installCheckboxRenderer(tree, new MavenUIUtil.CheckboxHandler() {
+      public void toggle(TreePath treePath, InputEvent e) {
+        SimpleNode node = tree.getNodeFor(treePath);
+        if (node != null) {
+          node.handleDoubleClickOrEnter(tree, e);
+        }
+      }
+
+      public boolean isVisible(Object userObject) {
+        return userObject instanceof ProfileNode;
+      }
+
+      public boolean isSelected(Object userObject) {
+        return ((ProfileNode)userObject).isActive();
+      }
+    });
+  }
+
+  public RootNode getRootElement() {
     return myRoot;
   }
 
-  protected abstract MavenProjectsNavigatorSettings getTreeViewSettings();
+  public List<ProjectNode> getProjectNodes() {
+    return new ArrayList<ProjectNode>(myProjectToNodeMapping.values());
+  }
 
-  protected abstract void updateTreeFrom(@Nullable SimpleNode node);
+  public void buildTree() {
+    updateProjects(myProjectsManager.getProjects());
+  }
+
+  public void update(boolean restructure) {
+    if (restructure) {
+      buildTree();
+    }
+    else {
+      updateFrom(myRoot);
+    }
+  }
+
+  private void updateFrom(SimpleNode node) {
+    myTreeBuilder.addSubtreeToUpdateByElement(node);
+  }
+
+  public void updateProjects(List<MavenProject> projects) {
+    for (MavenProject each : projects) {
+      ProjectNode node = findNodeFor(each);
+      if (node == null) {
+        node = new ProjectNode(each);
+        myProjectToNodeMapping.put(each, node);
+      }
+      doUpdateProject(node);
+    }
+    myRoot.updateProfilesNode();
+  }
+
+  private void doUpdateProject(ProjectNode node) {
+    MavenProject project = node.getMavenProject();
+
+    ProjectsGroupNode newParentNode = myRoot;
+
+    if (myProjectsNavigator.getGroupModules()) {
+      MavenProject aggregator = myProjectsManager.findAggregator(project);
+      if (aggregator != null) {
+        ProjectNode aggregatorNode = findNodeFor(aggregator);
+        if (aggregatorNode != null && aggregatorNode.isVisible()) {
+          newParentNode = aggregatorNode.getModulesNode();
+        }
+      }
+    }
+
+    node.updateNode();
+    reconnectNode(node, newParentNode);
+
+    ProjectsGroupNode newModulesParentNode = myProjectsNavigator.getGroupModules() && node.isVisible()
+                                             ? node.getModulesNode()
+                                             : myRoot;
+    for (MavenProject each : myProjectsManager.getModules(project)) {
+      ProjectNode moduleNode = findNodeFor(each);
+      if (moduleNode != null && !moduleNode.getStructuralParent().equals(newModulesParentNode)) {
+        reconnectNode(moduleNode, newModulesParentNode);
+      }
+    }
+  }
+
+  private void reconnectNode(ProjectNode node, ProjectsGroupNode newParentNode) {
+    ProjectsGroupNode oldParentNode = node.getStructuralParent();
+    if (oldParentNode == null || !oldParentNode.equals(newParentNode)) {
+      if (oldParentNode != null) {
+        oldParentNode.remove(node);
+        updateFrom(oldParentNode);
+      }
+      newParentNode.add(node);
+      updateFrom(newParentNode);
+    }
+    else {
+      newParentNode.sortProjects();
+      updateFrom(newParentNode);
+    }
+  }
+
+  public void removeProject(MavenProject project) {
+    ProjectNode node = myProjectToNodeMapping.remove(project);
+    if (node != null) {
+      ProjectsGroupNode parent = node.getStructuralParent();
+      parent.remove(node);
+      myRoot.updateProfilesNode();
+    }
+  }
+
+  public void setActiveProfiles(List<String> profiles) {
+    myRoot.setActiveProfiles(profiles);
+  }
+
+  public void updateIgnored(List<MavenProject> projects) {
+    for (MavenProject each : projects) {
+      ProjectNode node = findNodeFor(each);
+      if (node == null) continue;
+      updateFrom(node.getStructuralParent());
+    }
+  }
+
+  public void updateShortcuts() {
+    for (ProjectNode each : myProjectToNodeMapping.values()) {
+      each.updateShortcuts();
+      updateFrom(each);
+    }
+  }
+
+  public void select(MavenProject project) {
+    ProjectNode node = findNodeFor(project);
+    if (node != null) myTreeBuilder.select(node, null);
+  }
+
+  private ProjectNode findNodeFor(MavenProject project) {
+    return myProjectToNodeMapping.get(project);
+  }
 
   private boolean shouldDisplay(CustomNode node) {
     Class[] visibles = getVisibleNodesClasses();
@@ -93,24 +253,20 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     return null;
   }
 
-  private static final Comparator<SimpleNode> nodeComparator = new Comparator<SimpleNode>() {
-    public int compare(SimpleNode o1, SimpleNode o2) {
-      if (o1 instanceof ProfilesNode) return -1;
-      if (o2 instanceof ProfilesNode) return 1;
-      return getRepr(o1).compareToIgnoreCase(getRepr(o2));
+  public static <T extends CustomNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
+    final List<T> filtered = new ArrayList<T>();
+    for (SimpleNode node : getSelectedNodes(tree)) {
+      if ((nodeClass != null) && (!nodeClass.isInstance(node))) {
+        filtered.clear();
+        break;
+      }
+      //noinspection unchecked
+      filtered.add((T)node);
     }
-
-    private String getRepr(SimpleNode node) {
-      return node.getName();
-    }
-  };
-
-  private static <T extends SimpleNode> void insertSorted(List<T> list, T newObject) {
-    int pos = Collections.binarySearch(list, newObject, nodeComparator);
-    list.add(pos >= 0 ? pos : -pos - 1, newObject);
+    return filtered;
   }
 
-  public static List<SimpleNode> getSelectedNodes(SimpleTree tree) {
+  private static List<SimpleNode> getSelectedNodes(SimpleTree tree) {
     List<SimpleNode> nodes = new ArrayList<SimpleNode>();
     TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths != null) {
@@ -121,24 +277,16 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     return nodes;
   }
 
-  public static <T extends SimpleNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> aClass) {
-    final List<T> filtered = new ArrayList<T>();
-    for (SimpleNode node : getSelectedNodes(tree)) {
-      if ((aClass != null) && (!aClass.isInstance(node))) {
-        filtered.clear();
-        break;
-      }
-      //noinspection unchecked
-      filtered.add((T)node);
-    }
-    return filtered;
+  private static <T extends SimpleNode> void insertSorted(List<T> list, T newObject) {
+    int pos = Collections.binarySearch(list, newObject, NODE_COMPARATOR);
+    list.add(pos >= 0 ? pos : -pos - 1, newObject);
   }
 
   @Nullable
-  public static PomNode getCommonParent(Collection<? extends CustomNode> goalNodes) {
-    PomNode parent = null;
-    for (CustomNode node : goalNodes) {
-      PomNode nextParent = node.getParent(PomNode.class);
+  public static ProjectNode getCommonProjectNode(Collection<? extends CustomNode> nodes) {
+    ProjectNode parent = null;
+    for (CustomNode node : nodes) {
+      ProjectNode nextParent = node.getParent(ProjectNode.class);
       if (parent == null) {
         parent = nextParent;
       }
@@ -147,14 +295,6 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       }
     }
     return parent;
-  }
-
-  public void selectNode(SimpleTreeBuilder builder, SimpleNode node) {
-    builder.select(node, null);
-  }
-
-  protected String formatHtmlImage(URL url) {
-    return "<img src=\"" + url + "\"> ";
   }
 
   public enum ErrorLevel {
@@ -173,7 +313,10 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
     public void setStructuralParent(CustomNode structuralParent) {
       myStructuralParent = structuralParent;
+    }
 
+    public CustomNode getStructuralParent() {
+      return myStructuralParent;
     }
 
     @Override
@@ -181,21 +324,18 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       return myStructuralParent;
     }
 
-    public <T extends CustomNode> T getParent(Class<T> aClass) {
+    public <T extends CustomNode> T getParent(Class<T> parentClass) {
       CustomNode node = this;
       while (true) {
         node = node.myStructuralParent;
-        if (node == null || aClass.isInstance(node)) {
-          //noinspection unchecked,ConstantConditions
+        if (node == null || parentClass.isInstance(node)) {
+          //noinspection unchecked
           return (T)node;
         }
       }
     }
 
     public boolean isVisible() {
-      for (CustomNode each : getStructuralChildren()) {
-        if (each.isVisible()) return true;
-      }
       return shouldDisplay(this);
     }
 
@@ -239,10 +379,6 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
         if (eachLevel.compareTo(result) > 0) result = eachLevel;
       }
       return result;
-    }
-
-    public ErrorLevel getNodeErrorLevel() {
-      return myNodeErrorLevel;
     }
 
     public void setNodeErrorLevel(ErrorLevel level) {
@@ -305,145 +441,68 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       return null;
     }
 
-    void updateSubTree() {
-      updateTreeFrom(this);
-    }
-
-    public void handleDoubleClickOrEnter(final SimpleTree tree, final InputEvent inputEvent) {
-      final String actionId = getActionId();
+    public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
+      String actionId = getActionId();
       if (actionId != null) {
-        IdeaAPIHelper.executeAction(actionId, inputEvent);
+        MavenUIUtil.executeAction(actionId, inputEvent);
       }
     }
   }
 
-  public abstract class PomGroupNode extends CustomNode {
-    public final List<PomNode> pomNodes = new ArrayList<PomNode>();
-
-    public PomGroupNode(CustomNode parent) {
+  public abstract class GroupNode extends CustomNode {
+    protected GroupNode(CustomNode parent) {
       super(parent);
     }
 
+    @Override
     public boolean isVisible() {
-      return !pomNodes.isEmpty() && super.isVisible();
-    }
-
-    protected List<? extends CustomNode> getStructuralChildren() {
-      return pomNodes;
-    }
-
-    protected boolean addUnderExisting(final PomNode newNode) {
-      for (PomNode node : pomNodes) {
-        if (node.isAncestor(newNode)) {
-          node.addNestedPom(newNode);
-          return true;
-        }
+      if (!super.isVisible()) return false;
+      for (CustomNode each : getStructuralChildren()) {
+        if (each.isVisible()) return true;
       }
       return false;
     }
-
-    public boolean addUnder(PomNode newNode) {
-      if (getTreeViewSettings().groupStructurally) {
-        if (addUnderExisting(newNode)) {
-          return true;
-        }
-      }
-
-      for (PomNode child : removeChildren(newNode, new ArrayList<PomNode>())) {
-        newNode.addNestedPom(child);
-      }
-
-      add(newNode);
-      return true;
-    }
-
-    protected Collection<PomNode> removeChildren(final PomNode parent, final Collection<PomNode> children) {
-      return removeOwnChildren(parent, children);
-    }
-
-    protected final Collection<PomNode> removeOwnChildren(final PomNode parent, final Collection<PomNode> children) {
-      for (PomNode node : pomNodes) {
-        if (parent.isAncestor(node)) {
-          children.add(node);
-        }
-      }
-      pomNodes.removeAll(children);
-
-      resetChildrenCaches();
-      return children;
-    }
-
-    protected void add(PomNode pomNode) {
-      boolean wasVisible = isVisible();
-
-      pomNode.setStructuralParent(this);
-      insertSorted(pomNodes, pomNode);
-
-      resetChildrenCaches();
-      updateGroupNode(wasVisible);
-    }
-
-    public void remove(PomNode pomNode) {
-      boolean wasVisible = isVisible();
-
-      pomNode.setStructuralParent(null);
-      pomNodes.remove(pomNode);
-      adoptOrphans(pomNode);
-
-      resetChildrenCaches();
-      updateGroupNode(wasVisible);
-    }
-
-    public void reinsert(PomNode pomNode) {
-      pomNodes.remove(pomNode);
-      insertSorted(pomNodes, pomNode);
-    }
-
-    private void adoptOrphans(final PomNode pomNode) {
-      PomGroupNode newParent = getNewParentForOrphans();
-      newParent.merge(pomNode.modulePomsNode);
-      newParent.merge(pomNode.nonModulePomsNode);
-      if (newParent != this) {
-        updateTreeFrom(newParent);
-      }
-    }
-
-    protected PomGroupNode getNewParentForOrphans() {
-      return this;
-    }
-
-    private void merge(PomGroupNode groupNode) {
-      for (PomNode pomNode : groupNode.pomNodes) {
-        insertSorted(pomNodes, pomNode);
-      }
-      groupNode.clear();
-      resetChildrenCaches();
-    }
-
-    public void clear() {
-      pomNodes.clear();
-      resetChildrenCaches();
-    }
-
-    private void updateGroupNode(boolean wasVisible) {
-      if (wasVisible && isVisible()) {
-        updateSubTree();
-      }
-      else {
-        updateTreeFrom(getVisibleParent());
-      }
-    }
-
-    @NotNull
-    protected abstract CustomNode getVisibleParent();
   }
 
-  public class RootNode extends PomGroupNode {
-    public ProfilesNode profilesNode;
+  public abstract class ProjectsGroupNode extends GroupNode {
+    protected final List<ProjectNode> myProjectNodes = new ArrayList<ProjectNode>();
+
+    public ProjectsGroupNode(CustomNode parent) {
+      super(parent);
+      setIcons(CLOSED_MODULES_ICON, OPEN_MODULES_ICON);
+    }
+
+    protected List<? extends CustomNode> getStructuralChildren() {
+      return myProjectNodes;
+    }
+
+    public List<ProjectNode> getProjectNodes() {
+      return myProjectNodes;
+    }
+
+    protected void add(ProjectNode projectNode) {
+      projectNode.setStructuralParent(this);
+      insertSorted(myProjectNodes, projectNode);
+      resetChildrenCaches();
+    }
+
+    public void remove(ProjectNode projectNode) {
+      projectNode.setStructuralParent(null);
+      myProjectNodes.remove(projectNode);
+      resetChildrenCaches();
+    }
+
+    public void sortProjects() {
+      Collections.sort(myProjectNodes, NODE_COMPARATOR);
+    }
+  }
+
+  public class RootNode extends ProjectsGroupNode {
+    private ProfilesNode myProfilesNode;
 
     public RootNode() {
       super(null);
-      profilesNode = new ProfilesNode(this);
+      myProfilesNode = new ProfilesNode(this);
       updateNameAndDescription();
     }
 
@@ -451,95 +510,72 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       setNameAndDescription(NavigatorBundle.message("node.root"), null);
     }
 
+    @Override
+    public boolean isVisible() {
+      return true;
+    }
+
     protected List<? extends CustomNode> getStructuralChildren() {
       List<CustomNode> result = new ArrayList<CustomNode>();
-      result.add(profilesNode);
-      result.addAll(pomNodes);
+      result.add(myProfilesNode);
+      result.addAll(myProjectNodes);
       return result;
     }
 
-    @NotNull
-    protected CustomNode getVisibleParent() {
-      return myRoot;
-    }
-
-    public void rebuild(final Collection<PomNode> allPomNodes) {
-      pomNodes.clear();
-
-      updateProfileNodes();
-
-      for (PomNode node : allPomNodes) {
-        node.unlinkNested();
-      }
-      for (PomNode pomNode : allPomNodes) {
-        addToStructure(pomNode);
-      }
-    }
-
-    void addToStructure(PomNode pomNode) {
-      if (!getTreeViewSettings().showIgnored && myProjectsManager.isIgnored(pomNode.myMavenProject)) {
-        return;
-      }
-      addUnder(pomNode);
-    }
-
-    public void updateProfileNodes() {
-      profilesNode.clear();
+    public void updateProfilesNode() {
+      // TODO!!!!!!!!!!!!!!!!!!!!!!
+      myProfilesNode.clear();
       for (String each : myProjectsManager.getAvailableProfiles()) {
-        profilesNode.add(each);
+        myProfilesNode.add(each);
       }
-      profilesNode.updateActive(myProjectsManager.getActiveProfiles(), true);
-      profilesNode.updateSubTree();
+      myProfilesNode.updateActive(myProjectsManager.getActiveProfiles(), true);
     }
 
     public void setActiveProfiles(List<String> profiles) {
-      profilesNode.updateActive(profiles, false);
+      myProfilesNode.updateActive(profiles, false);
     }
   }
 
-  public class PomNode extends CustomNode {
-    final private MavenProject myMavenProject;
-    private String savedPath = "";
-    private String actionIdPrefix = "";
+  public class ProjectNode extends CustomNode {
+    private final MavenProject myMavenProject;
+    private String myActionIdPrefix = "";
 
-    private LifecycleNode lifecycleNode;
-    private PluginsNode pluginsNode;
-    public NestedPomsNode modulePomsNode;
-    public NestedPomsNode nonModulePomsNode;
+    private final LifecycleNode myLifecycleNode;
+    private final PluginsNode myPluginsNode;
+    private final ModulesNode myModulesNode;
 
-    public PomNode(MavenProject mavenProject) {
+    public ProjectNode(MavenProject mavenProject) {
       super(null);
-      this.myMavenProject = mavenProject;
+      myMavenProject = mavenProject;
 
-      lifecycleNode = new LifecycleNode(this);
-      pluginsNode = new PluginsNode(this);
-      modulePomsNode = new ModulePomsNode(this);
-      nonModulePomsNode = new NonModulePomsNode(this);
-
-      modulePomsNode.sibling = nonModulePomsNode;
-      nonModulePomsNode.sibling = modulePomsNode;
+      myLifecycleNode = new LifecycleNode(this);
+      myPluginsNode = new PluginsNode(this);
+      myModulesNode = new ModulesNode(this);
 
       updateNode();
       setUniformIcon(MAVEN_PROJECT_ICON);
     }
 
-    public VirtualFile getFile() {
-      return myMavenProject.getFile();
+    @Override
+    public ProjectsGroupNode getStructuralParent() {
+      return (ProjectsGroupNode)super.getStructuralParent();
+    }
+
+    @Override
+    public boolean isVisible() {
+      return super.isVisible() && (myProjectsNavigator.getShowIgnored() || !myProjectsManager.isIgnored(myMavenProject));
     }
 
     protected List<? extends CustomNode> getStructuralChildren() {
       List<CustomNode> result = new ArrayList<CustomNode>();
-      result.add(lifecycleNode);
-      result.add(pluginsNode);
-      result.add(modulePomsNode);
-      result.add(nonModulePomsNode);
+      result.add(myLifecycleNode);
+      result.add(myPluginsNode);
+      result.add(myModulesNode);
       return result;
     }
 
-    @Nullable
-    @NonNls
-    protected String getMenuId() {
-      return "Maven.PomMenu";
+    public ModulesNode getModulesNode() {
+      return myModulesNode;
     }
 
     public String getProjectName() {
@@ -550,30 +586,33 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       return myMavenProject;
     }
 
-    private VirtualFile getDirectory() {
-      //noinspection ConstantConditions
-      return myMavenProject.getDirectoryFile();
+    public VirtualFile getFile() {
+      return myMavenProject.getFile();
     }
 
-    public boolean isAncestor(PomNode that) {
-      return VfsUtil.isAncestor(getDirectory(), that.getDirectory(), true);
+    public String getPath() {
+      return getFile().getPath();
+    }
+
+    @Nullable
+    @NonNls
+    protected String getMenuId() {
+      return "Maven.PomMenu";
     }
 
     @Nullable
     public Navigatable getNavigatable() {
-      return PsiManager.getInstance(MavenProjectsStructure.this.myProject).findFile(myMavenProject.getFile());
+      return PsiManager.getInstance(MavenProjectsStructure.this.myProject).findFile(getFile());
     }
 
     private void updateNode() {
       updateErrorLevel();
       updateNameAndDescription();
 
-      savedPath = myMavenProject.getFile().getPath();
-      actionIdPrefix = myTasksManager.getActionId(savedPath, null);
+      myActionIdPrefix = myTasksManager.getActionId(getPath(), null);
 
-      lifecycleNode.updateGoals();
-      createPluginsNode();
-      regroupNested();
+      myLifecycleNode.updateGoals();
+      updatePluginsNode();
     }
 
     private void updateErrorLevel() {
@@ -640,7 +679,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
     private ErrorLevel getModulesErrorLevel() {
       ErrorLevel result = ErrorLevel.NONE;
-      for (PomNode each : modulePomsNode.pomNodes) {
+      for (ProjectNode each : myModulesNode.myProjectNodes) {
         ErrorLevel moduleLevel = each.getOverallErrorLevel();
         if (moduleLevel.compareTo(result) > 0) result = moduleLevel;
       }
@@ -658,7 +697,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       for (MavenProjectProblem each : problems) {
         desc.append("<tr>");
         if (first) {
-          desc.append("<td valign=top>" + formatHtmlImage(critical ? ERROR_ICON_URL : WARNING_ICON_URL) + "</td>");
+          desc.append("<td valign=top>" + MavenUtil.formatHtmlImage(critical ? ERROR_ICON_URL : WARNING_ICON_URL) + "</td>");
           desc.append("<td valign=top>" + (critical ? "Errors" : "Warnings") + ":</td>");
           first = false;
         }
@@ -699,17 +738,17 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       return result;
     }
 
-    private void createPluginsNode() {
-      pluginsNode.clear();
+    private void updatePluginsNode() {
+      myPluginsNode.clear();
       for (MavenPlugin each : myMavenProject.getPlugins()) {
         if (!hasPlugin(each)) {
-          pluginsNode.add(new PluginNode(this, each.getMavenId()));
+          myPluginsNode.add(new PluginNode(this, each.getMavenId()));
         }
       }
     }
 
-    public boolean hasPlugin(MavenPlugin plugin) {
-      for (PluginNode node : pluginsNode.pluginNodes) {
+    private boolean hasPlugin(MavenPlugin plugin) {
+      for (PluginNode node : myPluginsNode.myPluginNodes) {
         if (node.getId().matches(plugin.getMavenId())) {
           return true;
         }
@@ -717,72 +756,8 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       return false;
     }
 
-    public void addNestedPom(PomNode child) {
-      if (!modulePomsNode.addUnder(child)) {
-        nonModulePomsNode.addUnder(child);
-      }
-    }
-
-    void onFileUpdate() {
-      final String oldName = getName();
-      final String oldPath = savedPath;
-
-      updateNode();
-
-      if (!oldPath.equals(savedPath)) {
-        removeFromParent();
-        myRoot.addToStructure(this);
-      }
-      else if (!oldName.equals(getName())) {
-        PomGroupNode groupNode = getParent(PomGroupNode.class);
-        groupNode.reinsert(this);
-        updateTreeFrom(getVisibleParent());
-      }
-      else {
-        updateSubTree();
-      }
-    }
-
-    private CustomNode getVisibleParent() {
-      return getParent(getTreeViewSettings().groupStructurally
-                       ? NonModulePomsNode.class
-                       : RootNode.class);
-    }
-
-    void removeFromParent() {
-      // parent can be null if we are trying to remove an excluded node
-      // thus not present in structure and has no parent
-      PomGroupNode parent = getParent(PomGroupNode.class);
-      if (parent != null) parent.remove(this);
-    }
-
-    public void unlinkNested() {
-      modulePomsNode.clear();
-      nonModulePomsNode.clear();
-    }
-
-    public boolean containsAsModule(PomNode node) {
-      MavenProjectsManager m = MavenProjectsManager.getInstance(MavenProjectsStructure.this.myProject);
-      return m.isModuleOf(myMavenProject, node.myMavenProject);
-    }
-
-    public void setIgnored(boolean on) {
-      updateNameAndDescription();
-      if (getTreeViewSettings().showIgnored) {
-        updateSubTree();
-      }
-      else {
-        if (on) {
-          removeFromParent();
-        }
-        else {
-          myRoot.addToStructure(this);
-        }
-      }
-    }
-
     @Nullable
-    public GoalNode findGoalNode(final String goalName) {
+    public GoalNode findGoalNode(String goalName) {
       for (GoalNode goalNode : collectGoalNodes()) {
         if (goalNode.getGoal().equals(goalName)) {
           return goalNode;
@@ -792,168 +767,88 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       return null;
     }
 
-    public void updateShortcuts(@Nullable String actionId) {
-      if (actionId == null || actionId.startsWith(actionIdPrefix)) {
-        boolean update = false;
-        for (GoalNode goalNode : collectGoalNodes()) {
-          update = goalNode.updateShortcut(actionId) || update;
-        }
-        if (update) {
-          updateSubTree();
-        }
+    public void updateShortcuts() {
+      for (GoalNode each : collectGoalNodes()) {
+        each.update();
       }
     }
 
     private Collection<GoalNode> collectGoalNodes() {
-      Collection<GoalNode> goalNodes = new ArrayList<GoalNode>(lifecycleNode.goalNodes);
-
-      goalNodes.addAll(lifecycleNode.goalNodes);
-
-      for (PluginNode pluginNode : pluginsNode.pluginNodes) {
-        goalNodes.addAll(pluginNode.goalNodes);
+      Collection<GoalNode> result = new ArrayList<GoalNode>(myLifecycleNode.myGoalNodes);
+      for (PluginNode pluginNode : myPluginsNode.myPluginNodes) {
+        result.addAll(pluginNode.myGoalNodes);
       }
-
-      return goalNodes;
-    }
-
-    public void regroupNested() {
-      regroupMisplaced(modulePomsNode, false);
-      regroupMisplaced(nonModulePomsNode, true);
-    }
-
-    private void regroupMisplaced(final NestedPomsNode src, final boolean misplacedFlag) {
-      Collection<PomNode> misplaced = new ArrayList<PomNode>();
-      for (PomNode node : src.pomNodes) {
-        if (containsAsModule(node) == misplacedFlag) {
-          misplaced.add(node);
-        }
-      }
-      for (PomNode node : misplaced) {
-        src.pomNodes.remove(node);
-        addNestedPom(node);
-      }
-      if (!misplaced.isEmpty()) {
-        updateSubTree();
-      }
+      return result;
     }
   }
 
-  public abstract class NestedPomsNode extends PomGroupNode {
-    private PomGroupNode sibling;
-
-    public NestedPomsNode(PomNode parent) {
+  public class ModulesNode extends ProjectsGroupNode {
+    public ModulesNode(ProjectNode parent) {
       super(parent);
       setIcons(CLOSED_MODULES_ICON, OPEN_MODULES_ICON);
-    }
-
-    public boolean isVisible() {
-      return getTreeViewSettings().groupStructurally && super.isVisible();
-    }
-
-    @NotNull
-    protected CustomNode getVisibleParent() {
-      return getParent(PomNode.class);
-    }
-
-    protected Collection<PomNode> removeChildren(final PomNode node, final Collection<PomNode> children) {
-      super.removeChildren(node, children);
-      if (sibling != null) {
-        sibling.removeOwnChildren(node, children);
-      }
-      return children;
-    }
-  }
-
-  public class ModulePomsNode extends NestedPomsNode {
-    public ModulePomsNode(PomNode parent) {
-      super(parent);
-      updateNameAndDescription();
     }
 
     @Override
     protected void updateNameAndDescription() {
       setNameAndDescription(NavigatorBundle.message("node.modules"), null);
     }
-
-    public boolean addUnder(PomNode newNode) {
-      if (getParent(PomNode.class).containsAsModule(newNode)) {
-        add(newNode);
-        return true;
-      }
-      return addUnderExisting(newNode);
-    }
-
-    protected PomGroupNode getNewParentForOrphans() {
-      return getParent(PomNode.class).nonModulePomsNode;
-    }
   }
 
-  public class NonModulePomsNode extends NestedPomsNode {
-    public NonModulePomsNode(PomNode parent) {
+  public abstract class GoalsGroupNode extends GroupNode {
+    private final ProjectNode myProjectNode;
+    protected final List<GoalNode> myGoalNodes = new ArrayList<GoalNode>();
+
+    public GoalsGroupNode(ProjectNode parent) {
       super(parent);
-      updateNameAndDescription();
+      myProjectNode = parent;
     }
 
     @Override
-    protected void updateNameAndDescription() {
-      setNameAndDescription(NavigatorBundle.message("node.nested.poms"), null);
-    }
-  }
-
-  public abstract class GoalGroupNode extends CustomNode {
-    final List<GoalNode> goalNodes = new ArrayList<GoalNode>();
-    private final PomNode pomNode;
-
-    public GoalGroupNode(PomNode parent) {
-      super(parent);
-      pomNode = parent;
+    public ProjectNode getStructuralParent() {
+      return (ProjectNode)super.getStructuralParent();
     }
 
     protected List<? extends CustomNode> getStructuralChildren() {
-      return goalNodes;
+      return myGoalNodes;
     }
   }
 
   public abstract class GoalNode extends CustomNode {
-    private final String goal;
-    private final PomNode pomNode;
-    private final String displayName;
-    private String actionId;
+    private final ProjectNode myProjectNode;
+    private final String myGoal;
+    private final String myDisplayName;
+    private String myActionId;
 
-    public GoalNode(GoalGroupNode parent, String goal, String displayName) {
+    public GoalNode(GoalsGroupNode parent, String goal, String displayName) {
       super(parent);
-      this.goal = goal;
-      this.displayName = displayName;
-      pomNode = parent.pomNode;
+      myGoal = goal;
+      myDisplayName = displayName;
+      myProjectNode = parent.myProjectNode;
       updateNameAndDescription();
       setUniformIcon(PHASE_ICON);
     }
 
+    public String getProjectPath() {
+      return myProjectNode.getPath();
+    }
+
     @Override
     protected void updateNameAndDescription() {
-      actionId = pomNode.actionIdPrefix + goal;
-      String hint = myTasksManager.getActionDescription(pomNode.savedPath, goal);
-      setNameAndDescription(displayName, null, hint);
+      myActionId = myProjectNode.myActionIdPrefix + myGoal;
+      String hint = myTasksManager.getActionDescription(myProjectNode.getPath(), myGoal);
+      setNameAndDescription(myDisplayName, null, hint);
     }
 
     @Override
     protected SimpleTextAttributes getPlainAttributes() {
-      if (goal.equals(pomNode.myMavenProject.getDefaultGoal())) {
+      if (myGoal.equals(myProjectNode.myMavenProject.getDefaultGoal())) {
         return new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, getColor());
       }
       return super.getPlainAttributes();
     }
 
-    public boolean updateShortcut(@Nullable String actionId) {
-      if (actionId == null || actionId.equals(this.actionId)) {
-        updateNameAndDescription();
-        return true;
-      }
-      return false;
-    }
-
     public String getGoal() {
-      return goal;
+      return myGoal;
     }
 
     @Nullable
@@ -970,8 +865,8 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  public class LifecycleNode extends GoalGroupNode {
-    public LifecycleNode(PomNode parent) {
+  public class LifecycleNode extends GoalsGroupNode {
+    public LifecycleNode(ProjectNode parent) {
       super(parent);
       updateNameAndDescription();
       setIcons(CLOSED_PHASES_ICON, OPEN_PHASES_ICON);
@@ -983,28 +878,27 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public void updateGoals() {
-      goalNodes.clear();
-      for (String goal : myStandardGoals) {
-        goalNodes.add(new StandardGoalNode(this, goal));
+      myGoalNodes.clear();
+      for (String goal : PHASES) {
+        myGoalNodes.add(new StandardGoalNode(this, goal));
       }
     }
   }
 
   public class StandardGoalNode extends GoalNode {
-    public StandardGoalNode(GoalGroupNode parent, String goal) {
+    public StandardGoalNode(GoalsGroupNode parent, String goal) {
       super(parent, goal, goal);
     }
 
     public boolean isVisible() {
-      return (!getTreeViewSettings().filterStandardPhases
-              || myStandardPhases.contains(getName())) && super.isVisible();
+      return super.isVisible() && (!myProjectsNavigator.getShowBasicPhasesOnly() || BASIC_PHASES.contains(getName()));
     }
   }
 
-  public class ProfilesNode extends CustomNode {
-    final List<ProfileNode> profileNodes = new ArrayList<ProfileNode>();
+  public class ProfilesNode extends GroupNode {
+    private final List<ProfileNode> myProfileNodes = new ArrayList<ProfileNode>();
 
-    public ProfilesNode(final CustomNode parent) {
+    public ProfilesNode(CustomNode parent) {
       super(parent);
       updateNameAndDescription();
       setIcons(CLOSED_PROFILES_ICON, OPEN_PROFILES_ICON);
@@ -1015,24 +909,20 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       setNameAndDescription(NavigatorBundle.message("node.profiles"), null);
     }
 
-    public boolean isVisible() {
-      return !profileNodes.isEmpty() && super.isVisible();
-    }
-
     protected List<? extends CustomNode> getStructuralChildren() {
-      return profileNodes;
+      return myProfileNodes;
     }
 
     public void clear() {
-      profileNodes.clear();
+      myProfileNodes.clear();
     }
 
     public void add(final String profileName) {
-      insertSorted(profileNodes, new ProfileNode(this, profileName));
+      insertSorted(myProfileNodes, new ProfileNode(this, profileName));
     }
 
     public void updateActive(final Collection<String> activeProfiles, boolean force) {
-      for (ProfileNode node : profileNodes) {
+      for (ProfileNode node : myProfileNodes) {
         final boolean active = activeProfiles.contains(node.getProfile());
         if (active != node.isActive() || force) {
           node.setActive(active);
@@ -1042,22 +932,22 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class ProfileNode extends CustomNode {
-    private final String name;
-    private boolean active;
+    private final String myName;
+    private boolean isActive;
 
-    public ProfileNode(final ProfilesNode parent, String name) {
+    public ProfileNode(ProfilesNode parent, String name) {
       super(parent);
-      this.name = name;
+      myName = name;
       updateNameAndDescription();
     }
 
     @Override
     protected void updateNameAndDescription() {
-      setNameAndDescription(name, null);
+      setNameAndDescription(myName, null);
     }
 
     public String getProfile() {
-      return name;
+      return myName;
     }
 
     @Nullable
@@ -1073,18 +963,18 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public boolean isActive() {
-      return active;
+      return isActive;
     }
 
-    private void setActive(final boolean active) {
-      this.active = active;
+    private void setActive(boolean active) {
+      isActive = active;
     }
   }
 
-  public class PluginsNode extends CustomNode {
-    final List<PluginNode> pluginNodes = new ArrayList<PluginNode>();
+  public class PluginsNode extends GroupNode {
+    private final List<PluginNode> myPluginNodes = new ArrayList<PluginNode>();
 
-    public PluginsNode(final PomNode parent) {
+    public PluginsNode(ProjectNode parent) {
       super(parent);
       updateNameAndDescription();
       setIcons(CLOSED_PLUGINS_ICON, OPEN_PLUGINS_ICON);
@@ -1095,31 +985,28 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
       setNameAndDescription(NavigatorBundle.message("node.plugins"), null);
     }
 
-    public boolean isVisible() {
-      return !pluginNodes.isEmpty() && super.isVisible();
-    }
-
     protected List<? extends CustomNode> getStructuralChildren() {
-      return pluginNodes;
+      return myPluginNodes;
     }
 
     public void clear() {
-      pluginNodes.clear();
+      myPluginNodes.clear();
     }
 
     public void add(PluginNode node) {
-      insertSorted(pluginNodes, node);
+      insertSorted(myPluginNodes, node);
     }
   }
 
-  public class PluginNode extends GoalGroupNode {
+  public class PluginNode extends GoalsGroupNode {
     private final MavenId myId;
-    private MavenPluginInfo myPluginInfo;
+    private final MavenPluginInfo myPluginInfo;
 
-    public PluginNode(PomNode parent, final MavenId id) {
+    public PluginNode(ProjectNode parent, final MavenId id) {
       super(parent);
       myId = id;
 
+      /// todo!!!!!!!!!!!!!!!!
       myPluginInfo = MavenArtifactUtil.readPluginInfo(myProjectsManager.getLocalRepository(), myId);
       setNodeErrorLevel(myPluginInfo == null ? ErrorLevel.WARNING : ErrorLevel.NONE);
       updateNameAndDescription();
@@ -1127,7 +1014,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
       if (myPluginInfo != null) {
         for (MavenPluginInfo.Mojo mojo : myPluginInfo.getMojos()) {
-          goalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal(), mojo.getDisplayName()));
+          myGoalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal(), mojo.getDisplayName()));
         }
       }
     }

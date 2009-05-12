@@ -3,12 +3,10 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TestDialog;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReimportingTest extends MavenImportingTestCase {
-  private int questionsCount;
-
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
@@ -30,12 +28,6 @@ public class ReimportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1</version>");
     importProject();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    Messages.setTestDialog(TestDialog.DEFAULT);
-    super.tearDown();
   }
 
   public void testKeepingModuleGroups() throws Exception {
@@ -79,7 +71,7 @@ public class ReimportingTest extends MavenImportingTestCase {
                      "  <module>m1</module>" +
                      "</modules>");
 
-    configMessagesForYesAnswer();
+    configConfirmationForYesAnswer();
     importProject();
     assertModules("project", "m1");
   }
@@ -94,7 +86,7 @@ public class ReimportingTest extends MavenImportingTestCase {
                      "  <module>m1</module>" +
                      "</modules>");
 
-    configMessagesForNoAnswer();
+    configConfirmationForNoAnswer();
     importProject();
     assertModules("project", "m1", "m2");
   }
@@ -108,24 +100,26 @@ public class ReimportingTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>m1</module>" +
                      "</modules>");
+    AtomicInteger counter = configConfirmationForNoAnswer();
 
-    assertEquals(0, questionsCount);
-
-    configMessagesForNoAnswer();
-    importProject();
-    assertEquals(1, questionsCount);
+    assertEquals(0, counter.get());
 
     importProject();
-    assertEquals(1, questionsCount);
+    assertEquals(1, counter.get());
+
+    importProject();
+    assertEquals(1, counter.get());
   }
 
   public void testDoesNotAskToRemoveManuallyAdderModules() throws Exception {
     createModule("userModule");
     assertModules("project", "m1", "m2", "userModule");
 
+    AtomicInteger counter = configConfirmationForNoAnswer();
+
     importProject();
 
-    assertEquals(0, questionsCount);
+    assertEquals(0, counter.get());
     assertModules("project", "m1", "m2", "userModule");
   }
 
@@ -138,20 +132,20 @@ public class ReimportingTest extends MavenImportingTestCase {
 
     assertModules("project", "m1", "m2");
 
-    configMessagesForYesAnswer();
+    configConfirmationForYesAnswer();
 
     getMavenImporterSettings().setCreateModulesForAggregators(false);
-    myMavenProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.flushPendingImportRequestsInTests();
     assertModules("m2");
 
     getMavenImporterSettings().setCreateModulesForAggregators(true);
-    myMavenProjectsManager.flushPendingImportRequestsInTests();
+    myProjectsManager.flushPendingImportRequestsInTests();
     assertModules("project", "m1", "m2");
   }
 
   public void testDoNotCreateModulesForNewlyCreatedAggregativeProjectsIfNotNecessary() throws Exception {
     getMavenImporterSettings().setCreateModulesForAggregators(false);
-    configMessagesForYesAnswer();
+    configConfirmationForYesAnswer();
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -199,7 +193,7 @@ public class ReimportingTest extends MavenImportingTestCase {
                      "  </profile>" +
                      "</profiles>");
 
-    configMessagesForYesAnswer(); // will ask about absent modules
+    configConfirmationForYesAnswer(); // will ask about absent modules
 
     importProjectWithProfiles("profile1");
     assertModules("project", "m1");
@@ -231,26 +225,9 @@ public class ReimportingTest extends MavenImportingTestCase {
                     "  </resources>" +
                     "</build>");
 
-    importProject(); // shouldn't throw Dialog.show exception
+    AtomicInteger counter = configConfirmationForNoAnswer();
+    importProject();
     resolveDependenciesAndImport();
-    assertEquals(0, questionsCount);
-  }
-
-  private void configMessagesForYesAnswer() {
-    Messages.setTestDialog(new TestDialog() {
-      public int show(String message) {
-        questionsCount++;
-        return 0;
-      }
-    });
-  }
-
-  private void configMessagesForNoAnswer() {
-    Messages.setTestDialog(new TestDialog() {
-      public int show(String message) {
-        questionsCount++;
-        return 1;
-      }
-    });
+    assertEquals(0, counter.get());
   }
 }

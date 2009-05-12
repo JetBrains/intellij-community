@@ -4,20 +4,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.SimpleNode;
 
 public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
-  private String myPomPath;
+  private String myProjectPath;
   private String myGoal;
 
-  public SelectMavenGoalDialog(Project project, final String pomPath, final String goal, String title) {
+  public SelectMavenGoalDialog(Project project, final String projectPath, final String goal, String title) {
     super(project, title, MavenProjectsStructure.GoalNode.class, new NodeSelector() {
-      public SimpleNode findNode(MavenProjectsStructure.PomNode pomNode) {
-        if (pomNode.getMavenProject().getPath().equals(pomPath)) {
+      public SimpleNode findNode(MavenProjectsStructure.ProjectNode pomNode) {
+        if (pomNode.getMavenProject().getPath().equals(projectPath)) {
           return pomNode.findGoalNode(goal);
         }
         return null;
       }
     });
 
-    myPomPath = pomPath;
+    myProjectPath = projectPath;
     myGoal = goal;
 
     init();
@@ -29,13 +29,13 @@ public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
     SimpleNode node = getSelectedNode();
     if (node instanceof MavenProjectsStructure.GoalNode) {
       MavenProjectsStructure.GoalNode goalNode = (MavenProjectsStructure.GoalNode)node;
-      myPomPath = goalNode.getParent(MavenProjectsStructure.PomNode.class).getMavenProject().getPath();
+      myProjectPath = goalNode.getProjectPath();
       myGoal = goalNode.getGoal();
     }
   }
 
-  public String getSelectedPomPath() {
-    return myPomPath;
+  public String getSelectedProjectPath() {
+    return myProjectPath;
   }
 
   public String getSelectedGoal() {

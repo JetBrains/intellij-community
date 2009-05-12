@@ -1,60 +1,59 @@
 package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
-import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.MavenAction;
+import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public class ToggleProfileAction extends MavenAction {
-  public void update(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final MavenProjectsManager projectsManager = project != null ? project.getComponent(MavenProjectsManager.class) : null;
-    final List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES_KEY);
+  public void update(AnActionEvent e) {
+    super.update(e);
+    if (!isAvailable(e)) return;
 
-    final boolean enabled = projectsManager != null && profiles != null && !profiles.isEmpty() && isEnabled(projectsManager, profiles);
+    MavenProjectsManager projectsManager = getProjectsManager(e);
+    List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
 
-    e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setText((enabled && projectsManager.getActiveProfiles().contains(profiles.get(0)))
+    e.getPresentation().setText(isActive(projectsManager, profiles)
                                 ? ProjectBundle.message("maven.profile.deactivate")
                                 : ProjectBundle.message("maven.profile.activate"));
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    MavenProjectsManager manager = project != null ? MavenProjectsManager.getInstance(project) : null;
-    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES_KEY);
+  @Override
+  protected boolean isAvailable(AnActionEvent e) {
+    if (!super.isAvailable(e)) return false;
 
-    if (manager != null && profiles != null && !profiles.isEmpty() && isEnabled(manager, profiles)) {
-      List<String> activeProfiles = new ArrayList<String>(manager.getActiveProfiles());
-      if (activeProfiles.contains(profiles.get(0))) {
-        activeProfiles.removeAll(profiles);
+    List<String> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
+    if (selectedProfiles == null || selectedProfiles.isEmpty()) return false;
+
+    List<String> activeProfiles = getProjectsManager(e).getActiveProfiles();
+    int activeCount = 0;
+    for (String profile : selectedProfiles) {
+      if (activeProfiles.contains(profile)) {
+        activeCount++;
       }
-      else {
-        activeProfiles.addAll(profiles);
-      }
-      manager.setActiveProfiles(activeProfiles);
     }
+    return activeCount == 0 || activeCount == selectedProfiles.size();
   }
 
-  private boolean isEnabled(MavenProjectsManager projectsManager, List<String> profiles) {
-    List<String> activeProfiles = projectsManager.getActiveProfiles();
-    int count = 0;
-    for (String profile : profiles) {
-      if (activeProfiles.contains(profile)) {
-        count++;
-      }
+  private boolean isActive(MavenProjectsManager projectsManager, List<String> profiles) {
+    return projectsManager.getActiveProfiles().contains(profiles.get(0));
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    MavenProjectsManager manager = getProjectsManager(e);
+    List<String> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
+
+    List<String> activeProfiles = manager.getActiveProfiles();
+    if (isActive(manager, selectedProfiles)) {
+      activeProfiles.removeAll(selectedProfiles);
     }
-    return count == 0 || count == profiles.size();
+    else {
+      activeProfiles.addAll(selectedProfiles);
+    }
+    manager.setActiveProfiles(activeProfiles);
   }
 }

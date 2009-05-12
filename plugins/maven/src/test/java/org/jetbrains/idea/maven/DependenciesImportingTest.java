@@ -868,8 +868,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     if (ignore()) return;
 
-    MavenProject root = myMavenTree.getRootProjects().get(0);
-    List<MavenProject> modules = myMavenTree.getModules(root);
+    MavenProject root = myProjectsTree.getRootProjects().get(0);
+    List<MavenProject> modules = myProjectsTree.getModules(root);
 
     assertOrderedElementsAreEqual(root.getProblems());
     assertOrderedElementsAreEqual(modules.get(0).getProblems(),
@@ -924,7 +924,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
-    myMavenProjectsManager.importProjects();
+    myProjectsManager.importProjects();
 
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");

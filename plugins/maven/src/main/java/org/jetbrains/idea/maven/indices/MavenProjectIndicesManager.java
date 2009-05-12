@@ -45,9 +45,6 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
       public void activated() {
         updateIndicesList();
       }
-
-      public void setIgnored(MavenProject project, boolean on) {
-      }
     });
 
     getMavenProjectManager().addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {

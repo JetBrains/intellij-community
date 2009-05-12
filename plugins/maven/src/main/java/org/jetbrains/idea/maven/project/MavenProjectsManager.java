@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -129,11 +128,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void initNew(List<VirtualFile> files, List<String> profiles) {
-    myState.originalFiles = ContainerUtil.map(files, new Function<VirtualFile, String>() {
-      public String fun(VirtualFile file) {
-        return file.getPath();
-      }
-    });
+    myState.originalFiles = MavenUtil.collectPaths(files);
     myState.activeProfiles = profiles;
     doInit(false);
   }
@@ -152,14 +147,13 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     listenForSettingsChanges();
     listenForProjectsTreeChanges();
 
-    scheduleReadAllProjects();
-
-    if (isUnitTestMode()) return;
-
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
-        listenForExternalChanges();
-        fireActivated();
+        if (!isUnitTestMode()) {
+          fireActivated();
+          listenForExternalChanges();
+        }
+        scheduleReadAllProjects();
       }
     });
   }
@@ -404,9 +398,14 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return null;
   }
 
-  public boolean isModuleOf(MavenProject parentNode, MavenProject moduleNode) {
-    if (!isInitialized()) return false;
-    return myProjectsTree.isModuleOf(parentNode, moduleNode);
+  public MavenProject findAggregator(MavenProject module) {
+    if (!isInitialized()) return null;
+    return myProjectsTree.findAggregator(module);
+  }
+
+  public List<MavenProject> getModules(MavenProject aggregator) {
+    if (!isInitialized()) return Collections.emptyList();
+    return myProjectsTree.getModules(aggregator);
   }
 
   public List<String> getIgnoredFilesPaths() {
@@ -424,9 +423,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return myProjectsTree.getIgnoredState(project);
   }
 
-  public void setIgnoredState(MavenProject project, boolean ignored) {
+  public void setIgnoredState(List<MavenProject> projects, boolean ignored) {
     if (!isInitialized()) return;
-    myProjectsTree.setIgnoredState(project, ignored);
+    myProjectsTree.setIgnoredState(projects, ignored);
   }
 
   public List<String> getIgnoredFilesPatterns() {
@@ -716,6 +715,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   public MavenProjectsProcessor.Handler getPluginDownloadingProcessorHandler() {
     return myPluginsResolvingProcessor.getHandler();
+  }
+
+  @TestOnly
+  public void fireActivatedInTests() {
+    fireActivated();
   }
 
   private void fireActivated() {

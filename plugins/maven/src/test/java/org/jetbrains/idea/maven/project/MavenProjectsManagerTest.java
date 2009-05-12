@@ -24,7 +24,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "<version>1</version>");
 
     // shouldn't throw
-    assertNull(myMavenProjectsManager.findProject(myProjectPom));
+    assertNull(myProjectsManager.findProject(myProjectPom));
   }
 
   public void testUpdatingProjectsWhenAbsentManagedProjectFileAppears() throws Exception {
@@ -36,12 +36,12 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "  <module>m</module>" +
                   "</modules>");
 
-    assertEquals(1, myMavenTree.getRootProjects().size());
+    assertEquals(1, myProjectsTree.getRootProjects().size());
 
     myProjectPom.delete(this);
     waitForReadingCompletion();
 
-    assertEquals(0, myMavenTree.getRootProjects().size());
+    assertEquals(0, myProjectsTree.getRootProjects().size());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -52,7 +52,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "</modules>");
     waitForReadingCompletion();
 
-    assertEquals(1, myMavenTree.getRootProjects().size());
+    assertEquals(1, myProjectsTree.getRootProjects().size());
   }
 
   public void testUpdatingProjectsWhenRenaming() throws Exception {
@@ -67,17 +67,17 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                      "<version>1</version>");
     importProjects(p1, p2);
 
-    assertEquals(2, myMavenTree.getRootProjects().size());
+    assertEquals(2, myProjectsTree.getRootProjects().size());
 
     p2.rename(this, "foo.bar");
     waitForReadingCompletion();
 
-    assertEquals(1, myMavenTree.getRootProjects().size());
+    assertEquals(1, myProjectsTree.getRootProjects().size());
 
     p2.rename(this, "pom.xml");
     waitForReadingCompletion();
 
-    assertEquals(2, myMavenTree.getRootProjects().size());
+    assertEquals(2, myProjectsTree.getRootProjects().size());
   }
 
   public void testUpdatingProjectsWhenMoving() throws Exception {
@@ -95,17 +95,17 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     VirtualFile oldDir = p2.getParent();
     VirtualFile newDir = myProjectRoot.createChildDirectory(this, "foo");
 
-    assertEquals(2, myMavenTree.getRootProjects().size());
+    assertEquals(2, myProjectsTree.getRootProjects().size());
 
     p2.move(this, newDir);
     waitForReadingCompletion();
 
-    assertEquals(1, myMavenTree.getRootProjects().size());
+    assertEquals(1, myProjectsTree.getRootProjects().size());
 
     p2.move(this, oldDir);
     waitForReadingCompletion();
 
-    assertEquals(2, myMavenTree.getRootProjects().size());
+    assertEquals(2, myProjectsTree.getRootProjects().size());
   }
 
   public void testUpdatingProjectsWhenMovingModuleFile() throws Exception {
@@ -127,23 +127,23 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     VirtualFile oldDir = m.getParent();
     VirtualFile newDir = myProjectRoot.createChildDirectory(this, "m2");
 
-    assertEquals(1, myMavenTree.getRootProjects().size());
-    assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
+    assertEquals(1, myProjectsTree.getRootProjects().size());
+    assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
     m.move(this, newDir);
     waitForReadingCompletion();
 
-    assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
+    assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
     m.move(this, oldDir);
     waitForReadingCompletion();
 
-    assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
+    assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
     m.move(this, myProjectRoot.createChildDirectory(this, "xxx"));
     waitForReadingCompletion();
 
-    assertEquals(0, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
+    assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
   }
 
   public void testUpdatingProjectsWhenAbsentModuleFileAppears() throws Exception {
@@ -155,11 +155,11 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "  <module>m</module>" +
                   "</modules>");
 
-    List<MavenProject> roots = myMavenTree.getRootProjects();
+    List<MavenProject> roots = myProjectsTree.getRootProjects();
     MavenProject parentNode = roots.get(0);
 
     assertNotNull(parentNode);
-    assertTrue(myMavenTree.getModules(roots.get(0)).isEmpty());
+    assertTrue(myProjectsTree.getModules(roots.get(0)).isEmpty());
 
     VirtualFile m = createModulePom("m",
                                     "<groupId>test</groupId>" +
@@ -167,7 +167,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                     "<version>1</version>");
     waitForReadingCompletion();
 
-    List<MavenProject> children = myMavenTree.getModules(roots.get(0));
+    List<MavenProject> children = myProjectsTree.getModules(roots.get(0));
     assertEquals(1, children.size());
     assertSame(m, children.get(0).getFile());
   }
@@ -187,23 +187,23 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                     "<version>1</version>");
     waitForReadingCompletion();
 
-    assertEquals(1, myMavenTree.getRootProjects().size());
-    assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
+    assertEquals(1, myProjectsTree.getRootProjects().size());
+    assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
-    myMavenProjectsManager.addManagedFiles(Arrays.asList(m));
+    myProjectsManager.addManagedFiles(Arrays.asList(m));
     waitForReadingCompletion();
 
-    assertEquals(1, myMavenTree.getRootProjects().size());
-    assertEquals(1, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
+    assertEquals(1, myProjectsTree.getRootProjects().size());
+    assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>");
     waitForReadingCompletion();
 
-    assertEquals(2, myMavenTree.getRootProjects().size());
-    assertEquals(0, myMavenTree.getModules(myMavenTree.getRootProjects().get(0)).size());
-    assertEquals(0, myMavenTree.getModules(myMavenTree.getRootProjects().get(1)).size());
+    assertEquals(2, myProjectsTree.getRootProjects().size());
+    assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
+    assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(1)).size());
   }
 
   public void testUpdatingProjectsOnSettingsXmlChange() throws Exception {
@@ -249,10 +249,10 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     importProject();
 
-    List<MavenProject> roots = myMavenTree.getRootProjects();
+    List<MavenProject> roots = myProjectsTree.getRootProjects();
 
     MavenProject parentNode = roots.get(0);
-    MavenProject childNode = myMavenTree.getModules(roots.get(0)).get(0);
+    MavenProject childNode = myProjectsTree.getModules(roots.get(0)).get(0);
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
@@ -339,10 +339,10 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     importProject();
 
-    List<MavenProject> roots = myMavenTree.getRootProjects();
+    List<MavenProject> roots = myProjectsTree.getRootProjects();
 
     MavenProject parentNode = roots.get(0);
-    MavenProject childNode = myMavenTree.getModules(roots.get(0)).get(0);
+    MavenProject childNode = myProjectsTree.getModules(roots.get(0)).get(0);
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
@@ -401,10 +401,10 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     importProject();
 
-    List<MavenProject> roots = myMavenTree.getRootProjects();
+    List<MavenProject> roots = myProjectsTree.getRootProjects();
 
     MavenProject parentNode = roots.get(0);
-    MavenProject childNode = myMavenTree.getModules(roots.get(0)).get(0);
+    MavenProject childNode = myProjectsTree.getModules(roots.get(0)).get(0);
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
@@ -473,7 +473,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
   }
 
   public void testSavingAndLoadingState() throws Exception {
-    MavenProjectsManagerState state = myMavenProjectsManager.getState();
+    MavenProjectsManagerState state = myProjectsManager.getState();
     assertTrue(state.originalFiles.isEmpty());
     assertTrue(state.activeProfiles.isEmpty());
     assertTrue(state.ignoredFiles.isEmpty());
@@ -500,11 +500,11 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                      "<version>1</version>");
 
     importProjects(p1, p2);
-    myMavenProjectsManager.setActiveProfiles(Arrays.asList("one", "two"));
-    myMavenProjectsManager.setIgnoredFilesPaths(Arrays.asList(p1.getPath()));
-    myMavenProjectsManager.setIgnoredFilesPatterns(Arrays.asList("*.xxx"));
+    myProjectsManager.setActiveProfiles(Arrays.asList("one", "two"));
+    myProjectsManager.setIgnoredFilesPaths(Arrays.asList(p1.getPath()));
+    myProjectsManager.setIgnoredFilesPatterns(Arrays.asList("*.xxx"));
     
-    state = myMavenProjectsManager.getState();
+    state = myProjectsManager.getState();
     assertUnorderedElementsAreEqual(state.originalFiles, p1.getPath(), p2.getPath());
     assertUnorderedElementsAreEqual(state.activeProfiles, "one", "two");
     assertUnorderedElementsAreEqual(state.ignoredFiles, p1.getPath());
@@ -517,16 +517,16 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     newState.ignoredFiles = Collections.singleton(p1.getPath());
     newState.ignoredPathMasks = Arrays.asList("*.zzz");
 
-    myMavenProjectsManager.loadState(newState);
+    myProjectsManager.loadState(newState);
 
-    assertUnorderedElementsAreEqual(myMavenProjectsManager.getProjectsTreeForTests().getManagedFilesPaths(),
+    assertUnorderedElementsAreEqual(myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths(),
                                     p1.getPath(), p3.getPath());
-    assertUnorderedElementsAreEqual(myMavenProjectsManager.getActiveProfiles(), "three");
-    assertUnorderedElementsAreEqual(myMavenProjectsManager.getIgnoredFilesPaths(), p1.getPath());
-    assertUnorderedElementsAreEqual(myMavenProjectsManager.getIgnoredFilesPatterns(), "*.zzz");
+    assertUnorderedElementsAreEqual(myProjectsManager.getActiveProfiles(), "three");
+    assertUnorderedElementsAreEqual(myProjectsManager.getIgnoredFilesPaths(), p1.getPath());
+    assertUnorderedElementsAreEqual(myProjectsManager.getIgnoredFilesPatterns(), "*.zzz");
 
     waitForReadingCompletion();
-    assertUnorderedElementsAreEqual(myMavenProjectsManager.getProjectsTreeForTests().getRootProjectsFiles(),
+    assertUnorderedElementsAreEqual(myProjectsManager.getProjectsTreeForTests().getRootProjectsFiles(),
                                     p1, p3);
   }
 }

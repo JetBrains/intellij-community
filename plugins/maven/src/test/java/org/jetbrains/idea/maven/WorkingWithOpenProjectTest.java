@@ -41,7 +41,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
   }
   
   public void testSavingAllDocumentBeforeReimport() throws Exception {
-    myMavenProjectsManager.listenForExternalChanges();
+    myProjectsManager.listenForExternalChanges();
     Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
     d.setText(createPomXml("<groupId>test</groupId>" +
                              "<artifactId>project</artifactId>" +
@@ -55,7 +55,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
                              "  </dependency>" +
                              "</dependencies>"));
     
-    myMavenProjectsManager.waitForQuickResolvingCompletionAndImport();
+    myProjectsManager.waitForQuickResolvingCompletionAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0");
   }

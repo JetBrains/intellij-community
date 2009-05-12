@@ -11,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -45,8 +44,10 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     myTree = tree;
     myStatusPanel = statusPanel;
 
-    JComponent toolbar = ActionManager.getInstance().createActionToolbar("New Maven Toolbar", (ActionGroup)ActionManager.getInstance()
-      .getAction("Maven.PomTreeToolbar"), true).getComponent();
+    final ActionManager actionManager = ActionManager.getInstance();
+    JComponent toolbar = actionManager.createActionToolbar("New Maven Toolbar",
+                                                           (ActionGroup)actionManager.getAction("Maven.NavigatorToolbar"),
+                                                           true).getComponent();
 
     JPanel content = new JPanel(new BorderLayout());
     content.add(new JScrollPane(myTree), BorderLayout.CENTER);
@@ -59,9 +60,9 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
       public void invokePopup(final Component comp, final int x, final int y) {
         final String id = getMenuId(getSelectedNodes(MavenProjectsStructure.CustomNode.class));
         if (id != null) {
-          final ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
+          final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
           if (actionGroup != null) {
-            ActionManager.getInstance().createActionPopupMenu("", actionGroup).getComponent().show(comp, x, y);
+            actionManager.createActionPopupMenu("", actionGroup).getComponent().show(comp, x, y);
           }
         }
       }
@@ -98,33 +99,33 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     if (dataId.equals(Location.LOCATION)) return extractLocation();
     if (dataId.equals(PlatformDataKeys.NAVIGATABLE_ARRAY.getName())) return extractNavigatables();
 
-    if (dataId.equals(MavenDataKeys.MAVEN_PROJECT_NODES.getName())) return extractPomNodes();
-    if (dataId.equals(MavenDataKeys.MAVEN_GOALS_KEY.getName())) return extractGoals();
-    if (dataId.equals(MavenDataKeys.MAVEN_PROFILES_KEY.getName())) return extractProfiles();
+    if (dataId.equals(MavenDataKeys.MAVEN_PROJECTS.getName())) return extractProjectNodes();
+    if (dataId.equals(MavenDataKeys.MAVEN_GOALS.getName())) return extractGoals();
+    if (dataId.equals(MavenDataKeys.MAVEN_PROFILES.getName())) return extractProfiles();
 
     return null;
   }
 
-  private List<MavenProject> extractPomNodes() {
+  private List<MavenProject> extractProjectNodes() {
     List<MavenProject> result = new ArrayList<MavenProject>();
-    for (MavenProjectsStructure.PomNode each : getSelectedPomNodes()) {
+    for (MavenProjectsStructure.ProjectNode each : getSelectedProjectNodes()) {
       result.add(each.getMavenProject());
     }
     return result.isEmpty() ? null : result;
   }
 
   private VirtualFile extractVirtualFile() {
-    final MavenProjectsStructure.PomNode pomNode = getContextPomNode();
-    if (pomNode == null) return null;
-    VirtualFile file = pomNode.getFile();
+    final MavenProjectsStructure.ProjectNode projectNode = getContextProjectNode();
+    if (projectNode == null) return null;
+    VirtualFile file = projectNode.getFile();
     if (file == null || !file.isValid()) return null;
     return file;
   }
 
   private Object extractVirtualFiles() {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
-    for (MavenProjectsStructure.PomNode pomNode : getSelectedPomNodes()) {
-      VirtualFile file = pomNode.getFile();
+    for (MavenProjectsStructure.ProjectNode projectNode : getSelectedProjectNodes()) {
+      VirtualFile file = projectNode.getFile();
       if (file.isValid()) {
         files.add(file);
       }
@@ -142,8 +143,8 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
   private Object extractNavigatables() {
     final List<Navigatable> navigatables = new ArrayList<Navigatable>();
-    for (MavenProjectsStructure.PomNode pomNode : getSelectedPomNodes()) {
-      final Navigatable navigatable = pomNode.getNavigatable();
+    for (MavenProjectsStructure.ProjectNode projectNode : getSelectedProjectNodes()) {
+      final Navigatable navigatable = projectNode.getNavigatable();
       if (navigatable != null) {
         navigatables.add(navigatable);
       }
@@ -152,9 +153,9 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   }
 
   private List<String> extractGoals() {
-    final MavenProjectsStructure.PomNode pomNode = getSelectedPomNode();
-    if (pomNode != null) {
-      MavenProject project = pomNode.getMavenProject();
+    final MavenProjectsStructure.ProjectNode projectNode = getSelectedProjectNode();
+    if (projectNode != null) {
+      MavenProject project = projectNode.getMavenProject();
       String goal = project.getDefaultGoal();
       if (!StringUtil.isEmptyOrSpaces(goal)) {
         return Collections.singletonList(goal);
@@ -162,7 +163,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     }
     else {
       final List<MavenProjectsStructure.GoalNode> nodes = getSelectedNodes(MavenProjectsStructure.GoalNode.class);
-      if (MavenProjectsStructure.getCommonParent(nodes) == null) {
+      if (MavenProjectsStructure.getCommonProjectNode(nodes) == null) {
         return null;
       }
       final List<String> goals = new ArrayList<String>();
@@ -184,36 +185,32 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     return profiles;
   }
 
-  private <T extends SimpleNode> List<T> getSelectedNodes(final Class<T> aClass) {
+  private <T extends MavenProjectsStructure.CustomNode> List<T> getSelectedNodes(Class<T> aClass) {
     return MavenProjectsStructure.getSelectedNodes(myTree, aClass);
   }
 
-  private List<MavenProjectsStructure.PomNode> getSelectedPomNodes() {
-    return getSelectedNodes(MavenProjectsStructure.PomNode.class);
+  private List<MavenProjectsStructure.ProjectNode> getSelectedProjectNodes() {
+    return getSelectedNodes(MavenProjectsStructure.ProjectNode.class);
   }
 
   @Nullable
-  private MavenProjectsStructure.PomNode getSelectedPomNode() {
-    final List<MavenProjectsStructure.PomNode> pomNodes = getSelectedPomNodes();
-    return pomNodes.size() == 1 ? pomNodes.get(0) : null;
+  private MavenProjectsStructure.ProjectNode getSelectedProjectNode() {
+    final List<MavenProjectsStructure.ProjectNode> projectNodes = getSelectedProjectNodes();
+    return projectNodes.size() == 1 ? projectNodes.get(0) : null;
   }
 
   @Nullable
-  private MavenProjectsStructure.PomNode getContextPomNode() {
-    final MavenProjectsStructure.PomNode pomNode = getSelectedPomNode();
-    if (pomNode != null) {
-      return pomNode;
-    }
-    else {
-      return MavenProjectsStructure.getCommonParent(getSelectedNodes(MavenProjectsStructure.CustomNode.class));
-    }
+  private MavenProjectsStructure.ProjectNode getContextProjectNode() {
+    MavenProjectsStructure.ProjectNode projectNode = getSelectedProjectNode();
+    if (projectNode != null) return projectNode;
+    return MavenProjectsStructure.getCommonProjectNode(getSelectedNodes(MavenProjectsStructure.CustomNode.class));
   }
 
   private int getStandardGoalOrder(String goal) {
     if (standardGoalOrder == null) {
       standardGoalOrder = new THashMap<String, Integer>();
       int i = 0;
-      for (String aGoal : MavenEmbedderFactory.getStandardGoalsList()) {
+      for (String aGoal : MavenEmbedderFactory.getPhasesList()) {
         standardGoalOrder.put(aGoal, i++);
       }
     }
