@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author peter
@@ -25,5 +26,10 @@ import java.util.Map;
 public class ConcurrentMultiMap<K,V> extends MultiMap<K,V> {
   protected Map<K, Collection<V>> createMap() {
     return new ConcurrentHashMap<K, Collection<V>>();
+  }
+
+  @Override
+  protected Collection<V> createCollection() {
+    return new CopyOnWriteArrayList<V>();
   }
 }
