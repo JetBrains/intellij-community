@@ -16,13 +16,18 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class DumbService {
-  public static final boolean UPDATE_IN_BACKGROUND = !ApplicationManager.getApplication().isUnitTestMode() &&
-                                                     "true".equals(System.getProperty("update.indices.in.background"));
-
   public static final Topic<DumbModeListener> DUMB_MODE = new Topic<DumbModeListener>("dumb mode", DumbModeListener.class);
 
+  /**
+   * @return whether IntelliJ IDEA is in dumb mode, which means that right now indices are updated in background.
+   * IDEA offers only limited functionality at such times, e.g. plain text file editing and version control operations.
+   */
   public abstract boolean isDumb();
 
+  /**
+   * Run the runnable when dumb mode ends
+   * @param runnable runnable to run
+   */
   public abstract void runWhenSmart(Runnable runnable);
 
   public void waitForSmartMode() {
@@ -42,6 +47,10 @@ public abstract class DumbService {
     semaphore.waitFor();
   }
 
+  /**
+   * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode
+   * @param runnable runnable
+   */
   public void smartInvokeLater(@NotNull final Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {

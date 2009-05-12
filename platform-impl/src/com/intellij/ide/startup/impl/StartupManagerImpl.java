@@ -1,6 +1,5 @@
 package com.intellij.ide.startup.impl;
 
-import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,9 +30,10 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
 
-  private FileSystemSynchronizer myFileSystemSynchronizer = new FileSystemSynchronizer();
+  private FileSystemSynchronizerImpl myFileSystemSynchronizer = new FileSystemSynchronizerImpl();
   private boolean myStartupActivityRunning = false;
   private boolean myStartupActivityPassed = false;
+  private boolean myBackgroundIndexing = false;
 
   private final Project myProject;
 
@@ -49,6 +49,10 @@ public class StartupManagerImpl extends StartupManagerEx {
     myPostStartupActivities.add(runnable);
   }
 
+  public void setBackgroundIndexing(boolean backgroundIndexing) {
+    myBackgroundIndexing = backgroundIndexing;
+  }
+
   public boolean startupActivityRunning() {
     return myStartupActivityRunning;
   }
@@ -61,7 +65,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     myPreStartupActivities.add(runnable);
   }
 
-  public FileSystemSynchronizer getFileSystemSynchronizer() {
+  public FileSystemSynchronizerImpl getFileSystemSynchronizer() {
     return myFileSystemSynchronizer;
   }
 
@@ -74,7 +78,7 @@ public class StartupManagerImpl extends StartupManagerEx {
             runActivities(myPreStartupActivities);
             if (myFileSystemSynchronizer != null || !ApplicationManager.getApplication().isUnitTestMode()) {
               myFileSystemSynchronizer.setCancelable(true);
-              myFileSystemSynchronizer.execute();
+              myFileSystemSynchronizer.executeFileUpdate();
               myFileSystemSynchronizer = null;
             }
             myStartupActivityRunning = true;
@@ -94,7 +98,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   public synchronized void runPostStartupActivities() {
     final Application app = ApplicationManager.getApplication();
     app.assertIsDispatchThread();
-    if (DumbService.UPDATE_IN_BACKGROUND) {
+    if (myBackgroundIndexing) {
       final List<Runnable> dumbAware = CollectionFactory.arrayList();
       for (Iterator<Runnable> iterator = myPostStartupActivities.iterator(); iterator.hasNext();) {
         Runnable runnable = iterator.next();

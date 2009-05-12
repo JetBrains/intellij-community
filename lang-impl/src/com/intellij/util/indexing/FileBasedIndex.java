@@ -2,7 +2,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
 import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -647,7 +647,7 @@ public class FileBasedIndex implements ApplicationComponent {
       final Runnable rebuildRunnable = new Runnable() {
         public void run() {
 
-          final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
+          final FileSystemSynchronizerImpl synchronizer = new FileSystemSynchronizerImpl();
           synchronizer.setCancelable(false);
           for (Project project : ProjectManager.getInstance().getOpenProjects()) {
             synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), FileBasedIndex.this));
@@ -655,7 +655,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
           try {
             clearIndex(indexId);
-            synchronizer.execute();
+            synchronizer.executeFileUpdate();
           }
           catch (StorageException e) {
             requestRebuild(indexId);

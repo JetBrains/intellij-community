@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -20,9 +20,9 @@ import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -568,7 +568,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private void doSynchronize() {
     if (!myStartupActivityPerformed) return;
 
-    final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
+    final FileSystemSynchronizerImpl synchronizer = new FileSystemSynchronizerImpl();
     for (CacheUpdater updater : myChangeUpdaters) {
       synchronizer.registerCacheUpdater(updater);
     }
@@ -576,13 +576,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     if (!ApplicationManager.getApplication().isUnitTestMode() && myProjectOpened) {
       Runnable process = new Runnable() {
         public void run() {
-          synchronizer.execute();
+          synchronizer.executeFileUpdate();
         }
       };
       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, ProjectBundle.message("project.root.change.loading.progress"), false, myProject);
     }
     else {
-      synchronizer.execute();
+      synchronizer.executeFileUpdate();
     }
   }
 

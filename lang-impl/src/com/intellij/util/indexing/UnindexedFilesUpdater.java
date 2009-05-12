@@ -1,17 +1,27 @@
 package com.intellij.util.indexing;
 
-import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.BackgroundableCacheUpdater;
 import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -19,7 +29,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
 *         Date: Jan 29, 2008
 */
-public class UnindexedFilesUpdater implements CacheUpdater {
+public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
   private final FileBasedIndex myIndex;
   private final Project myProject;
   private final ProjectRootManager myRootManager;
@@ -34,7 +44,69 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     CollectingContentIterator finder = myIndex.createContentIterator();
     iterateIndexableFiles(finder);
     final List<VirtualFile> files = finder.getFiles();
-    return BackgroundUpdateHelper.maybeBackground(files.toArray(new VirtualFile[files.size()]), myProject, this);
+    return files.toArray(new VirtualFile[files.size()]);
+  }
+
+  public boolean initiallyBackgrounded() {
+    return Registry.get(DumbServiceImpl.FILE_INDEX_BACKGROUND).asBoolean();
+  }
+
+  public boolean canBeSentToBackground(Collection<VirtualFile> remaining) {
+    if (remaining.size() < 42) {
+      return false;
+    }
+
+    final RegistryValue value = Registry.get(DumbServiceImpl.FILE_INDEX_BACKGROUND);
+    if (!value.asBoolean()) {
+      if (Messages.showDialog(myProject, "<html>" +
+                                         "While indices are updated in background, most of IntelliJ IDEA's<br>" +
+                                         "smart functionality <b>won't be available</b>.<br>" +
+                                         "Only the most basic editing and version control operations will be enabled.<br>" +
+                                         "There will be no Goto Class, no error highlighting, <b>no refactorings</b>, etc!<br>" +
+                                         "Do you still want to send indexing to background?</html>", "Are you really sure?",
+                              new String[]{"Yes", "No"}, 1, UIUtil.getWarningIcon()) != 0) {
+        return false;
+      }
+    }
+
+    value.setValue("true");
+
+    return true;
+  }
+
+  public void backgrounded(Collection<VirtualFile> remaining) {
+    ((StartupManagerImpl)StartupManager.getInstance(myProject)).setBackgroundIndexing(true);
+
+    final VirtualFile[] files = remaining.toArray(new VirtualFile[remaining.size()]);
+    DumbServiceImpl.getInstance().queueIndexUpdate(myProject, new Consumer<ProgressIndicator>() {
+      public void consume(final ProgressIndicator indicator) {
+        try {
+          for (int i = 0; i < files.length ; i++) {
+            if (myProject != null && myProject.isDisposed()) return;
+
+            final VirtualFile file = files[i];
+            indicator.setFraction(((double) i) / files.length);
+            indicator.setText2(file.getPresentableUrl());
+
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                indicator.checkCanceled();
+                if (myProject != null && myProject.isDisposed()) return;
+                if (!file.isValid()) return;
+                try {
+                  processFile(new FileContent(file));
+                }
+                catch (NoProjectForFileException ignored) {
+                }
+              }
+            });
+          }
+        }
+        finally {
+          updatingDone();
+        }
+      }
+    });
   }
 
   public void processFile(final FileContent fileContent) {

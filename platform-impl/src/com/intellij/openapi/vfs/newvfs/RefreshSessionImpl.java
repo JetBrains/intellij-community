@@ -4,7 +4,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.ide.startup.impl.FileSystemSynchronizerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -125,7 +125,7 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   private void notifyCacheUpdaters() {
-    final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
+    final FileSystemSynchronizerImpl synchronizer = new FileSystemSynchronizerImpl();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myRefreshParticipants.size(); i++) {
       CacheUpdater participant = myRefreshParticipants.get(i);
@@ -138,14 +138,14 @@ public class RefreshSessionImpl extends RefreshSession {
       if (runWithProgress) {
         Runnable process = new Runnable() {
           public void run() {
-            synchronizer.execute();
+            synchronizer.executeFileUpdate();
           }
         };
         ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(process, VfsBundle.message("file.update.modified.progress"), false, null);
       }
       else {
-        synchronizer.execute();
+        synchronizer.executeFileUpdate();
       }
     }
   }

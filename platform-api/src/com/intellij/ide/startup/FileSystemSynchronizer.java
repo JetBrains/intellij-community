@@ -25,12 +25,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.List;
 
 /**
  * @author max
@@ -38,9 +36,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class FileSystemSynchronizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileSystemSynchronizer");
 
-  private final ArrayList<CacheUpdater> myUpdaters = new ArrayList<CacheUpdater>();
-  private final LinkedHashSet<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
-  private Collection/*<VirtualFile>*/[] myUpdateSets;
+  protected final ArrayList<CacheUpdater> myUpdaters = new ArrayList<CacheUpdater>();
+  private LinkedHashSet<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
+  protected CacheUpdateSets myIndexingSets;
+  protected CacheUpdateSets myContentSets;
 
   private boolean myIsCancelable = false;
 
@@ -52,20 +51,16 @@ public class FileSystemSynchronizer {
     myIsCancelable = isCancelable;
   }
 
-  public void execute() {
-    /*
-    long time1 = System.currentTimeMillis();
-    */
+  public void executeFileUpdate() {
+    //final long l = System.currentTimeMillis();
 
-    if (!myIsCancelable) {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      if (indicator != null) {
-        indicator.startNonCancelableSection();
-      }
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (!myIsCancelable && indicator != null) {
+      indicator.startNonCancelableSection();
     }
 
     try {
-      if (myUpdateSets == null) { // collectFilesToUpdate() was not executed before
+      if (myIndexingSets == null) { // collectFilesToUpdate() was not executed before
         if (collectFilesToUpdate() == 0) return;
       }
 
@@ -80,18 +75,12 @@ public class FileSystemSynchronizer {
       throw e;
     }
     finally {
-      if (!myIsCancelable) {
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null) {
-          indicator.finishNonCancelableSection();
-        }
+      if (!myIsCancelable && indicator != null) {
+        indicator.finishNonCancelableSection();
       }
+      /*System.out.println("FileSystemSynchronizerImpl.executeFileUpdate");
+      System.out.println("modal indexing took " + (System.currentTimeMillis() - l));*/
     }
-
-    /*
-    long time2 = System.currentTimeMillis();
-    System.out.println("synchronizer.execute() in " + (time2 - time1) + " ms");
-    */
   }
 
   public int collectFilesToUpdate() {
@@ -101,23 +90,22 @@ public class FileSystemSynchronizer {
       indicator.setText(IdeBundle.message("progress.scanning.files"));
     }
 
-    myUpdateSets = new Collection[myUpdaters.size()];
-    for (int i = 0; i < myUpdaters.size(); i++) {
-      CacheUpdater updater = myUpdaters.get(i);
+    List<List<VirtualFile>> updateSets = new ArrayList<List<VirtualFile>>();
+    for (CacheUpdater updater : myUpdaters) {
       try {
-        VirtualFile[] updaterFiles = updater.queryNeededFiles();
-        Collection<VirtualFile> localSet = new LinkedHashSet<VirtualFile>(Arrays.asList(updaterFiles));
-        myFilesToUpdate.addAll(localSet);
-        myUpdateSets[i] = localSet;
+        List<VirtualFile> updaterFiles = Arrays.asList(updater.queryNeededFiles());
+        updateSets.add(updaterFiles);
+        myFilesToUpdate.addAll(updaterFiles);
       }
       catch (ProcessCanceledException e) {
         throw e;
       }
       catch (Throwable e) {
         LOG.error(e);
-        myUpdateSets[i] = new ArrayList();
       }
     }
+    myContentSets = new CacheUpdateSets(updateSets);
+    myIndexingSets = new CacheUpdateSets(updateSets);
 
     if (indicator != null) {
       indicator.popState();
@@ -130,22 +118,28 @@ public class FileSystemSynchronizer {
     return myFilesToUpdate.size();
   }
 
-  private void updateFiles() {
+  protected void updateFiles() {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.pushState();
       indicator.setText(IdeBundle.message("progress.parsing.files"));
     }
 
+    final int updaterCount = myUpdaters.size();
     int totalFiles = myFilesToUpdate.size();
-    final MyContentQueue contentQueue = new MyContentQueue();
+    final FileContentQueue contentQueue = new FileContentQueue();
 
     final Runnable contentLoadingRunnable = new Runnable() {
       public void run() {
         try {
           for (VirtualFile file : myFilesToUpdate) {
-            if (indicator != null) indicator.checkCanceled();
-            contentQueue.put(file);
+            if (indicator != null) {
+              indicator.checkCanceled();
+            }
+
+            if (myContentSets.contains(file)) {
+              contentQueue.put(file);
+            }
           }
         }
         catch (ProcessCanceledException e) {
@@ -184,9 +178,9 @@ public class FileSystemSynchronizer {
         indicator.setFraction((double)++count / totalFiles);
         indicator.setText2(file.getPresentableUrl());
       }
-      for (int i = 0; i < myUpdaters.size(); i++) {
+      for (int i = 0; i < updaterCount; i++) {
         CacheUpdater updater = myUpdaters.get(i);
-        if (myUpdateSets[i].remove(file)) {
+        if (myIndexingSets.remove(i, file)) {
           try {
             updater.processFile(content);
           }
@@ -196,7 +190,7 @@ public class FileSystemSynchronizer {
           catch (Throwable e) {
             LOG.error(e);
           }
-          if (myUpdateSets[i].isEmpty()) {
+          if (myIndexingSets.isDoneForegroundly(i)) {
             try {
               updater.updatingDone();
             }
@@ -206,7 +200,6 @@ public class FileSystemSynchronizer {
             catch (Throwable e) {
               LOG.error(e);
             }
-            myUpdaters.set(i, null);
           }
         }
       }
@@ -238,73 +231,8 @@ public class FileSystemSynchronizer {
   private void dropUpdaters() {
     myUpdaters.clear();
     myFilesToUpdate.clear();
-    myUpdateSets = null;
+    myIndexingSets = null;
+    myContentSets = null;
   }
 
-  @SuppressWarnings({"SynchronizeOnThis"})
-  private static class MyContentQueue extends ArrayBlockingQueue<FileContent> {
-    private long totalSize;
-    private static final long SIZE_THRESHOLD = 1024*1024;
-
-    public MyContentQueue() {
-      super(256);
-      totalSize = 0;
-    }
-
-    @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
-    public void put(VirtualFile file) throws InterruptedException {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-
-      FileContent content = new FileContent(file);
-
-      if (file.isValid()) {
-        try {
-          final long contentLength = content.getLength();
-          if (contentLength < SIZE_THRESHOLD) {
-            synchronized (this) {
-              while (totalSize > SIZE_THRESHOLD) {
-                if (indicator != null) indicator.checkCanceled();
-                wait(300);
-              }
-              totalSize += contentLength;
-            }
-
-            content.getBytes(); // Reads the content bytes and caches them.
-          }
-        }
-        catch (IOException e) {
-          content.setEmptyContent();
-        }
-        catch(ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
-      else {
-        content.setEmptyContent();
-      }
-
-      put(content);
-    }
-
-
-    public FileContent take() throws InterruptedException {
-      final FileContent result = super.take();
-
-      synchronized (this) {
-        try {
-          final VirtualFile file = result.getVirtualFile();
-          if (file == null || !file.isValid() || result.getLength() >= SIZE_THRESHOLD) return result;
-          totalSize -= result.getLength();
-        }
-        finally {
-          notifyAll();
-        }
-      }
-
-      return result;
-    }
-  }
 }

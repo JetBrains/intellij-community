@@ -55,6 +55,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
   private boolean myBackgrounded = false;
   private boolean myWasShown;
   private String myProcessId = "<unknown>";
+  @Nullable private volatile Runnable myBackgroundHandler;
 
   public ProgressWindow(boolean shouldShowCancel, Project project) {
     this(shouldShowCancel, false, project);
@@ -238,16 +239,23 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
   }
 
   public void background() {
+    final Runnable backgroundHandler = myBackgroundHandler;
+    if (backgroundHandler != null) {
+      backgroundHandler.run();
+      return;
+    }
+
     if (myDialog != null) {
       myBackgrounded = true;
       myDialog.background();
 
       if (myDialog.wasShown()) {
         myFocusTrackback.restoreFocus();
-      } else {
+      }
+      else {
         myFocusTrackback.consume();
       }
-      
+
       myDialog = null;
     }
   }
@@ -300,7 +308,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
   protected class MyDialog implements Disposable {
     private long myLastTimeDrawn = -1;
-    private boolean myShouldShowBackground;
+    private volatile boolean myShouldShowBackground;
 
     private final Runnable myRepaintRunnable = new Runnable() {
       public void run() {
@@ -441,6 +449,16 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       return myPanel;
     }
 
+    public void setShouldShowBackground(final boolean shouldShowBackground) {
+      myShouldShowBackground = shouldShowBackground;
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myBackgroundButton.setVisible(shouldShowBackground);
+          myPanel.revalidate();
+        }
+      });
+    }
+
     public void changeCancelButtonText(String text){
       setCancelButtonText(text);
     }
@@ -463,15 +481,15 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       myCancelButton.setVisible(myShouldShowCancel);
 
       myBackgroundButton.setVisible(myShouldShowBackground);
-      if (myShouldShowBackground) {
-        myBackgroundButton.addActionListener(
-          new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+      myBackgroundButton.addActionListener(
+        new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            if (myShouldShowBackground) {
               ProgressWindow.this.background();
             }
           }
-        );
-      }
+        }
+      );
 
       // Panel with progress indicator and percents
 
@@ -633,6 +651,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         return null;
       }
     }
+  }
+
+  public void setBackgroundHandler(@Nullable Runnable backgroundHandler) {
+    myBackgroundHandler = backgroundHandler;
+    myDialog.setShouldShowBackground(backgroundHandler != null);
   }
 
   public void setCancelButtonText(String text){

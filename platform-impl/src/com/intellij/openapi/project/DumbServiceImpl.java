@@ -5,6 +5,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -15,6 +16,7 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -22,11 +24,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author peter
  */
 public class DumbServiceImpl extends DumbService {
-  //@NonNls private static final String NOTIFICATION_ID = "dumb-mode";
   private final AtomicBoolean myDumb = new AtomicBoolean();
   private final DumbModeListener myPublisher;
   private final Queue<Runnable> myUpdateQueue = new Queue<Runnable>(5);
   private final Queue<Runnable> myAfterUpdateQueue = new Queue<Runnable>(5);
+  @NonNls public static final String FILE_INDEX_BACKGROUND = "fileIndex.background";
 
   public DumbServiceImpl(MessageBus bus) {
     myPublisher = bus.syncPublisher(DUMB_MODE);
@@ -36,6 +38,7 @@ public class DumbServiceImpl extends DumbService {
     return myDumb.get();
   }
 
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static DumbServiceImpl getInstance() {
     return (DumbServiceImpl)ServiceManager.getService(DumbService.class);
   }
@@ -106,7 +109,7 @@ public class DumbServiceImpl extends DumbService {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
     } else {
-      ApplicationManager.getApplication().invokeLater(runnable);
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
     }
   }
 
