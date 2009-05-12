@@ -255,20 +255,25 @@ public class SvnVcs extends AbstractVcs {
       final MessageBusConnection connection = bus.connect();
       connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {
         public void processLoadedLists(final List<LocalChangeList> lists) {
+          SvnConfiguration.SvnSupportOptions supportOptions = null;
           try {
             ChangeListManager.getInstanceChecked(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
 
-            final SvnConfiguration.SvnSupportOptions supportOptions = myConfiguration.getSupportOptions();
+            supportOptions = myConfiguration.getSupportOptions();
 
-            upgradeTo15(supportOptions);
+            upgradeToRecentVersion(supportOptions);
             if (! supportOptions.changeListsSynchronized()) {
               processChangeLists(lists);
-              supportOptions.upgradeToChangeListsSynchronized();
             }
           }
           catch (ProcessCanceledException e) {
             //
+          } finally {
+            if (supportOptions != null) {
+              supportOptions.upgrade();
+            }
           }
+
           connection.disconnect();
         }
       });
@@ -319,17 +324,17 @@ public class SvnVcs extends AbstractVcs {
     }
   }
 
-  private void upgradeTo15(final SvnConfiguration.SvnSupportOptions supportOptions) {
-    if (! supportOptions.upgradeTo15Asked()) {
+  private void upgradeToRecentVersion(final SvnConfiguration.SvnSupportOptions supportOptions) {
+    if (! supportOptions.upgradeTo16Asked()) {
       final SvnWorkingCopyChecker workingCopyChecker = new SvnWorkingCopyChecker();
 
       if (workingCopyChecker.upgradeNeeded()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             // ask for upgrade
-            final int upgradeAnswer = Messages.showYesNoDialog(SvnBundle.message("upgrade.format.to15.question.text",
+            final int upgradeAnswer = Messages.showYesNoDialog(SvnBundle.message("upgrade.format.to16.question.text",
               SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text"))),
-              SvnBundle.message("upgrade.format.to15.question.title"), Messages.getWarningIcon());
+              SvnBundle.message("upgrade.format.to16.question.title"), Messages.getWarningIcon());
             if (DialogWrapper.OK_EXIT_CODE == upgradeAnswer) {
               workingCopyChecker.doUpgrade();
             }
@@ -796,7 +801,7 @@ public class SvnVcs extends AbstractVcs {
     public boolean upgradeNeeded() {
       myAllWcInfos = getAllWcInfos();
       for (WCInfo info : myAllWcInfos) {
-        if (! WorkingCopyFormat.ONE_DOT_FIVE.equals(info.getFormat())) {
+        if (! WorkingCopyFormat.ONE_DOT_SIX.equals(info.getFormat())) {
           return true;
         }
       }
@@ -806,7 +811,7 @@ public class SvnVcs extends AbstractVcs {
     public void doUpgrade() {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          final SvnFormatWorker formatWorker = new SvnFormatWorker(myProject, WorkingCopyFormat.ONE_DOT_FIVE, myAllWcInfos);
+          final SvnFormatWorker formatWorker = new SvnFormatWorker(myProject, WorkingCopyFormat.ONE_DOT_SIX, myAllWcInfos);
           // additionally ask about working copies with roots above the project root
           formatWorker.checkForOutsideCopies();
           if (formatWorker.haveStuffToConvert()) {

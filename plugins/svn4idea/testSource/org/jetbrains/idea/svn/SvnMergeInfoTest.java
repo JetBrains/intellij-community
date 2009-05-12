@@ -308,7 +308,8 @@ public class SvnMergeInfoTest extends SvnTestCase {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final SVNWCClient wcClient = vcs.createWCClient();
     final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert data != null && data.getValue() != null && "/trunk:3,4".equals(data.getValue().getString());
+    assert data != null && data.getValue() != null && ("/trunk:3-4".equals(data.getValue().getString()) ||
+                                                      "/trunk:3,4".equals(data.getValue().getString()));
     final SVNPropertyData dataFolder = wcClient.doGetProperty(new File(myBranchVcsRoot, "folder"), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     assert dataFolder != null && dataFolder.getValue() != null && "/trunk:3".equals(dataFolder.getValue().getString());
 

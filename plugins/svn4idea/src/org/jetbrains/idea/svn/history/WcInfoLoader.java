@@ -66,7 +66,7 @@ public class WcInfoLoader {
 
   @Nullable
   private WCInfoWithBranches createInfo(final WCInfo info, final SvnVcs vcs, final SvnFileUrlMapping urlMapping) {
-    if (! WorkingCopyFormat.ONE_DOT_FIVE.equals(info.getFormat())) {
+    if (! info.getFormat().supportsMergeInfo()) {
       return null;
     }
 

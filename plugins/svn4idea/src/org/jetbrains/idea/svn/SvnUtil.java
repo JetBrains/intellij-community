@@ -281,7 +281,9 @@ public class SvnUtil {
   }
 
   public static String formatRepresentation(final WorkingCopyFormat format) {
-    if (WorkingCopyFormat.ONE_DOT_FIVE.equals(format)) {
+    if (WorkingCopyFormat.ONE_DOT_SIX.equals(format)) {
+      return SvnBundle.message("dialog.show.svn.map.table.version16.text");
+    } else if (WorkingCopyFormat.ONE_DOT_FIVE.equals(format)) {
       return SvnBundle.message("dialog.show.svn.map.table.version15.text");
     } else if (WorkingCopyFormat.ONE_DOT_FOUR.equals(format)) {
       return SvnBundle.message("dialog.show.svn.map.table.version14.text");
@@ -478,7 +480,7 @@ public class SvnUtil {
     final List<WCInfo> infos = vcs.getAllWcInfos();
 
     for (WCInfo info : infos) {
-      if (! WorkingCopyFormat.ONE_DOT_FIVE.equals(info.getFormat())) {
+      if (! info.getFormat().supportsMergeInfo()) {
         continue;
       }
 

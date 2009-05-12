@@ -52,7 +52,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
       if (! wcInfo.isIsWcRoot()) {
         File path = new File(wcInfo.getPath());
         path = SvnUtil.getWorkingCopyRoot(path);
-        int result = Messages.showYesNoCancelDialog(SvnBundle.message("upgrade.format.to15.clarify.for.outside.copies.text", path),
+        int result = Messages.showYesNoCancelDialog(SvnBundle.message("upgrade.format.clarify.for.outside.copies.text", path),
                                                     SvnBundle.message("action.change.wcopy.format.task.title"),
                                                     Messages.getWarningIcon());
         if (DialogWrapper.CANCEL_EXIT_CODE == result) {
@@ -97,7 +97,8 @@ public class SvnFormatWorker extends Task.Backgroundable {
   public void run(@NotNull final ProgressIndicator indicator) {
     ProjectLevelVcsManager.getInstanceChecked(myProject).startBackgroundVcsOperation();
     indicator.setIndeterminate(true);
-    if (WorkingCopyFormat.ONE_DOT_FIVE.equals(myNewFormat)) {
+    final boolean supportsChangelists = myNewFormat.supportsChangelists();
+    if (supportsChangelists) {
       myBeforeChangeLists = ChangeListManager.getInstanceChecked(myProject).getChangeListsCopy();
     }
     final SVNWCClient wcClient = myVcs.createWCClient();
@@ -121,7 +122,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
       ProjectLevelVcsManager.getInstance(myProject).stopBackgroundVcsOperation();
 
       // to map to native
-      if (WorkingCopyFormat.ONE_DOT_FIVE.equals(myNewFormat)) {
+      if (supportsChangelists) {
         SvnVcs.getInstance(myProject).processChangeLists(myBeforeChangeLists);
       }
 

@@ -28,8 +28,8 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -40,10 +40,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -163,7 +160,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     String formatMode = null;
     final Ref<Boolean> wasOk = new Ref<Boolean>();
     while ((formatMode == null) && (! Boolean.FALSE.equals(wasOk.get()))) {
-      formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnConfiguration.UPGRADE_AUTO_15, wasOk);
+      formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnConfiguration.UPGRADE_AUTO_16, wasOk);
       SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(formatMode));
     }
     return Boolean.TRUE.equals(wasOk.get());
@@ -224,17 +221,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                 // do not pay attention to ignored/excluded settings
                 client.doImport(target, url, message, null, !includeIgnored, false, depth);
               } else {
-                final SvnExcludingIgnoredOperation.Filter filter = new SvnExcludingIgnoredOperation.Filter(project);
-                final LocalFileSystem lfs = LocalFileSystem.getInstance();
-                final DefaultSVNCommitHandler commitHandler = new DefaultSVNCommitHandler() {
-                  @Override
-                  public boolean accept(final File file) throws SVNException {
-                    final VirtualFile vf = lfs.findFileByIoFile(file);
-                    return vf != null && filter.accept(vf);
-                  }
-                };
-
-                client.setCommitHandler(commitHandler);
+                client.setCommitHandler(new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)));
                 client.doImport(target, url, message, null, !includeIgnored, false, depth);
               }
             }
@@ -252,6 +239,21 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     
     if (! errorMessage.isNull()) {
       Messages.showErrorDialog(SvnBundle.message("message.text.cannot.import", errorMessage.get()), SvnBundle.message("message.title.import"));
+    }
+  }
+
+  private static class MyFilter extends DefaultSVNCommitHandler implements ISVNFileFilter {
+    private final LocalFileSystem myLfs;
+    private final SvnExcludingIgnoredOperation.Filter myFilter;
+
+    private MyFilter(LocalFileSystem lfs, SvnExcludingIgnoredOperation.Filter filter) {
+      myLfs = lfs;
+      myFilter = filter;
+    }
+
+    public boolean accept(final File file) throws SVNException {
+      final VirtualFile vf = myLfs.findFileByIoFile(file);
+      return vf != null && myFilter.accept(vf);
     }
   }
 

@@ -154,15 +154,22 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     if (! myRecentlyUpdatedFiles.isEmpty()) {
       myResolveWorker.execute(myRecentlyUpdatedFiles);
     }
+    final boolean haveConflicts = ResolveWorker.haveUnresolvedConflicts(myRecentlyUpdatedFiles);
+
     accomulate();
 
-    if ((! myMerger.hasNext()) || (! myExceptions.isEmpty()) || myAccomulatedFiles.containErrors()) {
+    if ((! myMerger.hasNext()) || haveConflicts || (! myExceptions.isEmpty()) || myAccomulatedFiles.containErrors()) {
       initMergeTarget();
       if (myAccomulatedFiles.isEmpty() && myExceptions.isEmpty() && (myMergeTarget == null)) {
         Messages.showMessageDialog(SvnBundle.message("action.Subversion.integrate.changes.message.files.up.to.date.text"),
                                    SvnBundle.message("action.Subversion.integrate.changes.messages.title"),
                                    Messages.getInformationIcon());
       } else {
+        if (haveConflicts) {
+          final VcsException exception = new VcsException(SvnBundle.message("svn.integrate.changelist.warning.unresolved.conflicts.text"));
+          exception.setIsWarning(true);
+          myExceptions.add(exception);
+        }
         finishActions();
       }
       myMerger.afterProcessing();
@@ -190,7 +197,9 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private void prepareAndShowResults() {
     if (! myExceptions.isEmpty()) {
       AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, VcsBundle.message("message.title.vcs.update.errors"));
-    } else if (! myAccomulatedFiles.isEmpty()) {
+    }
+    // todo unite into one window??
+    if (! myAccomulatedFiles.isEmpty()) {
       if (SvnConfiguration.getInstance(myVcs.getProject()).UPDATE_RUN_STATUS) {
         doStatus(new Consumer<UpdatedFiles>() {
           public void consume(final UpdatedFiles updatedFiles) {

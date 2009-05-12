@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -55,6 +56,14 @@ public class UpdateEventHandler implements ISVNEventHandler {
     if (handleInDescendants(event)) {
       updateProgressIndicator();
       return;
+    }
+
+    if (event.getAction() == SVNEventAction.TREE_CONFLICT) {
+      myText2 = SvnBundle.message("progress.text2.treeconflicted", displayPath);
+      updateProgressIndicator();
+      myUpdatedFiles.registerGroup(createFileGroup(VcsBundle.message("update.group.name.merged.with.tree.conflicts"),
+                                                   SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT));
+      addFileToGroup(SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT, event);
     }
 
     if (event.getAction() == SVNEventAction.UPDATE_ADD ||

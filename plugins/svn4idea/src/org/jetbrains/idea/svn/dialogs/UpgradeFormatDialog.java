@@ -18,6 +18,7 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   private JRadioButton myUpgradeNoneButton;
   private JRadioButton myUpgradeAutoButton;
   private JRadioButton myUpgradeAuto15Button;
+  private JRadioButton myUpgradeAuto16Button;
 
   protected File myPath;
 
@@ -46,7 +47,9 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   public void setData(final boolean display13format, final String selectedFormat) {
-    if (SvnConfiguration.UPGRADE_AUTO.equals(selectedFormat)) {
+    if (SvnConfiguration.UPGRADE_AUTO_16.equals(selectedFormat)) {
+      myUpgradeAuto16Button.setSelected(true);
+    } else if (SvnConfiguration.UPGRADE_AUTO.equals(selectedFormat)) {
       myUpgradeAutoButton.setSelected(true);
     } else if (SvnConfiguration.UPGRADE_AUTO_15.equals(selectedFormat)) {
       myUpgradeAuto15Button.setSelected(true);
@@ -95,16 +98,20 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     myUpgradeNoneButton = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".none").toString()));
     myUpgradeAutoButton = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".auto").toString()));
     myUpgradeAuto15Button = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".auto.15format").toString()));
+    myUpgradeAuto16Button = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".auto.16format").toString()));
 
     ButtonGroup group = new ButtonGroup();
     group.add(myUpgradeNoneButton);
     group.add(myUpgradeAutoButton);
     group.add(myUpgradeAuto15Button);
+    group.add(myUpgradeAuto16Button);
     panel.add(myUpgradeNoneButton, gb);
     gb.gridy += 1;
     panel.add(myUpgradeAutoButton, gb);
     gb.gridy += 1;
     panel.add(myUpgradeAuto15Button, gb);
+    gb.gridy += 1;
+    panel.add(myUpgradeAuto16Button, gb);
     gb.gridy += 1;
 
     myUpgradeNoneButton.setSelected(true);
@@ -139,6 +146,8 @@ public class UpgradeFormatDialog extends DialogWrapper  {
       return SvnConfiguration.UPGRADE_AUTO;
     } else if (myUpgradeAuto15Button.isSelected()) {
       return SvnConfiguration.UPGRADE_AUTO_15;
+    } else if (myUpgradeAuto16Button.isSelected()) {
+      return SvnConfiguration.UPGRADE_AUTO_16;
     }
     return null;
   }

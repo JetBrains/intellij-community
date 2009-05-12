@@ -20,19 +20,17 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +55,12 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
   }
 
   public void fillGroups(UpdatedFiles updatedFiles) {
+    updatedFiles.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.property.conflicts"),
+                                       VcsBundle.message("status.group.name.will.be.merged.with.property.conflicts"), false,
+                                       FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID, false));
+    updatedFiles.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.tree.conflicts"),
+                                       VcsBundle.message("status.group.name.will.be.merged.with.tree.conflicts"), false,
+                                       SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT, false));
   }
 
   @NotNull
@@ -90,57 +94,164 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       return new UpdateSessionAdapter(Collections.<VcsException>emptyList(), true);
     }
 
-    final FileGroup conflictedGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
-    final Collection<String> conflictedFiles = conflictedGroup.getFiles();
-    return new UpdateSessionAdapter(exceptions, false) {
-      public void onRefreshFilesCompleted() {
-        for(FilePath contentRoot: contentRoots) {
-          // update switched/ignored status of directories
-          VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(contentRoot);
-        }
-        if (conflictedFiles != null && !conflictedFiles.isEmpty() && !isDryRun()) {
-          List<VirtualFile> vfFiles = new ArrayList<VirtualFile>();
-          for (final String conflictedFile : conflictedFiles) {
-            @NonNls final String path = "file://" + conflictedFile.replace(File.separatorChar, '/');
-            VirtualFile vf = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-              @Nullable public VirtualFile compute() {
-                return VirtualFileManager.getInstance().findFileByUrl(path);
-              }
+    return new MyUpdateSessionAdapter(contentRoots, updatedFiles, exceptions);
+  }
 
-            });
-            if (vf != null) {
-              // refresh base directory so that conflict files should be detected
-              vf.getParent().refresh(true, false);
-              VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(vf);
-              if (myVcs.equals(ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsFor(vf))) {
+  private class MyUpdateSessionAdapter extends UpdateSessionAdapter {
+    private final FilePath[] myContentRoots;
+    private final UpdatedFiles myUpdatedFiles;
+    private final VcsDirtyScopeManager myDirtyScopeManager;
+    private final List<MyConflictWorker> myGroupWorkers;
 
-                final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myVcs.getProject()).ensureFilesWritable(vf);
-                if (! operationStatus.hasReadonlyFiles()) {
-                  vfFiles.add(vf);
-                }
-              }
-            }
+    private MyUpdateSessionAdapter(@NotNull final FilePath[] contentRoots, final UpdatedFiles updatedFiles, final List<VcsException> exceptions) {
+      super(exceptions, false);
+      myContentRoots = contentRoots;
+      myUpdatedFiles = updatedFiles;
+      myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myVcs.getProject());
+
+      if (! isDryRun()) {
+        myGroupWorkers = Arrays.asList(new MyTextConflictWorker(), new MyConflictWorker(FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID) {
+          protected List<VirtualFile> merge() {
+            return null;
           }
-          if (!vfFiles.isEmpty()) {
-            final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(myVcs.getProject());
-            List<VirtualFile> mergedFiles = vcsHelper.showMergeDialog(vfFiles, new SvnMergeProvider(myVcs.getProject()));
-            FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
-            for(VirtualFile mergedFile: mergedFiles) {
-              String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
-              VcsRevisionNumber revision = conflictedGroup.getRevision(myVcsManager, path);
-              conflictedGroup.remove(path);
-              if (revision != null) {
-                mergedGroup.add(path, myVcs, revision);
-              }
-              else {
-                mergedGroup.add(path);
-              }
-            }
+        }, new MyConflictWorker(SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT) {
+          protected List<VirtualFile> merge() {
+            return null;
+          }
+        });
+      } else {
+        myGroupWorkers = Collections.emptyList();
+      }
+    }
+
+    // update switched/ignored status of directories
+    private void dirtyRoots() {
+      final Collection<VirtualFile> vfColl = new ArrayList<VirtualFile>(myContentRoots.length);
+      for (FilePath contentRoot: myContentRoots) {
+        final VirtualFile vf = contentRoot.getVirtualFile();
+        if (vf != null) {
+          vfColl.add(vf);
+        }
+      }
+      myDirtyScopeManager.filesDirty(vfColl, null);
+    }
+
+    public void onRefreshFilesCompleted() {
+      dirtyRoots();
+
+      for (MyConflictWorker groupWorker : myGroupWorkers) {
+        groupWorker.execute();
+      }
+    }
+
+    private class MyTextConflictWorker extends MyConflictWorker {
+      private MyTextConflictWorker() {
+        super(FileGroup.MERGED_WITH_CONFLICT_ID);
+      }
+
+      protected List<VirtualFile> merge() {
+        final List<VirtualFile> writeable = prepareWriteable(myFiles);
+        final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(myVcs.getProject());
+        return vcsHelper.showMergeDialog(writeable, new SvnMergeProvider(myVcs.getProject()));
+      }
+    }
+
+    private abstract class MyConflictWorker {
+      private final String groupId;
+      protected final List<VirtualFile> myFiles;
+      private LocalFileSystem myLfs;
+      private final ProjectLevelVcsManager myPlVcsManager;
+
+      protected MyConflictWorker(final String groupId) {
+        this.groupId = groupId;
+        myFiles = new ArrayList<VirtualFile>();
+        myLfs = LocalFileSystem.getInstance();
+        myPlVcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
+      }
+
+      // for reuse
+      protected List<VirtualFile> prepareWriteable(final Collection<VirtualFile> files) {
+        final List<VirtualFile> writeable = new ArrayList<VirtualFile>();
+        for (VirtualFile vf : files) {
+          if (myVcs.equals(myPlVcsManager.getVcsFor(vf))) {
+            writeable.add(vf);
+          }
+        }
+        final ReadonlyStatusHandler.OperationStatus operationStatus =
+          ReadonlyStatusHandler.getInstance(myVcs.getProject()).ensureFilesWritable(writeable);
+        writeable.removeAll(Arrays.asList(operationStatus.getReadonlyFiles()));
+
+        return writeable;
+      }
+
+      @Nullable
+      protected abstract List<VirtualFile> merge();
+
+      public void execute() {
+        fillAndRefreshFiles();
+        if (! myFiles.isEmpty()) {
+          final List<VirtualFile> merged = merge();
+          if (merged != null && (! merged.isEmpty())) {
+            moveToMergedGroup(merged);
+
+            // do we need this
+            myDirtyScopeManager.filesDirty(merged, null);
           }
         }
       }
 
-    };
+      protected void moveToMergedGroup(final List<VirtualFile> merged) {
+        final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(groupId);
+        FileGroup mergedGroup = myUpdatedFiles.getGroupById(FileGroup.MERGED_ID);
+        for (VirtualFile mergedFile: merged) {
+          final String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
+          final VcsRevisionNumber revision = conflictedGroup.getRevision(myVcsManager, path);
+          conflictedGroup.remove(path);
+          if (revision != null) {
+            mergedGroup.add(path, myVcs, revision);
+          }
+          else {
+            mergedGroup.add(path);
+          }
+        }
+      }
+
+      protected void fillAndRefreshFiles() {
+        final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(groupId);
+        final Collection<String> conflictedFiles = conflictedGroup.getFiles();
+        final Collection<VirtualFile> parents = new ArrayList<VirtualFile>();
+
+        if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
+          for (final String conflictedFile : conflictedFiles) {
+            final File file = new File(conflictedFile);
+            VirtualFile vf = myLfs.findFileByIoFile(file);
+            if (vf == null) {
+              vf = myLfs.refreshAndFindFileByIoFile(file);
+            }
+            if (vf != null) {
+              myFiles.add(vf);
+              final VirtualFile parent = vf.getParent();
+              if (parent != null) {
+                parents.add(parent);
+              }
+            }
+          }
+        }
+
+        if (! myFiles.isEmpty()) {
+          final RefreshQueue refreshQueue = RefreshQueue.getInstance();
+          final RefreshSession session = refreshQueue.createSession(true, true, null);
+          session.addAllFiles(parents);
+          session.launch();
+          
+          myDirtyScopeManager.filesDirty(myFiles, null);
+        }
+      }
+
+      public String getGroupId() {
+        return groupId;
+      }
+    }
   }
 
   protected boolean isDryRun() {

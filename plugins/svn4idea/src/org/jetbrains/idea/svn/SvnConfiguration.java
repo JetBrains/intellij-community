@@ -65,6 +65,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   
   public static final String UPGRADE_AUTO = "auto";
   public static final String UPGRADE_AUTO_15 = "auto1.5";
+  public static final String UPGRADE_AUTO_16 = "auto1.6";
   public static final String UPGRADE_NONE = "none";
 
   public String USER = "";
@@ -130,17 +131,18 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
     private final static long UPGRADE_TO_15_VERSION_ASKED = 123;
     private final static long CHANGELIST_SUPPORT = 124;
+    private final static long UPGRADE_TO_16_VERSION_ASKED = 125;
 
-    public boolean upgradeTo15Asked() {
-      return (myVersion != null) && (UPGRADE_TO_15_VERSION_ASKED <= myVersion);
+    public boolean upgradeTo16Asked() {
+      return (myVersion != null) && (UPGRADE_TO_16_VERSION_ASKED <= myVersion);
     }
 
     public boolean changeListsSynchronized() {
       return (myVersion != null) && (CHANGELIST_SUPPORT <= myVersion);
     }
 
-    public void upgradeToChangeListsSynchronized() {
-      myVersion = CHANGELIST_SUPPORT;
+    public void upgrade() {
+      myVersion = UPGRADE_TO_16_VERSION_ASKED;
     }
   }
 

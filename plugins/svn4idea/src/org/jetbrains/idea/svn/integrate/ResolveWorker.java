@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.update.SvnUpdateGroups;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 
 import java.util.ArrayList;
@@ -58,7 +59,18 @@ public class ResolveWorker {
       }
     }
 
-    return (! myConflictedVirtualFiles.isEmpty()) && (! SvnConfiguration.getInstanceChecked(myProject).MERGE_DRY_RUN);
+    return ((! myConflictedVirtualFiles.isEmpty()) || (! haveUnresolvedConflicts(updatedFiles))) &&
+           (! SvnConfiguration.getInstanceChecked(myProject).MERGE_DRY_RUN);
+  }
+
+  public static boolean haveUnresolvedConflicts(final UpdatedFiles updatedFiles) {
+    final String[] ids = new String[] {FileGroup.MERGED_WITH_CONFLICT_ID, FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID,
+      SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT};
+    for (String id : ids) {
+      final FileGroup group = updatedFiles.getGroupById(id);
+      if ((group != null) && (! group.isEmpty())) return true;
+    }
+    return false;
   }
 
   // on EDT, dispose checked

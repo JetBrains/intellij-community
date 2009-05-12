@@ -107,7 +107,8 @@ public class ResolveAction extends BasicAction {
       }, SvnBundle.message("progress.searching.for.files.with.conflicts"), true, project);
     }
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(fileList);
-    AbstractVcsHelper.getInstance(project).showMergeDialog(Arrays.asList(status.getUpdatedFiles()), new SvnMergeProvider(project));
+    fileList.removeAll(Arrays.asList(status.getReadonlyFiles()));
+    AbstractVcsHelper.getInstance(project).showMergeDialog(fileList, new SvnMergeProvider(project));
   }
 
   protected boolean isBatchAction() {

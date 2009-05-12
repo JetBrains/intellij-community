@@ -85,6 +85,10 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
 
   }
 
+  public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
+    
+  }
+
   public void processModifiedWithoutCheckout(final VirtualFile file) {
 
   }

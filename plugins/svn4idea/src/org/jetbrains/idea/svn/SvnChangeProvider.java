@@ -103,7 +103,7 @@ public class SvnChangeProvider implements ChangeProvider {
         if (context.isCanceled()) {
           throw new ProcessCanceledException();
         }
-        processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), builder, null);
+        processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), null, context);
       }
     }
     catch (SVNException e) {
@@ -116,8 +116,9 @@ public class SvnChangeProvider implements ChangeProvider {
     processFile(path, context, null, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, context.getClient());
   }
 
+  @Nullable
   private String changeListNameFromStatus(final SVNStatus status) {
-    if (WorkingCopyFormat.ONE_DOT_FIVE.getFormat() == status.getWorkingCopyFormat()) {
+    if (WorkingCopyFormat.getInstance(status.getWorkingCopyFormat()).supportsChangelists()) {
       if (SVNNodeKind.FILE.equals(status.getKind())) {
         final String clName = status.getChangelistName();
         return (clName == null) ? null : clName;
@@ -150,8 +151,8 @@ public class SvnChangeProvider implements ChangeProvider {
       final SVNStatus deletedStatus = deletedFile.getStatus();
       if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
         final String clName = changeListNameFromStatus(copiedFile.getStatus());
-        builder.processChangeInList(new Change(createBeforeRevision(deletedFile, true),
-                                         CurrentContentRevision.create(copiedFile.getFilePath())), clName);
+        builder.processChangeInList(createMovedChange(createBeforeRevision(deletedFile, true),
+                                 CurrentContentRevision.create(copiedFile.getFilePath()), copiedStatus, deletedStatus, context), clName);
         deletedToDelete.add(deletedFile);
         for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
           SvnChangedFile deletedChild = iterChild.next();
@@ -169,8 +170,9 @@ public class SvnChangeProvider implements ChangeProvider {
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
             FilePath newFilePath = myFactory.createFilePathOn(newPath);
             if (!context.isDeleted(newFilePath)) {
-              builder.processChangeInList(new Change(createBeforeRevision(deletedChild, true), CurrentContentRevision.create(newFilePath)),
-                                          clName);
+              builder.processChangeInList(createMovedChange(createBeforeRevision(deletedChild, true),
+                                                            CurrentContentRevision.create(newFilePath),
+                                                            context.getTreeConflictStatus(newPath), childStatus, context), clName);
               deletedToDelete.add(deletedChild);
             }
           }
@@ -200,7 +202,7 @@ public class SvnChangeProvider implements ChangeProvider {
         final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
         final SvnContentRevision beforeRevision = SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision());
         final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
-        builder.processChangeInList(new Change(beforeRevision, afterRevision), changeListNameFromStatus(status));
+        builder.processChangeInList(createMovedChange(beforeRevision, afterRevision, copiedStatus, status, context), changeListNameFromStatus(status));
         foundRename = true;
       }
     }
@@ -208,7 +210,7 @@ public class SvnChangeProvider implements ChangeProvider {
     if (!foundRename) {
       // for debug
       LOG.info("Rename not found for " + copiedFile.getFilePath().getPresentableUrl());
-      processStatus(copiedFile.getFilePath(), copiedStatus, builder, null);
+      processStatus(copiedFile.getFilePath(), copiedStatus, null, context);
     }
   }
 
@@ -409,12 +411,44 @@ public class SvnChangeProvider implements ChangeProvider {
       if (parentCopyFromURL != null) {
         context.addCopiedFile(filePath, status, parentCopyFromURL);
       }
-      processStatus(filePath, status, context.getBuilder(), parentStatus);
+      processStatus(filePath, status, parentStatus, context);
     }
   }
 
-  private void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder,
-                             final FileStatus parentStatus) throws SVNException {
+  // seems here we can only have a tree conflict; which can be marked on either path (?)
+  // .. ok try to merge states
+  private Change createMovedChange(final ContentRevision before, final ContentRevision after, final SVNStatus copiedStatus,
+                                   final SVNStatus deletedStatus, @NotNull final SvnChangeProviderContext context) {
+    return new ConflictedSvnChange(before, after, ConflictState.mergeState(getState(copiedStatus, context), getState(deletedStatus, context)),
+                                   copiedStatus.getTreeConflict() != null ? after.getFile() : before.getFile());
+  }
+
+  private Change createChange(final ContentRevision before, final ContentRevision after, final FileStatus fStatus,
+                              final SVNStatus svnStatus, @NotNull final SvnChangeProviderContext context) {
+    return new ConflictedSvnChange(before, after, fStatus, getState(svnStatus, context), after == null ? before.getFile() : after.getFile());
+  }
+
+  private LocallyDeletedChange createLocallyDeletedChange(@NotNull FilePath filePath, final SVNStatus status, @NotNull final SvnChangeProviderContext context) {
+    return new SvnLocallyDeletedChange(filePath, getState(status, context));
+  }
+
+  private ConflictState getState(@Nullable final SVNStatus svnStatus, @NotNull final SvnChangeProviderContext context) {
+    if (svnStatus == null) {
+      return ConflictState.none;
+    }
+
+    final boolean treeConflict = svnStatus.getTreeConflict() != null;
+    final boolean textConflict = SVNStatusType.STATUS_CONFLICTED == svnStatus.getContentsStatus();
+    final boolean propertyConflict = SVNStatusType.STATUS_CONFLICTED == svnStatus.getPropertiesStatus();
+    if (treeConflict) {
+      context.reportTreeConflict(svnStatus);
+    }
+
+    return ConflictState.getInstance(treeConflict, textConflict, propertyConflict);
+  }
+
+  private void processStatus(final FilePath filePath, final SVNStatus status, final FileStatus parentStatus, @NotNull final SvnChangeProviderContext context) throws SVNException {
+    final ChangelistBuilder builder = context.getBuilder();
     loadEntriesFile(filePath);
     if (status != null) {
       FileStatus fStatus = convertStatus(status, filePath.getIOFile());
@@ -432,19 +466,19 @@ public class SvnChangeProvider implements ChangeProvider {
                statusType == SVNStatusType.STATUS_REPLACED ||
                propStatus == SVNStatusType.STATUS_MODIFIED ||
                propStatus == SVNStatusType.STATUS_CONFLICTED) {
-        builder.processChangeInList(new Change(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()),
-                                         CurrentContentRevision.create(filePath), fStatus), changeListNameFromStatus(status));
+        builder.processChangeInList(createChange(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()),
+                                         CurrentContentRevision.create(filePath), fStatus, status, context), changeListNameFromStatus(status));
         checkSwitched(filePath, builder, status, fStatus);
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
-        builder.processChangeInList(new Change(null, CurrentContentRevision.create(filePath), fStatus), changeListNameFromStatus(status));
+        builder.processChangeInList(createChange(null, CurrentContentRevision.create(filePath), fStatus, status, context), changeListNameFromStatus(status));
       }
       else if (statusType == SVNStatusType.STATUS_DELETED) {
-        builder.processChangeInList(new Change(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()), null, fStatus),
+        builder.processChangeInList(createChange(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()), null, fStatus, status, context),
                                     changeListNameFromStatus(status));
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
-        builder.processLocallyDeletedFile(filePath);
+        builder.processLocallyDeletedFile(createLocallyDeletedChange(filePath, status, context));
       }
       else if (statusType == SVNStatusType.STATUS_IGNORED || parentStatus == FileStatus.IGNORED) {
         builder.processIgnoredFile(filePath.getVirtualFile());
@@ -455,8 +489,8 @@ public class SvnChangeProvider implements ChangeProvider {
       else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
         if (file != null && FileDocumentManager.getInstance().isFileModifiedAndDocumentUnsaved(file)) {
-          builder.processChangeInList(new Change(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()),
-                                           CurrentContentRevision.create(filePath), FileStatus.MODIFIED), changeListNameFromStatus(status));
+          builder.processChangeInList(createChange(SvnContentRevision.create(myVcs, filePath, status.getCommittedRevision()),
+                                           CurrentContentRevision.create(filePath), FileStatus.MODIFIED, status, context), changeListNameFromStatus(status));
         }
         checkSwitched(filePath, builder, status, fStatus);
       }
@@ -658,6 +692,8 @@ public class SvnChangeProvider implements ChangeProvider {
     private final SVNStatusClient myStatusClient;
     private List<SvnChangedFile> myCopiedFiles = null;
     private final List<SvnChangedFile> myDeletedFiles = new ArrayList<SvnChangedFile>();
+    // for files moved in a subtree, which were the targets of merge (for instance). 
+    private final Map<String, SVNStatus> myTreeConflicted;
     private Map<FilePath, String> myCopyFromURLs = null;
 
     private final ProgressIndicator myProgress;
@@ -666,6 +702,7 @@ public class SvnChangeProvider implements ChangeProvider {
       myStatusClient = vcs.createStatusClient();
       myChangelistBuilder = changelistBuilder;
       myProgress = progress;
+      myTreeConflicted = new HashMap<String, SVNStatus>();
     }
 
     public ChangelistBuilder getBuilder() {
@@ -674,6 +711,15 @@ public class SvnChangeProvider implements ChangeProvider {
 
     public SVNStatusClient getClient() {
       return myStatusClient;
+    }
+
+    public void reportTreeConflict(final SVNStatus status) {
+      myTreeConflicted.put(status.getFile().getAbsolutePath(), status);
+    }
+
+    @Nullable
+    public SVNStatus getTreeConflictStatus(final File file) {
+      return myTreeConflicted.get(file.getAbsolutePath());
     }
 
     @NotNull
