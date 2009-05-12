@@ -93,7 +93,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @NotNull
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
-    assert parent instanceof GrEnumConstantList;
+    assert parent instanceof GrEnumConstantList : parent;
     return (PsiClass)parent.getParent().getParent();
   }
 
