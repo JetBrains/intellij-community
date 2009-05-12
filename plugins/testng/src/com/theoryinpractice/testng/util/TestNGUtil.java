@@ -52,7 +52,7 @@ public class TestNGUtil implements TestFramework
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   public static final String TESTNG_GROUP_NAME = "TestNG";
 
-  private static final String TEST_ANNOTATION_FQN = Test.class.getName();
+  public static final String TEST_ANNOTATION_FQN = Test.class.getName();
   public static final String[] CONFIG_ANNOTATIONS_FQN = {
       Configuration.class.getName(),
       Factory.class.getName(),
@@ -217,20 +217,8 @@ public class TestNGUtil implements TestFramework
         annotation = null;
       }
       if (annotation != null) {
-        PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
-        OUTER:
-        for (PsiNameValuePair aPair : pair) {
-          if (parameter.equals(aPair.getName())) {
-            Collection<String> matches = extractValuesFromParameter(aPair);
-            //check if any matches are in our values
-            for (String s : matches) {
-              if (values.contains(s)) {
-
-                results.put(psiClass, new LinkedHashSet<PsiMethod>());
-                break OUTER;
-              }
-            }
-          }
+        if (isAnnotatedWithParameter(annotation, parameter, values)) {
+          results.put(psiClass, new LinkedHashSet<PsiMethod>());
         }
       } else {
         Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
@@ -248,20 +236,9 @@ public class TestNGUtil implements TestFramework
         if (method != null) {
           annotation = AnnotationUtil.findAnnotation(method, test);
           if (annotation != null) {
-            PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
-            OUTER:
-            for (PsiNameValuePair aPair : pair) {
-              if (parameter.equals(aPair.getName())) {
-                Collection<String> matches = extractValuesFromParameter(aPair);
-                for (String s : matches) {
-                  if (values.contains(s)) {
-                    if (results.get(psiClass) == null)
-                      results.put(psiClass, new LinkedHashSet<PsiMethod>());
-                    results.get(psiClass).add(method);
-                    break OUTER;
-                  }
-                }
-              }
+            if (isAnnotatedWithParameter(annotation, parameter, values)) {
+              if (results.get(psiClass) == null) results.put(psiClass, new LinkedHashSet<PsiMethod>());
+              results.get(psiClass).add(method);
             }
           } else {
             Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
@@ -277,26 +254,56 @@ public class TestNGUtil implements TestFramework
     return results;
   }
 
-  public static Set<String> getAnnotationValues(String parameter, PsiClass... classes) {
-    Set<String> results = new HashSet<String>();
-    Set<String> test = new HashSet<String>(1);
-    test.add(TEST_ANNOTATION_FQN);
-    test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
-    for (PsiClass psiClass : classes) {
-      if (psiClass != null && hasTest(psiClass)) {
-        appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
-        PsiMethod[] methods = psiClass.getMethods();
-        for (PsiMethod method : methods) {
-          if (method != null) {
-            appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(method, test), method);
+  public static boolean isAnnotatedWithParameter(PsiAnnotation annotation, String parameter, Set<String> values) {
+    PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
+    for (PsiNameValuePair aPair : pair) {
+      if (parameter.equals(aPair.getName())) {
+        Collection<String> matches = extractValuesFromParameter(aPair);
+        for (String s : matches) {
+          if (values.contains(s)) {
+            return true;
           }
         }
       }
     }
+    return false;
+  }
+
+  public static Set<String> getAnnotationValues(String parameter, PsiClass... classes) {
+    Set<String> results = new HashSet<String>();
+    collectAnnotationValues(results, parameter, null, classes);
     return results;
   }
 
-  private static void appendAnnotationAttributeValues(final String parameter,
+  /**
+   * @return were javadoc params used
+   */
+  public static boolean collectAnnotationValues(Set<String> results, String parameter, PsiMethod[] psiMethods, PsiClass... classes) {
+    boolean used = false;
+    Set<String> test = new HashSet<String>(1);
+    test.add(TEST_ANNOTATION_FQN);
+    test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
+    if (psiMethods != null) {
+      for (PsiMethod psiMethod : psiMethods) {
+        used |= appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
+      }
+    } else {
+      for (PsiClass psiClass : classes) {
+        if (psiClass != null && hasTest(psiClass)) {
+          used |= appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
+          PsiMethod[] methods = psiClass.getMethods();
+          for (PsiMethod method : methods) {
+            if (method != null) {
+              used |= appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(method, test), method);
+            }
+          }
+        }
+      }
+    }
+    return used;
+  }
+
+  private static boolean appendAnnotationAttributeValues(final String parameter,
                                                       final Collection<String> results,
                                                       final PsiAnnotation annotation,
                                                       final PsiDocCommentOwner commentOwner) {
@@ -307,8 +314,11 @@ public class TestNGUtil implements TestFramework
           results.addAll(extractValuesFromParameter(aPair));
         }
       }
+      return false;
     } else {
-      results.addAll(extractAnnotationValuesFromJavaDoc(getTextJavaDoc(commentOwner), parameter));
+      final Collection<String> values = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(commentOwner), parameter);
+      results.addAll(values);
+      return !values.isEmpty();
     }
   }
 

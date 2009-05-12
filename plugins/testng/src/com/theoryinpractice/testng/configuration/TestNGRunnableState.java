@@ -7,6 +7,7 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.IDEACoverageRunner;
@@ -40,6 +41,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
+import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
@@ -64,7 +66,7 @@ import java.util.*;
 
 public class TestNGRunnableState extends JavaCommandLineState
 {
-  private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
+  private static final Logger LOG = Logger.getInstance("TestNG Runner");
   private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
   private final TestNGConfiguration config;
   private final RunnerSettings runnerSettings;
@@ -91,7 +93,7 @@ public class TestNGRunnableState extends JavaCommandLineState
           debugPort = DebuggerUtils.getInstance().findAvailableDebugAddress(true);
         }
         catch (ExecutionException e) {
-          LOGGER.error(e);
+          LOG.error(e);
         }
         debuggingRunnerData.setDebugPort(debugPort);
       }
@@ -152,8 +154,8 @@ public class TestNGRunnableState extends JavaCommandLineState
         .getEffectiveLanguageLevel(module);
     boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
 
-    LOGGER.info("Language level is " + effectiveLanguageLevel.toString());
-    LOGGER.info("is15 is " + is15);
+    LOG.info("Language level is " + effectiveLanguageLevel.toString());
+    LOG.info("is15 is " + is15);
 
     // Add plugin jars first...
     javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
@@ -175,17 +177,17 @@ public class TestNGRunnableState extends JavaCommandLineState
     // Append coverage parameters if appropriate
     if ((!(runnerSettings.getData() instanceof DebuggingRunnerData) || config.getCoverageRunner() instanceof IDEACoverageRunner) && config.isCoverageEnabled()) {
       myCurrentCoverageSuite = CoverageDataManager.getInstance(project).addCoverageSuite(config);
-      LOGGER.info("Added coverage data with name '" + myCurrentCoverageSuite.getPresentableName() + "'");
+      LOG.info("Added coverage data with name '" + myCurrentCoverageSuite.getPresentableName() + "'");
       config.appendCoverageArgument(javaParameters);
     }
 
-    LOGGER.info("Test scope is: " + config.getPersistantData().getScope());
+    LOG.info("Test scope is: " + config.getPersistantData().getScope());
     if (config.getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT) {
-      LOGGER.info("Configuring for whole project");
+      LOG.info("Configuring for whole project");
       JavaParametersUtil.configureProject(config.getProject(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                                           config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
     } else {
-      LOGGER.info("Configuring for module:" + config.getConfigurationModule().getModuleName());
+      LOG.info("Configuring for module:" + config.getConfigurationModule().getModuleName());
       JavaParametersUtil.configureModule(config.getConfigurationModule(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                                          config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
     }
@@ -273,7 +275,7 @@ public class TestNGRunnableState extends JavaCommandLineState
         annotationType = is15 ? TestNG.JDK_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
       }
 
-      LOGGER.info("Using annotationType of " + annotationType);
+      LOG.info("Using annotationType of " + annotationType);
 
       int logLevel = 1;
       try {
@@ -306,7 +308,7 @@ public class TestNGRunnableState extends JavaCommandLineState
           if (annotationType != null && !"".equals(annotationType)) {
             suite.setAnnotations(annotationType);
           }
-          LOGGER.info("Using annotationType of " + annotationType);
+          LOG.info("Using annotationType of " + annotationType);
 
           final String fileId =
               (project.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml").replace(' ', '_');
@@ -354,7 +356,7 @@ public class TestNGRunnableState extends JavaCommandLineState
         //TODO we should narrow this down by module really, if that's what's specified
         TestClassFilter projectFilter = new TestClassFilter(scope.getSourceScope(config).getGlobalSearchScope(), config.getProject(), true);
         TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
-        classes.putAll(calculateDependencies(data, true, TestNGUtil.getAllTestClasses(filter)));
+        classes.putAll(calculateDependencies(null, TestNGUtil.getAllTestClasses(filter)));
         if (classes.size() == 0) {
           throw new CantRunException("No tests found in the package \"" + packageName + '\"');
         }
@@ -369,7 +371,7 @@ public class TestNGRunnableState extends JavaCommandLineState
       if (null == psiClass.getQualifiedName()) {
         throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
       }
-      classes.putAll(calculateDependencies(data, true, psiClass));
+      classes.putAll(calculateDependencies(null, psiClass));
     } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
       PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
@@ -380,8 +382,14 @@ public class TestNGRunnableState extends JavaCommandLineState
       if (null == psiClass.getQualifiedName()) {
         throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
       }
-      classes.putAll(calculateDependencies(data, false, psiClass));
-      classes.put(psiClass, Arrays.asList(psiClass.findMethodsByName(data.getMethodName(), true)));
+      final PsiMethod[] methods = psiClass.findMethodsByName(data.getMethodName(), true);
+      classes.putAll(calculateDependencies(methods, psiClass));
+      Collection<PsiMethod> psiMethods = classes.get(psiClass);
+      if (psiMethods == null) {
+        psiMethods = new LinkedHashSet<PsiMethod>();
+        classes.put(psiClass, psiMethods);
+      }
+      psiMethods.addAll(Arrays.asList(methods));
     } else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
       //for a group, we include all classes
       PsiClass[] testClasses =
@@ -418,7 +426,7 @@ public class TestNGRunnableState extends JavaCommandLineState
 
         }
         catch (IOException e) {
-          LOGGER.error(e);
+          LOG.error(e);
         }
       }
     }
@@ -456,21 +464,41 @@ public class TestNGRunnableState extends JavaCommandLineState
     }
   }
 
-  private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(TestData data, boolean includeClasses, @Nullable PsiClass... classes) {
+  private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(PsiMethod[] methods, @Nullable PsiClass... classes) {
     //we build up a list of dependencies
     Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
     if (classes != null && classes.length > 0) {
-      Set<String> dependencies = TestNGUtil.getAnnotationValues("dependsOnGroups", classes);
+      Set<String> dependencies = new HashSet<String>();
+      final boolean usedJavadocTags = TestNGUtil.collectAnnotationValues(dependencies, "dependsOnGroups", methods, classes);
       if (!dependencies.isEmpty()) {
         final Project project = classes[0].getProject();
-        PsiManager psiManager = PsiManager.getInstance(project);
         //we get all classes in the module to figure out which are in the groups we depend on
-        Collection<PsiClass> allClasses = AllClassesSearch.search(getSearchScope(), project).findAll();
-        Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
-        //we now have a list of dependencies, and a list of classes that match those dependencies
-        results.putAll(filteredClasses);
+        Collection<PsiClass> allClasses;
+        if (usedJavadocTags) {
+          allClasses = AllClassesSearch.search(getSearchScope(), project).findAll();
+          Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
+          //we now have a list of dependencies, and a list of classes that match those dependencies
+          results.putAll(filteredClasses);
+        } else {
+          final PsiClass testAnnotation =
+            JavaPsiFacade.getInstance(project).findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.allScope(project));
+          LOG.assertTrue(testAnnotation != null);
+          for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, getSearchScope())) {
+            if (TestNGUtil.isAnnotatedWithParameter(AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN), "groups", dependencies)) {
+              final PsiClass psiClass = psiMember.getContainingClass();
+              Collection<PsiMethod> psiMethods = results.get(psiClass);
+              if (psiMethods == null) {
+                psiMethods = new LinkedHashSet<PsiMethod>();
+                results.put(psiClass, psiMethods);
+              }
+              if (psiMember instanceof PsiMethod) {
+                psiMethods.add((PsiMethod)psiMember);
+              }
+            }
+          }
+        }
       }
-      if (includeClasses) {
+      if (methods == null) {
         for (PsiClass c : classes) {
           results.put(c, new LinkedHashSet<PsiMethod>());
         }
