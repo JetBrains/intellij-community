@@ -23,6 +23,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private final Project myProject;
   private final Map<String, LocalChangeList> myMap;
+  // in fact, a kind of local change
+  private final DeletedFilesHolder myLocallyDeleted;
   private LocalChangeList myDefault;
 
   private ChangeListsIndexes myIdx;
@@ -31,12 +33,14 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myProject = project;
     myMap = new HashMap<String, LocalChangeList>();
     myIdx = new ChangeListsIndexes();
+    myLocallyDeleted = new DeletedFilesHolder();
   }
 
   private ChangeListWorker(final ChangeListWorker worker) {
     myProject = worker.myProject;
     myMap = new HashMap<String, LocalChangeList>();
     myIdx = new ChangeListsIndexes(worker.myIdx);
+    myLocallyDeleted = worker.myLocallyDeleted.copy();
     
     LocalChangeList defaultList = null;
     for (LocalChangeList changeList : worker.myMap.values()) {
@@ -69,6 +73,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myMap.putAll(worker.myMap);
     myDefault = worker.myDefault;
     myIdx = new ChangeListsIndexes(worker.myIdx);
+    // todo +-
+    myLocallyDeleted.takeFrom(worker.myLocallyDeleted);
   }
 
   public ChangeListWorker copy() {
@@ -88,7 +94,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   public LocalChangeList getChangeList(String id) {
     for (LocalChangeList changeList : myMap.values()) {
       if (changeList.getId().equals(id)) {
-        return changeList;
+        return changeList.copy();
       }
     }
     return null;
@@ -286,6 +292,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     for (Change change : oldChanges) {
       myIdx.changeRemoved(change);
     }
+    myLocallyDeleted.cleanScope(scope);
   }
 
   public void notifyDoneProcessingChanges(final ChangeListListener dispatcher) {
@@ -384,6 +391,18 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   public FileStatus getStatus(final VirtualFile file) {
     return myIdx.getStatus(file);
+  }
+
+  public DeletedFilesHolder getLocallyDeleted() {
+    return myLocallyDeleted.copy();
+  }
+
+  public void addLocallyDeleted(final LocallyDeletedChange change) {
+    myLocallyDeleted.addFile(change);
+  }
+
+  public boolean isContainedInLocallyDeleted(final FilePath filePath) {
+    return myLocallyDeleted.isContainedInLocallyDeleted(filePath);
   }
 
   private abstract class ExternalVsInternalChangesIntersection {

@@ -103,11 +103,16 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   public void processLocallyDeletedFile(final FilePath file) {
+    processLocallyDeletedFile(new LocallyDeletedChange(file));
+  }
+
+  public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
     if (! myUpdateUnversioned) return;
     checkIfDisposed();
+    final FilePath file = locallyDeletedChange.getPath();
     if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
     if (myScope.belongsTo(file)) {
-      myComposite.getDeletedFilesHolder().addFile(file);
+      myChangeListWorker.addLocallyDeleted(locallyDeletedChange);
     }
   }
 

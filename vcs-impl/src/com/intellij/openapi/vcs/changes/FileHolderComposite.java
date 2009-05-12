@@ -11,7 +11,6 @@ public class FileHolderComposite implements FileHolder {
 
   public FileHolderComposite(final Project project) {
     myHolders = new HashMap<HolderType, FileHolder>();
-    myHolders.put(FileHolder.HolderType.DELETED, new DeletedFilesHolder());
     myHolders.put(FileHolder.HolderType.UNVERSIONED, new VirtualFileHolder(project, FileHolder.HolderType.UNVERSIONED));
     myHolders.put(FileHolder.HolderType.SWITCHED, new SwitchedFileHolder(project, HolderType.SWITCHED));
     myHolders.put(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING, new VirtualFileHolder(project, FileHolder.HolderType.MODIFIED_WITHOUT_EDITING));
@@ -83,10 +82,6 @@ public class FileHolderComposite implements FileHolder {
 
   public HolderType getType() {
     throw new UnsupportedOperationException();
-  }
-
-  public DeletedFilesHolder getDeletedFilesHolder() {
-    return (DeletedFilesHolder) myHolders.get(HolderType.DELETED);
   }
 
   public SwitchedFileHolder getSwitchedFileHolder() {

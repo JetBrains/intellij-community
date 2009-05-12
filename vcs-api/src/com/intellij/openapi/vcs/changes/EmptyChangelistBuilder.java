@@ -39,6 +39,9 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   public void processLocallyDeletedFile(final FilePath file) {
   }
 
+  public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
+  }
+
   public void processModifiedWithoutCheckout(final VirtualFile file) {
   }
 

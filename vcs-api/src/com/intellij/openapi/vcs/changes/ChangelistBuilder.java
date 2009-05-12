@@ -62,6 +62,8 @@ public interface ChangelistBuilder {
    * @param file a file to process
    */
   void processLocallyDeletedFile(FilePath file);
+  
+  void processLocallyDeletedFile(final LocallyDeletedChange locallyDeletedChange);
 
   /**
    * Process the file that was modified without explicit checkout

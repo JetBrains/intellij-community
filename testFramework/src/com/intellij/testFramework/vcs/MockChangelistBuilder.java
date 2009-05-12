@@ -17,10 +17,7 @@
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangelistBuilder;
-import com.intellij.openapi.vcs.changes.LogicalLock;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +46,9 @@ public class MockChangelistBuilder implements ChangelistBuilder {
   }
 
   public void processLocallyDeletedFile(FilePath file) {
+  }
+
+  public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
   }
 
   public void processModifiedWithoutCheckout(VirtualFile file) {

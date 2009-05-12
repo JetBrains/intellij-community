@@ -115,7 +115,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     myShowFlatten = showFlatten;
   }
 
-  public void updateModel(List<? extends ChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<FilePath> locallyDeletedFiles,
+  public void updateModel(List<? extends ChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<LocallyDeletedChange> locallyDeletedFiles,
                           List<VirtualFile> modifiedWithoutEditing,
                           MultiMap<String, VirtualFile> switchedFiles,
                           @Nullable List<VirtualFile> ignoredFiles,

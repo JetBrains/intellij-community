@@ -412,13 +412,18 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return ((LogicallyLockedHolder) myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).getMap().containsKey(file);
   }
 
-  public List<FilePath> getDeletedFiles() {
-    return new ArrayList<FilePath>(myComposite.getDeletedFilesHolder().getFiles());
+  public boolean isContainedInLocallyDeleted(final FilePath filePath) {
+    synchronized (myDataLock) {
+      return myWorker.isContainedInLocallyDeleted(filePath);
+    }
   }
 
-  /**
-   * @return only roots for switched folders, and switched files
-   */
+  public List<LocallyDeletedChange> getDeletedFiles() {
+    synchronized (myDataLock) {
+      return myWorker.getLocallyDeleted().getFiles();
+    }
+  }
+
   MultiMap<String, VirtualFile> getSwitchedFilesMap() {
     return myComposite.getSwitchedFileHolder().getBranchToFileMap();
   }

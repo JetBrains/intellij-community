@@ -6,10 +6,12 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
+import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -53,6 +55,10 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
+  }
+
+  public static ChangesBrowserNode create(final Project project, @NotNull final LocallyDeletedChange change) {
+    return new ChangesBrowserLocallyDeletedNode(change, project);
   }
 
   public static ChangesBrowserNode create(final Project project, @NotNull Object userObject) {
@@ -155,9 +161,18 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
         final FilePath file = (FilePath)value;
         files.add(file);
       }
+      final FilePath ownPath = child.getMyPath();
+      if (ownPath != null) {
+        files.add(ownPath);
+      }
     }
 
     return files;
+  }
+
+  @Nullable
+  protected FilePath getMyPath() {
+    return null;
   }
 
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {

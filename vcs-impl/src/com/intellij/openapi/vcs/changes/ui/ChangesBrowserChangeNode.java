@@ -10,17 +10,19 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
 /**
  * @author yole
  */
-public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
+public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> implements TreeLinkMouseListener.HaveTooltip {
   private final Project myProject;
 
   protected ChangesBrowserChangeNode(final Project project, Change userObject) {
@@ -65,11 +67,16 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
       appendSwitched(renderer);
     }
 
-    if (filePath.isDirectory() || !isLeaf()) {
-      renderer.setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
-    }
-    else {
-      renderer.setIcon(filePath.getFileType().getIcon());
+    final Icon addIcon = change.getAdditionalIcon();
+    if (addIcon != null) {
+      renderer.setIcon(addIcon);
+    } else {
+      if (filePath.isDirectory() || !isLeaf()) {
+        renderer.setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
+      }
+      else {
+        renderer.setIcon(filePath.getFileType().getIcon());
+      }
     }
   }
 
@@ -81,6 +88,11 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
         renderer.append(" [switched to " + branch + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
+  }
+
+  public String getTooltip() {
+    final Change change = getUserObject();
+    return change.getDescription();
   }
 
   @Override

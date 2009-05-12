@@ -204,7 +204,9 @@ public class LocalChangeListImpl extends LocalChangeList {
     for (int i = 0; i < newChanges.length; i++) {
       Change oldChange = findOldChange(newChanges[i]);
       if (oldChange != null) {
-        newChanges[i] = oldChange;
+        // or additional info from change descendants will be lost todo: maybe override equals, but then..
+        // todo: equivalency not <-> to equals there
+        //newChanges[i] = oldChange;
       }
       else {
         changesDetected = true;

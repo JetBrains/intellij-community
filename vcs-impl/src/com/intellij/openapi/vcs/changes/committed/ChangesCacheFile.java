@@ -828,7 +828,7 @@ public class ChangesCacheFile {
         beforeRevision.getFile().refresh();
         if (beforeRevision.getFile().getVirtualFile() == null || myCreatedFiles.contains(beforeRevision.getFile())) {
           // if not deleted from vcs, mark as incoming, otherwise file already deleted
-          final boolean locallyDeleted = myClManager.getDeletedFiles().contains(beforeRevision.getFile());
+          final boolean locallyDeleted = myClManager.isContainedInLocallyDeleted(beforeRevision.getFile());
           debug(locallyDeleted ? "File deleted locally, change marked as incoming" : "File already deleted");
           state.setState(locallyDeleted ? IncomingChangeState.State.BEFORE_NOT_EXISTS_DELETED_LOCALLY : IncomingChangeState.State.BEFORE_NOT_EXISTS_ALREADY_DELETED);
           return !locallyDeleted;

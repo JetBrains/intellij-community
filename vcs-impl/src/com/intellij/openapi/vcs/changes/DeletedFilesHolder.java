@@ -3,27 +3,30 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vcs.FilePath;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
  */
 public class DeletedFilesHolder implements FileHolder {
-  private final List<FilePath> myFiles = new ArrayList<FilePath>();
+  private final Map<String, LocallyDeletedChange> myFiles = new HashMap<String, LocallyDeletedChange>();
 
-  public synchronized void cleanAll() {
+  public void cleanAll() {
     myFiles.clear();
   }
+  
+  public void takeFrom(final DeletedFilesHolder holder) {
+    myFiles.clear();
+    myFiles.putAll(holder.myFiles);
+  }
 
-  public synchronized void cleanScope(final VcsDirtyScope scope) {
+  public void cleanScope(final VcsDirtyScope scope) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final List<FilePath> currentFiles = new ArrayList<FilePath>(myFiles);
-        for (FilePath path : currentFiles) {
-          if (scope.belongsTo(path)) {
-            myFiles.remove(path);
+        final List<LocallyDeletedChange> currentFiles = new ArrayList<LocallyDeletedChange>(myFiles.values());
+        for (LocallyDeletedChange change : currentFiles) {
+          if (scope.belongsTo(change.getPath())) {
+            myFiles.remove(change.getPresentableUrl());
           }
         }
       }
@@ -34,17 +37,22 @@ public class DeletedFilesHolder implements FileHolder {
     return HolderType.DELETED;
   }
 
-  public synchronized void addFile(FilePath file) {
-    myFiles.add(file);
+  public void addFile(final LocallyDeletedChange change) {
+    myFiles.put(change.getPresentableUrl(), change);
   }
 
-  public synchronized List<FilePath> getFiles() {
-    return Collections.unmodifiableList(myFiles);
+  public List<LocallyDeletedChange> getFiles() {
+    return new ArrayList<LocallyDeletedChange>(myFiles.values());
   }
 
-  public synchronized DeletedFilesHolder copy() {
+  public boolean isContainedInLocallyDeleted(final FilePath filePath) {
+    final String url = filePath.getPresentableUrl();
+    return myFiles.containsKey(url);
+  }
+
+  public DeletedFilesHolder copy() {
     final DeletedFilesHolder copyHolder = new DeletedFilesHolder();
-    copyHolder.myFiles.addAll(myFiles);
+    copyHolder.myFiles.putAll(myFiles);
     return copyHolder;
   }
 

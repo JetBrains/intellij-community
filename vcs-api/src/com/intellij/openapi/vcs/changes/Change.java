@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 
 /**
@@ -96,7 +97,7 @@ public class Change {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || (! (o instanceof Change))) return false;
     final Change otherChange = ((Change)o);
 
     final ContentRevision br1 = getBeforeRevision();
@@ -205,5 +206,15 @@ public class Change {
 
   public void setIsReplaced(final boolean isReplaced) {
     myIsReplaced = isReplaced;
+  }
+
+  @Nullable
+  public Icon getAdditionalIcon() {
+    return null;
+  }
+
+  @Nullable
+  public String getDescription() {
+    return null;
   }
 }

@@ -4,10 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.LogicalLock;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -75,7 +72,7 @@ public class TreeModelBuilder {
 
   public DefaultTreeModel buildModel(final List<? extends ChangeList> changeLists,
                                      final List<VirtualFile> unversionedFiles,
-                                     final List<FilePath> locallyDeletedFiles,
+                                     final List<LocallyDeletedChange> locallyDeletedFiles,
                                      final List<VirtualFile> modifiedWithoutEditing,
                                      final MultiMap<String, VirtualFile> switchedFiles,
                                      @Nullable final List<VirtualFile> ignoredFiles, @Nullable final List<VirtualFile> lockedFolders,
@@ -113,7 +110,7 @@ public class TreeModelBuilder {
     if (!locallyDeletedFiles.isEmpty()) {
       ChangesBrowserNode locallyDeletedNode = ChangesBrowserNode.create(myProject, VcsBundle.message("changes.nodetitle.locally.deleted.files"));
       model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
-      buildFilePaths(locallyDeletedFiles, locallyDeletedNode);
+      buildLocallyDeletedPaths(locallyDeletedFiles, locallyDeletedNode);
     }
 
     collapseDirectories(model, root);
@@ -154,6 +151,20 @@ public class TreeModelBuilder {
     final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (VirtualFile file : files) {
       insertChangeNode(file, foldersCache, policy, baseNode);
+    }
+  }
+
+  private void buildLocallyDeletedPaths(final Collection<LocallyDeletedChange> locallyDeletedChanges, final ChangesBrowserNode baseNode) {
+    final HashMap<String, ChangesBrowserNode> foldersCache = new HashMap<String, ChangesBrowserNode>();
+    final ChangesGroupingPolicy policy = createGroupingPolicy();
+    for (LocallyDeletedChange change : locallyDeletedChanges) {
+      ChangesBrowserNode oldNode = foldersCache.get(change.getPresentableUrl());
+      if (oldNode == null) {
+        final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, change);
+        final ChangesBrowserNode parent = getParentNodeFor(node, foldersCache, policy, baseNode);
+        model.insertNodeInto(node, parent, parent.getChildCount());
+        foldersCache.put(change.getPresentableUrl(), node);
+      }
     }
   }
 
@@ -278,6 +289,8 @@ public class TreeModelBuilder {
       return (FilePath)o;
     } else if (o instanceof ChangesBrowserLogicallyLockedFile) {
       return new FilePathImpl(((ChangesBrowserLogicallyLockedFile) o).getUserObject());
+    } else if (o instanceof LocallyDeletedChange) {
+      return ((LocallyDeletedChange) o).getPath();
     }
 
     return null;
