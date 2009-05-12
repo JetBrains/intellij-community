@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -86,7 +87,8 @@ public class DeleteHandler {
       safeDeleteApplicable = SafeDeleteProcessor.validElement(element);
     }
 
-    if (safeDeleteApplicable) {
+    final boolean dumb = DumbService.getInstance().isDumb();
+    if (safeDeleteApplicable && !dumb) {
       DeleteDialog dialog = new DeleteDialog(project, elements, new DeleteDialog.Callback() {
         public void run(final DeleteDialog dialog) {
           if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements))) return;
@@ -101,6 +103,7 @@ public class DeleteHandler {
       if (!dialog.isOK()) return;
     }
     else {
+      @SuppressWarnings({"UnresolvedPropertyKey"})
       String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message("prompt.delete.elements"), elements);
 
       boolean anyDirectories = false;
@@ -119,6 +122,10 @@ public class DeleteHandler {
         else {
           warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories.in.the.selected.directory");
         }
+      }
+
+      if (safeDeleteApplicable && dumb) {
+        warningMessage += "\n\nWarning:\n  Safe delete is not available while IntelliJ IDEA updates indices,\n  no usages will be checked.";
       }
 
       int result = Messages.showDialog(project, warningMessage, IdeBundle.message("title.delete"),
