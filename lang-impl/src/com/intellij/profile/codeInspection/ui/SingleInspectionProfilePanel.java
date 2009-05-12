@@ -94,11 +94,9 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
   private boolean myIsInRestore = false;
 
   public static final DataKey<SingleInspectionProfilePanel> PANEL_KEY = DataKey.create(SingleInspectionProfilePanel.class.getName());
-  private final boolean myAreScopesAvailable;
 
-  public SingleInspectionProfilePanel(final String inspectionProfileName, final ModifiableModel profile, boolean areScopesAvailable) {
+  public SingleInspectionProfilePanel(final String inspectionProfileName, final ModifiableModel profile) {
     super(new BorderLayout());
-    myAreScopesAvailable = areScopesAvailable;
     mySelectedProfile = (InspectionProfileImpl)profile;
     myInitialProfile = inspectionProfileName;
     add(createInspectionProfileSettingsPanel(), BorderLayout.CENTER);
@@ -231,7 +229,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
                                                  JPanel parent,
                                                  String profileName) {
 
-    profileName = Messages.showInputDialog(parent, profileName, "title", Messages.getQuestionIcon());
+    profileName = Messages.showInputDialog(parent, profileName, "title", Messages.getQuestionIcon()); //todo
     if (profileName == null) return null;
     final boolean isLocal = false;
     final ProfileManager profileManager = selectedProfile.getProfileManager();
@@ -254,28 +252,6 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       }
       else if (initValue == 1) {
         profileModifiableModel.resetToBase();
-      }
-      profileModifiableModel.setName(profileName);
-      profileModifiableModel.setLocal(isLocal);
-      return profileModifiableModel;
-  }
-
-  @Nullable
-  public static ModifiableModel createNewLocalProfileWithSpecifiedName(ModifiableModel selectedProfile, ProfileManager ideProfileManager,
-                                                                       ProfileManager currentProfileManager,
-                                                                       Collection<String> currentlyUsingNames,
-                                                                       String profileName, boolean isLocal) {
-    ProfileManager profileManager = isLocal && ideProfileManager != null ? ideProfileManager : currentProfileManager;
-    if (currentlyUsingNames.contains(profileName)) {
-      Messages.showErrorDialog(InspectionsBundle.message("inspection.unable.to.create.profile.message", profileName),
-                               InspectionsBundle.message("inspection.unable.to.create.profile.dialog.title"));
-      return null;
-    }
-    InspectionProfileImpl inspectionProfile =
-        new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
-      final ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
-      if (selectedProfile != null) { //can be null for default or empty profile
-        profileModifiableModel.copyFrom(selectedProfile);
       }
       profileModifiableModel.setName(profileName);
       profileModifiableModel.setLocal(isLocal);
@@ -309,7 +285,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
 
     try {
       myIsInRestore = true;
-      ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().restoreVisibleState(myTree);
+      mySelectedProfile.getExpandedNodes().restoreVisibleState(myTree);
     }
     finally {
       myIsInRestore = false;
@@ -371,7 +347,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
 
   private void repaintTableData() {
     if (myTree != null) {
-      ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().saveVisibleState(myTree);
+      mySelectedProfile.getExpandedNodes().saveVisibleState(myTree);
       reloadModel();
       restoreTreeState();
     }
@@ -436,7 +412,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
         }
 
         if (!myIsInRestore) {
-          InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
+          InspectionProfileImpl selected = mySelectedProfile;
           if (selected != null) {
             InspectionProfileImpl baseProfile = (InspectionProfileImpl)selected.getParentProfile();
             if (baseProfile != null) {
@@ -492,7 +468,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       }
 
       public void treeCollapsed(TreeExpansionEvent event) {
-        InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
+        InspectionProfileImpl selected = mySelectedProfile;
         String nodeTitle = getExpandedString(event.getPath());
         final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
         if (parentProfile != null) {
@@ -502,7 +478,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       }
 
       public void treeExpanded(TreeExpansionEvent event) {
-        InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
+        InspectionProfileImpl selected = mySelectedProfile;
         String nodeTitle = getExpandedString(event.getPath());
         final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
         if (parentProfile != null) {
@@ -821,7 +797,6 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     }
 
 
-    if (myAreScopesAvailable) {
       final JPanel addDeleteMoveUpDouwnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
       final JButton addScope = new JButton("Add scope");
       addScope.addActionListener(new ActionListener() {
@@ -870,7 +845,6 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       addDeleteMoveUpDouwnPanel.add(moveDown);
 
       withSeverity.add(addDeleteMoveUpDouwnPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
-    }
 
     return withSeverity;
   }

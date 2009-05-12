@@ -17,7 +17,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
@@ -25,10 +26,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
 public abstract class InspectionToolsConfigurable implements Configurable, ErrorsConfigurable {
-  private final String mySelectedTool;
   private CardLayout myLayout = new CardLayout();
   private JPanel myPanel;
 
@@ -38,24 +39,20 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
   private JComboBox myProfiles;
   private Map<String, SingleInspectionProfilePanel> myPanels = new HashMap<String, SingleInspectionProfilePanel>();
 
-  protected final ProfileManager myProfileManager;
   private JPanel myWholePanel;
   private JButton myAddButton;
   private JButton myDeleteButton;
   private ArrayList<String> myDeletedProfiles = new ArrayList<String>();
+  protected final InspectionProfileManager myProfileManager;
+  protected final InspectionProjectProfileManager myProjectProfileManager;
 
-  protected InspectionToolsConfigurable(ProfileManager profileManager) {
-    this(null, profileManager);
-  }
 
-  public InspectionToolsConfigurable(final String selectedTool, ProfileManager profileManager) {
-    mySelectedTool = selectedTool;
-    myProfileManager = profileManager;
+  public InspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ModifiableModel model = SingleInspectionProfilePanel.createNewProfile(-1, (ModifiableModel)getSelectedObject(), myWholePanel, "");
+        final ModifiableModel model = SingleInspectionProfilePanel.createNewProfile(-1, getSelectedObject(), myWholePanel, "");
         if (model != null) {
-          final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(model.getName(), model, areScopesAvailable());
+          final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(model.getName(), model);
           myPanel.add(model.getName(), panel);
           myPanels.put(model.getName(), panel);
           ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
@@ -72,6 +69,8 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
          myDeletedProfiles.add(selectedProfile.getName());
       }
     });
+    myProjectProfileManager = projectProfileManager;
+    myProfileManager = profileManager;
   }
 
   public String getDisplayName() {
@@ -118,7 +117,7 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
   public void apply() throws ConfigurationException {
     for (String name : myPanels.keySet()) {
       if (myDeletedProfiles.contains(name)) {
-        myProfileManager.deleteProfile(name);
+        deleteProfile(name);
       } else {
         myPanels.get(name).apply();
       }
@@ -126,26 +125,33 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
     setCurrentProfile((InspectionProfileImpl)myProfiles.getSelectedItem());
   }
 
-  protected abstract void setCurrentProfile(InspectionProfileImpl profile);
+  protected void deleteProfile(String name) {
+    myProfileManager.deleteProfile(name);
+    myProjectProfileManager.deleteProfile(name);
+  }
 
-  protected abstract boolean areScopesAvailable();
+  protected abstract void setCurrentProfile(InspectionProfileImpl profile);
 
   public void reset() {
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     myProfiles.setModel(model);
-    for (Profile profile : myProfileManager.getProfiles()) {
+    for (Profile profile : getProfiles()) {
       model.addElement(profile);
       final String profileName = profile.getName();
-      final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileName, ((InspectionProfileImpl)profile).getModifiableModel(), areScopesAvailable());
+      final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileName, ((InspectionProfileImpl)profile).getModifiableModel());
       myPanels.put(profileName, panel);
       panel.reset();
       myPanel.add(profileName, panel);
     }
     myProfiles.setSelectedItem(getCurrentProfile());
     myLayout.show(myPanel, getCurrentProfile().getName());
-    if (mySelectedTool != null) {
-      myPanels.get(getCurrentProfile().getName()).selectInspectionTool(mySelectedTool);
-    }
+  }
+
+  protected Collection<Profile> getProfiles() {
+    final Collection<Profile> result = new ArrayList<Profile>();
+    result.addAll(myProfileManager.getProfiles());
+    result.addAll(myProjectProfileManager.getProfiles());
+    return result;
   }
 
   public void disposeUIResources() {
@@ -154,7 +160,14 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
     }
   }
 
-  public void selectProfile(String name) {}
+  public void selectProfile(String name) {
+    for (int i = 0; i < myProfiles.getItemCount(); i++) {
+      if (Comparing.strEqual(((InspectionProfileImpl)myProfiles.getItemAt(i)).getName(), name)) {
+        myProfiles.setSelectedIndex(i);
+        break;
+      }
+    }
+  }
 
   public void selectInspectionTool(String selectedToolShortName) {
     myPanels.get(((Profile)myProfiles.getSelectedItem()).getName()).selectInspectionTool(selectedToolShortName);

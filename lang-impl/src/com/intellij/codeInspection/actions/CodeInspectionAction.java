@@ -81,7 +81,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final IDEInspectionToolsConfigurable errorConfigurable = new IDEInspectionToolsConfigurable(null, profileManager);
+        final IDEInspectionToolsConfigurable errorConfigurable = new IDEInspectionToolsConfigurable(projectProfileManager, profileManager);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
         errorConfigurable.selectProfile(((Profile)profiles.getSelectedItem()).getName());
         editor.show();

@@ -69,7 +69,7 @@ public class PlatformInspectionsConfigurable implements ErrorsConfigurable {
       myProfile = new InspectionProfileImpl((InspectionProfileImpl) InspectionProfileManager.getInstance().getRootProfile());
     }
     if (myPanel == null) {
-      myPanel = new SingleInspectionProfilePanel(myProfile.getName(), myProfile, false);
+      myPanel = new SingleInspectionProfilePanel(myProfile.getName(), myProfile);
     }
     return myPanel;
   }

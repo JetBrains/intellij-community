@@ -15,7 +15,6 @@ import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
 import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -71,24 +70,23 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
                                          final boolean canChooseDifferentProfile,
                                          final String selectedToolShortName) {
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
+    final ErrorsConfigurable errorsConfigurable;
     if (!canChooseDifferentProfile) {
-      @NonNls final String dimensionServiceKey = "#Errors";
-      return settingsUtil.editConfigurable(project, dimensionServiceKey,
-                                           new IDEInspectionToolsConfigurable(selectedToolShortName, InspectionProfileManager.getInstance()));
+      errorsConfigurable = new IDEInspectionToolsConfigurable(InspectionProjectProfileManager.getInstance(project), InspectionProfileManager.getInstance());
     }
     else {
-      final ErrorsConfigurable errorsConfigurable = ProjectInspectionToolsConfigurable.getInstance(project);
-      return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
-        public void run() {
-          errorsConfigurable.selectProfile(inspectionProfile.getName());
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              errorsConfigurable.selectInspectionTool(selectedToolShortName);
-            }
-          });
-        }
-      });
+      errorsConfigurable = ProjectInspectionToolsConfigurable.getInstance(project);
     }
+    return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
+      public void run() {
+        errorsConfigurable.selectProfile(inspectionProfile.getName());
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            errorsConfigurable.selectInspectionTool(selectedToolShortName);
+          }
+        });
+      }
+    });
 
   }
 
