@@ -16,6 +16,7 @@
 package git4idea.merge;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -24,9 +25,14 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.StringScanner;
+import git4idea.config.GitConfigUtil;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * Collect change for merge or pull operations
@@ -93,39 +99,103 @@ public class MergeChangeCollector {
         String path = root + "/" + GitUtil.unescapePath(relative);
         myUpdates.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).add(path);
       }
+      GitRevisionNumber currentHead = GitRevisionNumber.resolve(myProject, myRoot, "HEAD");
       // collect other changes (ignoring unmerged)
-      h = new GitSimpleHandler(myProject, myRoot, GitHandler.DIFF);
-      h.setSilent(true);
-      h.setNoSSH(true);
-      // note that moves are not detected here
-      h.addParameters("--name-status", "--diff-filter=ADMRUX", myStart.getRev());
-      for (String line : h.run().split("\n")) {
-        if (line.length() == 0) {
-          continue;
+      TreeSet<String> updated = new TreeSet<String>();
+      TreeSet<String> created = new TreeSet<String>();
+      TreeSet<String> removed = new TreeSet<String>();
+      if (currentHead.equals(myStart)) {
+        // The head has not advanced. This means that this is a merge that did not commit.
+        // This could be caused by --no-commit option or by failed two-head merge. The MERGE_HEAD
+        // should be available. In case of --no-commit option, the MERGE_HEAD might contain
+        // multiple heads separated by newline. The changes are collected separately for each head
+        // and they are merged using TreeSet class (that also sorts the changes).
+        File mergeHeadsFile = new File(root, ".git/MERGE_HEAD");
+        try {
+          String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, GitConfigUtil.UTF8_ENCODING));
+          for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
+            String head = s.line();
+            if (head.length() == 0) {
+              continue;
+            }
+            // note that "..." cause the diff to start from common parent between head and merge head
+            processDiff(root, updated, created, removed, myStart.getRev() + "..." + head);
+          }
         }
-        String[] tk = line.split("[\t ]+");
-        final String relative = tk[tk.length - 1];
-        if (myUnmergedPaths.contains(relative)) {
-          continue;
-        }
-        String path = root + "/" + GitUtil.unescapePath(relative);
-        switch (tk[0].charAt(0)) {
-          case 'M':
-            myUpdates.getGroupById(FileGroup.UPDATED_ID).add(path);
-            break;
-          case 'A':
-            myUpdates.getGroupById(FileGroup.CREATED_ID).add(path);
-            break;
-          case 'D':
-            myUpdates.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).add(path);
-            break;
-          default:
-            throw new IllegalStateException("Unexpected status: " + line);
+        catch (IOException e) {
+          //noinspection ThrowableInstanceNeverThrown
+          exceptions.add(new VcsException("Unable to read the file " + mergeHeadsFile + ": " + e.getMessage(), e));
         }
       }
+      else {
+        // Otherwise this is a merge that did created a commit. And because of this the incoming changes
+        // are diffs between old head and new head. The commit could have been multihead commit,
+        // and the expression below considers it as well.
+        processDiff(root, updated, created, removed, myStart.getRev() + "..HEAD");
+      }
+      addAll(FileGroup.UPDATED_ID, updated);
+      addAll(FileGroup.CREATED_ID, created);
+      addAll(FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
     }
     catch (VcsException e) {
       exceptions.add(e);
+    }
+  }
+
+  /**
+   * Process diff
+   *
+   * @param root      the vcs root
+   * @param updated   the set of updated files
+   * @param created   the set of created files
+   * @param removed   the set of removed files
+   * @param revisions the diff expressions
+   * @throws VcsException if there is a problem with running git
+   */
+  private void processDiff(String root, TreeSet<String> updated, TreeSet<String> created, TreeSet<String> removed, String revisions)
+    throws VcsException {
+    GitSimpleHandler h1 = new GitSimpleHandler(myProject, myRoot, GitHandler.DIFF);
+    h1.setSilent(true);
+    h1.setNoSSH(true);
+    // note that moves are not detected here
+    h1.addParameters("--name-status", "--diff-filter=ADMRUX", revisions);
+    for (String line : h1.run().split("\n")) {
+      if (line.length() == 0) {
+        continue;
+      }
+      String[] tk = line.split("[\t ]+");
+      final String relative = tk[tk.length - 1];
+      // eliminate conflicts
+      if (myUnmergedPaths.contains(relative)) {
+        continue;
+      }
+      String path = root + "/" + GitUtil.unescapePath(relative);
+      switch (tk[0].charAt(0)) {
+        case 'M':
+          updated.add(path);
+          break;
+        case 'A':
+          created.add(path);
+          break;
+        case 'D':
+          removed.add(path);
+          break;
+        default:
+          throw new IllegalStateException("Unexpected status: " + line);
+      }
+    }
+  }
+
+  /**
+   * Add all paths to the group
+   *
+   * @param id    the group identifier
+   * @param paths the set of paths
+   */
+  private void addAll(String id, TreeSet<String> paths) {
+    FileGroup fileGroup = myUpdates.getGroupById(id);
+    for (String path : paths) {
+      fileGroup.add(path);
     }
   }
 }

@@ -34,6 +34,11 @@ import java.util.Map;
  */
 public class GitConfigUtil {
   /**
+   * The UTF-8 enconding name
+   */
+  public static final String UTF8_ENCODING = "UTF-8";
+
+  /**
    * A private constructor for utility class
    */
   private GitConfigUtil() {
@@ -170,7 +175,7 @@ public class GitConfigUtil {
       // ignore exception
     }
     if (encoding == null || encoding.length() == 0) {
-      encoding = "UTF-8";
+      encoding = UTF8_ENCODING;
     }
     return encoding;
   }
