@@ -1,6 +1,7 @@
-package com.intellij.ui.debugger.extensions.playback;
+package com.intellij.ui.debugger.extensions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;

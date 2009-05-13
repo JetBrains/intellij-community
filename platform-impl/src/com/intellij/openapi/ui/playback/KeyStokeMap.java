@@ -1,4 +1,4 @@
-package com.intellij.ui.debugger.extensions.playback;
+package com.intellij.openapi.ui.playback;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ReflectionUtil;
