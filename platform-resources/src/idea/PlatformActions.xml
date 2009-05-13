@@ -106,8 +106,6 @@
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="/general/ideOptions.png"/>
           <group id="FileOtherSettingsGroup" popup="true">
               <group id="FileSettingsGroup"/>
-              <separator/>
-              <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
           </group>
         </group>
         <separator/>

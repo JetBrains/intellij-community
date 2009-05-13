@@ -261,6 +261,7 @@
       <separator/>
 
       <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
+      <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
 
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
