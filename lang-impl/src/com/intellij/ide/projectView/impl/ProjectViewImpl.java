@@ -1350,12 +1350,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (isFlattenPackages(myCurrentViewId)) {
         presentation.setText(IdeBundle.message("action.hide.empty.middle.packages"));
         presentation.setDescription(IdeBundle.message("action.show.hide.empty.middle.packages"));
-        presentation.setIcon(HIDE_EMPTY_MIDDLE_PACKAGES_ICON);
       }
       else {
         presentation.setText(IdeBundle.message("action.compact.empty.middle.packages"));
         presentation.setDescription(IdeBundle.message("action.show.compact.empty.middle.packages"));
-        presentation.setIcon(COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
       }
     }
   }
