@@ -2,8 +2,10 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.pending.DuringChangeListManagerUpdateTestScheme;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
@@ -85,6 +87,11 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     sleep1000();
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
+    final VcsException updateException = ((ChangeListManagerImpl)clManager).getUpdateException();
+    if (updateException != null) {
+      updateException.printStackTrace();
+    }
+    Assert.assertNull(updateException == null ? null : updateException.getMessage(), updateException);
 
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.myS1File}, clManager.getDefaultListName(), clManager);
 
