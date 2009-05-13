@@ -174,8 +174,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public FileElement loadTreeElement() {
+    FileElement treeElement;
+
     synchronized (myStubLock) {
-      FileElement treeElement = (FileElement)_getTreeElement();
+      treeElement = (FileElement)_getTreeElement();
       if (treeElement != null) return treeElement;
 
       final FileViewProvider viewProvider = getViewProvider();
@@ -183,16 +185,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         LOG.error("Access to tree elements not allowed in tests." + viewProvider.getVirtualFile().getPresentableUrl());
       }
 
-      // load document outside lock for better performance
       final Document document = viewProvider.isEventSystemEnabled() ? viewProvider.getDocument() : null;
-      //synchronized (PsiLock.LOCK) {
       treeElement = createFileElement(viewProvider.getContents());
       if (document != null) {
         treeElement.putUserData(HARD_REFERENCE_TO_DOCUMENT, document);
       }
-      setTreeElement(treeElement);
       treeElement.setPsi(this);
-      //}
 
       StubTree stub = derefStub();
       if (stub != null) {
@@ -203,15 +201,18 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         myStub = null;
       }
 
-      if (getViewProvider().isEventSystemEnabled()) {
-        ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
-      }
+      setTreeElement(treeElement);
+
       if (LOG.isDebugEnabled() && getViewProvider().isPhysical()) {
         LOG.debug("Loaded text for file " + getViewProvider().getVirtualFile().getPresentableUrl());
       }
-
-      return treeElement;
     }
+
+    if (getViewProvider().isEventSystemEnabled()) {
+      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
+    }
+
+    return treeElement;
   }
 
   public ASTNode findTreeForStub(StubTree tree, StubElement<?> stub) {
