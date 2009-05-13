@@ -142,9 +142,9 @@ public class GitChangeUtils {
     throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, GitHandler.REV_LIST);
     handler.addParameters("--timestamp", "--max-count=1", revisionNumber);
+    handler.endOptions();
     handler.setNoSSH(true);
     handler.setSilent(true);
-    handler.endOptions();
     String output = handler.run();
     StringTokenizer stk = new StringTokenizer(output, "\n\r \t", false);
     if (!stk.hasMoreTokens()) {
