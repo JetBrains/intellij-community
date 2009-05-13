@@ -2479,7 +2479,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
     else {
-      if (!myMousePressedInsideSelection && getSelectionModel().hasSelection()) {
+      if (!myMousePressedInsideSelection && (getSelectionModel().hasSelection() || getSelectionModel().hasBlockSelection())) {
         setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
         mySelectionModel.setSelection(caretOffset, caretOffset);
       }
@@ -2690,7 +2690,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         selectionModel.setSelection(oldSelectionStart, newCaretOffset);
       }
       else {
-        if (isColumnMode()) {
+        if (isColumnMode() || e.isAltDown()) {
           final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
           selectionModel.setBlockSelection(blockStart, getCaretModel().getLogicalPosition());
         }
