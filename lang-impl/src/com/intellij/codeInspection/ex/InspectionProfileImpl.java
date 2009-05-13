@@ -459,7 +459,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       initInspectionTools();
       for (ToolsImpl toolList : profile.myTools.values()) {
         final ToolsImpl tools = myTools.get(toolList.getShortName());
-        final ScopeToolState defaultState = toolList.getDeafultState();
+        final ScopeToolState defaultState = toolList.getDefaultState();
         tools.setDefaultState(copyToolSettings((InspectionTool)defaultState.getTool()), defaultState.isEnabled(), defaultState.getLevel());
         final List<ScopeToolState> currentNonDefault = tools.getNonDefaultTools();
         if (currentNonDefault != null) {
@@ -636,7 +636,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private void reduceConvertedScopes() {
     for (ToolsImpl tools : myTools.values()) {
-      final ScopeToolState toolState = tools.getDeafultState();
+      final ScopeToolState toolState = tools.getDefaultState();
       final List<ScopeToolState> nonDefaultTools = tools.getNonDefaultTools();
       if (nonDefaultTools != null) {
         boolean equal = true;
@@ -671,9 +671,20 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return result;
   }
 
-  public List<ScopeToolState> getAllTools(String shortName) {
+  public List<ScopeToolState> getDefaultStates() {
     final List<ScopeToolState> result = new ArrayList<ScopeToolState>();
-    result.addAll(myTools.get(shortName).getTools());
+    for (Tools tools : myTools.values()) {
+      result.add(tools.getDefaultState());
+    }
+    return result;
+  }
+
+  public List<ScopeToolState> getNonDefaultTools(String shortName) {
+    final List<ScopeToolState> result = new ArrayList<ScopeToolState>();
+    final List<ScopeToolState> nonDefaultTools = myTools.get(shortName).getNonDefaultTools();
+    if (nonDefaultTools != null) {
+      result.addAll(nonDefaultTools);
+    }
     return result;
   }
 
@@ -714,13 +725,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return tools != null ? tools.getLevel(scope) : HighlightDisplayLevel.WARNING;
   }
 
-  public void addOneMoreScope(InspectionProfileEntry tool, NamedScope scope, HighlightDisplayLevel level, boolean enabled) {
-    final ToolsImpl tools = myTools.get(tool.getShortName());
-    final InspectionProfileEntry currentTool = tools.getTool();
-    if (currentTool != null) {
-      tools.addTool(scope, currentTool, tools.isEnabled(), tools.getLevel());
-    } 
-    tools.addTool(scope, (InspectionTool)tool, enabled, level);
+  public ScopeToolState addScope(InspectionProfileEntry tool, NamedScope scope, HighlightDisplayLevel level, boolean enabled) {
+    return myTools.get(tool.getShortName()).addTool(scope, tool, enabled, level);
   }
 
 

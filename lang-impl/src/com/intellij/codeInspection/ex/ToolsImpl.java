@@ -42,11 +42,13 @@ public class ToolsImpl implements Tools {
   }
 
 
-  public void addTool(NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+  public ScopeToolState addTool(NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
     if (myTools == null) {
       myTools = new ArrayList<ScopeToolState>();
     }
-    myTools.add(new ScopeToolState(scope, tool, enabled, level));
+    final ScopeToolState scopeToolState = new ScopeToolState(scope, tool, enabled, level);
+    myTools.add(scopeToolState);
+    return scopeToolState;
   }
 
   public InspectionProfileEntry getInspectionTool(PsiElement element) {
@@ -155,7 +157,7 @@ public class ToolsImpl implements Tools {
     return result;
   }
 
-  public ScopeToolState getDeafultState() {
+  public ScopeToolState getDefaultState() {
     return myDefaultState;
   }
 
@@ -347,6 +349,8 @@ public class ToolsImpl implements Tools {
       final ScopeToolState scopeToolState = myTools.get(idx);
       myTools.remove(idx);
       myTools.add(idx, new ScopeToolState(scopeToolState.getScope(), scopeToolState.getTool(), scopeToolState.isEnabled(), level));
+    } else if (idx == - 1) {
+      myDefaultState.setLevel(level);
     }
   }
 

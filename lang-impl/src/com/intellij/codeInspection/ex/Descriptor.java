@@ -26,8 +26,10 @@ public class Descriptor {
   private boolean myEnabled = false;
   private NamedScope myScope;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
+  private final ScopeToolState myState;
 
   public Descriptor(ScopeToolState pair, InspectionProfile inspectionProfile) {
+    myState = pair;
     final InspectionProfileEntry tool = pair.getTool();
     @NonNls Element config = new Element("options");
     try {
@@ -102,5 +104,9 @@ public class Descriptor {
 
   public NamedScope getScope() {
     return myScope;
+  }
+
+  public ScopeToolState getState() {
+    return myState;
   }
 }

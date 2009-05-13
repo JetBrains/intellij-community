@@ -456,7 +456,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
     boolean resultsFound = false;
     for (Tools currentTools : tools.values()) {
-      final InspectionTool defaultTool = (InspectionTool)currentTools.getDeafultState().getTool();
+      final InspectionTool defaultTool = (InspectionTool)currentTools.getDefaultState().getTool();
       final HighlightDisplayKey key = HighlightDisplayKey.find(defaultTool.getShortName());
       if (profile != null && !profile.isToolEnabled(key)) {
         break; //exclude disabled inspections from view
