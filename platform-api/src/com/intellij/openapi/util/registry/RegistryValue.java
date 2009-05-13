@@ -27,33 +27,37 @@ public class RegistryValue {
 
 
   public String asString() {
-    final String value = get(myKey, null);
+    final String value = get(myKey, null, true);
     assert value != null : myKey;
     return value;
   }
 
   public boolean asBoolean() {
-    return Boolean.valueOf(get(myKey, "false"));
+    return Boolean.valueOf(get(myKey, "false", true));
   }
 
   public String getDescription() {
-    return get(myKey + ".description", "");
+    return get(myKey + ".description", "", false);
   }
 
   public boolean isRestartRequired() {
-    return Boolean.valueOf(get(myKey + ".restartRequired", "false"));
+    return Boolean.valueOf(get(myKey + ".restartRequired", "false", false));
   }
 
   public boolean isChangedFromDefault() {
     return !getBundleValue(myKey).equals(asString());
   }
 
-  private String get(String key, String defaultValue) {
-    if (myCachedValue == null) {
-      myCachedValue = _get(key, defaultValue);
-    }
+  private String get(String key, String defaultValue, boolean isValue) {
+    if (isValue) {
+      if (myCachedValue == null) {
+        myCachedValue = _get(key, defaultValue);
+      }
 
-    return myCachedValue;
+      return myCachedValue;
+    } else {
+      return _get(key, defaultValue);
+    }
   }
 
   private String _get(String key, String defaultValue) {
