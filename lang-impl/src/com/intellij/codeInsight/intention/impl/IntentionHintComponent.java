@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -29,6 +30,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +50,8 @@ import java.util.List;
  * @author Mike
  * @author Valentin
  * @author Eugene Belyaev
- * @author and me too
+ * @author Konstantin Bulenkov
+ * @author and me too (Chinee?)
  */
 public class IntentionHintComponent extends JPanel implements Disposable, ScrollAwareHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
@@ -246,6 +249,17 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       }
 
       final IntentionAction action = value.getAction();
+
+      //custom icon
+      if (action instanceof QuickFixWrapper) {
+        final QuickFixWrapper quickFix = (QuickFixWrapper)action;
+        if (quickFix.getFix() instanceof Iconable) {
+          final Icon icon = ((Iconable)quickFix.getFix()).getIcon(0);
+          if (icon != null) {
+            return icon;
+          }
+        }
+      }
 
       if (mySettings.isShowLightBulb(action)) {
         if (myCachedErrorFixes.contains(value)) {
