@@ -57,17 +57,17 @@ public class DnDAwareTree extends Tree implements DnDAware {
     return this;
   }
 
-  public static Pair<Image, Point> getDragImage(DnDAwareTree tree, TreePath path, Point dragOrigin) {
-    int row = tree.getRowForPath(path);
-    Component comp = tree.getCellRenderer().getTreeCellRendererComponent(tree, path.getLastPathComponent(), false, true, true, row, false);
-    return createDragImage(tree, comp, dragOrigin, true);
+  public static Pair<Image, Point> getDragImage(Tree dndAwareTree, TreePath path, Point dragOrigin) {
+    int row = dndAwareTree.getRowForPath(path);
+    Component comp = dndAwareTree.getCellRenderer().getTreeCellRendererComponent(dndAwareTree, path.getLastPathComponent(), false, true, true, row, false);
+    return createDragImage(dndAwareTree, comp, dragOrigin, true);
   }
 
-  public static Pair<Image, Point> getDragImage(DnDAwareTree tree, final String text, Point dragOrigin) {
-    return createDragImage(tree, new JLabel(text), dragOrigin, false);
+  public static Pair<Image, Point> getDragImage(Tree dndAwareTree, final String text, Point dragOrigin) {
+    return createDragImage(dndAwareTree, new JLabel(text), dragOrigin, false);
   }
 
-  private static Pair<Image, Point> createDragImage(final DnDAwareTree tree, final Component c, Point dragOrigin, boolean adjustToPathUnderDragOrigin) {
+  private static Pair<Image, Point> createDragImage(final Tree tree, final Component c, Point dragOrigin, boolean adjustToPathUnderDragOrigin) {
     if (c instanceof JComponent) {
       ((JComponent)c).setOpaque(true);
     }

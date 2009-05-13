@@ -6,30 +6,27 @@ import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.util.Pair;
-import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
 * @author nik
 */
-public class LayoutTree extends SimpleTree implements AdvancedDnDSource {
+public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource {
   private final Convertor<TreePath, String> mySpeedSearchConvertor = new Convertor<TreePath, String>() {
     public String convert(final TreePath path) {
       final SimpleNode node = getNodeFor(path);
@@ -103,24 +100,6 @@ public class LayoutTree extends SimpleTree implements AdvancedDnDSource {
   }
 
   public void dropActionChanged(int gestureModifiers) {
-  }
-
-  public void processMouseEvent(MouseEvent e) {
-    if (getToolTipText() == null && e.getID() == MouseEvent.MOUSE_ENTERED) return;
-    super.processMouseEvent(e);
-  }
-
-  public boolean isOverSelection(Point point) {
-    return TreeUtil.isOverSelection(this, point);
-  }
-
-  public void dropSelectionButUnderPoint(Point point) {
-    TreeUtil.dropSelectionButUnderPoint(this, point);
-  }
-
-  @NotNull
-  public JComponent getComponent() {
-    return this;
   }
 
   public void dispose() {

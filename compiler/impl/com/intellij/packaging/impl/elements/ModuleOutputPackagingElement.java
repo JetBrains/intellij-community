@@ -8,6 +8,7 @@ import com.intellij.packaging.elements.CopyInstructionCreator;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
+import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -33,7 +34,7 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
   }
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
-    return new ModuleElementPresentation(myModuleName, findModule(context));
+    return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModuleName, findModule(context)));
   }
 
   @Override

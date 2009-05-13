@@ -4,19 +4,20 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
+import com.intellij.packaging.ui.TreeNodePresentation;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public class ModuleElementPresentation extends PackagingElementPresentation {
+public class ModuleElementPresentation extends TreeNodePresentation {
   private final String myName;
   private final Module myModule;
 
-  public ModuleElementPresentation(String name, Module module) {
+  public ModuleElementPresentation(@NotNull String name, @Nullable Module module) {
     myModule = module;
     myName = name;
   }

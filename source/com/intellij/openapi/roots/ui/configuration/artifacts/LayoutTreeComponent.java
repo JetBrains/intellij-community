@@ -14,7 +14,6 @@ import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
-import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.*;
@@ -233,10 +232,9 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         return;
       }
       List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
-      for (PackagingSourceItem item : draggingObject.getSourceItems()) {
-        final List<? extends PackagingElement<?>> elements = item.createElements();
-        toSelect.addAll(elements);
-        target.addChildren(elements);
+      for (PackagingElement<?> element : draggingObject.createPackagingElements()) {
+        toSelect.add(element);
+        target.addChild(element);
       }
       updateAndSelect(targetNode, toSelect);
       myArtifactsEditor.getSourceItemsTree().rebuildTree();

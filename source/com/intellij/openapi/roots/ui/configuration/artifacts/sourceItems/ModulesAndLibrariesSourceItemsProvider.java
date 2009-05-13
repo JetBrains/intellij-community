@@ -1,4 +1,4 @@
-package com.intellij.openapi.roots.ui.configuration.artifacts.dragAndDrop;
+package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -8,11 +8,11 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.ui.PackagingSourceItemsProvider;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.ui.PackagingSourceItemsGroup;
 import com.intellij.packaging.impl.elements.LibraryElementType;
 import com.intellij.packaging.impl.elements.ModuleOutputElementType;
+import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.PackagingSourceItemsProvider;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,8 +24,8 @@ import java.util.*;
 public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItemsProvider {
 
   @NotNull
-  public Collection<? extends PackagingSourceItemsGroup> getSourceItems(@NotNull PackagingEditorContext editorContext, @NotNull Artifact artifact,
-                                                                  PackagingSourceItemsGroup parent) {
+  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull PackagingEditorContext editorContext, @NotNull Artifact artifact,
+                                                                  PackagingSourceItem parent) {
     if (parent == null) {
       return createModuleItems(editorContext, artifact, ArrayUtil.EMPTY_STRING_ARRAY);
     }
@@ -38,9 +38,9 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     return Collections.emptyList();
   }
 
-  private static Collection<? extends PackagingSourceItemsGroup> createClasspathItems(PackagingEditorContext editorContext,
+  private static Collection<? extends PackagingSourceItem> createClasspathItems(PackagingEditorContext editorContext,
                                                                                       Artifact artifact, @NotNull Module module) {
-    final List<PackagingSourceItemsGroup> items = new ArrayList<PackagingSourceItemsGroup>();
+    final List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
     final ModuleRootModel rootModel = editorContext.getModulesProvider().getRootModel(module);
     List<Library> libraries = new ArrayList<Library>();
     for (OrderEntry orderEntry : rootModel.getOrderEntries()) {
@@ -62,9 +62,9 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     return items;
   }
 
-  private static Collection<? extends PackagingSourceItemsGroup> createModuleItems(PackagingEditorContext editorContext, Artifact artifact, @NotNull String[] groupPath) {
+  private static Collection<? extends PackagingSourceItem> createModuleItems(PackagingEditorContext editorContext, Artifact artifact, @NotNull String[] groupPath) {
     final Module[] modules = editorContext.getModulesProvider().getModules();
-    final List<PackagingSourceItemsGroup> items = new ArrayList<PackagingSourceItemsGroup>();
+    final List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
     Set<String> groups = new HashSet<String>();
     for (Module module : modules) {
       String[] path = ModuleManager.getInstance(editorContext.getProject()).getModuleGroupPath(module);
