@@ -92,10 +92,6 @@ class DumbModeIndicator extends StatusBarCustomComponentFactory<DumbModeIndicato
                                      "although you still can edit your files and work with VCS and file system.<br>" +
                                      "If you need smarter actions like Goto Declaration, Find Usages or refactorings,<br>" +
                                      "please wait until the update is finished. We appreciate your understanding." +
-                                     "<p>" +
-                                     "If you prefer IntelliJ IDEA always to be smart, you can disable backgroundable<br>" +
-                                     "indexing in 'File | Other Settings | Registry | " + DumbServiceImpl.FILE_INDEX_BACKGROUND + "' and restart.<br>" +
-                                     "After restart, the indices will be always updated in a modal dialog." +
                                      "</html>", "Don't panic!", DUMB_MODE_ICON);
         }
       });
