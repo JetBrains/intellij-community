@@ -23,6 +23,9 @@ public class DeletedFilesHolder implements FileHolder {
   public void cleanScope(final VcsDirtyScope scope) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
+        if (scope == null) {
+          myFiles.clear();
+        }
         final List<LocallyDeletedChange> currentFiles = new ArrayList<LocallyDeletedChange>(myFiles.values());
         for (LocallyDeletedChange change : currentFiles) {
           if (scope.belongsTo(change.getPath())) {
