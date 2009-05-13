@@ -78,6 +78,7 @@ public class ShowImplementationsAction extends AnAction {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
+    boolean isInvokedFromEditor = editor != null;
     PsiElement element;
     if (editor != null) {
       element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getAllAccepted());
@@ -138,7 +139,7 @@ public class ShowImplementationsAction extends AnAction {
     }
     
 
-    showImplementations(impls, project, text, editor, file);
+    showImplementations(impls, project, text, editor, file, isInvokedFromEditor);
   }
 
   protected void updateElementImplementations(final PsiElement element, final Editor editor, final Project project, final PsiFile file) {
@@ -151,12 +152,11 @@ public class ShowImplementationsAction extends AnAction {
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
-    showImplementations(impls, project, text, editor, file);
+    showImplementations(impls, project, text, editor, file, false);
   }
 
-  protected void showImplementations(final PsiElement[] impls, final Project project, final String text,
-                                          final Editor editor,
-                                          final PsiFile file) {
+  protected void showImplementations(final PsiElement[] impls, final Project project, final String text, final Editor editor, final PsiFile file,
+                                     boolean invokedFromEditor) {
     if (impls == null || impls.length == 0) return;
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKDEFINITION_FEATURE);
@@ -165,7 +165,7 @@ public class ShowImplementationsAction extends AnAction {
     }
 
     int index = 0;
-    if (editor != null && file != null && impls.length > 1) {
+    if (invokedFromEditor && file != null && impls.length > 1) {
       final VirtualFile virtualFile = file.getVirtualFile();
       final PsiFile containingFile = impls[0].getContainingFile();
       if (virtualFile != null && containingFile != null && virtualFile.equals(containingFile.getVirtualFile())) {
