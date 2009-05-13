@@ -5,6 +5,7 @@ import com.intellij.compiler.ant.Generator;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
+import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -53,7 +54,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   }
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {
-    return new ArtifactElementPresentation(myArtifactName, findArtifact(context), context);
+    return new DelegatedPackagingElementPresentation(new ArtifactElementPresentation(myArtifactName, findArtifact(context), context));
   }
 
   public ArtifactPackagingElement getState() {

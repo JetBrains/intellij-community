@@ -5,7 +5,10 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.PackagingElementType;
+import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author nik
@@ -23,4 +26,10 @@ public interface ArtifactsEditor extends Disposable {
   Artifact getArtifact();
 
   ArtifactRootElement<?> getRootElement();
+
+  PackagingEditorContext getContext();
+
+  JComponent getMainComponent();
+
+  ComplexElementSubstitutionParameters getSubstitutionParameters();
 }

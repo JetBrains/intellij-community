@@ -32,7 +32,7 @@ public class MultiValuesMap<Key, Value>{
     myBaseMap = ordered ? new LinkedHashMap<Key, Collection<Value>>() : new HashMap<Key, Collection<Value>>();
   }
 
-  public void putAll(Key key, List<Value> values) {
+  public void putAll(Key key, Collection<Value> values) {
     for (Value value : values) {
       put(key, value);
     }

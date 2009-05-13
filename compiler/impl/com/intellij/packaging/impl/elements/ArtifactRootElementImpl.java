@@ -50,6 +50,11 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   public void loadState(Object state) {
   }
 
+  @Override
+  public boolean canBeRenamed() {
+    return false;
+  }
+
   public void rename(@NotNull String newName) {
   }
 

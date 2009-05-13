@@ -4,6 +4,7 @@ import com.intellij.ide.dnd.AdvancedDnDSource;
 import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -27,6 +28,8 @@ import java.util.List;
 * @author nik
 */
 public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTree");
+
   private final Convertor<TreePath, String> mySpeedSearchConvertor = new Convertor<TreePath, String>() {
     public String convert(final TreePath path) {
       final SimpleNode node = getNodeFor(path);
@@ -43,7 +46,8 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
         final JTextField field = (JTextField)super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
         final Object node = ((DefaultMutableTreeNode)value).getUserObject();
-        final PackagingElement<?> element = ((PackagingElementNode)node).getFirstElement();
+        final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
+        LOG.assertTrue(element != null);
         final String name = ((CompositePackagingElement)element).getName();
         field.setText(name);
         int i = name.lastIndexOf('.');
@@ -59,7 +63,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
         final Object node = getNodeFor(path);
         CompositePackagingElement currentElement = null;
         if (node instanceof PackagingElementNode) {
-          final PackagingElement<?> element = ((PackagingElementNode)node).getFirstElement();
+          final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
           if (element instanceof CompositePackagingElement) {
             currentElement = (CompositePackagingElement)element;
           }
@@ -145,5 +149,12 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       }
     });
     return nodes;
+  }
+
+  public void addSubtreeToUpdate(final PackagingElementNode elementNode) {
+    final DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRootNode(), elementNode);
+    if (node != null) {
+      addSubtreeToUpdate(node);
+    }
   }
 }

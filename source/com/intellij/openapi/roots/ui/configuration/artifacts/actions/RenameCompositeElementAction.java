@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsEditor;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
+import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
 
 import javax.swing.tree.TreePath;
 
@@ -25,12 +27,15 @@ public class RenameCompositeElementAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactsEditor.getPackagingElementsTree().getSelection();
-    e.getPresentation().setVisible(selection.getElementIfSingle() instanceof CompositePackagingElement);
+    final PackagingElement<?> element = selection.getElementIfSingle();
+    e.getPresentation().setVisible(element instanceof CompositePackagingElement && ((CompositePackagingElement)element).canBeRenamed());
   }
 
   public void actionPerformed(AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactsEditor.getPackagingElementsTree().getSelection();
-    final TreePath path = selection.getPath(selection.getSelectedNodes().get(0));
+    final PackagingElementNode<?> node = selection.getNodeIfSingle();
+    if (node == null) return;
+    final TreePath path = selection.getPath(node);
     myArtifactsEditor.getPackagingElementsTree().rename(path);
   }
 }

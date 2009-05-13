@@ -15,7 +15,7 @@ public class ArtifactEditorFindUsagesAction extends FindUsagesInProjectStructure
   private LayoutTreeComponent myLayoutTreeComponent;
 
   public ArtifactEditorFindUsagesAction(LayoutTreeComponent layoutTreeComponent, Project project) {
-    super(layoutTreeComponent.getTree(), project);
+    super(layoutTreeComponent.getLayoutTree(), project);
     myLayoutTreeComponent = layoutTreeComponent;
   }
 
@@ -30,10 +30,10 @@ public class ArtifactEditorFindUsagesAction extends FindUsagesInProjectStructure
   }
 
   protected RelativePoint getPointToShowResults() {
-    final int selectedRow = myLayoutTreeComponent.getTree().getSelectionRows()[0];
-    final Rectangle rowBounds = myLayoutTreeComponent.getTree().getRowBounds(selectedRow);
+    final int selectedRow = myLayoutTreeComponent.getLayoutTree().getSelectionRows()[0];
+    final Rectangle rowBounds = myLayoutTreeComponent.getLayoutTree().getRowBounds(selectedRow);
     final Point location = rowBounds.getLocation();
     location.y += rowBounds.height;
-    return new RelativePoint(myLayoutTreeComponent.getTree(), location);
+    return new RelativePoint(myLayoutTreeComponent.getLayoutTree(), location);
   }
 }

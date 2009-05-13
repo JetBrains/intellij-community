@@ -21,10 +21,8 @@ public class LayoutTreeSelection {
   private List<PackagingElement<?>> mySelectedElements = new ArrayList<PackagingElement<?>>();
   private Map<PackagingElement<?>, PackagingElementNode<?>> myElement2Node = new HashMap<PackagingElement<?>, PackagingElementNode<?>>();
   private Map<PackagingElementNode<?>, TreePath> myNode2Path = new HashMap<PackagingElementNode<?>, TreePath>();
-  private final LayoutTree myLayoutTree;
 
   public LayoutTreeSelection(@NotNull LayoutTree tree) {
-    myLayoutTree = tree;
     final TreePath[] paths = tree.getSelectionPaths();
     if (paths == null) {
       return;
@@ -44,11 +42,11 @@ public class LayoutTreeSelection {
     }
   }
 
-  public List<PackagingElementNode<?>> getSelectedNodes() {
+  public List<PackagingElementNode<?>> getNodes() {
     return mySelectedNodes;
   }
 
-  public List<PackagingElement<?>> getSelectedElements() {
+  public List<PackagingElement<?>> getElements() {
     return mySelectedElements;
   }
 
@@ -61,29 +59,19 @@ public class LayoutTreeSelection {
   }
 
   @Nullable
-  public PackagingElementNode<?> getParentNode(@NotNull PackagingElementNode<?> selectedNode) {
-    final TreePath path = myNode2Path.get(selectedNode);
-    final TreePath parentPath = path.getParentPath();
-    if (parentPath == null) return null;
-    final SimpleNode parentNode = myLayoutTree.getNodeFor(parentPath);
-    return parentNode instanceof PackagingElementNode ? (PackagingElementNode<?>)parentNode : null;
-  }
-
-  @Nullable
   public CompositePackagingElement<?> getCommonParentElement() {
-    PackagingElementNode<?> parentNode = null;
+    CompositePackagingElement<?> commonParent = null;
     for (PackagingElementNode<?> selectedNode : mySelectedNodes) {
-      final PackagingElementNode<?> node = getParentNode(selectedNode);
-      if (node == null || parentNode != null && parentNode != node) {
+      final PackagingElement<?> element = selectedNode.getElementIfSingle();
+      if (element == null) return null;
+
+      final CompositePackagingElement<?> parentElement = selectedNode.getParentElement(element);
+      if (parentElement == null || commonParent != null && !commonParent.equals(parentElement)) {
         return null;
       }
-      parentNode = node;
+      commonParent = parentElement;
     }
-    if (parentNode == null) {
-      return null;
-    }
-    final PackagingElement<?> element = parentNode.getElementIfSingle();
-    return element instanceof CompositePackagingElement ? (CompositePackagingElement<?>)element : null;
+    return commonParent;
   }
 
   @Nullable

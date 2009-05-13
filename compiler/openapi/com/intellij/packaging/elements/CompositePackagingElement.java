@@ -35,6 +35,10 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
 
   public abstract String getName();
 
+  public boolean canBeRenamed() {
+    return true;
+  }
+
   public abstract void rename(@NotNull String newName);
 
   protected List<? extends Generator> computeChildrenGenerators(PackagingElementResolvingContext resolvingContext,

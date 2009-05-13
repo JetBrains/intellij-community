@@ -15,7 +15,7 @@ public class ArtifactEditorNavigateAction extends AnAction {
 
   public ArtifactEditorNavigateAction(LayoutTreeComponent layoutTreeComponent) {
     super(ProjectBundle.message("action.name.facet.navigate"));
-    registerCustomShortcutSet(CommonShortcuts.getEditSource(), layoutTreeComponent.getTree());
+    registerCustomShortcutSet(CommonShortcuts.getEditSource(), layoutTreeComponent.getLayoutTree());
     myLayoutTreeComponent = layoutTreeComponent;
   }
 

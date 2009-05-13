@@ -1,7 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 
-import com.intellij.openapi.roots.ui.configuration.artifacts.ComplexElementSubstitutionParameters;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsEditorImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ComplexElementSubstitutionParameters;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -20,22 +22,27 @@ public class PackagingTreeNodeFactory {
   private PackagingTreeNodeFactory() {
   }
 
-  public static List<? extends PackagingElementNode<?>> createNodes(@NotNull List<? extends PackagingElement<?>> elements, final PackagingElementNode<?> parent,
-                                                   @NotNull PackagingEditorContext context,
-                                                   @NotNull ComplexElementSubstitutionParameters substitutionParameters) {
+  public static List<? extends PackagingElementNode<?>> createNodes(@NotNull List<? extends PackagingElement<?>> elements,
+                                                                    final @NotNull CompositePackagingElementNode parentNode,
+                                                                    final @NotNull CompositePackagingElement parentElement,
+                                                                    @NotNull PackagingEditorContext context,
+                                                                    @NotNull ComplexElementSubstitutionParameters substitutionParameters,
+                                                                    @NotNull Collection<PackagingNodeSource> nodeSources) {
     List<PackagingElementNode<?>> nodes = new ArrayList<PackagingElementNode<?>>();
 
-    addNodes(elements, parent, context, substitutionParameters, nodes);
+    addNodes(elements, parentNode, parentElement, context, substitutionParameters, nodeSources, nodes);
 
     return nodes;
   }
 
-  private static void addNodes(List<? extends PackagingElement<?>> elements, PackagingElementNode<?> parent, PackagingEditorContext context,
-                               ComplexElementSubstitutionParameters substitutionParameters, List<PackagingElementNode<?>> nodes) {
+  private static void addNodes(@NotNull List<? extends PackagingElement<?>> elements, @NotNull CompositePackagingElementNode parentNode,
+                               @NotNull CompositePackagingElement parentElement, @NotNull PackagingEditorContext context,
+                               @NotNull ComplexElementSubstitutionParameters substitutionParameters, @NotNull Collection<PackagingNodeSource> nodeSources,
+                               @NotNull List<PackagingElementNode<?>> nodes) {
     for (PackagingElement<?> element : elements) {
       final PackagingElementNode<?> prev = findEqual(nodes, element);
       if (prev != null) {
-        prev.addElement(element);
+        prev.addElement(element, parentElement, nodeSources);
         continue;
       }
 
@@ -43,21 +50,22 @@ public class PackagingTreeNodeFactory {
         throw new AssertionError("artifact root not expected here");
       }
       else if (element instanceof CompositePackagingElement) {
-        nodes.add(new CompositePackagingElementNode((CompositePackagingElement<?>)element, context, parent, substitutionParameters));
+        nodes.add(new CompositePackagingElementNode((CompositePackagingElement<?>)element, context, parentNode, parentElement, substitutionParameters, nodeSources));
       }
       else if (element instanceof ComplexPackagingElement) {
         final ComplexPackagingElement<?> complexElement = (ComplexPackagingElement<?>)element;
         if (substitutionParameters.shouldSubstitute(complexElement)) {
           final List<? extends PackagingElement<?>> substitution = complexElement.getSubstitution(context);
           if (substitution != null) {
-            addNodes(substitution, parent, context, substitutionParameters, nodes);
+            final PackagingNodeSource source = new PackagingNodeSource(complexElement, parentNode, parentElement, nodeSources);
+            addNodes(substitution, parentNode, parentElement, context, substitutionParameters, Collections.singletonList(source), nodes);
             continue;
           }
         }
-        nodes.add(new ComplexPackagingElementNode(complexElement, context, parent, substitutionParameters));
+        nodes.add(new ComplexPackagingElementNode(complexElement, context, parentNode, parentElement, substitutionParameters, nodeSources));
       }
       else {
-        nodes.add(new PackagingElementNode<PackagingElement<?>>(element, context, parent));
+        nodes.add(new PackagingElementNode<PackagingElement<?>>(element, context, parentNode, parentElement, nodeSources));
       }
     }
   }
@@ -76,9 +84,5 @@ public class PackagingTreeNodeFactory {
   public static ArtifactRootNode createRootNode(ArtifactsEditorImpl artifactsEditor, PackagingEditorContext context,
                                       ComplexElementSubstitutionParameters substitutionParameters) {
     return new ArtifactRootNode(artifactsEditor, context, substitutionParameters);
-  }
-
-  public static Object createRootNode() {
-    return null;
   }
 }

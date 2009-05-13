@@ -3,13 +3,12 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ComplexElementSubstitutionParameters;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTree;
 import com.intellij.packaging.elements.ComplexPackagingElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.util.ui.tree.TreeUtil;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import java.awt.event.InputEvent;
+import java.util.Collection;
 
 /**
  * @author nik
@@ -17,9 +16,10 @@ import java.awt.event.InputEvent;
 public class ComplexPackagingElementNode extends PackagingElementNode<ComplexPackagingElement<?>> {
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
 
-  public ComplexPackagingElementNode(ComplexPackagingElement<?> element, PackagingEditorContext context, PackagingElementNode<?> parent,
-                                     ComplexElementSubstitutionParameters substitutionParameters) {
-    super(element, context, parent);
+  public ComplexPackagingElementNode(ComplexPackagingElement<?> element, PackagingEditorContext context, CompositePackagingElementNode parentNode,
+                                     CompositePackagingElement<?> parentElement,
+                                     ComplexElementSubstitutionParameters substitutionParameters, Collection<PackagingNodeSource> nodeSources) {
+    super(element, context, parentNode, parentElement, nodeSources);
     mySubstitutionParameters = substitutionParameters;
   }
 
@@ -27,12 +27,10 @@ public class ComplexPackagingElementNode extends PackagingElementNode<ComplexPac
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
     mySubstitutionParameters.substitute(this);
     final LayoutTree layoutTree = (LayoutTree)tree;
-    final DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(layoutTree.getRootNode(), this);
-    if (node != null) {
-      final TreeNode parent = node.getParent();
-      if (parent instanceof DefaultMutableTreeNode) {
-        layoutTree.addSubtreeToUpdate((DefaultMutableTreeNode)parent);
-      }
+    final CompositePackagingElementNode parentNode = getParentNode();
+    if (parentNode != null) {
+      layoutTree.addSubtreeToUpdate(parentNode);
     }
   }
+
 }

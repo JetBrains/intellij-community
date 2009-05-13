@@ -30,4 +30,8 @@ public class ComplexElementSubstitutionParameters {
   public void substitute(ComplexPackagingElementNode complexNode) {
     mySubstituted.addAll(complexNode.getPackagingElements());
   }
+
+  public void dontSubstitute(ComplexPackagingElement<?> element) {
+    mySubstituted.remove(element);
+  }
 }

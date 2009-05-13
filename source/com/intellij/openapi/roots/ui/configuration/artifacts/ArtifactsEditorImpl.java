@@ -185,20 +185,26 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));
     popupActionGroup.add(new RenameCompositeElementAction(this));
+    popupActionGroup.add(Separator.getInstance());
+    popupActionGroup.add(new HideContentAction(this));
     popupActionGroup.add(new ArtifactEditorNavigateAction(myLayoutTreeComponent));
     popupActionGroup.add(new ArtifactEditorFindUsagesAction(myLayoutTreeComponent, myProject));
 
     popupActionGroup.add(Separator.getInstance());
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    DefaultTreeExpander treeExpander = new DefaultTreeExpander(myLayoutTreeComponent.getTree());
-    popupActionGroup.add(actionsManager.createExpandAllAction(treeExpander, myLayoutTreeComponent.getTree()));
-    popupActionGroup.add(actionsManager.createCollapseAllAction(treeExpander, myLayoutTreeComponent.getTree()));
+    DefaultTreeExpander treeExpander = new DefaultTreeExpander(myLayoutTreeComponent.getLayoutTree());
+    popupActionGroup.add(actionsManager.createExpandAllAction(treeExpander, myLayoutTreeComponent.getLayoutTree()));
+    popupActionGroup.add(actionsManager.createCollapseAllAction(treeExpander, myLayoutTreeComponent.getLayoutTree()));
 
-    PopupHandler.installPopupHandler(myLayoutTreeComponent.getTree(), popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    TreeToolTipHandler.install(myLayoutTreeComponent.getTree());
-    ToolTipManager.sharedInstance().registerComponent(myLayoutTreeComponent.getTree());
+    PopupHandler.installPopupHandler(myLayoutTreeComponent.getLayoutTree(), popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    TreeToolTipHandler.install(myLayoutTreeComponent.getLayoutTree());
+    ToolTipManager.sharedInstance().registerComponent(myLayoutTreeComponent.getLayoutTree());
     rebuildTries();
     return getMainComponent();
+  }
+
+  public ComplexElementSubstitutionParameters getSubstitutionParameters() {
+    return mySubstitutionParameters;
   }
 
   private AddPackagingElementActionGroup createAddAction(boolean popup) {

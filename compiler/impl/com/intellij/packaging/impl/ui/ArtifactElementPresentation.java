@@ -1,19 +1,19 @@
 package com.intellij.packaging.impl.ui;
 
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.packaging.ui.PackagingElementWeights;
-import com.intellij.packaging.ui.PackagingEditorContext;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
+import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.ui.PackagingElementWeights;
+import com.intellij.packaging.ui.TreeNodePresentation;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class ArtifactElementPresentation extends PackagingElementPresentation {
+public class ArtifactElementPresentation extends TreeNodePresentation {
   private final Artifact myArtifact;
   private final PackagingEditorContext myContext;
   private final String myName;

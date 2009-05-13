@@ -6,8 +6,8 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ChooseArtifactsDial
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
-import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
+import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
   @NotNull
   public List<? extends ArtifactPackagingElement> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact,
                                                                    CompositePackagingElement<?> parent) {
-    ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(context.getProject(), getNotAddedArtifacts(context, artifact),
+    ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(context.getProject(), getAvailableArtifacts(context, artifact),
                                                              CompilerBundle.message("dialog.title.choose.artifacts"), "");
     dialog.show();
     final List<ArtifactPackagingElement> elements = new ArrayList<ArtifactPackagingElement>();
@@ -45,7 +45,7 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
   }
 
   @NotNull
-  public static List<? extends Artifact> getNotAddedArtifacts(@NotNull final PackagingEditorContext context, @NotNull Artifact artifact) {
+  public static List<? extends Artifact> getAvailableArtifacts(@NotNull final PackagingEditorContext context, @NotNull final Artifact artifact) {
     final Set<Artifact> result = new HashSet<Artifact>(Arrays.asList(context.getArtifactModel().getArtifacts()));
     ArtifactUtil.processPackagingElements(artifact, ARTIFACT_ELEMENT_TYPE, new Processor<ArtifactPackagingElement>() {
       public boolean process(ArtifactPackagingElement artifactPackagingElement) {
@@ -54,6 +54,19 @@ public class ArtifactElementType extends PackagingElementType<ArtifactPackagingE
       }
     }, context, true);
     result.remove(artifact);
+    final Iterator<Artifact> iterator = result.iterator();
+    while (iterator.hasNext()) {
+      Artifact another = iterator.next();
+      final boolean notContainThis =
+          ArtifactUtil.processPackagingElements(another, ARTIFACT_ELEMENT_TYPE, new Processor<ArtifactPackagingElement>() {
+            public boolean process(ArtifactPackagingElement element) {
+              return !element.getArtifactName().equals(artifact.getName());
+            }
+          }, context, true);
+      if (!notContainThis) {
+        iterator.remove();
+      }
+    }
     return new ArrayList<Artifact>(result);
   }
 
