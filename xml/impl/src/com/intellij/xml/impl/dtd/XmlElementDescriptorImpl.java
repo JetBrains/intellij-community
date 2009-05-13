@@ -4,10 +4,9 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
@@ -79,10 +78,11 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     return getNsDescriptorFrom(myElementDecl);
   }
 
+  @Nullable
   private static XmlNSDescriptor getNsDescriptorFrom(final PsiElement elementDecl) {
-    final PsiFile file = elementDecl.getContainingFile();
-    if(!(file instanceof XmlFile)) return null;
-    final XmlDocument document = ((XmlFile)file).getDocument();
+    final XmlFile file = XmlUtil.getContainingFile(elementDecl);
+    if(file == null) return null;
+    final XmlDocument document = file.getDocument();
     XmlNSDescriptor descriptor = (XmlNSDescriptor) document.getMetaData();
     if(descriptor == null) descriptor = document.getDefaultNSDescriptor(XmlUtil.EMPTY_URI, false);
     return descriptor;
