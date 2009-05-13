@@ -327,7 +327,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
     actions.addSeparator();
     actions.add(new MyAddScopeAction());
 
-    actions.add(new AnAction("Delete", "Delete", Icons.DELETE_ICON) {
+    actions.add(new AnAction("Delete Scope", "Delete Scope", Icons.DELETE_ICON) {
       {
         registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
       }
@@ -336,6 +336,8 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       public void update(AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
+        if (mySelectedProfile == null) return;
+        if (mySelectedProfile.getProfileManager().getScopesManager() == null) return;
         final MyTreeNode[] nodes = myTree.getSelectedNodes(MyTreeNode.class, null);
         if (nodes.length > 0) {
           for (MyTreeNode node : nodes) {
@@ -369,11 +371,13 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       }
     });
 
-    actions.add(new AnAction("Move Up", "Move Up", IconLoader.getIcon("/actions/moveUp.png")){
+    actions.add(new AnAction("Move Scope Up", "Move Scope Up", IconLoader.getIcon("/actions/moveUp.png")){
       @Override
       public void update(AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
+        if (mySelectedProfile == null) return;
+        if (mySelectedProfile.getProfileManager().getScopesManager() == null) return;
         final MyTreeNode[] nodes = myTree.getSelectedNodes(MyTreeNode.class, null);
         if (nodes.length > 0) {
           final MyTreeNode treeNode = nodes[0];
@@ -400,11 +404,13 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       }
     });
 
-    actions.add(new AnAction("Move Down", "Move Down", IconLoader.getIcon("/actions/moveDown.png")){
+    actions.add(new AnAction("Move Scope Down", "Move Scope Down", IconLoader.getIcon("/actions/moveDown.png")){
       @Override
       public void update(AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
+        if (mySelectedProfile == null) return;
+        if (mySelectedProfile.getProfileManager().getScopesManager() == null) return;
         final MyTreeNode[] nodes = myTree.getSelectedNodes(MyTreeNode.class, null);
         if (nodes.length > 0) {
           final MyTreeNode treeNode = nodes[0];
@@ -1295,7 +1301,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
 
   private class MyAddScopeAction extends AnAction {
     public MyAddScopeAction() {
-      super("Add", "Add", Icons.ADD_ICON);
+      super("Add Scope", "Add Scope", Icons.ADD_ICON);
     }
 
     {
@@ -1307,6 +1313,7 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       if (mySelectedProfile == null) return;
+      if (mySelectedProfile.getProfileManager().getScopesManager() == null) return;
       final MyTreeNode[] nodes = myTree.getSelectedNodes(MyTreeNode.class, null);
       if (nodes.length > 0) {
         final MyTreeNode node = nodes[0];
