@@ -27,8 +27,8 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.OrderedSet;
-import com.intellij.util.io.fs.IFile;
 import com.intellij.util.io.fs.FileSystem;
+import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -170,7 +170,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     final StateStorageManager stateStorageManager = getStateStorageManager();
     if (dir_store.exists() && iFile.isDirectory()) {
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir_store);
+      FileBasedStorage.syncRefreshPathRecursively(dir_store.getPath(), null);
 
       myScheme = StorageScheme.DIRECTORY_BASED;
 

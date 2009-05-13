@@ -14,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
-import com.intellij.psi.PsiLock;
 import com.intellij.util.ArrayUtil;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
@@ -59,34 +58,12 @@ public class FileBasedStorage extends XmlElementStorage {
 
     if (!myConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
       try {
-        String configDirectoryPath = PathManager.getConfigPath(true);
-
-        VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(configDirectoryPath);
-
-        if (configDir != null) {
-          requestAllChildren(configDir);
-
-          if (configDir instanceof NewVirtualFile) {
-            ((NewVirtualFile)configDir).markDirtyRecursively();
-          }
-
-          configDir.refresh(false, true);
-        }
-
+        syncRefreshPathRecursively(PathManager.getConfigPath(true), "componentVersions");
       }
       finally {
         myConfigDirectoryRefreshed = true;
       }
-
     }
-
-    if (!isOptionsFile(filePath) && !Thread.holdsLock(PsiLock.LOCK) && (app.isUnitTestMode() || app.isDispatchThread())) {
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
-      if (virtualFile != null) {
-        virtualFile.refresh(false, false);
-      }
-    }
-
 
     myRootElementName = rootElementName;
     myFilePath = filePath;
@@ -109,10 +86,24 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
-  private static void requestAllChildren(final VirtualFile configDir) {
-    if (!"componentVersions".equals(configDir.getName())) {
+  public static void syncRefreshPathRecursively(String configDirectoryPath, @Nullable final String excludeDir) {
+    VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(configDirectoryPath);
+
+    if (configDir != null) {
+      requestAllChildren(configDir, excludeDir);
+
+      if (configDir instanceof NewVirtualFile) {
+        ((NewVirtualFile)configDir).markDirtyRecursively();
+      }
+
+      configDir.refresh(false, true);
+    }
+  }
+
+  private static void requestAllChildren(final VirtualFile configDir, @Nullable final String excludeDir) {
+    if (excludeDir == null || !excludeDir.equals(configDir.getName())) {
       for (VirtualFile file : configDir.getChildren()) {
-        requestAllChildren(file);
+        requestAllChildren(file, excludeDir);
       }
     }
   }
