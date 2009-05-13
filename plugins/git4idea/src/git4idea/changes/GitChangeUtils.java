@@ -147,6 +147,9 @@ public class GitChangeUtils {
     handler.endOptions();
     String output = handler.run();
     StringTokenizer stk = new StringTokenizer(output, "\n\r \t", false);
+    if (!stk.hasMoreTokens()) {
+      throw new VcsException("The string '" + revisionNumber + "' does not represents a revision number.");
+    }
     Date timestamp = GitUtil.parseTimestamp(stk.nextToken());
     return new GitRevisionNumber(stk.nextToken(), timestamp);
   }
