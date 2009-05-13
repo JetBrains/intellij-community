@@ -35,7 +35,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class InjectedLanguageManager implements ProjectComponent {
-  public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.multiHostInjector");
+
+  /** @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
+  @Deprecated
+  public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME;
 
   public static InjectedLanguageManager getInstance(Project project) {
     return project.getComponent(InjectedLanguageManager.class);
