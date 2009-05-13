@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleNodeVisitor;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import org.jetbrains.annotations.Nullable;
@@ -48,20 +49,21 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
     Disposer.register(myProject, treeBuilder);
 
     treeStructure.buildTree();
-    SimpleNode selection = null;
-    for (MavenProjectsStructure.ProjectNode each : treeStructure.getProjectNodes()) {
-      if (mySelector != null) {
-        selection = mySelector.findNode(each);
+    final SimpleNode[] selection = new SimpleNode[]{null};
+    treeStructure.getRootElement().accept(new SimpleNodeVisitor() {
+      public boolean accept(SimpleNode each) {
+        if (!mySelector.shouldSelect(each)) return true;
+
+        selection[0] = each;
+        return false;
       }
-      if (selection != null) break;
-    }
+    });
 
     treeBuilder.updateFromRoot(true);
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
 
-    if (selection != null) {
-      myTree.setSelectedNode(treeBuilder, selection, true);
-      // TODO: does not work because of delayed children creation
+    if (selection[0] != null) {
+      treeStructure.select(selection[0]);
     }
 
     init();
@@ -79,6 +81,6 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
   }
 
   protected interface NodeSelector {
-    SimpleNode findNode(MavenProjectsStructure.ProjectNode pomNode);
+    boolean shouldSelect(SimpleNode node);
   }
 }

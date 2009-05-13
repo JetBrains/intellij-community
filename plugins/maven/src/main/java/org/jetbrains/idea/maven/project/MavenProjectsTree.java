@@ -330,7 +330,9 @@ public class MavenProjectsTree {
                  recursive);
       }
     }
-    fireProjectsRead(new ArrayList<MavenProject>(readProjects.values()));
+    if (!readProjects.isEmpty()) {
+      fireProjectsRead(new ArrayList<MavenProject>(readProjects.values()));
+    }
   }
 
   private void doAdd(MavenProjectReader reader,
@@ -673,6 +675,20 @@ public class MavenProjectsTree {
     readLock();
     try {
       return new ArrayList<MavenProject>(myVirtualFileToProjectMapping.values());
+    }
+    finally {
+      readUnlock();
+    }
+  }
+
+  public List<MavenProject> getNonIgnoredProjects() {
+    readLock();
+    try {
+      List<MavenProject> result = new ArrayList<MavenProject>();
+      for (MavenProject each : myVirtualFileToProjectMapping.values()) {
+        if (!isIgnored(each)) result.add(each);
+      }
+      return result;
     }
     finally {
       readUnlock();

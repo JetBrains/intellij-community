@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -10,6 +12,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.project.MavenRemoteRepository;
 import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 import org.sonatype.nexus.index.ArtifactInfo;
 
@@ -21,13 +24,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class MavenProjectIndicesManager extends SimpleProjectComponent {
   private final AtomicReference<List<MavenIndex>> myProjectIndices = new AtomicReference<List<MavenIndex>>(new ArrayList<MavenIndex>());
+  private final MergingUpdateQueue myUpdateQueue;
 
   public static MavenProjectIndicesManager getInstance(Project p) {
     return p.getComponent(MavenProjectIndicesManager.class);
   }
 
-  public MavenProjectIndicesManager(Project p) {
-    super(p);
+  public MavenProjectIndicesManager(Project project) {
+    super(project);
+    myUpdateQueue = new MavenMergingUpdateQueue(getClass().getSimpleName(), 1000, true, project);
   }
 
   @Override
@@ -38,37 +43,41 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
   public void doInit() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      updateIndicesList();
+      scheduleUpdateIndicesList();
     }
 
     getMavenProjectManager().addManagerListener(new MavenProjectsManager.Listener() {
       public void activated() {
-        updateIndicesList();
+        scheduleUpdateIndicesList();
       }
     });
 
     getMavenProjectManager().addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
       public void projectsRead(List<MavenProject> projects) {
-        updateIndicesList();
+        scheduleUpdateIndicesList();
       }
 
       @Override
       public void projectRemoved(MavenProject project) {
-        updateIndicesList();
+        scheduleUpdateIndicesList();
       }
 
       @Override
       public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-        updateIndicesList();
+        scheduleUpdateIndicesList();
       }
     });
   }
 
-  private void updateIndicesList() {
-    MavenIndicesManager m = MavenIndicesManager.getInstance();
-    myProjectIndices.set(m.ensureIndicesExist(getLocalRepository(),
-                                              collectRemoteRepositories()));
+  private void scheduleUpdateIndicesList() {
+    myUpdateQueue.queue(new Update(this) {
+      public void run() {
+        List<MavenIndex> newIndices = MavenIndicesManager.getInstance().ensureIndicesExist(
+          getLocalRepository(), collectRemoteRepositories());
+        myProjectIndices.set(newIndices);
+      }
+    });
   }
 
   private File getLocalRepository() {

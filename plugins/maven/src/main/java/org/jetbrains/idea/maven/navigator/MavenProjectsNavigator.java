@@ -188,7 +188,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     myProjectsManager.addProjectsTreeListener(new MyProjectsListener());
 
     myTasksManager.addListener(new MavenTasksManager.Listener() {
-      public void updateShortcuts(@Nullable String actionId) {
+      public void updateShortcuts() {
         scheduleStructureUpdate(new Runnable() {
           public void run() {
             myStructure.updateShortcuts();

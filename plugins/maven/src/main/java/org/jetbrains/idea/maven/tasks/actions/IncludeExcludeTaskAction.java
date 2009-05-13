@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.tasks.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.idea.maven.tasks.MavenTask;
+import org.jetbrains.idea.maven.tasks.MavenGoalTask;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenToggleAction;
 
@@ -20,8 +20,8 @@ public abstract class IncludeExcludeTaskAction extends MavenToggleAction {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    Collection<MavenTask> all = getAllTasks(e);
-    MavenTask task = getTaskToChange(e);
+    Collection<MavenGoalTask> all = getAllTasks(e);
+    MavenGoalTask task = getTaskToChange(e);
     if (state) {
       all.add(task);
     }
@@ -31,13 +31,13 @@ public abstract class IncludeExcludeTaskAction extends MavenToggleAction {
     getTasksManager(e).updateTaskShortcuts(task);
   }
 
-  protected MavenTask getTaskToChange(AnActionEvent e) {
+  protected MavenGoalTask getTaskToChange(AnActionEvent e) {
     return MavenTasksManager.getMavenTask(e.getDataContext());
   }
 
-  protected Collection<MavenTask> getAllTasks(AnActionEvent e) {
+  protected Collection<MavenGoalTask> getAllTasks(AnActionEvent e) {
     return getAllTasks(getTasksManager(e));
   }
 
-  protected abstract Collection<MavenTask> getAllTasks(MavenTasksManager tasksManager);
+  protected abstract Collection<MavenGoalTask> getAllTasks(MavenTasksManager tasksManager);
 }

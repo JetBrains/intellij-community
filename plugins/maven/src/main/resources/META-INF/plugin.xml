@@ -226,7 +226,7 @@
       <reference id="Maven.Help"/>
     </group>
 
-    <group id="Maven.PomMenu" popup="true">
+    <group id="Maven.ProjectMenu" popup="true">
       <reference id="Maven.RunGoal"/>
       <reference ref="RunContextGroup"/>
       <separator/>
@@ -241,10 +241,6 @@
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference ref="Maven.TasksGroup"/>
-    </group>
-
-    <group id="Maven.ProfileMenu" popup="true">
-      <reference id="Maven.ToggleProfile"/>
     </group>
 
     <group id="Maven.GenerateGroup" text="Generate">

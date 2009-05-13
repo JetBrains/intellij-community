@@ -64,7 +64,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private MergingUpdateQueue myImportingQueue;
   private final Set<MavenProject> myProjectsToImport = new THashSet<MavenProject>();
 
-  private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher = EventDispatcher.create(MavenProjectsTree.Listener.class);
+  private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher
+    = EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createEmptyCOWList();
 
   public static MavenProjectsManager getInstance(Project p) {
@@ -223,10 +224,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor, myEmbeddersManager);
 
-    myImportingQueue = new MergingUpdateQueue(getClass().getName() + ": Importing queue",
-                                              IMPORT_DELAY, !isUnitTestMode(), MergingUpdateQueue.ANY_COMPONENT);
+    myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode());
     myImportingQueue.setPassThrough(false); // by default in unit-test mode it executes request right-away 
-    MavenUserAwareUpdatingQueueHelper.attachTo(myProject, myImportingQueue);
+    MavenUserAwareMegringUpdateQueueHelper.attachTo(myProject, myImportingQueue);
   }
 
   private void listenForSettingsChanges() {
@@ -366,6 +366,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   public List<MavenProject> getProjects() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getProjects();
+  }
+
+  public List<MavenProject> getNonIgnoredProjects() {
+    if (!isInitialized()) return Collections.emptyList();
+    return myProjectsTree.getNonIgnoredProjects();
   }
 
   public List<VirtualFile> getProjectsFiles() {

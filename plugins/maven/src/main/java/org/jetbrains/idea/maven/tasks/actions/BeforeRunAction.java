@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.idea.maven.tasks.ExecuteOnRunDialog;
-import org.jetbrains.idea.maven.tasks.MavenTask;
+import org.jetbrains.idea.maven.tasks.MavenGoalTask;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.tasks.TasksBundle;
 import org.jetbrains.idea.maven.utils.MavenToggleAction;
@@ -23,7 +23,7 @@ public class BeforeRunAction extends MavenToggleAction {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    final MavenTask task = getMavenTask(e);
+    final MavenGoalTask task = getMavenTask(e);
     final MavenTasksManager tasksManager = getTasksManager(e);
 
     DialogWrapper dialog = new ExecuteOnRunDialog(getProject(e), TasksBundle.message("maven.event.execute.before.run.debug")) {
@@ -46,7 +46,7 @@ public class BeforeRunAction extends MavenToggleAction {
     }
   }
 
-  private MavenTask getMavenTask(AnActionEvent e) {
+  private MavenGoalTask getMavenTask(AnActionEvent e) {
     return MavenTasksManager.getMavenTask(e.getDataContext());
   }
 }

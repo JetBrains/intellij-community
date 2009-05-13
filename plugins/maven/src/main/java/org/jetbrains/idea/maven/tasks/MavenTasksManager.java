@@ -6,7 +6,6 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -27,7 +26,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +40,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
-import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.utils.MavenDataKeys;
-import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
+import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.util.*;
@@ -67,7 +66,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
   private final MavenRunner myRunner;
 
   private MavenTasksState myState = new MavenTasksState();
-  private Map<Pair<String, Integer>, MavenTask> myBeforeRunMap = new THashMap<Pair<String, Integer>, MavenTask>();
+  private Map<Pair<String, Integer>, MavenGoalTask> myBeforeRunMap = new THashMap<Pair<String, Integer>, MavenGoalTask>();
 
   private MyKeymapListener myKeymapListener;
   private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
@@ -134,13 +133,13 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
 
   @NotNull
   public MavenTasksState getState() {
-    Map<String, MavenTask> map = new THashMap<String, MavenTask>();
+    Map<String, MavenGoalTask> map = new THashMap<String, MavenGoalTask>();
 
-    for (Map.Entry<Pair<String, Integer>, MavenTask> each : myBeforeRunMap.entrySet()) {
+    for (Map.Entry<Pair<String, Integer>, MavenGoalTask> each : myBeforeRunMap.entrySet()) {
       Pair<String, Integer> key = each.getKey();
       String type = key.first;
       Integer configID = key.second;
-      MavenTask task = each.getValue();
+      MavenGoalTask task = each.getValue();
 
       if (configID == null) {
         map.put(type, task);
@@ -158,11 +157,11 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
   }
 
   public void loadState(MavenTasksState state) {
-    Map<Pair<String, Integer>, MavenTask> map = new THashMap<Pair<String, Integer>, MavenTask>();
+    Map<Pair<String, Integer>, MavenGoalTask> map = new THashMap<Pair<String, Integer>, MavenGoalTask>();
 
-    for (Map.Entry<String, MavenTask> each : state.beforeRun.entrySet()) {
+    for (Map.Entry<String, MavenGoalTask> each : state.beforeRun.entrySet()) {
       String key = each.getKey();
-      MavenTask task = each.getValue();
+      MavenGoalTask task = each.getValue();
       int delimIndex = key.indexOf("#");
       if (delimIndex == -1) { // configurationType
         map.put(new Pair<String, Integer>(key, null), task);
@@ -182,9 +181,9 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     myBeforeRunMap = map;
   }
 
-  public boolean execute(@NotNull Collection<MavenTask> mavenTasks, ProgressIndicator indicator) {
+  public boolean execute(@NotNull Collection<MavenGoalTask> mavenTasks, ProgressIndicator indicator) {
     final List<MavenRunnerParameters> parametersList = new ArrayList<MavenRunnerParameters>();
-    for (MavenTask mavenTask : mavenTasks) {
+    for (MavenGoalTask mavenTask : mavenTasks) {
       final MavenRunnerParameters runnerParameters = mavenTask.createRunnerParameters(myProjectsManager);
       if (runnerParameters == null) {
         return false;
@@ -194,12 +193,12 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     return myRunner.runBatch(parametersList, null, null, TasksBundle.message("maven.event.executing"), indicator);
   }
 
-  public String getActionId(@Nullable String pomPath, @Nullable String goal) {
+  public String getActionId(@Nullable String projectPath, @Nullable String goal) {
     StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
     result.append(myProject.getLocationHash());
 
-    if (pomPath != null) {
-      String portablePath = FileUtil.toSystemIndependentName(pomPath);
+    if (projectPath != null) {
+      String portablePath = FileUtil.toSystemIndependentName(projectPath);
 
       result.append(new File(portablePath).getParentFile().getName());
       result.append(Integer.toHexString(portablePath.hashCode()));
@@ -217,7 +216,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     }
 
     final String shortcutString = getShortcutString(actionId);
-    final MavenTask mavenTask = new MavenTask(pomPath, goal);
+    final MavenGoalTask mavenTask = new MavenGoalTask(pomPath, goal);
 
     final StringBuilder stringBuilder = new StringBuilder();
     appendIf(stringBuilder, shortcutString != null, shortcutString);
@@ -248,14 +247,14 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     }
   }
 
-  public void updateShortcuts(@Nullable String actionId) {
+  public void updateShortcuts() {
     for (Listener listener : myListeners) {
-      listener.updateShortcuts(actionId);
+      listener.updateShortcuts();
     }
   }
 
-  public void updateTaskShortcuts(@NotNull MavenTask mavenTask) {
-    updateShortcuts(getActionId(mavenTask.pomPath, mavenTask.goal));
+  public void updateTaskShortcuts(@NotNull MavenGoalTask mavenTask) {
+    updateShortcuts();
   }
 
   public void installTaskSelector(TaskSelector selector) {
@@ -263,12 +262,12 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
   }
 
   @Nullable
-  private MavenTask selectMavenTask(Project project, RunConfiguration runConfiguration) {
+  private MavenGoalTask selectMavenTask(Project project, RunConfiguration runConfiguration) {
     if (myTaskSelector == null) {
       return null;
     }
 
-    final MavenTask mavenTask = getTask(runConfiguration.getType(), runConfiguration);
+    final MavenGoalTask mavenTask = getTask(runConfiguration.getType(), runConfiguration);
 
     if (!myTaskSelector.select(project, mavenTask != null ? mavenTask.pomPath : null, mavenTask != null ? mavenTask.goal : null,
                                TasksBundle.message("maven.event.select.goal.title"))) {
@@ -277,7 +276,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
 
     final String pomPath = myTaskSelector.getSelectedPomPath();
     if (pomPath != null) {
-      final MavenTask newMavenTask = new MavenTask(pomPath, myTaskSelector.getSelectedGoal());
+      final MavenGoalTask newMavenTask = new MavenGoalTask(pomPath, myTaskSelector.getSelectedGoal());
       if (!isAssignedForType(runConfiguration.getType(), newMavenTask)) {
         assignTask(runConfiguration.getType(), runConfiguration, newMavenTask);
         updateTaskShortcuts(newMavenTask);
@@ -286,7 +285,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     }
 
     clearAssignment(runConfiguration.getType(), runConfiguration);
-    updateShortcuts(null);
+    updateShortcuts();
     return null;
   }
 
@@ -298,24 +297,24 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     return getDescription(getTask(runConfiguration.getType(), runConfiguration));
   }
 
-  public MavenTask getAssignedTask(ConfigurationType type, RunConfiguration config) {
+  public MavenGoalTask getAssignedTask(ConfigurationType type, RunConfiguration config) {
     return myBeforeRunMap.get(getKey(type, config));
   }
 
-  MavenTask getTask(ConfigurationType type, RunConfiguration config) {
-    final MavenTask task = getAssignedTask(type, config);
+  MavenGoalTask getTask(ConfigurationType type, RunConfiguration config) {
+    final MavenGoalTask task = getAssignedTask(type, config);
     return task != null ? task : getAssignedTask(type, null);
   }
 
-  public boolean hasAssginments(MavenTask task) {
+  public boolean hasAssginments(MavenGoalTask task) {
     return myBeforeRunMap.containsValue(task);
   }
 
-  public boolean isAssignedForType(ConfigurationType type, MavenTask mavenTask) {
+  public boolean isAssignedForType(ConfigurationType type, MavenGoalTask mavenTask) {
     return mavenTask.equals(getAssignedTask(type, null));
   }
 
-  public void assignTask(ConfigurationType type, RunConfiguration config, MavenTask mavenTask) {
+  public void assignTask(ConfigurationType type, RunConfiguration config, MavenGoalTask mavenTask) {
     myBeforeRunMap.put(getKey(type, config), mavenTask);
   }
 
@@ -323,11 +322,11 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     myBeforeRunMap.remove(getKey(type, config));
   }
 
-  public void clearAssignments(MavenTask task) {
+  public void clearAssignments(MavenGoalTask task) {
     final Collection<Pair<String, Integer>> keysToRemove = new ArrayList<Pair<String, Integer>>();
     final Collection<String> oldKeysToRemove = new ArrayList<String>();
 
-    for (Map.Entry<Pair<String, Integer>, MavenTask> each : myBeforeRunMap.entrySet()) {
+    for (Map.Entry<Pair<String, Integer>, MavenGoalTask> each : myBeforeRunMap.entrySet()) {
       if (each.getValue().equals(task)) {
         keysToRemove.add(each.getKey());
       }
@@ -357,13 +356,13 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
   }
 
   @Nullable
-  public static MavenTask getMavenTask(DataContext dataContext) {
+  public static MavenGoalTask getMavenTask(DataContext dataContext) {
     if (dataContext != null) {
       final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
       if (virtualFile != null && MavenConstants.POM_XML.equals(virtualFile.getName())) {
         final List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(dataContext);
         if (goals != null && goals.size() == 1) {
-          return new MavenTask(virtualFile.getPath(), goals.get(0));
+          return new MavenGoalTask(virtualFile.getPath(), goals.get(0));
         }
       }
     }
@@ -371,7 +370,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
   }
 
   @Nullable
-  private String getDescription(MavenTask mavenTask) {
+  private String getDescription(MavenGoalTask mavenTask) {
     if (mavenTask != null) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mavenTask.pomPath);
       if (file != null) {
@@ -402,7 +401,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
 
     public void activeKeymapChanged(Keymap keymap) {
       listenTo(keymap);
-      updateShortcuts(null);
+      updateShortcuts();
     }
 
     private void listenTo(Keymap keymap) {
@@ -416,73 +415,89 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     }
 
     public void onShortcutChanged(String actionId) {
-      updateShortcuts(actionId);
+      updateShortcuts();
     }
 
     public void stopListen() {
-      MavenKeymapExtension.updateActions(myProject, true);
+      MavenKeymapExtension.clearActions(myProject);
       listenTo(null);
       KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(this);
     }
   }
 
   private class MyProjectsTreeListener extends MavenProjectsTree.ListenerAdapter implements MavenProjectsManager.Listener {
+    private final Map<MavenProject, Boolean> mySheduledProjects = new THashMap<MavenProject, Boolean>();
+    private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue(getComponentName() + ": Keymap Update",
+                                                                                 500, true, myProject);
+
     public void activated() {
-      scheduleKeymapUpdate(null, false);
+      scheduleKeymapUpdate(myProjectsManager.getNonIgnoredProjects(), true);
     }
 
     @Override
     public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
-      scheduleKeymapUpdate(unignored, false);
-      scheduleKeymapUpdate(ignored, true);
+      scheduleKeymapUpdate(unignored, true);
+      scheduleKeymapUpdate(ignored, false);
     }
 
     @Override
     public void projectsRead(List<MavenProject> projects) {
-      scheduleKeymapUpdate(projects, false);
+      scheduleKeymapUpdate(projects, true);
     }
 
     @Override
     public void projectRemoved(MavenProject project) {
-      scheduleKeymapUpdate(Collections.singletonList(project), true);
+      scheduleKeymapUpdate(Collections.singletonList(project), false);
     }
 
     @Override
     public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-      scheduleKeymapUpdate(Collections.singletonList(project), false);
+      scheduleKeymapUpdate(Collections.singletonList(project), true);
     }
 
     @Override
     public void pluginsResolved(MavenProject project) {
-      scheduleKeymapUpdate(Collections.singletonList(project), false);
+      scheduleKeymapUpdate(Collections.singletonList(project), true);
     }
 
-    private void scheduleKeymapUpdate(final List<MavenProject> mavenProjects, final boolean delete) {
-      Runnable updateTask = new Runnable() {
+    private void scheduleKeymapUpdate(List<MavenProject> mavenProjects, boolean forUpdate) {
+      synchronized (mySheduledProjects) {
+        for (MavenProject each : mavenProjects) {
+          mySheduledProjects.put(each, forUpdate);
+        }
+      }
+
+      Update update = new Update(this) {
         public void run() {
-          if (myProject.isDisposed()) return;
-          if (mavenProjects == null) {
-            MavenKeymapExtension.updateActions(myProject, delete);
+          List<MavenProject> projectToUpdate;
+          List<MavenProject> projectToDelete;
+          synchronized (mySheduledProjects) {
+            projectToUpdate = selectScheduledProjects(true);
+            projectToDelete = selectScheduledProjects(false);
+            mySheduledProjects.clear();
           }
-          else {
-            for (MavenProject each : mavenProjects) {
-              MavenKeymapExtension.updateActions(myProject, each, delete);
-            }
-          }
+          MavenKeymapExtension.clearActions(myProject, projectToDelete);
+          MavenKeymapExtension.updateActions(myProject, projectToUpdate);
         }
       };
+      if (isUnitTestMode()) {
+        update.run();
+        return;
+      }
+      myUpdateQueue.queue(update);
+    }
 
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        updateTask.run();
-      }
-      else {
-        myKeymapUpdaterAlarm.addRequest(updateTask, 10);
-      }
+    private List<MavenProject> selectScheduledProjects(final boolean forUpdate) {
+      return ContainerUtil.mapNotNull(mySheduledProjects.entrySet(), new Function<Map.Entry<MavenProject, Boolean>, MavenProject>() {
+        public MavenProject fun(Map.Entry<MavenProject, Boolean> eachEntry) {
+          return forUpdate == eachEntry.getValue() ? eachEntry.getKey() : null;
+        }
+      });
     }
   }
 
   public interface Listener {
-    void updateShortcuts(@Nullable String actionId);
+    void updateShortcuts();
   }
 
   public interface TaskSelector {

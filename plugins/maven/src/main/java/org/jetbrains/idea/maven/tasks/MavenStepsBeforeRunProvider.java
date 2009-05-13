@@ -43,7 +43,7 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
                        TasksBundle.message("execute.before.launch.steps.title"),
                        true) {
           public void run(@NotNull ProgressIndicator indicator) {
-            final MavenTask task = getEventsHandler().getTask(configuration.getType(), configuration);
+            final MavenGoalTask task = getEventsHandler().getTask(configuration.getType(), configuration);
             result[0] = task != null && getEventsHandler().execute(Arrays.asList(task), indicator);
           }
         }.queue();
@@ -54,7 +54,7 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public void copyTaskData(final RunConfiguration from, final RunConfiguration to) {
-    final MavenTask mavenTask = getEventsHandler().getAssignedTask(from.getType(), from);
+    final MavenGoalTask mavenTask = getEventsHandler().getAssignedTask(from.getType(), from);
     if (mavenTask != null) {
       getEventsHandler().assignTask(to.getType(), to, mavenTask.clone());
       // no need to update shortcut description actually, as the presentation of mavenTask should not change

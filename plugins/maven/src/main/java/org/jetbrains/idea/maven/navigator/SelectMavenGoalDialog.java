@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.treeStructure.SimpleNode;
 
 public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
@@ -9,11 +10,13 @@ public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
 
   public SelectMavenGoalDialog(Project project, final String projectPath, final String goal, String title) {
     super(project, title, MavenProjectsStructure.GoalNode.class, new NodeSelector() {
-      public SimpleNode findNode(MavenProjectsStructure.ProjectNode pomNode) {
-        if (pomNode.getMavenProject().getPath().equals(projectPath)) {
-          return pomNode.findGoalNode(goal);
+      public boolean shouldSelect(SimpleNode node) {
+        if (node instanceof MavenProjectsStructure.GoalNode) {
+          MavenProjectsStructure.GoalNode goalNode = (MavenProjectsStructure.GoalNode)node;
+          return FileUtil.pathsEqual(goalNode.getProjectPath(), projectPath)
+                 && goalNode.getGoal().equals(goal);
         }
-        return null;
+        return false;
       }
     });
 

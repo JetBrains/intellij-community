@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -62,7 +63,7 @@ public class MavenTasksManagerTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertKeymapDoesNotContain(myProjectPom, "surefire:test");
+    assertKeymapDoesNotContain(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -151,7 +152,7 @@ public class MavenTasksManagerTest extends MavenImportingTestCase {
 
   private void assertKeymapContains(VirtualFile pomFile, String goal) {
     String id = myEventsManager.getActionId(pomFile.getPath(), goal);
-    assertTrue(getProjectActions().toString(), getProjectActions().contains(id));
+    assertTrue("Action " + id + " not found among: \n" + StringUtil.join(getProjectActions(), "\n"), getProjectActions().contains(id));
   }
 
   private void assertKeymapDoesNotContain(VirtualFile pomFile, String goal) {

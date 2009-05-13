@@ -8,27 +8,27 @@ import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 
 import java.util.Arrays;
 
-public class MavenTask implements Cloneable, Comparable {
+public class MavenGoalTask implements Cloneable, Comparable {
   public String pomPath;
   public String goal;
 
-  public MavenTask() {
+  public MavenGoalTask() {
   }
 
-  public MavenTask(final String pomPath, final String goal) {
+  public MavenGoalTask(final String pomPath, final String goal) {
     this.pomPath = pomPath;
     this.goal = goal;
   }
 
-  protected MavenTask clone() {
-    return new MavenTask(pomPath, goal);
+  protected MavenGoalTask clone() {
+    return new MavenGoalTask(pomPath, goal);
   }
 
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final MavenTask task = (MavenTask)o;
+    final MavenGoalTask task = (MavenGoalTask)o;
 
     if (goal != null ? !goal.equals(task.goal) : task.goal != null) return false;
     if (pomPath != null ? !pomPath.equals(task.pomPath) : task.pomPath != null) return false;

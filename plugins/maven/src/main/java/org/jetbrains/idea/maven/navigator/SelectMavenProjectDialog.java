@@ -13,8 +13,11 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
 
   public SelectMavenProjectDialog(Project project, final MavenProject current) {
     super(project, "Select Maven Project", MavenProjectsStructure.ProjectNode.class, new NodeSelector() {
-      public SimpleNode findNode(MavenProjectsStructure.ProjectNode pomNode) {
-        return pomNode.getMavenProject() == current ? pomNode : null;
+      public boolean shouldSelect(SimpleNode node) {
+        if (node instanceof MavenProjectsStructure.ProjectNode) {
+          return ((MavenProjectsStructure.ProjectNode)node).getMavenProject() == current;
+        }
+        return false;
       }
     });
 

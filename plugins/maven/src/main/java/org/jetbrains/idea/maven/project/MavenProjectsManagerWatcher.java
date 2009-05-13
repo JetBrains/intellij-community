@@ -27,6 +27,8 @@ import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
+import org.jetbrains.idea.maven.utils.MavenUserAwareMegringUpdateQueueHelper;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -50,11 +52,9 @@ public class MavenProjectsManagerWatcher {
   private List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<VirtualFilePointer>();
 
   private final Set<Document> myChangedDocuments = new THashSet<Document>();
-  private final MergingUpdateQueue myChangedDocumentsQueue = new MergingUpdateQueue(getClass() + ": Document changes queue",
-                                                                                    DOCUMENT_SAVE_DELAY,
-                                                                                    false,
-                                                                                    MergingUpdateQueue.ANY_COMPONENT,
-                                                                                    null);
+  private final MergingUpdateQueue myChangedDocumentsQueue = new MavenMergingUpdateQueue(getClass() + ": Document changes queue",
+                                                                                         DOCUMENT_SAVE_DELAY,
+                                                                                         false);
 
   public MavenProjectsManagerWatcher(Project project,
                                      MavenProjectsTree tree,
@@ -74,7 +74,7 @@ public class MavenProjectsManagerWatcher {
     myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new MyFileChangeListener());
     myBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
 
-    MavenUserAwareUpdatingQueueHelper.attachTo(myProject, myChangedDocumentsQueue);
+    MavenUserAwareMegringUpdateQueueHelper.attachTo(myProject, myChangedDocumentsQueue);
     myChangedDocumentsQueue.activate();
 
     myDocumentListener = new DocumentAdapter() {

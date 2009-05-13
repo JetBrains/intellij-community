@@ -180,7 +180,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     final List<MavenProjectsStructure.ProfileNode> nodes = getSelectedNodes(MavenProjectsStructure.ProfileNode.class);
     final List<String> profiles = new ArrayList<String>();
     for (MavenProjectsStructure.ProfileNode node : nodes) {
-      profiles.add(node.getProfile());
+      profiles.add(node.getProfileName());
     }
     return profiles;
   }
