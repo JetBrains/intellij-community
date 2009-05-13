@@ -1,7 +1,9 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
+import com.intellij.application.options.editor.EditorOptionsProvider;
+import com.intellij.application.options.editor.JavaAutoImportOptions;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -11,10 +13,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.statistics.JavaStatisticsManager;
@@ -22,12 +26,12 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 public class AddImportAction implements QuestionAction {
@@ -103,7 +107,7 @@ public class AddImportAction implements QuestionAction {
             @Override
             public PopupStep onChosen(String selectedValue, boolean finalChoice) {
               if (finalChoice) {
-                excludeFromImport(selectedValue);
+                excludeFromImport(myProject, selectedValue);
               }
 
               return super.onChosen(selectedValue, finalChoice);
@@ -130,11 +134,21 @@ public class AddImportAction implements QuestionAction {
     JBPopupFactory.getInstance().createListPopup(step).showInBestPositionFor(myEditor);
   }
 
-  public static void excludeFromImport(String prefix) {
-    final CodeInsightSettings cis = CodeInsightSettings.getInstance();
-    final LinkedHashSet<String> strings = new LinkedHashSet<String>(Arrays.asList(cis.EXCLUDED_PACKAGES));
-    strings.add(prefix);
-    cis.EXCLUDED_PACKAGES = strings.toArray(new String[strings.size()]);
+  public static void excludeFromImport(final Project project, final String prefix) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (project.isDisposed()) return;
+
+        final AutoImportOptionsConfigurable configurable = EditorOptionsProvider.EP_NAME.findExtension(AutoImportOptionsConfigurable.class);
+        ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
+          public void run() {                 
+            final JavaAutoImportOptions options = ContainerUtil.findInstance(configurable.getConfigurables(), JavaAutoImportOptions.class);
+            options.addExcludePackage(prefix);
+            IdeFocusManager.getInstance(project).requestFocus(options.getExcludePackagesList(), false);
+          }
+        });
+      }
+    });
   }
 
   public static List<String> getAllExcludableStrings(@NotNull String qname) {

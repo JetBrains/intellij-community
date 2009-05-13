@@ -27,6 +27,7 @@ import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
+import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SortedList;
@@ -536,6 +537,21 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e){
+        final Point point = e.getPoint();
+        final int i = myList.locationToIndex(point);
+        if (i >= 0) {
+          final LookupElement selected = (LookupElement)myList.getModel().getElementAt(i);
+          if (selected != null) {
+            final Collection<LookupElementAction> actions = getActionsFor(selected);
+            if (!actions.isEmpty() &&
+                e.getClickCount() == 1 &&
+                point.x >= myList.getCellBounds(i, i).width - PopupIcons.EMPTY_ICON.getIconWidth()) {
+              ShowLookupActionsHandler.showItemActions(LookupImpl.this, actions);
+              return;
+            }
+          }
+        }
+
         if (e.getClickCount() == 2){
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             public void run() {

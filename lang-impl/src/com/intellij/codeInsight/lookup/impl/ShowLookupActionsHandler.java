@@ -32,6 +32,10 @@ public class ShowLookupActionsHandler extends LookupActionHandler {
       return;
     }
 
+    showItemActions(lookup, actions);
+  }
+
+  public static void showItemActions(LookupImpl lookup, Collection<LookupElementAction> actions) {
     final BaseListPopupStep<LookupElementAction> step = new LookupActionsStep(actions, lookup);
 
     final Rectangle bounds = lookup.getCurrentItemBounds();

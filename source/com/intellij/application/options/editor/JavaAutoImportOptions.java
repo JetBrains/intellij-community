@@ -55,10 +55,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
         String packageName = Messages.showInputDialog(myWholePanel, ApplicationBundle.message("exclude.from.completion.prompt"),
                                                       ApplicationBundle.message("exclude.from.completion.title"),
                                                       Messages.getWarningIcon(), "", validator);
-        if (packageName != null) {
-          myExcludePackagesModel.add(myExcludePackagesModel.size(), packageName);
-          myExcludePackagesList.setSelectedValue(packageName, true);
-        }
+        addExcludePackage(packageName);
       }
     });
     myExcludePackagesList.addListSelectionListener(new ListSelectionListener() {
@@ -71,6 +68,17 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
         ListUtil.removeSelectedItems(myExcludePackagesList);
       }
     });
+  }
+
+  public void addExcludePackage(String packageName) {
+    if (packageName != null) {
+      myExcludePackagesModel.add(myExcludePackagesModel.size(), packageName);
+      myExcludePackagesList.setSelectedValue(packageName, true);
+    }
+  }
+
+  public JList getExcludePackagesList() {
+    return myExcludePackagesList;
   }
 
   public void reset() {
