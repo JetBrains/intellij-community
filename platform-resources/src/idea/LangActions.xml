@@ -701,9 +701,6 @@
       <reference ref="ViewSource"/>
     </group>
 
-    <group id="InspectionProfilePanelToolbar">
-    </group>
-
     <!-- ***** yFiles actions *************************************** -->
     <action id="Graph.ZoomIn" class="com.intellij.openapi.graph.builder.actions.ZoomInAction" text="Zoom In">
       <keyboard-shortcut first-keystroke="ADD" keymap="$default"/>

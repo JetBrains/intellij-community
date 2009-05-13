@@ -25,6 +25,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 /**
  * User: anna
@@ -111,5 +112,9 @@ public abstract class FilterComponent extends JPanel {
 
   public void dispose() {
     myUpdateAlarm.cancelAllRequests();
+  }
+
+  protected void setHistory(List<String> strings) {
+    myFilter.setHistory(strings);
   }
 }
