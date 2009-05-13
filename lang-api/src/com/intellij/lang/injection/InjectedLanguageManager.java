@@ -51,7 +51,11 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   public abstract TextRange injectedToHost(@NotNull PsiElement element, @NotNull TextRange textRange);
   public abstract int injectedToHost(@NotNull PsiElement element, int offset);
 
+  /** @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
+  @Deprecated
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector);
+  /** @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
+  @Deprecated
   public abstract boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector);
 
   public abstract String getUnescapedText(@NotNull PsiElement injectedNode);
