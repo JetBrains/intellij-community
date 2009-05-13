@@ -37,6 +37,7 @@ public class ProgressTipPanel {
   private Runnable myLastRequest;
   private JButton myCloseButton;
   private JCheckBox myKeepOpen;
+  private JScrollPane myScrollPane;
 
   private static final @NonNls String KEEP_OPTION_NAME = "KEEP_PRODUCTIVITY_HINTS";
   private boolean myIsShownIsOwnDialog = false;
@@ -49,7 +50,7 @@ public class ProgressTipPanel {
     //noinspection HardCodedStringLiteral
     myBrowser.setContentType("text/html");
 
-    myBrowser.setPreferredSize(new Dimension(500, 200));
+    myScrollPane.setPreferredSize(new Dimension(600, 200));
     myBrowser.setEditable(false);
     myPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
     myLabel.setIcon(IconLoader.getIcon("/general/tip.png"));
