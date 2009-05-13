@@ -26,12 +26,12 @@ public interface GitHandlerListener extends EventListener {
    *
    * @param exitCode a exit code
    */
-  void processTerminted(int exitCode);
+  void processTerminated(int exitCode);
 
   /**
-   * This method is invoked if starting git process failed with exeption
+   * This method is invoked if starting git process failed with exception
    *
-   * @param exception an exeption
+   * @param exception an exception
    */
   void startFailed(Throwable exception);
 

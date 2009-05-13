@@ -92,7 +92,9 @@ public class GitRebaseEditor extends DialogWrapper {
    * The constructor
    *
    * @param project the project
+   * @param gitRoot the git root
    * @param file    the file to edit
+   * @throws IOException if file could not be loaded
    */
   protected GitRebaseEditor(final Project project, final VirtualFile gitRoot, String file) throws IOException {
     super(project, true);
@@ -219,6 +221,8 @@ public class GitRebaseEditor extends DialogWrapper {
 
   /**
    * Cancel rebase
+   *
+   * @throws IOException if file cannot be reset to empty one
    */
   public void cancel() throws IOException {
     myTableModel.cancel(myFile);
@@ -327,6 +331,7 @@ public class GitRebaseEditor extends DialogWrapper {
      * Load data from the file
      *
      * @param file the file to load
+     * @throws IOException if file could not be loaded
      */
     public void load(final String file) throws IOException {
       String encoding = GitConfigUtil.getLogEncoding(myProject, myGitRoot);

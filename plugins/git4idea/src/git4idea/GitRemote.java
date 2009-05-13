@@ -52,7 +52,7 @@ public final class GitRemote {
    */
   @NonNls private static final String SHOW_URL_PREFIX = "  URL: ";
   /**
-   * Prefix for local branch maping in "git remote show -n {branch}"
+   * Prefix for local branch mapping in "git remote show -n {branch}"
    */
   @NonNls private static final String SHOW_MAPPING_PREFIX = "  Remote branch merged with 'git pull' while on branch ";
   /**
@@ -119,6 +119,7 @@ public final class GitRemote {
    * @param project the context project
    * @param root    the git root
    * @return a list of registered remotes
+   * @throws VcsException in case of git error
    */
   public static List<GitRemote> list(Project project, VirtualFile root) throws VcsException {
     ArrayList<GitRemote> remotes = new ArrayList<GitRemote>();
@@ -141,7 +142,11 @@ public final class GitRemote {
   /**
    * Get information about remote stored in locally (remote end is not queried about branches)
    *
+   * @param project the context project
+   * @param root    the VCS root
+   * @param name    the name of the of the remote to find
    * @return a information about remotes
+   * @throws VcsException if there is a problem with running git
    */
   @Nullable
   public static GitRemote find(Project project, VirtualFile root, String name) throws VcsException {
@@ -154,7 +159,6 @@ public final class GitRemote {
     if (handler.getExitCode() != 0) {
       return null;
     }
-    int i = 0;
     if (!in.tryConsume("* ") || !name.equals(in.line()) || !in.hasMoreData()) {
       throw new IllegalStateException("Unexpected format for 'git remote show'");
     }
@@ -166,9 +170,12 @@ public final class GitRemote {
 
 
   /**
-   * Get information about remote stored in localy (remote end is not queried about branches)
+   * Get information about remote stored in locally (remote end is not queried about branches)
    *
+   * @param project the current project
+   * @param root    the VCS root
    * @return a information about remotes
+   * @throws VcsException if there is a problem with running git
    */
   public Info localInfo(Project project, VirtualFile root) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.REMOTE);
@@ -211,6 +218,7 @@ public final class GitRemote {
    * @param root       the git root
    * @param remoteName the name of the remote
    * @return the configured fetch specifications for remote
+   * @throws VcsException if there is a problem with running git
    */
   public static List<String> getFetchSpecs(Project project, VirtualFile root, String remoteName) throws VcsException {
     ArrayList<String> rc = new ArrayList<String>();
@@ -235,7 +243,7 @@ public final class GitRemote {
       }
     }
     else {
-      // try config file
+      // try .git/config file
       for (Pair<String, String> pair : GitConfigUtil.getAllValues(project, root, "remote." + remoteName + ".fetch")) {
         rc.add(pair.second);
       }

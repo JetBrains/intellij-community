@@ -27,7 +27,7 @@ public interface GitSSHHandler {
    * Verify server host key
    *
    * @param handler                  a handler identifier
-   * @param hostname                 a host name
+   * @param hostName                 a host name
    * @param port                     a port number
    * @param serverHostKeyAlgorithm   an algorithm
    * @param serverHostKeyFingerprint a key fingerprint
@@ -35,7 +35,7 @@ public interface GitSSHHandler {
    * @return true the host is verified, false otherwise
    */
   boolean verifyServerHostKey(int handler,
-                              String hostname,
+                              String hostName,
                               int port,
                               String serverHostKeyAlgorithm,
                               String serverHostKeyFingerprint,
@@ -45,30 +45,31 @@ public interface GitSSHHandler {
    * Ask passphrase for the key
    *
    * @param handler   a handler identifier
-   * @param username  a name of user
+   * @param userName  a name of user
    * @param keyPath   a path for the key
    * @param lastError a last error (or empty string)
    * @return the passphrase entered by the user
    */
   @Nullable
-  String askPassphrase(final int handler, final String username, final String keyPath, final String lastError);
+  String askPassphrase(final int handler, final String userName, final String keyPath, final String lastError);
 
   /**
    * Reply to challenge for keyboard-interactive method. Also used for
    *
    * @param handlerNo   a handler identifier
-   * @param username    a user name (includes host and port)
+   * @param userName    a user name (includes host and port)
    * @param name        name of challenge
    * @param instruction instruction
    * @param numPrompts  amount of prompts
    * @param prompt      prompts
-   * @param echo        whether the reply should be echoed (booleans represented as string due to XML RCP limitation)
+   * @param echo        whether the reply should be echoed (boolean values represented as string due to XML RPC limitation)
    * @param lastError   @return answers provided by the user
+   * @return a list or replies to challenges (the size should be equal to the number of prompts)
    */
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
   @Nullable
   Vector<String> replyToChallenge(final int handlerNo,
-                                  final String username,
+                                  final String userName,
                                   final String name,
                                   final String instruction,
                                   final int numPrompts,
@@ -77,13 +78,13 @@ public interface GitSSHHandler {
                                   final String lastError);
 
   /**
-   * Ask password for the specified username
+   * Ask password for the specified user name
    *
    * @param handlerNo a handler identifier
-   * @param username  a name of user to ask password for
+   * @param userName  a name of user to ask password for
    * @param lastError a last error
    * @return the password or null if authentication failed.
    */
   @Nullable
-  String askPassword(final int handlerNo, final String username, final String lastError);
+  String askPassword(final int handlerNo, final String userName, final String lastError);
 }

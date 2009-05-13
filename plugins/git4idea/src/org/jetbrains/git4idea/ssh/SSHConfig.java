@@ -43,22 +43,21 @@ public class SSHConfig {
   @NonNls private final static HashSet<String> ALLOWED_METHODS = new HashSet<String>();
 
   static {
-    ALLOWED_METHODS.add(SSHMain.PUBLICKEY_METHOD);
+    ALLOWED_METHODS.add(SSHMain.PUBLIC_KEY_METHOD);
     ALLOWED_METHODS.add(SSHMain.KEYBOARD_INTERACTIVE_METHOD);
     ALLOWED_METHODS.add(SSHMain.PASSWORD_METHOD);
   }
 
   /**
-   * Lookup host in the host database
+   * Look the host up in the host database
    *
    * @param user a user name
    * @param host a host name
    * @param port a port
    * @return a create host entry
    */
-  public
   @NotNull
-  Host lookup(@Nullable String user, @NotNull String host, @Nullable Integer port) {
+  public Host lookup(@Nullable String user, @NotNull String host, @Nullable Integer port) {
     final Host rc = new Host();
     entriesLoop:
     for (HostEntry e : myEntries) {
@@ -94,6 +93,7 @@ public class SSHConfig {
 
   /**
    * @return a SSH user configuration file
+   * @throws IOException if config could not be loaded
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
   @NotNull
@@ -115,9 +115,9 @@ public class SSHConfig {
         }
         final String[] parts = line.split("[ \t]*[= \t]", 2);
         final String keyword = parts[0];
-        final String arg = unqouteIfNeeded(parts[1]);
+        final String argument = unquoteIfNeeded(parts[1]);
         if ("Host".equalsIgnoreCase(keyword)) {
-          HostEntry entry = new HostEntry(arg);
+          HostEntry entry = new HostEntry(argument);
           rc.myEntries.add(entry);
           host = entry.myHost;
           continue;
@@ -127,41 +127,41 @@ public class SSHConfig {
           continue;
         }
         if ("BatchMode".equalsIgnoreCase(keyword)) {
-          host.myBatchMode = parseBoolean(arg);
+          host.myBatchMode = parseBoolean(argument);
         }
         else if ("HostKeyAlgorithms".equalsIgnoreCase(keyword)) {
-          host.myHostKeyAlgorithms = Collections.unmodifiableList(parseList(arg));
+          host.myHostKeyAlgorithms = Collections.unmodifiableList(parseList(argument));
         }
         else if ("HostKeyAlias".equalsIgnoreCase(keyword)) {
-          host.myHostKeyAlias = arg;
+          host.myHostKeyAlias = argument;
         }
         else if ("HostName".equalsIgnoreCase(keyword)) {
-          host.myHostName = arg;
+          host.myHostName = argument;
         }
         else if ("IdentityFile".equalsIgnoreCase(keyword)) {
-          host.myIdentityFile = arg;
+          host.myIdentityFile = argument;
         }
         else if ("NumberOfPasswordPrompts".equalsIgnoreCase(keyword)) {
-          host.myNumberOfPasswordPrompts = parseInt(arg);
+          host.myNumberOfPasswordPrompts = parseInt(argument);
         }
         else if ("PasswordAuthentication".equalsIgnoreCase(keyword)) {
-          host.myPasswordAuthentication = parseBoolean(arg);
+          host.myPasswordAuthentication = parseBoolean(argument);
         }
         else if ("Port".equalsIgnoreCase(keyword)) {
-          host.myPort = parseInt(arg);
+          host.myPort = parseInt(argument);
         }
         else if ("PreferredAuthentications".equalsIgnoreCase(keyword)) {
-          final LinkedList<String> list = parseList(arg);
+          final LinkedList<String> list = parseList(argument);
           list.retainAll(ALLOWED_METHODS);
           if (!list.isEmpty()) {
             host.myPreferredMethods = Collections.unmodifiableList(list);
           }
         }
         else if ("PubkeyAuthentication".equalsIgnoreCase(keyword)) {
-          host.myPubkeyAuthentication = parseBoolean(arg);
+          host.myPubkeyAuthentication = parseBoolean(argument);
         }
         else if ("User".equalsIgnoreCase(keyword)) {
-          host.myUser = arg;
+          host.myUser = argument;
         }
       }
     }
@@ -174,12 +174,12 @@ public class SSHConfig {
   /**
    * Parse integer and return null if integer is incorrect
    *
-   * @param arg an argument to parse
+   * @param value an argument to parse
    * @return {@link Integer} or null.
    */
-  private static Integer parseInt(final String arg) {
+  private static Integer parseInt(final String value) {
     try {
-      return Integer.parseInt(arg);
+      return Integer.parseInt(value);
     }
     catch (NumberFormatException e) {
       return null;
@@ -189,22 +189,23 @@ public class SSHConfig {
   /**
    * Parse file name handling %d %u %l %h %r options
    *
-   * @param arg a file name to parse
+   * @param host  the host entry
+   * @param value a file name to parse
    * @return actual file name
    */
-  private static File parseFileName(Host host, final String arg) {
+  private static File parseFileName(Host host, final String value) {
     try {
       StringBuilder rc = new StringBuilder();
-      for (int i = 0; i < arg.length(); i++) {
-        char ch = arg.charAt(i);
+      for (int i = 0; i < value.length(); i++) {
+        char ch = value.charAt(i);
         if (i == 0 && ch == '~') {
           rc.append(USER_HOME);
           continue;
         }
-        if (ch == '%' && i + 1 < arg.length()) {
+        if (ch == '%' && i + 1 < value.length()) {
           //noinspection AssignmentToForLoopParameter
           i++;
-          switch (arg.charAt(i)) {
+          switch (value.charAt(i)) {
             case '%':
               rc.append('%');
               break;
@@ -236,14 +237,14 @@ public class SSHConfig {
   }
 
   /**
-   * Parse booleas avlue
+   * Parse boolean value
    *
-   * @param arg an value to parse
+   * @param value an value to parse
    * @return a boolean value
    */
-  private static Boolean parseBoolean(final String arg) {
+  private static Boolean parseBoolean(final String value) {
     //noinspection HardCodedStringLiteral
-    return "yes".equals(arg);
+    return "yes".equals(value);
   }
 
   private static LinkedList<String> parseList(final String arg) {
@@ -260,10 +261,10 @@ public class SSHConfig {
   /**
    * Unquote string if needed
    *
-   * @param part a string to unqoute
+   * @param part a string to unquote
    * @return unquoted value
    */
-  private static String unqouteIfNeeded(String part) {
+  private static String unquoteIfNeeded(String part) {
     if (part.length() > 1 && part.charAt(0) == '"' && part.charAt(part.length() - 1) == '"') {
       part = part.substring(1, part.length() - 1);
     }
@@ -284,7 +285,7 @@ public class SSHConfig {
      */
     private final List<Pattern> myPositive = new ArrayList<Pattern>();
     /**
-     * Exact positve patterns that match host excatly rather than by mask
+     * Exact positive patterns that match host exactly rather than by mask
      */
     private final List<String> myExactPositive = new ArrayList<String>();
     /**
@@ -317,7 +318,7 @@ public class SSHConfig {
     /**
      * Convert host pattern from glob format to regexp. Note that the function assumes
      * a valid host pattern, so characters that might not happen in the host name but
-     * must be escaped in Req exp are not escaped.
+     * must be escaped in regular expressions are not escaped.
      *
      * @param s a pattern to convert
      * @return the resulting pattern
@@ -357,11 +358,11 @@ public class SSHConfig {
      */
     @Nullable private String myHostName;
     /**
-     * The port nummber
+     * The port number
      */
     @Nullable private Integer myPort;
     /**
-     * Identy file
+     * Identity file
      */
     @Nullable private String myIdentityFile;
     /**
@@ -373,7 +374,7 @@ public class SSHConfig {
      */
     @Nullable private List<String> myHostKeyAlgorithms;
     /**
-     * Bantch mode parameter
+     * Batch mode parameter
      */
     @Nullable private Boolean myBatchMode;
     /**
@@ -381,7 +382,7 @@ public class SSHConfig {
      */
     @Nullable private String myHostKeyAlias;
     /**
-     * Number of pasword prompts
+     * Number of password prompts
      */
     @Nullable private Integer myNumberOfPasswordPrompts;
     /**
@@ -429,7 +430,7 @@ public class SSHConfig {
     }
 
     /**
-     * @return preffered authentication methods
+     * @return preferred authentication methods
      */
     @NotNull
     public List<String> getPreferredMethods() {
@@ -445,7 +446,7 @@ public class SSHConfig {
     }
 
     /**
-     * @return alghorithms that should be used for the host
+     * @return algorithms that should be used for the host
      */
     @NotNull
     public List<String> getHostKeyAlgorithms() {
@@ -483,7 +484,7 @@ public class SSHConfig {
     }
 
     /**
-     * Set defaults for unspecifed fields
+     * Set defaults for unspecified fields
      */
     @SuppressWarnings({"HardCodedStringLiteral"})
     private void setDefaults() {
@@ -495,7 +496,7 @@ public class SSHConfig {
       }
       if (myPreferredMethods == null) {
         myPreferredMethods = Collections
-          .unmodifiableList(Arrays.asList(SSHMain.PUBLICKEY_METHOD, SSHMain.KEYBOARD_INTERACTIVE_METHOD, SSHMain.PASSWORD_METHOD));
+          .unmodifiableList(Arrays.asList(SSHMain.PUBLIC_KEY_METHOD, SSHMain.KEYBOARD_INTERACTIVE_METHOD, SSHMain.PASSWORD_METHOD));
       }
       if (myBatchMode == null) {
         myBatchMode = Boolean.FALSE;
@@ -518,7 +519,7 @@ public class SSHConfig {
     }
 
     /**
-     * Enusre that the value is not null
+     * Ensure that the value is not null
      *
      * @param value the value to check
      * @param <T>   the parameter type

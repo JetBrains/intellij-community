@@ -33,13 +33,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 /**
- * Checkout provider fo the Git
+ * Checkout provider for the Git
  */
 public class GitCheckoutProvider implements CheckoutProvider {
   /**
    * The version number since which "-v" options is supported.
    */
-  // TODO check if they will actially supprot the switch in the released 1.6.0.5
+  // TODO check if they will actually support the switch in the released 1.6.0.5
   private static final GitVersion VERBOSE_CLONE_SUPPORTED = new GitVersion(1, 6, 0, 5);
 
   /**

@@ -46,25 +46,25 @@ public class GitUtil {
    * A private constructor to suppress instance creation
    */
   private GitUtil() {
-    // do nothink
+    // do nothing
   }
 
   @NotNull
   public static VirtualFile getVcsRoot(@NotNull final Project project, @NotNull final FilePath filePath) {
-    VirtualFile vfile = VcsUtil.getVcsRootFor(project, filePath);
-    if (vfile == null) {
+    VirtualFile file = VcsUtil.getVcsRootFor(project, filePath);
+    if (file == null) {
       throw new IllegalStateException("The file is not under git: " + filePath);
     }
-    return vfile;
+    return file;
   }
 
   @NotNull
   public static VirtualFile getVcsRoot(@NotNull final Project project, final VirtualFile virtualFile) {
-    VirtualFile vfile = VcsUtil.getVcsRootFor(project, virtualFile);
-    if (vfile == null) {
+    VirtualFile root = VcsUtil.getVcsRootFor(project, virtualFile);
+    if (root == null) {
       throw new IllegalStateException("The file is not under git: " + virtualFile.getPath());
     }
-    return vfile;
+    return root;
   }
 
   /**
@@ -110,34 +110,6 @@ public class GitUtil {
   }
 
   /**
-   * @return a temporary directory to use
-   */
-  @NotNull
-  public static VirtualFile getTempDir() throws VcsException {
-    try {
-      @SuppressWarnings({"HardCodedStringLiteral"}) File temp = File.createTempFile("git-temp-file", "txt");
-      try {
-        final File parentFile = temp.getParentFile();
-        if (parentFile == null) {
-          throw new Exception("Missing parent in " + temp);
-        }
-        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(parentFile);
-        if (vFile == null) {
-          throw new Exception("Missing virtual file for dir " + parentFile);
-        }
-        return vFile;
-      }
-      finally {
-        //noinspection ResultOfMethodCallIgnored
-        temp.delete();
-      }
-    }
-    catch (Exception e) {
-      throw new VcsException("Unable to locate temporary directory", e);
-    }
-  }
-
-  /**
    * Sort files by vcs root
    *
    * @param project the project file
@@ -146,7 +118,7 @@ public class GitUtil {
    */
   public static Map<VirtualFile, List<FilePath>> sortFilePathsByVcsRoot(Project project, final Collection<FilePath> files) {
     Map<VirtualFile, List<FilePath>> rc = new HashMap<VirtualFile, List<FilePath>>();
-    // TODO fix for submodules (several subroots within single vcsroot)
+    // TODO fix for submodules (several sub-roots within single vcs root)
     for (FilePath p : files) {
       VirtualFile root = VcsUtil.getVcsRootFor(project, p);
       if (root == null) {
@@ -168,8 +140,7 @@ public class GitUtil {
    *
    * @param path a path to unescape
    * @return unescaped path
-   * @throws com.intellij.openapi.vcs.VcsException
-   *          if the path in invalid
+   * @throws VcsException if the path in invalid
    */
   public static String unescapePath(String path) throws VcsException {
     final int l = path.length();
@@ -195,7 +166,7 @@ public class GitUtil {
             break;
           default:
             if (isOctal(e)) {
-              // collect sequence of charcters as a byte array.
+              // collect sequence of characters as a byte array.
               // count bytes first
               int n = 0;
               for (int j = i; j < l;) {
@@ -233,7 +204,7 @@ public class GitUtil {
               }
               assert n == b.length;
               // add them to string
-              final String encoding = GitConfigUtil.getFilenameEncoding();
+              final String encoding = GitConfigUtil.getFileNameEncoding();
               try {
                 rc.append(new String(b, encoding));
               }
@@ -264,10 +235,10 @@ public class GitUtil {
   }
 
   /**
-   * Parse unix timestamp as it is returned by the git
+   * Parse UNIX timestamp as it is returned by the git
    *
    * @param value a value to parse
-   * @return timestamp as {@link java.util.Date} object
+   * @return timestamp as {@link Date} object
    */
   public static Date parseTimestamp(String value) {
     return new Date(Long.parseLong(value.trim()) * 1000);
@@ -349,8 +320,9 @@ public class GitUtil {
   }
 
   /**
-   * Return a git root for the file path (the parent directory with ".git" subdirectory)
+   * Return a git root for the file (the parent directory with ".git" subdirectory)
    *
+   * @param file the file to check
    * @return git root for the file
    * @throws IllegalArgumentException if the file is not under git
    */
@@ -365,10 +337,10 @@ public class GitUtil {
   }
 
   /**
-   * Return a git root for the file path (the parent directory with ".git" subdirectory)
+   * Return a git root for the file (the parent directory with ".git" subdirectory)
    *
-   * @return git root for the file
-   * @throws IllegalArgumentException if the file is not under git
+   * @param file the file to check
+   * @return git root for the file or null if the file is not not under Git
    */
   @Nullable
   public static VirtualFile gitRootOrNull(final VirtualFile file) {
@@ -478,11 +450,11 @@ public class GitUtil {
   }
 
   /**
-   * Return commiter name based on author name and commiter name
+   * Return committer name based on author name and committer name
    *
    * @param authorName    the name of author
-   * @param committerName the name of commiter
-   * @return just a name if they are equal, or name that includes both author and commiter
+   * @param committerName the name of committer
+   * @return just a name if they are equal, or name that includes both author and committer
    */
   public static String adjustAuthorName(final String authorName, String committerName) {
     if (!authorName.equals(committerName)) {
@@ -495,7 +467,7 @@ public class GitUtil {
   /**
    * Check if the file path is under git
    *
-   * @param project the context proejct
+   * @param project the context project
    * @param path    the path
    * @return true if the file path is under git
    */
@@ -522,7 +494,7 @@ public class GitUtil {
   }
 
   /**
-   * Get git time (unix time) basing on the date object
+   * Get git time (UNIX time) basing on the date object
    *
    * @param time the time to convert
    * @return the time in git format

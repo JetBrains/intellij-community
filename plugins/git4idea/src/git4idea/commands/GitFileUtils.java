@@ -29,12 +29,20 @@ import java.util.List;
  */
 public class GitFileUtils {
   /**
+   * The private constructor for static utility class
+   */
+  private GitFileUtils() {
+    // do nothing
+  }
+
+  /**
    * Delete files
    *
    * @param project the project
    * @param root    a vcs root
    * @param files   files to delete
    * @return a result of operation
+   * @throws VcsException in case of git problem
    */
   public static String delete(Project project, VirtualFile root, List<FilePath> files) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.RM);
@@ -50,6 +58,7 @@ public class GitFileUtils {
    * @param root    a vcs root
    * @param files   files to delete
    * @return a result of operation
+   * @throws VcsException in case of git problem
    */
   public static String deleteFiles(Project project, VirtualFile root, List<VirtualFile> files) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.RM);
@@ -65,6 +74,7 @@ public class GitFileUtils {
    * @param root    a vcs root
    * @param files   files to delete
    * @return a result of operation
+   * @throws VcsException in case of git problem
    */
   public static String deleteFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
     return deleteFiles(project, root, Arrays.asList(files));
@@ -77,6 +87,7 @@ public class GitFileUtils {
    * @param root    a vcs root
    * @param files   files to add
    * @return a result of operation
+   * @throws VcsException in case of git problem
    */
   public static String addFiles(Project project, VirtualFile root, Collection<VirtualFile> files) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.ADD);
@@ -92,6 +103,7 @@ public class GitFileUtils {
    * @param root    a vcs root
    * @param files   files to add
    * @return a result of operation
+   * @throws VcsException in case of git problem
    */
   public static String addFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
     return addFiles(project, root, Arrays.asList(files));
@@ -104,6 +116,7 @@ public class GitFileUtils {
    * @param root    a vcs root
    * @param files   files to add
    * @return a result of operation
+   * @throws VcsException in case of git problem
    */
   public static String addPaths(Project project, VirtualFile root, Collection<FilePath> files) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.ADD);

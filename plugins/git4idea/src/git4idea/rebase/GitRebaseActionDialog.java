@@ -40,9 +40,10 @@ public class GitRebaseActionDialog extends DialogWrapper {
   /**
    * A constructor
    *
-   * @param project     a project to select
-   * @param roots       a git repository roots for the project
-   * @param defaultRoot a guessed default root
+   * @param project     the project to select
+   * @param title       the dialog title
+   * @param roots       the git repository roots for the project
+   * @param defaultRoot the guessed default root
    */
   public GitRebaseActionDialog(Project project, String title, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);

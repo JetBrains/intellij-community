@@ -31,7 +31,7 @@ import java.util.concurrent.Semaphore;
 
 /**
  * The main class for SSH client. It can only handle the following command line (which is use by GIT):
- * git-ssh xmlRcpPort [-p port] host command. The program is wrapped in the script, so XML RCP port
+ * git-ssh xmlRpcPort [-p port] host command. The program is wrapped in the script, so XML RPC port
  * not settable using script interface.
  * <p/>
  * The code here is based on SwingShell example.
@@ -51,7 +51,7 @@ public class SSHMain {
    */
   private final int myHandlerNo;
   /**
-   * the xml RCP port
+   * the xml RPC port
    */
   private final GitSSHIdeaClient myXmlRpcClient;
   /**
@@ -92,11 +92,11 @@ public class SSHMain {
    */
   private static final int BUFFER_SIZE = 16 * 1024;
   /**
-   * public key authenticatio method
+   * public key authentication method
    */
-  @NonNls public static final String PUBLICKEY_METHOD = "publickey";
+  @NonNls public static final String PUBLIC_KEY_METHOD = "publickey";
   /**
-   * keboard interactve method
+   * keyboard interactive method
    */
   @NonNls public static final String KEYBOARD_INTERACTIVE_METHOD = "keyboard-interactive";
   /**
@@ -116,16 +116,17 @@ public class SSHMain {
   /**
    * A constructor
    *
-   * @param xmlRcpPort a xml RCP port
+   * @param xmlRpcPort a xml RPC port
    * @param host       a host
    * @param username   a name of user (from URL)
    * @param port       a port
    * @param command    a command
+   * @throws IOException if config file could not be loaded
    */
-  private SSHMain(final int xmlRcpPort, String host, String username, Integer port, String command) throws IOException {
+  private SSHMain(final int xmlRpcPort, String host, String username, Integer port, String command) throws IOException {
     SSHConfig config = SSHConfig.load();
     myHost = config.lookup(username, host, port);
-    myXmlRpcClient = new GitSSHIdeaClient(xmlRcpPort, myHost.isBatchMode());
+    myXmlRpcClient = new GitSSHIdeaClient(xmlRpcPort, myHost.isBatchMode());
     myHandlerNo = Integer.parseInt(System.getenv(GitSSHService.SSH_HANDLER_ENV));
     myCommand = command;
   }
@@ -137,7 +138,7 @@ public class SSHMain {
    */
   public static void main(String[] args) {
     try {
-      SSHMain app = parseArgs(args);
+      SSHMain app = parseArguments(args);
       app.start();
       System.exit(app.myExitCode);
     }
@@ -150,7 +151,8 @@ public class SSHMain {
   /**
    * Start the application
    *
-   * @throws java.io.IOException if there is a problem with connection
+   * @throws IOException          if there is a problem with connection
+   * @throws InterruptedException if thread was interrupted
    */
   private void start() throws IOException, InterruptedException {
     Connection c = new Connection(myHost.getHostName(), myHost.getPort());
@@ -198,11 +200,11 @@ public class SSHMain {
       if (c.isAuthenticationComplete()) {
         return;
       }
-      if (PUBLICKEY_METHOD.equals(method)) {
+      if (PUBLIC_KEY_METHOD.equals(method)) {
         if (!myHost.supportsPubkeyAuthentication()) {
           continue;
         }
-        if (!c.isAuthMethodAvailable(myHost.getUser(), PUBLICKEY_METHOD)) {
+        if (!c.isAuthMethodAvailable(myHost.getUser(), PUBLIC_KEY_METHOD)) {
           continue;
         }
         File key = myHost.getIdentityFile();
@@ -230,19 +232,19 @@ public class SSHMain {
         if (!c.isAuthMethodAvailable(myHost.getUser(), KEYBOARD_INTERACTIVE_METHOD)) {
           continue;
         }
-        InteractiveSupport ic = new InteractiveSupport();
+        InteractiveSupport interactiveSupport = new InteractiveSupport();
         for (int i = myHost.getNumberOfPasswordPrompts(); i > 0; i--) {
           if (c.isAuthenticationComplete()) {
             return;
           }
-          if (c.authenticateWithKeyboardInteractive(myHost.getUser(), ic)) {
+          if (c.authenticateWithKeyboardInteractive(myHost.getUser(), interactiveSupport)) {
             myLastError = "";
             return;
           }
           else {
             myLastError = GitBundle.getString("sshmain.keyboard.interactive.failed");
           }
-          if (ic.myPromptCount == 0 || ic.myCancelled) {
+          if (interactiveSupport.myPromptCount == 0 || interactiveSupport.myCancelled) {
             // the interactive callback has never been asked or it was cancelled, exit the loop
             myLastError = "";
             break;
@@ -295,7 +297,7 @@ public class SSHMain {
     try {
       final File file = new File(keyPath);
       if (file.exists()) {
-        // if encrypted ask user for keyphrase
+        // if encrypted ask user for passphrase
         String passphrase = null;
         char[] text = FileUtil.loadFileText(file);
         if (isEncryptedKey(text)) {
@@ -313,7 +315,7 @@ public class SSHMain {
                 myLastError = "";
               }
               catch (IOException e) {
-                // decofing failed
+                // decoding failed
                 myLastError = GitBundle.message("sshmain.invalidpassphrase", keyPath);
                 continue;
               }
@@ -348,7 +350,7 @@ public class SSHMain {
   }
 
   /**
-   * Check if the key is encrypted. The key is considered ecrypted
+   * Check if the key is encrypted. The key is considered encrypted
    *
    * @param text the text of the key
    * @return true if the key is encrypted
@@ -376,7 +378,7 @@ public class SSHMain {
   }
 
   /**
-   * Forward stream in separaete thread.
+   * Forward stream in separate thread.
    *
    * @param name             the name of the stream
    * @param out              the output stream
@@ -445,14 +447,15 @@ public class SSHMain {
    *
    * @param args command line arguments
    * @return application instance
+   * @throws IOException if loading configuration file failed
    */
-  private static SSHMain parseArgs(String[] args) throws IOException {
+  private static SSHMain parseArguments(String[] args) throws IOException {
     if (args.length != 3 && args.length != 5) {
       System.err.println(GitBundle.message("sshmain.invalid.amount.of.arguments", Arrays.asList(args)));
       System.exit(1);
     }
     int i = 0;
-    int xmlRcpPort = Integer.parseInt(args[i++]);
+    int xmlRpcPort = Integer.parseInt(args[i++]);
     Integer port = null;
     //noinspection HardCodedStringLiteral
     if ("-p".equals(args[i])) {
@@ -470,12 +473,12 @@ public class SSHMain {
       host = host.substring(atIndex + 1);
     }
     String command = args[i];
-    return new SSHMain(xmlRcpPort, host, user, port, command);
+    return new SSHMain(xmlRpcPort, host, user, port, command);
   }
 
 
   /**
-   * Interactive callback support. The callback invokes Idea XML RCP server.
+   * Interactive callback support. The callback invokes Idea XML RPC server.
    */
   class InteractiveSupport implements InteractiveCallback {
     /**
@@ -522,7 +525,7 @@ public class SSHMain {
   }
 
   /**
-   * Server host key verifier that invokes Idea XML RCP server.
+   * Server host key verifier that invokes Idea XML RPC server.
    */
   private class HostKeyVerifier implements ServerHostKeyVerifier {
     /**
@@ -548,7 +551,7 @@ public class SSHMain {
         boolean keyCheck = myXmlRpcClient.verifyServerHostKey(myHandlerNo, hostname, port, serverHostKeyAlgorithm, fingerprint, isNew);
         if (keyCheck) {
           String hashedHostname = KnownHosts.createHashedHostname(hostname);
-          // Add the hostkey to the in-memory database
+          // Add the host key to the in-memory database
           database.addHostkey(new String[]{hashedHostname}, serverHostKeyAlgorithm, serverHostKey);
           // Also try to add the key to a known_host file
           try {

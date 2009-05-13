@@ -45,7 +45,7 @@ public final class GitVersion implements Comparable<GitVersion> {
   public static final GitVersion MIN = new GitVersion(1, 5, 6, 3);
 
   /**
-   * Major version nubmer
+   * Major version number
    */
   private final int myMajor;
   /**
@@ -160,7 +160,7 @@ public final class GitVersion implements Comparable<GitVersion> {
   /**
    * Compare version number
    *
-   * @param gitVersion a git revsion to compare wiht
+   * @param gitVersion a git revision to compare with
    * @return the comparison result
    */
   public boolean isLessOrEqual(final GitVersion gitVersion) {

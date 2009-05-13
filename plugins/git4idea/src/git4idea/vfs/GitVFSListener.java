@@ -45,7 +45,7 @@ public class GitVFSListener extends VcsVFSListener {
    * A constructor for listener
    *
    * @param project a project
-   * @param vcs     a vcs for that proejct
+   * @param vcs     a vcs for that project
    */
   public GitVFSListener(final Project project, final GitVcs vcs) {
     super(project, vcs);

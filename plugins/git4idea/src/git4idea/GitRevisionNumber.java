@@ -41,29 +41,29 @@ public class GitRevisionNumber implements VcsRevisionNumber {
   /**
    * the hash from 40 zeros representing not yet created commit
    */
-  public static final String NOT_COMMITED_HASH;
+  public static final String NOT_COMMITTED_HASH;
 
   static {
     char[] data = new char[40];
     Arrays.fill(data, '0');
-    NOT_COMMITED_HASH = new String(data);
+    NOT_COMMITTED_HASH = new String(data);
   }
 
   /**
    * the revision number (40 character hashcode, tag, or reference). In some cases incomplete hashcode could be used.
    */
-  @NotNull private final String myRevisionStr;
+  @NotNull private final String myRevisionHash;
   /**
    * the date when revision created
    */
   @NotNull private final Date myTimestamp;
 
   /**
-   * A constrctuctor for TIP revision
+   * A constructor for TIP revision
    */
   public GitRevisionNumber() {
     // TODO review usages
-    myRevisionStr = TIP;
+    myRevisionHash = TIP;
     myTimestamp = new Date();
   }
 
@@ -74,19 +74,19 @@ public class GitRevisionNumber implements VcsRevisionNumber {
    */
   public GitRevisionNumber(@NonNls @NotNull String version) {
     // TODO review usages
-    myRevisionStr = version;
+    myRevisionHash = version;
     myTimestamp = new Date();
   }
 
   /**
-   * A consctructor from version and time
+   * A constructor from version and time
    *
    * @param version   the version number
    * @param timeStamp the time when the version has been created
    */
   public GitRevisionNumber(@NotNull String version, @NotNull Date timeStamp) {
     myTimestamp = timeStamp;
-    myRevisionStr = version;
+    myRevisionHash = version;
   }
 
   /**
@@ -96,7 +96,7 @@ public class GitRevisionNumber implements VcsRevisionNumber {
    */
   @NotNull
   public String asString() {
-    return myRevisionStr;
+    return myRevisionHash;
   }
 
   /**
@@ -112,21 +112,21 @@ public class GitRevisionNumber implements VcsRevisionNumber {
    */
   @NotNull
   public String getRev() {
-    return myRevisionStr;
+    return myRevisionHash;
   }
 
   /**
-   * @return the short revision number. The revision number likely unambiguously indentify local revision, however in rare cases there could be conflicts.
+   * @return the short revision number. The revision number likely unambiguously identify local revision, however in rare cases there could be conflicts.
    */
   @NotNull
   public String getShortRev() {
-    if (myRevisionStr.length() == 0) return "";
-    if (myRevisionStr.length() == 40) return myRevisionStr.substring(0, 8);
-    if (myRevisionStr.length() > 40)  // revision string encoded with date too
+    if (myRevisionHash.length() == 0) return "";
+    if (myRevisionHash.length() == 40) return myRevisionHash.substring(0, 8);
+    if (myRevisionHash.length() > 40)  // revision string encoded with date too
     {
-      return myRevisionStr.substring(myRevisionStr.indexOf("[") + 1, 8);
+      return myRevisionHash.substring(myRevisionHash.indexOf("[") + 1, 8);
     }
-    return myRevisionStr;
+    return myRevisionHash;
   }
 
   /**
@@ -136,44 +136,44 @@ public class GitRevisionNumber implements VcsRevisionNumber {
     if (this == crev) return 0;
 
     if (crev instanceof GitRevisionNumber) {
-      GitRevisionNumber crevg = (GitRevisionNumber)crev;
-      if ((crevg.myRevisionStr != null) && myRevisionStr.equals(crevg.myRevisionStr)) {
+      GitRevisionNumber other = (GitRevisionNumber)crev;
+      if ((other.myRevisionHash != null) && myRevisionHash.equals(other.myRevisionHash)) {
         return 0;
       }
 
-      if ((crevg.myRevisionStr.indexOf("[") > 0) && (crevg.myTimestamp != null)) {
-        return myTimestamp.compareTo(crevg.myTimestamp);
+      if ((other.myRevisionHash.indexOf("[") > 0) && (other.myTimestamp != null)) {
+        return myTimestamp.compareTo(other.myTimestamp);
       }
 
       // check for parent revs
-      String crevName = null;
-      String revName = null;
-      int crevNum = -1;
-      int revNum = -1;
+      String otherName = null;
+      String thisName = null;
+      int otherParents = -1;
+      int thisParent = -1;
 
-      if (crevg.myRevisionStr.contains("~")) {
-        int tildeIdx = crevg.myRevisionStr.indexOf('~');
-        crevName = crevg.myRevisionStr.substring(0, tildeIdx);
-        crevNum = Integer.parseInt(crevg.myRevisionStr.substring(tildeIdx));
+      if (other.myRevisionHash.contains("~")) {
+        int tildeIndex = other.myRevisionHash.indexOf('~');
+        otherName = other.myRevisionHash.substring(0, tildeIndex);
+        otherParents = Integer.parseInt(other.myRevisionHash.substring(tildeIndex));
       }
 
-      if (myRevisionStr.contains("~")) {
-        int tildeIdx = myRevisionStr.indexOf('~');
-        revName = myRevisionStr.substring(0, tildeIdx);
-        revNum = Integer.parseInt(myRevisionStr.substring(tildeIdx));
+      if (myRevisionHash.contains("~")) {
+        int tildeIndex = myRevisionHash.indexOf('~');
+        thisName = myRevisionHash.substring(0, tildeIndex);
+        thisParent = Integer.parseInt(myRevisionHash.substring(tildeIndex));
       }
 
-      if (crevName == null && revName == null) {
-        return myTimestamp.compareTo(crevg.myTimestamp);
+      if (otherName == null && thisName == null) {
+        return myTimestamp.compareTo(other.myTimestamp);
       }
-      else if (crevName == null) {
+      else if (otherName == null) {
         return 1;  // I am an ancestor of the compared revision
       }
-      else if (revName == null) {
+      else if (thisName == null) {
         return -1; // the compared revision is my ancestor
       }
       else {
-        return revNum - crevNum;  // higher relative rev numbers are older ancestors
+        return thisParent - otherParents;  // higher relative rev numbers are older ancestors
       }
     }
 
@@ -186,13 +186,13 @@ public class GitRevisionNumber implements VcsRevisionNumber {
     if ((obj == null) || (obj.getClass() != getClass())) return false;
 
     GitRevisionNumber test = (GitRevisionNumber)obj;
-    // TODO normailize revision string?
-    return myRevisionStr.equals(test.myRevisionStr);
+    // TODO normalize revision string?
+    return myRevisionHash.equals(test.myRevisionHash);
   }
 
   @Override
   public int hashCode() {
-    return myRevisionStr.hashCode();
+    return myRevisionHash.hashCode();
   }
 
   /**
@@ -201,16 +201,16 @@ public class GitRevisionNumber implements VcsRevisionNumber {
    *         the first revision of several will referred.
    */
   public String getParentRevisionStr() {
-    String rev = myRevisionStr;
+    String rev = myRevisionHash;
     int bracketIdx = rev.indexOf("[");
     if (bracketIdx > 0) {
-      rev = myRevisionStr.substring(bracketIdx + 1, myRevisionStr.indexOf("]"));
+      rev = myRevisionHash.substring(bracketIdx + 1, myRevisionHash.indexOf("]"));
     }
 
-    int tildeIdx = rev.indexOf("~");
-    if (tildeIdx > 0) {
-      int n = Integer.parseInt(rev.substring(tildeIdx)) + 1;
-      return rev.substring(0, tildeIdx) + "~" + n;
+    int tildeIndex = rev.indexOf("~");
+    if (tildeIndex > 0) {
+      int n = Integer.parseInt(rev.substring(tildeIndex)) + 1;
+      return rev.substring(0, tildeIndex) + "~" + n;
     }
     return rev + "~1";
   }
@@ -232,6 +232,7 @@ public class GitRevisionNumber implements VcsRevisionNumber {
    * @param vcsRoot a vcs root
    * @param rev     a revision expression
    * @return a resolved revision number with correct time
+   * @throws VcsException if there is a problem with running git
    */
   public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, @NonNls String rev) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, vcsRoot, GitHandler.REV_LIST);
@@ -239,8 +240,8 @@ public class GitRevisionNumber implements VcsRevisionNumber {
     h.setSilent(true);
     h.addParameters("--timestamp", "--max-count=1", rev);
     h.endOptions();
-    StringTokenizer stk = new StringTokenizer(h.run(), "\n\r \t", false);
-    Date timestamp = GitUtil.parseTimestamp(stk.nextToken());
-    return new GitRevisionNumber(stk.nextToken(), timestamp);
+    StringTokenizer tokenizer = new StringTokenizer(h.run(), "\n\r \t", false);
+    Date timestamp = GitUtil.parseTimestamp(tokenizer.nextToken());
+    return new GitRevisionNumber(tokenizer.nextToken(), timestamp);
   }
 }

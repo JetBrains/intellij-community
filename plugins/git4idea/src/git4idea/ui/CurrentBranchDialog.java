@@ -88,6 +88,7 @@ public class CurrentBranchDialog extends DialogWrapper {
    * @param project     the context project
    * @param roots       the git roots for the project
    * @param defaultRoot the default root
+   * @throws VcsException if there is a problem with running git
    */
   public CurrentBranchDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) throws VcsException {
     super(project, true);

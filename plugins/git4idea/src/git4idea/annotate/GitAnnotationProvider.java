@@ -54,7 +54,7 @@ public class GitAnnotationProvider implements AnnotationProvider {
    */
   @NonNls private static final String AUTHOR_KEY = "author";
   /**
-   * The commiter time key for annotations
+   * The committer time key for annotations
    */
   @NonNls private static final String COMMITTER_TIME_KEY = "committer-time";
 
@@ -131,6 +131,7 @@ public class GitAnnotationProvider implements AnnotationProvider {
    * @param revisions          the revision list from history
    * @param file               a virtual file for the action
    * @return a file annotation object
+   * @throws VcsException if there is a problem with running git
    */
   private GitFileAnnotation annotate(final FilePath repositoryFilePath,
                                      final VcsFileRevision revision,
@@ -160,7 +161,7 @@ public class GitAnnotationProvider implements AnnotationProvider {
     for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
       // parse header line
       String commitHash = s.spaceToken();
-      if (commitHash.equals(GitRevisionNumber.NOT_COMMITED_HASH)) {
+      if (commitHash.equals(GitRevisionNumber.NOT_COMMITTED_HASH)) {
         commitHash = null;
       }
       s.spaceToken(); // skip revision line number

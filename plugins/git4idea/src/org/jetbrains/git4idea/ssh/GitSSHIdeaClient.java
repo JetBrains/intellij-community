@@ -37,7 +37,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
    */
   @NonNls private static final String HANDLER_NAME = "Git4ideaSSHHandler";
   /**
-   * XML RCP client
+   * XML RPC client
    */
   @Nullable private final XmlRpcClientLite myClient;
 
@@ -45,7 +45,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
    * A constructor
    *
    * @param port      port number
-   * @param batchMode
+   * @param batchMode if true, the client is run in the batch mode, so nothing should be prompted
    * @throws IOException if there is IO problem
    */
   GitSSHIdeaClient(final int port, final boolean batchMode) throws IOException {
@@ -66,15 +66,15 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     if (myClient == null) {
       return false;
     }
-    Vector params = new Vector();
-    params.add(handler);
-    params.add(hostname);
-    params.add(port);
-    params.add(serverHostKeyAlgorithm);
-    params.add(serverHostKey);
-    params.add(isNew);
+    Vector parameters = new Vector();
+    parameters.add(handler);
+    parameters.add(hostname);
+    parameters.add(port);
+    parameters.add(serverHostKeyAlgorithm);
+    parameters.add(serverHostKey);
+    parameters.add(isNew);
     try {
-      return ((Boolean)myClient.execute(methodName("verifyServerHostKey"), params)).booleanValue();
+      return ((Boolean)myClient.execute(methodName("verifyServerHostKey"), parameters)).booleanValue();
     }
     catch (XmlRpcException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
@@ -103,13 +103,13 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     if (myClient == null) {
       return null;
     }
-    Vector params = new Vector();
-    params.add(handler);
-    params.add(username);
-    params.add(keyPath);
-    params.add(lastError);
+    Vector parameters = new Vector();
+    parameters.add(handler);
+    parameters.add(username);
+    parameters.add(keyPath);
+    parameters.add(lastError);
     try {
-      return adjustNull(((String)myClient.execute(methodName("askPassphrase"), params)));
+      return adjustNull(((String)myClient.execute(methodName("askPassphrase"), parameters)));
     }
     catch (XmlRpcException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
@@ -135,17 +135,17 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     if (myClient == null) {
       return null;
     }
-    Vector params = new Vector();
-    params.add(handlerNo);
-    params.add(username);
-    params.add(name);
-    params.add(instruction);
-    params.add(numPrompts);
-    params.add(prompt);
-    params.add(echo);
-    params.add(lastError);
+    Vector parameters = new Vector();
+    parameters.add(handlerNo);
+    parameters.add(username);
+    parameters.add(name);
+    parameters.add(instruction);
+    parameters.add(numPrompts);
+    parameters.add(prompt);
+    parameters.add(echo);
+    parameters.add(lastError);
     try {
-      return adjustNull((Vector<String>)myClient.execute(methodName("replyToChallenge"), params));
+      return adjustNull((Vector<String>)myClient.execute(methodName("replyToChallenge"), parameters));
     }
     catch (XmlRpcException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
@@ -164,12 +164,12 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     if (myClient == null) {
       return null;
     }
-    Vector params = new Vector();
-    params.add(handlerNo);
-    params.add(username);
-    params.add(lastError);
+    Vector parameters = new Vector();
+    parameters.add(handlerNo);
+    parameters.add(username);
+    parameters.add(lastError);
     try {
-      return adjustNull(((String)myClient.execute(methodName("askPassword"), params)));
+      return adjustNull(((String)myClient.execute(methodName("askPassword"), parameters)));
     }
     catch (XmlRpcException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
@@ -180,11 +180,11 @@ public class GitSSHIdeaClient implements GitSSHHandler {
   }
 
   /**
-   * Since XMLRCP client does not understand null values, the value should be
+   * Since XML RPC client does not understand null values, the value should be
    * adjusted. This is done by replacing string {@code "\u0000"} with null.
    *
    * @param s a value to adjust
-   * @return ajusted value.
+   * @return adjusted value.
    */
   @Nullable
   private static String adjustNull(final String s) {
@@ -192,11 +192,11 @@ public class GitSSHIdeaClient implements GitSSHHandler {
   }
 
   /**
-   * Since XMLRCP client does not understand null values, the value should be
+   * Since XML RPC client does not understand null values, the value should be
    * adjusted. This is done by replacing empty array with null.
    *
    * @param s a value to adjust
-   * @return ajusted value.
+   * @return adjusted value.
    */
   @Nullable
   private static <T> Vector<T> adjustNull(final Vector<T> s) {

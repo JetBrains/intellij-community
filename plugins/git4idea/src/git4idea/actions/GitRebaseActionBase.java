@@ -8,10 +8,10 @@ import git4idea.commands.GitHandler;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.rebase.GitRabaseLineListener;
 import git4idea.rebase.GitRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorMain;
 import git4idea.rebase.GitRebaseEditorService;
+import git4idea.rebase.GitRebaseLineListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,27 +31,27 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
                          final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
     GitLineHandler h = createHandler(project, gitRoots, defaultRoot);
-    if(h == null) {
+    if (h == null) {
       return;
     }
     final VirtualFile root = h.workingDirectoryFile();
     GitRebaseEditorService service = GitRebaseEditorService.getInstance();
     GitRebaseEditorHandler editor = service.getHandler(project, root);
-    GitRabaseLineListener resultListener = new GitRabaseLineListener();
+    GitRebaseLineListener resultListener = new GitRebaseLineListener();
     h.addLineListener(resultListener);
     configureEditor(editor);
     affectedRoots.add(root);
     try {
-      h.setenv(GitHandler.GIT_EDITOR_ENV, service.getEditorCommand());
-      h.setenv(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, Integer.toString(editor.getHandlerNo()));
+      h.setEnvironment(GitHandler.GIT_EDITOR_ENV, service.getEditorCommand());
+      h.setEnvironment(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, Integer.toString(editor.getHandlerNo()));
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("rebasing.title"), h.printableCommandLine());
     }
     finally {
       editor.close();
-      final GitRabaseLineListener.Result result = resultListener.getResult();
+      final GitRebaseLineListener.Result result = resultListener.getResult();
       String messageId;
       boolean isError = true;
-      switch(result.status) {
+      switch (result.status) {
         case CONFLICT:
           messageId = "rebase.result.conflict";
           break;
@@ -72,12 +72,13 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
         default:
           messageId = null;
       }
-      if(messageId != null) {
+      if (messageId != null) {
         String message = GitBundle.message(messageId, result.current, result.total);
-        String title = GitBundle.message(messageId+".title");
-        if(isError) {
+        String title = GitBundle.message(messageId + ".title");
+        if (isError) {
           Messages.showErrorDialog(project, message, title);
-        } else {
+        }
+        else {
           Messages.showInfoMessage(project, message, title);
         }
       }
@@ -85,9 +86,9 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
   }
 
   /**
-   * This method could be overrriden to supply addtional information to the editor.
+   * This method could be overridden to supply additional information to the editor.
    *
-   * @param editor
+   * @param editor the editor to configure
    */
   protected void configureEditor(GitRebaseEditorHandler editor) {
   }

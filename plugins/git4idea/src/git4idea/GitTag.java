@@ -58,8 +58,7 @@ public class GitTag extends GitReference {
    * @param project the context
    * @param root    the git root
    * @param tags    the tag list
-   * @throws com.intellij.openapi.vcs.VcsException
-   *          if there is a problem with running git
+   * @throws VcsException if there is a problem with running git
    */
   public static void listAsStrings(final Project project, final VirtualFile root, final Collection<String> tags) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.TAG);
@@ -80,8 +79,7 @@ public class GitTag extends GitReference {
    * @param project the context
    * @param root    the git root
    * @param tags    the tag list
-   * @throws com.intellij.openapi.vcs.VcsException
-   *          if there is a problem with running git
+   * @throws VcsException if there is a problem with running git
    */
   public static void list(final Project project, final VirtualFile root, final Collection<? super GitTag> tags) throws VcsException {
     ArrayList<String> temp = new ArrayList<String>();

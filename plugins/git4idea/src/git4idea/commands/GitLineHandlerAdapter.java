@@ -24,14 +24,14 @@ public class GitLineHandlerAdapter implements GitLineHandlerListener {
   /**
    * {@inheritDoc}
    */
-  public void onLineAvaiable(final String line, final Key outputType) {
+  public void onLineAvailable(final String line, final Key outputType) {
     // do nothing
   }
 
   /**
    * {@inheritDoc}
    */
-  public void processTerminted(final int exitCode) {
+  public void processTerminated(final int exitCode) {
     // do nothing
   }
 

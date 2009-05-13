@@ -63,22 +63,22 @@ public abstract class GitHandler {
   /**
    * wrapped process handler
    */
-  // note that access is safe beacause it accessed in unsychronized block only after process is started, and it does not change after that
+  // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
   /**
    * process
    */
   private Process myProcess;
   /**
-   * If true, the standard output is not copied to viresion control console
+   * If true, the standard output is not copied to version control console
    */
   private boolean myStdoutSuppressed;
   /**
-   * If true, the standard error is not copied to viresion control console
+   * If true, the standard error is not copied to version control console
    */
   private boolean myStderrSuppressed;
   /**
-   * the contenxt project (might be a default project)
+   * the context project (might be a default project)
    */
   private final Project myProject;
   /**
@@ -96,10 +96,10 @@ public abstract class GitHandler {
   /**
    * if true process might be cancelled
    */
-  // note that access is safe beacause it accessed in unsychronized block only after process is started, and it does not change after that
+  // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private boolean myIsCancellable = true;
   /**
-   * exit code or null if exit code is not yet availale
+   * exit code or null if exit code is not yet available
    */
   private Integer myExitCode;
   /**
@@ -219,7 +219,7 @@ public abstract class GitHandler {
    */
   @NonNls public static final String RESET = "reset";
   /**
-   * Name of environement variable that specifies editor for the git
+   * Name of environment variable that specifies editor for the git
    */
   @NonNls public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
   /**
@@ -290,7 +290,7 @@ public abstract class GitHandler {
   /**
    * add error to the error list
    *
-   * @param ex VcsExetpion
+   * @param ex an error to add to the list
    */
   public void addError(VcsException ex) {
     myErrors.add(ex);
@@ -348,7 +348,7 @@ public abstract class GitHandler {
   }
 
   /**
-   * Add listner to handler
+   * Add listener to handler
    *
    * @param listener a listener
    */
@@ -375,7 +375,7 @@ public abstract class GitHandler {
   }
 
   /**
-   * Add filepath parameters. The parameters are made relative to the working directory
+   * Add file path parameters. The parameters are made relative to the working directory
    *
    * @param parameters a parameters to add
    * @throws IllegalArgumentException if some path is not under root.
@@ -385,7 +385,7 @@ public abstract class GitHandler {
   }
 
   /**
-   * Add filepath parameters. The parameters are made relative to the working directory
+   * Add file path parameters. The parameters are made relative to the working directory
    *
    * @param filePaths a parameters to add
    * @throws IllegalArgumentException if some path is not under root.
@@ -443,7 +443,7 @@ public abstract class GitHandler {
 
 
   /**
-   * Set new value of cacellable flag (by default true)
+   * Set new value of cancellable flag (by default true)
    *
    * @param value a new value of the flag
    */
@@ -498,7 +498,7 @@ public abstract class GitHandler {
           setExitCode(exitCode);
           cleanupEnv();
           GitHandler.this.processTerminated(exitCode);
-          myListeners.getMulticaster().processTerminted(exitCode);
+          myListeners.getMulticaster().processTerminated(exitCode);
         }
 
         public void processWillTerminate(final ProcessEvent event, final boolean willBeDestroyed) {
@@ -581,7 +581,7 @@ public abstract class GitHandler {
     if (!myNoSSHFlag && !myEnvironmentCleanedUp) {
       GitSSHService ssh = GitSSHService.getInstance();
       myEnvironmentCleanedUp = true;
-      ssh.unregisterHander(myHandlerNo);
+      ssh.unregisterHandler(myHandlerNo);
     }
   }
 
@@ -594,7 +594,7 @@ public abstract class GitHandler {
   }
 
   /**
-   * Set silent mode. When handler is silient, it does not logs command in version control console.
+   * Set silent mode. When handler is silent, it does not logs command in version control console.
    * Note that this option also suppresses stderr and stdout copying.
    *
    * @param silent a new value of the flag
@@ -610,7 +610,7 @@ public abstract class GitHandler {
   }
 
   /**
-   * @return a charcter set to use for IO
+   * @return a character set to use for IO
    */
   public Charset getCharset() {
     return myCharset;
@@ -627,14 +627,14 @@ public abstract class GitHandler {
   }
 
   /**
-   * @return true if stadnard output is not copied to the console
+   * @return true if standard output is not copied to the console
    */
   public boolean isStdoutSuppressed() {
     return myStdoutSuppressed;
   }
 
   /**
-   * Set flag specifing if stdout shoud be copied to the console
+   * Set flag specifying if stdout should be copied to the console
    *
    * @param stdoutSuppressed true if output is not copied to the console
    */
@@ -644,14 +644,14 @@ public abstract class GitHandler {
   }
 
   /**
-   * @return true if stadnard output is not copied to the console
+   * @return true if standard output is not copied to the console
    */
   public boolean isStderrSuppressed() {
     return myStderrSuppressed;
   }
 
   /**
-   * Set flag specifing if stderr shoud be copied to the console
+   * Set flag specifying if stderr should be copied to the console
    *
    * @param stderrSuppressed true if error output is not copied to the console
    */
@@ -661,12 +661,12 @@ public abstract class GitHandler {
   }
 
   /**
-   * Set environement variable
+   * Set environment variable
    *
    * @param name  the variable name
-   * @param value the varianble value
+   * @param value the variable value
    */
-  public void setenv(String name, String value) {
+  public void setEnvironment(String name, String value) {
     myEnv.put(name, value);
   }
 }

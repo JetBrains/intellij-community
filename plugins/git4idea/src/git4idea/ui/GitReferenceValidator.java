@@ -36,7 +36,7 @@ public class GitReferenceValidator {
    */
   private boolean myLastResult;
   /**
-   * The text that was used for last valiation
+   * The text that was used for last validation
    */
   private String myLastResultText = null;
   /**
@@ -44,7 +44,7 @@ public class GitReferenceValidator {
    */
   private final Project myProject;
   /**
-   * The git root dropdown
+   * The git root combobox
    */
   private final JComboBox myGitRoot;
   /**
@@ -52,7 +52,7 @@ public class GitReferenceValidator {
    */
   private final JTextField myTextField;
   /**
-   * The button that initate validation action
+   * The button that initiates validation action
    */
   private final JButton myButton;
 
@@ -60,9 +60,10 @@ public class GitReferenceValidator {
    * A constructor from fields
    *
    * @param project       the project to use
+   * @param gitRoot       the git root directory
    * @param textField     the text field that contains object reference
-   * @param button        the button that inititates validation action
-   * @param statusChanged the action that is ivoked when validation status changed
+   * @param button        the button that initiates validation action
+   * @param statusChanged the action that is invoked when validation status changed
    */
   public GitReferenceValidator(final Project project,
                                final JComboBox gitRoot,

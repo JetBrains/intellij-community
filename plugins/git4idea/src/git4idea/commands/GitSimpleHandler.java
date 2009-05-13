@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 /**
- * Simple Git hanlder that accumulates stdout and stderr and has nothing on stdin.
- * The handler executes commands sychronously with cancellable progress indicator.
+ * Simple Git handler that accumulates stdout and stderr and has nothing on stdin.
+ * The handler executes commands synchronously with cancellable progress indicator.
  * <p/>
  * The class also includes a number of static utility methods that represent some
  * simple commands.
@@ -91,7 +91,7 @@ public class GitSimpleHandler extends GitHandler {
   }
 
   /**
-   * For silent handlers, print out everithng
+   * For silent handlers, print out everything
    */
   public void unsilence() {
     myVcs.showCommandLine(printableCommandLine());
@@ -179,11 +179,10 @@ public class GitSimpleHandler extends GitHandler {
   }
 
   /**
-   * Execute withot UI. If UI interactions are required (for example SSH popups or progress dialog), use {@link git4idea.commands.GitHandlerUtil} methods.
+   * Execute without UI. If UI interactions are required (for example SSH popups or progress dialog), use {@link GitHandlerUtil} methods.
    *
    * @return a value if process was successful
-   * @throws com.intellij.openapi.vcs.VcsException
-   *          exception if process failed to start.
+   * @throws VcsException exception if process failed to start.
    */
   public String run() throws VcsException {
     if (!isNoSSH()) {
@@ -192,7 +191,7 @@ public class GitSimpleHandler extends GitHandler {
     final VcsException[] ex = new VcsException[1];
     final String[] result = new String[1];
     addListener(new GitHandlerListener() {
-      public void processTerminted(final int exitCode) {
+      public void processTerminated(final int exitCode) {
         if (exitCode == 0 || isIgnoredErrorCode(exitCode)) {
           result[0] = getStdout();
         }

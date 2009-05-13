@@ -127,7 +127,7 @@ public class GitVcs extends AbstractVcs {
    */
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private GitVersion myVersion;
   /**
-   * Checking the version lock (used to prevent infinite recusion)
+   * Checking the version lock (used to prevent infinite recursion)
    */
   private final Object myCheckingVersion = new Object();
   /**

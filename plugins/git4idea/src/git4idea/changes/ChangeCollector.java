@@ -144,7 +144,7 @@ class ChangeCollector {
       handler.setSilent(true);
       handler.setStdoutSuppressed(true);
       // During init diff does not works because HEAD
-      // will apppear only after the first commit.
+      // will appear only after the first commit.
       // In that case added files are cached in index.
       String output = handler.run();
       if (output.length() > 0) {

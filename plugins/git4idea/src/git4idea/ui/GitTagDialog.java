@@ -90,7 +90,7 @@ public class GitTagDialog extends DialogWrapper {
    */
   @NonNls private static final String MESSAGE_FILE_PREFIX = "git-tag-message-";
   /**
-   * Suffix for messge file name
+   * Suffix for message file name
    */
   @NonNls private static final String MESSAGE_FILE_SUFFIX = ".txt";
   /**
@@ -141,7 +141,7 @@ public class GitTagDialog extends DialogWrapper {
   /**
    * Perform tagging according to selected options
    *
-   * @param exceptions
+   * @param exceptions the list where exceptions are collected
    */
   public void runAction(final List<VcsException> exceptions) {
     final String message = myMessageTextArea.getText();
@@ -270,12 +270,12 @@ public class GitTagDialog extends DialogWrapper {
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
-  
+
   /**
    * {@inheritDoc}
    */
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.TagFiles";
-  }   
+  }
 }

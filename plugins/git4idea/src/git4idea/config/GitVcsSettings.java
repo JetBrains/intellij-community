@@ -54,11 +54,11 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    */
   @NonNls private static final String DEFAULT_WINDOWS_GIT = "git.exe";
   /**
-   * Default unix paths
+   * Default UNIX paths
    */
   @NonNls private static final String[] DEFAULT_UNIX_PATHS = {"/usr/local/bin", "/usr/bin", "/opt/local/bin", "/opt/bin"};
   /**
-   * Unix executable name
+   * UNIX executable name
    */
   @NonNls private static final String DEFAULT_UNIX_GIT = "git";
 
@@ -112,7 +112,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    * Get git setting for the project
    *
    * @param project a context project
-   * @return the git settigns
+   * @return the git settings
    */
   public static GitVcsSettings getInstance(Project project) {
     return ServiceManager.getService(project, GitVcsSettings.class);
@@ -138,21 +138,21 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    */
   private static String defaultGit() {
     String[] paths;
-    String exe;
+    String program;
     if (SystemInfo.isWindows) {
-      exe = DEFAULT_WINDOWS_GIT;
+      program = DEFAULT_WINDOWS_GIT;
       paths = DEFAULT_WINDOWS_PATHS;
     }
     else {
-      exe = DEFAULT_UNIX_GIT;
+      program = DEFAULT_UNIX_GIT;
       paths = DEFAULT_UNIX_PATHS;
     }
     for (String p : paths) {
-      File f = new File(p, exe);
+      File f = new File(p, program);
       if (f.exists()) {
         return f.getAbsolutePath();
       }
     }
-    return exe;     // otherwise, hope it's in $PATH
+    return program;     // otherwise, hope it's in $PATH
   }
 }

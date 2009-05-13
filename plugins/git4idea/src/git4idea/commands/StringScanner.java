@@ -39,7 +39,7 @@ public class StringScanner {
   }
 
   /**
-   * @return true if ther is more data available
+   * @return true if there are more data available
    */
   public boolean hasMoreData() {
     return myPosition < myText.length();

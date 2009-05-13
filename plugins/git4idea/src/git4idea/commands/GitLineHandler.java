@@ -108,7 +108,7 @@ public class GitLineHandler extends GitHandler {
    * Notify listeners for each complete line. Note that in the case of stderr, the last line is saved.
    *
    * @param outputType  output type
-   * @param lines       line interator
+   * @param lines       line iterator
    * @param lineBuilder a line builder
    */
   private void notifyLines(final Key outputType, final Iterator<String> lines, final StringBuilder lineBuilder) {
@@ -152,7 +152,7 @@ public class GitLineHandler extends GitHandler {
         myVcs.showErrorMessages(trimmed);
       }
     }
-    myLineListeners.getMulticaster().onLineAvaiable(trimmed, outputType);
+    myLineListeners.getMulticaster().onLineAvailable(trimmed, outputType);
   }
 
   /**

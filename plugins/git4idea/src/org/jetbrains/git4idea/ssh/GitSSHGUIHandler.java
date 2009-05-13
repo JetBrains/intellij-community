@@ -205,20 +205,20 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
     /**
      * A name of user
      */
-    private final String myUsername;
+    private final String myUserName;
 
     public GitSSHKeyboardInteractiveDialog(String name,
                                            final int numPrompts,
                                            final String instruction,
                                            final Vector<String> prompt,
                                            final Vector<Boolean> echo,
-                                           final String username) {
+                                           final String userName) {
       super(myProject, true);
       myNumPrompts = numPrompts;
       myInstruction = instruction;
       myPrompt = prompt;
       myEcho = echo;
-      myUsername = username;
+      myUserName = userName;
       setTitle(GitBundle.message("ssh.keyboard.interactive.title", name));
       init();
       setResizable(true);
@@ -263,7 +263,7 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
         c.weightx = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.WEST;
-        contents.add(new JLabel(myUsername), c);
+        contents.add(new JLabel(myUserName), c);
         line++;
         for (int i = 0; i < myNumPrompts; i++) {
           c = new GridBagConstraints();

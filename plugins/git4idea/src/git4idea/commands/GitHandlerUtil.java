@@ -40,7 +40,7 @@ public class GitHandlerUtil {
   }
 
   /**
-   * Execute simple process synchrnously with progress
+   * Execute simple process synchronously with progress
    *
    * @param handler        a handler
    * @param operationTitle an operation title shown in progress dialog
@@ -66,7 +66,7 @@ public class GitHandlerUtil {
   }
 
   /**
-   * Execute simple process synchrnously with progress
+   * Execute simple process synchronously with progress
    *
    * @param handler        a handler
    * @param operationTitle an operation title shown in progress dialog
@@ -79,7 +79,7 @@ public class GitHandlerUtil {
 
 
   /**
-   * Execute simple process synchrnously with progress
+   * Execute simple process synchronously with progress
    *
    * @param handler              a handler
    * @param operationTitle       an operation title shown in progress dialog
@@ -106,7 +106,7 @@ public class GitHandlerUtil {
 
 
   /**
-   * Run handler synchronously. The method assumes that all listners are set up.
+   * Run handler synchronously. The method assumes that all listeners are set up.
    *
    * @param handler              a handler to run
    * @param operationTitle       operation title
@@ -145,10 +145,10 @@ public class GitHandlerUtil {
   }
 
   /**
-   * Run synchrnously using progress indicator, but throw an exeption instead of showing error dialog
+   * Run synchronously using progress indicator, but collect exceptions instead of showing error dialog
    *
    * @param handler a handler to use
-   * @throws VcsException if there is problem with running git operation
+   * @return the collection of exception collected during operation
    */
   public static Collection<VcsException> doSynchronouslyWithExceptions(final GitLineHandler handler) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -156,17 +156,17 @@ public class GitHandlerUtil {
   }
 
   /**
-   * Run synchrnously using progress indicator, but throw an exeption instead of showing error dialog
+   * Run synchronously using progress indicator, but collect exception instead of showing error dialog
    *
    * @param handler           a handler to use
    * @param progressIndicator a progress indicator
-   * @throws VcsException if there is problem with running git operation
+   * @return the collection of exception collected during operation
    */
   public static Collection<VcsException> doSynchronouslyWithExceptions(final GitLineHandler handler,
                                                                        final ProgressIndicator progressIndicator) {
     handler.addLineListener(new GitLineHandlerListenerProgress(progressIndicator, handler, "") {
       @Override
-      public void processTerminted(final int exitCode) {
+      public void processTerminated(final int exitCode) {
         if (exitCode != 0 && !handler.isIgnoredErrorCode(exitCode)) {
           ensureError(exitCode);
         }
@@ -174,6 +174,7 @@ public class GitHandlerUtil {
 
       @Override
       public void startFailed(final Throwable exception) {
+        //noinspection ThrowableInstanceNeverThrown
         handler.addError(new VcsException("Git start failed: " + exception.toString(), exception));
       }
     });
@@ -208,7 +209,7 @@ public class GitHandlerUtil {
     /**
      * {@inheritDoc}
      */
-    public void processTerminted(final int exitCode) {
+    public void processTerminated(final int exitCode) {
       if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
         ensureError(exitCode);
         EventQueue.invokeLater(new Runnable() {
@@ -228,9 +229,11 @@ public class GitHandlerUtil {
       if (myHandler.errors().size() == 0) {
         String text = getErrorText();
         if ((text == null || text.length() == 0) && myHandler.errors().size() == 0) {
+          //noinspection ThrowableInstanceNeverThrown
           myHandler.addError(new VcsException(GitBundle.message("git.error.exit", exitCode)));
         }
         else {
+          //noinspection ThrowableInstanceNeverThrown
           myHandler.addError(new VcsException(text));
         }
       }
@@ -285,8 +288,8 @@ public class GitHandlerUtil {
     /**
      * Error indicators for the line
      */
-    @NonNls private static final String[] ERROR_INIDCATORS =
-      {"ERROR:", "error:", "FATAL:", "fatal:", "Cannot apply", "Could not", "Interactive rebase already started"};
+    @NonNls private static final String[] ERROR_INDICATORS =
+      {"ERROR:", "error", "FATAL:", "fatal", "Cannot apply", "Could not", "Interactive rebase already started"};
 
     /**
      * Check if the line is an error line
@@ -295,7 +298,7 @@ public class GitHandlerUtil {
      * @return true if the error line
      */
     protected static boolean isErrorLine(String text) {
-      for (String prefix : ERROR_INIDCATORS) {
+      for (String prefix : ERROR_INDICATORS) {
         if (text.startsWith(prefix)) {
           return true;
         }
@@ -316,7 +319,7 @@ public class GitHandlerUtil {
     /**
      * A constructor
      *
-     * @param manager
+     * @param manager       the project manager
      * @param handler       a handler instance
      * @param operationName an operation name
      */
@@ -329,15 +332,16 @@ public class GitHandlerUtil {
      * {@inheritDoc}
      */
     protected String getErrorText() {
-      // all lines are already calcualated as errors
+      // all lines are already calculated as errors
       return "";
     }
 
     /**
      * {@inheritDoc}
      */
-    public void onLineAvaiable(final String line, final Key outputType) {
+    public void onLineAvailable(final String line, final Key outputType) {
       if (isErrorLine(line.trim())) {
+        //noinspection ThrowableInstanceNeverThrown
         myHandler.addError(new VcsException(line));
       }
       if (myProgressIndicator != null) {

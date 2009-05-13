@@ -36,11 +36,11 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 /**
- * A dialog for merge action. It represents most options avaialbe for git merge.
+ * A dialog for merge action. It represents most options available for git merge.
  */
 public class GitMergeDialog extends DialogWrapper {
   /**
-   * The git root availab for git merge action
+   * The git root available for git merge action
    */
   private JComboBox myGitRoot;
   /**
@@ -48,7 +48,7 @@ public class GitMergeDialog extends DialogWrapper {
    */
   private JCheckBox myNoCommitCheckBox;
   /**
-   * The checkbox that suppresses fast forward resolution even if it is availalbe
+   * The checkbox that suppresses fast forward resolution even if it is available
    */
   private JCheckBox myNoFastForwardCheckBox;
   /**
@@ -56,7 +56,7 @@ public class GitMergeDialog extends DialogWrapper {
    */
   private JCheckBox mySquashCommitCheckBox;
   /**
-   * The label contaning a name of the current branch
+   * The label containing a name of the current branch
    */
   private JLabel myCurrentBranchText;
   /**
@@ -64,7 +64,7 @@ public class GitMergeDialog extends DialogWrapper {
    */
   private JPanel myBranchToMergeContainer;
   /**
-   * Choser of branches to merge
+   * Chooser of branches to merge
    */
   private ElementsChooser<String> myBranchChooser;
   /**
@@ -222,7 +222,7 @@ public class GitMergeDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.MergeBranches";
-  }  
+  }
 
   /**
    * @return selected root

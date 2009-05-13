@@ -60,15 +60,15 @@ public class GitMergeProvider implements MergeProvider2 {
   /**
    * The revision that designates common parent for the files during the merge
    */
-  private static final int ORIGINAL_REVNUM = 1;
+  private static final int ORIGINAL_REVISION_NUM = 1;
   /**
-   * The revision that designages the file on the local branch
+   * The revision that designates the file on the local branch
    */
-  private static final int YOURS_REVNUM = 2;
+  private static final int YOURS_REVISION_NUM = 2;
   /**
-   * The revision that designages the remote file being merged
+   * The revision that designates the remote file being merged
    */
-  private static final int THEIRS_REVNUM = 3;
+  private static final int THEIRS_REVISION_NUM = 3;
 
   /**
    * A merge provider
@@ -91,18 +91,15 @@ public class GitMergeProvider implements MergeProvider2 {
     VcsRunnable runnable = new VcsRunnable() {
       @SuppressWarnings({"ConstantConditions"})
       public void run() throws VcsException {
-        GitFileRevision original =
-          new GitFileRevision(myProject, path, new GitRevisionNumber(":" + ORIGINAL_REVNUM));
-        GitFileRevision current =
-          new GitFileRevision(myProject, path, new GitRevisionNumber(":" + YOURS_REVNUM));
-        GitFileRevision last =
-          new GitFileRevision(myProject, path, new GitRevisionNumber(":" + THEIRS_REVNUM));
+        GitFileRevision original = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + ORIGINAL_REVISION_NUM));
+        GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + YOURS_REVISION_NUM));
+        GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + THEIRS_REVISION_NUM));
         try {
           try {
             mergeData.ORIGINAL = original.getContent();
           }
-          catch(Exception ex) {
-            /// unable to load original revsion, use the current instead
+          catch (Exception ex) {
+            /// unable to load original revision, use the current instead
             /// This could happen in case if rebasing.
             mergeData.ORIGINAL = file.contentsToByteArray();
           }
@@ -233,12 +230,12 @@ public class GitMergeProvider implements MergeProvider2 {
               cs.put(file, c);
             }
             switch (source) {
-              case ORIGINAL_REVNUM:
+              case ORIGINAL_REVISION_NUM:
                 break;
-              case THEIRS_REVNUM:
+              case THEIRS_REVISION_NUM:
                 c.myStatusTheirs = Conflict.Status.MODIFIED;
                 break;
-              case YOURS_REVNUM:
+              case YOURS_REVISION_NUM:
                 c.myStatusYours = Conflict.Status.MODIFIED;
                 break;
               default:
@@ -348,7 +345,7 @@ public class GitMergeProvider implements MergeProvider2 {
       /**
        * The constructor
        *
-       * @param isTheirs
+       * @param isTheirs if true columns represents status in 'theirs' revision, if false in 'ours'
        */
       public StatusColumn(boolean isTheirs) {
         super(isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status"));

@@ -64,16 +64,18 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   /**
    * {@inheritDoc}
    */
-  public void rollbackModifiedWithoutCheckout(@NotNull List<VirtualFile> files, final List<VcsException> exceptions,
-                                                            final RollbackProgressListener listener) {
+  public void rollbackModifiedWithoutCheckout(@NotNull List<VirtualFile> files,
+                                              final List<VcsException> exceptions,
+                                              final RollbackProgressListener listener) {
     throw new UnsupportedOperationException("Explicit file checkout is not supported by GIT.");
   }
 
   /**
    * {@inheritDoc}
    */
-  public void rollbackMissingFileDeletion(@NotNull List<FilePath> files, final List<VcsException> exceptions,
-                                                        final RollbackProgressListener listener) {
+  public void rollbackMissingFileDeletion(@NotNull List<FilePath> files,
+                                          final List<VcsException> exceptions,
+                                          final RollbackProgressListener listener) {
     throw new UnsupportedOperationException("Missing file delete is not reported by GIT.");
   }
 
@@ -87,7 +89,9 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   /**
    * {@inheritDoc}
    */
-  public void rollbackChanges(@NotNull List<Change> changes, final List<VcsException> exceptions, @NotNull final RollbackProgressListener listener) {
+  public void rollbackChanges(@NotNull List<Change> changes,
+                              final List<VcsException> exceptions,
+                              @NotNull final RollbackProgressListener listener) {
     HashMap<VirtualFile, List<FilePath>> toUnindex = new HashMap<VirtualFile, List<FilePath>>();
     HashMap<VirtualFile, List<FilePath>> toRevert = new HashMap<VirtualFile, List<FilePath>>();
     List<FilePath> toDelete = new ArrayList<FilePath>();
@@ -133,11 +137,13 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
         final File ioFile = file.getIOFile();
         if (ioFile.exists()) {
           if (!ioFile.delete()) {
+            //noinspection ThrowableInstanceNeverThrown
             exceptions.add(new VcsException("Unable to delete file: " + file));
           }
         }
       }
       catch (Exception e) {
+        //noinspection ThrowableInstanceNeverThrown
         exceptions.add(new VcsException("Unable to delete file: " + file, e));
       }
     }
@@ -156,6 +162,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   /**
    * Reverts the list of files we are passed.
    *
+   * @param root  the VCS root
    * @param files The array of files to revert.
    * @throws VcsException Id it breaks.
    */
@@ -173,6 +180,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    *
    * @param root  a git root
    * @param files files to remove from index. @throws VcsException if there is a problem with running command
+   * @throws VcsException if there is a problem with running git
    */
   private void unindex(final VirtualFile root, final List<FilePath> files) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitHandler.RM);
@@ -186,10 +194,11 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
 
 
   /**
-   * Register file in the map under uppropriate root
+   * Register file in the map under appropriate root
    *
-   * @param file  a file to register
-   * @param files a map to use
+   * @param project the context project
+   * @param files   a map to use
+   * @param file    a file to register
    */
   private static void registerFile(Project project, Map<VirtualFile, List<FilePath>> files, FilePath file) {
     final VirtualFile root = GitUtil.getGitRoot(project, file);

@@ -23,8 +23,8 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitTag;
@@ -68,7 +68,7 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
    */
   private JPanel myPanel;
   /**
-   * The context proejct
+   * The context project
    */
   private final Project myProject;
   /**
@@ -97,7 +97,7 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
   private static final Logger log = Logger.getInstance(GitRefspecAddRefsDialog.class.getName());
 
   /**
-   * A consturctor
+   * A constructor
    *
    * @param project  the project
    * @param root     the git repository root
@@ -287,7 +287,7 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
    * Get selected elements
    *
    * @param isTag if true tags are returned, heads otherwise
-   * @return a collection of selected reference of the specified typ
+   * @return a collection of selected reference of the specified type
    */
   public SortedSet<String> getSelected(final boolean isTag) {
     TreeSet<String> rc = new TreeSet<String>();

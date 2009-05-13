@@ -34,7 +34,7 @@ import java.util.*;
 
 /**
  * Base class for actions that affect the entire git repository.
- * The action is avialable if there is at least one git root.
+ * The action is available if there is at least one git root.
  */
 public abstract class GitRepositoryAction extends AnAction {
 
@@ -118,11 +118,11 @@ public abstract class GitRepositoryAction extends AnAction {
    * Perform action for some repositories
    *
    * @param project       a context project
-   * @param gitRoots      a git roots that affect the current project (sorted by {@link com.intellij.openapi.vfs.VirtualFile#getPresentableUrl()})
+   * @param gitRoots      a git roots that affect the current project (sorted by {@link VirtualFile#getPresentableUrl()})
    * @param defaultRoot   a guessed default root (based on the currently selected file list)
    * @param affectedRoots a set of roots affected by the action
    * @param exceptions    a list of exceptions from running git
-   * @throws VcsException if there is a probem with running git (this exception is considered to be added to the end of the exception list)
+   * @throws VcsException if there is a problem with running git (this exception is considered to be added to the end of the exception list)
    */
   protected abstract void perform(@NotNull Project project,
                                   @NotNull List<VirtualFile> gitRoots,

@@ -58,7 +58,7 @@ public class GitPushDialog extends DialogWrapper {
    */
   private static final String PUSH_POLICY_DEFAULT = GitBundle.getString("push.policy.default");
   /**
-   * Push policy meanding all references
+   * Push policy meaning all references
    */
   private static final String PUSH_POLICY_ALL = GitBundle.getString("push.policy.all");
   /**
@@ -224,7 +224,7 @@ public class GitPushDialog extends DialogWrapper {
     myPushPolicy.addItem(PUSH_POLICY_ALL);
     myPushPolicy.addItem(PUSH_POLICY_MIRROR);
     myPushPolicy.setSelectedIndex(0);
-    // configure policy listner
+    // configure policy listener
     final ActionListener policyListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         String p = (String)myPushPolicy.getSelectedItem();

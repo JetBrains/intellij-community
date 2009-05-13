@@ -49,9 +49,9 @@ public class GitMergeUtil {
 
 
   /**
-   * Get a list of merge strategies for the specified branch cuont
+   * Get a list of merge strategies for the specified branch count
    *
-   * @param branchCount
+   * @param branchCount a number of branches to merge
    * @return an array of strategy names
    */
   @NonNls
@@ -94,7 +94,7 @@ public class GitMergeUtil {
   }
 
   /**
-   * Setup strategies dropdown. The set of strategies changes according to amount of selected elements in branchChooser.
+   * Setup strategies combobox. The set of strategies changes according to amount of selected elements in branchChooser.
    *
    * @param branchChooser    a branch chooser
    * @param noCommitCheckBox no commit checkbox

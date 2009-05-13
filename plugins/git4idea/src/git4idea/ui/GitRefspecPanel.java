@@ -108,7 +108,7 @@ public class GitRefspecPanel extends JPanel {
    */
   private String myRemote;
   /**
-   * The source of default referneces
+   * The source of default references
    */
   private ReferenceSource myReferenceSource;
   /**
@@ -241,8 +241,8 @@ public class GitRefspecPanel extends JPanel {
   /**
    * Simple tag name
    *
-   * @param tagName
-   * @return the tag name
+   * @param tagName the short name of tag
+   * @return the fully qualified tag reference name
    */
   private static String tagName(final String tagName) {
     return GitTag.REFS_TAGS_PREFIX + tagName;
@@ -351,13 +351,13 @@ public class GitRefspecPanel extends JPanel {
     }
     myRemoteHeads.clear();
     myRemoteTags.clear();
-    setDefaulMapping();
+    setDefaultMapping();
   }
 
   /**
    * Set default mapping
    */
-  private void setDefaulMapping() {
+  private void setDefaultMapping() {
     final GitRemote remote = myRemotes.get(myRemote);
     myReferencesModel.clear();
     if (remote != null && myReferenceSource == ReferenceSource.FETCH) {

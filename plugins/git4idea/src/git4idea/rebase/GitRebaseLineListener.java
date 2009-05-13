@@ -4,13 +4,13 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import git4idea.commands.GitLineHandlerAdapter;
 
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * This litestener gathers information relevant to the progress of the rebase operation
+ * This listener gathers information relevant to the progress of the rebase operation
  */
-public class GitRabaseLineListener extends GitLineHandlerAdapter {
+public class GitRebaseLineListener extends GitLineHandlerAdapter {
   /**
    * Git rebase progress message
    */
@@ -28,7 +28,7 @@ public class GitRabaseLineListener extends GitLineHandlerAdapter {
    * {@inheritDoc}
    */
   @Override
-  public synchronized void onLineAvaiable(String line, Key outputType) {
+  public synchronized void onLineAvailable(String line, Key outputType) {
     if (outputType == ProcessOutputTypes.STDOUT) {
       if (PROGRESS.matcher(line).matches()) {
         myProgressLine = line;
@@ -65,21 +65,23 @@ public class GitRabaseLineListener extends GitLineHandlerAdapter {
    * @return the progress values as a pair
    */
   public synchronized Result getResult() {
-    int total, current;
+    int total;
+    int current;
     if (myProgressLine != null) {
       // the integers already matched the digits pattern, so they should parse
       final Matcher matcher = PROGRESS.matcher(myProgressLine);
-      if(matcher.matches()) {
+      if (matcher.matches()) {
         current = Integer.parseInt(matcher.group(1));
         total = Integer.parseInt(matcher.group(2));
-      } else {
-        throw new IllegalStateException("The wrong current result line: "+myProgressLine);
+      }
+      else {
+        throw new IllegalStateException("The wrong current result line: " + myProgressLine);
       }
     }
     else {
       total = current = 0;
     }
-    return new Result(myStatus == null? Status.ERROR: myStatus, total, current);
+    return new Result(myStatus == null ? Status.ERROR : myStatus, total, current);
   }
 
   /**
@@ -95,7 +97,7 @@ public class GitRabaseLineListener extends GitLineHandlerAdapter {
      */
     public final int total;
     /**
-     * The commin number that is being currently processed
+     * The commit number that is being currently processed
      */
     public final int current;
 
@@ -122,7 +124,7 @@ public class GitRabaseLineListener extends GitLineHandlerAdapter {
      */
     CANCELLED,
     /**
-     * Rebase is finshed
+     * Rebase is finished
      */
     FINISHED,
     /**

@@ -60,7 +60,7 @@ public class GitSSHService implements ApplicationComponent {
    */
   @NonNls private static final String GIT_SSH_PREFIX = "git-ssh-";
   /**
-   * If true, the component has been intialized
+   * If true, the component has been initialized
    */
   private boolean myInitialized = false;
   /**
@@ -68,7 +68,7 @@ public class GitSSHService implements ApplicationComponent {
    */
   private File myScriptPath;
   /**
-   * XML rcp server
+   * XML RPC server
    */
   private final XmlRpcServer myXmlRpcServer;
   /**
@@ -89,7 +89,7 @@ public class GitSSHService implements ApplicationComponent {
   /**
    * A constructor from parameter
    *
-   * @param xmlRpcServer the injected XmlRcp server reference
+   * @param xmlRpcServer the injected XmlRpc server reference
    */
   public GitSSHService(final @NotNull XmlRpcServer xmlRpcServer) {
     myXmlRpcServer = xmlRpcServer;
@@ -158,23 +158,24 @@ public class GitSSHService implements ApplicationComponent {
   }
 
   /**
-   * Register handler. Note that handlers must be unregistered using {@link #unregisterHander(int)}.
+   * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(int)}.
    *
+   * @param handler a handler to register
    * @return an identifier to pass to the environment variable
    */
   public synchronized int registerHandler(@NotNull Handler handler) {
     initComponent();
     while (true) {
-      int rnd = RANDOM.nextInt();
-      if (rnd == Integer.MIN_VALUE) {
+      int candidate = RANDOM.nextInt();
+      if (candidate == Integer.MIN_VALUE) {
         continue;
       }
-      rnd = Math.abs(rnd);
-      if (handlers.containsKey(rnd)) {
+      candidate = Math.abs(candidate);
+      if (handlers.containsKey(candidate)) {
         continue;
       }
-      handlers.put(rnd, handler);
-      return rnd;
+      handlers.put(candidate, handler);
+      return candidate;
     }
   }
 
@@ -198,7 +199,7 @@ public class GitSSHService implements ApplicationComponent {
    *
    * @param key the key to unregister
    */
-  public synchronized void unregisterHander(int key) {
+  public synchronized void unregisterHandler(int key) {
     if (handlers.remove(key) == null) {
       throw new IllegalArgumentException("The handler " + key + " is not registered");
     }
@@ -230,7 +231,7 @@ public class GitSSHService implements ApplicationComponent {
      *
      * @param username  a user name
      * @param keyPath   a key path
-     * @param lastError
+     * @param lastError the last error for the handler
      * @return a passphrase or null if dialog was cancelled.
      */
     String askPassphrase(final String username, final String keyPath, final String lastError);
@@ -238,13 +239,13 @@ public class GitSSHService implements ApplicationComponent {
     /**
      * Reply to challenge in keyboard-interactive scenario
      *
-     * @param username
+     * @param username    a user name
      * @param name        a name of challenge
      * @param instruction a instructions
      * @param numPrompts  number of prompts
      * @param prompt      prompts
-     * @param echo        true if the reply for correponding prompt should be echoed
-     * @param lastError
+     * @param echo        true if the reply for corresponding prompt should be echoed
+     * @param lastError   the last error
      * @return replies to the challenges
      */
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
@@ -260,7 +261,7 @@ public class GitSSHService implements ApplicationComponent {
      * Ask password
      *
      * @param username  a user name
-     * @param lastError
+     * @param lastError the previous error
      * @return a password or null if dialog was cancelled.
      */
     String askPassword(final String username, final String lastError);
@@ -268,7 +269,7 @@ public class GitSSHService implements ApplicationComponent {
   }
 
   /**
-   * Internal handler implemenation class, do not use it.
+   * Internal handler implementation class, do not use it.
    */
   public class InternalRequestHandler implements GitSSHHandler {
     /**
@@ -316,7 +317,7 @@ public class GitSSHService implements ApplicationComponent {
      * Adjust null value (by converting to {@link GitSSHService#XML_RPC_NULL_STRING})
      *
      * @param s a value to adjust
-     * @return a string if non-nul or {@link GitSSHService#XML_RPC_NULL_STRING} if s == null
+     * @return a string if non-null or {@link GitSSHService#XML_RPC_NULL_STRING} if s == null
      */
     private String adjustNull(final String s) {
       return s == null ? XML_RPC_NULL_STRING : s;

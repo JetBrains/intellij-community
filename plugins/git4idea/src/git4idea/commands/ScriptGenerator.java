@@ -60,7 +60,7 @@ public class ScriptGenerator {
    */
   private final ArrayList<String> myPaths = new ArrayList<String>();
   /**
-   * The internal parameteers for the script
+   * The internal parameters for the script
    */
   private final ArrayList<String> myInternalParameters = new ArrayList<String>();
 
@@ -96,7 +96,7 @@ public class ScriptGenerator {
    */
   private void addPath(final String path) {
     if (!myPaths.contains(path)) {
-      // the size of path is expceted to be quite small, so no optimization is done here
+      // the size of path is expected to be quite small, so no optimization is done here
       myPaths.add(path);
     }
   }
@@ -116,11 +116,11 @@ public class ScriptGenerator {
   /**
    * Add internal parameters for the script
    *
-   * @param params internal parameters
+   * @param parameters internal parameters
    * @return this script generator
    */
-  public ScriptGenerator addInternal(String... params) {
-    myInternalParameters.addAll(Arrays.asList(params));
+  public ScriptGenerator addInternal(String... parameters) {
+    myInternalParameters.addAll(Arrays.asList(parameters));
     return this;
   }
 

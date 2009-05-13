@@ -44,7 +44,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Git update environment implementation. The environement does just a simple
+ * Git update environment implementation. The environment does just a simple
  * {@code git pull -v} for each content root.
  */
 public class GitUpdateEnvironment implements UpdateEnvironment {
@@ -90,7 +90,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
         if (value == null || value.length() == 0) {
           continue;
         }
-        // rememeber the current position
+        // remember the current position
         GitRevisionNumber before = GitRevisionNumber.resolve(myProject, root, "HEAD");
         // do pull
         GitLineHandler h = new GitLineHandler(myProject, root, GitHandler.PULL);

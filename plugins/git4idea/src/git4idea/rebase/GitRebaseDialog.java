@@ -90,7 +90,7 @@ public class GitRebaseDialog extends DialogWrapper {
    */
   private JCheckBox myShowRemoteBranchesCheckBox;
   /**
-   * Preserve mereges checkbox
+   * Preserve merges checkbox
    */
   private JCheckBox myPreserveMergesCheckBox;
   /**
@@ -281,7 +281,7 @@ public class GitRebaseDialog extends DialogWrapper {
   }
 
   /**
-   * Update onto and from dropdowns.
+   * Update onto and from comboboxes.
    */
   private void updateOntoFrom() {
     String onto = GitUIUtil.getTextField(myOntoComboBox).getText();

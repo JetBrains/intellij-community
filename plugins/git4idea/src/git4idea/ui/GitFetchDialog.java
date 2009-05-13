@@ -38,7 +38,7 @@ public class GitFetchDialog extends DialogWrapper {
    */
   private JComboBox myGitRoot;
   /**
-   * Refrence specification panel
+   * Reference specification panel
    */
   private GitRefspecPanel myRefspecs;
   /**
@@ -222,7 +222,7 @@ public class GitFetchDialog extends DialogWrapper {
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
-  
+
   /**
    * {@inheritDoc}
    */

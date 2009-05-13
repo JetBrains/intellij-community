@@ -15,22 +15,21 @@
  */
 package git4idea.actions;
 
-import git4idea.i18n.GitBundle;
-import git4idea.rebase.GitRebaseUtils;
-import git4idea.rebase.GitRebaseActionDialog;
-import git4idea.commands.GitSimpleHandler;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitHandlerUtil;
-import org.jetbrains.annotations.NonNls;
+import git4idea.commands.GitSimpleHandler;
+import git4idea.i18n.GitBundle;
+import git4idea.rebase.GitRebaseActionDialog;
+import git4idea.rebase.GitRebaseUtils;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.ui.Messages;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.Iterator;
 
 /**
  * Rebase abort action
@@ -63,7 +62,7 @@ public class GitRebaseAbort extends GitRepositoryAction {
       if (!gitRoots.contains(defaultRoot)) {
         defaultRoot = gitRoots.get(0);
       }
-      GitRebaseActionDialog d = new GitRebaseActionDialog(project, getActionTitle(), gitRoots, defaultRoot);
+      GitRebaseActionDialog d = new GitRebaseActionDialog(project, getActionName(), gitRoots, defaultRoot);
       root = d.selectRoot();
       if (root == null) {
         return;
@@ -71,8 +70,8 @@ public class GitRebaseAbort extends GitRepositoryAction {
     }
     affectedRoots.add(root);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.REBASE);
-    h.addParameters(getOptionName());
-    GitHandlerUtil.doSynchronously(h, getActionTitle(), h.printableCommandLine());
+    h.addParameters("--abort");
+    GitHandlerUtil.doSynchronously(h, getActionName(), h.printableCommandLine());
   }
 
   /**
@@ -80,22 +79,6 @@ public class GitRebaseAbort extends GitRepositoryAction {
    */
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("rebase.abort.action.name");
-  }
-
-
-  /**
-   * @return the option name
-   */
-  @NonNls
-  protected String getOptionName() {
-    return "--abort";
-  }
-
-  /**
-   * @return title for root selection dialog
-   */
-  protected String getActionTitle() {
     return GitBundle.getString("rebase.abort.action.name");
   }
 }

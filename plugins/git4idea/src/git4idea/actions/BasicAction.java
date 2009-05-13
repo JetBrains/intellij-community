@@ -51,6 +51,7 @@ public abstract class BasicAction extends AnAction {
     });
     final VirtualFile[] vFiles = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
 
+    assert project != null;
     final GitVcs vcs = GitVcs.getInstance(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, vFiles)) {
       return;
@@ -110,7 +111,7 @@ public abstract class BasicAction extends AnAction {
 
   /**
    * recursively adds all the children of file to the files list, for which
-   * this action makes sense ({@link #appliesTo(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile)}
+   * this action makes sense ({@link #appliesTo(Project, VirtualFile)}
    * returns true)
    *
    * @param project the project subject of the action
@@ -164,16 +165,15 @@ public abstract class BasicAction extends AnAction {
       presentation.setVisible(true);
       return;
     }
-    GitVcs mksvcs = GitVcs.getInstance(project);
-    boolean enabled =
-      ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(mksvcs, vFiles) && isEnabled(project, mksvcs, vFiles);
-    // only enable action if all the targets are under the vcs and the action suports all of them
+    GitVcs vcs = GitVcs.getInstance(project);
+    boolean enabled = ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, vFiles) && isEnabled(project, vcs, vFiles);
+    // only enable action if all the targets are under the vcs and the action supports all of them
 
     presentation.setEnabled(enabled);
     presentation.setVisible(enabled);
   }
 
-  protected abstract boolean isEnabled(@NotNull Project project, @NotNull GitVcs mksvcs, @NotNull VirtualFile... vFiles);
+  protected abstract boolean isEnabled(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile... vFiles);
 
   public static void saveAll() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

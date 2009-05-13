@@ -22,11 +22,11 @@ import com.intellij.openapi.util.Key;
  */
 public interface GitLineHandlerListener extends GitHandlerListener {
   /**
-   * This method is invoked when line (as separated by \n or \r) becomes avaialbe.
+   * This method is invoked when line (as separated by \n or \r) becomes available.
    *
    * @param line       a line of the text
    * @param outputType a type of output (one of constants from {@link com.intellij.execution.process.ProcessOutputTypes})
    */
-  @SuppressWarnings({"UnusedParameters"})
-  void onLineAvaiable(String line, Key outputType);
+  @SuppressWarnings({"UnusedParameters", "UnnecessaryFullyQualifiedName"})
+  void onLineAvailable(String line, Key outputType);
 }

@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Git un-stash action
+ * Git unstash action
  */
 public class GitUnstash extends GitRepositoryAction {
 

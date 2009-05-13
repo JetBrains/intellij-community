@@ -37,7 +37,7 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
   private final File myFile;
 
   /**
-   * The contstructor
+   * The constructor
    *
    * @param project the context project
    * @param root    the Git root

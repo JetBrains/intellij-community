@@ -83,11 +83,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * the file name prefix for commit message file
    */
-  @NonNls private static final String GIT_COMIT_MSG_FILE_PREFIX = "git-comit-msg-";
+  @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-comit-msg-";
   /**
    * the file extension for commit message file
    */
-  @NonNls private static final String GIT_COMIT_MSG_FILE_EXT = ".txt";
+  @NonNls private static final String GIT_COMMIT_MSG_FILE_EXT = ".txt";
 
 
   /**
@@ -95,7 +95,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    *
    * @param project           a project
    * @param dirtyScopeManager a dirty scope manager
-   * @param settings
+   * @param settings          the vcs settings
    */
   public GitCheckinEnvironment(@NotNull Project project,
                                @NotNull final VcsDirtyScopeManager dirtyScopeManager,
@@ -212,6 +212,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       }
       catch (IOException ex) {
+        //noinspection ThrowableInstanceNeverThrown
         exceptions.add(new VcsException("Creation of commit message file failed", ex));
       }
     }
@@ -231,7 +232,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param removed     removed files
    * @param messageFile a message file for commit
    * @param author      an author
-   * @throws VcsException a vcs exception
+   * @param exceptions  the list of exceptions to report
+   * @return true if merge commit was successful
    */
   private static boolean mergeCommit(final Project project,
                                      final VirtualFile root,
@@ -345,7 +347,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * Check if commit has failed due to unfinished merge
    *
    * @param ex an exception to examine
-   * @return true if exception meeans that there is a partial commit during merge
+   * @return true if exception means that there is a partial commit during merge
    */
   private static boolean isMergeCommit(final VcsException ex) {
     //noinspection HardCodedStringLiteral
@@ -356,7 +358,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * Check if the exception means that no origin was found for pus operation
    *
    * @param ex an exception to use
-   * @return true if exception means that canges cannot be pushed because repository is entirely local.
+   * @return true if exception means that changes cannot be pushed because repository is entirely local.
    */
   private static boolean isNoOrigin(final VcsException ex) {
     //noinspection HardCodedStringLiteral
@@ -368,8 +370,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    *
    * @param project    the project
    * @param root       a vcs root
-   * @param added      a added/modified files to commit
-   * @param added      a removed files to commit
+   * @param added      added/modified files to commit
+   * @param removed    removed files to commit
    * @param exceptions a list of exceptions to update
    * @return true if index was updated successfully
    */
@@ -410,7 +412,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param root    a git repository root
    * @param message a message to write
    * @return a file reference
-   * @throws IOException
+   * @throws IOException if file cannot be created
    */
   private File createMessageFile(VirtualFile root, final String message) throws IOException {
     // filter comment lines
@@ -422,7 +424,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       filteredMessage.append(line).append('\n');
     }
-    File file = File.createTempFile(GIT_COMIT_MSG_FILE_PREFIX, GIT_COMIT_MSG_FILE_EXT);
+    File file = File.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT);
     file.deleteOnExit();
     @NonNls String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
     Writer out = new OutputStreamWriter(new FileOutputStream(file), encoding);
@@ -461,7 +463,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param root             a vcs root
    * @param files            a files to commit
    * @param message          a message file to use
-   * @param nextCommitAuthor
+   * @param nextCommitAuthor a author for the next commit
    * @return a simple handler that does the task
    */
   private static GitSimpleHandler commit(Project project,
@@ -550,7 +552,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      */
     private final JCheckBox myPushChanges;
     /**
-     * The author ComboBox, the dropdown contains previously selected authors.
+     * The author ComboBox, the combobox contains previously selected authors.
      */
     private final JComboBox myAuthor;
 

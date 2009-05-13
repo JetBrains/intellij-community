@@ -69,9 +69,9 @@ public class GitHistoryUtils {
       return null;
     }
     String[] lines = result.split("\n");
-    String revstr = lines[0];
+    String hash = lines[0];
     Date commitDate = GitUtil.parseTimestamp(lines[1]);
-    return new GitRevisionNumber(revstr, commitDate);
+    return new GitRevisionNumber(hash, commitDate);
   }
 
 
@@ -90,8 +90,8 @@ public class GitHistoryUtils {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
-    h.addParameters("-M", "--follow", "--name-only", "--pretty=format:%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%s%n%n%b%x00",
-                    "--encoding=UTF-8");
+    h.addParameters("-M", "--follow", "--name-only",
+                    "--pretty=format:%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%s%n%n%b%x00", "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
     String output = h.run();
@@ -111,7 +111,7 @@ public class GitHistoryUtils {
   /**
    * Get name of the file in the last commit. If file was renamed, returns the previous name.
    *
-   * @param project the contenxt project
+   * @param project the context project
    * @param path    the path to check
    * @return the name of file in the last commit or argument
    */

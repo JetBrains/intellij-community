@@ -42,7 +42,7 @@ import java.util.regex.Pattern;
  */
 public class GitCloneDialog extends DialogWrapper {
   /**
-   * The parttern for SSH urls in form [user@]host:path
+   * The pattern for SSH URL-s in form [user@]host:path
    */
   private static final Pattern SSH_URL_PATTERN;
 
@@ -151,7 +151,7 @@ public class GitCloneDialog extends DialogWrapper {
                                                                            myProject, fcd, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
         @Override
         protected VirtualFile getInitialFile() {
-          // suggest project base dir only if nothing is typed in the component.
+          // suggest project base directory only if nothing is typed in the component.
           String text = getComponentText();
           if (text.length() == 0) {
             VirtualFile file = myProject.getBaseDir();
@@ -207,10 +207,10 @@ public class GitCloneDialog extends DialogWrapper {
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         myTestURL = myRepositoryURL.getText();
-        String stdout = GitHandlerUtil
+        String output = GitHandlerUtil
           .doSynchronously(GitSimpleHandler.checkRepository(myProject, myTestURL), GitBundle.message("clone.testing", myTestURL),
                            "connection test");
-        if (stdout != null) {
+        if (output != null) {
           Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
                                    GitBundle.getString("clone.test.success"));
           myTestResult = Boolean.TRUE;
@@ -335,7 +335,7 @@ public class GitCloneDialog extends DialogWrapper {
   }
 
   /**
-   * Get default name for checkouted directory
+   * Get default name for checked out directory
    *
    * @param url an URL to checkout
    * @return a default repository name

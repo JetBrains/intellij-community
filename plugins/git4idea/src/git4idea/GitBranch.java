@@ -71,7 +71,7 @@ public class GitBranch extends GitReference {
   }
 
   /**
-   * @return true if the branch is remtoe
+   * @return true if the branch is remote
    */
   public boolean isRemote() {
     return myRemote;

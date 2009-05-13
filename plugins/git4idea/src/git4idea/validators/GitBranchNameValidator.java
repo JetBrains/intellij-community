@@ -28,15 +28,15 @@ import java.util.regex.Pattern;
  */
 public class GitBranchNameValidator implements InputValidator {
   /**
-   * the regular expression that
+   * the regular expression that checks branch name
    */
-  private static final Pattern REGEX;
+  private static final Pattern REF_FORMAT_PATTERN;
 
   static {
     // based on the git-check-ref-format command description
     final String goodChar = "[!-~&&[^\\^~:\\[\\]\\?\\*\\./<>\\|'`]]";
     final String component = "(?:" + goodChar + "+\\.?)+";
-    REGEX = Pattern.compile(component + "+(?:/*" + component + ")*");
+    REF_FORMAT_PATTERN = Pattern.compile(component + "+(?:/*" + component + ")*");
   }
 
   /**
@@ -48,7 +48,7 @@ public class GitBranchNameValidator implements InputValidator {
    * {@inheritDoc}
    */
   public boolean checkInput(String inputString) {
-    return REGEX.matcher(inputString).matches();
+    return REF_FORMAT_PATTERN.matcher(inputString).matches();
   }
 
   /**

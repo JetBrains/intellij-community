@@ -55,7 +55,7 @@ public class GitCheckoutDialog extends DialogWrapper {
    */
   private JComboBox myGitRoot;
   /**
-   * Branch/tag to checkoutpu
+   * Branch/tag to check out
    */
   private JComboBox myBranchToCkeckout;
   /**
@@ -344,6 +344,7 @@ public class GitCheckoutDialog extends DialogWrapper {
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
+
   /**
    * {@inheritDoc}
    */

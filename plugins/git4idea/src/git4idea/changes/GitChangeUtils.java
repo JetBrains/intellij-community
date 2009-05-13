@@ -243,9 +243,14 @@ public class GitChangeUtils {
       // Find the first commit with changes and report it as a change list.
       // If no changes are found (why to merge than?). Empty changelist is reported.
       int i = 0;
+      assert parentRevision != null;
       do {
         if (i != 0) {
           parentRevision = loadRevision(project, root, parents[i]);
+          if (parentRevision == null) {
+            // the repository was cloned with --depth parameter
+            continue;
+          }
         }
         GitSimpleHandler diffHandler = new GitSimpleHandler(project, root, GitHandler.DIFF);
         diffHandler.setNoSSH(true);

@@ -46,7 +46,7 @@ public class GitConfigUtil {
    * @param root    the git root
    * @param keyMask the keys to be queried
    * @param result  the map to put results to
-   * @throws VcsException an exception
+   * @throws VcsException if there is a problem with running git
    */
   public static void getValues(Project project, VirtualFile root, String keyMask, Map<String, String> result) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.CONFIG);
@@ -201,7 +201,7 @@ public class GitConfigUtil {
    *
    * @return the encoding for file names
    */
-  public static String getFilenameEncoding() {
+  public static String getFileNameEncoding() {
     // TODO the best guess is that the default encoding is used.
     return Charset.defaultCharset().name();
   }
@@ -212,6 +212,7 @@ public class GitConfigUtil {
    * @param project the project
    * @param root    the git root
    * @param key     the key to unset
+   * @throws VcsException if there is a problem with running git
    */
   public static void unsetValue(Project project, VirtualFile root, String key) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.CONFIG);
@@ -229,6 +230,7 @@ public class GitConfigUtil {
    * @param root    the git root
    * @param key     the key to set
    * @param value   the value to set
+   * @throws VcsException if there is a problem with running git
    */
   public static void setValue(Project project, VirtualFile root, String key, String value) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.CONFIG);

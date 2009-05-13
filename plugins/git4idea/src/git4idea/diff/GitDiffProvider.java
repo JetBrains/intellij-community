@@ -51,7 +51,7 @@ public class GitDiffProvider implements DiffProvider {
    */
   private final Project myProject;
   /**
-   * The status manager for the proejct
+   * The status manager for the project
    */
   private final FileStatusManager myStatusManager;
   /**

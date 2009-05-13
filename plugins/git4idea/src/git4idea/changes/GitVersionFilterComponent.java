@@ -6,12 +6,12 @@ import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
 import javax.swing.*;
 
 /**
- * The component for version fliter
+ * The component for version filter
  */
 public class GitVersionFilterComponent extends StandardVersionFilterComponent<ChangeBrowserSettings> {
 
   /**
-   * The consturctor
+   * The constructor
    *
    * @param showDateFilter the filter component
    */

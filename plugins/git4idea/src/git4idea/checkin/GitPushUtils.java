@@ -46,8 +46,9 @@ public class GitPushUtils {
     rc.addParameters("-v", "--all");
     rc.addLineListener(new GitLineHandlerAdapter() {
       @Override
-      public void onLineAvaiable(final String line, final Key outputType) {
+      public void onLineAvailable(final String line, final Key outputType) {
         if (outputType == ProcessOutputTypes.STDERR && line.startsWith(" ! [")) {
+          //noinspection ThrowableInstanceNeverThrown
           rc.addError(new VcsException("Rejected push: " + line));
         }
       }
