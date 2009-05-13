@@ -138,7 +138,7 @@ public class DuringChangeListManagerUpdateTestScheme {
     assert manager.findChangeList(listName) != null;
     final LocalChangeList list = manager.findChangeList(listName);
     final Collection<Change> changes = list.getChanges();
-    assert changes.size() == files.length : debugRealListContent(list);
+    assert changes.size() == files.length : "size: " + changes.size() + " " + debugRealListContent(list);
 
     for (Change change : changes) {
       final VirtualFile vf = change.getAfterRevision().getFile().getVirtualFile();
