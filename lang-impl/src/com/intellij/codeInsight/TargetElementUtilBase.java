@@ -118,9 +118,7 @@ public class TargetElementUtilBase {
   }
 
   public static boolean inVirtualSpace(Editor editor, LogicalPosition logicalPosition) {
-    final Document document = editor.getDocument();
-    if (logicalPosition.line >= document.getLineCount()) return true;
-    return logicalPosition.column > document.getLineEndOffset(logicalPosition.line) - document.getLineStartOffset(logicalPosition.line);
+    return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
   }
 
   @Nullable

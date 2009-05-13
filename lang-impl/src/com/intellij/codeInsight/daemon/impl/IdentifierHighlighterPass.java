@@ -54,10 +54,6 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       return;
     }
 
-    if (TargetElementUtilBase.inVirtualSpace(myEditor, myEditor.getCaretModel().getOffset())) {
-      return;
-    }
-
     final HighlightUsagesHandlerBase handler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile);
     if (handler != null) {
       final List targets = handler.getTargets();
@@ -95,7 +91,9 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), getHighlights(), getId());
+    final boolean virtSpace = TargetElementUtilBase.inVirtualSpace(myEditor, myEditor.getCaretModel().getOffset());
+    final List<HighlightInfo> infos = virtSpace ? Collections.<HighlightInfo>emptyList() : getHighlights();
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getId());
   }
 
   private List<HighlightInfo> getHighlights() {
