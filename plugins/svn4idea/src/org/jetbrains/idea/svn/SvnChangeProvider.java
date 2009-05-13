@@ -93,27 +93,32 @@ public class SvnChangeProvider implements ChangeProvider {
         processFile(path, context, status, false, context.getClient());
       }*/
 
-      for(SvnChangedFile copiedFile: context.getCopiedFiles()) {
-        if (context.isCanceled()) {
-          throw new ProcessCanceledException();
-        }
-        processCopiedFile(copiedFile, builder, context);
-      }
-      for(SvnChangedFile deletedFile: context.getDeletedFiles()) {
-        if (context.isCanceled()) {
-          throw new ProcessCanceledException();
-        }
-        processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), null, context);
-      }
+      processCopiedAndDeleted(context);
     }
     catch (SVNException e) {
       throw new VcsException(e);
     }
   }
 
+  private void processCopiedAndDeleted(final SvnChangeProviderContext context) throws SVNException {
+    for(SvnChangedFile copiedFile: context.getCopiedFiles()) {
+      if (context.isCanceled()) {
+        throw new ProcessCanceledException();
+      }
+      processCopiedFile(copiedFile, context.getBuilder(), context);
+    }
+    for(SvnChangedFile deletedFile: context.getDeletedFiles()) {
+      if (context.isCanceled()) {
+        throw new ProcessCanceledException();
+      }
+      processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), null, context);
+    }
+  }
+
   public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder) throws SVNException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
     processFile(path, context, null, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, context.getClient());
+    processCopiedAndDeleted(context);
   }
 
   @Nullable
@@ -410,8 +415,9 @@ public class SvnChangeProvider implements ChangeProvider {
       String parentCopyFromURL = context.getParentCopyFromURL(filePath);
       if (parentCopyFromURL != null) {
         context.addCopiedFile(filePath, status, parentCopyFromURL);
+      } else {
+        processStatus(filePath, status, parentStatus, context);
       }
-      processStatus(filePath, status, parentStatus, context);
     }
   }
 

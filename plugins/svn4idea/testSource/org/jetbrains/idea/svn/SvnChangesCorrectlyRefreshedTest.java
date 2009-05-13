@@ -70,8 +70,15 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
   public void testModificationAndAfterRevert() throws Throwable {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
+    try {
+      Thread.sleep(30);
+    }
+    catch (InterruptedException e) {
+      //
+    }
 
     editFileInCommand(myProject, subTree.myS1File, "new");
+
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
     Assert.assertEquals("new", text1.toString());
 
@@ -192,7 +199,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     sleep1000();
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.mySourceDir, subTree.myS1File, subTree.myS2File, subTree.myS1File},
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.mySourceDir, subTree.myS1File, subTree.myS2File},
                                                                 clManager.getDefaultListName(), clManager);
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
