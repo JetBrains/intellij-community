@@ -92,10 +92,10 @@ public class JavaMethodResolveHelper {
     NONE, STATIC, RESOLVE
   }
 
-  public Collection<PsiMethod> getMethods() {
-    return ContainerUtil.mapNotNull(myProcessor.getResult(), new Function<JavaResolveResult, PsiMethod>() {
-      public PsiMethod fun(final JavaResolveResult javaResolveResult) {
-        return (PsiMethod)javaResolveResult.getElement();
+  public Collection<JavaMethodCandidateInfo> getMethods() {
+    return ContainerUtil.mapNotNull(myProcessor.getResult(), new Function<JavaResolveResult, JavaMethodCandidateInfo>() {
+      public JavaMethodCandidateInfo fun(final JavaResolveResult javaResolveResult) {
+        return new JavaMethodCandidateInfo((PsiMethod)javaResolveResult.getElement(), javaResolveResult.getSubstitutor());
       }
     });
   }
