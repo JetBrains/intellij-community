@@ -117,12 +117,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     boolean fireChange() {
-      return fireRootsChanged(myFileTypes);
+      return fireRootsChanged(myFileTypes, false);
     }
 
     public void beforeRootsChanged() {
       if (myBatchLevel == 0 || !myChanged) {
-        if (fireBeforeRootsChanged(myFileTypes)) {
+        if (fireBeforeRootsChanged(myFileTypes, false)) {
             myChanged = true;
           }
       }
@@ -144,7 +144,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return (ProjectRootManagerImpl)getInstance(project);
   }
 
-  private boolean fireBeforeRootsChanged(final boolean filetypes) {
+  private boolean fireBeforeRootsChanged(final boolean filetypes, final boolean dumbness) {
     boolean res = false;
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (myRootsChangeCounter == 0) {
@@ -153,7 +153,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         myRootsChangeCounter++; // blocks all firing until finishRootsChangedOnDemand
         //putRootsChangedStachTrace();
       }
-      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
+      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes, dumbness));
       res = true;
     }
 
@@ -388,8 +388,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
 
       public void exitDumbMode() {
-        fireBeforeRootsChanged(true);
-        fireRootsChanged(true);
+        fireBeforeRootsChanged(true, true);
+        fireRootsChanged(true, true);
       }
     });
 
@@ -490,7 +490,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     getBatchSession(filetypes).rootsChanged(true);
   }
 
-  private boolean fireRootsChanged(final boolean filetypes) {
+  private boolean fireRootsChanged(final boolean filetypes, boolean dumbness) {
     if (myProject.isDisposed()) return false;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -502,7 +502,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     myModificationCount++;
 
-    myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
+    myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, filetypes, dumbness));
 
     doSynchronize();
 

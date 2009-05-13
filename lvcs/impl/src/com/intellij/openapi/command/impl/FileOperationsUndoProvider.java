@@ -57,7 +57,9 @@ public class FileOperationsUndoProvider extends VirtualFileAdapter implements Un
       }
 
       public void rootsChanged(final ModuleRootEvent event) {
-        ((UndoManagerImpl)UndoManager.getInstance(myProject)).invalidateAllComplexCommands();
+        if (!event.isCausedByDumbnessChange()) {
+          ((UndoManagerImpl)UndoManager.getInstance(myProject)).invalidateAllComplexCommands();
+        }
       }
     });
   }
