@@ -2,8 +2,9 @@ package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 
-public class ShowRegistryAction extends AnAction {
+public class ShowRegistryAction extends AnAction implements DumbAware {
 
   private RegistryUi myUi;
 
