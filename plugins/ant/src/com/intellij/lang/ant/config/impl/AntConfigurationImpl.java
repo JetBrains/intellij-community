@@ -751,8 +751,13 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                       }
                     }
                     if (event != null) {
-                      event.readExternal(e, getProject());
-                      setTargetForEvent(buildFile, targetName, event);
+                      try {
+                        event.readExternal(e, getProject());
+                        setTargetForEvent(buildFile, targetName, event);
+                      }
+                      catch (InvalidDataException readFailed) {
+                        LOG.info(readFailed.getMessage());
+                      }
                     }
                   }
                 }

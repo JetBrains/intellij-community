@@ -2,6 +2,7 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.ExecutionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -72,7 +73,7 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     return myTargetNames;
   }
 
-  public void readExternal(Element element, Project project) {
+  public void readExternal(Element element, Project project) throws InvalidDataException {
     super.readExternal(element, project);
     myPresentableName = element.getAttributeValue(PRESENTABLE_NAME);
   }
