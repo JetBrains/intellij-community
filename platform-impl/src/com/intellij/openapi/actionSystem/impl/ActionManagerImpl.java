@@ -10,6 +10,7 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,11 +23,9 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -38,10 +37,11 @@ import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import javax.swing.*;
 import javax.swing.Timer;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.List;
 
 public final class ActionManagerImpl extends ActionManagerEx implements JDOMExternalizable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
@@ -1112,5 +1112,76 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         }
       }
     }
+  }
+
+  public ActionCallback tryToExecute(@NotNull final AnAction action, @NotNull final InputEvent inputEvent, @Nullable final Component contextComponent, @Nullable final String place,
+                                     boolean now) {
+
+    final Application app = ApplicationManager.getApplication();
+    assert app.isDispatchThread();
+
+    final ActionCallback result = new ActionCallback();
+    final Runnable doRunnable = new Runnable() {
+      public void run() {
+        tryToExecuteNow(action, inputEvent, contextComponent, place, result);
+      }
+    };
+
+    if (now) {
+      doRunnable.run();
+    } else {
+      SwingUtilities.invokeLater(doRunnable);
+    }
+    
+    return result;
+
+  }
+
+  private void tryToExecuteNow(AnAction action, InputEvent inputEvent, Component contextComponent, String place, final ActionCallback result) {
+    final Presentation presenation = (Presentation)action.getTemplatePresentation().clone();
+
+    final DataManager dataManager = DataManager.getInstance();
+    DataContext context = contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
+
+    AnActionEvent event = new AnActionEvent(
+      inputEvent, context,
+      place != null ? place : ActionPlaces.UNKNOWN,
+      presenation, this,
+      inputEvent.getModifiersEx()
+    );
+
+    ActionUtil.performDumbAwareUpdate(action, event, false);
+    if (!event.getPresentation().isEnabled()) {
+      result.setRejected();
+      return;
+    }
+
+    ActionUtil.lastUpdateAndCheckDumb(action, event, false);
+    if (!event.getPresentation().isEnabled()) {
+      result.setRejected();
+      return;
+    }
+
+    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
+    if (component != null && !component.isShowing()) {
+      result.setRejected();
+      return;
+    }
+
+    fireBeforeActionPerformed(action, context);
+
+    UIUtil.addAwtListener(new AWTEventListener() {
+      public void eventDispatched(AWTEvent event) {
+        if (event.getID() == WindowEvent.WINDOW_OPENED ||event.getID() == WindowEvent.WINDOW_ACTIVATED) {
+          if (!result.isProcessed()) {
+            result.setDone();
+          }
+        }
+      }
+    }, WindowEvent.WINDOW_EVENT_MASK, result);
+
+    action.actionPerformed(event);
+    result.setDone();
+    queueActionPerformedEvent(action, context);
   }
 }

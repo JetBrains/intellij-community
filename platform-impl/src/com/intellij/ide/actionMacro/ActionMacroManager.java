@@ -1,8 +1,6 @@
 package com.intellij.ide.actionMacro;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -12,9 +10,12 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.IdeFrame;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -169,19 +170,36 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   }
 
   private void playbackMacro(ActionMacro macro) {
-    myIsPlaying = true;
-    try {
-      ActionMacro.ActionDescriptor[] actions = macro.getActions();
-      for (int i = 0; i < actions.length; i++) {
-        // Right thing here. If some macro changes the context (like transferes focus) we should use changed one.
-        actions[i].playBack(DataManager.getInstance().getDataContext());
-        IdeEventQueue.getInstance().flushQueue();
+    final IdeFrame frame = WindowManager.getInstance().getIdeFrame(null);
+    assert frame != null;
+
+    StringBuffer script = new StringBuffer();
+    ActionMacro.ActionDescriptor[] actions = macro.getActions();
+    for (ActionMacro.ActionDescriptor each : actions) {
+      each.generateTo(script);
+    }
+
+    final PlaybackRunner runner = new PlaybackRunner(script.toString(), new PlaybackRunner.StatusCallback.Edt() {
+      public void errorEdt(String text, int curentLine) {
+        frame.getStatusBar().setInfo("Line " + curentLine + ":" + " Error: " + text);
       }
-      myLastMacro = macro;
-    }
-    finally{
-      myIsPlaying = false;
-    }
+
+      public void messageEdt(String text, int curentLine) {
+        frame.getStatusBar().setInfo("Line " + curentLine + ": " + text);
+      }
+    });
+
+    myIsPlaying = true;
+
+    runner.run().doWhenDone(new Runnable() {
+      public void run() {
+        frame.getStatusBar().setInfo("Script execution finished");
+      }
+    }).doWhenProcessed(new Runnable() {
+      public void run() {
+        myIsPlaying = false;
+      }
+    });
   }
 
   public boolean isRecording() {

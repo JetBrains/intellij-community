@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.Extensions;
@@ -299,7 +298,8 @@ final class EditorTabbedContainer implements Disposable {
       }
 
       if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0) {
-        ActionUtil.execute("HideAllWindows", e, null, ActionPlaces.UNKNOWN, 0);
+        final ActionManager mgr = ActionManager.getInstance();
+        mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
       }
       else if (UIUtil.isActionClick(e) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
         final TabInfo info = myTabs.findInfo(e);

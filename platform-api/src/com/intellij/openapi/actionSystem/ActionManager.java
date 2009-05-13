@@ -18,11 +18,14 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.InputEvent;
 
 /**
  * A manager for actions. Used to register and unregister actions, also
@@ -151,4 +154,7 @@ public abstract class ActionManager implements ApplicationComponent {
   public abstract void addTimerListener(int delay, TimerListener listener);
 
   public abstract void removeTimerListener(TimerListener listener);
+
+  public abstract ActionCallback tryToExecute(@NotNull AnAction action, @NotNull InputEvent inputEvent, @Nullable Component contextComponent,
+                                              @Nullable String place, boolean now);
 }

@@ -146,6 +146,8 @@ public class ActionMacro implements JDOMExternalizable {
     Object clone();
 
     void playBack(DataContext context);
+
+    void generateTo(StringBuffer script);
   }
 
   public static class TypedDescriptor implements ActionDescriptor {
@@ -179,6 +181,11 @@ public class ActionMacro implements JDOMExternalizable {
 
     public int hashCode() {
       return myText.hashCode();
+    }
+
+    public void generateTo(StringBuffer script) {
+      script.append(myText);
+      script.append("\n");
     }
 
     public String toString() {
@@ -234,6 +241,10 @@ public class ActionMacro implements JDOMExternalizable {
         return;
       }
       action.actionPerformed(event);
+    }
+
+    public void generateTo(StringBuffer script) {
+      script.append("%action ").append(getActionId()).append("\n");
     }
   }
 }

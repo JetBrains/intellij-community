@@ -1,12 +1,19 @@
 package com.intellij.openapi.ui.playback;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.text.StringTokenizer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 public class PlaybackRunner {
@@ -96,8 +103,12 @@ public class PlaybackRunner {
       return new DelayCommand(string, line);
     }
 
-    if (string.startsWith(Shortcut.PREFIX)) {
-      return new Shortcut(string, line);
+    if (string.startsWith(KeyShortcut.PREFIX)) {
+      return new KeyShortcut(string, line);
+    }
+
+    if (string.startsWith(Action.PREFIX)) {
+      return new Action(string, line);
     }
 
     return new AlphaNumericType(string, line);
@@ -115,6 +126,36 @@ public class PlaybackRunner {
     void error(String text, int currentLine);
 
     void message(String text, int currentLine);
+
+    public abstract static class Edt implements StatusCallback {
+      public final void error(final String text, final int currentLine) {
+        if (SwingUtilities.isEventDispatchThread()) {
+          errorEdt(text, currentLine);
+        } else {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              errorEdt(text, currentLine);
+            }
+          });
+        }
+      }
+
+      public abstract void errorEdt(String text, int curentLine);
+
+      public final void message(final String text, final int currentLine) {
+        if (SwingUtilities.isEventDispatchThread()) {
+          messageEdt(text, currentLine);
+        } else {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              messageEdt(text, currentLine);
+            }
+          });
+        }
+      }
+
+      public abstract void messageEdt(String text, int curentLine);
+    }
   }
 
   private interface Command {
@@ -182,6 +223,62 @@ public class PlaybackRunner {
     public ActionCallback _execute(StatusCallback cb, Robot robot) {
       dumpError(cb, getText());
       return new ActionCallback.Rejected();
+    }
+  }
+
+  private static class Action extends AbstractCommand {
+
+    static String PREFIX = CMD_PREFIX + "action";
+
+    private Action(String text, int line) {
+      super(text, line);
+    }
+
+    protected ActionCallback _execute(StatusCallback cb, Robot robot) {
+      final String actionName = getText().substring(PREFIX.length()).trim();
+
+      final AnAction action = ActionManager.getInstance().getAction(actionName);
+      if (action == null) {
+        dumpError(cb, "Unknown action: " + actionName);
+        return new ActionCallback.Rejected();
+      }
+
+      final InputEvent input = getInputEvent(actionName);
+
+      final ActionCallback result = new ActionCallback();
+
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          ActionManager.getInstance().tryToExecute(action, input, null, null, false).notifyWhenDone(result);
+        }
+      });
+
+      return result;
+    }
+
+    private InputEvent getInputEvent(String actionName) {
+      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionName);
+      KeyStroke keyStroke = null;
+      for (Shortcut each : shortcuts) {
+        if (each instanceof KeyboardShortcut) {
+          keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();
+          if (keyStroke != null) break;
+        }
+      }
+
+      if (keyStroke != null) {
+        return new KeyEvent(JOptionPane.getRootFrame(),
+                                               KeyEvent.KEY_PRESSED,
+                                               System.currentTimeMillis(),
+                                               keyStroke.getModifiers(),
+                                               keyStroke.getKeyCode(),
+                                               keyStroke.getKeyChar(),
+                                               KeyEvent.KEY_LOCATION_STANDARD);
+      } else {
+        return new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON1);
+      }
+
+
     }
   }
 
@@ -271,12 +368,12 @@ public class PlaybackRunner {
     }
   }
 
-  private static class Shortcut extends TypeCommand {
+  private static class KeyShortcut extends TypeCommand {
 
     public static String PREFIX = CMD_PREFIX + "[";
     public static String POSTFIX = CMD_PREFIX + "]";
 
-    private Shortcut(String text, int line) {
+    private KeyShortcut(String text, int line) {
       super(text, line);
     }
 

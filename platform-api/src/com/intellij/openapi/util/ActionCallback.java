@@ -16,13 +16,13 @@
 
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.lang.Runnable;
 
-public class ActionCallback {
+public class ActionCallback implements Disposable {
   private final ExecutionCallback myDone;
   private final ExecutionCallback myRejected;
 
@@ -40,14 +40,24 @@ public class ActionCallback {
 
   public void setDone() {
     myDone.setExecuted();
+    Disposer.dispose(this);
   }
 
   public boolean isDone() {
     return myDone.isExecuted();
   }
 
+  public boolean isRejected() {
+    return myRejected.isExecuted();
+  }
+
+  public boolean isProcessed() {
+    return isDone() || isRejected();
+  }
+
   public void setRejected() {
     myRejected.setExecuted();
+    Disposer.dispose(this);
   }
 
   public final ActionCallback doWhenDone(@NotNull final Runnable runnable) {
@@ -116,4 +126,7 @@ public class ActionCallback {
     }
   }
 
+
+  public void dispose() {
+  }
 }

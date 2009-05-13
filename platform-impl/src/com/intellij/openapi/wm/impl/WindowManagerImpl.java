@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
 import com.sun.jna.examples.WindowUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -381,7 +382,22 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   public IdeFrame getIdeFrame(final Project project) {
-    return getFrame(project);
+    if (project != null) {
+      return getFrame(project);
+    } else {
+      final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      final Component parent = UIUtil.findUltimateParent(window);
+      if (parent instanceof IdeFrame) return (IdeFrame)parent;
+
+      final Frame[] frames = Frame.getFrames();
+      for (Frame each : frames) {
+        if (each instanceof IdeFrame) {
+          return (IdeFrame)each;
+        }
+      }
+    }
+
+    return null;
   }
 
   public final IdeFrameImpl allocateFrame(final Project project) {
