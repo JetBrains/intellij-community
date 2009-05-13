@@ -461,13 +461,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         final ToolsImpl tools = myTools.get(toolList.getShortName());
         final ScopeToolState defaultState = toolList.getDefaultState();
         tools.setDefaultState(copyToolSettings((InspectionTool)defaultState.getTool()), defaultState.isEnabled(), defaultState.getLevel());
-        final List<ScopeToolState> currentNonDefault = tools.getNonDefaultTools();
-        if (currentNonDefault != null) {
-          final int count = currentNonDefault.size();
-          for (int i = 0; i < count; i++) {
-            tools.removeScope(0);
-          }
-        }
+        tools.removeAllScopes();
         tools.setEnabled(toolList.isEnabled());
         final List<ScopeToolState> nonDefaultToolStates = toolList.getNonDefaultTools();
         if (nonDefaultToolStates != null) {
@@ -649,10 +643,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         }
         tools.setEnabled(isEnabled);
         if (equal) {
-          final int count = nonDefaultTools.size();
-          for (int i = 0; i < count; i++) {
-            tools.removeScope(0);
-          }
+          tools.removeAllScopes();
         }
       }
     }
@@ -698,6 +689,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void removeScope(String toolId, int scopeIdx) {
     myTools.get(toolId).removeScope(scopeIdx);
+  }
+
+  public void removeAllScopes(String toolId) {
+    myTools.get(toolId).removeAllScopes();
   }
 
   public void setScope(String toolId, int idx, NamedScope namedScope) {

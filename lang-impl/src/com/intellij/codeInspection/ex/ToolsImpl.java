@@ -183,6 +183,10 @@ public class ToolsImpl implements Tools {
     }
   }
 
+  public void removeAllScopes() {
+    myTools = null;
+  }
+
   public void setScope(int idx, NamedScope namedScope) {
     if (myTools != null && myTools.size() > idx && idx >= 0) {
       final ScopeToolState scopeToolState = myTools.get(idx);

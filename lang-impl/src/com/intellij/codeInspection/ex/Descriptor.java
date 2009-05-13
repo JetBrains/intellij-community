@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
@@ -55,7 +54,7 @@ public class Descriptor {
     return myKey.equals(descriptor.getKey()) &&
            myLevel.equals(descriptor.getLevel()) &&
            myEnabled == descriptor.isEnabled() &&
-           Comparing.equal(myScope, descriptor.myScope);
+           myState.equalTo(descriptor.getState());
   }
 
   public int hashCode() {
