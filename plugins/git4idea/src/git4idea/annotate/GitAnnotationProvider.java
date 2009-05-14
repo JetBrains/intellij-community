@@ -137,7 +137,7 @@ public class GitAnnotationProvider implements AnnotationProvider {
                                      final VcsFileRevision revision,
                                      final List<VcsFileRevision> revisions,
                                      final VirtualFile file) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(myProject, repositoryFilePath), GitHandler.ANNOTATE);
+    GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(repositoryFilePath), GitHandler.ANNOTATE);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.setCharset(file.getCharset());

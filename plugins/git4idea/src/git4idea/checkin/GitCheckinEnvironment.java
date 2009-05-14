@@ -442,7 +442,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<VcsException>();
-    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByVcsRoot(myProject, files);
+    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByGitRoot(files);
     for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
@@ -517,7 +517,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       assert beforeRevision != null || afterRevision != null;
       // note that any path will work, because changes could happen within single vcs root
       final FilePath filePath = afterRevision != null ? afterRevision.getFile() : beforeRevision.getFile();
-      final VirtualFile vcsRoot = GitUtil.getGitRoot(myProject, filePath);
+      final VirtualFile vcsRoot = GitUtil.getGitRoot(filePath);
       List<Change> changeList = result.get(vcsRoot);
       if (changeList == null) {
         changeList = new ArrayList<Change>();

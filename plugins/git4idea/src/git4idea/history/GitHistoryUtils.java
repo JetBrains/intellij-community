@@ -58,7 +58,7 @@ public class GitHistoryUtils {
   @Nullable
   public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath) throws VcsException {
     filePath = getLastCommitName(project, filePath);
-    GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(project, filePath), GitHandler.LOG);
+    GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitHandler.LOG);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", "--pretty=format:%H%n%ct%n");
@@ -86,7 +86,7 @@ public class GitHistoryUtils {
   public static List<VcsFileRevision> history(Project project, FilePath path) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
-    final VirtualFile root = GitUtil.getGitRoot(project, path);
+    final VirtualFile root = GitUtil.getGitRoot(path);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);

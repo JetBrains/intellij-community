@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.config.GitConfigUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,36 +48,38 @@ public class GitUtil {
     // do nothing
   }
 
+  /**
+   * Sort files by Git root
+   *
+   * @param virtualFiles files to sort
+   * @return sorted files
+   * @throws IllegalArgumentException if non git files are passed
+   */
   @NotNull
-  public static VirtualFile getVcsRoot(@NotNull final Project project, @NotNull final FilePath filePath) {
-    VirtualFile file = VcsUtil.getVcsRootFor(project, filePath);
-    if (file == null) {
-      throw new IllegalStateException("The file is not under git: " + filePath);
-    }
-    return file;
-  }
-
-  @NotNull
-  public static VirtualFile getVcsRoot(@NotNull final Project project, final VirtualFile virtualFile) {
-    VirtualFile root = VcsUtil.getVcsRootFor(project, virtualFile);
-    if (root == null) {
-      throw new IllegalStateException("The file is not under git: " + virtualFile.getPath());
-    }
-    return root;
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Collection<VirtualFile> virtualFiles) {
+    return sortFilesByGitRoot(virtualFiles, false);
   }
 
   /**
    * Sort files by Git root
    *
    * @param virtualFiles files to sort
+   * @param ignoreNonGit if true, non-git files are ignored
    * @return sorted files
+   * @throws IllegalArgumentException if non git files are passed when {@code ignoreNonGit} is false
    */
-  @NotNull
-  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Collection<VirtualFile> virtualFiles) {
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(Collection<VirtualFile> virtualFiles, boolean ignoreNonGit) {
     Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
     for (VirtualFile file : virtualFiles) {
-      final VirtualFile vcsRoot = getGitRoot(file);
-      assert vcsRoot != null;
+      final VirtualFile vcsRoot = gitRootOrNull(file);
+      if (vcsRoot == null) {
+        if (ignoreNonGit) {
+          continue;
+        }
+        else {
+          throw new IllegalArgumentException("The file " + file.getPath() + " is not under Git");
+        }
+      }
       List<VirtualFile> files = result.get(vcsRoot);
       if (files == null) {
         files = new ArrayList<VirtualFile>();
@@ -112,18 +113,33 @@ public class GitUtil {
   /**
    * Sort files by vcs root
    *
-   * @param project the project file
-   * @param files   files to delete.
+   * @param files files to sort.
    * @return the map from root to the files under the root
+   * @throws IllegalArgumentException if non git files are passed
    */
-  public static Map<VirtualFile, List<FilePath>> sortFilePathsByVcsRoot(Project project, final Collection<FilePath> files) {
+  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(final Collection<FilePath> files) {
+    return sortFilePathsByGitRoot(files, false);
+  }
+
+  /**
+   * Sort files by vcs root
+   *
+   * @param files        files to sort.
+   * @param ignoreNonGit if true, non-git files are ignored
+   * @return the map from root to the files under the root
+   * @throws IllegalArgumentException if non git files are passed when {@code ignoreNonGit} is false
+   */
+  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(Collection<FilePath> files, boolean ignoreNonGit) {
     Map<VirtualFile, List<FilePath>> rc = new HashMap<VirtualFile, List<FilePath>>();
-    // TODO fix for submodules (several sub-roots within single vcs root)
     for (FilePath p : files) {
-      VirtualFile root = VcsUtil.getVcsRootFor(project, p);
+      VirtualFile root = getGitRootOrNull(p);
       if (root == null) {
-        // non vcs file
-        continue;
+        if (ignoreNonGit) {
+          continue;
+        }
+        else {
+          throw new IllegalArgumentException("The file " + p.getPath() + " is not under Git");
+        }
       }
       List<FilePath> l = rc.get(root);
       if (l == null) {
@@ -250,7 +266,7 @@ public class GitUtil {
    * @param roots git content roots
    * @return a content root
    */
-  public static Set<VirtualFile> gitRoots(final Collection<VirtualFile> roots) {
+  public static Set<VirtualFile> gitRootsForPaths(final Collection<VirtualFile> roots) {
     HashSet<VirtualFile> rc = new HashSet<VirtualFile>();
     for (VirtualFile root : roots) {
       VirtualFile f = root;
@@ -269,36 +285,16 @@ public class GitUtil {
   /**
    * Return a git root for the file path (the parent directory with ".git" subdirectory)
    *
-   * @param project  a project
    * @param filePath a file path
    * @return git root for the file
    * @throws IllegalArgumentException if the file is not under git
    */
-  public static VirtualFile getGitRoot(final Project project, final FilePath filePath) {
-    VirtualFile root = getGitRootOrNull(project, filePath);
+  public static VirtualFile getGitRoot(final FilePath filePath) {
+    VirtualFile root = getGitRootOrNull(filePath);
     if (root != null) {
       return root;
     }
     throw new IllegalArgumentException("The file " + filePath + " is not under git.");
-  }
-
-  /**
-   * Return a git root for the file path (the parent directory with ".git" subdirectory)
-   *
-   * @param project  a project
-   * @param filePath a file path
-   * @return git root for the file or null if the file is not under git
-   */
-  @Nullable
-  private static VirtualFile getGitRootOrNull(final Project project, final FilePath filePath) {
-    VirtualFile root = VcsUtil.getVcsRootFor(project, filePath);
-    while (root != null) {
-      if (root.findFileByRelativePath(".git") != null) {
-        break;
-      }
-      root = root.getParent();
-    }
-    return root;
   }
 
   /**
@@ -467,25 +463,23 @@ public class GitUtil {
   /**
    * Check if the file path is under git
    *
-   * @param project the context project
-   * @param path    the path
+   * @param path the path
    * @return true if the file path is under git
    */
-  public static boolean isUnderGit(final Project project, final FilePath path) {
-    return getGitRootOrNull(project, path) != null;
+  public static boolean isUnderGit(final FilePath path) {
+    return getGitRootOrNull(path) != null;
   }
 
   /**
    * Get git roots for the selected paths
    *
-   * @param project   the project
    * @param filePaths the context paths
    * @return a set of git roots
    */
-  public static Set<VirtualFile> gitRoots(final Project project, final Collection<FilePath> filePaths) {
+  public static Set<VirtualFile> gitRoots(final Collection<FilePath> filePaths) {
     HashSet<VirtualFile> rc = new HashSet<VirtualFile>();
     for (FilePath path : filePaths) {
-      final VirtualFile root = getGitRootOrNull(project, path);
+      final VirtualFile root = getGitRootOrNull(path);
       if (root != null) {
         rc.add(root);
       }

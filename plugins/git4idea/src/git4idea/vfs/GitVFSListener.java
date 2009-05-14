@@ -77,7 +77,7 @@ public class GitVFSListener extends VcsVFSListener {
    * {@inheritDoc}
    */
   protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
-    Map<VirtualFile, List<VirtualFile>> sortedFiles = GitUtil.sortFilesByGitRoot(addedFiles);
+    Map<VirtualFile, List<VirtualFile>> sortedFiles = GitUtil.sortFilesByGitRoot(addedFiles, true);
     // note that copied files are not processed because they are included into added files.
     for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
       try {
@@ -97,7 +97,7 @@ public class GitVFSListener extends VcsVFSListener {
    * @param addedFiles the added files
    */
   private void performAdding(Collection<FilePath> addedFiles) {
-    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByVcsRoot(myProject, addedFiles);
+    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByGitRoot(addedFiles, true);
     // note that copied files are not processed because they are included into added files.
     for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
       try {
@@ -136,7 +136,7 @@ public class GitVFSListener extends VcsVFSListener {
    * {@inheritDoc}
    */
   protected void performDeletion(final List<FilePath> filesToDelete) {
-    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByVcsRoot(myProject, filesToDelete);
+    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByGitRoot(filesToDelete, true);
     for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();

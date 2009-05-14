@@ -49,11 +49,10 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
   private final Project project;
   private final String branch;
 
-   public GitFileRevision(@NotNull Project project,
-                         @NotNull FilePath path,
-                         @NotNull GitRevisionNumber revision) {
+  public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision) {
     this(project, path, revision, null, null, null);
   }
+
   public GitFileRevision(@NotNull Project project,
                          @NotNull FilePath path,
                          @NotNull GitRevisionNumber revision,
@@ -96,7 +95,7 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
   }
 
   public synchronized void loadContent() throws VcsException {
-    final VirtualFile root = GitUtil.getGitRoot(project, path);
+    final VirtualFile root = GitUtil.getGitRoot(path);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.SHOW);
     h.setNoSSH(true);
     h.setCharset(BIN_ENCODING);

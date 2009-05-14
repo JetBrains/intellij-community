@@ -201,7 +201,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @param file    a file to register
    */
   private static void registerFile(Project project, Map<VirtualFile, List<FilePath>> files, FilePath file) {
-    final VirtualFile root = GitUtil.getGitRoot(project, file);
+    final VirtualFile root = GitUtil.getGitRoot(file);
     List<FilePath> paths = files.get(root);
     if (paths == null) {
       paths = new ArrayList<FilePath>();

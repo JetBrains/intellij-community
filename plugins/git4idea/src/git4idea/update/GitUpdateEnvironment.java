@@ -79,7 +79,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
                                          @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef)
     throws ProcessCanceledException {
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    for (VirtualFile root : GitUtil.gitRoots(myProject, Arrays.asList(filePaths))) {
+    for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filePaths))) {
       try {
         // check if there is a remote for the branch
         final GitBranch branch = GitBranch.current(myProject, root);
@@ -121,7 +121,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
    */
   public boolean validateOptions(Collection<FilePath> filePaths) {
     for (FilePath p : filePaths) {
-      if (!GitUtil.isUnderGit(myProject, p)) {
+      if (!GitUtil.isUnderGit(p)) {
         return false;
       }
     }

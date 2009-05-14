@@ -70,7 +70,7 @@ public class GitContentRevision implements ContentRevision {
     if (myFile.isDirectory()) {
       return null;
     }
-    VirtualFile root = GitUtil.getGitRoot(myProject, myFile);
+    VirtualFile root = GitUtil.getGitRoot(myFile);
     GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitHandler.SHOW);
     h.setCharset(myCharset);
     h.setNoSSH(true);

@@ -21,12 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.rollback.GitRollbackEnvironment;
@@ -50,7 +50,7 @@ public class GitRevert extends BasicAction {
     for (VirtualFile f : affectedFiles) {
       Change ch = changeManager.getChange(f);
       if (ch != null) {
-        roots.add(VcsUtil.getVcsRootFor(project, f));
+        roots.add(GitUtil.getGitRoot(f));
         changes.add(ch);
       }
     }

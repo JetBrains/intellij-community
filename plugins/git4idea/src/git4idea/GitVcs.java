@@ -309,7 +309,7 @@ public class GitVcs extends AbstractVcs {
       return new GitRevisionNumber(rev, d);
     }
     if (path != null) {
-      VirtualFile root = GitUtil.getGitRoot(myProject, path);
+      VirtualFile root = GitUtil.getGitRoot(path);
       try {
         return GitRevisionNumber.resolve(myProject, root, revision);
       }

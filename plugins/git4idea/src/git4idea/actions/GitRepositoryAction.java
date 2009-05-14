@@ -59,7 +59,7 @@ public abstract class GitRepositoryAction extends AnAction {
                                GitBundle.getString("repository.action.missing.roots.title"));
       return;
     }
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>(GitUtil.gitRoots(Arrays.asList(contentRoots)));
+    final List<VirtualFile> roots = new ArrayList<VirtualFile>(GitUtil.gitRootsForPaths(Arrays.asList(contentRoots)));
     if (roots.size() == 0) {
       Messages.showErrorDialog(project, GitBundle.getString("repository.action.missing.roots.misconfigured"),
                                GitBundle.getString("repository.action.missing.roots.title"));

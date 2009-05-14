@@ -123,7 +123,7 @@ public class GitMergeProvider implements MergeProvider2 {
   public void conflictResolvedForFile(VirtualFile file) {
     if (file == null) return;
     try {
-      GitFileUtils.addFiles(myProject, GitUtil.getVcsRoot(myProject, file), file);
+      GitFileUtils.addFiles(myProject, GitUtil.getGitRoot(file), file);
     }
     catch (VcsException e) {
       log.error("Confirming conflict resolution failed", e);
