@@ -7,6 +7,7 @@ package com.intellij.ide.startup.impl;
 import com.intellij.ide.startup.BackgroundableCacheUpdater;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.ide.startup.CacheUpdateSets;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -22,17 +23,19 @@ public class FileSystemSynchronizerImpl extends FileSystemSynchronizer {
 
   @Override
   protected void updateFiles() {
+    final CacheUpdateSets indexingSets = myIndexingSets;
+    final CacheUpdateSets contentSets = myContentSets;
     boolean showBackgroundButton = false;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       for (int i = 0, myUpdatersSize = myUpdaters.size(); i < myUpdatersSize; i++) {
         CacheUpdater updater = myUpdaters.get(i);
         if (updater instanceof BackgroundableCacheUpdater) {
           if (((BackgroundableCacheUpdater)updater).initiallyBackgrounded()) {
-            List<VirtualFile> remaining = myIndexingSets.backgrounded(i);
+            List<VirtualFile> remaining = indexingSets.backgrounded(i);
             if (remaining != null && !remaining.isEmpty()) {
               ((BackgroundableCacheUpdater)updater).backgrounded(remaining);
             }
-            myContentSets.backgrounded(i);
+            contentSets.backgrounded(i);
           }
           else {
             showBackgroundButton = true;
@@ -46,7 +49,7 @@ public class FileSystemSynchronizerImpl extends FileSystemSynchronizer {
       final ProgressWindow progressWindow = (ProgressWindow)indicator;
       progressWindow.setBackgroundHandler(new Runnable() {
         public void run() {
-          handleBackgroundAction(progressWindow);
+          handleBackgroundAction(progressWindow, indexingSets, contentSets);
         }
       });
     }
@@ -61,23 +64,24 @@ public class FileSystemSynchronizerImpl extends FileSystemSynchronizer {
     }
   }
 
-  private void handleBackgroundAction(final ProgressWindow progressWindow) {
+  private void handleBackgroundAction(final ProgressWindow progressWindow, final CacheUpdateSets indexingSets,
+                                      final CacheUpdateSets contentSets) {
     boolean allBackgrounded = true;
     for (int i = 0, size = myUpdaters.size(); i < size; i++) {
       CacheUpdater updater = myUpdaters.get(i);
       if (updater instanceof BackgroundableCacheUpdater) {
-        List<VirtualFile> remaining = myIndexingSets.getRemainingFiles(i);
+        List<VirtualFile> remaining = indexingSets.getRemainingFiles(i);
         if (remaining == null || remaining.isEmpty()) {
           continue;
         }
 
         final boolean backgrounded = ((BackgroundableCacheUpdater)updater).canBeSentToBackground(remaining);
         if (backgrounded) {
-          remaining = myIndexingSets.backgrounded(i); //during canBeSentToBackground, more files were already indexed
+          remaining = indexingSets.backgrounded(i); //during canBeSentToBackground, more files were already indexed
           if (remaining != null && !remaining.isEmpty()) {
             ((BackgroundableCacheUpdater)updater).backgrounded(remaining);
           }
-          myContentSets.backgrounded(i); //not to load the content of files needed only for the backgrounded CacheUpdater
+          contentSets.backgrounded(i); //not to load the content of files needed only for the backgrounded CacheUpdater
         } else {
           allBackgrounded = false;
         }
