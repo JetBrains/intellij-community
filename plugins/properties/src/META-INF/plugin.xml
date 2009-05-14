@@ -1,6 +1,7 @@
 <idea-plugin version="2">
   <id>com.intellij.properties</id>
   <name>Properties Support</name>
+  <depends>com.intellij.modules.xml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
