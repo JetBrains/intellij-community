@@ -254,4 +254,12 @@ public class CurrentBranchDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     return myPanel;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "reference.vcs.git.current.branch";
+  }
 }
