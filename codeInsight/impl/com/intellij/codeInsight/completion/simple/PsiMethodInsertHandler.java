@@ -4,10 +4,7 @@
  */
 package com.intellij.codeInsight.completion.simple;
 
-import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -18,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -25,6 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -57,7 +56,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
       new MethodParenthesesHandler(myMethod, !signatureSelected,
                                            styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
                                            styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
-                                           shouldInsertRightParenthesis(item, hasParams, tailType)
+                                           shouldInsertRightParenthesis(hasParams, tailType)
       ).handleInsert(context, item);
     }
     
@@ -82,7 +81,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  protected static boolean shouldInsertRightParenthesis(final LookupItem<PsiMethod> item, boolean hasParams, TailType tailType) {
+  protected static boolean shouldInsertRightParenthesis(boolean hasParams, TailType tailType) {
     if (tailType == TailType.SMART_COMPLETION) return false;
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -104,44 +103,99 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     return LookupItem.handleCompletionChar(editor, item, completionChar);
   }
 
-  private boolean isToInsertParenth(PsiElement place){
+  private static boolean isToInsertParenth(PsiElement place){
     if (place == null) return true;
     return !(place.getParent() instanceof PsiImportStaticReferenceElement);
   }
 
   private static void insertExplicitTypeParams(final LookupItem<PsiMethod> item, final Document document, final int offset, PsiFile file) {
-    if (item.getAttribute(LookupItem.INSERT_TYPE_PARAMS) != null) {
-      final PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
-      assert substitutor != null;
-      final int nameLength = item.getLookupString().length();
-      final PsiMethod method = (PsiMethod)((LookupItem)item).getObject();
-      final PsiTypeParameter[] parameters = method.getTypeParameters();
-      assert parameters.length > 0;
-      final StringBuilder builder = new StringBuilder("<");
-      boolean first = true;
-      for (final PsiTypeParameter parameter : parameters) {
-        if (!first) builder.append(", ");
-        first = false;
-        final PsiType type = substitutor.substitute(parameter);
-        if (type == null || type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType) return;
+    final PsiMethod method = item.getObject();
+    if (!AnalyzingJavaSmartCompletionContributor.hasUnboundTypeParams(method)) {
+      return;
+    }
 
-        final String text = type.getCanonicalText();
-        if (text.indexOf('?') >= 0) return;
+    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
 
-        builder.append(text);
-      }
-      final String typeParams = builder.append(">").toString();
-      document.insertString(offset - nameLength, typeParams);
-      PsiDocumentManager.getInstance(method.getProject()).commitDocument(document);
-      final PsiReference reference = file.findReferenceAt(offset - nameLength + typeParams.length() + 1);
-      if (reference instanceof PsiJavaCodeReferenceElement) {
-        try {
-          CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences((PsiElement)reference));
+    PsiExpression expression = PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiExpression.class, false);
+    if (expression == null) return;
+
+    final Project project = file.getProject();
+    final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(project).getExpectedTypes(expression, true, false);
+    if (expectedTypes == null) return;
+
+    for (final ExpectedTypeInfo type : expectedTypes) {
+      if (type.isInsertExplicitTypeParams()) {
+        final OffsetMap map = new OffsetMap(document);
+        final OffsetKey refOffsetKey = OffsetKey.create("refOffset");
+        map.addOffset(refOffsetKey, offset - 1);
+
+        final String typeParams = getTypeParamsText(method, type.getType());
+        if (typeParams == null) {
+          return;
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        final String qualifierText = getQualifierText(file, method, offset - 1);
+
+        document.insertString(offset - method.getName().length(), qualifierText + typeParams);
+        PsiDocumentManager.getInstance(project).commitDocument(document);
+
+        final PsiReference reference = file.findReferenceAt(map.getOffset(refOffsetKey));
+        if (reference instanceof PsiJavaCodeReferenceElement) {
+          try {
+            CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
+              JavaCodeStyleManager.getInstance(project).shortenClassReferences((PsiElement)reference));
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
         }
+        return;
       }
     }
+    
+
+  }
+
+  private static String getQualifierText(PsiFile file, PsiMethod method, final int refOffset) {
+    final PsiReference reference = file.findReferenceAt(refOffset);
+    if (reference instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)reference).isQualified()) {
+      return "";
+    }
+
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) {
+      return "";
+    }
+
+    if (method.hasModifierProperty(PsiModifier.STATIC)) {
+      return containingClass.getQualifiedName() + ".";
+    }
+
+    if (containingClass.getManager().areElementsEquivalent(containingClass, PsiTreeUtil.findElementOfClassAtOffset(file, refOffset, PsiClass.class, false))) {
+      return "this.";
+    }
+
+    return containingClass.getQualifiedName() + ".this.";
+  }
+
+  @Nullable
+  private static String getTypeParamsText(final PsiMethod method, PsiType expectedType) {
+    final PsiSubstitutor substitutor = AnalyzingJavaSmartCompletionContributor.calculateMethodReturnTypeSubstitutor(method, expectedType);
+    assert substitutor != null;
+    final PsiTypeParameter[] parameters = method.getTypeParameters();
+    assert parameters.length > 0;
+    final StringBuilder builder = new StringBuilder("<");
+    boolean first = true;
+    for (final PsiTypeParameter parameter : parameters) {
+      if (!first) builder.append(", ");
+      first = false;
+      final PsiType type = substitutor.substitute(parameter);
+      if (type == null || type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType) return null;
+
+      final String text = type.getCanonicalText();
+      if (text.indexOf('?') >= 0) return null;
+
+      builder.append(text);
+    }
+    return builder.append(">").toString();
   }
 }
