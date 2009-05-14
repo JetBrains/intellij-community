@@ -271,10 +271,12 @@ public class SvnCommittedViewTest extends SvnTestCase {
   }
 
   private String printChanges(final Data data, final Collection<Change> changes) {
-    final StringBuilder sb = new StringBuilder("Data: ").append(data.myLocalPath).append(" Changes: ");
+    final StringBuilder sb = new StringBuilder("Data: ").append(data.myLocalPath).append(" exists: ").
+      append(new File(data.myLocalPath).exists()).append(" Changes: ");
     for (Change change : changes) {
       final ContentRevision cr = change.getAfterRevision() == null ? change.getBeforeRevision() : change.getAfterRevision();
-      sb.append("'").append(cr.getFile().getIOFile().getAbsolutePath()).append("' | ");
+      final File ioFile = cr.getFile().getIOFile();
+      sb.append("'").append(ioFile.getAbsolutePath()).append("' exists: ").append(ioFile.exists()).append(" | ");
     }
     return sb.toString();
   }
