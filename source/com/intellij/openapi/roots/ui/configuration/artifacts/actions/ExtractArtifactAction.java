@@ -17,9 +17,9 @@ import java.util.Collection;
  * @author nik
  */
 public class ExtractArtifactAction extends AnAction {
-  private ArtifactsEditor myEditor;
+  private ArtifactEditor myEditor;
 
-  public ExtractArtifactAction(ArtifactsEditor editor) {
+  public ExtractArtifactAction(ArtifactEditor editor) {
     super(ProjectBundle.message("action.name.extract.artifact"));
     myEditor = editor;
   }

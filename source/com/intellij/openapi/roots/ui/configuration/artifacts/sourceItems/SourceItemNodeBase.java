@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsEditor;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditor;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTreeNode;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.PackagingEditorContext;
@@ -22,18 +22,18 @@ import java.util.List;
  */
 public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
   private Artifact myArtifact;
-  private final ArtifactsEditor myArtifactsEditor;
+  private final ArtifactEditor myArtifactEditor;
 
   public SourceItemNodeBase(PackagingEditorContext context, NodeDescriptor parentDescriptor, final TreeNodePresentation presentation,
-                            ArtifactsEditor artifactsEditor) {
+                            ArtifactEditor artifactEditor) {
     super(context, parentDescriptor, presentation);
-    myArtifact = artifactsEditor.getArtifact();
-    myArtifactsEditor = artifactsEditor;
+    myArtifact = artifactEditor.getArtifact();
+    myArtifactEditor = artifactEditor;
   }
 
   @Override
   protected void update(PresentationData presentation) {
-    final Artifact artifact = myArtifactsEditor.getArtifact();
+    final Artifact artifact = myArtifactEditor.getArtifact();
     if (!myArtifact.equals(artifact)) {
       myArtifact = artifact;
     }
@@ -46,7 +46,7 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
     for (PackagingSourceItemsProvider provider : providers) {
       final Collection<? extends PackagingSourceItem> items = provider.getSourceItems(myContext, myArtifact, getSourceItem());
       for (PackagingSourceItem item : items) {
-        children.add(new SourceItemNode(myContext, this, item, myArtifactsEditor));
+        children.add(new SourceItemNode(myContext, this, item, myArtifactEditor));
       }
     }
     return children.toArray(new SimpleNode[children.size()]);

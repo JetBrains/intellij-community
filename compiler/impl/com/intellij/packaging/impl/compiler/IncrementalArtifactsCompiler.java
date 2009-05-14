@@ -3,6 +3,7 @@ package com.intellij.packaging.impl.compiler;
 import com.intellij.compiler.impl.packagingCompiler.PackagingCompilerBase;
 import com.intellij.compiler.impl.packagingCompiler.PackagingProcessingItem;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -14,6 +15,7 @@ import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,19 +30,33 @@ public class IncrementalArtifactsCompiler extends PackagingCompilerBase<Artifact
   }
 
   protected PackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext) {
-    final Artifact[] artifacts = ArtifactManager.getInstance(getProject()).getArtifacts();
+    final Artifact[] artifacts = getArtifactsToBuild(builderContext.getCompileContext().getCompileScope());
     for (Artifact artifact : artifacts) {
       final String outputPath = artifact.getOutputPath();
-      if (artifact.isBuildOnMake()) {
-        if (outputPath == null || outputPath.length() == 0) {
-          builderContext.getCompileContext().addMessage(CompilerMessageCategory.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified", null, -1, -1);
-          continue;
-        }
-
-        collectItems(builderContext, artifact, outputPath);
+      if (outputPath == null || outputPath.length() == 0) {
+        builderContext.getCompileContext()
+            .addMessage(CompilerMessageCategory.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified",
+                        null, -1, -1);
+        continue;
       }
+
+      collectItems(builderContext, artifact, outputPath);
     }
     return builderContext.getProcessingItems();
+  }
+
+  private Artifact[] getArtifactsToBuild(final CompileScope compileScope) {
+    final Artifact[] artifactsFromScope = ArtifactCompileScope.getArtifacts(compileScope);
+    if (artifactsFromScope != null) {
+      return artifactsFromScope;
+    }
+    List<Artifact> artifacts = new ArrayList<Artifact>();
+    for (Artifact artifact : ArtifactManager.getInstance(getProject()).getArtifacts()) {
+      if (artifact.isBuildOnMake()) {
+        artifacts.add(artifact);
+      }
+    }
+    return artifacts.toArray(new Artifact[artifacts.size()]);
   }
 
   private void collectItems(@NotNull ArtifactsProcessingItemsBuilderContext builderContext, @NotNull Artifact artifact, @NotNull String outputPath) {

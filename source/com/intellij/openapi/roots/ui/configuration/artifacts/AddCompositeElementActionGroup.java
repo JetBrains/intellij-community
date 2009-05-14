@@ -12,23 +12,23 @@ import java.util.List;
  * @author nik
  */
 public class AddCompositeElementActionGroup extends AnAction {
-  private final ArtifactsEditor myArtifactsEditor;
+  private final ArtifactEditor myArtifactEditor;
   private final CompositePackagingElementType<?> myElementType;
 
-  public AddCompositeElementActionGroup(ArtifactsEditor artifactsEditor, CompositePackagingElementType elementType) {
+  public AddCompositeElementActionGroup(ArtifactEditor artifactEditor, CompositePackagingElementType elementType) {
     super(ProjectBundle.message("artifacts.create.action", elementType.getPresentableName()));
-    myArtifactsEditor = artifactsEditor;
+    myArtifactEditor = artifactEditor;
     myElementType = elementType;
     getTemplatePresentation().setIcon(elementType.getCreateElementIcon());
   }
 
   public void actionPerformed(AnActionEvent e) {
-    myArtifactsEditor.addNewPackagingElement(myElementType);
+    myArtifactEditor.addNewPackagingElement(myElementType);
   }
 
-  public static void addCompositeCreateActions(List<AnAction> actions, final ArtifactsEditor artifactsEditor) {
+  public static void addCompositeCreateActions(List<AnAction> actions, final ArtifactEditor artifactEditor) {
     for (CompositePackagingElementType packagingElementType : PackagingElementFactory.getInstance().getCompositeElementTypes()) {
-      actions.add(new AddCompositeElementActionGroup(artifactsEditor, packagingElementType));
+      actions.add(new AddCompositeElementActionGroup(artifactEditor, packagingElementType));
     }
   }
 }

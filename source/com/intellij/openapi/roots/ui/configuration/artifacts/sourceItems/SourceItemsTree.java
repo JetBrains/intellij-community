@@ -7,7 +7,7 @@ import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsEditorImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SimpleDnDAwareTree;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SourceItemsDraggingObject;
 import com.intellij.openapi.util.Disposer;
@@ -31,10 +31,10 @@ import java.util.List;
 public class SourceItemsTree implements DnDSource, Disposable{
   private SimpleDnDAwareTree myTree;
   private final PackagingEditorContext myEditorContext;
-  private final ArtifactsEditorImpl myArtifactsEditor;
+  private final ArtifactEditorImpl myArtifactsEditor;
   private SimpleTreeBuilder myBuilder;
 
-  public SourceItemsTree(PackagingEditorContext editorContext, ArtifactsEditorImpl artifactsEditor) {
+  public SourceItemsTree(PackagingEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
     myEditorContext = editorContext;
     myArtifactsEditor = artifactsEditor;
     myTree = new SimpleDnDAwareTree();
@@ -97,9 +97,9 @@ public class SourceItemsTree implements DnDSource, Disposable{
 
   private static class SourceItemsTreeStructure extends SimpleTreeStructure {
     private final PackagingEditorContext myEditorContext;
-    private final ArtifactsEditorImpl myArtifactsEditor;
+    private final ArtifactEditorImpl myArtifactsEditor;
 
-    public SourceItemsTreeStructure(PackagingEditorContext editorContext, ArtifactsEditorImpl artifactsEditor) {
+    public SourceItemsTreeStructure(PackagingEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
       myEditorContext = editorContext;
       myArtifactsEditor = artifactsEditor;
     }

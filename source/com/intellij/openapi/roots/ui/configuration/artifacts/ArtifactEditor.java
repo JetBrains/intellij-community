@@ -13,8 +13,8 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public interface ArtifactsEditor extends Disposable {
-  DataKey<ArtifactsEditor> ARTIFACTS_EDITOR_KEY = DataKey.create("artifactsEditor");
+public interface ArtifactEditor extends Disposable {
+  DataKey<ArtifactEditor> ARTIFACTS_EDITOR_KEY = DataKey.create("artifactsEditor");
 
 
   void addNewPackagingElement(@NotNull PackagingElementType<?> type);

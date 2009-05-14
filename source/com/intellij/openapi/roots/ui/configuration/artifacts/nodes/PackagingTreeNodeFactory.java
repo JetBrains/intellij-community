@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsEditorImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ComplexElementSubstitutionParameters;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.ComplexPackagingElement;
@@ -81,7 +81,7 @@ public class PackagingTreeNodeFactory {
   }
 
   @NotNull
-  public static ArtifactRootNode createRootNode(ArtifactsEditorImpl artifactsEditor, PackagingEditorContext context,
+  public static ArtifactRootNode createRootNode(ArtifactEditorImpl artifactsEditor, PackagingEditorContext context,
                                       ComplexElementSubstitutionParameters substitutionParameters) {
     return new ArtifactRootNode(artifactsEditor, context, substitutionParameters);
   }

@@ -14,9 +14,9 @@ import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
  * @author nik
  */
 public class InlineArtifactAction extends AnAction {
-  private final ArtifactsEditor myEditor;
+  private final ArtifactEditor myEditor;
 
-  public InlineArtifactAction(ArtifactsEditor editor) {
+  public InlineArtifactAction(ArtifactEditor editor) {
     super(ProjectBundle.message("action.name.inline.artifact"));
     myEditor = editor;
   }

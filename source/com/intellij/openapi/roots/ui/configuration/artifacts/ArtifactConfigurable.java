@@ -16,14 +16,14 @@ import javax.swing.*;
 public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
   private final Artifact myOriginalArtifact;
   private final PackagingEditorContext myPackagingEditorContext;
-  private final ArtifactsEditorImpl myEditor;
+  private final ArtifactEditorImpl myEditor;
   private boolean myIsInUpdateName;
 
   public ArtifactConfigurable(Artifact originalArtifact, PackagingEditorContext packagingEditorContext, final Runnable updateTree) {
     super(true, updateTree);
     myOriginalArtifact = originalArtifact;
     myPackagingEditorContext = packagingEditorContext;
-    myEditor = new ArtifactsEditorImpl(packagingEditorContext, originalArtifact);
+    myEditor = new ArtifactEditorImpl(packagingEditorContext, originalArtifact);
   }
 
   public void setDisplayName(String name) {

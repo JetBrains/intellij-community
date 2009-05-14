@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -17,8 +18,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
-import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -39,7 +40,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ArtifactsEditorImpl implements ArtifactsEditor {
+public class ArtifactEditorImpl implements ArtifactEditor {
   private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
   private TextFieldWithBrowseButton myOutputDirectoryField;
@@ -48,7 +49,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   private Splitter mySplitter;
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
-  private final EventDispatcher<ArtifactsEditorListener> myDispatcher = EventDispatcher.create(ArtifactsEditorListener.class);
+  private final EventDispatcher<ArtifactEditorListener> myDispatcher = EventDispatcher.create(ArtifactEditorListener.class);
   private final PackagingEditorContext myContext;
   private SourceItemsTree mySourceItemsTree;
   private final Artifact myOriginalArtifact;
@@ -56,7 +57,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   private TabbedPaneWrapper myTabbedPane;
   private ArtifactPostprocessingPanel myPostprocessingPanel;
 
-  public ArtifactsEditorImpl(final PackagingEditorContext context, Artifact artifact) {
+  public ArtifactEditorImpl(final PackagingEditorContext context, Artifact artifact) {
     myContext = context;
     myOriginalArtifact = artifact;
     myProject = context.getProject();
@@ -67,8 +68,8 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     Disposer.register(this, myLayoutTreeComponent);
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
     final String outputPath = artifact.getOutputPath();
-    myOutputDirectoryField.addBrowseFolderListener(ProjectBundle.message("dialog.title.output.directory.for.artifact"),
-                                                   ProjectBundle.message("chooser.description.select.output.directory.for.0.artifact",
+    myOutputDirectoryField.addBrowseFolderListener(CompilerBundle.message("dialog.title.output.directory.for.artifact"),
+                                                   CompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
                                                                          getArtifact().getName()),
                                                    myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myOutputDirectoryField.setText(outputPath != null ? FileUtil.toSystemDependentName(outputPath) : null);
@@ -93,7 +94,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     return mySourceItemsTree;
   }
 
-  public void addListener(@NotNull final ArtifactsEditorListener listener) {
+  public void addListener(@NotNull final ArtifactEditorListener listener) {
     myDispatcher.addListener(listener);
   }
 
@@ -101,7 +102,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
     return myContext;
   }
 
-  public void removeListener(@NotNull final ArtifactsEditorListener listener) {
+  public void removeListener(@NotNull final ArtifactEditorListener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -208,7 +209,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   }
 
   private AddPackagingElementActionGroup createAddAction(boolean popup) {
-    return new AddPackagingElementActionGroup(this, popup);
+    return new AddPackagingElementActionGroup(this);
   }
 
   public JComponent getMainComponent() {
@@ -239,7 +240,7 @@ public class ArtifactsEditorImpl implements ArtifactsEditor {
   private class MyDataProvider implements TypeSafeDataProvider {
     public void calcData(DataKey key, DataSink sink) {
       if (ARTIFACTS_EDITOR_KEY.equals(key)) {
-        sink.put(ARTIFACTS_EDITOR_KEY, ArtifactsEditorImpl.this);
+        sink.put(ARTIFACTS_EDITOR_KEY, ArtifactEditorImpl.this);
       }
     }
   }

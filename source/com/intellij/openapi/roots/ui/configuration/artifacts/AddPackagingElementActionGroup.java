@@ -17,13 +17,11 @@ import java.util.List;
  * @author nik
  */
 public class AddPackagingElementActionGroup extends ActionGroup {
-  private final ArtifactsEditor myArtifactsEditor;
-  private final boolean myPopup;
+  private final ArtifactEditor myArtifactEditor;
 
-  public AddPackagingElementActionGroup(ArtifactsEditor artifactsEditor, boolean popup) {
+  public AddPackagingElementActionGroup(ArtifactEditor artifactEditor) {
     super(ProjectBundle.message("artifacts.add.copy.action"), true);
-    myArtifactsEditor = artifactsEditor;
-    myPopup = popup;
+    myArtifactEditor = artifactEditor;
     getTemplatePresentation().setIcon(Icons.ADD_ICON);
   }
 
@@ -32,16 +30,12 @@ public class AddPackagingElementActionGroup extends ActionGroup {
     if (e == null) return EMPTY_ARRAY;
 
     List<AnAction> actions = new ArrayList<AnAction>();
-    //if (!myPopup) {
-    //  AddCompositeElementActionGroup.addCompositeCreateActions(actions, myArtifactsEditor);
-    //}
-
     final PackagingElementType<?>[] types = PackagingElementFactory.getInstance().getNonCompositeElementTypes();
     for (final PackagingElementType<?> type : types) {
       final AnAction action = new AnAction(type.getPresentableName()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          myArtifactsEditor.addNewPackagingElement(type);
+          myArtifactEditor.addNewPackagingElement(type);
         }
       };
       action.getTemplatePresentation().setIcon(type.getCreateElementIcon());

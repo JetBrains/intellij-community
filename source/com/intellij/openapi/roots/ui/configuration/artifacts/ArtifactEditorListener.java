@@ -5,5 +5,5 @@ import java.util.EventListener;
 /**
  * @author nik
  */
-public interface ArtifactsEditorListener extends EventListener {
+public interface ArtifactEditorListener extends EventListener {
 }

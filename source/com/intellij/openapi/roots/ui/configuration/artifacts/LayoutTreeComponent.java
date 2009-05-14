@@ -37,7 +37,7 @@ import java.util.List;
 
 public class LayoutTreeComponent implements DnDTarget, Disposable {
   @NonNls private static final String EMPTY_CARD = "<empty>";
-  private final ArtifactsEditorImpl myArtifactsEditor;
+  private final ArtifactEditorImpl myArtifactsEditor;
   private LayoutTree myTree;
   private JPanel myTreePanel;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
@@ -49,7 +49,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private JPanel myPropertiesPanel;
   private SimpleTreeBuilder myBuilder;
 
-  public LayoutTreeComponent(ArtifactsEditorImpl artifactsEditor, ComplexElementSubstitutionParameters substitutionParameters,
+  public LayoutTreeComponent(ArtifactEditorImpl artifactsEditor, ComplexElementSubstitutionParameters substitutionParameters,
                                PackagingEditorContext context, Artifact originalArtifact) {
     myArtifactsEditor = artifactsEditor;
     mySubstitutionParameters = substitutionParameters;
