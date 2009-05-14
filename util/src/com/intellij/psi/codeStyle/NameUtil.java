@@ -360,8 +360,8 @@ public class NameUtil {
       int patternLen = pattern.length();
       int nameLen = name.length();
 
-      if (patternLen == 0 || patternLen > nameLen) return false;
       if (myEnsureFirstSymbolsMatch) {
+        if (patternLen == 0) return false;
         if (StringUtil.toLowerCase(name.charAt(0)) != pattern.charAt(0)) return false;
 
         nameIndex = 1;
