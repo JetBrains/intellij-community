@@ -20,6 +20,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
   private final Project myProject;
   private final Alarm myAlarm = new Alarm();
   private AbstractValueHint myRequest = null;
+  private DebuggerSupport[] mySupports;
 
   public ValueLookupManager(Project project) {
     myProject = project;
@@ -28,7 +29,9 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
   public void disposeComponent() {
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+    mySupports = DebuggerSupport.getDebuggerSupports();
+  }
 
   public void projectOpened() {
     EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this);
@@ -55,8 +58,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
       hideHint();
     }
 
-    DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-    for (DebuggerSupport support : supports) {
+    for (DebuggerSupport support : mySupports) {
       QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
       if (handler.isEnabled(myProject)) {
         requestHint(handler, editor, point, AbstractValueHint.getType(e));
