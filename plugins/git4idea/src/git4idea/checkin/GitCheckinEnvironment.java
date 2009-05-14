@@ -125,7 +125,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    return GitBundle.getString("git.default.commit.message");
+    return null;
   }
 
   /**
