@@ -26,6 +26,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.StringScanner;
 
 import java.util.*;
 
@@ -172,17 +173,20 @@ class ChangeCollector {
     handler.setStdoutSuppressed(true);
     // run handler and collect changes
     String list = handler.run();
-    for (String line : list.split("\n")) {
-      if (line.length() == 0) {
+    for (StringScanner sc = new StringScanner(list); sc.hasMoreData();) {
+      if (sc.isEol()) {
+        sc.nextLine();
         continue;
       }
-      String[] tokens = line.split("[\t ]+");
-      String file = GitUtil.unescapePath(tokens[tokens.length - 1]);
-      if ("?".equals(tokens[0])) {
-        myUnversioned.add(myVcsRoot.findFileByRelativePath(file));
+      char status = sc.peek();
+      sc.skipChars(2);
+      if ('?' == status) {
+        myUnversioned.add(myVcsRoot.findFileByRelativePath(GitUtil.unescapePath(sc.line())));
       }
       else { //noinspection HardCodedStringLiteral
-        if ("M".equals(tokens[0])) {
+        if ('M' == status) {
+          sc.boundedToken('\t');
+          String file = GitUtil.unescapePath(sc.line());
           if (!myUnmergedNames.add(file)) {
             continue;
           }
@@ -196,7 +200,7 @@ class ChangeCollector {
           myChanges.add(new Change(before, after, FileStatus.MERGED_WITH_CONFLICTS));
         }
         else {
-          throw new VcsException("Unsupported type of the merge conflict detected: " + line);
+          throw new VcsException("Unsupported type of the merge conflict detected: " + status);
         }
       }
     }
