@@ -24,7 +24,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -44,6 +43,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -727,33 +728,122 @@ public class CreateFromUsageUtils {
     return isInNamedElement || element.getTextRange().contains(offset-1);
   }
 
-  public static void addClassesWithMember(String memberName, final PsiFile file, final Set<String> possibleClassNames, final boolean method,
+  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<String> possibleClassNames, final boolean method,
                                           final boolean staticAccess) {
+    addClassesWithMember(memberName, file, possibleClassNames, method, staticAccess, true);
+  }
+
+  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<String> possibleClassNames, final boolean method,
+                                          final boolean staticAccess,
+                                          final boolean addObjectInheritors) {
     final Project project = file.getProject();
-    final Module moduleForFile = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file.getVirtualFile());
-    GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleForFile, false);
+    final Module moduleForFile = ModuleUtil.findModuleForPsiElement(file);
+    if (moduleForFile == null) return;
+
+    final GlobalSearchScope searchScope = file.getResolveScope();
     GlobalSearchScope descendantsSearchScope = GlobalSearchScope.moduleWithDependenciesScope(moduleForFile);
-    final PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();
-    final PsiMember[] members = method ? cache.getMethodsByName(memberName, searchScope) : cache.getFieldsByName(memberName, searchScope);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final PsiShortNamesCache cache = facade.getShortNamesCache();
+
+    if (handleObjectMethod(possibleClassNames, facade, searchScope, method, memberName, staticAccess, addObjectInheritors)) {
+      return;
+    }
+
+    final PsiMember[] members = ApplicationManager.getApplication().runReadAction(new Computable<PsiMember[]>() {
+      public PsiMember[] compute() {
+        return method ? cache.getMethodsByName(memberName, searchScope) : cache.getFieldsByName(memberName, searchScope);
+      }
+    });
 
     for (int i = 0; i < members.length; ++i) {
       final PsiMember member = members[i];
-
-      if (!member.hasModifierProperty(PsiModifier.PRIVATE) && member.hasModifierProperty(PsiModifier.STATIC) == staticAccess) {
+      if (hasCorrectModifiers(member, staticAccess)) {
         final PsiClass containingClass = member.getContainingClass();
 
         if (containingClass != null) {
-          for(PsiClass clazz: ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).findAll()) {
-            final String qName = clazz.getQualifiedName();
-            if (qName != null) possibleClassNames.add(qName);
-          }
-          
-          final String qName = containingClass.getQualifiedName();
-          if (qName != null) possibleClassNames.add(qName);
+          final String qName = getQualifiedName(containingClass);
+          if (qName == null) continue;
+
+          ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).forEach(new Processor<PsiClass>() {
+            public boolean process(PsiClass psiClass) {
+              ContainerUtil.addIfNotNull(getQualifiedName(psiClass), possibleClassNames);
+              return true;
+            }
+          });
+
+          possibleClassNames.add(qName);
         }
       }
       members[i] = null;
     }
+  }
+
+  private static boolean handleObjectMethod(Set<String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
+    final PsiShortNamesCache cache = facade.getShortNamesCache();
+    final boolean[] allClasses = {false};
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        final PsiClass objectClass = facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, searchScope);
+        if (objectClass != null) {
+          if (method && objectClass.findMethodsByName(memberName, false).length > 0) {
+            allClasses[0] = true;
+          }
+          else if (!method) {
+            final PsiField field = objectClass.findFieldByName(memberName, false);
+            if (hasCorrectModifiers(field, staticAccess)) {
+              allClasses[0] = true;
+            }
+          }
+        }
+      }
+    });
+    if (allClasses[0]) {
+      possibleClassNames.add(CommonClassNames.JAVA_LANG_OBJECT);
+
+      if (!addInheritors) {
+        return true;
+      }
+
+      final String[] strings = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
+        public String[] compute() {
+          return cache.getAllClassNames();
+        }
+      });
+      for (final String className : strings) {
+        final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+          public PsiClass[] compute() {
+            return cache.getClassesByName(className, searchScope);
+          }
+        });
+        for (final PsiClass aClass : classes) {
+          final String qname = getQualifiedName(aClass);
+          ContainerUtil.addIfNotNull(qname, possibleClassNames);
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  @Nullable
+  private static String getQualifiedName(final PsiClass aClass) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return aClass.getQualifiedName();
+      }
+    });
+  }
+
+  private static boolean hasCorrectModifiers(@Nullable final PsiMember member, final boolean staticAccess) {
+    if (member == null) {
+      return false;
+    }
+
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return !member.hasModifierProperty(PsiModifier.PRIVATE) && member.hasModifierProperty(PsiModifier.STATIC) == staticAccess;
+      }
+    }).booleanValue();
   }
 
   private static class ParameterNameExpression extends Expression {
