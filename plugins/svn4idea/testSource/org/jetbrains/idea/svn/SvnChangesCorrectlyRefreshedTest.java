@@ -73,7 +73,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
     try {
-      Thread.sleep(30);
+      Thread.sleep(300);
     }
     catch (InterruptedException e) {
       //
