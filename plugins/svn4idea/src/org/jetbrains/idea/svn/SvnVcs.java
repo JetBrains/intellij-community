@@ -145,6 +145,8 @@ public class SvnVcs extends AbstractVcs {
   public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
 
   static {
+    SvnHttpAuthMethodsDefaultChecker.check();
+
     //noinspection UseOfArchaicSystemPropertyAccessors
     final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG);
     SVNDebugLog.setDefaultLog(logger);
