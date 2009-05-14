@@ -92,6 +92,26 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   /**
+   * Perform adding the files using file paths
+   *
+   * @param addedFiles the added files
+   */
+  private void performAdding(Collection<FilePath> addedFiles) {
+    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByVcsRoot(myProject, addedFiles);
+    // note that copied files are not processed because they are included into added files.
+    for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
+      try {
+        final VirtualFile root = e.getKey();
+        GitFileUtils.addPaths(myProject, root, e.getValue());
+        markRootDirty(root);
+      }
+      catch (VcsException ex) {
+        ((GitVcs)myVcs).showMessages(ex.getMessage());
+      }
+    }
+  }
+
+  /**
    * {@inheritDoc}
    */
   protected String getDeleteTitle() {
@@ -145,13 +165,13 @@ public class GitVFSListener extends VcsVFSListener {
    */
   protected void performMoveRename(final List<MovedFileInfo> movedFiles) {
     // because git does not tracks moves, the file are just added and deleted.
-    ArrayList<VirtualFile> added = new ArrayList<VirtualFile>();
+    ArrayList<FilePath> added = new ArrayList<FilePath>();
     ArrayList<FilePath> removed = new ArrayList<FilePath>();
     for (MovedFileInfo m : movedFiles) {
-      added.add(VcsUtil.getVirtualFile(m.myNewPath));
+      added.add(VcsUtil.getFilePath(m.myNewPath));
       removed.add(VcsUtil.getFilePath(m.myOldPath));
     }
-    performAdding(added, null);
+    performAdding(added);
     performDeletion(removed);
   }
 
