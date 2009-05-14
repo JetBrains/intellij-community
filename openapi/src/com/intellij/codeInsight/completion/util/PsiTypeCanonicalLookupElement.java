@@ -15,18 +15,24 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Icons;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author peter
  */
 public class PsiTypeCanonicalLookupElement extends LookupElement {
+  private static final Icon EMPTY_ICON = new EmptyIcon(Icons.CLASS_ICON.getIconWidth() * 2, Icons.CLASS_ICON.getIconHeight());
+
   private static final LookupElementRenderer<PsiTypeCanonicalLookupElement> RENDERER = new LookupElementRenderer<PsiTypeCanonicalLookupElement>() {
     public void renderElement(final PsiTypeCanonicalLookupElement element, final LookupElementPresentation presentation) {
       final PsiClass psiClass = element.getPsiClass();
       if (psiClass != null) {
-        presentation.setIcon(psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+        presentation.setIcon(presentation.isReal() ? psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY) : EMPTY_ICON);
         presentation.setTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true, false, false);
       }
       final PsiType type = element.getPsiType();
