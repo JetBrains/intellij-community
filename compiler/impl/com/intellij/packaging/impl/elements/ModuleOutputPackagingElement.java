@@ -3,10 +3,9 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.openapi.module.Module;
-import com.intellij.packaging.elements.ArtifactGenerationContext;
-import com.intellij.packaging.elements.CopyInstructionCreator;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
@@ -38,11 +37,24 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
   }
 
   @Override
-  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
-                                                           @NotNull CopyInstructionCreator creator,
-                                                           @NotNull ArtifactGenerationContext generationContext) {
+  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
+                                                           @NotNull AntCopyInstructionCreator creator,
+                                                           @NotNull ArtifactAntGenerationContext generationContext) {
     final String moduleOutput = BuildProperties.propertyRef(generationContext.getModuleOutputPath(myModuleName));
     return Collections.singletonList(creator.createDirectoryContentCopyInstruction(moduleOutput));
+  }
+
+  @Override
+  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
+                                                     @NotNull PackagingElementResolvingContext resolvingContext,
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext) {
+    final Module module = findModule(resolvingContext);
+    if (module != null) {
+      final VirtualFile output = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
+      if (output != null) {
+        creator.addDirectoryCopyInstructions(output);
+      }
+    }
   }
 
   @Override

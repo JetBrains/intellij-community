@@ -32,11 +32,11 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
   private final Stack<String> myOutputPaths;
   private Stack<NestedJarInfo> myNestedJars;
   private final BuildConfiguration myBuildConfiguration;
-  private final ProcessingItemsBuilderContext myContext;
+  private final OldProcessingItemsBuilderContext myContext;
   private final BuildParticipant myBuildParticipant;
   private final LocalFileSystem myLocalFileSystem;
 
-  public ProcessingItemsBuilder(final BuildParticipant buildParticipant, ProcessingItemsBuilderContext context) {
+  public ProcessingItemsBuilder(final BuildParticipant buildParticipant, OldProcessingItemsBuilderContext context) {
     myContext = context;
     myBuildParticipant = buildParticipant;
     myBuildConfiguration = myBuildParticipant.getBuildConfiguration();

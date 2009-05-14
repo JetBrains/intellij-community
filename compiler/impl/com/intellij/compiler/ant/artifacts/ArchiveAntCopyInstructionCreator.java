@@ -3,16 +3,16 @@ package com.intellij.compiler.ant.artifacts;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.compiler.ant.Tag;
 import com.intellij.compiler.ant.taskdefs.ZipFileSet;
-import com.intellij.packaging.elements.CopyInstructionCreator;
+import com.intellij.packaging.elements.AntCopyInstructionCreator;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class ArchiveCopyInstructionCreator implements CopyInstructionCreator {
+public class ArchiveAntCopyInstructionCreator implements AntCopyInstructionCreator {
   private String myPrefix;
 
-  public ArchiveCopyInstructionCreator(String prefix) {
+  public ArchiveAntCopyInstructionCreator(String prefix) {
     myPrefix = prefix;
   }
 
@@ -28,8 +28,8 @@ public class ArchiveCopyInstructionCreator implements CopyInstructionCreator {
   }
 
   @NotNull
-  public CopyInstructionCreator subFolder(String directoryName) {
-    return new ArchiveCopyInstructionCreator(myPrefix + "/" + directoryName);
+  public AntCopyInstructionCreator subFolder(String directoryName) {
+    return new ArchiveAntCopyInstructionCreator(myPrefix + "/" + directoryName);
   }
 
   public Generator createSubFolderCommand(String directoryName) {

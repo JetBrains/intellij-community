@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author nik
  */
-public interface ArtifactGenerationContext {
+public interface ArtifactAntGenerationContext {
 
   void runBeforeCurrentArtifact(Generator generator);
 

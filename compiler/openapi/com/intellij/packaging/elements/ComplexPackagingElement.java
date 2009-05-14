@@ -17,8 +17,8 @@ public abstract class ComplexPackagingElement<S> extends PackagingElement<S> {
   }
 
   @Override
-  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull CopyInstructionCreator creator,
-                                                   @NotNull ArtifactGenerationContext generationContext) {
+  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
+                                                   @NotNull ArtifactAntGenerationContext generationContext) {
     final List<? extends PackagingElement<?>> substitution = getSubstitution(resolvingContext);
     if (substitution == null) {
       return Collections.emptyList();
@@ -26,10 +26,23 @@ public abstract class ComplexPackagingElement<S> extends PackagingElement<S> {
 
     final List<Generator> fileSets = new ArrayList<Generator>();
     for (PackagingElement<?> element : substitution) {
-      fileSets.addAll(element.computeCopyInstructions(resolvingContext, creator, generationContext));
+      fileSets.addAll(element.computeAntInstructions(resolvingContext, creator, generationContext));
     }
     return fileSets;
   }
+
+  @Override
+  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
+                                                     @NotNull PackagingElementResolvingContext resolvingContext,
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext) {
+    final List<? extends PackagingElement<?>> substitution = getSubstitution(resolvingContext);
+    if (substitution == null) return;
+
+    for (PackagingElement<?> element : substitution) {
+      element.computeIncrementalCompilerInstructions(creator, resolvingContext, compilerContext);
+    }
+  }
+
 
   @Nullable
   public abstract List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context);

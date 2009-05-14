@@ -2,7 +2,7 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.Generator;
-import com.intellij.compiler.ant.artifacts.ArchiveCopyInstructionCreator;
+import com.intellij.compiler.ant.artifacts.ArchiveAntCopyInstructionCreator;
 import com.intellij.compiler.ant.taskdefs.Jar;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
@@ -37,16 +37,23 @@ public class ArchivePackagingElement extends CompositePackagingElement<ArchivePa
   }
 
   @Override
-  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull CopyInstructionCreator creator,
-                                                   @NotNull ArtifactGenerationContext generationContext) {
+  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
+                                                   @NotNull ArtifactAntGenerationContext generationContext) {
     final String tempJarProperty = generationContext.createNewTempFileProperty("temp.jar.path." + myArchiveFileName, myArchiveFileName);
     String jarPath = BuildProperties.propertyRef(tempJarProperty);
     final Jar jar = new Jar(jarPath, "preserve");
-    for (Generator generator : computeChildrenGenerators(resolvingContext, new ArchiveCopyInstructionCreator(""), generationContext)) {
+    for (Generator generator : computeChildrenGenerators(resolvingContext, new ArchiveAntCopyInstructionCreator(""), generationContext)) {
       jar.add(generator);
     }
     generationContext.runBeforeCurrentArtifact(jar);
     return Collections.singletonList(creator.createFileCopyInstruction(jarPath, myArchiveFileName));
+  }
+
+  @Override
+  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
+                                                     @NotNull PackagingElementResolvingContext resolvingContext,
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext) {
+    computeChildrenInstructions(creator.archive(myArchiveFileName), resolvingContext, compilerContext);
   }
 
   public ArchivePackagingElement getState() {

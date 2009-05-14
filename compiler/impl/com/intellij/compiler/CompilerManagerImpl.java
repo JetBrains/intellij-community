@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -21,6 +22,7 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
@@ -50,6 +52,9 @@ public class CompilerManagerImpl extends CompilerManager {
     addCompiler(new ResourceCompiler(myProject, compilerConfiguration));
     addCompiler(new RmicCompiler(myProject));
     addCompiler(new IncrementalPackagingCompiler(myProject));
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      addCompiler(new IncrementalArtifactsCompiler(myProject));
+    }
 
     for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {
       addCompiler(compiler);

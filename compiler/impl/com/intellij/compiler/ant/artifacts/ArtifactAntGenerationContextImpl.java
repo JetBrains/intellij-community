@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.ArtifactGenerationContext;
+import com.intellij.packaging.elements.ArtifactAntGenerationContext;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ArtifactGenerationContextImpl implements ArtifactGenerationContext {
+public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationContext {
   @NonNls public static final String ARTIFACTS_TEMP_DIR_PROPERTY = "artifacts.temp.dir";
   private Map<Artifact, String> myArtifact2Target = new THashMap<Artifact, String>();
   private List<Generator> myBeforeBuildGenerators = new ArrayList<Generator>();
@@ -31,7 +31,7 @@ public class ArtifactGenerationContextImpl implements ArtifactGenerationContext 
   private GenerationOptions myGenerationOptions;
   private List<Generator> myBeforeCurrentArtifact = new ArrayList<Generator>();
 
-  public ArtifactGenerationContextImpl(Project project, GenerationOptions generationOptions) {
+  public ArtifactAntGenerationContextImpl(Project project, GenerationOptions generationOptions) {
     myProject = project;
     myGenerationOptions = generationOptions;
   }

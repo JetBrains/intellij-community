@@ -42,9 +42,9 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   }
 
   @Override
-  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
-                                                           @NotNull CopyInstructionCreator creator,
-                                                           @NotNull ArtifactGenerationContext generationContext) {
+  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
+                                                           @NotNull AntCopyInstructionCreator creator,
+                                                           @NotNull ArtifactAntGenerationContext generationContext) {
     final Artifact artifact = findArtifact(resolvingContext);
     if (artifact != null) {
       final String outputPath = BuildProperties.propertyRef(generationContext.getArtifactOutputProperty(artifact));

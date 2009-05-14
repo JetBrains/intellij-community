@@ -3,10 +3,7 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.packaging.elements.ArtifactGenerationContext;
-import com.intellij.packaging.elements.ArtifactRootElement;
-import com.intellij.packaging.elements.CopyInstructionCreator;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -58,9 +55,16 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   public void rename(@NotNull String newName) {
   }
 
-  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull CopyInstructionCreator creator,
-                                                   @NotNull ArtifactGenerationContext generationContext) {
+  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
+                                                   @NotNull ArtifactAntGenerationContext generationContext) {
     throw new UnsupportedOperationException("'computeGenerators' not implemented in " + getClass().getName());
+  }
+
+  @Override
+  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
+                                                     @NotNull PackagingElementResolvingContext resolvingContext,
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext) {
+    computeChildrenInstructions(creator, resolvingContext, compilerContext);
   }
 
   @Override

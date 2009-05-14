@@ -48,13 +48,24 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
 
   @NotNull
   public ModifiableArtifact addArtifact(@NotNull final String name, @NotNull ArtifactType artifactType) {
-    final ArtifactImpl artifact = new ArtifactImpl(name, artifactType, false, new ArtifactRootElementImpl(), null);
+    final ArtifactImpl artifact = new ArtifactImpl(generateUniqueName(name), artifactType, false, new ArtifactRootElementImpl(), null);
     myOriginalArtifacts.add(artifact);
     myArtifact2ModifiableCopy.put(artifact, artifact);
     myModifiable2Original.put(artifact, artifact);
     artifactsChanged();
     myDispatcher.getMulticaster().artifactAdded(artifact);
     return artifact;
+  }
+
+  private String generateUniqueName(String baseName) {
+    String name = baseName;
+    int i = 2;
+    while (true) {
+      if (findArtifact(name) == null) {
+        return name;
+      }
+      name = baseName + i++;
+    }
   }
 
   public void addListener(@NotNull ArtifactListener listener) {

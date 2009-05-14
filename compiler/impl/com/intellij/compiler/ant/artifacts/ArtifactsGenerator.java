@@ -28,12 +28,12 @@ public class ArtifactsGenerator {
   @NonNls private static final String INIT_ARTIFACTS_TARGET = "init.artifacts";
   private final Project myProject;
   private final PackagingElementResolvingContext myResolvingContext;
-  private ArtifactGenerationContextImpl myContext;
+  private ArtifactAntGenerationContextImpl myContext;
 
   public ArtifactsGenerator(Project project, GenerationOptions genOptions) {
     myProject = project;
     myResolvingContext = ArtifactManager.getInstance(myProject).getResolvingContext();
-    myContext = new ArtifactGenerationContextImpl(project, genOptions);
+    myContext = new ArtifactAntGenerationContextImpl(project, genOptions);
   }
 
   public List<Generator> generate() {
@@ -41,7 +41,7 @@ public class ArtifactsGenerator {
 
     final Target initTarget = new Target(INIT_ARTIFACTS_TARGET, null, null, null);
     generators.add(initTarget);
-    initTarget.add(new Property(ArtifactGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY, BuildProperties.propertyRelativePath(BuildProperties.getProjectBaseDirProperty(), "artifactsTemp")));
+    initTarget.add(new Property(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY, BuildProperties.propertyRelativePath(BuildProperties.getProjectBaseDirProperty(), "artifactsTemp")));
 
     StringBuilder depends = new StringBuilder();
     final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getArtifacts();
@@ -74,7 +74,7 @@ public class ArtifactsGenerator {
     for (Generator generator : myContext.getAfterBuildGenerators()) {
       buildAllArtifacts.add(generator);
     }
-    buildAllArtifacts.add(new Delete(BuildProperties.propertyRef(ArtifactGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY)));
+    buildAllArtifacts.add(new Delete(BuildProperties.propertyRef(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY)));
 
     generators.add(buildAllArtifacts);
     return generators;
@@ -106,18 +106,18 @@ public class ArtifactsGenerator {
 
     final Target artifactTarget =
         new Target(myContext.getTargetName(artifact), depends.toString(), "Build '" + artifact.getName() + "' artifact", null);
-    final String tempOutputDirectory = BuildProperties.propertyRelativePath(ArtifactGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY,
+    final String tempOutputDirectory = BuildProperties.propertyRelativePath(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY,
                                                                             BuildProperties.convertName(artifact.getName()));
     artifactTarget.add(new Property(myContext.getArtifactOutputProperty(artifact), tempOutputDirectory));
 
     final String outputPath = BuildProperties.propertyRef(myContext.getArtifactOutputProperty(artifact));
     artifactTarget.add(new Mkdir(outputPath));
 
-    final DirectoryCopyInstructionCreator creator = new DirectoryCopyInstructionCreator(outputPath);
+    final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(outputPath);
 
     List<Generator> copyInstructions = new ArrayList<Generator>();
     for (PackagingElement<?> element : artifact.getRootElement().getChildren()) {
-      copyInstructions.addAll(element.computeCopyInstructions(myResolvingContext, creator, myContext));
+      copyInstructions.addAll(element.computeAntInstructions(myResolvingContext, creator, myContext));
     }
 
     for (Generator generator : myContext.getAndClearBeforeCurrentArtifact()) {

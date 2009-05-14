@@ -5,16 +5,16 @@ import com.intellij.compiler.ant.Tag;
 import com.intellij.compiler.ant.taskdefs.Copy;
 import com.intellij.compiler.ant.taskdefs.FileSet;
 import com.intellij.compiler.ant.taskdefs.Mkdir;
-import com.intellij.packaging.elements.CopyInstructionCreator;
+import com.intellij.packaging.elements.AntCopyInstructionCreator;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class DirectoryCopyInstructionCreator implements CopyInstructionCreator {
+public class DirectoryAntCopyInstructionCreator implements AntCopyInstructionCreator {
   private String myOutputDirectory;
 
-  public DirectoryCopyInstructionCreator(String outputDirectory) {
+  public DirectoryAntCopyInstructionCreator(String outputDirectory) {
     myOutputDirectory = outputDirectory;
   }
 
@@ -35,8 +35,8 @@ public class DirectoryCopyInstructionCreator implements CopyInstructionCreator {
   }
 
   @NotNull
-  public CopyInstructionCreator subFolder(String directoryName) {
-    return new DirectoryCopyInstructionCreator(myOutputDirectory + "/" + directoryName);
+  public AntCopyInstructionCreator subFolder(String directoryName) {
+    return new DirectoryAntCopyInstructionCreator(myOutputDirectory + "/" + directoryName);
   }
 
   public Generator createSubFolderCommand(String directoryName) {

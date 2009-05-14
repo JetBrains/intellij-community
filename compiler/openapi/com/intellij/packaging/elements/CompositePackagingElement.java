@@ -42,12 +42,20 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
   public abstract void rename(@NotNull String newName);
 
   protected List<? extends Generator> computeChildrenGenerators(PackagingElementResolvingContext resolvingContext,
-                                                                final CopyInstructionCreator copyInstructionCreator,
-                                                                final ArtifactGenerationContext generationContext) {
+                                                                final AntCopyInstructionCreator copyInstructionCreator,
+                                                                final ArtifactAntGenerationContext generationContext) {
     final List<Generator> generators = new ArrayList<Generator>();
     for (PackagingElement<?> child : myChildren) {
-      generators.addAll(child.computeCopyInstructions(resolvingContext, copyInstructionCreator, generationContext));
+      generators.addAll(child.computeAntInstructions(resolvingContext, copyInstructionCreator, generationContext));
     }
     return generators;
+  }
+
+  protected void computeChildrenInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
+                                             @NotNull PackagingElementResolvingContext resolvingContext,
+                                             @NotNull ArtifactIncrementalCompilerContext compilerContext) {
+    for (PackagingElement<?> child : myChildren) {
+      child.computeIncrementalCompilerInstructions(creator, resolvingContext, compilerContext);
+    }
   }
 }

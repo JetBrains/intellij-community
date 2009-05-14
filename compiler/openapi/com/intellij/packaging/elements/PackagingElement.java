@@ -24,8 +24,13 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
     return myType;
   }
 
-  public abstract List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
-                                                            @NotNull CopyInstructionCreator creator, @NotNull ArtifactGenerationContext generationContext);
+  public abstract List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
+                                                                    @NotNull AntCopyInstructionCreator creator, 
+                                                                    @NotNull ArtifactAntGenerationContext generationContext);
+
+  public abstract void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator, 
+                                                              @NotNull PackagingElementResolvingContext resolvingContext,
+                                                              @NotNull ArtifactIncrementalCompilerContext compilerContext);
 
   public abstract boolean isEqualTo(@NotNull PackagingElement<?> element);
 }

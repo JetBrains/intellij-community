@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public interface CopyInstructionCreator {
+public interface AntCopyInstructionCreator {
 
   @NotNull
   Tag createDirectoryContentCopyInstruction(@NotNull String dirPath);
@@ -17,7 +17,7 @@ public interface CopyInstructionCreator {
   Tag createFileCopyInstruction(@NotNull String filePath, String outputFileName);
 
   @NotNull
-  CopyInstructionCreator subFolder(String directoryName);
+  AntCopyInstructionCreator subFolder(String directoryName);
 
   @Nullable
   Generator createSubFolderCommand(String directoryName);

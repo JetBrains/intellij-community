@@ -3,10 +3,9 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.packaging.elements.ArtifactGenerationContext;
-import com.intellij.packaging.elements.CopyInstructionCreator;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.FileCopyPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -37,9 +36,9 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
   }
 
   @Override
-  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
-                                                           @NotNull CopyInstructionCreator creator,
-                                                           @NotNull ArtifactGenerationContext generationContext) {
+  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
+                                                           @NotNull AntCopyInstructionCreator creator,
+                                                           @NotNull ArtifactAntGenerationContext generationContext) {
     File file = new File(FileUtil.toSystemDependentName(myFilePath));
     final String path = generationContext.getSubstitutedPath(myFilePath);
     Generator generator;
@@ -50,6 +49,22 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
       generator = creator.createFileCopyInstruction(path, StringUtil.getShortName(myFilePath, '/'));
     }
     return Collections.singletonList(generator);
+  }
+
+  @Override
+  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
+                                                     @NotNull PackagingElementResolvingContext resolvingContext,
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext) {
+    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFilePath);
+    if (file == null || !file.isValid()) {
+      return;
+    }
+    if (file.isDirectory()) {
+      creator.addDirectoryCopyInstructions(file);
+    }
+    else {
+      creator.addFileCopyInstruction(file);
+    }
   }
 
   @Override

@@ -31,9 +31,9 @@ public class DirectoryPackagingElement extends CompositePackagingElement<Directo
   }
 
   @Override
-  public List<? extends Generator> computeCopyInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
-                                                           @NotNull CopyInstructionCreator creator,
-                                                           @NotNull ArtifactGenerationContext generationContext) {
+  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
+                                                           @NotNull AntCopyInstructionCreator creator,
+                                                           @NotNull ArtifactAntGenerationContext generationContext) {
 
     final List<Generator> children = new ArrayList<Generator>();
     final Generator command = creator.createSubFolderCommand(myDirectoryName);
@@ -42,6 +42,13 @@ public class DirectoryPackagingElement extends CompositePackagingElement<Directo
     }
     children.addAll(computeChildrenGenerators(resolvingContext, creator.subFolder(myDirectoryName), generationContext));
     return children;
+  }
+
+  @Override
+  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
+                                                     @NotNull PackagingElementResolvingContext resolvingContext,
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext) {
+    computeChildrenInstructions(creator.subFolder(myDirectoryName), resolvingContext, compilerContext);
   }
 
   public DirectoryPackagingElement getState() {
