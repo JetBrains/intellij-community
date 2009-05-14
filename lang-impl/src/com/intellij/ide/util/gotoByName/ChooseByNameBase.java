@@ -33,7 +33,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.UIUtil;
-import org.apache.oro.text.regex.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -1087,7 +1086,7 @@ public abstract class ChooseByNameBase{
           for (Object element : sameNameElements) {
             elementsArray.add(element);
             if (elementsArray.size() >= myMaximumListSizeLimit) {
-              overflow = true;
+                overflow = true;
               break All;
             }
           }
@@ -1165,13 +1164,9 @@ patterns:
     }
 
     final String[] names = checkboxState ? myNames[1] : myNames[0];
-    final String regex = NameUtil.buildRegexp(pattern, 0, true, true);
+    final NameUtil.Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true);
 
     try {
-      Perl5Compiler compiler = new Perl5Compiler();
-      final Pattern compiledPattern = compiler.compile(regex);
-      final PatternMatcher matcher = new Perl5Matcher();
-
       for (String name : names) {
         if (calcElementsThread != null && calcElementsThread.myCancelled) {
           throw new ProcessCanceledException();
@@ -1182,13 +1177,13 @@ patterns:
               list.add(name);
             }
           }
-          else if (pattern.length() == 0 || matcher.matches(name, compiledPattern)) {
+          else if (pattern.length() == 0 || matcher.matches(name)) {
             list.add(name);
           }
         }
       }
     }
-    catch (MalformedPatternException e) {
+    catch (Exception e) {
       // Do nothing. No matches appears valid result for "bad" pattern
     }
   }

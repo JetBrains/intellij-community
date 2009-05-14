@@ -25,8 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Roman Chernyatchik
@@ -94,13 +92,10 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
         items.add(new LookupItem<PresentableLookupValue>(variant, variant.getPresentation()));
       }
     } else {
-      final String regexp = NameUtil.buildRegexp(prefix, 0, true, true);
-      final Pattern pattern = Pattern.compile(regexp);
-      final Matcher matcher = pattern.matcher("");
+      final NameUtil.Matcher matcher = NameUtil.buildMatcher(prefix, 0, true, true);
 
       for (PresentableLookupValue variant : myVariants) {
-        matcher.reset(variant.getPresentation());
-        if (matcher.matches()) {
+        if (matcher.matches(variant.getPresentation())) {
           items.add(new LookupItem<PresentableLookupValue>(variant, variant.getPresentation()));
         }
       }

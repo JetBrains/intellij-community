@@ -5,15 +5,13 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.psi.codeStyle.NameUtil;
-import org.apache.oro.text.regex.*;
 
 import java.awt.event.KeyEvent;
 
 public class SpeedSearch {
   private String myString = "";
   private boolean myEnabled;
-  private PatternMatcher myMatcher;
-  private Pattern myCompiledPattern;
+  private NameUtil.Matcher myMatcher;
 
   public void type(String letter) {
     updatePattern(myString + letter);
@@ -27,7 +25,7 @@ public class SpeedSearch {
 
   public boolean shouldBeShowing(String string) {
     return string == null ||
-           myString.length() == 0 || (myMatcher != null && myCompiledPattern != null && myMatcher.matches(string, myCompiledPattern));
+           myString.length() == 0 || (myMatcher != null && myMatcher.matches(string));
   }
 
   public void process(KeyEvent e) {
@@ -89,14 +87,11 @@ public class SpeedSearch {
 
   public void updatePattern(final String string) {
     myString = string;
-    Perl5Compiler compiler = new Perl5Compiler();
     try {
-      myCompiledPattern = compiler.compile(NameUtil.buildRegexp("*" + string, 0, true, false));
-      myMatcher = new Perl5Matcher();
+      myMatcher = NameUtil.buildMatcher("*" + string, 0, true, false);
     }
-    catch (MalformedPatternException e) {
+    catch (Exception e) {
       myMatcher = null;
-      myCompiledPattern = null;
     }
   }
 }

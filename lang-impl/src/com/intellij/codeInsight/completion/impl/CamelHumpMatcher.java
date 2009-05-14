@@ -13,10 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import org.apache.oro.text.regex.MalformedPatternException;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.Perl5Compiler;
-import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -25,14 +21,13 @@ import java.util.Map;
  * @author peter
 */
 public class CamelHumpMatcher extends PrefixMatcher {
-  private static final Map<String, Pattern> ourPatternCache = new LinkedHashMap<String, Pattern>() {
+  private static final Map<String, NameUtil.Matcher> ourPatternCache = new LinkedHashMap<String, NameUtil.Matcher>() {
     @Override
-    protected boolean removeEldestEntry(Map.Entry<String, Pattern> eldest) {
+    protected boolean removeEldestEntry(Map.Entry<String, NameUtil.Matcher> eldest) {
       return size() > 10;
     }
   };
-  private volatile Pattern myPattern;
-  private volatile Perl5Matcher myMatcher;
+  private NameUtil.Matcher myMatcher;
   private final String myPrefix;
   private final boolean myCaseSensitive;
 
@@ -46,25 +41,18 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   public synchronized boolean prefixMatches(@NotNull final String name) {
-    if (myPattern == null) {
-      final String stringPattern = createCamelHumpsMatcher();
+    if (myMatcher == null) {
       synchronized (ourPatternCache) {
-        Pattern pattern = ourPatternCache.get(stringPattern);
+        NameUtil.Matcher pattern = ourPatternCache.get(myPrefix);
         if (pattern == null) {
-          try {
-            pattern = new Perl5Compiler().compile(stringPattern);
-            ourPatternCache.put(stringPattern, pattern);
-          }
-          catch (MalformedPatternException e) {
-            throw new RuntimeException(e);
-          }
+          pattern = createCamelHumpsMatcher();
+          ourPatternCache.put(myPrefix, pattern);
         }
-        myPattern = pattern;
+        myMatcher = pattern;
       }
-      myMatcher = new Perl5Matcher();
     }
 
-    return myMatcher.matches(name, myPattern);
+    return myMatcher.matches(name);
   }
 
 
@@ -136,9 +124,9 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return uniqueText;
   }
 
-  private String createCamelHumpsMatcher() {
+  private NameUtil.Matcher createCamelHumpsMatcher() {
     if (!myCaseSensitive) {
-      return NameUtil.buildRegexp(myPrefix, 0, true, true);
+      return NameUtil.buildMatcher(myPrefix, 0, true, true);
     }
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -146,13 +134,13 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
     switch (variant) {
       case CodeInsightSettings.NONE:
-        return NameUtil.buildRegexp(myPrefix, 0, true, true);
+        return NameUtil.buildMatcher(myPrefix, 0, true, true);
       case CodeInsightSettings.FIRST_LETTER:
-        return NameUtil.buildRegexp(myPrefix, 1, true, true);
+        return NameUtil.buildMatcher(myPrefix, 1, true, true);
       case CodeInsightSettings.ALL:
-        return NameUtil.buildRegexp(myPrefix, 0, false, false);
+        return NameUtil.buildMatcher(myPrefix, 0, false, false);
       default:
-        return NameUtil.buildRegexp(myPrefix, 0, true, false);
+        return NameUtil.buildMatcher(myPrefix, 0, true, false);
     }
   }
 }

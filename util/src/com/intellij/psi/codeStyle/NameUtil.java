@@ -26,6 +26,7 @@ import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class NameUtil {
   private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
@@ -300,5 +301,83 @@ public class NameUtil {
     b = new StringBuffer();
     b.append(c);
     return b;
+  }
+
+  public interface Matcher {
+    boolean matches(CharSequence name);
+  }
+
+  public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower));
+  }
+
+  public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords));
+  }
+
+  private static Matcher buildMatcher(String pattern, String regexp) {
+    return new OptimizedMatcher(pattern, regexp);
+  }
+
+  private static class OptimizedMatcher implements Matcher {
+    private final String myPreparedPattern;
+    private final boolean myEnsureFirstSymbolsMatch;
+    private final java.util.regex.Matcher myMatcher;
+
+    public OptimizedMatcher(String pattern, String regexp) {
+      myPreparedPattern = preparePattern(pattern);
+      myEnsureFirstSymbolsMatch = pattern.length() > 0 && Character.isLetterOrDigit(pattern.charAt(0));
+      myMatcher = Pattern.compile(regexp).matcher("");
+    }
+
+    public boolean matches(CharSequence name) {
+      if (!prefilter(name, myPreparedPattern)) {
+        return false;
+      }
+
+      myMatcher.reset(name);
+      return myMatcher.matches();
+    }
+
+    private static String preparePattern(String pattern) {
+      StringBuilder builder = new StringBuilder();
+      for (int i = 0; i < pattern.length(); i++) {
+        char c = pattern.charAt(i);
+        if (Character.isLetterOrDigit(c)) {
+          builder.append(StringUtil.toLowerCase(c));
+        }
+      }
+      return builder.toString();
+    }
+
+    /**
+     * Don't try regexp matcher on names, which do not contain all the alphanumerics from the pattern in pattern's original order.
+     */
+    private boolean prefilter(CharSequence name, String pattern) {
+      int patternIndex = 0;
+      int nameIndex = 0;
+
+      int patternLen = pattern.length();
+      int nameLen = name.length();
+
+      if (patternLen == 0 || patternLen > nameLen) return false;
+      if (myEnsureFirstSymbolsMatch) {
+        if (StringUtil.toLowerCase(name.charAt(0)) != pattern.charAt(0)) return false;
+
+        nameIndex = 1;
+        patternIndex = 1;
+      }
+
+      while (patternIndex < patternLen) {
+        char c = pattern.charAt(patternIndex++);
+
+        while (true) {
+          if (nameIndex >= nameLen) return false;
+          if (StringUtil.toLowerCase(name.charAt(nameIndex++)) == c) break;
+        }
+      }
+
+      return true;
+    }
   }
 }

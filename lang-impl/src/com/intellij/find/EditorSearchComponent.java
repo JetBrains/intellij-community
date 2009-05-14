@@ -43,7 +43,6 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class EditorSearchComponent extends JPanel implements DataProvider {
@@ -644,17 +643,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     private String[] calcWords(final String prefix) {
-      final String regexp = NameUtil.buildRegexp(prefix, 0, true, true);
-      final Pattern pattern = Pattern.compile(regexp);
-      final Matcher matcher = pattern.matcher("");
+      final NameUtil.Matcher matcher = NameUtil.buildMatcher(prefix, 0, true, true);
       final Set<String> words = new HashSet<String>();
       CharSequence chars = myEditor.getDocument().getCharsSequence();
 
       IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
         public void run(final CharSequence chars, final int start, final int end, char[] charArray) {
           final CharSequence word = chars.subSequence(start, end);
-          matcher.reset(word);
-          if (matcher.matches()) {
+          if (matcher.matches(word)) {
             words.add(word.toString());
           }
         }
