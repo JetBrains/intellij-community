@@ -163,16 +163,18 @@ public class FileSystemSynchronizer {
 
     int count = 0;
     while (true) {
-      FileContent content = null;
+      final FileContent content;
       try {
         content = contentQueue.take();
       }
       catch (InterruptedException e) {
         LOG.error(e);
+        break;
       }
       if (content == null) break;
       final VirtualFile file = content.getVirtualFile();
       if (file == null) break;
+
       if (indicator != null) {
         indicator.checkCanceled();
         indicator.setFraction((double)++count / totalFiles);
@@ -180,7 +182,7 @@ public class FileSystemSynchronizer {
       }
       for (int i = 0; i < updaterCount; i++) {
         CacheUpdater updater = myUpdaters.get(i);
-        if (myIndexingSets.remove(i, file)) {
+        if (updater != null && myIndexingSets.remove(i, file)) {
           try {
             updater.processFile(content);
           }
@@ -200,6 +202,7 @@ public class FileSystemSynchronizer {
             catch (Throwable e) {
               LOG.error(e);
             }
+            myUpdaters.set(i, null); //not to call updatingDone second time below
           }
         }
       }
@@ -213,9 +216,12 @@ public class FileSystemSynchronizer {
   }
 
   private void updatingDone() {
-    for (CacheUpdater updater : myUpdaters) {
+    for (int i = 0, myUpdatersSize = myUpdaters.size(); i < myUpdatersSize; i++) {
+      CacheUpdater updater = myUpdaters.get(i);
       try {
-        if (updater != null) updater.updatingDone();
+        if (updater != null && myIndexingSets.isDoneForegroundly(i)) {
+          updater.updatingDone();
+        }
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -225,10 +231,6 @@ public class FileSystemSynchronizer {
       }
     }
 
-    dropUpdaters();
-  }
-
-  private void dropUpdaters() {
     myUpdaters.clear();
     myFilesToUpdate.clear();
     myIndexingSets = null;
