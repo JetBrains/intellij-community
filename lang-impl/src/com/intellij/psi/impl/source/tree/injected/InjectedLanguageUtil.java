@@ -24,6 +24,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,30 +38,40 @@ import java.util.List;
 public class InjectedLanguageUtil {
   static final Key<List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
-  private InjectedLanguageUtil() {
-  }
-
-  public static void forceInjectionOnElement(@NotNull final PsiElement host) {
-    PsiFile file = host.getContainingFile();
-    if (file instanceof DummyHolder) {
-      PsiElement context = file.getContext();
-      if (context != null) {
-        context.getContainingFile().getNode();
-      }
-    }
+  public static void forceInjectionOnElement(@NotNull PsiElement host) {
     enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
       }
     });
   }
 
+  private static PsiElement loadTree(PsiElement host) {
+    PsiFile file = host.getContainingFile();
+    if (file instanceof DummyHolder) {
+      PsiElement context = file.getContext();
+      if (context != null) {
+        PsiFile topFile = context.getContainingFile();
+        topFile.getNode();  //load tree
+        TextRange textRange = host.getTextRange().shiftRight(context.getTextRange().getStartOffset());
+
+        PsiElement inLoadedTree =
+          PsiTreeUtil.findElementOfClassAtRange(topFile, textRange.getStartOffset(), textRange.getEndOffset(), host.getClass());
+        if (inLoadedTree != null) {
+          host = inLoadedTree;
+        }
+      }
+    }
+    return host;
+  }
+
   @Nullable
   public static List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final PsiElement host) {
+    final PsiElement inTree = loadTree(host);
     final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
-    enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    enumerate(inTree, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         for (PsiLanguageInjectionHost.Shred place : places) {
-          if (place.host == host) {
+          if (place.host == inTree) {
             result.add(new Pair<PsiElement, TextRange>(injectedPsi, place.getRangeInsideHost()));
           }
         }
@@ -98,6 +109,13 @@ public class InjectedLanguageUtil {
       final PsiFile file = context.getContainingFile();
       if (file == null || !file.isPhysical() && file.getOriginalFile() == file) return;
     }
+
+    PsiElement inTree = loadTree(host);
+    if (inTree != host) {
+      host = inTree;
+      containingFile = host.getContainingFile();
+    }
+
     Places places = probeElementsUp(host, containingFile, probeUp);
     if (places == null) return;
     for (Place place : places) {
