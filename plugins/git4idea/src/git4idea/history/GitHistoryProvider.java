@@ -113,7 +113,7 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    */
   @Nullable
   public HistoryAsTreeProvider getTreeHistoryProvider() {
-    return new GitHistoryTreeProvider();
+    return null;
   }
 
   /**
