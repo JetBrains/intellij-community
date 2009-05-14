@@ -3,6 +3,7 @@ package com.intellij.appengine.sdk.impl;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.server.integration.AppEngineServerData;
 import com.intellij.appengine.server.integration.AppEngineServerIntegration;
+import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.BrowserUtil;
@@ -10,7 +11,6 @@ import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.javaee.appServerIntegrations.ApplicationServerInfo;
 import com.intellij.javaee.appServerIntegrations.CantFindApplicationServerJarsException;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
@@ -102,7 +102,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
 
   private File getCachedWhiteListFile() {
     String fileName = StringUtil.getShortName(myHomePath, '/') + Integer.toHexString(myHomePath.hashCode()) + "_" + Long.toHexString(getToolsApiJarFile().lastModified());
-    return new File(PathManager.getSystemPath(), "GoogleAppEngine" + File.separator + fileName);
+    return new File(AppEngineUtil.getAppEngineSystemDir(), fileName);
   }
 
   public boolean isMethodInBlacklist(@NotNull String className, @NotNull String methodName) {
@@ -155,6 +155,18 @@ public class AppEngineSdkImpl implements AppEngineSdk {
       }
     }.execute();
     return server;
+  }
+
+  public String getOrmLibDirectoryPath() {
+    return getLibUserDirectoryPath() + "/orm";
+  }
+
+  public File getOrmLibSourcesDirectory() {
+    return new File(FileUtil.toSystemDependentName(myHomePath + "/src/orm"));
+  }
+
+  public String getLibUserDirectoryPath() {
+    return myHomePath + "/lib/user";
   }
 
   private Map<String, Set<String>> loadBlackList() throws IOException {

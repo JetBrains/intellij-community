@@ -17,6 +17,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private final FacetEditorContext myContext;
   private JPanel myMainPanel;
   private JPanel mySdkEditorPanel;
+  private JCheckBox myRunEnhancerOnCheckBox;
   private AppEngineSdkEditor mySdkEditor;
 
   public AppEngineFacetEditor(AppEngineFacetConfiguration facetConfiguration, FacetEditorContext context, FacetValidatorsManager validatorsManager) {
@@ -42,11 +43,13 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   }
 
   public boolean isModified() {
-    return !mySdkEditor.getPath().equals(myFacetConfiguration.getSdkHomePath());
+    return myRunEnhancerOnCheckBox.isSelected() != myFacetConfiguration.isRunEnhancerOnMake()
+           || !mySdkEditor.getPath().equals(myFacetConfiguration.getSdkHomePath());
   }
 
   public void apply() throws ConfigurationException {
     myFacetConfiguration.setSdkHomePath(mySdkEditor.getPath());
+    myFacetConfiguration.setRunEnhancerOnMake(myRunEnhancerOnCheckBox.isSelected());
   }
 
   public void reset() {
@@ -54,6 +57,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     if (myContext.isNewFacet() && myFacetConfiguration.getSdkHomePath().length() == 0) {
       mySdkEditor.setDefaultPath();
     }
+    myRunEnhancerOnCheckBox.setSelected(myFacetConfiguration.isRunEnhancerOnMake());
   }
 
   public void disposeUIResources() {

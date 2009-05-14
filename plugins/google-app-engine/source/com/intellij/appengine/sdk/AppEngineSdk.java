@@ -1,10 +1,9 @@
 package com.intellij.appengine.sdk;
 
+import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-
-import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 
 /**
  * @author nik
@@ -27,4 +26,10 @@ public interface AppEngineSdk {
   boolean isValid();
 
   ApplicationServer getOrCreateAppServer();
+
+  String getOrmLibDirectoryPath();
+
+  String getLibUserDirectoryPath();
+
+  File getOrmLibSourcesDirectory();
 }

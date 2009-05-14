@@ -15,6 +15,7 @@ import org.jdom.Element;
  */
 public class AppEngineFacetConfiguration implements FacetConfiguration, PersistentStateComponent<AppEngineFacetConfiguration> {
   private String mySdkHomePath = "";
+  private boolean myRunEnhancerOnMake = false;
 
   public FacetEditorTab[] createEditorTabs(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
     return new FacetEditorTab[] {
@@ -34,6 +35,7 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
 
   public void loadState(AppEngineFacetConfiguration state) {
     mySdkHomePath = state.getSdkHomePath();
+    myRunEnhancerOnMake = state.isRunEnhancerOnMake();
   }
 
   @Tag("sdk-home-path")
@@ -43,5 +45,14 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
 
   public void setSdkHomePath(String sdkHomePath) {
     mySdkHomePath = sdkHomePath;
+  }
+
+  @Tag("run-enhancer-on-make")
+  public boolean isRunEnhancerOnMake() {
+    return myRunEnhancerOnMake;
+  }
+
+  public void setRunEnhancerOnMake(boolean runEnhancerOnMake) {
+    myRunEnhancerOnMake = runEnhancerOnMake;
   }
 }

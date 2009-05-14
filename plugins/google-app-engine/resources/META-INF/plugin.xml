@@ -2,7 +2,7 @@
   <name>Google App Engine Integration</name>
   <id>com.intellij.appengine</id>
   <description>Provides support for developing Google App Engine applications</description>
-  <version>0.102</version>
+  <version>0.2.0</version>
   <idea-version since-build="9000"/>
   <depends>com.intellij.javaee</depends>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
@@ -16,9 +16,12 @@
          <li>appengine-web.xml descriptor
          <li>App Engine Facet
          <li>App Engine Dev server run configuration
+         <li>jdoconfig.xml descriptor
+         <li>required libraries
        </ul>
      <li> inspection to report forbidden code in App Engine application
      <li> run configuration for Google App Engine Dev server
+     <li> option to run JDO Enhancer on make (in Google App Engine Facet settings)
      <li> action for uploading an application to Google (Tools | Upload App Engine Application)
     </ul>
    ]]></change-notes>
@@ -34,6 +37,7 @@
     <frameworkSupport implementation="com.intellij.appengine.facet.AppEngineSupportProvider"/>
     <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
+    <compiler implementation="com.intellij.appengine.enhancement.EnhancerCompiler"/>
   </extensions>
 
   <actions>

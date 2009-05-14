@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.application.PathManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
 
 /**
  * @author nik
@@ -21,6 +23,7 @@ import java.util.List;
 public class AppEngineUtil {
   public static final Icon APP_ENGINE_ICON = IconLoader.getIcon("/icons/appEngine.png");
   @NonNls public static final String APPENGINE_WEB_XML_NAME = "appengine-web.xml";
+  @NonNls public static final String JDO_CONFIG_XML_NAME = "jdoconfig.xml";
 
   private AppEngineUtil() {
   }
@@ -54,5 +57,9 @@ public class AppEngineUtil {
       }
     }
     return facets;
+  }
+
+  public static File getAppEngineSystemDir() {
+    return new File(PathManager.getSystemPath(), "GoogleAppEngine");
   }
 }

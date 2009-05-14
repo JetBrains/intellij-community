@@ -17,18 +17,26 @@ import com.intellij.ide.util.newProjectWizard.FrameworkSupportModel;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.javaee.run.configuration.CommonStrategy;
 import com.intellij.javaee.web.facet.WebFacet;
+import com.intellij.javaee.module.JavaeePackagingConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
+import java.io.File;
 
 /**
  * @author nik
@@ -45,10 +53,14 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
     final VirtualFile webXml = webFacet.getWebXmlDescriptor().getVirtualFile();
     if (webXml == null) return;
 
-    final FileTemplate template = FileTemplateManager.getInstance().getJ2eeTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE);
+    createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE, webXml.getParent(), AppEngineUtil.APPENGINE_WEB_XML_NAME);
+  }
+
+  private void createFileFromTemplate(final String templateName, final VirtualFile parent, final String fileName) {
+    final FileTemplate template = FileTemplateManager.getInstance().getJ2eeTemplate(templateName);
     try {
       final String text = template.getText(FileTemplateManager.getInstance().getDefaultProperties());
-      final VirtualFile file = webXml.getParent().createChildData(this, AppEngineUtil.APPENGINE_WEB_XML_NAME);
+      final VirtualFile file = parent.createChildData(this, fileName);
       VfsUtil.saveText(file, text);
     }
     catch (IOException e) {
@@ -56,7 +68,7 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
     }
   }
 
-  private void addSupport(Module module, ModifiableRootModel rootModel, String sdkPath) {
+  private void addSupport(final Module module, final ModifiableRootModel rootModel, String sdkPath, boolean addJdoSupport) {
     super.addSupport(module, rootModel, null, null);
     final AppEngineFacet appEngineFacet = FacetManager.getInstance(module).getFacetByType(AppEngineFacet.ID);
     LOG.assertTrue(appEngineFacet != null);
@@ -76,6 +88,64 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
       runManager.addConfiguration(runSettings, false);
       runManager.setActiveConfiguration(runSettings);
     }
+
+    final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getLibUserDirectoryPath(), null);
+    rootModel.addLibraryEntry(apiJar);
+    if (addJdoSupport) {
+      appEngineFacet.getConfiguration().setRunEnhancerOnMake(true);
+      try {
+        final VirtualFile[] sourceRoots = rootModel.getSourceRoots();
+        final VirtualFile sourceRoot;
+        if (sourceRoots.length > 0) {
+          sourceRoot = sourceRoots[0];
+        }
+        else {
+          sourceRoot = findOrCreateChildDirectory(rootModel.getContentRoots()[0], "src");
+        }
+        VirtualFile metaInf = findOrCreateChildDirectory(sourceRoot, "META-INF");
+        createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_JDO_CONFIG_TEMPLATE, metaInf, AppEngineUtil.JDO_CONFIG_XML_NAME);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      final Library library = addProjectLibrary(module, "AppEngine ORM", sdk.getOrmLibDirectoryPath(), sdk.getOrmLibSourcesDirectory());
+      rootModel.addLibraryEntry(library);
+      final JavaeePackagingConfiguration configuration = appEngineFacet.getWebFacet().getPackagingConfiguration();
+      configuration.addLibraryLink(library);
+      configuration.addLibraryLink(apiJar);
+    }
+  }
+
+  private static Library addProjectLibrary(final Module module, final String name, final String path, @Nullable final File sourcesDirectory) {
+    return new WriteAction<Library>() {
+      protected void run(final Result<Library> result) {
+        final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
+        Library library = libraryTable.getLibraryByName(name);
+        if (library == null) {
+          library = libraryTable.createLibrary(name);
+          final Library.ModifiableModel model = library.getModifiableModel();
+          model.addJarDirectory(VfsUtil.pathToUrl(path), false);
+          if (sourcesDirectory != null) {
+            final File[] files = sourcesDirectory.listFiles();
+            if (files != null) {
+              for (File file : files) {
+                model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.SOURCES);
+              }
+            }
+          }
+          model.commit();
+        }
+        result.setResult(library);
+      }
+    }.execute().getResultObject();
+  }
+
+  private VirtualFile findOrCreateChildDirectory(VirtualFile parent, final String name) throws IOException {
+    VirtualFile child = parent.findChild(name);
+    if (child != null) {
+      return child;
+    }
+    return parent.createChildDirectory(this, name);
   }
 
   @NotNull
@@ -85,21 +155,27 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
   }
 
   private class AppEngineSupportConfigurable extends VersionConfigurable {
+    private JPanel myMainPanel;
     private AppEngineSdkEditor mySdkEditor;
+    private JCheckBox myJdoCheckBox;
 
     private AppEngineSupportConfigurable() {
       super(AppEngineSupportProvider.this, ArrayUtil.EMPTY_STRING_ARRAY, null);
       mySdkEditor = new AppEngineSdkEditor(null);
+      myMainPanel = new JPanel(new BorderLayout());
+      myMainPanel.add(mySdkEditor.getMainComponent(), BorderLayout.CENTER);
+      myJdoCheckBox = new JCheckBox("JDO persistence");
+      myMainPanel.add(myJdoCheckBox, BorderLayout.SOUTH);
     }
 
     @Override
     public void addSupport(Module module, ModifiableRootModel rootModel, @Nullable Library library) {
-      AppEngineSupportProvider.this.addSupport(module, rootModel, mySdkEditor.getPath());
+      AppEngineSupportProvider.this.addSupport(module, rootModel, mySdkEditor.getPath(), myJdoCheckBox.isSelected());
     }
 
     @Override
     public JComponent getComponent() {
-      return mySdkEditor.getMainComponent();
+      return myMainPanel;
     }
 
   }
