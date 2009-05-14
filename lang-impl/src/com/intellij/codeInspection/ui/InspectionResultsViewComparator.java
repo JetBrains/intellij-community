@@ -17,7 +17,7 @@ import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.editor.Document;
-import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.profile.codeInspection.ui.InspectionsConfigTreeComparator;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
@@ -44,8 +44,8 @@ public class InspectionResultsViewComparator implements Comparator {
     }
 
     if (node1 instanceof InspectionNode && node2 instanceof InspectionNode)
-      return SingleInspectionProfilePanel.getDisplayTextToSort(node1.toString())
-      .compareToIgnoreCase(SingleInspectionProfilePanel.getDisplayTextToSort(node2.toString()));
+      return InspectionsConfigTreeComparator.getDisplayTextToSort(node1.toString())
+      .compareToIgnoreCase(InspectionsConfigTreeComparator.getDisplayTextToSort(node2.toString()));
 
     if (node1 instanceof InspectionNode) return -1;
     if (node2 instanceof InspectionNode) return 1;

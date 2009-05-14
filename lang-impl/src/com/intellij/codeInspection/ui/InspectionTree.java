@@ -16,7 +16,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.profile.codeInspection.ui.InspectionsConfigTreeComparator;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -64,7 +64,7 @@ public class InspectionTree extends Tree {
     TreeUtil.installActions(this);
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
       public String convert(TreePath o) {
-        return SingleInspectionProfilePanel.getDisplayTextToSort(o.getLastPathComponent().toString());
+        return InspectionsConfigTreeComparator.getDisplayTextToSort(o.getLastPathComponent().toString());
       }
     });
 

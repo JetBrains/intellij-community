@@ -3,7 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.profile.codeInspection.ui.InspectionConfigTreeNode;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -62,7 +62,7 @@ public class VisibleTreeState implements JDOMExternalizable{
   }
 
   private void traverseNodes(final DefaultMutableTreeNode root, List<TreePath> pathsToExpand, List<TreePath> toSelect) {
-    final Descriptor descriptor = ((SingleInspectionProfilePanel.MyTreeNode)root).getDesriptor();
+    final Descriptor descriptor = ((InspectionConfigTreeNode)root).getDesriptor();
     final TreeNode[] rootPath = root.getPath();
     if (descriptor != null) {
       final String shortName = descriptor.getKey().toString();
@@ -74,7 +74,7 @@ public class VisibleTreeState implements JDOMExternalizable{
       }
     }
     else {
-      final String str = ((SingleInspectionProfilePanel.MyTreeNode)root).getGroupName();
+      final String str = ((InspectionConfigTreeNode)root).getGroupName();
       if (mySelectedNodes.contains(str)) {
         toSelect.add(new TreePath(rootPath));
       }
@@ -94,7 +94,7 @@ public class VisibleTreeState implements JDOMExternalizable{
     if (expanded != null) {
       while (expanded.hasMoreElements()) {
         final TreePath treePath = expanded.nextElement();
-        final SingleInspectionProfilePanel.MyTreeNode node = (SingleInspectionProfilePanel.MyTreeNode)treePath.getLastPathComponent();
+        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)treePath.getLastPathComponent();
         final Descriptor descriptor = node.getDesriptor();
         String expandedNode;
         if (descriptor != null) {
@@ -114,7 +114,7 @@ public class VisibleTreeState implements JDOMExternalizable{
     mySelectedNodes.clear();
     if (selectionPaths != null) {
       for (TreePath selectionPath : selectionPaths) {
-        final SingleInspectionProfilePanel.MyTreeNode node = (SingleInspectionProfilePanel.MyTreeNode)selectionPath.getLastPathComponent();
+        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
         final Descriptor descriptor = node.getDesriptor();
         String selectedNode;
         if (descriptor != null) {
