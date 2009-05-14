@@ -73,7 +73,7 @@ import java.util.List;
  * User: anna
  * Date: 31-May-2006
  */
-public class SingleInspectionProfilePanel extends JPanel implements DataProvider {
+public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsPanel");
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
   private static final String UNDER_CONSTRUCTION = InspectionsBundle.message("inspection.tool.description.under.construction.text");
@@ -93,8 +93,6 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
   private String myInitialProfile;
   @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
   private boolean myIsInRestore = false;
-
-  public static final DataKey<SingleInspectionProfilePanel> PANEL_KEY = DataKey.create(SingleInspectionProfilePanel.class.getName());
 
   public SingleInspectionProfilePanel(final String inspectionProfileName, final ModifiableModel profile) {
     super(new BorderLayout());
@@ -910,13 +908,6 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
 
 
     return false;
-  }
-
-  public Object getData(@NonNls final String dataId) {
-    if (dataId.equals(PANEL_KEY.getName())) {
-      return this;
-    }
-    return null;
   }
 
 
