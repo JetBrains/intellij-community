@@ -76,8 +76,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = false;
   public boolean AUTOCOMPLETE_COMMON_PREFIX = true;
-  public boolean INSERT_SINGLE_PARENTH = false;
-  public boolean INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS = false;
   public boolean SHOW_STATIC_AFTER_INSTANCE = false;
 
   public boolean SHOW_SIGNATURES_IN_LOOKUPS = true;

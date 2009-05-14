@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="7f988" layout-manager="GridLayoutManager" row-count="15" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="1">
+      <grid id="7f988" layout-manager="GridLayoutManager" row-count="11" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="1">
         <margin top="7" left="7" bottom="7" right="7"/>
         <constraints>
           <grid row="0" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
@@ -92,14 +92,6 @@
               <text resource-bundle="messages/ApplicationBundle" key="label.complete.autopopup"/>
             </properties>
           </component>
-          <component id="8a242" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="11" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="label.complete.brackets"/>
-            </properties>
-          </component>
           <component id="59c92" class="javax.swing.JCheckBox" binding="myCbAutocompletion">
             <constraints>
               <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -149,33 +141,6 @@
             <properties>
               <columns value="4"/>
               <text value="0"/>
-            </properties>
-          </component>
-          <component id="923fc" class="javax.swing.JRadioButton" binding="myRbInsertParenth">
-            <constraints>
-              <grid row="12" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="15" bottom="2" right="2"/>
-              <text resource-bundle="messages/ApplicationBundle" key="radio.insert.left.parenthesis"/>
-            </properties>
-          </component>
-          <component id="1e3db" class="javax.swing.JCheckBox" binding="myCbInsertBothParenthesWhenNoArgs">
-            <constraints>
-              <grid row="13" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="25" bottom="2" right="2"/>
-              <text resource-bundle="messages/ApplicationBundle" key="checkbox.insert.both.parentheses.when.no.arguments"/>
-            </properties>
-          </component>
-          <component id="b1568" class="javax.swing.JRadioButton" binding="myRbInsertBothParenthes">
-            <constraints>
-              <grid row="14" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="15" bottom="2" right="2"/>
-              <text resource-bundle="messages/ApplicationBundle" key="radio.insert.both.parentheses"/>
             </properties>
           </component>
           <component id="f05b7" class="javax.swing.JTextField" binding="myFldJavadocAutocompletionDelayField">

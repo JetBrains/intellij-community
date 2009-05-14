@@ -56,7 +56,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
       new MethodParenthesesHandler(myMethod, !signatureSelected,
                                            styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
                                            styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
-                                           shouldInsertRightParenthesis(hasParams, tailType)
+                                           shouldInsertRightParenthesis(tailType)
       ).handleInsert(context, item);
     }
     
@@ -81,14 +81,8 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  protected static boolean shouldInsertRightParenthesis(boolean hasParams, TailType tailType) {
-    if (tailType == TailType.SMART_COMPLETION) return false;
-
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.INSERT_SINGLE_PARENTH && (!settings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS || hasParams) && tailType == TailType.NONE) {
-      return false;
-    }
-    return true;
+  protected static boolean shouldInsertRightParenthesis(TailType tailType) {
+    return tailType != TailType.SMART_COMPLETION;
   }
 
   @NotNull

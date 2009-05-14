@@ -220,11 +220,8 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   }
 
   private void handleParenses(final boolean hasParams, final boolean needParenth, TailType tailType){
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     final boolean generateAnonymousBody = myLookupItem.getAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR) != null;
-    boolean insertRightParenth = (!settings.INSERT_SINGLE_PARENTH || settings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS && !hasParams
-                                 || generateAnonymousBody
-                                 || tailType != TailType.NONE) && tailType != TailType.SMART_COMPLETION;
+    boolean insertRightParenth = tailType != TailType.SMART_COMPLETION;
 
     if (needParenth){
       if (myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) >= 0 && myContext.getOffsetMap().getOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET) >= 0){

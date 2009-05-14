@@ -38,28 +38,10 @@ public class CodeCompletionPanel {
   private static final String CASE_SENSITIVE_ALL = ApplicationBundle.message("combobox.autocomplete.casesensitive.all");
   private static final String CASE_SENSITIVE_NONE = ApplicationBundle.message("combobox.autocomplete.casesensitive.none");
   private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.casesensitive.first.letter");
-  private static final String CASE_SENSITIVE_UPPERCASE_LETTERS = ApplicationBundle.message("combobox.autocomplete.casesensitive.all.uppercase");
-  private JRadioButton myRbInsertParenth;
-  private JRadioButton myRbInsertBothParenthes;
-  private JCheckBox myCbInsertBothParenthesWhenNoArgs;
   ButtonGroup buttonGroup = new ButtonGroup();
 
   public CodeCompletionPanel(){
-   myCaseSensitiveCombo.setModel(new DefaultComboBoxModel(new String[]{CASE_SENSITIVE_ALL, CASE_SENSITIVE_NONE,
-                                                                       CASE_SENSITIVE_FIRST_LETTER, CASE_SENSITIVE_UPPERCASE_LETTERS}));
-
-
-   myRbInsertParenth.addActionListener(new ActionListener() {
-     public void actionPerformed(ActionEvent e){
-       myCbInsertBothParenthesWhenNoArgs.setEnabled(true);
-     }
-   });
-
-   myRbInsertBothParenthes.addActionListener(new ActionListener() {
-     public void actionPerformed(ActionEvent e){
-       myCbInsertBothParenthesWhenNoArgs.setEnabled(false);
-     }
-   });
+   myCaseSensitiveCombo.setModel(new DefaultComboBoxModel(new String[]{CASE_SENSITIVE_ALL, CASE_SENSITIVE_NONE, CASE_SENSITIVE_FIRST_LETTER}));
 
 
    myCbAutocompletion.addActionListener(
@@ -100,15 +82,11 @@ public class CodeCompletionPanel {
      }
    );
 
-   buttonGroup.add(myRbInsertParenth);
-   buttonGroup.add(myRbInsertBothParenthes);
-
     hideOption(myCbShowStaticAfterInstance, OptionId.COMPLETION_SHOW_STATIC_AFTER_IMPORT);
     hideOption(myCbXmlAutocompletion, OptionId.COMPLETION_AUTO_POPUP_XML);
     hideOption(myXmlAutocompletionDelayField, OptionId.COMPLETION_AUTO_POPUP_XML);
     hideOption(myCbJavadocAutocompletion, OptionId.COMPLETION_AUTO_POPUP_DOC_COMMENT);
     hideOption(myFldJavadocAutocompletionDelayField, OptionId.COMPLETION_AUTO_POPUP_DOC_COMMENT);
-    hideOption(myCbInsertBothParenthesWhenNoArgs, OptionId.COMPLETION_DOUBLE_PAREN_NO_ARGS);
     hideOption(myCbOnSmartTypeCompletion, OptionId.COMPLETION_SMART_TYPE);
     hideOption(myCbOnClassNameCompletion, OptionId.COMPLETION_CLASS_NAME);
 
@@ -141,16 +119,6 @@ public class CodeCompletionPanel {
     }
     myCaseSensitiveCombo.setSelectedItem(value);
     myCbShowSignaturesInLookup.setSelected(codeInsightSettings.SHOW_SIGNATURES_IN_LOOKUPS);
-
-    if (codeInsightSettings.INSERT_SINGLE_PARENTH) {
-      myRbInsertParenth.setSelected(true);
-      myCbInsertBothParenthesWhenNoArgs.setEnabled(true);
-    }
-    else {
-      myRbInsertBothParenthes.setSelected(true);
-      myCbInsertBothParenthesWhenNoArgs.setEnabled(false);
-    }
-    myCbInsertBothParenthesWhenNoArgs.setSelected(codeInsightSettings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS);
 
     myCbOnCodeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     myCbOnSmartTypeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
@@ -189,8 +157,6 @@ public class CodeCompletionPanel {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
 
     codeInsightSettings.COMPLETION_CASE_SENSITIVE = getCaseSensitiveValue();
-    codeInsightSettings.INSERT_SINGLE_PARENTH = myRbInsertParenth.isSelected();
-    codeInsightSettings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS = myCbInsertBothParenthesWhenNoArgs.isSelected();
 
     codeInsightSettings.SHOW_SIGNATURES_IN_LOOKUPS = myCbShowSignaturesInLookup.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION = myCbOnCodeCompletion.isSelected();
@@ -224,8 +190,6 @@ public class CodeCompletionPanel {
     boolean isModified = false;
 
     isModified |= (getCaseSensitiveValue() != codeInsightSettings.COMPLETION_CASE_SENSITIVE);
-    isModified |= (myRbInsertParenth.isSelected() != codeInsightSettings.INSERT_SINGLE_PARENTH);
-    isModified |= (myCbInsertBothParenthesWhenNoArgs.isSelected() != codeInsightSettings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS);
 
     isModified |= isModified(myCbShowSignaturesInLookup, codeInsightSettings.SHOW_SIGNATURES_IN_LOOKUPS);
     isModified |= isModified(myCbOnCodeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
