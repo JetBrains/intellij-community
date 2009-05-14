@@ -34,6 +34,10 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -326,20 +330,30 @@ public class SvnVcs extends AbstractVcs {
     }
   }
 
+  private final static String UPGRADE_SUBVERSION_FORMAT = "UPGRADE_SUBVERSION_FORMAT";
+
   private void upgradeToRecentVersion(final SvnConfiguration.SvnSupportOptions supportOptions) {
     if (! supportOptions.upgradeTo16Asked()) {
       final SvnWorkingCopyChecker workingCopyChecker = new SvnWorkingCopyChecker();
 
       if (workingCopyChecker.upgradeNeeded()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            // ask for upgrade
+        final Notifications notifications = myProject.getMessageBus().syncPublisher(Notifications.TOPIC);
+        notifications.register(UPGRADE_SUBVERSION_FORMAT, NotificationDisplayType.BALOON, false);
+        final String title = SvnBundle.message("upgrade.format.to16.question.title");
+        notifications.notify(UPGRADE_SUBVERSION_FORMAT, title, title, NotificationType.INFORMATION, new NotificationListener() {
+          @NotNull
+          public Continue perform() {
             final int upgradeAnswer = Messages.showYesNoDialog(SvnBundle.message("upgrade.format.to16.question.text",
-              SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text"))),
-              SvnBundle.message("upgrade.format.to16.question.title"), Messages.getWarningIcon());
+                SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text"))),
+                SvnBundle.message("upgrade.format.to16.question.title"), Messages.getWarningIcon());
             if (DialogWrapper.OK_EXIT_CODE == upgradeAnswer) {
               workingCopyChecker.doUpgrade();
             }
+            return Continue.REMOVE;
+          }
+
+          public Continue onRemove() {
+            return Continue.REMOVE;
           }
         });
       }
