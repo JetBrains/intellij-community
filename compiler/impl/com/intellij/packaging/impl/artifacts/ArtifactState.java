@@ -3,19 +3,21 @@ package com.intellij.packaging.impl.artifacts;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author nik
  */
 @Tag("artifact")
 public class ArtifactState {
+  @NonNls public static final String NAME_ATTRIBUTE = "name";
   private String myName;
   private String myOutputPath;
   private String myArtifactType = PlainArtifactType.ID;
   private boolean myBuildOnMake;
   private Element myRootElement;
 
-  @Attribute("name")
+  @Attribute(NAME_ATTRIBUTE)
   public String getName() {
     return myName;
   }

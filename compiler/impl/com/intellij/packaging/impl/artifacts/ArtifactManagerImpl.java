@@ -24,7 +24,7 @@ import java.util.Set;
     name = ArtifactManagerImpl.COMPONENT_NAME,
     storages = {
         @Storage(id = "other", file = "$PROJECT_FILE$"),
-        @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/artifacts.xml", scheme = StorageScheme.DIRECTORY_BASED)
+        @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/artifacts/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ArtifactManagerStateSplitter.class)
     }
 )
 public class ArtifactManagerImpl extends ArtifactManager implements ProjectComponent, PersistentStateComponent<ArtifactManagerState> {
