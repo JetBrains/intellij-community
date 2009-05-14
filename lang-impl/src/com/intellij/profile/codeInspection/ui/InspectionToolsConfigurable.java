@@ -12,19 +12,33 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -42,9 +56,12 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
   private JPanel myWholePanel;
   private JButton myAddButton;
   private JButton myDeleteButton;
+  private JButton myImportButton;
+  private JButton myExportButton;
   private ArrayList<String> myDeletedProfiles = new ArrayList<String>();
   protected final InspectionProfileManager myProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
+  private static final Logger LOG = Logger.getInstance("#" + InspectionToolsConfigurable.class.getName());
 
 
   public InspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
@@ -52,11 +69,7 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
       public void actionPerformed(ActionEvent e) {
         final ModifiableModel model = SingleInspectionProfilePanel.createNewProfile(-1, getSelectedObject(), myWholePanel, "");
         if (model != null) {
-          final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(model.getName(), model);
-          myPanel.add(model.getName(), panel);
-          myPanels.put(model.getName(), panel);
-          ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
-          myProfiles.setSelectedItem(model);
+          addProjectProfile((InspectionProfileImpl)model);
           myDeletedProfiles.remove(model.getName());
         }
       }
@@ -69,8 +82,67 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
          myDeletedProfiles.add(selectedProfile.getName());
       }
     });
+
+    myImportButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+        descriptor.setDescription("Choose profile file");
+        final VirtualFile[] files = FileChooser.chooseFiles(myWholePanel, descriptor);
+        if (files.length == 0) return;
+        final InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileImpl.getDefaultProfile());
+        try {
+          profile.readExternal(JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(files[0])).getRootElement());
+
+          if (Messages.showYesNoDialog(myWholePanel, "Do you want the profile to be saved to current project?", "Choose Profile Purpose", Messages.getQuestionIcon())
+              == DialogWrapper.OK_EXIT_CODE) {
+            addProjectProfile(profile);
+          } else {
+            myProfileManager.addProfile(profile);
+          }
+        }
+        catch (InvalidDataException e1) {
+          LOG.error(e1);
+        }
+        catch (JDOMException e1) {
+          LOG.error(e1);
+        }
+        catch (IOException e1) {
+          LOG.error(e1);
+        }
+      }
+    });
+
+    myExportButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        descriptor.setDescription("Choose directory to store profile file");
+        final VirtualFile[] files = FileChooser.chooseFiles(myWholePanel, descriptor);
+        if (files.length == 0) return;
+        final Element element = new Element("inspections");
+        try {
+          final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
+          profile.writeExternal(element);
+          JDOMUtil.writeDocument(new Document(element), files[0].getPath() + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml", SystemProperties.getLineSeparator());
+        }
+        catch (WriteExternalException e1) {
+          LOG.error(e1);
+        }
+        catch (IOException e1) {
+          LOG.error(e1);
+        }
+      }
+    });
+
     myProjectProfileManager = projectProfileManager;
     myProfileManager = profileManager;
+  }
+
+  private void addProjectProfile(InspectionProfileImpl model) {
+    final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(model.getName(), model);
+    myPanel.add(model.getName(), panel);
+    myPanels.put(model.getName(), panel);
+    ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
+    myProfiles.setSelectedItem(model);
   }
 
   public String getDisplayName() {
@@ -158,6 +230,7 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
     for (SingleInspectionProfilePanel panel : myPanels.values()) {
       panel.disposeUI();
     }
+    myPanels.clear();
   }
 
   public void selectProfile(String name) {
