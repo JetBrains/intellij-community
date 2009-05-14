@@ -44,7 +44,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
   protected static PackagingProcessingItem[] buildItems(final BuildRecipe buildRecipe, final MockBuildConfiguration mockBuildConfiguration) {
     final MockBuildParticipant participant = new MockBuildParticipant(mockBuildConfiguration, buildRecipe);
     final DummyCompileContext compileContext = new MyDummyCompileContext();
-    final ProcessingItemsBuilderContext context = new ProcessingItemsBuilderContext(compileContext);
+    final OldProcessingItemsBuilderContext context = new OldProcessingItemsBuilderContext(compileContext);
     new ProcessingItemsBuilder(participant, context).build();
     buildRecipe.visitInstructions(new BuildInstructionVisitor() {
       public boolean visitCompoundBuildInstruction(final CompoundBuildInstruction instruction) throws Exception {
