@@ -4,6 +4,7 @@
  */
 package com.intellij.profile.codeInspection.ui.actions;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -73,6 +74,7 @@ public class AddScopeAction extends AnAction {
     }
     node.insert(new InspectionConfigTreeNode(addedDescriptor, scopeToolState.getScope(), tool.isEnabledByDefault(), true, false), 0);
     node.setInspectionNode(false);
+    node.isProperSetting = mySelectedProfile.isProperSetting(HighlightDisplayKey.find(tool.getShortName()));
     ((DefaultTreeModel)myTree.getModel()).reload(node);
     myTree.expandPath(new TreePath(node.getPath()));
     myTree.revalidate();

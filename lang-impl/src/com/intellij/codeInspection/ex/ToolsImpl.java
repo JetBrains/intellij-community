@@ -140,7 +140,7 @@ public class ToolsImpl implements Tools {
             if (projects.length > 0) {
               namedScope = NamedScopesHolder.getScope(projects[0], scopeName);
             } else {
-              namedScope = null;
+              namedScope = NamedScopesHolder.getScope(ProjectManager.getInstance().getDefaultProject(), scopeName);
             }
           }
           if (namedScope != null) {
@@ -289,26 +289,6 @@ public class ToolsImpl implements Tools {
       }
     }
   }
-
-  public void enableTool(PsiElement element) {
-    myEnabled = true;
-    if (element == null){
-      myDefaultState.setEnabled(true);
-      return;
-    }
-    final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(element.getProject());
-    if (myTools != null) {
-      for (ScopeToolState state : myTools) {
-        final NamedScope scope = state.getScope();
-        if (scope != null && scope.getValue().contains(element.getContainingFile(), validationManager)) {
-          state.setEnabled(true);
-          return;
-        }
-      }
-    }
-    myDefaultState.setEnabled(true);
-  }
-
 
   public void disableTool(NamedScope namedScope) {
     if (myTools != null) {

@@ -183,7 +183,7 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
     for (SingleInspectionProfilePanel panel : myPanels.values()) {
       if (panel.isModified()) return true;
     }
-    return false;
+    return !myDeletedProfiles.isEmpty();
   }
 
   public void apply() throws ConfigurationException {
@@ -195,6 +195,7 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
       }
     }
     setCurrentProfile((InspectionProfileImpl)myProfiles.getSelectedItem());
+    myDeletedProfiles.clear();
   }
 
   protected void deleteProfile(String name) {

@@ -37,7 +37,6 @@ import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.actions.AddScopeAction;
 import com.intellij.profile.codeInspection.ui.actions.DeleteScopeAction;
 import com.intellij.profile.codeInspection.ui.actions.MoveScopeAction;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
@@ -525,10 +524,14 @@ public class SingleInspectionProfilePanel extends JPanel {
       final String toolShortName = key.toString();
       if (toolNode.isChecked()) {
         if (toolNode.getScope() != null){
-          mySelectedProfile.enableTool(toolShortName, toolNode.getScope());
+          if (toolNode.isByDefault()) {
+            mySelectedProfile.enableToolByDefault(toolShortName);
+          } else {
+            mySelectedProfile.enableTool(toolShortName, toolNode.getScope());
+          }
         } else {
           if (toolNode.isInspectionNode()) {
-            mySelectedProfile.enableTool(toolShortName, (PsiElement)null);
+            mySelectedProfile.enableToolByDefault(toolShortName);
           } else {
             mySelectedProfile.enableTool(toolShortName);
           }
@@ -536,10 +539,14 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
       else {
         if (toolNode.getScope() != null)  {
-          mySelectedProfile.disableTool(toolShortName, toolNode.getScope());
+          if (toolNode.isByDefault()) {
+            mySelectedProfile.disableToolByDefault(toolShortName);
+          } else {
+            mySelectedProfile.disableTool(toolShortName, toolNode.getScope());
+          }
         } else {
           if (toolNode.isInspectionNode()) {
-            mySelectedProfile.disableTool(toolShortName, (PsiElement)null);
+            mySelectedProfile.disableToolByDefault(toolShortName);
           } else {
             mySelectedProfile.disableTool(toolShortName);
           }
@@ -881,10 +888,13 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private boolean descriptorsAreChanged() {
     for (Descriptor defaultDescriptor : myDescriptors.keySet()) {
-      if (mySelectedProfile.isToolEnabled(defaultDescriptor.getKey(), (PsiElement)null) != defaultDescriptor.isEnabled()){
+      if (mySelectedProfile.isToolEnabled(defaultDescriptor.getKey(), (NamedScope)null) != defaultDescriptor.isEnabled()){
         return true;
       }
-      List<Descriptor> descriptors = myDescriptors.get(defaultDescriptor);
+      if (mySelectedProfile.getErrorLevel(defaultDescriptor.getKey(), defaultDescriptor.getScope()) != defaultDescriptor.getLevel()) {
+        return true;
+      }
+      final List<Descriptor> descriptors = myDescriptors.get(defaultDescriptor);
       for (Descriptor descriptor : descriptors) {
         if (mySelectedProfile.isToolEnabled(descriptor.getKey(), descriptor.getScope()) != descriptor.isEnabled()) {
           return true;

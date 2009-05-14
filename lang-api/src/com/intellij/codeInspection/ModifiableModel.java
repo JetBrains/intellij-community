@@ -78,5 +78,4 @@ public interface ModifiableModel extends Profile {
 
   void disableTool(String toolId, PsiElement element);
 
-  void enableTool(String toolId, PsiElement element);
 }
