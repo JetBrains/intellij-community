@@ -25,9 +25,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.config.GitConfigUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -340,6 +342,9 @@ public class GitUtil {
    */
   @Nullable
   public static VirtualFile gitRootOrNull(final VirtualFile file) {
+    if (file instanceof AbstractVcsVirtualFile) {
+      return getGitRootOrNull(VcsUtil.getFilePath(file.getPath()));
+    }
     VirtualFile root = file;
     while (root != null) {
       if (root.findFileByRelativePath(".git") != null) {

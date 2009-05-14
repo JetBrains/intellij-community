@@ -15,21 +15,64 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitFileRevision;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
 
 /**
- * Initial code for show submitted files action
+ * Initial code for show submitted files action, this action is accessed from history view
  */
-public class GitShowAllSubmittedFilesAction {
+public class GitShowAllSubmittedFilesAction extends AnAction {
+
+  /**
+   * A constructor
+   */
+  public GitShowAllSubmittedFilesAction() {
+    super(GitBundle.message("show.all.paths.affected.action.name"), null, IconLoader.findIcon("/icons/allRevisions.png"));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+    final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+    e.getPresentation().setEnabled((e.getData(VcsDataKeys.VCS_FILE_REVISION) != null) && (revisionVirtualFile != null));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void actionPerformed(AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return;
+    final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
+    final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+    if ((revision != null) && (revisionVirtualFile != null)) {
+      final GitFileRevision gitRevision = ((GitFileRevision)revision);
+      showSubmittedFiles(project, gitRevision, revisionVirtualFile);
+    }
+  }
+
   /**
    * Show submitted files
    *

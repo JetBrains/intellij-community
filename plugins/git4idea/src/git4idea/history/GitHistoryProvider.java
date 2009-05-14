@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.util.ui.ColumnInfo;
+import git4idea.actions.GitShowAllSubmittedFilesAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    * {@inheritDoc}
    */
   public AnAction[] getAdditionalActions(FileHistoryPanel panel) {
-    return new AnAction[0];
+    return new AnAction[]{new GitShowAllSubmittedFilesAction()};
   }
 
   /**
