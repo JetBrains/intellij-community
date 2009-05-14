@@ -71,4 +71,6 @@ public interface CommonClassNames {
   @NonNls String CLASS_FILE_EXTENSION = ".class";
 
   @NonNls String JAVA_LANG_STRING_SHORT = "String";
+
+  @NonNls String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
 }
