@@ -47,7 +47,7 @@ public class GitRebaseLineListener extends GitLineHandlerAdapter {
         myStatus = Status.FINISHED;
       }
       else if (line.startsWith("Automatic cherry-pick failed. ")) {
-        assert myStatus == null;
+        assert myStatus == null || myStatus == Status.ERROR;
         myStatus = Status.CONFLICT;
       }
       else if (line.startsWith("Could not execute editor")) {
@@ -55,8 +55,9 @@ public class GitRebaseLineListener extends GitLineHandlerAdapter {
         myStatus = myProgressLine == null ? Status.CANCELLED : Status.ERROR;
       }
       else if (line.startsWith("fatal") || line.startsWith("error: ")) {
-        assert myStatus == null;
-        myStatus = Status.ERROR;
+        if (myStatus != Status.CONFLICT) {
+          myStatus = Status.ERROR;
+        }
       }
     }
   }
