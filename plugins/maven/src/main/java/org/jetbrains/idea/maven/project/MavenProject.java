@@ -695,6 +695,10 @@ public class MavenProject implements Serializable {
     return myProperties;
   }
 
+  public synchronized File getLocalRepository() {
+    return myLocalRepository;
+  }
+
   public synchronized List<MavenRemoteRepository> getRemoteRepositories() {
     return myRemoteRepositories;
   }

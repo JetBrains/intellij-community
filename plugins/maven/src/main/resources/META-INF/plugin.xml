@@ -201,7 +201,7 @@
       </action>
       <separator/>
       <action id="Maven.AssignShortcut"
-              class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign Ahortcut..."
+              class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign Shortcut..."
               description="Assign Shortcut">
       </action>
     </group>

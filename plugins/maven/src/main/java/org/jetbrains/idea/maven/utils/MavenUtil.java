@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
@@ -33,7 +35,6 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -81,10 +82,19 @@ public class MavenUtil {
 
   public static List<VirtualFile> collectFiles(List<MavenProject> projects) {
     return ContainerUtil.map(projects, new Function<MavenProject, VirtualFile>() {
-      public VirtualFile fun(MavenProject project ) {
+      public VirtualFile fun(MavenProject project) {
         return project.getFile();
       }
     });
+  }
+
+  public static VirtualFile getMavenProjectFileFromContext(DataContext dataContext) {
+    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    return isMavenProjectFile(file) ? file : null;
+  }
+
+  public static boolean isMavenProjectFile(VirtualFile file) {
+    return file != null && !file.isDirectory() && MavenConstants.POM_XML.equals(file.getName());
   }
 
   public static String formatHtmlImage(URL url) {

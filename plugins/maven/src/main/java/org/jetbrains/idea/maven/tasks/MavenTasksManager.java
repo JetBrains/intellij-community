@@ -4,7 +4,6 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
@@ -20,18 +19,15 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,45 +36,43 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
-import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenDataKeys;
+import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
+import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 @State(name = "MavenEventsHandler", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenTasksManager extends SimpleProjectComponent implements PersistentStateComponent<MavenTasksState> {
-  public static MavenTasksManager getInstance(Project project) {
-    return project.getComponent(MavenTasksManager.class);
-  }
-
-  @NonNls private static final String ACTION_ID_PREFIX = "Maven_";
-
-  public static final String RUN_MAVEN_STEP = TasksBundle.message("maven.event.before.run");
+public class MavenTasksManager extends SimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState> {
+  private static final String ACTION_ID_PREFIX = "Maven_";
 
   private static final String BEFORE_MAKE = TasksBundle.message("maven.event.text.before.make");
   private static final String AFTER_MAKE = TasksBundle.message("maven.event.text.after.make");
   private static final String BEFORE_RUN = TasksBundle.message("maven.event.text.before.run");
 
+  private final AtomicBoolean isInitialized = new AtomicBoolean();
+
   private final MavenProjectsManager myProjectsManager;
   private final MavenRunner myRunner;
 
-  private MavenTasksState myState = new MavenTasksState();
+  private MavenTasksManagerState myState = new MavenTasksManagerState();
   private Map<Pair<String, Integer>, MavenGoalTask> myBeforeRunMap = new THashMap<Pair<String, Integer>, MavenGoalTask>();
 
   private MyKeymapListener myKeymapListener;
   private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
   private TaskSelector myTaskSelector;
 
-  private final Alarm myKeymapUpdaterAlarm;
+  public static MavenTasksManager getInstance(Project project) {
+    return project.getComponent(MavenTasksManager.class);
+  }
 
   public MavenTasksManager(Project project, MavenProjectsManager projectsManager, MavenRunner runner) {
     super(project);
     myProjectsManager = projectsManager;
     myRunner = runner;
-    myKeymapUpdaterAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, project);
   }
 
   @Override
@@ -94,6 +88,8 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
 
   @TestOnly
   public void doInit() {
+    if (isInitialized.getAndSet(true)) return;
+
     MyProjectsTreeListener listener = new MyProjectsTreeListener();
     myProjectsManager.addManagerListener(listener);
     myProjectsManager.addProjectsTreeListener(listener);
@@ -115,24 +111,14 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
 
   @Override
   public void disposeComponent() {
-    Disposer.dispose(myKeymapUpdaterAlarm);
+    if (!isInitialized.getAndSet(false)) return;
 
-    if (myKeymapListener != null) {
-      myKeymapListener.stopListen();
-      myKeymapListener = null;
-    }
-  }
-
-  public void addListener(Listener listener) {
-    myListeners.add(listener);
-  }
-
-  public void removeListener(Listener listener) {
-    myListeners.remove(listener);
+    myKeymapListener.stopListen();
+    MavenKeymapExtension.clearActions(myProject);
   }
 
   @NotNull
-  public MavenTasksState getState() {
+  public MavenTasksManagerState getState() {
     Map<String, MavenGoalTask> map = new THashMap<String, MavenGoalTask>();
 
     for (Map.Entry<Pair<String, Integer>, MavenGoalTask> each : myBeforeRunMap.entrySet()) {
@@ -156,7 +142,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     return myState;
   }
 
-  public void loadState(MavenTasksState state) {
+  public void loadState(MavenTasksManagerState state) {
     Map<Pair<String, Integer>, MavenGoalTask> map = new THashMap<Pair<String, Integer>, MavenGoalTask>();
 
     for (Map.Entry<String, MavenGoalTask> each : state.beforeRun.entrySet()) {
@@ -209,20 +195,18 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     return result.toString();
   }
 
-  public String getActionDescription(@NotNull String pomPath, @NotNull final String goal) {
-    final String actionId = getActionId(pomPath, goal);
-    if (actionId == null) {
-      return null;
-    }
+  public String getActionDescription(@NotNull String pomPath, @NotNull String goal) {
+    String actionId = getActionId(pomPath, goal);
+    if (actionId == null) return null;
 
-    final String shortcutString = getShortcutString(actionId);
-    final MavenGoalTask mavenTask = new MavenGoalTask(pomPath, goal);
+    String shortcutsString = getShortcutString(actionId);
+    MavenGoalTask mavenTask = new MavenGoalTask(pomPath, goal);
 
-    final StringBuilder stringBuilder = new StringBuilder();
-    appendIf(stringBuilder, shortcutString != null, shortcutString);
-    appendIf(stringBuilder, myState.beforeCompile.contains(mavenTask), BEFORE_MAKE);
-    appendIf(stringBuilder, myState.afterCompile.contains(mavenTask), AFTER_MAKE);
-    appendIf(stringBuilder, hasAssginments(mavenTask), BEFORE_RUN);
+    StringBuilder stringBuilder = new StringBuilder();
+    appendIf(stringBuilder, shortcutsString, shortcutsString != null);
+    appendIf(stringBuilder, BEFORE_MAKE, myState.beforeCompile.contains(mavenTask));
+    appendIf(stringBuilder, AFTER_MAKE, myState.afterCompile.contains(mavenTask));
+    appendIf(stringBuilder, BEFORE_RUN, hasAssginments(mavenTask));
 
     return stringBuilder.length() == 0 ? null : stringBuilder.toString();
   }
@@ -230,31 +214,18 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
   private static String getShortcutString(String actionId) {
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] shortcuts = activeKeymap.getShortcuts(actionId);
-    if (shortcuts != null && shortcuts.length > 0) {
-      return KeymapUtil.getShortcutText(shortcuts[0]);
-    }
-    else {
-      return null;
-    }
+    if (shortcuts == null || shortcuts.length == 0) return null;
+
+    return KeymapUtil.getShortcutsText(shortcuts);
   }
 
-  private void appendIf(StringBuilder stringBuilder, boolean on, String text) {
-    if (on) {
-      if (stringBuilder.length() > 0) {
-        stringBuilder.append(", ");
-      }
-      stringBuilder.append(text);
-    }
-  }
+  private void appendIf(StringBuilder stringBuilder, String text, boolean condition) {
+    if (!condition) return;
 
-  public void updateShortcuts() {
-    for (Listener listener : myListeners) {
-      listener.updateShortcuts();
+    if (stringBuilder.length() > 0) {
+      stringBuilder.append(", ");
     }
-  }
-
-  public void updateTaskShortcuts(@NotNull MavenGoalTask mavenTask) {
-    updateShortcuts();
+    stringBuilder.append(text);
   }
 
   public void installTaskSelector(TaskSelector selector) {
@@ -279,22 +250,35 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
       final MavenGoalTask newMavenTask = new MavenGoalTask(pomPath, myTaskSelector.getSelectedGoal());
       if (!isAssignedForType(runConfiguration.getType(), newMavenTask)) {
         assignTask(runConfiguration.getType(), runConfiguration, newMavenTask);
-        updateTaskShortcuts(newMavenTask);
+        fireTaskShortcutsUpdated(newMavenTask);
       }
       return newMavenTask;
     }
 
     clearAssignment(runConfiguration.getType(), runConfiguration);
-    updateShortcuts();
+    fireShortcutsUpdated();
     return null;
   }
 
-  public String configureRunStep(final RunConfiguration runConfiguration) {
+  public String configureRunStep(RunConfiguration runConfiguration) {
     return getDescription(selectMavenTask(myProject, runConfiguration));
   }
 
-  public String getRunStepDescription(final RunConfiguration runConfiguration) {
+  public String getRunStepDescription(RunConfiguration runConfiguration) {
     return getDescription(getTask(runConfiguration.getType(), runConfiguration));
+  }
+
+  @Nullable
+  private String getDescription(MavenGoalTask mavenTask) {
+    if (mavenTask == null) return null;
+
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mavenTask.pomPath);
+    if (file == null) return null;
+
+    MavenProject project = myProjectsManager.findProject(file);
+    if (project == null) return null;
+
+    return project.getDisplayName() + ":" + mavenTask.goal;
   }
 
   public MavenGoalTask getAssignedTask(ConfigurationType type, RunConfiguration config) {
@@ -323,8 +307,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
   }
 
   public void clearAssignments(MavenGoalTask task) {
-    final Collection<Pair<String, Integer>> keysToRemove = new ArrayList<Pair<String, Integer>>();
-    final Collection<String> oldKeysToRemove = new ArrayList<String>();
+    List<Pair<String, Integer>> keysToRemove = new ArrayList<Pair<String, Integer>>();
 
     for (Map.Entry<Pair<String, Integer>, MavenGoalTask> each : myBeforeRunMap.entrySet()) {
       if (each.getValue().equals(task)) {
@@ -346,62 +329,57 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     }
   }
 
-  static String getOldVersionKey(ConfigurationType type, RunConfiguration configuration) {
-    if (configuration != null) {
-      return type.getDisplayName() + "#" + configuration.getName();
-    }
-    else {
-      return type.getDisplayName();
-    }
-  }
-
   @Nullable
   public static MavenGoalTask getMavenTask(DataContext dataContext) {
-    if (dataContext != null) {
-      final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-      if (virtualFile != null && MavenConstants.POM_XML.equals(virtualFile.getName())) {
-        final List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(dataContext);
-        if (goals != null && goals.size() == 1) {
-          return new MavenGoalTask(virtualFile.getPath(), goals.get(0));
-        }
-      }
-    }
-    return null;
+    if (dataContext == null) return null;
+
+    VirtualFile file = MavenUtil.getMavenProjectFileFromContext(dataContext);
+    if (file == null) return null;
+
+    List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(dataContext);
+    if (goals == null || goals.size() != 1) return null;
+
+    return new MavenGoalTask(file.getPath(), goals.get(0));
   }
 
-  @Nullable
-  private String getDescription(MavenGoalTask mavenTask) {
-    if (mavenTask != null) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mavenTask.pomPath);
-      if (file != null) {
-        MavenProject project = myProjectsManager.findProject(file);
-        if (project != null) {
-          StringBuilder stringBuilder = new StringBuilder();
-          stringBuilder.append("'");
-          stringBuilder.append(project.getMavenId().artifactId);
-          stringBuilder.append(" ");
-          stringBuilder.append(mavenTask.goal);
-          stringBuilder.append("'");
-          return stringBuilder.toString();
-        }
-      }
+  private void fireShortcutsUpdated() {
+    for (Listener listener : myListeners) {
+      listener.shortcutsUpdated();
     }
-    return null;
+  }
+
+  public void fireTaskShortcutsUpdated(@NotNull MavenGoalTask mavenTask) {
+    fireShortcutsUpdated();
+  }
+
+  public void addListener(Listener listener) {
+    myListeners.add(listener);
+  }
+
+  public interface Listener {
+    void shortcutsUpdated();
+  }
+
+  public interface TaskSelector {
+    boolean select(Project project, @Nullable String pomPath, @Nullable String goal, @NotNull String title);
+
+    String getSelectedPomPath();
+
+    String getSelectedGoal();
   }
 
   private class MyKeymapListener implements KeymapManagerListener, Keymap.Listener {
     private Keymap myCurrentKeymap = null;
 
     public MyKeymapListener() {
-      final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
-      final Keymap activeKeymap = keymapManager.getActiveKeymap();
-      listenTo(activeKeymap);
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      listenTo(keymapManager.getActiveKeymap());
       keymapManager.addKeymapManagerListener(this);
     }
 
     public void activeKeymapChanged(Keymap keymap) {
       listenTo(keymap);
-      updateShortcuts();
+      fireShortcutsUpdated();
     }
 
     private void listenTo(Keymap keymap) {
@@ -415,11 +393,10 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     }
 
     public void onShortcutChanged(String actionId) {
-      updateShortcuts();
+      fireShortcutsUpdated();
     }
 
     public void stopListen() {
-      MavenKeymapExtension.clearActions(myProject);
       listenTo(null);
       KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(this);
     }
@@ -494,17 +471,5 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
         }
       });
     }
-  }
-
-  public interface Listener {
-    void updateShortcuts();
-  }
-
-  public interface TaskSelector {
-    boolean select(Project project, @Nullable String pomPath, @Nullable String goal, @NotNull String title);
-
-    String getSelectedPomPath();
-
-    String getSelectedGoal();
   }
 }

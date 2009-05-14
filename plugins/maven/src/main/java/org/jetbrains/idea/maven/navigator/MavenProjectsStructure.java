@@ -22,7 +22,10 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
-import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenPluginInfo;
+import org.jetbrains.idea.maven.utils.MavenUIUtil;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -34,30 +37,30 @@ import java.util.*;
 import java.util.List;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
-  private static final Icon MAVEN_PROJECT_ICON = IconLoader.getIcon("/images/mavenProject.png");
+  public static final Icon MAVEN_PROJECT_ICON = IconLoader.getIcon("/images/mavenProject.png");
 
-  private static final Icon OPEN_PROFILES_ICON = IconLoader.getIcon("/images/profilesOpen.png");
-  private static final Icon CLOSED_PROFILES_ICON = IconLoader.getIcon("/images/profilesClosed.png");
+  public static final Icon OPEN_PROFILES_ICON = IconLoader.getIcon("/images/profilesOpen.png");
+  public static final Icon CLOSED_PROFILES_ICON = IconLoader.getIcon("/images/profilesClosed.png");
 
-  private static final Icon OPEN_PHASES_ICON = IconLoader.getIcon("/images/phasesOpen.png");
-  private static final Icon CLOSED_PHASES_ICON = IconLoader.getIcon("/images/phasesClosed.png");
-  private static final Icon PHASE_ICON = IconLoader.getIcon("/images/phase.png");
+  public static final Icon OPEN_PHASES_ICON = IconLoader.getIcon("/images/phasesOpen.png");
+  public static final Icon CLOSED_PHASES_ICON = IconLoader.getIcon("/images/phasesClosed.png");
+  public static final Icon PHASE_ICON = IconLoader.getIcon("/images/phase.png");
 
-  private static final Icon OPEN_PLUGINS_ICON = IconLoader.getIcon("/images/phasesOpen.png");
-  private static final Icon CLOSED_PLUGINS_ICON = IconLoader.getIcon("/images/phasesClosed.png");
-  private static final Icon PLUGIN_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
-  private static final Icon PLUGIN_GOAL_ICON = IconLoader.getIcon("/images/pluginGoal.png");
+  public static final Icon OPEN_PLUGINS_ICON = IconLoader.getIcon("/images/phasesOpen.png");
+  public static final Icon CLOSED_PLUGINS_ICON = IconLoader.getIcon("/images/phasesClosed.png");
+  public static final Icon PLUGIN_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
+  public static final Icon PLUGIN_GOAL_ICON = IconLoader.getIcon("/images/pluginGoal.png");
 
-  private static final Icon OPEN_MODULES_ICON = IconLoader.getIcon("/images/modulesOpen.png");
-  private static final Icon CLOSED_MODULES_ICON = IconLoader.getIcon("/images/modulesClosed.png");
+  public static final Icon OPEN_MODULES_ICON = IconLoader.getIcon("/images/modulesOpen.png");
+  public static final Icon CLOSED_MODULES_ICON = IconLoader.getIcon("/images/modulesClosed.png");
 
-  private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/images/error.png");
-  private static final URL WARNING_ICON_URL = MavenProjectsStructure.class.getResource("/images/warning.png");
+  public static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/images/error.png");
+  public static final URL WARNING_ICON_URL = MavenProjectsStructure.class.getResource("/images/warning.png");
 
-  private static final CustomNode[] EMPTY_NODES_ARRAY = new CustomNode[0];
+  public static final CustomNode[] EMPTY_NODES_ARRAY = new CustomNode[0];
 
-  private static final Collection<String> BASIC_PHASES = MavenEmbedderFactory.getBasicPhasesList();
-  private static final Collection<String> PHASES = MavenEmbedderFactory.getPhasesList();
+  public static final Collection<String> BASIC_PHASES = MavenEmbedderFactory.getBasicPhasesList();
+  public static final Collection<String> PHASES = MavenEmbedderFactory.getPhasesList();
 
   private static final Comparator<SimpleNode> NODE_COMPARATOR = new Comparator<SimpleNode>() {
     public int compare(SimpleNode o1, SimpleNode o2) {

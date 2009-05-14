@@ -8,8 +8,8 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenAction;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Arrays;
 
@@ -25,7 +25,7 @@ public class AddManagedFilesAction extends MavenAction {
 
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        if (!file.isDirectory() && !file.getName().equals(MavenConstants.POM_XML)) return false;
+        if (!MavenUtil.isMavenProjectFile(file)) return false;
         return super.isFileVisible(file, showHiddenFiles);
       }
     };

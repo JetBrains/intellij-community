@@ -165,7 +165,6 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
   public void testIgnoringProjects() throws Exception {
     myProjectsManager.fireActivatedInTests();
 
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -221,6 +220,32 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     projectNode = (MavenProjectsStructure.ProjectNode)myStructure.getRootElement().getChildren()[0];
     assertEquals(m, projectNode.getFile());
     assertEquals(0, projectNode.getModulesNode().getProjectNodes().size());
+  }
+
+  public void testReorderingProjectsWhenNameChanges() throws Exception {
+    myProjectsManager.fireActivatedInTests();
+
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>");
+
+    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
+                                           "<artifactId>m2</artifactId>" +
+                                           "<version>1</version>");
+    readFiles(m1, m2);
+
+    assertEquals(2, getRootProjects().size());
+    assertEquals(m1, getRootProjects().get(0).getFile());
+    assertEquals(m2, getRootProjects().get(1).getFile());
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>am2</artifactId>" +
+                          "<version>1</version>");
+    readFiles(m2);
+
+    assertEquals(2, getRootProjects().size());
+    assertEquals(m2, getRootProjects().get(0).getFile());
+    assertEquals(m1, getRootProjects().get(1).getFile());
   }
 
   public void testReloadingState() throws Exception {

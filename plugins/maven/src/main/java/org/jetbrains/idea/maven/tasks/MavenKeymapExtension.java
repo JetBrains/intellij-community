@@ -1,17 +1,19 @@
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.KeymapGroupFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -22,41 +24,62 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
 public class MavenKeymapExtension implements KeymapExtension {
-  private static final Icon OPEN_ICON = IconLoader.getIcon("/images/phasesOpen.png");
-  private static final Icon CLOSED_ICON = IconLoader.getIcon("/images/phasesClosed.png");
-
   public KeymapGroup createGroup(Condition<AnAction> condition, Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(TasksBundle.message("maven.event.action.group.name"),
-                                                                      CLOSED_ICON,
-                                                                      OPEN_ICON);
+                                                                      MavenProjectsStructure.OPEN_PHASES_ICON,
+                                                                      MavenProjectsStructure.CLOSED_PHASES_ICON);
     if (project == null) return result;
 
-    ActionManager actionManager = ActionManager.getInstance();
-    String[] actionIds = actionManager.getActionIds(getActionPrefix(project, null));
-    Arrays.sort(actionIds);
+    Comparator<MavenProject> projectComparator = new Comparator<MavenProject>() {
+      public int compare(MavenProject o1, MavenProject o2) {
+        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+      }
+    };
+    Map<MavenProject, Set<Pair<String, String>>> projectToActionsMapping
+      = new TreeMap<MavenProject, Set<Pair<String, String>>>(projectComparator);
 
-    Map<MavenProject, KeymapGroup> projectToGroupMapping = new THashMap<MavenProject, KeymapGroup>();
-    for (String eachId : actionIds) {
+    ActionManager actionManager = ActionManager.getInstance();
+    for (String eachId : actionManager.getActionIds(getActionPrefix(project, null))) {
       AnAction eachAction = actionManager.getAction(eachId);
 
       if (!(eachAction instanceof MavenGoalAction)) continue;
       if (condition != null && !condition.value(actionManager.getActionOrStub(eachId))) continue;
 
-      MavenProject mavenProject = ((MavenGoalAction)eachAction).getMavenProject();
-      KeymapGroup projectGroup = projectToGroupMapping.get(mavenProject);
-
-      if (projectGroup == null) {
-        projectGroup = KeymapGroupFactory.getInstance().createGroup(mavenProject.getDisplayName());
-        projectToGroupMapping.put(mavenProject, projectGroup);
-        result.addGroup(projectGroup);
+      MavenGoalAction mavenAction = (MavenGoalAction)eachAction;
+      MavenProject mavenProject = mavenAction.getMavenProject();
+      Set<Pair<String, String>> actions = projectToActionsMapping.get(mavenProject);
+      if (actions == null) {
+        final List<String> projectGoals = collectGoals(mavenProject);
+        actions = new TreeSet<Pair<String, String>>(new Comparator<Pair<String, String>>() {
+          public int compare(Pair<String, String> o1, Pair<String, String> o2) {
+            String goal1 = o1.getFirst();
+            String goal2 = o2.getFirst();
+            int index1 = projectGoals.indexOf(goal1);
+            int index2 = projectGoals.indexOf(goal2);
+            if (index1 == index2) return goal1.compareToIgnoreCase(goal2);
+            return (index1 < index2 ? -1 : 1);
+          }
+        });
+        projectToActionsMapping.put(mavenProject, actions);
       }
+      actions.add(Pair.create(mavenAction.getGoal(), eachId));
+    }
 
-      projectGroup.addActionId(eachId);
+    for (Map.Entry<MavenProject, Set<Pair<String, String>>> each : projectToActionsMapping.entrySet()) {
+      MavenProject mavenProject = each.getKey();
+      Set<Pair<String, String>> goalsToActionIds = each.getValue();
+      if (goalsToActionIds.isEmpty()) continue;
+      KeymapGroup group = KeymapGroupFactory.getInstance().createGroup(mavenProject.getDisplayName(),
+                                                                       MavenProjectsStructure.OPEN_MODULES_ICON,
+                                                                       MavenProjectsStructure.CLOSED_MODULES_ICON);
+      result.addGroup(group);
+      for (Pair<String, String> eachGoalToActionId : goalsToActionIds) {
+        group.addActionId(eachGoalToActionId.getSecond());
+      }
     }
 
     return result;
@@ -83,11 +106,8 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   private static List<MavenGoalAction> collectActions(Project project, MavenProject mavenProject) {
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-
-    File localRepository = projectsManager.getLocalRepository();
     List<MavenGoalAction> result = new ArrayList<MavenGoalAction>();
-    for (String eachGoal : collectGoals(mavenProject, localRepository)) {
+    for (String eachGoal : collectGoals(mavenProject)) {
       result.add(new MavenGoalAction(mavenProject, eachGoal));
     }
     return result;
@@ -109,18 +129,18 @@ public class MavenKeymapExtension implements KeymapExtension {
     }
   }
 
-  private static Collection<String> collectGoals(MavenProject project, File repository) {
-    Collection<String> result = new THashSet<String>();
+  private static List<String> collectGoals(MavenProject project) {
+    List<String> result = new ArrayList<String>();
     result.addAll(MavenEmbedderFactory.getPhasesList());
 
     for (MavenPlugin each : project.getPlugins()) {
-      collectGoals(repository, each, result);
+      collectGoals(project.getLocalRepository(), each, result);
     }
 
     return result;
   }
 
-  private static void collectGoals(File repository, MavenPlugin plugin, Collection<String> list) {
+  private static void collectGoals(File repository, MavenPlugin plugin, List<String> list) {
     MavenPluginInfo info = MavenArtifactUtil.readPluginInfo(repository, plugin.getMavenId());
     if (info == null) return;
 
@@ -144,6 +164,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       myGoal = goal;
       Presentation template = getTemplatePresentation();
       template.setText(goal, false);
+      template.setIcon(MavenProjectsStructure.PHASE_ICON);
     }
 
     public void actionPerformed(AnActionEvent e) {

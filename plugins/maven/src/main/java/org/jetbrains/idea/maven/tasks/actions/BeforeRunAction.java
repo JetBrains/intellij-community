@@ -42,7 +42,7 @@ public class BeforeRunAction extends MavenToggleAction {
 
     dialog.show();
     if (dialog.isOK()) {
-      tasksManager.updateTaskShortcuts(task);
+      tasksManager.fireTaskShortcutsUpdated(task);
     }
   }
 

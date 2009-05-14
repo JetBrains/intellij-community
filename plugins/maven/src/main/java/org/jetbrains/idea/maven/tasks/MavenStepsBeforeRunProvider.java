@@ -24,7 +24,7 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public String getStepName() {
-    return MavenTasksManager.RUN_MAVEN_STEP;
+    return TasksBundle.message("maven.event.before.run");
   }
 
   public String getStepDescription(final RunConfiguration runConfiguration) {

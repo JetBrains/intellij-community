@@ -28,7 +28,7 @@ public abstract class IncludeExcludeTaskAction extends MavenToggleAction {
     else {
       all.remove(task);
     }
-    getTasksManager(e).updateTaskShortcuts(task);
+    getTasksManager(e).fireTaskShortcutsUpdated(task);
   }
 
   protected MavenGoalTask getTaskToChange(AnActionEvent e) {
