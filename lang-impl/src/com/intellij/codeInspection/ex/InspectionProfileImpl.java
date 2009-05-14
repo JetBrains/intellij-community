@@ -532,7 +532,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public boolean isToolEnabled(HighlightDisplayKey key) {
-    return isToolEnabled(key, (PsiElement)null);
+    final Tools toolState = myTools.get(key.toString());
+    return toolState != null && toolState.isEnabled();
   }
 
   public boolean isExecutable() {

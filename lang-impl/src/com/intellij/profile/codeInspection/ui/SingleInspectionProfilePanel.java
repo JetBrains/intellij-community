@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -35,7 +36,9 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -337,7 +340,6 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
         if (mySelectedProfile == null) return;
-        if (mySelectedProfile.getProfileManager().getScopesManager() == null) return;
         final MyTreeNode[] nodes = myTree.getSelectedNodes(MyTreeNode.class, null);
         if (nodes.length > 0) {
           for (MyTreeNode node : nodes) {
@@ -377,7 +379,6 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
         if (mySelectedProfile == null) return;
-        if (mySelectedProfile.getProfileManager().getScopesManager() == null) return;
         final MyTreeNode[] nodes = myTree.getSelectedNodes(MyTreeNode.class, null);
         if (nodes.length > 0) {
           final MyTreeNode treeNode = nodes[0];
@@ -410,7 +411,6 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
         if (mySelectedProfile == null) return;
-        if (mySelectedProfile.getProfileManager().getScopesManager() == null) return;
         final MyTreeNode[] nodes = myTree.getSelectedNodes(MyTreeNode.class, null);
         if (nodes.length > 0) {
           final MyTreeNode treeNode = nodes[0];
@@ -624,10 +624,26 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final HighlightDisplayKey key = descriptor.getKey();
       final String toolShortName = key.toString();
       if (toolNode.isChecked()) {
-        mySelectedProfile.enableTool(toolShortName);
+        if (toolNode.getScope() != null){
+          mySelectedProfile.enableTool(toolShortName, toolNode.getScope());
+        } else {
+          if (toolNode.isInspectionNode()) {
+            mySelectedProfile.enableTool(toolShortName, (PsiElement)null);
+          } else {
+            mySelectedProfile.enableTool(toolShortName);
+          }
+        }
       }
       else {
-        mySelectedProfile.disableTool(toolShortName);
+        if (toolNode.getScope() != null)  {
+          mySelectedProfile.disableTool(toolShortName, toolNode.getScope());
+        } else {
+          if (toolNode.isInspectionNode()) {
+            mySelectedProfile.disableTool(toolShortName, (PsiElement)null);
+          } else {
+            mySelectedProfile.disableTool(toolShortName);
+          }
+        }
       }
       toolNode.isProperSetting = mySelectedProfile.isProperSetting(key);
       updateUpHierarchy(toolNode, (MyTreeNode)toolNode.getParent());
@@ -1045,6 +1061,9 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
 
   private boolean descriptorsAreChanged() {
     for (Descriptor defaultDescriptor : myDescriptors.keySet()) {
+      if (mySelectedProfile.isToolEnabled(defaultDescriptor.getKey(), (PsiElement)null) != defaultDescriptor.isEnabled()){
+        return true;
+      }
       List<Descriptor> descriptors = myDescriptors.get(defaultDescriptor);
       for (Descriptor descriptor : descriptors) {
         if (mySelectedProfile.isToolEnabled(descriptor.getKey(), descriptor.getScope()) != descriptor.isEnabled()) {
@@ -1313,12 +1332,13 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       if (mySelectedProfile == null) return;
-      if (mySelectedProfile.getProfileManager().getScopesManager() == null) return;
+      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      if (project == null) return;
       final MyTreeNode[] nodes = myTree.getSelectedNodes(MyTreeNode.class, null);
       if (nodes.length > 0) {
         final MyTreeNode node = nodes[0];
         final Descriptor descriptor = node.getDesriptor();
-        if (descriptor != null && node.getScope() == null && !getAvailableScopes(descriptor).isEmpty()) {
+        if (descriptor != null && node.getScope() == null && !getAvailableScopes(descriptor, project).isEmpty()) {
           presentation.setEnabled(true);
         }
       }
@@ -1329,29 +1349,32 @@ public class SingleInspectionProfilePanel extends JPanel implements DataProvider
       final MyTreeNode[] nodes = myTree.getSelectedNodes(MyTreeNode.class, null);
       final MyTreeNode node = nodes[0];
       final Descriptor descriptor = node.getDesriptor();
-      if (descriptor != null) {
-        final InspectionProfileEntry tool = descriptor.getTool(); //copy
-        final List<String> availableScopes = getAvailableScopes(descriptor);
+      LOG.assertTrue(descriptor != null);
+      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      final InspectionProfileEntry tool = descriptor.getTool(); //copy
+      final List<String> availableScopes = getAvailableScopes(descriptor, project);
 
-        final int idx = Messages.showChooseDialog(myTree, "Scope:", "Choose Scope",
-                                                  availableScopes.toArray(new String[availableScopes.size()]), availableScopes.get(0), Messages.getQuestionIcon());
-        if (idx == -1) return;
-        final ScopeToolState scopeToolState = mySelectedProfile.addScope(tool, mySelectedProfile.getProfileManager().getScopesManager().getScope(availableScopes.get(idx)),
-                                                                         descriptor.getLevel(), tool.isEnabledByDefault());
-        final Descriptor addedDescriptor = new Descriptor(scopeToolState, mySelectedProfile);
-        if (node.getChildCount() == 0) {
-          node.add(new MyTreeNode(descriptor, DefaultScopesProvider.getAllScope(), true, descriptor.isEnabled(), true, false));
-        }
-        node.insert(new MyTreeNode(addedDescriptor, scopeToolState.getScope(), tool.isEnabledByDefault(), true, false), 0);
-        node.setInspectionNode(false);
-        ((DefaultTreeModel)myTree.getModel()).reload(node);
-        myTree.expandPath(new TreePath(node.getPath()));
-        myTree.revalidate();
+      final int idx = Messages.showChooseDialog(myTree, "Scope:", "Choose Scope",
+                                                availableScopes.toArray(new String[availableScopes.size()]), availableScopes.get(0), Messages.getQuestionIcon());
+      if (idx == -1) return;
+      final ScopeToolState scopeToolState = mySelectedProfile.addScope(tool, NamedScopesHolder.getScope(project, availableScopes.get(idx)),
+                                                                       descriptor.getLevel(), tool.isEnabledByDefault());
+      final Descriptor addedDescriptor = new Descriptor(scopeToolState, mySelectedProfile);
+      if (node.getChildCount() == 0) {
+        node.add(new MyTreeNode(descriptor, DefaultScopesProvider.getAllScope(), true, descriptor.isEnabled(), true, false));
       }
+      node.insert(new MyTreeNode(addedDescriptor, scopeToolState.getScope(), tool.isEnabledByDefault(), true, false), 0);
+      node.setInspectionNode(false);
+      ((DefaultTreeModel)myTree.getModel()).reload(node);
+      myTree.expandPath(new TreePath(node.getPath()));
+      myTree.revalidate();
     }
 
-    private List<String> getAvailableScopes(Descriptor descriptor) {
-      final ArrayList<NamedScope> scopes = new ArrayList<NamedScope>(Arrays.asList(mySelectedProfile.getProfileManager().getScopesManager().getScopes()));
+    private List<String> getAvailableScopes(Descriptor descriptor, Project project) {
+      final ArrayList<NamedScope> scopes = new ArrayList<NamedScope>();
+      for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
+        Collections.addAll(scopes, holder.getScopes());
+      }
       final Set<NamedScope> used = new HashSet<NamedScope>();
       final List<ScopeToolState> nonDefaultTools = mySelectedProfile.getNonDefaultTools(descriptor.getKey().toString());
       if (nonDefaultTools != null) {

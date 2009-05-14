@@ -8,6 +8,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -17,6 +19,7 @@ import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +131,18 @@ public class ToolsImpl implements Tools {
         final Element scopeElement = (Element)sO;
         final String scopeName = scopeElement.getAttributeValue(InspectionProfileImpl.NAME);
         if (scopeName != null) {
-          final NamedScope namedScope = profileManager.getScopesManager().getScope(scopeName);
+          final NamedScopesHolder scopesHolder = profileManager.getScopesManager();
+          final NamedScope namedScope;
+          if (scopesHolder != null) {
+            namedScope = scopesHolder.getScope(scopeName);
+          } else {
+            final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+            if (projects.length > 0) {
+              namedScope = NamedScopesHolder.getScope(projects[0], scopeName);
+            } else {
+              namedScope = null;
+            }
+          }
           if (namedScope != null) {
             final String errorLevel = scopeElement.getAttributeValue(InspectionProfileImpl.LEVEL_TAG);
             final String enabledInScope = scopeElement.getAttributeValue(InspectionProfileImpl.ENABLED_TAG);
@@ -205,8 +219,7 @@ public class ToolsImpl implements Tools {
   }
 
   public boolean isEnabled(NamedScope namedScope) {
-    if (!myEnabled) return false;
-    if (myDefaultState.isEnabled() && myTools != null) {
+    if (myTools != null) {
       for (ScopeToolState state : myTools) {
         if (Comparing.equal(namedScope, state.getScope())) return state.isEnabled();
       }
@@ -238,7 +251,6 @@ public class ToolsImpl implements Tools {
 
 
   public boolean isEnabled(PsiElement element) {
-    if (!myEnabled) return false;
     if (myTools == null || element == null) return myDefaultState.isEnabled();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
     for (ScopeToolState state : myTools) {
@@ -280,7 +292,10 @@ public class ToolsImpl implements Tools {
 
   public void enableTool(PsiElement element) {
     myEnabled = true;
-    if (element == null) return;
+    if (element == null){
+      myDefaultState.setEnabled(true);
+      return;
+    }
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(element.getProject());
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
@@ -291,6 +306,7 @@ public class ToolsImpl implements Tools {
         }
       }
     }
+    myDefaultState.setEnabled(true);
   }
 
 
@@ -306,7 +322,10 @@ public class ToolsImpl implements Tools {
 
 
   public void disableTool(PsiElement element) {
-    if (element == null) return;
+    if (element == null){
+      myDefaultState.setEnabled(false);
+      return;
+    }
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(element.getProject());
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
@@ -316,7 +335,9 @@ public class ToolsImpl implements Tools {
           return;
         }
       }
+      myDefaultState.setEnabled(false);
     } else {
+      myDefaultState.setEnabled(false);
       setEnabled(false);
     }
   }
