@@ -20,7 +20,7 @@
     </group>
 
 
-    <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="Git">
+    <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
       <reference ref="CheckinFiles"/>
       <!-- <reference id="CheckinProject"/>
    <reference id="UpdateFiles"/>
