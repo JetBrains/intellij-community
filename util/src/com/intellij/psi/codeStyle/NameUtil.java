@@ -378,7 +378,7 @@ public class NameUtil {
       }
 
       if (myEnsureFirstSymbolsMatch) {
-        if (patternLen == 0) return false;
+        if (patternLen == 0 || nameIndex >= nameLen) return false;
         if (StringUtil.toLowerCase(name.charAt(nameIndex)) != pattern.charAt(0)) return false;
 
         nameIndex++;
