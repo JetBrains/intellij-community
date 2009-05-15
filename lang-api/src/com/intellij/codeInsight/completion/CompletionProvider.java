@@ -13,20 +13,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class CompletionProvider<V extends CompletionParameters> {
   private final boolean myStartInReadAction;
-  private final boolean myReturnValue;
 
   protected CompletionProvider() {
-    this(true, true);
+    this(true);
   }
 
-  protected CompletionProvider(final boolean returnValue, final boolean startInReadAction) {
-    myReturnValue = returnValue;
+  protected CompletionProvider(final boolean startInReadAction) {
     myStartInReadAction = startInReadAction;
   }
 
   protected abstract void addCompletions(@NotNull V parameters, final ProcessingContext context, @NotNull CompletionResultSet result);
 
-  public final boolean addCompletionVariants(@NotNull final V parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+  public final void addCompletionVariants(@NotNull final V parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
     if (myStartInReadAction) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
@@ -36,6 +34,5 @@ public abstract class CompletionProvider<V extends CompletionParameters> {
     } else {
       addCompletions(parameters, context, result);
     }
-    return myReturnValue;
   }
 }

@@ -89,7 +89,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     return new Pair<ElementFilter, TailType>(TrueFilter.INSTANCE, TailType.NONE);
   }
 
-  public boolean fillCompletionVariants(final JavaSmartCompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(final JavaSmartCompletionParameters parameters, final CompletionResultSet result) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final PsiElement element = parameters.getPosition();
@@ -146,7 +146,6 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
         }
       }
     });
-    return true;
   }
 
   private static void addArrayMemberAccessors(final PsiElement element, final String prefix, final PsiType itemType,

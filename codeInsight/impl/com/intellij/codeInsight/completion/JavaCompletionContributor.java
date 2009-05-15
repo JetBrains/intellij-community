@@ -61,8 +61,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     or(psiElement(PsiIdentifier.class).withParent(NAME_VALUE_PAIR),
        psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
 
-  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet _result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC) return true;
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet _result) {
+    if (parameters.getCompletionType() != CompletionType.BASIC) return;
 
     if (parameters.getPosition().getContainingFile().getLanguage() == StdLanguages.JAVA) {
       final PsiFile file = parameters.getOriginalFile();
@@ -83,7 +83,8 @@ public class JavaCompletionContributor extends CompletionContributor {
             completeAnnotationAttributeName(_result, file, insertedElement, completionData, checkAccess);
           }
         });
-        return false;
+        _result.stopHere();
+        return;
       }
 
       LegacyCompletionContributor.processReferences(parameters, _result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {
@@ -144,10 +145,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
         result.addElement(item);
       }
-      return false;
+      result.stopHere();
     }
-
-    return true;
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiFile file, PsiElement insertedElement,

@@ -38,13 +38,14 @@ public class CompletionServiceImpl extends CompletionService{
     }
   }
 
-  public CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<LookupElement> consumer) {
+  public CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<LookupElement> consumer,
+                                                      @NotNull CompletionContributor contributor) {
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
 
     final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
 
-    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix));
+    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix), contributor);
   }
 
   @Override
@@ -71,8 +72,8 @@ public class CompletionServiceImpl extends CompletionService{
     private final String myTextBeforePosition;
 
     public CompletionResultSetImpl(final Consumer<LookupElement> consumer, final String textBeforePosition,
-                                   final PrefixMatcher prefixMatcher) {
-      super(prefixMatcher, consumer);
+                                   final PrefixMatcher prefixMatcher, CompletionContributor contributor) {
+      super(prefixMatcher, consumer, contributor);
       myTextBeforePosition = textBeforePosition;
     }
 
@@ -83,7 +84,13 @@ public class CompletionServiceImpl extends CompletionService{
         final String fragment = len > 100 ? myTextBeforePosition.substring(len - 100) : myTextBeforePosition;
         LOG.error("prefix should be some actual file string just before caret: " + matcher.getPrefix() + "\n text=" + fragment);
       }
-      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher);
+      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor) {
+        @Override
+        public void stopHere() {
+          super.stopHere();
+          CompletionResultSetImpl.this.stopHere();
+        }
+      };
     }
 
     @NotNull

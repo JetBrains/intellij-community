@@ -79,14 +79,13 @@ import org.jetbrains.annotations.Nullable;
  * Q: I know about my environment more than IDEA does, and I can swear that those 239 variants that IDEA suggest me in some place aren't all that relevant,
  * so I'd be happy to filter out 42 of them. How do I do this?<br>
  * A: This is a bit harder than just adding variants. First, you should invoke
- * {@link CompletionService#getVariantsFromContributors(com.intellij.openapi.extensions.ExtensionPointName, CompletionParameters, AbstractCompletionContributor, Consumer)}
- * with your own consumer, and your own contributor as the third argument (this will start contributors from the next one, skipping contributors before yours,
- * that have already passed). The consumer you provide should pass all the lookup elements to the {@link com.intellij.codeInsight.completion.CompletionResultSet}
- * given to you, except for the ones you wish to filter out. Be careful: it's too easy to break completion this way. Finally, if you've done all this, your own
- * contributor should return false from its {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} method, either directly
- * or via {@link com.intellij.codeInsight.completion.CompletionProvider#CompletionProvider(boolean, boolean)} first parameter. Once again, be careful, and
- * don't ever return false from there unless you know what you're doing! Returning false will stop other contributors, that happened to be loaded after yours,
- * from execution, and the user will never see their so useful and precious completion variants.<p>
+ * {@link com.intellij.codeInsight.completion.CompletionResultSet#runRemainingContributors(CompletionParameters, com.intellij.util.Consumer)}.
+ * The consumer you provide should pass all the lookup elements to the {@link com.intellij.codeInsight.completion.CompletionResultSet}
+ * given to you, except for the ones you wish to filter out. Be careful: it's too easy to break completion this way. Since you've
+ * ordered to invoke remaining contributors yourself, they won't be invoked automatically after yours finishes (see
+ * {@link CompletionResultSet#stopHere()} and {@link CompletionResultSet#isStopped()}).
+ * Calling {@link CompletionResultSet#stopHere()} explicitly will stop other contributors, that happened to be loaded after yours,
+ * from execution, and the user will never see their so useful and precious completion variants, so please be careful with this method.<p>
  *
  * Q: How are the lookup elements sorted?<br>
  * A: Basically in lexicographic order, ascending, by lookup string ({@link LookupElement#getLookupString()}. But some of elements
@@ -103,7 +102,7 @@ import org.jetbrains.annotations.Nullable;
  * is the 'final' consumer, it will pass your lookup elements directly to the lookup.<br>
  * If your contributor isn't even invoked, probably there was another contributor that said 'stop' to the system, and yours happened to be ordered after
  * that contributor. To test this hypothesis, put a breakpoint to
- * {@link CompletionService#getVariantsFromContributors(AbstractCompletionContributor[], CompletionParameters, AbstractCompletionContributor, Consumer)},
+ * {@link CompletionService#getVariantsFromContributors(CompletionParameters, CompletionContributor, com.intellij.util.Consumer)},
  * to the 'return false' line.<p> 
  *
  * @author peter
@@ -135,24 +134,25 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
    * @return true if completion process should continue invoking other contributors, and false otherwise. Don't ever return false unless you
    * know precisely what you're doing!!!
    */
-  public boolean fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
       final ProcessingContext context = new ProcessingContext();
       if (isPatternSuitable(pair.first, parameters, context)) {
-        if (!pair.second.addCompletionVariants(parameters, context, result)) {
-          return false;
+        pair.second.addCompletionVariants(parameters, context, result);
+        if (result.isStopped()) {
+          return;
         }
       }
     }
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(null)) {
       final ProcessingContext context = new ProcessingContext();
       if (isPatternSuitable(pair.first, parameters, context)) {
-        if (!pair.second.addCompletionVariants(parameters, context, result)) {
-          return false;
+        pair.second.addCompletionVariants(parameters, context, result);
+        if (result.isStopped()) {
+          return;
         }
       }
     }
-    return true;
   }
 
   /**

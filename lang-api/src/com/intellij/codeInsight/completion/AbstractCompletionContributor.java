@@ -25,7 +25,7 @@ public abstract class AbstractCompletionContributor<Params extends CompletionPar
    * @return Whether to continue variants collecting process. If false, remaining non-visited completion contributors are ignored.
    * @see CompletionService#getVariantsFromContributors(com.intellij.openapi.extensions.ExtensionPointName, CompletionParameters, AbstractCompletionContributor , com.intellij.util.Consumer)
    */
-  public abstract boolean fillCompletionVariants(Params parameters, CompletionResultSet result);
+  public abstract void fillCompletionVariants(Params parameters, CompletionResultSet result);
 
   protected static boolean isPatternSuitable(final ElementPattern<? extends PsiElement> pattern, final CompletionParameters parameters,
                                              final ProcessingContext context) {

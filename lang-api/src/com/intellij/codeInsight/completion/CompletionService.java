@@ -7,12 +7,10 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.Weigher;
-import com.intellij.util.Consumer;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,31 +55,23 @@ public abstract class CompletionService {
   /**
    * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors
    * will be run starting from the next one after that. 
-   * @param contributorsEP
    * @param parameters
    * @param from
    * @param consumer
-   * @param <Params>
-   * @param <T>
    * @return
    */
-  public <Params extends CompletionParameters, T extends AbstractCompletionContributor<Params>> boolean getVariantsFromContributors(
-      ExtensionPointName<T> contributorsEP,
-      Params parameters, @Nullable T from, Consumer<LookupElement> consumer) {
-    return getVariantsFromContributors(Extensions.getExtensions(contributorsEP), parameters, from, consumer);
-  }
-
-  public <Params extends CompletionParameters, T extends AbstractCompletionContributor<Params>> boolean getVariantsFromContributors(final T[] contributors,
-                                                                                                                                    final Params parameters,
-                                                                                                                                    final T from,
-                                                                                                                                    final Consumer<LookupElement> consumer) {
-    final CompletionResultSet result = createResultSet(parameters, consumer);
+  public void getVariantsFromContributors(final CompletionParameters parameters,
+                                          @Nullable final CompletionContributor from,
+                                          final Consumer<LookupElement> consumer) {
+    final CompletionContributor[] contributors = CompletionContributor.EP_NAME.getExtensions();
     for (int i = Arrays.asList(contributors).indexOf(from) + 1; i < contributors.length; i++) {
-      if (!contributors[i].fillCompletionVariants(parameters, result)) {
-        return false;
+      final CompletionContributor contributor = contributors[i];
+      final CompletionResultSet result = createResultSet(parameters, consumer, contributor);
+      contributor.fillCompletionVariants(parameters, result);
+      if (result.isStopped()) {
+        return;
       }
     }
-    return from == null;
   }
 
   /**
@@ -89,9 +79,11 @@ public abstract class CompletionService {
    * {@link com.intellij.codeInsight.completion.PrefixMatcher} and give the filtered variants to consumer.  
    * @param parameters
    * @param consumer
+   * @param contributor
    * @return
    */
-  public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<LookupElement> consumer);
+  public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<LookupElement> consumer,
+                                                      @NotNull CompletionContributor contributor);
 
   @Nullable
   public abstract CompletionProcess getCurrentCompletion();
@@ -130,7 +122,7 @@ public abstract class CompletionService {
   public LookupElement[] performCompletion(final CompletionParameters parameters, final Consumer<LookupElement> consumer) {
     final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
 
-    getVariantsFromContributors(CompletionContributor.EP_NAME, parameters, null, new Consumer<LookupElement>() {
+    getVariantsFromContributors(parameters, null, new Consumer<LookupElement>() {
       public void consume(final LookupElement lookupElement) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {

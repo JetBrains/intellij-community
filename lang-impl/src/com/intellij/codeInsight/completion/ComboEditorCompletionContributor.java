@@ -17,10 +17,9 @@ import javax.swing.*;
  * @author peter
  */
 public class ComboEditorCompletionContributor extends CompletionContributor{
-  ComboEditorCompletionContributor myComboEditorCompletionContributor;
 
   @Override
-  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
     final PsiFile file = parameters.getOriginalFile();
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document != null) {
@@ -39,10 +38,8 @@ public class ComboEditorCompletionContributor extends CompletionContributor{
             }));
           }
         }
-        return false;
+        result.stopHere();
       }
     }
-
-    return true;
   }
 }

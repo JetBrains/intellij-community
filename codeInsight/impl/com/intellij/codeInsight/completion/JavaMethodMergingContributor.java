@@ -22,18 +22,18 @@ import java.util.Map;
  * @author peter
  */
 public class JavaMethodMergingContributor extends CompletionContributor {
-  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.SMART && parameters.getCompletionType() != CompletionType.BASIC) return true;
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    if (parameters.getCompletionType() != CompletionType.SMART && parameters.getCompletionType() != CompletionType.BASIC) return;
 
     final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
     ProgressManager.getInstance().checkCanceled();
-    if (process == null || !process.willAutoInsert(AutoCompletionPolicy.SETTINGS_DEPENDENT, result.getPrefixMatcher())) return true;
+    if (process == null || !process.willAutoInsert(AutoCompletionPolicy.SETTINGS_DEPENDENT, result.getPrefixMatcher())) return;
 
     final Ref<Boolean> wereNonGrouped = Ref.create(false);
     final Map<String, LookupElement> methodNameToItem = CollectionFactory.linkedMap();
     final List<LookupElement> allMethodItems = CollectionFactory.arrayList();
-    final boolean toContinue =
-        CompletionService.getCompletionService().getVariantsFromContributors(EP_NAME, parameters, this, new Consumer<LookupElement>() {
+
+    result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
           public void consume(final LookupElement item) {
             item.putUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, null);
             Object o = item.getObject();
@@ -75,7 +75,6 @@ public class JavaMethodMergingContributor extends CompletionContributor {
         result.addElement(item);
       }
     }
-    return toContinue;
   }
 
 }

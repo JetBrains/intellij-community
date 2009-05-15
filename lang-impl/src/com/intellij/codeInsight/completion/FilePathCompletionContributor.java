@@ -63,7 +63,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>(true, false) {
+    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>(false) {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                     ProcessingContext context,

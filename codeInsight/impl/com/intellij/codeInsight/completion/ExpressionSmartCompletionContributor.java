@@ -25,17 +25,13 @@ public abstract class ExpressionSmartCompletionContributor extends AbstractCompl
     myList.add(new Pair<ElementPattern<? extends PsiElement>, CompletionProvider<JavaSmartCompletionParameters>>(place, provider));
   }
 
-  public boolean fillCompletionVariants(final JavaSmartCompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(final JavaSmartCompletionParameters parameters, CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<JavaSmartCompletionParameters>> pair : myList) {
       final ProcessingContext context = new ProcessingContext();
       if (isPatternSuitable(pair.first, parameters, context)) {
-        if (!pair.second.addCompletionVariants(parameters, context, result)) return false;
+        pair.second.addCompletionVariants(parameters, context, result);
       }
     }
-    return true;
   }
-
-
-
 
 }

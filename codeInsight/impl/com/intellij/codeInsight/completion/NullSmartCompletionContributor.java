@@ -25,11 +25,11 @@ import java.util.Collection;
 public class NullSmartCompletionContributor extends CompletionContributor{
   public NullSmartCompletionContributor() {
     extend(CompletionType.SMART, and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
-                                                      not(psiElement().afterLeaf("."))), new ExpectedTypeBasedCompletionProvider(false) {
+                                                      not(psiElement().afterLeaf("."))), new ExpectedTypeBasedCompletionProvider() {
       protected void addCompletions(final CompletionParameters parameters,
                                     final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
         final Ref<Boolean> empty = Ref.create(true);
-        CompletionService.getCompletionService().getVariantsFromContributors(EP_NAME, parameters, NullSmartCompletionContributor.this, new Consumer<LookupElement>() {
+        result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
           public void consume(final LookupElement lookupElement) {
             empty.set(false);
             result.addElement(lookupElement);

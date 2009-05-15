@@ -49,8 +49,11 @@ public class JavaDocCompletionContributor extends CompletionContributor {
   public JavaDocCompletionContributor() {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(PsiDocToken.DOC_TAG_NAME), new TagChooser());
 
-    extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocTagValue.class), new CompletionProvider<CompletionParameters>(false, true) {
+    extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocTagValue.class), new CompletionProvider<CompletionParameters>(
+      true) {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+        result.stopHere();
+
         final PsiElement position = parameters.getPosition();
         boolean isArg = PsiJavaPatterns.psiElement().afterLeaf("(").accepts(position);
         PsiDocTag tag = PsiTreeUtil.getParentOfType(position, PsiDocTag.class);
@@ -81,12 +84,10 @@ public class JavaDocCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (PsiJavaPatterns.psiElement(PsiDocToken.DOC_COMMENT_DATA).accepts(parameters.getPosition())) return true;
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    if (PsiJavaPatterns.psiElement(PsiDocToken.DOC_COMMENT_DATA).accepts(parameters.getPosition())) return;
 
-    return super.fillCompletionVariants(parameters, result);
-
-    //return true; //PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiDocTag.class) == null;
+    super.fillCompletionVariants(parameters, result);
   }
 
   private static class TagChooser extends CompletionProvider<CompletionParameters> {

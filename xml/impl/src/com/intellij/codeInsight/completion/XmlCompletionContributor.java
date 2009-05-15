@@ -34,13 +34,14 @@ public class XmlCompletionContributor extends CompletionContributor {
 
   @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
 
-  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
     final PsiElement element = parameters.getPosition();
 
     if (parameters.getCompletionType() == CompletionType.CLASS_NAME) {
-      if (!isXmlNameCompletion(parameters)) return true;
+      if (!isXmlNameCompletion(parameters)) return;
+      result.stopHere();
       if (!(element.getParent() instanceof XmlTag)) {
-        return false;
+        return;
       }
       final XmlTag parent = (XmlTag)element.getParent();
       final String namespace = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -97,9 +98,7 @@ public class XmlCompletionContributor extends CompletionContributor {
           newResult.addElement(item);
         }
       }
-      return false;
     }
-    return true;
   }
 
   private static boolean isXmlNameCompletion(final CompletionParameters parameters) {

@@ -21,24 +21,24 @@ import com.intellij.util.Consumer;
 public class BasicToClassNameDelegator extends CompletionContributor{
 
   @Override
-  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC) return true;
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    if (parameters.getCompletionType() != CompletionType.BASIC) return;
 
     final PsiFile file = parameters.getOriginalFile();
     final boolean isJava = file.getLanguage() == StdLanguages.JAVA;
-    if (!isJava && !(file.getLanguage() instanceof XMLLanguage)) return true;
+    if (!isJava && !(file.getLanguage() instanceof XMLLanguage)) return;
 
     final PsiElement position = parameters.getPosition();
     if (isJava) {
-      if (!(position.getParent() instanceof PsiJavaCodeReferenceElement)) return true;
-      if (((PsiJavaCodeReferenceElement)position.getParent()).getQualifier() != null) return true;
+      if (!(position.getParent() instanceof PsiJavaCodeReferenceElement)) return;
+      if (((PsiJavaCodeReferenceElement)position.getParent()).getQualifier() != null) return;
     }
 
     final String s = result.getPrefixMatcher().getPrefix();
-    if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return true;
+    if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return;
 
     final Ref<Boolean> empty = Ref.create(true);
-    CompletionService.getCompletionService().getVariantsFromContributors(EP_NAME, parameters, this, new Consumer<LookupElement>() {
+    result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
           public void consume(final LookupElement lookupElement) {
             empty.set(false);
             result.addElement(lookupElement);
@@ -55,11 +55,11 @@ public class BasicToClassNameDelegator extends CompletionContributor{
     else if (invocationCount > 1) {
       classParams = new CompletionParameters(position, file, CompletionType.CLASS_NAME, offset, invocationCount - 1);
     } else {
-      return false;
+      return;
     }
 
 
-    CompletionService.getCompletionService().getVariantsFromContributors(EP_NAME, classParams, null, new Consumer<LookupElement>() {
+    CompletionService.getCompletionService().getVariantsFromContributors(classParams, null, new Consumer<LookupElement>() {
       public void consume(final LookupElement lookupElement) {
         if (lookupElement instanceof JavaPsiClassReferenceElement) {
           ((JavaPsiClassReferenceElement)lookupElement).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
@@ -67,8 +67,6 @@ public class BasicToClassNameDelegator extends CompletionContributor{
         result.addElement(lookupElement);
       }
     });
-
-    return false;
   }
 
 }

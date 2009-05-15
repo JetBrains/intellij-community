@@ -27,8 +27,8 @@ import java.util.HashSet;
 public class WordCompletionContributor extends CompletionContributor{
 
   @Override
-  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC) return true;
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    if (parameters.getCompletionType() != CompletionType.BASIC) return;
 
     final PsiFile file = parameters.getOriginalFile();
     final int startOffset = parameters.getOffset();
@@ -45,7 +45,7 @@ public class WordCompletionContributor extends CompletionContributor{
       data.addKeywordVariants(toAdd, insertedElement, file);
       for (CompletionVariant completionVariant : toAdd) {
         if (completionVariant.hasKeywordCompletions()) {
-          return true;
+          return;
         }
       }
     }
@@ -74,7 +74,5 @@ public class WordCompletionContributor extends CompletionContributor{
         textContainer = textContainer.getTreeParent();
       }
     }
-
-    return true;
   }
 }

@@ -30,8 +30,8 @@ public abstract class ExpectedTypeBasedCompletionProvider extends CompletionProv
     }
   };
 
-  public ExpectedTypeBasedCompletionProvider(final boolean returnValue) {
-    super(returnValue, false);
+  public ExpectedTypeBasedCompletionProvider() {
+    super(false);
   }
 
   public void addCompletions(@NotNull final CompletionParameters params, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {

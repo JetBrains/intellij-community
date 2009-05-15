@@ -25,12 +25,12 @@ public class DomCompletionContributor extends CompletionContributor{
   private final GenericValueReferenceProvider myProvider = new GenericValueReferenceProvider();
 
   @Override
-  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC) return true;
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    if (parameters.getCompletionType() != CompletionType.BASIC) return;
 
     final PsiElement element = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlTag.class, XmlAttributeValue.class);
 
-    return element == null || ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+    if (element != null && !ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
         if (isSchemaEnumerated(element)) {
           return true;
@@ -42,8 +42,9 @@ public class DomCompletionContributor extends CompletionContributor{
         }
         return true;
       }
-    }).booleanValue();
-
+    }).booleanValue()) {
+      result.stopHere();
+    }
   }
 
   public static boolean isSchemaEnumerated(final PsiElement element) {
