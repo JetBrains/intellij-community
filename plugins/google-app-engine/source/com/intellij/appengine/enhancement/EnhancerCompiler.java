@@ -11,6 +11,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -42,7 +43,7 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
         if (facet.getConfiguration().isRunEnhancerOnMake()) {
           final VirtualFile outputRoot = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
           if (outputRoot != null) {
-            collectItems(outputRoot, facet, items);
+            collectItems(outputRoot, facet, context, items);
           }
         }
       }
@@ -50,15 +51,18 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
     return items.toArray(new ProcessingItem[items.size()]);
   }
 
-  private static void collectItems(@NotNull VirtualFile file, AppEngineFacet facet, List<ProcessingItem> items) {
+  private static void collectItems(@NotNull VirtualFile file, AppEngineFacet facet, CompileContext context, List<ProcessingItem> items) {
     if (file.isDirectory()) {
       final VirtualFile[] files = file.getChildren();
       for (VirtualFile child : files) {
-        collectItems(child, facet, items);
+        collectItems(child, facet, context, items);
       }
     }
-    else if (StdFileTypes.CLASS.equals(file.getFileType())){
-      items.add(new ClassFileItem(file, facet));
+    else if (StdFileTypes.CLASS.equals(file.getFileType())) {
+      final VirtualFile sourceFile = ((CompileContextEx)context).getSourceFileByOutputFile(file);
+      if (sourceFile != null && facet.shouldRunEnhancerFor(sourceFile)) {
+        items.add(new ClassFileItem(file, facet));
+      }
     }
   }
 

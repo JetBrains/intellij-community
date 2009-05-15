@@ -72,7 +72,8 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
     super.addSupport(module, rootModel, null, null);
     final AppEngineFacet appEngineFacet = FacetManager.getInstance(module).getFacetByType(AppEngineFacet.ID);
     LOG.assertTrue(appEngineFacet != null);
-    appEngineFacet.getConfiguration().setSdkHomePath(sdkPath);
+    final AppEngineFacetConfiguration facetConfiguration = appEngineFacet.getConfiguration();
+    facetConfiguration.setSdkHomePath(sdkPath);
     final AppEngineSdk sdk = appEngineFacet.getSdk();
     final ApplicationServer appServer = sdk.getOrCreateAppServer();
     if (appServer != null) {
@@ -92,7 +93,8 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
     final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getLibUserDirectoryPath(), null);
     rootModel.addLibraryEntry(apiJar);
     if (addJdoSupport) {
-      appEngineFacet.getConfiguration().setRunEnhancerOnMake(true);
+      facetConfiguration.setRunEnhancerOnMake(true);
+      facetConfiguration.getFilesToEnhance().addAll(AppEngineUtil.getDefaultSourceRootsToEnhance(rootModel));
       try {
         final VirtualFile[] sourceRoots = rootModel.getSourceRoots();
         final VirtualFile sourceRoot;

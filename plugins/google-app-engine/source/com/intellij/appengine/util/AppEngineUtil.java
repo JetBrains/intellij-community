@@ -8,6 +8,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,5 +65,17 @@ public class AppEngineUtil {
 
   public static File getAppEngineSystemDir() {
     return new File(PathManager.getSystemPath(), "GoogleAppEngine");
+  }
+
+  public static List<String> getDefaultSourceRootsToEnhance(ModuleRootModel rootModel) {
+    List<String> paths = new ArrayList<String>();
+    for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+      for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
+        if (!sourceFolder.isTestSource()) {
+          paths.add(VfsUtil.urlToPath(sourceFolder.getUrl()));
+        }
+      }
+    }
+    return paths;
   }
 }

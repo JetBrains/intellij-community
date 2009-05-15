@@ -8,8 +8,12 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -17,6 +21,7 @@ import org.jdom.Element;
 public class AppEngineFacetConfiguration implements FacetConfiguration, PersistentStateComponent<AppEngineFacetConfiguration> {
   private String mySdkHomePath = "";
   private boolean myRunEnhancerOnMake = false;
+  private List<String> myFilesToEnhance = new ArrayList<String>();
 
   public FacetEditorTab[] createEditorTabs(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
     return new FacetEditorTab[] {
@@ -54,7 +59,18 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
     return myRunEnhancerOnMake;
   }
 
+  @Tag("files-to-enhance")
+  @AbstractCollection(surroundWithTag = false, elementTag = "file", elementValueAttribute = "path")
+  public List<String> getFilesToEnhance() {
+    return myFilesToEnhance;
+  }
+
+  public void setFilesToEnhance(List<String> filesToEnhance) {
+    myFilesToEnhance = filesToEnhance;
+  }
+
   public void setRunEnhancerOnMake(boolean runEnhancerOnMake) {
     myRunEnhancerOnMake = runEnhancerOnMake;
   }
+
 }
