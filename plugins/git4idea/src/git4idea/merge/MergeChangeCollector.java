@@ -87,12 +87,13 @@ public class MergeChangeCollector {
       h.setNoSSH(true);
       h.setSilent(true);
       h.addParameters("--unmerged");
-      for (String line : h.run().split("\n")) {
-        if (line.length() == 0) {
+      for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {
+        if (s.isEol()) {
+          s.nextLine();
           continue;
         }
-        String[] tk = line.split("[\t ]+");
-        final String relative = tk[tk.length - 1];
+        s.boundedToken('\t');
+        final String relative = s.line();
         if (!myUnmergedPaths.add(relative)) {
           continue;
         }
@@ -154,23 +155,25 @@ public class MergeChangeCollector {
    */
   private void processDiff(String root, TreeSet<String> updated, TreeSet<String> created, TreeSet<String> removed, String revisions)
     throws VcsException {
-    GitSimpleHandler h1 = new GitSimpleHandler(myProject, myRoot, GitHandler.DIFF);
-    h1.setSilent(true);
-    h1.setNoSSH(true);
+    GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitHandler.DIFF);
+    h.setSilent(true);
+    h.setNoSSH(true);
     // note that moves are not detected here
-    h1.addParameters("--name-status", "--diff-filter=ADMRUX", revisions);
-    for (String line : h1.run().split("\n")) {
-      if (line.length() == 0) {
+    h.addParameters("--name-status", "--diff-filter=ADMRUX", revisions);
+    for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {
+      if (s.isEol()) {
+        s.nextLine();
         continue;
       }
-      String[] tk = line.split("[\t ]+");
-      final String relative = tk[tk.length - 1];
+      char status = s.peek();
+      s.boundedToken('\t');
+      final String relative = s.line();
       // eliminate conflicts
       if (myUnmergedPaths.contains(relative)) {
         continue;
       }
       String path = root + "/" + GitUtil.unescapePath(relative);
-      switch (tk[0].charAt(0)) {
+      switch (status) {
         case 'M':
           updated.add(path);
           break;
@@ -181,7 +184,7 @@ public class MergeChangeCollector {
           removed.add(path);
           break;
         default:
-          throw new IllegalStateException("Unexpected status: " + line);
+          throw new IllegalStateException("Unexpected status: " + status);
       }
     }
   }
