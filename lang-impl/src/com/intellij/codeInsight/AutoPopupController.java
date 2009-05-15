@@ -8,6 +8,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +42,7 @@ public class AutoPopupController implements Disposable {
 
   private void setupListeners() {
     ActionManagerEx.getInstanceEx().addAnActionListener(new AnActionListener() {
-      public void beforeActionPerformed(AnAction action, DataContext dataContext) {
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         myAlarm.cancelAllRequests();
       }
 
@@ -50,7 +51,7 @@ public class AutoPopupController implements Disposable {
       }
 
 
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+      public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
       }
     }, this);
 

@@ -150,7 +150,7 @@ public final class IdeMouseEventDispatcher{
                                                     e.getModifiers());
         action.beforeActionPerformedUpdate(actionEvent);
         if(presentation.isEnabled()){
-          actionManager.fireBeforeActionPerformed(action, dataContext);
+          actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
           Component c = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
           if (c != null && !c.isShowing()) {
             continue;

@@ -114,6 +114,7 @@ public class IdeEventQueue extends EventQueue {
 
 
   private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
+  private final Set<EventDispatcher> myPostprocessors = new LinkedHashSet<EventDispatcher>();
 
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
@@ -250,7 +251,23 @@ public class IdeEventQueue extends EventQueue {
 
 
   public void addDispatcher(final EventDispatcher dispatcher, Disposable parent) {
-    myDispatchers.add(dispatcher);
+    _addProcessor(dispatcher, parent, myDispatchers);
+  }
+
+  public void removeDispatcher(EventDispatcher dispatcher) {
+    myDispatchers.remove(dispatcher);
+  }
+
+  public void addPostprocessor(EventDispatcher dispatcher, Disposable parent) {
+    _addProcessor(dispatcher, parent, myPostprocessors);
+  }
+
+  public void removePostprocessor(EventDispatcher dispatcher) {
+    myPostprocessors.remove(dispatcher);
+  }
+
+  private void _addProcessor(final EventDispatcher dispatcher, Disposable parent, Set<EventDispatcher> set) {
+    set.add(dispatcher);
     if (parent != null) {
       Disposer.register(parent, new Disposable() {
         public void dispose() {
@@ -259,11 +276,6 @@ public class IdeEventQueue extends EventQueue {
       });
     }
   }
-
-  public void removeDispatcher(EventDispatcher dispatcher) {
-    myDispatchers.remove(dispatcher);
-  }
-
 
   public int getEventCount() {
     return myEventCount;
@@ -346,6 +358,10 @@ public class IdeEventQueue extends EventQueue {
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
       JobSchedulerImpl.resume();
+
+      for (EventDispatcher each : myPostprocessors) {
+        each.dispatch(e);
+      }
 
       if (DEBUG) {
         final long processTime = System.currentTimeMillis() - t;

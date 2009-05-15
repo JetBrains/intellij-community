@@ -367,11 +367,11 @@ public class DaemonListeners implements Disposable {
   private class MyAnActionListener implements AnActionListener {
     private final AnAction escapeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
 
-    public void beforeActionPerformed(AnAction action, DataContext dataContext) {
+    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
       myEscPressed = action == escapeAction;
     }
 
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
     public void beforeEditorTyping(char c, DataContext dataContext) {

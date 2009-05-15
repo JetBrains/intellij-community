@@ -163,13 +163,13 @@ public class ActionMenuItem extends JMenuItem {
         myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers());
       if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
         ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-        actionManager.fireBeforeActionPerformed(myAction, myContext);
+        actionManager.fireBeforeActionPerformed(myAction, myContext, event);
         Component component = ((Component)event.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT));
         if (component != null && !isInTree(component)) {
           return;
         }
         myAction.actionPerformed(event);
-        actionManager.queueActionPerformedEvent(myAction, myContext);
+        actionManager.queueActionPerformedEvent(myAction, myContext, event);
       }
     }
   }

@@ -1,6 +1,7 @@
 package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -14,12 +15,16 @@ import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -41,29 +46,34 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   private boolean myIsPlaying = false;
   @NonNls
   private static final String ELEMENT_MACRO = "macro";
+  private IdeEventQueue.EventDispatcher myKeyProcessor;
+
+  private InputEvent myLastActionInputEvent;
 
   public ActionMacroManager(ActionManagerEx actionManagerEx) {
     myActionManager = actionManagerEx;
     myActionManager.addAnActionListener(new AnActionListener() {
-      public void beforeActionPerformed(AnAction action, DataContext dataContext) {
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (myIsRecording) {
           String id = myActionManager.getId(action);
           //noinspection HardCodedStringLiteral
           if (id != null && !"StartStopMacroRecording".equals(id)) {
             myRecordingMacro.appendAction(id);
           }
+
+          myLastActionInputEvent = event.getInputEvent();
         }
       }
 
       public void beforeEditorTyping(char c, DataContext dataContext) {
-        if (myIsRecording) {
-          myRecordingMacro.appendKeytyped(c);
-        }
       }
 
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+      public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
       }
     });
+
+    myKeyProcessor = new MyKeyPostpocessor();
+    IdeEventQueue.getInstance().addPostprocessor(myKeyProcessor, null);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -207,6 +217,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   }
 
   public void disposeComponent() {
+    IdeEventQueue.getInstance().removePostprocessor(myKeyProcessor);
   }
 
   public ActionMacro[] getAllMacros() {
@@ -310,6 +321,46 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       super.update(e);
       e.getPresentation().setEnabled(!ActionMacroManager.getInstance().isPlaying() &&
                                      e.getDataContext().getData(DataConstants.EDITOR) != null);
+    }
+  }
+
+  private class MyKeyPostpocessor implements IdeEventQueue.EventDispatcher {
+
+    public boolean dispatch(AWTEvent e) {
+      if (isRecording() && e instanceof KeyEvent) {
+        postProcessKeyEvent((KeyEvent)e);
+      }
+      return false;
+    }
+
+    public void postProcessKeyEvent(KeyEvent e) {
+      final boolean isChar = e.getKeyChar() != KeyEvent.CHAR_UNDEFINED;
+      boolean hasActionModifiers = e.isAltDown() | e.isControlDown() | e.isMetaDown();
+      boolean plainType = isChar && !hasActionModifiers;
+      final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
+
+      boolean noModifierKeyIsPressed =  e.getKeyCode() != KeyEvent.VK_CONTROL
+                 && e.getKeyCode() != KeyEvent.VK_ALT
+                 && e.getKeyCode() != KeyEvent.VK_META
+                 && e.getKeyCode() != KeyEvent.VK_SHIFT;
+
+      if (e.getID() == KeyEvent.KEY_TYPED && plainType && !isEnter) {
+         myRecordingMacro.appendKeytyped(e.getKeyChar());
+      } else if (e.getID() == KeyEvent.KEY_PRESSED && noModifierKeyIsPressed && (!plainType || isEnter)) {
+        final boolean waiting = IdeEventQueue.getInstance().getKeyEventDispatcher().isWaitingForSecondKeyStroke();
+        if (!e.equals(myLastActionInputEvent) && !waiting) {
+          final String stroke = KeyStroke.getKeyStrokeForEvent(e).toString();
+
+          final int pressed = stroke.indexOf("pressed");
+          String key = stroke.substring(pressed + "pressed".length());
+          String modifiers = stroke.substring(0, pressed);
+
+          String ready = (modifiers.replaceAll("ctrl", "control").trim() + " " + key.trim()).trim();
+          
+          myRecordingMacro.appendShortuct(ready);
+          myLastActionInputEvent = null;
+        }
+      }
     }
   }
 }

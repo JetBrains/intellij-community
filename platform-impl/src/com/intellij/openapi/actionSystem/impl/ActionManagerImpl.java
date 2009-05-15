@@ -96,7 +96,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   @NonNls public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
 
   private final List<ActionPopupMenuImpl> myPopups = new ArrayList<ActionPopupMenuImpl>();
+
   private final Map<AnAction, DataContext> myQueuedNotifications = new LinkedHashMap<AnAction, DataContext>();
+  private final Map<AnAction, AnActionEvent> myQueuedNotificationsEvents = new LinkedHashMap<AnAction, AnActionEvent>();
+
   private Runnable myPreloadActionsRunnable;
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
@@ -897,11 +900,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
-  public void queueActionPerformedEvent(final AnAction action, DataContext context) {
+  public void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event) {
     if (myPopups.size() > 0) {
       myQueuedNotifications.put(action, context);
     } else {
-      fireAfterActionPerformed(action, context);
+      fireAfterActionPerformed(action, context, event);
     }
   }
 
@@ -914,9 +917,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     final Set<AnAction> actions = myQueuedNotifications.keySet();
     for (final AnAction eachAction : actions) {
       final DataContext eachContext = myQueuedNotifications.get(eachAction);
-      fireAfterActionPerformed(eachAction, eachContext);
+      fireAfterActionPerformed(eachAction, eachContext, myQueuedNotificationsEvents.get(eachAction));
     }
     myQueuedNotifications.clear();
+    myQueuedNotificationsEvents.clear();
   }
 
   private AnActionListener[] getActionListeners() {
@@ -946,7 +950,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     myCachedActionListeners = null;
   }
 
-  public void fireBeforeActionPerformed(AnAction action, DataContext dataContext) {
+  public void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
     if (action != null) {
       myPrevPerformedActionId = myLastPreformedActionId;
       myLastPreformedActionId = getId(action);
@@ -954,11 +958,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
     AnActionListener[] listeners = getActionListeners();
     for (AnActionListener listener : listeners) {
-      listener.beforeActionPerformed(action, dataContext);
+      listener.beforeActionPerformed(action, dataContext, event);
     }
   }
 
-  public void fireAfterActionPerformed(AnAction action, DataContext dataContext) {
+  public void fireAfterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
     if (action != null) {
       myPrevPerformedActionId = myLastPreformedActionId;
       myLastPreformedActionId = getId(action);
@@ -967,7 +971,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     AnActionListener[] listeners = getActionListeners();
     for (AnActionListener listener : listeners) {
       try {
-        listener.afterActionPerformed(action, dataContext);
+        listener.afterActionPerformed(action, dataContext, event);
       }
       catch(AbstractMethodError e) {
         // ignore
@@ -1168,7 +1172,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       return;
     }
 
-    fireBeforeActionPerformed(action, context);
+    fireBeforeActionPerformed(action, context, event);
 
     UIUtil.addAwtListener(new AWTEventListener() {
       public void eventDispatched(AWTEvent event) {
@@ -1182,6 +1186,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
     action.actionPerformed(event);
     result.setDone();
-    queueActionPerformedEvent(action, context);
+    queueActionPerformedEvent(action, context, event);
   }
 }

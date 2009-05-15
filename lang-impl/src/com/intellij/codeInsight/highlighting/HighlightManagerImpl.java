@@ -4,6 +4,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.components.ProjectComponent;
@@ -275,12 +276,12 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
   }
 
   private class MyAnActionListener implements AnActionListener {
-    public void beforeActionPerformed(AnAction action, final DataContext dataContext) {
+    public void beforeActionPerformed(AnAction action, final DataContext dataContext, AnActionEvent event) {
       requestHideHighlights(dataContext);
     }
 
 
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
     public void beforeEditorTyping(char c, DataContext dataContext) {

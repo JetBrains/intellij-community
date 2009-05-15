@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +35,9 @@ public abstract class ActionManagerEx extends ActionManager{
 
 
 
-  public abstract void fireBeforeActionPerformed(AnAction action, DataContext dataContext);
+  public abstract void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
-  public abstract void fireAfterActionPerformed(AnAction action, DataContext dataContext);
+  public abstract void fireAfterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
 
 
@@ -126,7 +127,7 @@ public abstract class ActionManagerEx extends ActionManager{
 
 
 
-  public abstract void queueActionPerformedEvent(final AnAction action, DataContext context);
+  public abstract void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event);
 
 
 

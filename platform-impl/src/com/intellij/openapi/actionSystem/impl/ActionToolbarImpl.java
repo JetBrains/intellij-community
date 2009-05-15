@@ -903,10 +903,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       myActionManager.removeAnActionListener(this);
     }
 
-    public void beforeActionPerformed(final AnAction action, final DataContext dataContext) {
+    public void beforeActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
       if (!myVisibleActions.contains(action)) {
         onOtherActionPerformed();
       }

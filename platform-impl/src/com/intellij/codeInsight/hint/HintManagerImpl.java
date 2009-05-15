@@ -1,10 +1,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -644,7 +641,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   private class MyAnActionListener implements AnActionListener {
-    public void beforeActionPerformed(AnAction action, DataContext dataContext) {
+    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
       if (action instanceof ActionToIgnore) return;
 
       AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
@@ -654,7 +651,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
 
 
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
     public void beforeEditorTyping(char c, DataContext dataContext) {}

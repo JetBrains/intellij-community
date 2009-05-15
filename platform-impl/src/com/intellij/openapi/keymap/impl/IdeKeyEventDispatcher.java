@@ -479,7 +479,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       processor.onUpdatePassed(e, action, actionEvent);
 
       ((DataManagerImpl.MyDataContext)myContext.getDataContext()).setEventCount(IdeEventQueue.getInstance().getEventCount());
-      actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext());
+      actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
       Component component = (Component)actionEvent.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT);
       if (component != null && !component.isShowing()) {
         return true;

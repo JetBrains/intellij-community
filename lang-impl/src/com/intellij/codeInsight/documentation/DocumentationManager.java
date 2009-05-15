@@ -18,6 +18,7 @@ import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -70,7 +71,7 @@ public class DocumentationManager {
     myProject = project;
     myActionManagerEx = managerEx;
     final AnActionListener actionListener = new AnActionListener() {
-      public void beforeActionPerformed(AnAction action, DataContext dataContext) {
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         final JBPopup hint = getDocInfoHint();
         if (hint != null) {
           if (action instanceof HintManagerImpl.ActionToIgnore) return;
@@ -91,7 +92,7 @@ public class DocumentationManager {
       }
 
 
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+      public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
       }
     };
     myActionManagerEx.addAnActionListener(actionListener, project);

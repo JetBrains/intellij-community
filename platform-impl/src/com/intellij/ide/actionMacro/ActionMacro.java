@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -28,6 +29,9 @@ public class ActionMacro implements JDOMExternalizable {
   private static final String ATTRIBUTE_NAME = "name";
   @NonNls
   private static final String ELEMENT_TYPING = "typing";
+
+  @NonNls
+  private static final String ELEMENT_SHORTCUT = "shortuct";
   @NonNls
   private static final String ATTRIBUTE_TEXT = "text";
   @NonNls
@@ -65,6 +69,8 @@ public class ActionMacro implements JDOMExternalizable {
       }
       else if (ELEMENT_ACTION.equals(action.getName())) {
         myActions.add(new IdActionDescriptor(action.getAttributeValue(ATTRIBUTE_ID)));
+      } else if (ELEMENT_SHORTCUT.equals(action.getName())) {
+        myActions.add(new ShortcutActionDesciption(action.getAttributeValue(ATTRIBUTE_TEXT)));
       }
     }
   }
@@ -74,15 +80,23 @@ public class ActionMacro implements JDOMExternalizable {
     final ActionDescriptor[] actions = getActions();
     for (int i = 0; i < actions.length; i++) {
       ActionDescriptor action = actions[i];
-      Element actionNode;
+      Element actionNode = null;
       if (action instanceof TypedDescriptor) {
         actionNode = new Element(ELEMENT_TYPING);
-        actionNode.setAttribute(ATTRIBUTE_TEXT, ((TypedDescriptor)action).getText());
+        final String t = ((TypedDescriptor)action).getText();
+        actionNode.setAttribute(ATTRIBUTE_TEXT, JDOMUtil.escapeText(t));
       }
-      else {
+      else if (action instanceof IdActionDescriptor) {
         actionNode = new Element(ELEMENT_ACTION);
         actionNode.setAttribute(ATTRIBUTE_ID, ((IdActionDescriptor)action).getActionId());
+      } else if (action instanceof ShortcutActionDesciption) {
+        actionNode = new Element(ELEMENT_SHORTCUT);
+        actionNode.setAttribute(ATTRIBUTE_TEXT, ((ShortcutActionDesciption)action).getText());
       }
+
+
+      assert actionNode != null : action;
+
       macro.addContent(actionNode);
     }
   }
@@ -126,6 +140,10 @@ public class ActionMacro implements JDOMExternalizable {
 
   public void appendAction(String actionId) {
     myActions.add(new IdActionDescriptor(actionId));
+  }
+
+  public void appendShortuct(String text) {
+    myActions.add(new ShortcutActionDesciption(text));
   }
 
   public void appendKeytyped(char c) {
@@ -199,6 +217,34 @@ public class ActionMacro implements JDOMExternalizable {
       for (int i = 0; i < chars.length; i++) {
         typedAction.actionPerformed(editor, chars[i], context);
       }
+    }
+  }
+
+  public static class ShortcutActionDesciption implements ActionDescriptor {
+
+    private String myKeyStroke;
+
+    public ShortcutActionDesciption(String stroke) {
+      myKeyStroke = stroke;
+    }
+
+    public Object clone() {
+      return new ShortcutActionDesciption(myKeyStroke);
+    }
+
+    public void playBack(DataContext context) {
+    }
+
+    public void generateTo(StringBuffer script) {
+      script.append("%[").append(myKeyStroke).append("]\n");
+    }
+
+    public String toString() {
+      return IdeBundle.message("action.descriptor.keystroke", myKeyStroke);
+    }
+
+    public String getText() {
+      return myKeyStroke;
     }
   }
 

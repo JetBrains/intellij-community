@@ -800,13 +800,14 @@ public final class InternalDecorator extends JPanel {
     public void actionPerformed(final ActionEvent e) {
       final DataContext dataContext = DataManager.getInstance().getDataContext(this);
       final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      actionManager.fireBeforeActionPerformed(myAction, dataContext);
+      final AnActionEvent event =
+        new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, myAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
+      actionManager.fireBeforeActionPerformed(myAction, dataContext, event);
       final Component component = ((Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT));
       if (component != null && !component.isShowing()) {
         return;
       }
-      myAction.actionPerformed(
-        new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, myAction.getTemplatePresentation(), ActionManager.getInstance(), 0));
+      myAction.actionPerformed(event);
     }
 
     public void setIcon(final Icon icon) {

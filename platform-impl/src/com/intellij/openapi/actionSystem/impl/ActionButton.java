@@ -99,13 +99,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     if (isButtonEnabled()) {
       final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
       final DataContext dataContext = event.getDataContext();
-      manager.fireBeforeActionPerformed(myAction, dataContext);
+      manager.fireBeforeActionPerformed(myAction, dataContext, event);
       Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component != null && !component.isShowing()) {
         return;
       }
       actionPerfomed(event);
-      manager.queueActionPerformedEvent(myAction, dataContext);
+      manager.queueActionPerformedEvent(myAction, dataContext, event);
     }
   }
 
