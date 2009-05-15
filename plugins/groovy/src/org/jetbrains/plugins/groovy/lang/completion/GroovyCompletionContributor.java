@@ -32,7 +32,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
                   psiElement().withText(PsiKeyword.THROW)))).withSuperParent(3, GrVariable.class);
 
   public GroovyCompletionContributor() {
-    extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>(true, false) {
+    extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>(false) {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         final PsiElement identifierCopy = parameters.getPosition();
         final PsiFile file = parameters.getOriginalFile();
