@@ -56,7 +56,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           public void consume(final PsiType type) {
             addExpectedType(result, type, identifierCopy);
           }
-        });
+        }, result.getPrefixMatcher());
       }
     });
   }
