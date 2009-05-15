@@ -334,6 +334,7 @@ public class PythonSdkType extends SdkType {
 
       commandLine.addParameter("-d"); commandLine.addParameter(stubsRoot); // -d stubs_root
       commandLine.addParameter("-b"); // for builtins
+      commandLine.addParameter("-u"); // for update-only mode
       try {
         final OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
         handler.startNotify();

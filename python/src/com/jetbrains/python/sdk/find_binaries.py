@@ -42,6 +42,8 @@ def find_binaries(paths):
   res = {} # {name.upper(): (name, full_path)} 
   if not paths:
     return {}
+  if hasattr(os, "java"): # jython can't have binary modules
+    return {} 
   paths = sortedNoCase(paths)
   for path in paths:
     for root, dirs, files in os.walk(path):
