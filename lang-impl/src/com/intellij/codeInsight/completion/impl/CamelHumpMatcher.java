@@ -21,6 +21,7 @@ import java.util.Map;
  * @author peter
 */
 public class CamelHumpMatcher extends PrefixMatcher {
+  private static int ourLastCompletionCaseSetting = -1;
   private static final Map<String, NameUtil.Matcher> ourPatternCache = new LinkedHashMap<String, NameUtil.Matcher>() {
     @Override
     protected boolean removeEldestEntry(Map.Entry<String, NameUtil.Matcher> eldest) {
@@ -43,6 +44,12 @@ public class CamelHumpMatcher extends PrefixMatcher {
   public synchronized boolean prefixMatches(@NotNull final String name) {
     if (myMatcher == null) {
       synchronized (ourPatternCache) {
+        final int currentSetting = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
+        if (ourLastCompletionCaseSetting != currentSetting) {
+          ourPatternCache.clear();
+          ourLastCompletionCaseSetting = currentSetting;
+        }
+
         NameUtil.Matcher pattern = ourPatternCache.get(myPrefix);
         if (pattern == null) {
           pattern = createCamelHumpsMatcher();
