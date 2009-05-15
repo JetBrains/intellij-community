@@ -57,6 +57,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -458,20 +459,36 @@ public class ImplementationViewComponent extends JPanel {
     }
 
     @Override
-      public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(final AnActionEvent e) {
       final UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsagesString(myTitle);
       presentation.setTabName(myTitle);
       presentation.setTabText(myTitle);
-      final UsageInfo[] usages = new UsageInfo[myElements.length];
-      for (int i = 0; i < myElements.length; i++) {
-        usages[i] = new UsageInfo(myElements[i]);
+      PsiElement[] elements = collectNonBinaryElements();
+      final UsageInfo[] usages = new UsageInfo[elements.length];
+      for (int i = 0; i < elements.length; i++) {
+        usages[i] = new UsageInfo(elements[i]);
       }
       UsageViewManager.getInstance(myEditor.getProject()).showUsages(new UsageTarget[0], UsageInfoToUsageConverter.convert(
-        new UsageInfoToUsageConverter.TargetElementsDescriptor(myElements), usages), presentation);
+        new UsageInfoToUsageConverter.TargetElementsDescriptor(elements), usages), presentation);
       if (myHint.isVisible()) {
         myHint.cancel();
       }
     }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setVisible(collectNonBinaryElements().length > 0);
+    }
+  }
+
+  private PsiElement[] collectNonBinaryElements() {
+    List<PsiElement> result = new ArrayList<PsiElement>();
+    for (PsiElement element : myElements) {
+      if (!(element instanceof PsiBinaryFile)) {
+        result.add(element);
+      }
+    }
+    return result.toArray(new PsiElement[result.size()]);
   }
 }
