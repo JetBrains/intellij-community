@@ -19,13 +19,11 @@ import javax.swing.tree.TreePath;
 
 public abstract class MoveScopeAction extends AnAction {
   private final Tree myTree;
-  private final InspectionProfileImpl mySelectedProfile;
   private final int myDir;
 
-  public MoveScopeAction(Tree tree, InspectionProfileImpl profile, String text, Icon icon, int dir) {
+  public MoveScopeAction(Tree tree,  String text, Icon icon, int dir) {
     super(text, text, icon);
     myTree = tree;
-    mySelectedProfile = profile;
     myDir = dir;
   }
 
@@ -36,7 +34,7 @@ public abstract class MoveScopeAction extends AnAction {
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
-    if (mySelectedProfile == null) return;
+    if (getSelectedProfile() == null) return;
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
     if (nodes.length > 0) {
       final InspectionConfigTreeNode treeNode = nodes[0];
@@ -54,11 +52,13 @@ public abstract class MoveScopeAction extends AnAction {
     final Descriptor descriptor = node.getDesriptor();
     final TreeNode parent = node.getParent();
     final int index = parent.getIndex(node);
-    mySelectedProfile.moveScope(descriptor.getKey().toString(), index, myDir);
+    getSelectedProfile().moveScope(descriptor.getKey().toString(), index, myDir);
     node.removeFromParent();
     ((InspectionConfigTreeNode)parent).insert(node, index + myDir);
     ((DefaultTreeModel)myTree.getModel()).reload(parent);
     myTree.setSelectionPath(new TreePath(node.getPath()));
     myTree.revalidate();
   }
+
+  protected abstract InspectionProfileImpl getSelectedProfile();
 }

@@ -510,7 +510,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void enableTool(String inspectionTool) {
-    myTools.get(inspectionTool).setEnabled(true);
+    final ToolsImpl tools = myTools.get(inspectionTool);
+    tools.setEnabled(true);
+    if (tools.getNonDefaultTools() == null) {
+      tools.getDefaultState().setEnabled(true);
+    }
   }
 
   public void enableTool(String inspectionTool, NamedScope namedScope) {
@@ -523,7 +527,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
 
   public void disableTool(String inspectionTool) {
-    myTools.get(inspectionTool).setEnabled(false);
+    final ToolsImpl tools = myTools.get(inspectionTool);
+    tools.setEnabled(false);
+    if (tools.getNonDefaultTools() == null) {
+      tools.getDefaultState().setEnabled(false);
+    }
   }
 
   public void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level) {

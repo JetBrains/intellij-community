@@ -19,15 +19,13 @@ import com.intellij.util.Icons;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-public class DeleteScopeAction extends AnAction {
+public abstract class DeleteScopeAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + DeleteScopeAction.class.getName());
   private final Tree myTree;
-  private final InspectionProfileImpl mySelectedProfile;
 
-  public DeleteScopeAction(Tree tree, InspectionProfileImpl profile) {
+  public DeleteScopeAction(Tree tree) {
     super("Delete Scope", "Delete Scope", Icons.DELETE_ICON);
     myTree = tree;
-    mySelectedProfile = profile;
     registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
   }
 
@@ -35,7 +33,7 @@ public class DeleteScopeAction extends AnAction {
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
-    if (mySelectedProfile == null) return;
+    if (getSelectedProfile() == null) return;
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
     if (nodes.length > 0) {
       for (InspectionConfigTreeNode node : nodes) {
@@ -54,12 +52,12 @@ public class DeleteScopeAction extends AnAction {
       final InspectionConfigTreeNode parent = (InspectionConfigTreeNode)node.getParent();
       final HighlightDisplayKey key = descriptor.getKey();
       if (parent.getChildCount() <= 2) { //remove default with last non-default
-        mySelectedProfile.removeAllScopes(key.toString());
+        getSelectedProfile().removeAllScopes(key.toString());
         parent.removeAllChildren();
         parent.setInspectionNode(true);
         parent.setByDefault(true);
       } else {
-        mySelectedProfile.removeScope(key.toString(), parent.getIndex(node));
+        getSelectedProfile().removeScope(key.toString(), parent.getIndex(node));
         node.removeFromParent();
       }
       ((DefaultTreeModel)myTree.getModel()).reload(parent);
@@ -67,4 +65,6 @@ public class DeleteScopeAction extends AnAction {
       myTree.revalidate();
     }
   }
+
+  protected abstract InspectionProfileImpl getSelectedProfile();
 }

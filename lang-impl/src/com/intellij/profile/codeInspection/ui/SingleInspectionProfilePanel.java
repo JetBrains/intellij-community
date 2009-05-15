@@ -202,6 +202,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void postProcessModification() {
+    initDescriptors();
     wereToolSettingsModified();
     //resetup configs
     for (ScopeToolState state : mySelectedProfile.getAllTools()) {
@@ -318,16 +319,32 @@ public class SingleInspectionProfilePanel extends JPanel {
     });
 
     actions.addSeparator();
-    actions.add(new AddScopeAction(myTree, mySelectedProfile));
-    actions.add(new DeleteScopeAction(myTree, mySelectedProfile));
-    actions.add(new MoveScopeAction(myTree, mySelectedProfile, "Move Scope Up", IconLoader.getIcon("/actions/moveUp.png"), -1) {
+    actions.add(new AddScopeAction(myTree){
+      protected InspectionProfileImpl getSelectedProfile() {
+        return mySelectedProfile;
+      }
+    });
+    actions.add(new DeleteScopeAction(myTree){
+      protected InspectionProfileImpl getSelectedProfile() {
+        return mySelectedProfile;
+      }
+    });
+    actions.add(new MoveScopeAction(myTree, "Move Scope Up", IconLoader.getIcon("/actions/moveUp.png"), -1) {
       protected boolean isEnabledFor(int idx, InspectionConfigTreeNode parent) {
         return idx > 0;
       }
+
+      protected InspectionProfileImpl getSelectedProfile() {
+        return mySelectedProfile;
+      }
     });
-    actions.add(new MoveScopeAction(myTree, mySelectedProfile, "Move Scope Down", IconLoader.getIcon("/actions/moveDown.png"), 1) {
+    actions.add(new MoveScopeAction(myTree, "Move Scope Down", IconLoader.getIcon("/actions/moveDown.png"), 1) {
       protected boolean isEnabledFor(int idx, InspectionConfigTreeNode parent) {
         return idx < parent.getChildCount() - 2;
+      }
+
+      protected InspectionProfileImpl getSelectedProfile() {
+        return mySelectedProfile;
       }
     });
     actions.addSeparator();
@@ -530,11 +547,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             mySelectedProfile.enableTool(toolShortName, toolNode.getScope());
           }
         } else {
-          if (toolNode.isInspectionNode()) {
-            mySelectedProfile.enableToolByDefault(toolShortName);
-          } else {
-            mySelectedProfile.enableTool(toolShortName);
-          }
+          mySelectedProfile.enableTool(toolShortName);
         }
       }
       else {
@@ -545,11 +558,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             mySelectedProfile.disableTool(toolShortName, toolNode.getScope());
           }
         } else {
-          if (toolNode.isInspectionNode()) {
-            mySelectedProfile.disableToolByDefault(toolShortName);
-          } else {
-            mySelectedProfile.disableTool(toolShortName);
-          }
+          mySelectedProfile.disableTool(toolShortName);
         }
       }
       toolNode.isProperSetting = mySelectedProfile.isProperSetting(key);
