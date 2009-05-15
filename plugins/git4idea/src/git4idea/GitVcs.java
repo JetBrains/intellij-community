@@ -534,4 +534,12 @@ public class GitVcs extends AbstractVcs {
     }
     return in;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public RootsConvertor getCustomConvertor() {
+    return GitRootConverter.INSTANCE;
+  }
 }
