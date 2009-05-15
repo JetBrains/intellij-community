@@ -43,6 +43,7 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
     //todo[nik] remove toSystemIndependentName call later. It is needed only to fix incorrect config files
     mySdkHomePath = FileUtil.toSystemIndependentName(state.getSdkHomePath());
     myRunEnhancerOnMake = state.isRunEnhancerOnMake();
+    myFilesToEnhance = state.getFilesToEnhance();
   }
 
   @Tag("sdk-home-path")
