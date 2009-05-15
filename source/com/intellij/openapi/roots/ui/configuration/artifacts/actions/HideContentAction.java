@@ -22,7 +22,7 @@ public class HideContentAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final LayoutTreeSelection selection = myArtifactEditor.getPackagingElementsTree().getSelection();
+    final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     if (node != null) {
       final Collection<PackagingNodeSource> sources = node.getNodeSources();
@@ -41,14 +41,14 @@ public class HideContentAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final LayoutTreeSelection selection = myArtifactEditor.getPackagingElementsTree().getSelection();
+    final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     if (node == null) return;
 
     final Collection<PackagingNodeSource> sources = node.getNodeSources();
     for (PackagingNodeSource source : sources) {
       myArtifactEditor.getSubstitutionParameters().dontSubstitute(source.getSourceElement());
-      myArtifactEditor.getPackagingElementsTree().getLayoutTree().addSubtreeToUpdate(source.getSourceParentNode());
+      myArtifactEditor.getLayoutTreeComponent().getLayoutTree().addSubtreeToUpdate(source.getSourceParentNode());
     }
   }
 }

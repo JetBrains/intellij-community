@@ -1,8 +1,9 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -29,5 +30,16 @@ public abstract class PackagingElementDraggingObject {
 
   public void setTargetElement(CompositePackagingElement<?> targetElement) {
     myTargetElement = targetElement;
+  }
+
+  public boolean checkCanDrop() {
+    return true;
+  }
+
+  public void beforeDrop() {
+  }
+
+  public boolean canDropInto(@NotNull PackagingElementNode node) {
+    return true;
   }
 }

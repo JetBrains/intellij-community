@@ -20,22 +20,24 @@ public class RenameCompositeElementAction extends AnAction {
 
   public RenameCompositeElementAction(ArtifactEditor artifactEditor) {
     super(ProjectBundle.message("action.name.rename.packaging.element"));
-    registerCustomShortcutSet(CommonShortcuts.getRename(), artifactEditor.getPackagingElementsTree().getTreePanel());
+    registerCustomShortcutSet(CommonShortcuts.getRename(), artifactEditor.getLayoutTreeComponent().getTreePanel());
     myArtifactEditor = artifactEditor;
   }
 
   @Override
   public void update(AnActionEvent e) {
-    final LayoutTreeSelection selection = myArtifactEditor.getPackagingElementsTree().getSelection();
+    final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElement<?> element = selection.getElementIfSingle();
-    e.getPresentation().setVisible(element instanceof CompositePackagingElement && ((CompositePackagingElement)element).canBeRenamed());
+    final boolean visible = element instanceof CompositePackagingElement && ((CompositePackagingElement)element).canBeRenamed();
+    e.getPresentation().setEnabled(visible);
+    e.getPresentation().setVisible(visible);
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final LayoutTreeSelection selection = myArtifactEditor.getPackagingElementsTree().getSelection();
+    final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     if (node == null) return;
     final TreePath path = selection.getPath(node);
-    myArtifactEditor.getPackagingElementsTree().rename(path);
+    myArtifactEditor.getLayoutTreeComponent().rename(path);
   }
 }

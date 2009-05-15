@@ -3,8 +3,11 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.ide.dnd.AdvancedDnDSource;
 import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -22,6 +25,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -29,7 +33,6 @@ import java.util.List;
 */
 public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTree");
-
   private final Convertor<TreePath, String> mySpeedSearchConvertor = new Convertor<TreePath, String>() {
     public String convert(final TreePath path) {
       final SimpleNode node = getNodeFor(path);
@@ -39,43 +42,14 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       return "";
     }
   };
+  private final ArtifactEditorImpl myArtifactsEditor;
 
-  public LayoutTree() {
-    setCellEditor(new DefaultCellEditor(new JTextField()) {
-      @Override
-      public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
-        final JTextField field = (JTextField)super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
-        final Object node = ((DefaultMutableTreeNode)value).getUserObject();
-        final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
-        LOG.assertTrue(element != null);
-        final String name = ((CompositePackagingElement)element).getName();
-        field.setText(name);
-        int i = name.lastIndexOf('.');
-        field.setSelectionStart(0);
-        field.setSelectionEnd(i != -1 ? i : name.length());
-        return field;
-      }
-
-      @Override
-      public boolean stopCellEditing() {
-        final String newValue = ((JTextField)editorComponent).getText();
-        final TreePath path = getEditingPath();
-        final Object node = getNodeFor(path);
-        CompositePackagingElement currentElement = null;
-        if (node instanceof PackagingElementNode) {
-          final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
-          if (element instanceof CompositePackagingElement) {
-            currentElement = (CompositePackagingElement)element;
-          }
-        }
-        final boolean stopped = super.stopCellEditing();
-        if (stopped && currentElement != null) {
-          currentElement.rename(newValue);
-          addSubtreeToUpdate((DefaultMutableTreeNode)path.getLastPathComponent());
-        }
-        return stopped;
-      }
-    });
+  public LayoutTree(ArtifactEditorImpl artifactsEditor) {
+    myArtifactsEditor = artifactsEditor;
+    setRootVisible(true);
+    setShowsRootHandles(false);
+    setCellEditor(new LayoutTreeCellEditor());
+    DnDManager.getInstance().registerSource(this);
   }
 
   public void addSubtreeToUpdate(DefaultMutableTreeNode newNode) {
@@ -88,16 +62,24 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     helper.installToolTipHandler(this);
   }
 
+  private List<PackagingElementNode<?>> getNodesToDrag() {
+    return getSelection().getNodes();
+  }
+
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-    return false;
+    return !getNodesToDrag().isEmpty();
   }
 
   public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
-    return null;
+    return new DnDDragStartBean(new LayoutNodesDraggingObject(myArtifactsEditor, getNodesToDrag()));
   }
 
   public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-    return null;
+    final List<PackagingElementNode<?>> nodes = getNodesToDrag();
+    if (nodes.size() == 1) {
+      return DnDAwareTree.getDragImage(this, getPathFor(nodes.get(0)), dragOrigin);
+    }
+    return DnDAwareTree.getDragImage(this, ProjectBundle.message("drag.n.drop.text.0.packaging.elements", nodes.size()), dragOrigin);
   }
 
   public void dragDropEnd() {
@@ -107,6 +89,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   public void dispose() {
+    DnDManager.getInstance().unregisterSource(this);
   }
 
   public LayoutTreeSelection getSelection() {
@@ -133,8 +116,8 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     return (DefaultMutableTreeNode)getModel().getRoot();
   }
 
-  public List<SimpleNode> findNodes(final List<? extends PackagingElement<?>> elements) {
-    final List<SimpleNode> nodes = new ArrayList<SimpleNode>();
+  public List<PackagingElementNode<?>> findNodes(final Collection<? extends PackagingElement<?>> elements) {
+    final List<PackagingElementNode<?>> nodes = new ArrayList<PackagingElementNode<?>>();
     TreeUtil.traverseDepth(getRootNode(), new TreeUtil.Traverse() {
       public boolean accept(Object node) {
         final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
@@ -155,6 +138,46 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     final DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRootNode(), elementNode);
     if (node != null) {
       addSubtreeToUpdate(node);
+    }
+  }
+
+  private class LayoutTreeCellEditor extends DefaultCellEditor {
+    public LayoutTreeCellEditor() {
+      super(new JTextField());
+    }
+
+    @Override
+    public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
+      final JTextField field = (JTextField)super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
+      final Object node = ((DefaultMutableTreeNode)value).getUserObject();
+      final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
+      LOG.assertTrue(element != null);
+      final String name = ((CompositePackagingElement)element).getName();
+      field.setText(name);
+      int i = name.lastIndexOf('.');
+      field.setSelectionStart(0);
+      field.setSelectionEnd(i != -1 ? i : name.length());
+      return field;
+    }
+
+    @Override
+    public boolean stopCellEditing() {
+      final String newValue = ((JTextField)editorComponent).getText();
+      final TreePath path = getEditingPath();
+      final Object node = getNodeFor(path);
+      CompositePackagingElement currentElement = null;
+      if (node instanceof PackagingElementNode) {
+        final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
+        if (element instanceof CompositePackagingElement) {
+          currentElement = (CompositePackagingElement)element;
+        }
+      }
+      final boolean stopped = super.stopCellEditing();
+      if (stopped && currentElement != null) {
+        currentElement.rename(newValue);
+        addSubtreeToUpdate((DefaultMutableTreeNode)path.getLastPathComponent());
+      }
+      return stopped;
     }
   }
 }

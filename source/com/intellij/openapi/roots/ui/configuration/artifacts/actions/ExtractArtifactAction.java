@@ -26,12 +26,12 @@ public class ExtractArtifactAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final LayoutTreeSelection selection = myEditor.getPackagingElementsTree().getSelection();
+    final LayoutTreeSelection selection = myEditor.getLayoutTreeComponent().getSelection();
     e.getPresentation().setEnabled(selection.getCommonParentElement() != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final LayoutTreeComponent treeComponent = myEditor.getPackagingElementsTree();
+    final LayoutTreeComponent treeComponent = myEditor.getLayoutTreeComponent();
     final LayoutTreeSelection selection = treeComponent.getSelection();
     final CompositePackagingElement<?> parent = selection.getCommonParentElement();
     if (parent == null) return;

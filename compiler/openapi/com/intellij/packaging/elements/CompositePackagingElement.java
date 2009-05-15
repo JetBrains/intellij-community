@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -12,25 +13,44 @@ import java.util.List;
  */
 public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
   private final List<PackagingElement<?>> myChildren = new ArrayList<PackagingElement<?>>();
+  private List<PackagingElement<?>> myUnmodifiableChildren;
 
   protected CompositePackagingElement(PackagingElementType type) {
     super(type);
   }
 
   public void addChild(@NotNull PackagingElement<?> child) {
+    for (PackagingElement<?> element : myChildren) {
+      if (element.isEqualTo(child)) {
+        if (element instanceof CompositePackagingElement) {
+          final List<PackagingElement<?>> children = ((CompositePackagingElement<?>)child).getChildren();
+          ((CompositePackagingElement<?>)element).addChildren(children);
+        }
+        return;
+      }
+    }
     myChildren.add(child);
+    myUnmodifiableChildren = null;
   }
 
   public void addChildren(Collection<? extends PackagingElement<?>> children) {
-    myChildren.addAll(children);
+    for (PackagingElement<?> child : children) {
+      addChild(child);
+    }
+    myUnmodifiableChildren = null;
   }
 
   public void removeChild(@NotNull PackagingElement<?> child) {
     myChildren.remove(child);
+    myUnmodifiableChildren = null;
   }
 
+  @NotNull
   public List<PackagingElement<?>> getChildren() {
-    return myChildren;
+    if (myUnmodifiableChildren == null) {
+      myUnmodifiableChildren = Collections.unmodifiableList(myChildren);
+    }
+    return myUnmodifiableChildren;
   }
 
   public abstract String getName();

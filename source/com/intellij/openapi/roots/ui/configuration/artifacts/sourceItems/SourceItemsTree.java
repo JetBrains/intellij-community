@@ -66,19 +66,27 @@ public class SourceItemsTree implements DnDSource, Disposable{
   }
 
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-    return getNodesToDrag().length > 0;
+    return !getItemsToDrag().isEmpty();
   }
 
   public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    List<PackagingSourceItem> items = getItemsToDrag();
+    return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[items.size()])));
+  }
+
+  private List<PackagingSourceItem> getItemsToDrag() {
     final DefaultMutableTreeNode[] nodes = getNodesToDrag();
     List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
     for (DefaultMutableTreeNode node : nodes) {
       final Object userObject = node.getUserObject();
       if (userObject instanceof SourceItemNode) {
-        items.add(((SourceItemNode)userObject).getSourceItem());
+        final PackagingSourceItem sourceItem = ((SourceItemNode)userObject).getSourceItem();
+        if (sourceItem != null && sourceItem.isProvideElements()) {
+          items.add(sourceItem);
+        }
       }
     }
-    return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[items.size()])));
+    return items;
   }
 
   public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {

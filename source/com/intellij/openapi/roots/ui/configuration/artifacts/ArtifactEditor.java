@@ -21,7 +21,7 @@ public interface ArtifactEditor extends Disposable {
 
   void removeSelectedElements();
 
-  LayoutTreeComponent getPackagingElementsTree();
+  LayoutTreeComponent getLayoutTreeComponent();
 
   Artifact getArtifact();
 

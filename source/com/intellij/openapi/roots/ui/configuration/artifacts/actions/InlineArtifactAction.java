@@ -23,14 +23,14 @@ public class InlineArtifactAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final LayoutTreeSelection selection = myEditor.getPackagingElementsTree().getSelection();
+    final LayoutTreeSelection selection = myEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     PackagingElement<?> element = selection.getElementIfSingle();
     e.getPresentation().setEnabled(element instanceof ArtifactPackagingElement && node != null && node.getParentElement(element) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final LayoutTreeComponent treeComponent = myEditor.getPackagingElementsTree();
+    final LayoutTreeComponent treeComponent = myEditor.getLayoutTreeComponent();
     final LayoutTreeSelection selection = treeComponent.getSelection();
     final PackagingElement<?> element = selection.getElementIfSingle();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();

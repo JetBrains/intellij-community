@@ -17,7 +17,6 @@ import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
@@ -55,13 +54,11 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     mySubstitutionParameters = substitutionParameters;
     myContext = context;
     myOriginalArtifact = originalArtifact;
-    myTree = new LayoutTree();
+    myTree = new LayoutTree(myArtifactsEditor);
     myBuilder = new SimpleTreeBuilder(myTree, myTree.getBuilderModel(), new LayoutTreeStructure(), new WeightBasedComparator(true));
     Disposer.register(this, myTree);
     Disposer.register(this, myBuilder);
 
-    myTree.setRootVisible(true);
-    myTree.setShowsRootHandles(false);
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         updatePropertiesPanel();
@@ -171,7 +168,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject(myTree.getRootNode(), node);
     myBuilder.addSubtreeToUpdate(treeNode, new Runnable() {
       public void run() {
-        List<SimpleNode> nodes = myTree.findNodes(toSelect);
+        List<PackagingElementNode<?>> nodes = myTree.findNodes(toSelect);
         myBuilder.select(nodes.toArray(new Object[nodes.size()]), null);
       }
     });
@@ -189,16 +186,26 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     if (!checkCanRemove(selection.getNodes())) return;
     ensureRootIsWritable();
 
-    for (PackagingElementNode<?> node : selection.getNodes()) {
+    removeNodes(selection.getNodes());
+    myArtifactsEditor.rebuildTries();
+  }
+
+  public void removeNodes(final List<PackagingElementNode<?>> nodes) {
+    Set<PackagingElement<?>> parents = new HashSet<PackagingElement<?>>();
+    for (PackagingElementNode<?> node : nodes) {
       final List<? extends PackagingElement<?>> toDelete = node.getPackagingElements();
       for (PackagingElement<?> element : toDelete) {
         final CompositePackagingElement<?> parent = node.getParentElement(element);
         if (parent != null) {
+          parents.add(parent);
           parent.removeChild(element);
         }
       }
     }
-    myArtifactsEditor.rebuildTries();
+    final List<PackagingElementNode<?>> parentNodes = myTree.findNodes(parents);
+    for (PackagingElementNode<?> parentNode : parentNodes) {
+      myTree.addSubtreeToUpdate(parentNode);
+    }
   }
 
   public boolean checkCanRemove(final List<PackagingElementNode<?>> nodes) {
@@ -256,7 +263,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       if (parent != null) {
         final PackagingElementDraggingObject draggingObject = (PackagingElementDraggingObject)object;
         final PackagingElementNode node = getNode(parent);
-        if (node != null) {
+        if (node != null && draggingObject.canDropInto(node)) {
           final PackagingElement element = node.getElementIfSingle();
           if (element instanceof CompositePackagingElement) {
             draggingObject.setTargetNode(node);
@@ -277,11 +284,12 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       final PackagingElementDraggingObject draggingObject = (PackagingElementDraggingObject)object;
       final PackagingElementNode<?> targetNode = draggingObject.getTargetNode();
       final CompositePackagingElement<?> targetElement = draggingObject.getTargetElement();
-      if (targetElement == null || targetNode == null) return;
+      if (targetElement == null || targetNode == null || !draggingObject.checkCanDrop()) return;
       if (!checkCanAdd(null, targetElement, targetNode)) {
         return;
       }
       ensureRootIsWritable();
+      draggingObject.beforeDrop();
       List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
       for (PackagingElement<?> element : draggingObject.createPackagingElements()) {
         toSelect.add(element);

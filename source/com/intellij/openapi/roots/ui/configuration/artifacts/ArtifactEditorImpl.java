@@ -233,7 +233,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
   public void dispose() {
   }
 
-  public LayoutTreeComponent getPackagingElementsTree() {
+  public LayoutTreeComponent getLayoutTreeComponent() {
     return myLayoutTreeComponent;
   }
 
