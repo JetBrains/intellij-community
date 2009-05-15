@@ -25,7 +25,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
-import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -555,33 +554,34 @@ public class PsiClassImplUtil {
     return true;
   }
 
+  @Nullable
   public static PsiClass getSuperClass(PsiClass psiClass) {
     PsiManager manager = psiClass.getManager();
     GlobalSearchScope resolveScope = psiClass.getResolveScope();
 
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (psiClass.isInterface()) {
-      return facade.findClass("java.lang.Object", resolveScope);
+      return facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
     }
     if (psiClass.isEnum()) {
-      return facade.findClass("java.lang.Enum", resolveScope);
+      return facade.findClass(CommonClassNames.JAVA_LANG_ENUM, resolveScope);
     }
 
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassReference = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassReference.resolve();
-      if (baseClass == null || baseClass.isInterface()) return facade.findClass("java.lang.Object", resolveScope);
+      if (baseClass == null || baseClass.isInterface()) return facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
       return baseClass;
     }
 
-    if ("java.lang.Object".equals(psiClass.getQualifiedName())) return null;
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return null;
 
     final PsiClassType[] referenceElements = psiClass.getExtendsListTypes();
 
-    if (referenceElements.length == 0) return facade.findClass("java.lang.Object", resolveScope);
+    if (referenceElements.length == 0) return facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
 
     PsiClass psiResoved = referenceElements[0].resolve();
-    return psiResoved == null ? facade.findClass("java.lang.Object", resolveScope) : psiResoved;
+    return psiResoved == null ? facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope) : psiResoved;
   }
 
   @NotNull public static PsiClass[] getSupers(PsiClass psiClass) {

@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,7 +47,7 @@ public class SubtypesMacro implements Macro {
       types.add(type);
       final PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
       final PsiElement element = file.findElementAt(context.getStartOffset());
-      types.addAll(CodeInsightUtil.addSubtypes(type, element, false));
+      types.addAll(CodeInsightUtil.addSubtypes(type, element, false, Condition.TRUE));
       final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
       for (PsiType t: types) {
         JavaTemplateUtil.addTypeLookupItem(set, t);

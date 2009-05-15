@@ -112,7 +112,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
                 return new Object[]{expectedType};
               }
             }, new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class))));
-        for (final MutableLookupElement<PsiExpression> element : classGetter.get(position, null)) {
+        for (final MutableLookupElement<PsiExpression> element : classGetter.getClassLiterals(position, null, result.getPrefixMatcher())) {
           result.addElement(element.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
         }
 

@@ -2,9 +2,11 @@ package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.ContextGetter;
@@ -16,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClassLiteralGetter implements ContextGetter {
+public class ClassLiteralGetter {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.filters.getters.ClassLiteralGetter");
   private final ContextGetter myBaseGetter;
   @NonNls private static final String DOT_CLASS = ".class";
@@ -25,7 +27,13 @@ public class ClassLiteralGetter implements ContextGetter {
     myBaseGetter = baseGetter;
   }
 
-  public MutableLookupElement<PsiExpression>[] get(PsiElement context, CompletionContext completionContext) {
+  public MutableLookupElement<PsiExpression>[] getClassLiterals(PsiElement context, CompletionContext completionContext, final PrefixMatcher matcher) {
+    final Condition<String> shortNameCondition = new Condition<String>() {
+      public boolean value(String s) {
+        return matcher.prefixMatches(s);
+      }
+    };
+
     final List<MutableLookupElement<PsiExpression>> result = new ArrayList<MutableLookupElement<PsiExpression>>();
     for (final Object element : myBaseGetter.get(context, completionContext)) {
       if (element instanceof PsiClassType) {
@@ -47,7 +55,7 @@ public class ClassLiteralGetter implements ContextGetter {
 
             createLookupElement(substitution, context, result);
             if (addInheritors && substitution != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(substitution.getCanonicalText())) {
-              for (final PsiType type : CodeInsightUtil.addSubtypes(substitution, context, true)) {
+              for (final PsiType type : CodeInsightUtil.addSubtypes(substitution, context, true, shortNameCondition)) {
                 createLookupElement(type, context, result);
               }
             }

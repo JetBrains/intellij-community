@@ -179,19 +179,37 @@ public class CodeInsightUtil {
     return CodeInsightUtilBase.preparePsiElementsForWrite(Arrays.asList(elements));
   }
 
-  public static Set<PsiType> addSubtypes(PsiType psiType, 
-                                         final PsiElement context,
-                                         final boolean getRawSubtypes) {
+  public static Set<PsiType> addSubtypes(PsiType psiType, final PsiElement context,
+                                         final boolean getRawSubtypes, Condition<String> shortNameCondition) {
     int arrayDim = psiType.getArrayDimensions();
 
     psiType = psiType.getDeepComponentType();
-    if (psiType instanceof PsiClassType) {
-      Set<PsiType> result = new HashSet<PsiType>();
-      getSubtypes(context, (PsiClassType)psiType, arrayDim, getRawSubtypes, result);
-      return result;
-    }
+    if (!(psiType instanceof PsiClassType)) return Collections.emptySet();
 
-    return Collections.emptySet();
+
+    final PsiClassType baseType = (PsiClassType)psiType;
+    final PsiClassType.ClassResolveResult baseResult =
+      ApplicationManager.getApplication().runReadAction(new Computable<PsiClassType.ClassResolveResult>() {
+        public PsiClassType.ClassResolveResult compute() {
+          return JavaCompletionUtil.originalize(baseType).resolveGenerics();
+        }
+      });
+    final PsiClass baseClass = baseResult.getElement();
+    final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
+    if(baseClass == null) return Collections.emptySet();
+
+    Set<PsiType> result = new HashSet<PsiType>();
+    final GlobalSearchScope scope = context.getResolveScope();
+    final Query<PsiClass> baseQuery = ClassInheritorsSearch.search(
+      new ClassInheritorsSearch.SearchParameters(baseClass, scope, true, false, false, shortNameCondition));
+    final Query<PsiClass> query = new FilteredQuery<PsiClass>(baseQuery, new Condition<PsiClass>() {
+      public boolean value(final PsiClass psiClass) {
+        return !(psiClass instanceof PsiTypeParameter);
+      }
+    });
+
+    query.forEach(createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, result, baseClass, baseSubstitutor));
+    return result;
   }
 
   private static void getSubtypes(final PsiElement context, final PsiClassType baseType, final int arrayDim,

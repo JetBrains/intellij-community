@@ -7,10 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
@@ -44,13 +41,20 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       }
     });
 
-    if ("java.lang.Object".equals(qualifiedName)) {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) {
       final SearchScope scope = useScope.intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.getScopeRestrictedByFileTypes(
           GlobalSearchScope.allScope(psiManager.getProject()), StdFileTypes.JSP, StdFileTypes.JSPX)));
 
       return AllClassesSearch.search(scope, aClass.getProject()).forEach(new Processor<PsiClass>() {
         public boolean process(final PsiClass psiClass) {
-          return consumer.process(psiClass);
+          if (psiClass.isInterface()) {
+            return consumer.process(psiClass);
+          }
+          final PsiClass superClass = psiClass.getSuperClass();
+          if (superClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
+            return consumer.process(psiClass);
+          }
+          return true;
         }
       });
     }

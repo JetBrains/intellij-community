@@ -4,23 +4,23 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.search.searches.AllClassesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.patterns.PsiJavaPatterns;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Set;
 
 /**
@@ -128,52 +128,30 @@ public class AllClassesGetter {
     myFilter = filter;
   }
 
-  public void getClasses(final PsiElement context, CompletionResultSet set, final int offset, final boolean filterByScope) {
+  public void getClasses(final PsiElement context, final CompletionResultSet set, final int offset, final boolean filterByScope) {
     if(context == null || !context.isValid()) return;
 
-    String packagePrefix = getPackagePrefix(context, offset);
+    final String packagePrefix = getPackagePrefix(context, offset);
 
-    final PsiManager manager = context.getManager();
     final Set<String> qnames = new THashSet<String>();
 
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    final PsiShortNamesCache cache = facade.getShortNamesCache();
-
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
-    final String[] names = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
-      public String[] compute() {
-        return cache.getAllClassNames();
+    final PrefixMatcher prefixMatcher = set.getPrefixMatcher();
+
+    final boolean lookingForAnnotations = PsiJavaPatterns.psiElement().afterLeaf("@").accepts(context);
+
+    AllClassesSearch.search(scope, context.getProject(), new Condition<String>() {
+      public boolean value(String s) {
+        return prefixMatcher.prefixMatches(s);
       }
-    });
-    Arrays.sort(names, new Comparator<String>() {
-      public int compare(final String o1, final String o2) {
-        return o1.compareToIgnoreCase(o2);
-      }
-    });
-
-    boolean lookingForAnnotations = false;
-    final PsiElement prevSibling = context.getParent().getPrevSibling();
-    if (prevSibling instanceof PsiJavaToken && ((PsiJavaToken)prevSibling).getTokenType() == JavaTokenType.AT) {
-      lookingForAnnotations = true;
-    }
-
-    final PrefixMatcher matcher = set.getPrefixMatcher();
-    for (final String name : names) {
-      if (!matcher.prefixMatches(name)) continue;
-
-      ProgressManager.getInstance().checkCanceled();
-      final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
-        public PsiClass[] compute() {
-          return cache.getClassesByName(name, scope);
-        }
-      });
-      for (PsiClass psiClass : classes) {
-        ProgressManager.getInstance().checkCanceled();
+    }).forEach(new Processor<PsiClass>() {
+      public boolean process(PsiClass psiClass) {
         if (isSuitable(context, packagePrefix, qnames, lookingForAnnotations, psiClass, filterByScope)) {
           set.addElement(createLookupItem(psiClass));
         }
+        return true;
       }
-    }
+    });
   }
 
   private static String getPackagePrefix(final PsiElement context, final int offset) {

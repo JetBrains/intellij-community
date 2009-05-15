@@ -20,11 +20,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiBundle;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
@@ -66,9 +64,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
         boolean result = processInheritors(consumer,
                                            baseClass,
                                            searchScope,
-                                           p.isCheckDeep(),
-                                           p.isCheckInheritance(),
-                                           p.isIncludeAnonymous());
+                                           p);
 
         if (progress != null) {
           progress.popState();
@@ -85,18 +81,29 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     private final boolean myCheckDeep;
     private final boolean myCheckInheritance;
     private final boolean myIncludeAnonymous;
+    private final Condition<String> myNameCondition;
 
     public SearchParameters(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
+      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Condition.TRUE);
+    }
+
+    public SearchParameters(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
+                            boolean includeAnonymous, final Condition<String> nameCondition) {
       myClass = aClass;
       myScope = scope;
       myCheckDeep = checkDeep;
       myCheckInheritance = checkInheritance;
       myIncludeAnonymous = includeAnonymous;
+      myNameCondition = nameCondition;
     }
 
     @NotNull
     public PsiClass getClassToProcess() {
       return myClass;
+    }
+
+    public Condition<String> getNameCondition() {
+      return myNameCondition;
     }
 
     public boolean isCheckDeep() {
@@ -119,7 +126,11 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   private ClassInheritorsSearch() {}
 
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, checkDeep, checkInheritance, includeAnonymous));
+    return search(new SearchParameters(aClass, scope, checkDeep, checkInheritance, includeAnonymous));
+  }
+
+  public static Query<PsiClass> search(final SearchParameters parameters) {
+    return INSTANCE.createUniqueResultsQuery(parameters);
   }
 
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
@@ -141,12 +152,19 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   private static boolean processInheritors(final Processor<PsiClass> consumer,
                                            final PsiClass baseClass,
                                            @NotNull final SearchScope searchScope,
-                                           final boolean checkDeep,
-                                           final boolean checkInheritance,
-                                           final boolean includeAnonymous) {
+                                           final SearchParameters parameters) {
     if (baseClass instanceof PsiAnonymousClass) return true;
 
     if (isFinal(baseClass)) return true;
+
+    final String qname = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return baseClass.getQualifiedName();
+      }
+    });
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname)) {
+      return AllClassesSearch.search(searchScope, baseClass.getProject(), parameters.getNameCondition()).forEach(consumer);
+    }
 
     final Ref<PsiClass> currentBase = Ref.create(null);
     final Stack<PsiClass> stack = new Stack<PsiClass>();
@@ -156,7 +174,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
         final Ref<Boolean> result = new Ref<Boolean>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            if (checkInheritance || checkDeep && !(candidate instanceof PsiAnonymousClass)) {
+            if (parameters.isCheckInheritance() || parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass)) {
               if (!candidate.isInheritor(currentBase.get(), false)) {
                 result.set(true);
                 return;
@@ -168,14 +186,15 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
                 result.set(consumer.process(candidate));
               }
               else {
-                if (!consumer.process(candidate)) result.set(false);
+                final String name = candidate.getName();
+                if (name != null && parameters.getNameCondition().value(name) && !consumer.process(candidate)) result.set(false);
               }
             }
           }
         });
-        if (!result.isNull()) return result.get();
+        if (!result.isNull()) return result.get().booleanValue();
 
-        if (checkDeep && !(candidate instanceof PsiAnonymousClass) && !isFinal(candidate)) {
+        if (parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass) && !isFinal(candidate)) {
           stack.push(candidate);
         }
 
@@ -191,7 +210,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       if (!processed.add(psiClass)) continue;
 
       currentBase.set(psiClass);
-      if (!DirectClassInheritorsSearch.search(psiClass, scope, includeAnonymous).forEach(processor)) return false;
+      if (!DirectClassInheritorsSearch.search(psiClass, scope, parameters.isIncludeAnonymous()).forEach(processor)) return false;
     }
     return true;
   }
