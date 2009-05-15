@@ -85,14 +85,6 @@ public class NameUtil {
     return ArrayUtil.toStringArray(array);
   }
 
-  private static boolean containsOnlyUppercaseLetters(String s) {
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      if (c != '*' && !Character.isUpperCase(c)) return false;
-    }
-    return true;
-  }
-
   public static String buildRegexp(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     return buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false);
   }
@@ -323,13 +315,13 @@ public class NameUtil {
   }
 
   private static class OptimizedMatcher implements Matcher {
-    private final String myPreparedPattern;
+    private final char[] myPreparedPattern;
     private final boolean myEnsureFirstSymbolsMatch;
     private final Perl5Matcher myMatcher;
     private final Pattern myPattern;
 
     public OptimizedMatcher(String pattern, String regexp) {
-      myPreparedPattern = preparePattern(pattern);
+      myPreparedPattern = preparePattern(pattern).toCharArray();
       myEnsureFirstSymbolsMatch = pattern.length() > 0 && Character.isLetterOrDigit(pattern.charAt(0));
       try {
         myPattern = new Perl5Compiler().compile(regexp);
@@ -362,11 +354,11 @@ public class NameUtil {
     /**
      * Don't try regexp matcher on names, which do not contain all the alphanumerics from the pattern in pattern's original order.
      */
-    private boolean prefilter(CharSequence name, String pattern) {
+    private boolean prefilter(String name, char[] pattern) {
       int patternIndex = 0;
       int nameIndex = 0;
 
-      int patternLen = pattern.length();
+      int patternLen = pattern.length;
       int nameLen = name.length();
 
       if (myEnsureFirstSymbolsMatch) {
@@ -375,14 +367,14 @@ public class NameUtil {
         }
 
         if (patternLen == 0 || nameIndex >= nameLen) return false;
-        if (StringUtil.toLowerCase(name.charAt(nameIndex)) != pattern.charAt(0)) return false;
+        if (StringUtil.toLowerCase(name.charAt(nameIndex)) != pattern[0]) return false;
 
         nameIndex++;
         patternIndex++;
       }
 
       while (patternIndex < patternLen) {
-        char c = pattern.charAt(patternIndex++);
+        char c = pattern[patternIndex++];
 
         while (true) {
           if (nameIndex >= nameLen) return false;
