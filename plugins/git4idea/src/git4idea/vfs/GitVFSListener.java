@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -36,10 +35,6 @@ import java.util.Map;
  * Git virtual file adapter
  */
 public class GitVFSListener extends VcsVFSListener {
-  /**
-   * Dirty scope manager for the project
-   */
-  private final VcsDirtyScopeManager myDirtyScopeManager;
 
   /**
    * A constructor for listener
@@ -49,7 +44,6 @@ public class GitVFSListener extends VcsVFSListener {
    */
   public GitVFSListener(final Project project, final GitVcs vcs) {
     super(project, vcs);
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
   /**
@@ -83,7 +77,7 @@ public class GitVFSListener extends VcsVFSListener {
       try {
         final VirtualFile root = e.getKey();
         GitFileUtils.addFiles(myProject, root, e.getValue());
-        markRootDirty(root);
+        GitUtil.refreshFiles(myProject, e.getValue());
       }
       catch (VcsException ex) {
         ((GitVcs)myVcs).showMessages(ex.getMessage());
@@ -103,7 +97,7 @@ public class GitVFSListener extends VcsVFSListener {
       try {
         final VirtualFile root = e.getKey();
         GitFileUtils.addPaths(myProject, root, e.getValue());
-        markRootDirty(root);
+        GitUtil.refreshFiles(myProject, e.getValue());
       }
       catch (VcsException ex) {
         ((GitVcs)myVcs).showMessages(ex.getMessage());
@@ -141,23 +135,12 @@ public class GitVFSListener extends VcsVFSListener {
       try {
         final VirtualFile root = e.getKey();
         GitFileUtils.delete(myProject, root, e.getValue());
-        markRootDirty(root);
+        GitUtil.refreshFiles(myProject, e.getValue());
       }
       catch (VcsException ex) {
         ((GitVcs)myVcs).showMessages(ex.getMessage());
       }
     }
-  }
-
-  /**
-   * Mark root as dirty
-   *
-   * @param root a vcs root to rescan
-   */
-  private void markRootDirty(final VirtualFile root) {
-    // Note that the root is invalidated because changes are detected per-root anyway.
-    // Otherwise it is not possible to detect moves.
-    myDirtyScopeManager.dirDirtyRecursively(root);
   }
 
   /**
