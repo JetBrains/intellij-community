@@ -373,12 +373,16 @@ public class NameUtil {
       int patternLen = pattern.length();
       int nameLen = name.length();
 
+      while (nameIndex < nameLen && name.charAt(nameIndex) == '_') {
+        nameIndex++;
+      }
+
       if (myEnsureFirstSymbolsMatch) {
         if (patternLen == 0) return false;
-        if (StringUtil.toLowerCase(name.charAt(0)) != pattern.charAt(0)) return false;
+        if (StringUtil.toLowerCase(name.charAt(nameIndex)) != pattern.charAt(0)) return false;
 
-        nameIndex = 1;
-        patternIndex = 1;
+        nameIndex++;
+        patternIndex++;
       }
 
       while (patternIndex < patternLen) {
