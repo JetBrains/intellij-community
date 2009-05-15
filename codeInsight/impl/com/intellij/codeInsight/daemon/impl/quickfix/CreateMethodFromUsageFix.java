@@ -94,7 +94,8 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return result;
   }
 
-  protected void invokeImpl(PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass) {
+
     if (targetClass == null) return;
     PsiMethodCallExpression expression = getMethodCall();
     if (expression == null) return;
@@ -105,9 +106,6 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     PsiClass parentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
     PsiMember enclosingContext = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiField.class, PsiClassInitializer.class);
-
-
-    final PsiFile targetFile = targetClass.getContainingFile();
 
     String methodName = ref.getReferenceName();
     LOG.assertTrue(methodName != null);
@@ -151,66 +149,71 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
         PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
       }
 
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      final Document document = documentManager.getDocument(targetFile);
 
-      targetClass = method.getContainingClass();
       final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
 
       method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
       if (method == null) return;
-      body = method.getBody();
-      TemplateBuilder builder = new TemplateBuilder(method);
 
-      PsiMethodCallExpression methodCall = getMethodCall();
-      if (methodCall == null) return;
-      PsiExpressionList argumentList = methodCall.getArgumentList();
-
-      final PsiSubstitutor substitutor = getTargetSubstitutor(methodCall);
-      CreateFromUsageUtils.setupMethodParameters(method, builder, argumentList, substitutor);
-      final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(methodCall, true);
-      new GuessTypeParameters(factory)
-        .setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
-      builder.setEndVariableAfter(targetClass.isInterface() ? method : body.getLBrace());
-      method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
-      if (method == null) return;
-
-      RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
-      final Editor newEditor = positionCursor(project, targetFile, method);
-      Template template = builder.buildTemplate();
-      newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
-      newEditor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
-
-      if (!targetClass.isInterface()) {
-        startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
-          public void templateFinished(Template template) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
-                final int offset = newEditor.getCaretModel().getOffset();
-                PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset - 1, PsiMethod.class, false);
-
-                if (method != null) {
-                  try {
-                    CreateFromUsageUtils.setupMethodBody(method);
-                  }
-                  catch (IncorrectOperationException e) {
-                    LOG.error(e);
-                  }
-
-                  CreateFromUsageUtils.setupEditor(method, newEditor);
-                }
-              }
-            });
-          }
-        });
-      }
-      else {
-        startTemplate(newEditor, template, project);
-      }
+      doCreate(targetClass, method, expression.getArgumentList().getExpressions(), context, getTargetSubstitutor(expression),
+               CreateFromUsageUtils.guessExpectedTypes(expression, true));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
+    }
+  }
+
+  public static void doCreate(PsiClass targetClass, PsiMethod method, PsiExpression[] expressions, @Nullable PsiElement context,
+                              PsiSubstitutor substitutor, ExpectedTypeInfo[] expectedTypes) {
+
+    final Project project = targetClass.getProject();
+    final PsiFile targetFile = targetClass.getContainingFile();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(targetFile);
+
+    TemplateBuilder builder = new TemplateBuilder(method);
+
+    CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, expressions);
+    new GuessTypeParameters(JavaPsiFacade.getInstance(project).getElementFactory())
+      .setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
+    PsiCodeBlock body = method.getBody();
+    assert body != null;
+    builder.setEndVariableAfter(targetClass.isInterface() ? method : body.getLBrace());
+    method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
+    if (method == null) return;
+
+    assert document != null;
+    RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
+    final Editor newEditor = positionCursor(project, targetFile, method);
+    Template template = builder.buildTemplate();
+    newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+    newEditor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+
+    if (!targetClass.isInterface()) {
+      startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
+        public void templateFinished(Template template) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
+              final int offset = newEditor.getCaretModel().getOffset();
+              PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset - 1, PsiMethod.class, false);
+
+              if (method != null) {
+                try {
+                  CreateFromUsageUtils.setupMethodBody(method);
+                }
+                catch (IncorrectOperationException e) {
+                  LOG.error(e);
+                }
+
+                CreateFromUsageUtils.setupEditor(method, newEditor);
+              }
+            }
+          });
+        }
+      });
+    }
+    else {
+      startTemplate(newEditor, template, project);
     }
   }
 
