@@ -8,6 +8,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -37,7 +38,7 @@ public class MavenDomUtil {
   public static MavenDomParent updateMavenParent(MavenDomProjectModel mavenModel, MavenProject parentProject) {
     MavenDomParent result = mavenModel.getMavenParent();
 
-    VirtualFile pomFile = mavenModel.getRoot().getFile().getVirtualFile();
+    VirtualFile pomFile = DomUtil.getFile(mavenModel).getVirtualFile();
     Project project = mavenModel.getXmlElement().getProject();
 
     MavenId parentId = parentProject.getMavenId();

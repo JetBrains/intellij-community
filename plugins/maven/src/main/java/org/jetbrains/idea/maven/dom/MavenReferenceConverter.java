@@ -46,7 +46,7 @@ public abstract class MavenReferenceConverter<T> extends Converter<T> implements
                                                        XmlFile psiFile);
 
   private Pair<VirtualFile, DomFileElement<MavenDomProjectModel>> getFileAndDom(ConvertContext context) {
-    DomFileElement<MavenDomProjectModel> dom = context.getInvocationElement().getRoot();
+    DomFileElement<MavenDomProjectModel> dom = DomUtil.getFileElement(context.getInvocationElement());
     VirtualFile virtualFile = dom.getOriginalFile().getVirtualFile();
     return Pair.create(virtualFile, dom);
   }

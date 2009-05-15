@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.DomUtil;
 import org.apache.commons.beanutils.BeanAccessLanguageException;
 import org.apache.commons.beanutils.BeanUtils;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -39,7 +40,7 @@ public class PropertyResolver {
     String text = value.getStringValue();
     if (text == null) return null;
 
-    DomFileElement<MavenDomProjectModel> dom = value.getRoot();
+    DomFileElement<MavenDomProjectModel> dom = DomUtil.getFileElement(value);
     return resolve(text, dom);
   }
 

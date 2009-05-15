@@ -48,7 +48,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     
     final Collection<String> dependencies = getDependencies(ideaPlugin);
     ContainerUtil.addIfNotNull(ideaPlugin.getPluginId(), dependencies);
-    for (IdeaPlugin plugin : IdeaPluginConverter.collectAllVisiblePlugins(extensions.getRoot().getFile())) {
+    for (IdeaPlugin plugin : IdeaPluginConverter.collectAllVisiblePlugins(DomUtil.getFile(extensions))) {
       final String value = plugin.getPluginId();
       if (value != null && dependencies.contains(value)) {
         registerExtensions(prefix, plugin, registrar, psiManager);
@@ -154,7 +154,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
 
     if (ideaPlugin.getPluginId() == null) {
-      final VirtualFile file = ideaPlugin.getRoot().getFile().getOriginalFile().getVirtualFile();
+      final VirtualFile file = DomUtil.getFile(ideaPlugin).getOriginalFile().getVirtualFile();
       if (file != null) {
         final String fileName = file.getName();
         if (!"plugin.xml".equals(fileName)) {
