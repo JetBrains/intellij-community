@@ -1,5 +1,7 @@
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -7,12 +9,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
@@ -60,7 +62,12 @@ public class MavenUtil {
 
   public static void runWhenInitialized(Project project, Runnable r) {
     if (project.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) {
-      r.run();
+      if (r instanceof DumbAware) {
+        r.run();
+      }
+      else {
+        DumbService.getInstance().runWhenSmart(r);
+      }
     }
     else {
       StartupManager.getInstance(project).registerPostStartupActivity(r);

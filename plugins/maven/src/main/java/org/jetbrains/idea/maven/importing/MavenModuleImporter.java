@@ -19,7 +19,7 @@ public class MavenModuleImporter {
   private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
   private final MavenModuleModelsProvider myRootModelsProvider;
-  private final ProjectLibrariesProvider myLibrariesProvider;
+  private final MavenProjectLibrariesProvider myLibrariesProvider;
   private MavenRootModelAdapter myRootModelAdapter;
 
   public MavenModuleImporter(Module module,
@@ -29,7 +29,7 @@ public class MavenModuleImporter {
                                  Map<MavenProject, String> mavenProjectToModuleName,
                                  MavenImportingSettings settings,
                                  MavenModuleModelsProvider rootModelsProvider,
-                                 ProjectLibrariesProvider librariesProvider) {
+                                 MavenProjectLibrariesProvider librariesProvider) {
     myModule = module;
     myModuleModel = moduleModel;
     myMavenTree = mavenTree;

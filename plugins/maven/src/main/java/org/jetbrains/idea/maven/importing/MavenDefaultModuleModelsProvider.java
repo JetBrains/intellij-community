@@ -9,10 +9,10 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
 
-public class DefaultMavenModuleModelsProvider implements MavenModuleModelsProvider {
+public class MavenDefaultModuleModelsProvider implements MavenModuleModelsProvider {
   private final Project myProject;
 
-  public DefaultMavenModuleModelsProvider(Project project) {
+  public MavenDefaultModuleModelsProvider(Project project) {
     myProject = project;
   }
 

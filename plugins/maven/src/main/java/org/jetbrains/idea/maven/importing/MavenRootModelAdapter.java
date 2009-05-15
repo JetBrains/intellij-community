@@ -198,7 +198,7 @@ public class MavenRootModelAdapter {
     return ModuleManager.getInstance(myRootModel.getProject()).findModuleByName(moduleName);
   }
 
-  public void addLibraryDependency(MavenArtifact artifact, boolean isExportable, ProjectLibrariesProvider provider) {
+  public void addLibraryDependency(MavenArtifact artifact, boolean isExportable, MavenProjectLibrariesProvider provider) {
     String libraryName = makeLibraryName(artifact);
 
     Library library = provider.getLibraryByName(libraryName);

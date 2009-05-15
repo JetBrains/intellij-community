@@ -5,14 +5,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.DefaultMavenModuleModelsProvider;
+import org.jetbrains.idea.maven.importing.*;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -79,32 +77,15 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     manager.addManagedFilesWithProfiles(files, getSelectedProfiles());
     manager.waitForReadingCompletion();
 
-    return manager.importProjects(new DefaultMavenModuleModelsProvider(project) {
-      @Override
-      public ModifiableModuleModel getModuleModel() {
-        if (model != null) return model;
-        return super.getModuleModel();
-      }
+    boolean isFromUI = model != null;
+    MavenProjectLibrariesProvider librariesProvider = isFromUI
+                                                      ? new MavenUIProjectLibrariesProvider(project)
+                                                      : new MavenDefaultProjectLibrariesProvider(project);
+    MavenModuleModelsProvider modelsProvider = isFromUI
+                                               ? new MavenUIModuleModelsProvider(model, modulesProvider)
+                                               : new MavenDefaultModuleModelsProvider(project);
 
-      @Override
-      public ModuleRootModel getRootModel(Module module) {
-        ModuleRootModel rootModel = modulesProvider.getRootModel(module);
-        if (rootModel != null) return rootModel;
-        return super.getModifiableRootModel(module);
-      }
-
-      @Override
-      public ModifiableRootModel getModifiableRootModel(Module module) {
-        ModuleRootModel rootModel = modulesProvider.getRootModel(module);
-        if (rootModel instanceof ModifiableRootModel) return (ModifiableRootModel)rootModel;
-        return super.getModifiableRootModel(module);
-      }
-
-      @Override
-      public void commit(ModifiableModuleModel modulModel, ModifiableRootModel[] rootModels) {
-        if (model == null) super.commit(modulModel, rootModels);
-      }
-    });
+    return manager.importProjects(modelsProvider, librariesProvider);
   }
 
   public VirtualFile getRootDirectory() {

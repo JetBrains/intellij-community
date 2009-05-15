@@ -27,10 +27,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
-import org.jetbrains.idea.maven.importing.DefaultMavenModuleModelsProvider;
-import org.jetbrains.idea.maven.importing.MavenFoldersConfigurator;
-import org.jetbrains.idea.maven.importing.MavenModuleModelsProvider;
-import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.importing.*;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -148,7 +145,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     listenForSettingsChanges();
     listenForProjectsTreeChanges();
 
-    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
+    runWhenInitialized(new DumbAwareRunnable() {
       public void run() {
         if (!isUnitTestMode()) {
           fireActivated();
@@ -225,7 +222,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor, myEmbeddersManager);
 
     myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode());
-    myImportingQueue.setPassThrough(false); // by default in unit-test mode it executes request right-away 
+    myImportingQueue.setPassThrough(false); // by default in unit-test mode it executes request right-away
     MavenUserAwareMegringUpdateQueueHelper.attachTo(myProject, myImportingQueue);
   }
 
@@ -458,36 +455,52 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleResolvingTasks(final MavenProject project) {
-    myQuickResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(true,
-                                                                                   project,
-                                                                                   myProjectsTree,
-                                                                                   getGeneralSettings()));
-    myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(false,
-                                                                              project,
-                                                                              myProjectsTree,
-                                                                              getGeneralSettings()));
+    runWhenInitialized(new DumbAwareRunnable() {
+      public void run() {
+        myQuickResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(true,
+                                                                                       project,
+                                                                                       myProjectsTree,
+                                                                                       getGeneralSettings()));
+        myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(false,
+                                                                                  project,
+                                                                                  myProjectsTree,
+                                                                                  getGeneralSettings()));
+      }
+    });
   }
 
   public void scheduleFoldersResolving() {
-    for (MavenProject each : getProjects()) {
-      myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each,
-                                                                                              getImportingSettings(),
-                                                                                              myProjectsTree));
-    }
+    runWhenInitialized(new DumbAwareRunnable() {
+      public void run() {
+        for (MavenProject each : getProjects()) {
+          myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each,
+                                                                                                  getImportingSettings(),
+                                                                                                  myProjectsTree));
+        }
+      }
+    });
   }
 
-  private void schedulePluginsResolving(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-    myPluginsResolvingProcessor.scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project,
-                                                                                            nativeMavenProject,
-                                                                                            myProjectsTree));
+  private void schedulePluginsResolving(final MavenProject project, final org.apache.maven.project.MavenProject nativeMavenProject) {
+    runWhenInitialized(new DumbAwareRunnable() {
+      public void run() {
+        myPluginsResolvingProcessor.scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project,
+                                                                                                nativeMavenProject,
+                                                                                                myProjectsTree));
+      }
+    });
   }
 
   public void scheduleArtifactsDownloading() {
-    for (MavenProject each : getProjects()) {
-      myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each,
-                                                                                                      myProjectsTree,
-                                                                                                      getDownloadingSettings()));
-    }
+    runWhenInitialized(new DumbAwareRunnable() {
+      public void run() {
+        for (MavenProject each : getProjects()) {
+          myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each,
+                                                                                                          myProjectsTree,
+                                                                                                          getDownloadingSettings()));
+        }
+      }
+    });
   }
 
   private void scheduleImport(MavenProject project) {
@@ -502,11 +515,19 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleImport() {
-    myImportingQueue.queue(new Update(this) {
+    runWhenInitialized(new Runnable() {
       public void run() {
-        importProjects();
+        myImportingQueue.queue(new Update(this) {
+          public void run() {
+            importProjects();
+          }
+        });
       }
     });
+  }
+
+  private void runWhenInitialized(Runnable runnable) {
+    MavenUtil.runWhenInitialized(myProject, runnable);
   }
 
   @TestOnly
@@ -627,10 +648,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public List<Module> importProjects() {
-    return importProjects(new DefaultMavenModuleModelsProvider(myProject));
+    return importProjects(new MavenDefaultModuleModelsProvider(myProject),
+                          new MavenDefaultProjectLibrariesProvider(myProject));
   }
 
-  public List<Module> importProjects(final MavenModuleModelsProvider moduleModelsProvider) {
+  public List<Module> importProjects(final MavenModuleModelsProvider moduleModelsProvider,
+                                     final MavenProjectLibrariesProvider librariesProvider) {
     List<Module> result = new WriteAction<List<Module>>() {
       protected void run(Result<List<Module>> result) throws Throwable {
         Set<MavenProject> projectsToImport;
@@ -644,6 +667,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
                                                                  getFileToModuleMapping(),
                                                                  projectsToImport,
                                                                  moduleModelsProvider,
+                                                                 librariesProvider,
                                                                  getImportingSettings());
 
         schedulePostImportTasts(importer.importProject());

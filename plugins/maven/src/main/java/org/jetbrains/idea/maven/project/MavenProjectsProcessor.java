@@ -14,17 +14,18 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MavenProjectsProcessor {
-  private static final int QUEUE_POLL_INTERVAL = 100;
+  private static final int WAIT_TIMEOUT = 2000;
 
   private final Project myProject;
   private final MavenEmbeddersManager myEmbeddersManager;
 
   private final Thread myThread;
   private final BlockingQueue<MavenProjectsProcessorTask> myQueue = new LinkedBlockingQueue<MavenProjectsProcessorTask>();
+  private final AtomicInteger myQueueSize = new AtomicInteger();
   private volatile boolean isStopped;
   private final AtomicReference<MavenProgressIndicator> myCurrentProgressIndicator = new AtomicReference<MavenProgressIndicator>();
 
@@ -47,18 +48,27 @@ public class MavenProjectsProcessor {
   }
 
   public void scheduleTask(MavenProjectsProcessorTask task) {
-    if (myQueue.contains(task)) return;
-    myQueue.add(task);
-    fireQueueChanged(myQueue.size());
+    synchronized (myQueue) {
+      if (myQueue.contains(task)) return;
+      myQueue.add(task);
+      myQueueSize.set(myQueue.size());
+      myQueue.notifyAll();
+    }
+    fireQueueChanged(myQueueSize.get());
   }
 
   public void removeTask(MavenProjectsProcessorTask task) {
-    myQueue.remove(task);
+    synchronized (myQueue) {
+      myQueue.remove(task);
+      myQueue.notifyAll();
+    }
   }
 
   public void waitForCompletion() {
+    if (isEmpty()) return;
+
     if (isUnitTestMode()) {
-      while (!myQueue.isEmpty() && doRunCycle()) { /* do nothing */}
+      while (!isEmpty() && doRunCycle()) {/* do nothing */}
       return;
     }
 
@@ -76,12 +86,24 @@ public class MavenProjectsProcessor {
     });
 
     while (true) {
-      if (isStopped || semaphore.waitFor(QUEUE_POLL_INTERVAL) || myQueue.isEmpty()) return;
+      if (isStopped || isEmpty() || semaphore.waitFor(WAIT_TIMEOUT)) return;
+    }
+  }
+
+  private boolean isEmpty() {
+    synchronized (myQueue) {
+      return myQueue.isEmpty();
     }
   }
 
   public void cancelNonBlocking() {
-    myQueue.clear();
+    synchronized (myQueue) {
+      myQueue.clear();
+      myQueue.notifyAll();
+      myQueueSize.set(0);
+    }
+    fireQueueChanged(myQueueSize.get());
+
     MavenProgressIndicator indicator = myCurrentProgressIndicator.get();
     if (indicator != null) indicator.getIndicator().cancel();
   }
@@ -91,6 +113,9 @@ public class MavenProjectsProcessor {
 
     try {
       isStopped = true;
+      synchronized (myQueue) {
+        myQueue.notifyAll();
+      }
       cancelNonBlocking();
       myThread.join();
     }
@@ -102,8 +127,15 @@ public class MavenProjectsProcessor {
   public boolean doRunCycle() {
     MavenProjectsProcessorTask task;
     try {
-      task = myQueue.poll(QUEUE_POLL_INTERVAL, TimeUnit.MILLISECONDS);
-      fireQueueChanged(myQueue.size());
+      synchronized (myQueue) {
+        while(myQueue.isEmpty()) {
+          myQueue.wait(WAIT_TIMEOUT);
+          if (isStopped) return false;
+        }
+        task = myQueue.poll();
+        myQueueSize.set(myQueue.size());
+      }
+      fireQueueChanged(myQueueSize.get());
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);

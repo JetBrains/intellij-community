@@ -16,16 +16,13 @@
 
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.util.JDOMUtil;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenId;
-import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +32,7 @@ public class MavenPlugin implements Serializable {
   private String myArtifactId;
   private String myVersion;
 
-  private String myConfiguration;
+  private Element myConfiguration;
   private List<Execution> myExecutions = new ArrayList<Execution>();
 
   protected MavenPlugin() {
@@ -46,12 +43,26 @@ public class MavenPlugin implements Serializable {
     myArtifactId = plugin.getArtifactId();
     myVersion = plugin.getVersion();
 
-    Object config = plugin.getConfiguration();
-    myConfiguration = config == null ? null : config.toString();
+    Xpp3Dom config = (Xpp3Dom)plugin.getConfiguration();
+    myConfiguration = config == null ? null : xppToElement(config);
 
     for (PluginExecution each : (Iterable<PluginExecution>)plugin.getExecutions()) {
       myExecutions.add(new Execution(each));
     }
+  }
+
+  private static Element xppToElement(Xpp3Dom xpp) {
+    Element result = new Element(xpp.getName());
+    Xpp3Dom[] children = xpp.getChildren();
+    if (children == null || children.length == 0) {
+      result.setText(xpp.getValue());
+    }
+    else {
+      for (Xpp3Dom each : children) {
+        result.addContent(xppToElement(each));
+      }
+    }
+    return result;
   }
 
   public String getGroupId() {
@@ -72,23 +83,7 @@ public class MavenPlugin implements Serializable {
 
   @Nullable
   public Element getConfigurationElement() {
-    return getConfigurationElement(myConfiguration);
-  }
-
-  @Nullable
-  private static Element getConfigurationElement(String text) {
-    try {
-      if (text == null) return null;
-      return JDOMUtil.loadDocument(text).getRootElement();
-    }
-    catch (IOException e) {
-      MavenLog.LOG.info(e);
-      return null;
-    }
-    catch (JDOMException e) {
-      MavenLog.LOG.info(e);
-      return null;
-    }
+    return myConfiguration;
   }
 
   public List<Execution> getExecutions() {
@@ -124,7 +119,7 @@ public class MavenPlugin implements Serializable {
 
   public static class Execution implements Serializable {
     private List<String> myGoals;
-    private String myConfiguration;
+    private Element myConfiguration;
 
     public Execution() {
     }
@@ -132,8 +127,8 @@ public class MavenPlugin implements Serializable {
     public Execution(PluginExecution execution) {
       myGoals = execution.getGoals();
 
-      Object config = execution.getConfiguration();
-      myConfiguration = config == null ? null : config.toString();
+      Xpp3Dom config = (Xpp3Dom)execution.getConfiguration();
+      myConfiguration = config == null ? null : xppToElement(config);
     }
 
     public List<String> getGoals() {
@@ -142,7 +137,7 @@ public class MavenPlugin implements Serializable {
 
     @Nullable
     public Element getConfigurationElement() {
-      return MavenPlugin.getConfigurationElement(myConfiguration);
+      return myConfiguration;
     }
   }
 }

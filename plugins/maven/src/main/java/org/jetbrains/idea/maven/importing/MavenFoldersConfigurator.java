@@ -32,7 +32,7 @@ public class MavenFoldersConfigurator {
           MavenProject mavenProject = manager.findProject(each);
           if (mavenProject == null) continue;
 
-          MavenRootModelAdapter a = new MavenRootModelAdapter(mavenProject, each, new DefaultMavenModuleModelsProvider(project));
+          MavenRootModelAdapter a = new MavenRootModelAdapter(mavenProject, each, new MavenDefaultModuleModelsProvider(project));
           new MavenFoldersConfigurator(mavenProject, settings, a).config(updateTargetFoldersOnly);
 
           ModifiableRootModel model = a.getRootModel();

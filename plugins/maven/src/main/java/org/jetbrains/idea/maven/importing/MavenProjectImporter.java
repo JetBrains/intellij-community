@@ -38,7 +38,7 @@ public class MavenProjectImporter {
   private final MavenImportingSettings myImportingSettings;
 
   private final ModifiableModuleModel myModuleModel;
-  private final ProjectLibrariesProvider myLibrariesProvider;
+  private final MavenProjectLibrariesProvider myLibrariesProvider;
 
   private final List<Module> myCreatedModules = new ArrayList<Module>();
   private final List<ModifiableRootModel> myRootModelsToCommit = new ArrayList<ModifiableRootModel>();
@@ -52,6 +52,7 @@ public class MavenProjectImporter {
                               Map<VirtualFile, Module> fileToModuleMapping,
                               Set<MavenProject> projectsToImport,
                               MavenModuleModelsProvider moduleModelsProvider,
+                              MavenProjectLibrariesProvider librariesProvider,
                               MavenImportingSettings importingSettings) {
     myProject = p;
     myProjectsTree = projectsTree;
@@ -62,7 +63,7 @@ public class MavenProjectImporter {
     myProjectsToImport = collectProjectsToImport(projectsToImport);
 
     myModuleModel = moduleModelsProvider.getModuleModel();
-    myLibrariesProvider = new ProjectLibrariesProvider(myProject);
+    myLibrariesProvider = librariesProvider;
   }
 
   private Set<MavenProject> collectProjectsToImport(Set<MavenProject> projectsToImport) {
