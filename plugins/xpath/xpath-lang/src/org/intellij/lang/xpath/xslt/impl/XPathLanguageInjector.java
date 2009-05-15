@@ -17,27 +17,26 @@ package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.injection.MultiHostInjector;
+import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.InjectedLanguagePlaces;
-import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
-class XPathLanguageInjector implements LanguageInjector {
+class XPathLanguageInjector implements MultiHostInjector {
     private static final Key<Pair<String, TextRange[]>> CACHED_FILES = Key.create("CACHED_FILES");
     private static final TextRange[] EMPTY_ARRAY = new TextRange[0];
 
@@ -88,8 +87,9 @@ class XPathLanguageInjector implements LanguageInjector {
         if (XsltSupport.mayBeAVT(attribute)) {
             final List<TextRange> avtRanges = new SmartList<TextRange>();
 
-            int i, j = 0;
-            final Lexer lexer = myParserDefinition.createLexer(attribute.getProject());
+          int i;
+          int j = 0;
+          final Lexer lexer = myParserDefinition.createLexer(attribute.getProject());
             while ((i = XsltSupport.getAVTOffset(value, j)) != -1) {
                 // "A right curly brace inside a Literal in an expression is not recognized as terminating the expression."
                 lexer.start(value, i, value.length(), 0);
@@ -125,29 +125,43 @@ class XPathLanguageInjector implements LanguageInjector {
         return ranges;
     }
 
-    public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
-        if (host instanceof XmlAttributeValue) {
-            final PsiElement parent = host.getParent();
-            if (parent instanceof XmlAttribute) {
-                final XmlAttribute attribute = (XmlAttribute)parent;
-                if (!XsltSupport.isXsltFile(attribute.getContainingFile())) return;
-                if (!XsltSupport.isXPathAttribute(attribute)) return;
+  @NotNull
+  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+    return Arrays.asList(XmlAttribute.class);
+  }
 
-                final TextRange[] ranges = getInjectionRanges(attribute);
-                for (TextRange range : ranges) {
-                    // workaround for http://www.jetbrains.net/jira/browse/IDEA-10096
-                    if (range instanceof AVTRange) {
-                        if (((AVTRange)range).myComplete) {
-                            injectionPlacesRegistrar.addPlace(XPathFileType.XPATH.getLanguage(), range.shiftRight(2).grown(-2), "", "");
-                        } else {
-                            // we need to keep the "'}' expected" parse error
-                            injectionPlacesRegistrar.addPlace(XPathFileType.XPATH.getLanguage(), range.shiftRight(2).grown(-1), "{", "");
-                        }
-                    } else {
-                        injectionPlacesRegistrar.addPlace(XPathFileType.XPATH.getLanguage(), range, "", "");
-                    }
-                }
-            }
+  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
+    final XmlAttribute attribute = (XmlAttribute)context;
+    if (!XsltSupport.isXsltFile(attribute.getContainingFile())) return;
+    if (!XsltSupport.isXPathAttribute(attribute)) return;
+
+    XmlAttributeValueImpl value = (XmlAttributeValueImpl)attribute.getValueElement();
+    if (value == null) return;
+    final TextRange[] ranges = getInjectionRanges(attribute);
+    for (TextRange range : ranges) {
+      // workaround for http://www.jetbrains.net/jira/browse/IDEA-10096
+      TextRange rangeInsideHost;
+      String prefix;
+      if (range instanceof AVTRange) {
+        if (((AVTRange)range).myComplete) {
+          rangeInsideHost = range.shiftRight(2).grown(-2);
+          prefix = "";
         }
+        else {
+          // we need to keep the "'}' expected" parse error
+          rangeInsideHost = range.shiftRight(2).grown(-1);
+          prefix = "{";
+        }
+      }
+      else {
+        rangeInsideHost = range;
+        prefix = "";
+      }
+      if (value.getTextRange().contains(rangeInsideHost.shiftRight(value.getTextRange().getStartOffset()))) {
+        registrar.startInjecting(XPathFileType.XPATH.getLanguage())
+        .addPlace(prefix, "",value, rangeInsideHost)
+        .doneInjecting();
+      }
     }
+  }
 }
