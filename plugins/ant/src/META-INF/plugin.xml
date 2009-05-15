@@ -34,6 +34,7 @@
     <hectorComponentProvider implementation="com.intellij.lang.ant.validation.AntHectorPanelProvider"/>
     <declarationRangeHandler key="com.intellij.lang.ant.psi.AntStructuredElement"
                              implementationClass="com.intellij.lang.ant.AntDeclarationRangeHandler"/>
+    <refactoring.elementListenerProvider implementation="com.intellij.lang.ant.refactoring.AntTargetRenameListenerProvider"/>
   </extensions>
 
   <application-components>

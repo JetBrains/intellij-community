@@ -25,6 +25,7 @@ public class AntStepsBeforeRunProvider implements StepsBeforeRunProvider {
 
   public String getStepDescription(final RunConfiguration runConfiguration) {
     final AntConfigurationImpl antConfiguration = (AntConfigurationImpl)AntConfiguration.getInstance(myProject);
+    antConfiguration.ensureInitialized();
     final ExecuteBeforeRunEvent event = antConfiguration.findExecuteBeforeRunEvent(runConfiguration);
     final AntBuildTarget buildTarget = antConfiguration.getTargetForEvent(event);
     return buildTarget != null ? getPresentableDescription(buildTarget.getName()) : "";

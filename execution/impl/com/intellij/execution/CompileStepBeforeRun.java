@@ -40,11 +40,9 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
   }
 
   public boolean hasTask(final RunConfiguration configuration) {
-    if (configuration instanceof RunProfileWithCompileBeforeLaunchOption && !(configuration instanceof RemoteConfiguration) && getConfig().isCompileBeforeRunning(configuration)) {
-      return true;
-    }
-
-    return false;
+    return configuration instanceof RunProfileWithCompileBeforeLaunchOption &&
+           !(configuration instanceof RemoteConfiguration) &&
+           getConfig().isCompileBeforeRunning(configuration);
   }
 
   private RunManagerConfig getConfig() {
@@ -97,6 +95,7 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
   }
 
   public void copyTaskData(final RunConfiguration from, final RunConfiguration to) {
+    System.out.println(from.getName() + "--->" + to.getName());
     // TODO: do we need this?
   }
 

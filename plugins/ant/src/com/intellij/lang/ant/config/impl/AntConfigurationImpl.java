@@ -342,6 +342,17 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
   }
 
+  public void handleTargetRename(String oldTargetName, String newTargetName) {
+    synchronized (myEventToTargetMap) {
+      for (Map.Entry<ExecutionEvent, Pair<AntBuildFile, String>> entry : myEventToTargetMap.entrySet()) {
+        final Pair<AntBuildFile, String> pair = entry.getValue();
+        if (pair != null && Comparing.equal(pair.getSecond(), oldTargetName)) {
+          entry.setValue(new Pair<AntBuildFile, String>(pair.getFirst(), newTargetName));
+        }
+      }
+    }
+  }
+
   public void updateBuildFile(final AntBuildFile buildFile) {
     myModificationCount++;
     myEventDispatcher.getMulticaster().buildFileChanged(buildFile);
