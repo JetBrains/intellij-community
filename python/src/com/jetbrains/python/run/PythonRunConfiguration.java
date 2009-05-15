@@ -3,12 +3,9 @@ package com.jetbrains.python.run;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -19,18 +16,22 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
  */
-public class PythonRunConfiguration extends AbstractPythonRunConfiguration implements PythonRunConfigurationParams {
+public class PythonRunConfiguration extends AbstractPythonRunConfiguration implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams {
   private String myScriptName;
   private String myScriptParameters;
 
-  protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory, String name) {
-    super(name, project, configurationFactory);
+  protected PythonRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
+    super(name, module, configurationFactory);
+  }
+
+  protected ModuleBasedConfiguration createInstance() {
+    return new PythonRunConfiguration(getConfigurationModule(), getFactory(), getName());
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
@@ -92,8 +93,12 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration imple
     JDOMExternalizerUtil.writeField(element, "PARAMETERS", myScriptParameters);
   }
 
+  public AbstractPythonRunConfigurationParams getBaseParams() {
+    return this;
+  }
+
   public static void copyParams(PythonRunConfigurationParams source, PythonRunConfigurationParams target) {
-    AbstractPythonRunConfiguration.copyParams(source, target);
+    AbstractPythonRunConfiguration.copyParams(source.getBaseParams(), target.getBaseParams());
     target.setScriptName(source.getScriptName());
     target.setScriptParameters(source.getScriptParameters());
   }

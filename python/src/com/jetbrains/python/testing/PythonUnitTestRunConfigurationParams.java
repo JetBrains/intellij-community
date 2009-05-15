@@ -5,7 +5,9 @@ import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 /**
  * @author Leonid Shalupov
  */
-public interface PythonUnitTestRunConfigurationParams extends AbstractPythonRunConfigurationParams {
+public interface PythonUnitTestRunConfigurationParams {
+  AbstractPythonRunConfigurationParams getBaseParams();
+
   String getClassName();
   void setClassName(String className);
 

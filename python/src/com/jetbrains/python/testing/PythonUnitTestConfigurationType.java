@@ -7,12 +7,13 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestType;
@@ -175,7 +176,7 @@ public class PythonUnitTestConfigurationType implements LocatableConfigurationTy
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PythonUnitTestRunConfiguration(project, this, "");
+      return new PythonUnitTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
   }
 

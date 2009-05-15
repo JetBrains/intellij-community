@@ -3,7 +3,9 @@ package com.jetbrains.python.run;
 /**
  * @author Leonid Shalupov
  */
-public interface PythonRunConfigurationParams extends AbstractPythonRunConfigurationParams {
+public interface PythonRunConfigurationParams {
+  AbstractPythonRunConfigurationParams getBaseParams();
+
   String getScriptName();
 
   void setScriptName(String scriptName);

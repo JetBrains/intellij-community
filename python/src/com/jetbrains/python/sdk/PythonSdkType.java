@@ -3,13 +3,18 @@ package com.jetbrains.python.sdk;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,6 +23,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.facet.PythonFacetSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -423,5 +429,20 @@ public class PythonSdkType extends SdkType {
 
   public static List<Sdk> getAllSdks() {
     return ProjectJdkTable.getInstance().getSdksOfType(getInstance());
+  }
+
+  @Nullable
+  public static Sdk findPythonSdk(Module module) {
+    if (module == null) return null;
+    final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) return sdk;
+    final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
+    for (Facet facet : facets) {
+      final FacetConfiguration configuration = facet.getConfiguration();
+      if (configuration instanceof PythonFacetSettings) {
+        return ((PythonFacetSettings) configuration).getSdk();
+      }
+    }
+    return null;
   }
 }

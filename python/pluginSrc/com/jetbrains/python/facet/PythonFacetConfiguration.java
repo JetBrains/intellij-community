@@ -5,7 +5,6 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,10 +14,8 @@ import org.jdom.Element;
 /**
  * @author yole
  */
-public class PythonFacetConfiguration implements FacetConfiguration {
+public class PythonFacetConfiguration extends PythonFacetSettings implements FacetConfiguration {
   private static final String SDK_NAME = "sdkName";
-
-  private Sdk mySdk;
 
   public FacetEditorTab[] createEditorTabs(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
     return new FacetEditorTab[] {
@@ -35,11 +32,4 @@ public class PythonFacetConfiguration implements FacetConfiguration {
     mySdk = StringUtil.isEmpty(sdkName) ? null : ProjectJdkTable.getInstance().findJdk(sdkName, PythonSdkType.getInstance().getName());
   }
 
-  public Sdk getSdk() {
-    return mySdk;
-  }
-
-  public void setSdk(Sdk sdk) {
-    mySdk = sdk;
-  }
 }

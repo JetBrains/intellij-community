@@ -3,27 +3,27 @@ package com.jetbrains.python.run;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.options.SettingsEditor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Leonid Shalupov
  */
-public abstract class AbstractPythonRunConfiguration extends RuntimeConfiguration
+public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule>
   implements LocatableConfiguration, AbstractPythonRunConfigurationParams {
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
@@ -31,8 +31,19 @@ public abstract class AbstractPythonRunConfiguration extends RuntimeConfiguratio
   private boolean myPassParentEnvs;
   private Map<String, String> myEnvs = new HashMap<String, String>();
 
-  public AbstractPythonRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
-    super(name, project, factory);
+  public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
+    super(name, module, factory);
+  }
+
+  public Collection<Module> getValidModules() {
+    final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+    List<Module> result = new ArrayList<Module>();
+    for (Module module : modules) {
+      if (PythonSdkType.findPythonSdk(module) != null) {
+        result.add(module);
+      }
+    }
+    return result;
   }
 
   @Nullable
