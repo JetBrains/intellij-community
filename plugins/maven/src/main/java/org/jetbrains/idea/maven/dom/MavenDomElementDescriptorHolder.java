@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
@@ -71,7 +72,7 @@ public class MavenDomElementDescriptorHolder {
 
     if (schema != null) {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(schema);
-      if (psiFile != null) myNSDescriptor.init(psiFile);
+      if (psiFile instanceof XmlFile) myNSDescriptor.init(psiFile);
     }
   }
 }
