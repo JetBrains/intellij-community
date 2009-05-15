@@ -17,6 +17,8 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.PomRenameableTarget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +32,7 @@ import java.util.List;
  * @see PsiJavaFile#getClasses() 
  */
 public interface PsiClass
-  extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner, PsiMember {
+  extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner, PsiTarget, PomRenameableTarget<PsiElement> {
   /**
    * The empty array of PSI classes which can be reused to avoid unnecessary allocations.
    */
@@ -348,4 +350,6 @@ public interface PsiClass
    */
   @NotNull
   Collection<HierarchicalMethodSignature> getVisibleSignatures();
+
+  PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 }

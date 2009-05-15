@@ -4,14 +4,11 @@
  */
 package com.intellij.pom;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * @author peter
  */
 public interface PomNamedTarget extends PomTarget {
 
-  @NotNull
   String getName();
 
 }

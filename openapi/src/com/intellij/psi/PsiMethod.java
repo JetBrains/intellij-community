@@ -18,6 +18,8 @@ package com.intellij.psi;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.PomRenameableTarget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +31,8 @@ import java.util.List;
  *
  * @see PsiClass#getMethods()
  */
-public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner {
+public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner,
+                                   PomRenameableTarget<PsiElement>, PsiTarget {
   /**
    * The empty array of PSI methods which can be reused to avoid unnecessary allocations.
    */
@@ -171,6 +174,8 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   @NotNull @NonNls
   String getName();
-  
+
+  PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
+
   @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature();
 }
