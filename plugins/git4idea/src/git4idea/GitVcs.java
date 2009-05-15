@@ -19,6 +19,7 @@ package git4idea;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.changes.GitChangeProvider;
@@ -55,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -498,5 +501,37 @@ public class GitVcs extends AbstractVcs {
    */
   public void showErrorMessages(final String line) {
     showMessage(line, ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean allowsNestedRoots() {
+    return true;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public List<VirtualFile> filterUniqueRoots(List<VirtualFile> in) {
+    Collections.sort(in, FilePathComparator.getInstance());
+
+    for (int i = 1; i < in.size(); i++) {
+      final VirtualFile child = in.get(i);
+      final VirtualFile childRoot = GitUtil.getGitRoot(child);
+      for (int j = i - 1; j >= 0; --j) {
+        final VirtualFile parent = in.get(j);
+        // the method check both that parent is an ancestor of the child and that they share common git root
+        if (VfsUtil.isAncestor(parent, child, false) && VfsUtil.isAncestor(childRoot, parent, false)) {
+          in.remove(i);
+          //noinspection AssignmentToForLoopParameter
+          --i;
+          break;
+        }
+      }
+    }
+    return in;
   }
 }
