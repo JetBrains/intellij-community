@@ -37,7 +37,7 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
     setMirrorCheckingType(element, null);
 
     PsiTypeElement[] typeElements = getTypeParameterElements();
-    PsiTypeElement[] typeMirrors = ((PsiReferenceParameterList)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getTypeParameterElements();
+    PsiTypeElement[] typeMirrors = ((PsiReferenceParameterList)SourceTreeToPsiMap.treeElementToPsi(element)).getTypeParameterElements();
     LOG.assertTrue(typeElements.length == typeMirrors.length);
     if (typeElements.length == typeMirrors.length) {
       for (int i = 0; i < typeElements.length; i++) {

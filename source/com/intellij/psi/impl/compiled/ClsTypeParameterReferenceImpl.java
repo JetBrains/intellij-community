@@ -161,8 +161,8 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
   }
 
   public TextRange getRangeInElement() {
-    getMirror();
-    return myMirror != null ? myMirror.getTextRange() : new TextRange(0, getTextLength());
+    final PsiElement mirror = getMirror();
+    return mirror != null ? mirror.getTextRange() : new TextRange(0, getTextLength());
   }
 
   public PsiElement getElement() {

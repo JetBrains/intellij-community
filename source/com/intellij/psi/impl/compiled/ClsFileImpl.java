@@ -39,13 +39,15 @@ import java.util.List;
 public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub> implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
 
+  static final Object MIRROR_LOCK = new String("Mirror Lock");
+
   private volatile ClsPackageStatementImpl myPackageStatement = null;
   private static final Key<Document> DOCUMENT_IN_MIRROR_KEY = Key.create("DOCUMENT_IN_MIRROR_KEY");
   private final PsiManagerImpl myManager;
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
-  private final Object myMirrorLock = new String("lock, that guards myMirror field for the file");
   private volatile SoftReference<StubTree> myStub;
+  private TreeElement myMirrorFileElement;
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(null);
@@ -223,18 +225,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         }
       }
     }
-    setMirrorCheckingType(element, null);
-  }
-
-  public String getText() {
-    initializeMirror();
-    return myMirror.getText();
-  }
-
-  @NotNull
-  public char[] textToCharArray() {
-    initializeMirror();
-    return myMirror.textToCharArray();
+    myMirrorFileElement = element;
   }
 
   @NotNull
@@ -263,11 +254,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return this;
   }
 
-  private void initializeMirror() {
-    if (myMirror == null) {
-      synchronized (getMirrorLock()) {
-        if (myMirror != null) return;
-
+  @Override
+  public PsiElement getMirror() {
+    synchronized (MIRROR_LOCK) {
+      if (myMirrorFileElement == null) {
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
         final Document document = documentManager.getDocument(getVirtualFile());
         String text = document.getText();
@@ -282,15 +272,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
           public void run() {
             setMirror((TreeElement)mirrorTreeElement);
-            myMirror.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
+            myMirrorFileElement.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
           }
         });
       }
-    }
-  }
 
-  Object getMirrorLock() {
-    return myMirrorLock;
+      return myMirrorFileElement.getPsi();
+    }
   }
 
   public long getModificationStamp() {

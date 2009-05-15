@@ -4,8 +4,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiElementBase;
@@ -21,7 +21,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   private static final boolean CHECK_MIRROR_ENABLED = false;
   protected static final Object LAZY_BUILT_LOCK = new String("lazy cls tree initialization lock");
 
-  protected volatile TreeElement myMirror = null;
+  private TreeElement myMirror = null;
 
   @NotNull
   public Language getLanguage() {
@@ -101,20 +101,18 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   public abstract void setMirror(@NotNull TreeElement element);
 
-  public final PsiElement getMirror() {
-    if (myMirror == null) {
-      if (DumbService.getInstance().isDumb()) {
-        return null;
-      }
-
-      final ClsFileImpl file = (ClsFileImpl)getContainingFile();
-      synchronized (file.getMirrorLock()) {
-        if (myMirror == null) {
-          file.getText();
+  public PsiElement getMirror() {
+    synchronized (ClsFileImpl.MIRROR_LOCK) {
+      if (myMirror == null) {
+        if (DumbService.getInstance().isDumb()) {
+          return null;
         }
+
+        final ClsFileImpl file = (ClsFileImpl)getContainingFile();
+        file.getMirror();
       }
+      return SourceTreeToPsiMap.treeElementToPsi(myMirror);
     }
-    return SourceTreeToPsiMap.treeElementToPsi(myMirror);
   }
 
   public final TextRange getTextRange() {
@@ -170,8 +168,8 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   private PsiElement mirrorToElement(PsiElement mirror) {
-    getMirror();
-    if (myMirror.getPsi() == mirror) return this;
+    final PsiElement m = getMirror();
+    if (m == mirror) return this;
 
     PsiElement[] children = getChildren();
     if (children.length == 0) return null;
@@ -199,7 +197,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   @NotNull
   public char[] textToCharArray() {
-    return getText().toCharArray();
+    return getMirror().textToCharArray();
   }
 
   public boolean textMatches(@NotNull CharSequence text) {
