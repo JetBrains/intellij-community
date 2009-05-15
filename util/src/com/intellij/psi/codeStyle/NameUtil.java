@@ -20,9 +20,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.oro.text.regex.MalformedPatternException;
+import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
-import org.apache.oro.text.regex.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -307,7 +307,7 @@ public class NameUtil {
   }
 
   public interface Matcher {
-    boolean matches(CharSequence name);
+    boolean matches(String name);
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
@@ -340,16 +340,12 @@ public class NameUtil {
       myMatcher = new Perl5Matcher();
     }
 
-    public boolean matches(CharSequence name) {
+    public boolean matches(String name) {
       if (!prefilter(name, myPreparedPattern)) {
         return false;
       }
 
-      if (name instanceof String) {
-        return myMatcher.matches((String)name, myPattern);
-      }
-
-      return myMatcher.matches(name.toString(), myPattern);
+      return myMatcher.matches(name, myPattern);
     }
 
     private static String preparePattern(String pattern) {
@@ -373,11 +369,11 @@ public class NameUtil {
       int patternLen = pattern.length();
       int nameLen = name.length();
 
-      while (nameIndex < nameLen && name.charAt(nameIndex) == '_') {
-        nameIndex++;
-      }
-
       if (myEnsureFirstSymbolsMatch) {
+        while (nameIndex < nameLen && name.charAt(nameIndex) == '_') {
+          nameIndex++;
+        }
+
         if (patternLen == 0 || nameIndex >= nameLen) return false;
         if (StringUtil.toLowerCase(name.charAt(nameIndex)) != pattern.charAt(0)) return false;
 
