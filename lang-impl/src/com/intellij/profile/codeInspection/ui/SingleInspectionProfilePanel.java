@@ -318,6 +318,16 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
+    actions.add(new ToggleAction("Lock Profile", "Lock profile", IconLoader.getIcon("/nodes/padlock.png")) {
+      public boolean isSelected(AnActionEvent e) {
+        return mySelectedProfile != null && mySelectedProfile.isProfileLocked();
+      }
+
+      public void setSelected(AnActionEvent e, boolean state) {
+        mySelectedProfile.lockProfile(state);
+      }
+    });
+
     actions.addSeparator();
     actions.add(new AddScopeAction(myTree){
       protected InspectionProfileImpl getSelectedProfile() {

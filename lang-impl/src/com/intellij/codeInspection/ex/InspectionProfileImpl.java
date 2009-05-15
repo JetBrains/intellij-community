@@ -201,6 +201,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
+    final String locked = element.getAttributeValue(IS_LOCKED);
+    if (locked != null) {
+      myLockedProfile = Boolean.parseBoolean(locked);
+    }
     myBaseProfile = getDefaultProfile();
     initInspectionTools();
     final String version = element.getAttributeValue(VERSION_TAG);
@@ -214,11 +218,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       catch (JDOMException e) {
         LOG.error(e);
       }
-    }
-
-    final String locked = element.getAttributeValue(IS_LOCKED);
-    if (locked != null) {
-      myLockedProfile = Boolean.parseBoolean(locked);
     }
 
     final Element highlightElement = element.getChild(USED_LEVELS);
@@ -258,7 +257,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
 
       for (final String toolName : diffMap.keySet()) {
-        if (diffMap.get(toolName).booleanValue()) continue;
+        if (!myLockedProfile && diffMap.get(toolName).booleanValue()) continue;
         final HighlightDisplayKey key = HighlightDisplayKey.find(toolName);
         if (key != null) {
           final ToolsImpl toolList = myTools.get(toolName);
@@ -430,7 +429,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
               key = HighlightDisplayKey.register(shortName);
             }
           }
-          myTools.put(tool.getShortName(), new ToolsImpl(tool, myBaseProfile != null ? myBaseProfile.getErrorLevel(key) : tool.getDefaultLevel(), myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : tool.isEnabledByDefault()));
+          myTools.put(tool.getShortName(), new ToolsImpl(tool, myBaseProfile != null ? myBaseProfile.getErrorLevel(key) : tool.getDefaultLevel(), !myLockedProfile && (myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : tool.isEnabledByDefault())));
         }
         if (mySource != null) {
           copyToolsConfigurations(mySource);
