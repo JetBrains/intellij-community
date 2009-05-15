@@ -238,6 +238,13 @@
 
     <refactoring.copyHandler implementation="org.jetbrains.plugins.groovy.refactoring.copy.GroovyCopyFilesOrDirectoriesHandler"/>
 
+    <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
+    <java.shortNamesCache implementation="org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"
+                    serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"/>
+
+    <inspectionToolProvider implementation="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider"/>
 
     <!-- control flow -->
     <intentionAction>
@@ -392,16 +399,10 @@
 
   <project-components>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.fileType.GroovyInjector</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.editor.EditorDecorator</implementation-class>
@@ -567,9 +568,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.gant.GantLoader</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.GrailsLoader</implementation-class>

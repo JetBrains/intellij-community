@@ -16,26 +16,25 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.resolve.ScriptMembersProvider;
 import org.jetbrains.plugins.groovy.extensions.resolve.ScriptMembersProviderRegistry;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -54,7 +53,7 @@ import java.util.Map;
 /**
  * @author ven
  */
-public class GroovyPsiManager implements ProjectComponent {
+public class GroovyPsiManager {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
   private final Project myProject;
 
@@ -69,47 +68,16 @@ public class GroovyPsiManager implements ProjectComponent {
   private GrTypeDefinition myArrayClass;
 
   private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
-  private boolean myRebuildGdkPending = true;
-  private GroovyShortNamesCache myCache;
+  private volatile boolean myRebuildGdkPending = true;
+  private final GroovyShortNamesCache myCache;
 
-  public TypeInferenceHelper getTypeInferenceHelper() {
-    return myTypeInferenceHelper;
-  }
-
-  private TypeInferenceHelper myTypeInferenceHelper;
+  private final TypeInferenceHelper myTypeInferenceHelper;
 
   private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { public int length }";
 
   public GroovyPsiManager(Project project) {
     myProject = project;
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "Groovy Psi Manager";
-  }
-
-  public void initComponent() {
-    myCache = new GroovyShortNamesCache(myProject);
-
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            if (!myProject.isDisposed()) {
-              JavaPsiFacade.getInstance(myProject).registerShortNamesCache(getNamesCache());
-            }
-          }
-        });
-      }
-    });
+    myCache = ContainerUtil.findInstance(project.getExtensions(PsiShortNamesCache.EP_NAME), GroovyShortNamesCache.class);
 
     ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
@@ -119,7 +87,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
     myTypeInferenceHelper = new TypeInferenceHelper(myProject);
 
-    myProject.getMessageBus().connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
@@ -130,11 +98,16 @@ public class GroovyPsiManager implements ProjectComponent {
     });
   }
 
+  public TypeInferenceHelper getTypeInferenceHelper() {
+    return myTypeInferenceHelper;
+  }
+
   public void dropTypesCache() {
     myCalculatedTypes.clear();
   }
 
-  private void buildGDK() {
+  @NotNull
+  private Map<String, List<PsiMethod>> buildGDK() {
     final HashMap<String, List<PsiMethod>> newMap = new HashMap<String, List<PsiMethod>>();
 
     PsiClass defaultMethodsClass =
@@ -156,16 +129,12 @@ public class GroovyPsiManager implements ProjectComponent {
       }
     }
 
-    myDefaultMethods = newMap;
-
-    addSwingBuilderMethods();
-
+    addSwingBuilderMethods(newMap);
+    return newMap;
   }
 
-  /**
+  /*
    * Method to add custom properties for some Groovy extensions
-   *
-   * @param file
    */
   private void buildGroovyScriptExtensionProperties() {
     final HashMap<String, List<PsiField>> newMap = new HashMap<String, List<PsiField>>();
@@ -183,7 +152,7 @@ public class GroovyPsiManager implements ProjectComponent {
     myScriptMethods = newMap;
   }
 
-  private void addDefaultMethod(PsiMethod method, HashMap<String, List<PsiMethod>> map, boolean isStatic) {
+  private static void addDefaultMethod(PsiMethod method, HashMap<String, List<PsiMethod>> map, boolean isStatic) {
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return;
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -196,7 +165,7 @@ public class GroovyPsiManager implements ProjectComponent {
       hisMethods = new ArrayList<PsiMethod>();
       map.put(thisCanonicalText, hisMethods);
     }
-    hisMethods.add(convertMethod(method, isStatic));
+    hisMethods.add(new GrGdkMethodImpl(method, isStatic));
   }
 
   private static final String[] SWING_WIDGETS_METHODS =
@@ -230,7 +199,7 @@ public class GroovyPsiManager implements ProjectComponent {
       "java.awt.Component", "rigidArea", "java.awt.Component", "tableLayout", "groovy.swing.impl.TableLayoutRow", "tr",
       "groovy.swing.impl.TableLayoutRow", "td", "groovy.swing.impl.TableLayoutCell",};
 
-  private void addSwingBuilderMethods() {
+  private void addSwingBuilderMethods(Map<String, List<PsiMethod>> myDefaultMethods) {
     PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
 
     StringBuilder classText = new StringBuilder();
@@ -256,26 +225,13 @@ public class GroovyPsiManager implements ProjectComponent {
     myDefaultMethods.put(SWING_BUILDER_QNAME, result);
   }
 
-  private PsiMethod convertMethod(PsiMethod method, boolean isStatic) {
-    return new GrGdkMethodImpl(method, isStatic);
-  }
-
-  public void disposeComponent() {
-  }
-
-
   public List<PsiMethod> getDefaultMethods(String qName) {
     if (myRebuildGdkPending) {
-      synchronized (this) {
-        if (myRebuildGdkPending) {
-          buildGDK();
-          myRebuildGdkPending = false;
-        }
+      final Map<String, List<PsiMethod>> gdk = buildGDK();
+      if (myRebuildGdkPending) {
+        myDefaultMethods = gdk;
+        myRebuildGdkPending = false;
       }
-    }
-
-    if (myDefaultMethods == null) {
-      return Collections.emptyList();
     }
 
     List<PsiMethod> methods = myDefaultMethods.get(qName);
@@ -311,7 +267,7 @@ public class GroovyPsiManager implements ProjectComponent {
     return methods;
   }
 
-  /**
+  /*
    * Get script extension by type
    */
   @Nullable
@@ -325,7 +281,7 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public static GroovyPsiManager getInstance(Project project) {
-    return project.getComponent(GroovyPsiManager.class);
+    return ServiceManager.getService(project, GroovyPsiManager.class);
   }
 
   @Nullable
@@ -363,7 +319,7 @@ public class GroovyPsiManager implements ProjectComponent {
     }
   };
 
-  public PsiType inferType(PsiElement element, Computable<PsiType> computable) {
+  public static PsiType inferType(PsiElement element, Computable<PsiType> computable) {
     final List<PsiElement> curr = myElementsWithTypesBeingInferred.get();
     try {
       curr.add(element);
@@ -374,7 +330,7 @@ public class GroovyPsiManager implements ProjectComponent {
     }
   }
 
-  public boolean isTypeBeingInferred(PsiElement element) {
+  public static boolean isTypeBeingInferred(PsiElement element) {
     return myElementsWithTypesBeingInferred.get().contains(element);
   }
 

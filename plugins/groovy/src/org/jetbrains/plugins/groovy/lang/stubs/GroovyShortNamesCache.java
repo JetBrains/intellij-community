@@ -19,9 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
@@ -40,25 +38,11 @@ import java.util.Collection;
 /**
  * @author ilyas
  */
-public class GroovyShortNamesCache implements PsiShortNamesCache {
-
-  Project myProject;
+public class GroovyShortNamesCache extends PsiShortNamesCache {
+  private final Project myProject;
 
   public GroovyShortNamesCache(Project project) {
     myProject = project;
-  }
-
-  public void runStartupActivity() {
-  }
-
-  @NotNull
-  public PsiFile[] getFilesByName(@NotNull String name) {
-    return PsiFile.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public String[] getAllFileNames() {
-    return FilenameIndex.getAllFilenames();
   }
 
   @NotNull

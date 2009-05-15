@@ -4,5 +4,6 @@ target(aaa: "") {
 
 }
 -----
+include
 includeTargets
 includeTool
