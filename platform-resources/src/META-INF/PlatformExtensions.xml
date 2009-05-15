@@ -89,9 +89,6 @@
   <applicationService serviceInterface="com.intellij.util.InstanceofCheckerGenerator"
                       serviceImplementation="com.intellij.util.InstanceofCheckerGeneratorImpl"/>
 
-  <applicationService serviceInterface="com.intellij.openapi.util.registry.Registry"
-          serviceImplementation="com.intellij.openapi.util.registry.Registry"/>
-
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
   <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"

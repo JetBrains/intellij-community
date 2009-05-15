@@ -1,9 +1,5 @@
 package com.intellij.openapi.util.registry;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -13,14 +9,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.*;
 
-@State(
-    name = "Registry",
-    storages = {
-        @Storage(
-            id = "other",
-            file="$APP_CONFIG$/other.xml")}
-)
-public class Registry implements PersistentStateComponent<Element> {
+public class Registry  {
 
   private static Reference<ResourceBundle> ourBundle;
 
@@ -31,6 +20,8 @@ public class Registry implements PersistentStateComponent<Element> {
   private Map<String, String> myLoadedUserProperties = new HashMap<String, String>();
 
   private Map<String, RegistryValue> myValues = new HashMap<String, RegistryValue>();
+
+  private static final Registry ourInstance = new Registry();
 
   public static RegistryValue get(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
     final Registry registry = Registry.getInstance();
@@ -60,7 +51,7 @@ public class Registry implements PersistentStateComponent<Element> {
 
 
   public static Registry getInstance() {
-    return ServiceManager.getService(Registry.class);
+    return ourInstance;
   }
 
   public Element getState() {
