@@ -332,6 +332,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testParamsUsedInLocalClass() throws Exception {
+    doTest();
+  }
+
   private void doChainedConstructorTest(final boolean replaceAllDuplicates) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, replaceAllDuplicates, getEditor(), getFile(), getProject(), true);

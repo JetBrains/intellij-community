@@ -546,6 +546,16 @@ public class ExtractMethodProcessor implements MatchProvider {
         if (elementOffset >= startOffset && elementOffset <= endOffset) {
           if (!isInExitStatements(element, exitStatements)) continue Variables;
         }
+        if (elementOffset == -1) { //references in local/anonymous classes should not be skipped
+          final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+          if (psiClass != null) {
+            final TextRange textRange = psiClass.getTextRange();
+            if (controlFlow.getElement(startOffset).getTextOffset() <= textRange.getStartOffset() &&
+                textRange.getEndOffset() <= controlFlow.getElement(endOffset).getTextRange().getEndOffset()) {
+              continue Variables;
+            }
+          }
+        }
       }
       iterator.remove();
     }
