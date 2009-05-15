@@ -92,9 +92,8 @@ public class ToolsImpl implements Tools {
   public void writeExternal(Element inspectionElement) throws WriteExternalException {
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
-        final NamedScope namedScope = state.getScope();
         final Element scopeElement = new Element("scope");
-        scopeElement.setAttribute("name", namedScope.getName());
+        scopeElement.setAttribute("name", state.getScopeName());
         scopeElement.setAttribute(InspectionProfileImpl.LEVEL_TAG, state.getLevel().toString());
         scopeElement.setAttribute(InspectionProfileImpl.ENABLED_TAG, Boolean.toString(state.isEnabled()));
         InspectionProfileEntry InspectionProfileEntry = state.getTool();
@@ -143,19 +142,30 @@ public class ToolsImpl implements Tools {
               namedScope = NamedScopesHolder.getScope(ProjectManager.getInstance().getDefaultProject(), scopeName);
             }
           }
+          final String errorLevel = scopeElement.getAttributeValue(InspectionProfileImpl.LEVEL_TAG);
+          final String enabledInScope = scopeElement.getAttributeValue(InspectionProfileImpl.ENABLED_TAG);
+          final InspectionProfileEntry copyTool =
+            ((InspectionProfileImpl)profile).myRegistrar.createInspectionTool(myShortName, tool);
+          copyTool.readSettings(scopeElement);
+          final HighlightDisplayLevel scopeLevel = errorLevel != null ? HighlightDisplayLevel
+            .find(((SeverityProvider)profileManager).getOwnSeverityRegistrar().getSeverity(errorLevel)) : level;
           if (namedScope != null) {
-            final String errorLevel = scopeElement.getAttributeValue(InspectionProfileImpl.LEVEL_TAG);
-            final String enabledInScope = scopeElement.getAttributeValue(InspectionProfileImpl.ENABLED_TAG);
-            final InspectionProfileEntry InspectionProfileEntry =
-              ((InspectionProfileImpl)profile).myRegistrar.createInspectionTool(myShortName, tool);
-            InspectionProfileEntry.readSettings(scopeElement);
-            addTool(namedScope, InspectionProfileEntry, enabledInScope != null && Boolean.parseBoolean(enabledInScope),
-                    errorLevel != null ? HighlightDisplayLevel
-                      .find(((SeverityProvider)profileManager).getOwnSeverityRegistrar().getSeverity(errorLevel)) : level);
+            addTool(namedScope, copyTool, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
+          } else {
+            addTool(scopeName, copyTool, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
           }
         }
       }
     }
+  }
+
+  private ScopeToolState addTool(String scopeName, InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+     if (myTools == null) {
+      myTools = new ArrayList<ScopeToolState>();
+    }
+    final ScopeToolState scopeToolState = new ScopeToolState(scopeName, tool, enabled, level);
+    myTools.add(scopeToolState);
+    return scopeToolState;
   }
 
   public InspectionProfileEntry getTool() {

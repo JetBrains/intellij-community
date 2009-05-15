@@ -83,8 +83,8 @@ public class SingleInspectionProfilePanel extends JPanel {
   private final UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
   private final JPanel myInspectionProfilePanel = new JPanel(new BorderLayout());
   private FilterComponent myProfileFilter;
-  private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode(InspectionsBundle.message("inspection.root.node.title"), null, false, false,
-                                                   false);
+  private final InspectionConfigTreeNode myRoot =
+    new InspectionConfigTreeNode(InspectionsBundle.message("inspection.root.node.title"), null, false, false, false);
   private final Alarm myAlarm = new Alarm();
   private boolean myModified = false;
   private Tree myTree;
@@ -663,9 +663,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       getGroupNode(myRoot, descriptor.getGroup(), properSetting).add(node);
       if (!descriptors.isEmpty()) {
         for (Descriptor des : descriptors) {
-          node.add(new InspectionConfigTreeNode(des, des.getScope(), des.getState().isEnabled(), properSetting, false));
+          node.add(new InspectionConfigTreeNode(des, des.getState(), false, properSetting, false));
         }
-        node.add(new InspectionConfigTreeNode(descriptor, descriptor.getScope(), true, descriptor.getState().isEnabled(), properSetting, false));
+        node.add(new InspectionConfigTreeNode(descriptor, descriptor.getState(), true, properSetting, false));
       }
       myRoot.setEnabled(myRoot.isEnabled() || enabled);
       myRoot.isProperSetting |= properSetting;

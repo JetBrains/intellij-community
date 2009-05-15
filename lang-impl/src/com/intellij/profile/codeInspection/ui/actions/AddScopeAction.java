@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.profile.codeInspection.ui.InspectionConfigTreeNode;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -68,9 +67,9 @@ public abstract class AddScopeAction extends AnAction {
                                                                      descriptor.getLevel(), tool.isEnabledByDefault());
     final Descriptor addedDescriptor = new Descriptor(scopeToolState, getSelectedProfile());
     if (node.getChildCount() == 0) {
-      node.add(new InspectionConfigTreeNode(descriptor, DefaultScopesProvider.getAllScope(), true, descriptor.isEnabled(), true, false));
+      node.add(new InspectionConfigTreeNode(descriptor, scopeToolState, true, true, false));
     }
-    node.insert(new InspectionConfigTreeNode(addedDescriptor, scopeToolState.getScope(), tool.isEnabledByDefault(), true, false), 0);
+    node.insert(new InspectionConfigTreeNode(addedDescriptor, scopeToolState, false, true, false), 0);
     node.setInspectionNode(false);
     node.isProperSetting = getSelectedProfile().isProperSetting(HighlightDisplayKey.find(tool.getShortName()));
     ((DefaultTreeModel)myTree.getModel()).reload(node);

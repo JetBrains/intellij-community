@@ -5,41 +5,33 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.Descriptor;
+import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.CheckedTreeNode;
 import org.jetbrains.annotations.Nullable;
 
 public class InspectionConfigTreeNode extends CheckedTreeNode {
-  private NamedScope myScope;
+  private ScopeToolState myState;
   private boolean myByDefault;
   private boolean myInspectionNode;
   public boolean isProperSetting;
 
-  public InspectionConfigTreeNode(Object userObject, NamedScope scope, boolean enabled, boolean properSetting, boolean inspectionNode) {
-    this(userObject, scope, false, enabled, properSetting, inspectionNode);
-  }
-
-  public InspectionConfigTreeNode(Object userObject, NamedScope scope, boolean byDefault, boolean enabled, boolean properSetting, boolean inspectionNode) {
+  public InspectionConfigTreeNode(Object userObject, ScopeToolState state, boolean byDefault, boolean properSetting, boolean inspectionNode) {
     super(userObject);
-    myScope = scope;
+    myState = state;
     myByDefault = byDefault;
     isProperSetting = properSetting;
     myInspectionNode = inspectionNode;
-    setChecked(enabled);
+    if (state != null) {
+      setChecked(state.isEnabled());
+    }
   }
 
-  /*public boolean equals(Object obj) {
-    if (!(obj instanceof MyTreeNode)) return false;
-    MyTreeNode node = (MyTreeNode)obj;
-    return isChecked() == node.isChecked() &&
-           isByDefault() == node.isByDefault() &&
-           isInspectionNode() == node.isInspectionNode() &&
-           (getUserObject() != null ? node.getUserObject().equals(getUserObject()) : node.getUserObject() == null);
+  public InspectionConfigTreeNode(Descriptor descriptor, ScopeToolState state, boolean byDefault, boolean isEnabled, boolean properSetting,
+                                  boolean inspectionNode) {
+    this(descriptor, state, byDefault, properSetting, inspectionNode);
+    setChecked(isEnabled);
   }
-
-  public int hashCode() {
-    return getUserObject() != null ? getUserObject().hashCode() : 0;
-  }*/
 
   @Nullable
   public Descriptor getDesriptor() {
@@ -47,18 +39,16 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
     return (Descriptor)userObject;
   }
 
-  public void setScope(NamedScope scope) {
-    myScope = scope;
-  }
-
+  @Nullable
   public NamedScope getScope() {
-    return myScope;
+    return myState != null ? myState.getScope() : null;
   }
 
   public boolean isByDefault() {
     return myByDefault;
   }
 
+  @Nullable
   public String getGroupName() {
     return userObject instanceof String ? (String)userObject : null;
   }
@@ -73,5 +63,10 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
 
   public void setByDefault(boolean byDefault) {
     myByDefault = byDefault;
+  }
+
+  @Nullable
+  public String getScopeName() {
+    return myState != null ? myState.getScopeName() : null;
   }
 }

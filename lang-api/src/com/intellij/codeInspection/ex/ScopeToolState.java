@@ -19,6 +19,7 @@ import javax.swing.*;
 
 public class ScopeToolState {
   private NamedScope myScope;
+  private final String myScopeName;
   private InspectionProfileEntry myTool;
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
@@ -28,13 +29,26 @@ public class ScopeToolState {
 
   public ScopeToolState(NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
     myScope = scope;
+    myScopeName = myScope.getName();
     myTool = tool;
     myEnabled = enabled;
     myLevel = level;
   }
 
+  public ScopeToolState(String scopeName, InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+    myScopeName = scopeName;
+    myTool = tool;
+    myEnabled = enabled;
+    myLevel = level;
+  }
+
+  @Nullable
   public NamedScope getScope() {
     return myScope;
+  }
+
+  public String getScopeName() {
+    return myScopeName;
   }
 
   @NotNull

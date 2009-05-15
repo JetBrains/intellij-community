@@ -8,7 +8,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
@@ -35,6 +34,8 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
 
     final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
     setBackground(background);
+    Color foreground =
+      selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting ? Color.BLUE : UIUtil.getTreeTextForeground();
 
     @NonNls String text = null;
     int style = Font.PLAIN;
@@ -45,21 +46,23 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
     }
     else {
       final Descriptor descriptor = node.getDesriptor();
-      final NamedScope namedScope = node.getScope();
-      if (namedScope != null) {
+      final String scopeName = node.getScopeName();
+      if (scopeName != null) {
         if (node.isByDefault()) {
           text = "Everywhere except";
         }
         else {
-          text = "In scope \'" + namedScope.getName() + "\'";
+          text = "In scope \'" + scopeName + "\'";
+          if (node.getScope() == null) {
+            foreground = Color.RED;
+          }
         }
       } else {
         text = descriptor.getText();
       }
       hint = getHint(descriptor);
     }
-    Color foreground =
-      selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting ? Color.BLUE : UIUtil.getTreeTextForeground();
+
     if (text != null) {
       SearchUtil.appendFragments(getFilter(), text, style, foreground, background,
                                  getTextRenderer());
