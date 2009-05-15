@@ -178,7 +178,7 @@ public class GitRebaseEditor extends DialogWrapper {
     while (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.skip) {
       i++;
     }
-    if (entries.get(i).getAction() == GitRebaseEntry.Action.squash) {
+    if (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.squash) {
       setErrorText(GitBundle.getString("rebase.editor.invalid.squash"));
       setOKActionEnabled(false);
       return;
@@ -398,6 +398,7 @@ public class GitRebaseEditor extends DialogWrapper {
       if (row < 1 || row >= myEntries.size()) {
         return false;
       }
+      myCommitsTable.removeEditor();
       GitRebaseEntry e = myEntries.get(row);
       myEntries.set(row, myEntries.get(row - 1));
       myEntries.set(row - 1, e);
@@ -415,6 +416,7 @@ public class GitRebaseEditor extends DialogWrapper {
       if (row < 0 || row >= myEntries.size() - 1) {
         return false;
       }
+      myCommitsTable.removeEditor();
       GitRebaseEntry e = myEntries.get(row);
       myEntries.set(row, myEntries.get(row + 1));
       myEntries.set(row + 1, e);
