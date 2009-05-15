@@ -359,7 +359,9 @@ public class UpdateHighlightersUtil {
     final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme(); // TODO: editor color scheme
     for (LineMarkerInfo info : markers) {
       PsiElement element = info.getElement();
-      TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, element.getTextRange());
+      TextRange textRange = element.getTextRange();
+      LOG.assertTrue(textRange != null, element);
+      TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
       if (startOffset <= elementRange.getStartOffset() && elementRange.getEndOffset() <= endOffset) {
         RangeHighlighter marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, info.textAttributesKey != null ? colorsScheme
           .getAttributes(info.textAttributesKey) : null, HighlighterTargetArea.EXACT_RANGE);
