@@ -26,6 +26,7 @@
     <orderEntry type="library" exported="" name="NanoXML" level="project" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="platform-resources_eng" />
+    <orderEntry type="library" name="OroMatcher" level="project" />
   </component>
   <component name="copyright">
     <Base>

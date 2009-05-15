@@ -19,6 +19,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.apache.oro.text.regex.MalformedPatternException;
+import org.apache.oro.text.regex.Perl5Compiler;
+import org.apache.oro.text.regex.Perl5Matcher;
+import org.apache.oro.text.regex.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +30,6 @@ import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class NameUtil {
   private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
@@ -322,12 +325,19 @@ public class NameUtil {
   private static class OptimizedMatcher implements Matcher {
     private final String myPreparedPattern;
     private final boolean myEnsureFirstSymbolsMatch;
-    private final java.util.regex.Matcher myMatcher;
+    private final Perl5Matcher myMatcher;
+    private final Pattern myPattern;
 
     public OptimizedMatcher(String pattern, String regexp) {
       myPreparedPattern = preparePattern(pattern);
       myEnsureFirstSymbolsMatch = pattern.length() > 0 && Character.isLetterOrDigit(pattern.charAt(0));
-      myMatcher = Pattern.compile(regexp).matcher("");
+      try {
+        myPattern = new Perl5Compiler().compile(regexp);
+      }
+      catch (MalformedPatternException e) {
+        throw new RuntimeException(e);
+      }
+      myMatcher = new Perl5Matcher();
     }
 
     public boolean matches(CharSequence name) {
@@ -335,8 +345,11 @@ public class NameUtil {
         return false;
       }
 
-      myMatcher.reset(name);
-      return myMatcher.matches();
+      if (name instanceof String) {
+        return myMatcher.matches((String)name, myPattern);
+      }
+
+      return myMatcher.matches(name.toString(), myPattern);
     }
 
     private static String preparePattern(String pattern) {
