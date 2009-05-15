@@ -37,7 +37,7 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     Class<? extends PsiModifierListOwner>[] types = p.getTypes();
 
     final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : null;
-    final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), scope);
+    final Collection<? extends PsiElement> annotations = JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), scope);
     for (PsiElement elt : annotations) {
       if (notAnnotation(elt)) continue;
 

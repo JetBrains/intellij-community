@@ -109,7 +109,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
   }
 
   public PsiClass[] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
-    final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
+    final Collection<? extends PsiElement> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
     if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
     List<PsiClass> result = new ArrayList<PsiClass>(classes.size());
     for (PsiElement found : classes) {
@@ -281,7 +281,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
     VirtualFile bestFile = null;
     PsiClass bestClass = null;
 
-    final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
+    final Collection<? extends PsiElement> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
 
     for (PsiElement found : classes) {
       if (notClass(found)) continue;
