@@ -48,11 +48,11 @@ public abstract class AbstractConvertContext extends ConvertContext {
 
   @NotNull
   public final XmlFile getFile() {
-    return getInvocationElement().getRoot().getFile();
+    return DomUtil.getFile(getInvocationElement());
   }
 
   public Module getModule() {
-    return getInvocationElement().getRoot().getRootElement().getModule();
+    return DomUtil.getFileElement(getInvocationElement()).getRootElement().getModule();
   }
 
   public PsiManager getPsiManager() {

@@ -23,10 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomEventAdapter;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.events.DomEvent;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +41,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   private T myComponent;
 
   public DomFileEditor(final DomElement element, final String name, final T component) {
-    this(element.getManager().getProject(), element.getRoot().getFile().getVirtualFile(), name, component);
+    this(element.getManager().getProject(), DomUtil.getFile(element).getVirtualFile(), name, component);
   }
 
   public DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
@@ -165,7 +162,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
                                                   final CaptionComponent captionComponent,
                                                   final Factory<? extends CommittablePanel> committablePanel) {
 
-    final XmlFile file = element.getRoot().getFile();
+    final XmlFile file = DomUtil.getFile(element);
     final Factory<BasicDomElementComponent> factory = new Factory<BasicDomElementComponent>() {
       public BasicDomElementComponent create() {
         return createComponentWithCaption(committablePanel.create(), captionComponent, element);

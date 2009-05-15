@@ -97,7 +97,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   private void applyFix() {
     chooseParent(myParents, new Consumer<DomElement>() {
       public void consume(final DomElement parent) {
-        new WriteCommandAction.Simple(parent.getManager().getProject(), parent.getRoot().getFile()) {
+        new WriteCommandAction.Simple(parent.getManager().getProject(), DomUtil.getFile(parent)) {
           protected void run() throws Throwable {
             doFix(parent, myChildDescription, myNewName);
           }
@@ -129,12 +129,12 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
           }
 
           public Icon getIconFor(final DomElement aValue) {
-            return aValue.getRoot().getFile().getIcon(0);
+            return DomUtil.getFile(aValue).getIcon(0);
           }
 
           @NotNull
           public String getTextFor(final DomElement value) {
-            final String name = value.getRoot().getFile().getName();
+            final String name = DomUtil.getFile(value).getName();
             assert name != null;
             return name;
           }

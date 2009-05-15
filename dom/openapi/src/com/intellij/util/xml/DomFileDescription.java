@@ -236,7 +236,7 @@ public class DomFileDescription<T> {
     final DomElement annotation = getScopeFromAnnotation(reference);
     if (annotation != null) return annotation;
 
-    return reference.getRoot();
+    return DomUtil.getRoot(reference);
   }
 
   /**

@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.MergedObject;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -40,12 +41,12 @@ public class DomModelImpl<T extends DomElement> {
    */
   @Deprecated
   public DomModelImpl(@NotNull T mergedModel, @NotNull Set<XmlFile> configFiles) {
-    myMergedModel = mergedModel.getRoot();
+    myMergedModel = DomUtil.getFileElement(mergedModel);
     myConfigFiles = configFiles;
   }
 
   public DomModelImpl(@NotNull DomFileElement<T> mergedModel, @NotNull Set<XmlFile> configFiles) {
-    myMergedModel = mergedModel.getRoot();
+    myMergedModel = DomUtil.getFileElement(mergedModel);
     myConfigFiles = configFiles;
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
@@ -51,6 +52,6 @@ public abstract class DomWrapper<T> {
   }
 
   public XmlFile getFile() {
-    return getExistingDomElement().getRoot().getFile();
+    return DomUtil.getFile(getExistingDomElement());
   }
 }

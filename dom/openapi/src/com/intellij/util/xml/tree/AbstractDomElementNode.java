@@ -21,6 +21,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 
 import javax.swing.*;
 import java.lang.reflect.Type;
@@ -67,7 +68,7 @@ abstract public class AbstractDomElementNode extends SimpleNode {
   }
 
   protected boolean shouldBeShown(final Type type) {
-    final Map<Class, Boolean> hiders = getDomElement().getRoot().getFile().getUserData(TREE_NODES_HIDERS_KEY);
+    final Map<Class, Boolean> hiders = DomUtil.getFile(getDomElement()).getUserData(TREE_NODES_HIDERS_KEY);
     if (type == null || hiders == null || hiders.size() == 0) return true;
 
     final Class aClass = ReflectionUtil.getRawType(type);

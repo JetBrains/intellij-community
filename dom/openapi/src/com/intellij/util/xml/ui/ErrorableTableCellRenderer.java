@@ -19,7 +19,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
@@ -37,14 +37,14 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
   private final TableCellRenderer myRenderer;
   private final DomElement myRowDomElement;
   private final T myCellValueDomElement;
-  private final DomFileElement<DomElement> myRoot;
+  private final DomElement myRoot;
 
   public ErrorableTableCellRenderer(@Nullable final T cellValueDomElement, final TableCellRenderer renderer, @NotNull final DomElement rowDomElement) {
     myCellValueDomElement = cellValueDomElement;
     myRenderer = renderer;
     myRowDomElement = rowDomElement;
 
-    myRoot = myRowDomElement.getRoot();
+    myRoot = DomUtil.getRoot(myRowDomElement);
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {

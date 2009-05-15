@@ -29,8 +29,12 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
   }
 
   public static XmlTag getParentTag(final XmlElement xmlElement) {
+    return (XmlTag)getParentTagCandidate(xmlElement);
+  }
+
+  public static PsiElement getParentTagCandidate(final XmlElement xmlElement) {
     final PsiElement parent = xmlElement.getParent();
-    return parent instanceof XmlEntityRef ? (XmlTag)parent.getParent() : (XmlTag)parent;
+    return parent instanceof XmlEntityRef ? parent.getParent() : parent;
   }
 
   @NotNull

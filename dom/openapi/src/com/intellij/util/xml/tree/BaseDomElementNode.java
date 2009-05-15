@@ -126,7 +126,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
 
-    Comparator<AbstractDomElementNode> comparator = myDomElement.getRoot().getFile().getUserData(COMPARATOR_KEY);
+    Comparator<AbstractDomElementNode> comparator = DomUtil.getFile(myDomElement).getUserData(COMPARATOR_KEY);
     if (comparator == null) {
       comparator = getDefaultComparator(element);
     }
@@ -199,7 +199,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       final String toolTip = TooltipUtils.getTooltipText(problems);
       addColoredFragment(getNodeName(), toolTip, getWavedAttributes(SimpleTextAttributes.STYLE_PLAIN));
       if (isShowContainingFileInfo()) {
-        addColoredFragment(" (" + myDomElement.getRoot().getFile().getName() + ")", toolTip, SimpleTextAttributes.GRAY_ATTRIBUTES);
+        addColoredFragment(" (" + DomUtil.getFile(myDomElement).getName() + ")", toolTip, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
     }
     else if (myDomElement.getXmlTag() == null && !(myDomElement instanceof DomFileElement)) {
@@ -214,7 +214,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
       if (isShowContainingFileInfo()) {
-        addColoredFragment(" (" + myDomElement.getRoot().getFile().getName() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        addColoredFragment(" (" + DomUtil.getFile(myDomElement).getName() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
     }
   }
@@ -223,7 +223,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     if (type == null) {
       return false;
     }
-    final List<Class> classes = getDomElement().getRoot().getFile().getUserData(key);
+    final List<Class> classes = DomUtil.getFile(getDomElement()).getUserData(key);
     if (classes != null) {
       Class clazz = ReflectionUtil.getRawType(type);
       return classes.contains(clazz);

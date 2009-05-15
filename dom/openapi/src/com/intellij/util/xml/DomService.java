@@ -55,6 +55,9 @@ public abstract class DomService {
   public abstract ModelMerger createModelMerger();
 
   @NotNull
+  public abstract XmlFile getContainingFile(@NotNull DomElement domElement);
+
+  @NotNull
   public abstract EvaluatedXmlName getEvaluatedXmlName(@NotNull DomElement element);
 
   public enum StructureViewMode {

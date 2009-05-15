@@ -46,9 +46,6 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
   @Nullable
   XmlElement getXmlElement();
 
-  @NotNull
-  <T extends DomElement> DomFileElement<T> getRoot();
-
   @Nullable
   DomElement getParent();
 

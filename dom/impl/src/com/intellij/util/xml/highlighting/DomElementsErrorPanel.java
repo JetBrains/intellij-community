@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ui.CommittablePanel;
 import com.intellij.util.xml.ui.Highlightable;
 
@@ -52,7 +53,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
 
     setPreferredSize(getDimension());
 
-    myErrorStripeRenderer = new DomElementsTrafficLightRenderer(domElements[0].getRoot().getFile());
+    myErrorStripeRenderer = new DomElementsTrafficLightRenderer(DomUtil.getFile(domElements[0]));
 
     addUpdateRequest();
     domManager.addDomEventListener(new DomChangeAdapter() {

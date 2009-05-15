@@ -43,7 +43,8 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     final DomElement annotation = getScopeFromAnnotation(reference);
     if (annotation != null) return annotation;
 
-    return getMergedRoot(reference.<T>getRoot());
+    final DomFileElement<T> element = DomUtil.getFileElement(reference);
+    return getMergedRoot(element);
   }
 
   public final T getMergedRoot(DomFileElement<T> element) {
@@ -89,7 +90,8 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     final List<JavaMethod> methods = DomUtil.getFixedPath(element.getParent());
     if (methods == null) return super.getIdentityScope(element);
 
-    Object o = getMergedRoot(element.<T>getRoot());
+    final DomFileElement<T> root = DomUtil.getFileElement(element);
+    Object o = getMergedRoot(root);
     for (final JavaMethod method : methods) {
       o = method.invoke(o, ArrayUtil.EMPTY_OBJECT_ARRAY);
     }

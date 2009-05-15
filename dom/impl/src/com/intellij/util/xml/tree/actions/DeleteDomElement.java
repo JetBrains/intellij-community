@@ -8,10 +8,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ElementPresentation;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomFileElementNode;
@@ -44,7 +46,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
       final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode) + "?", ApplicationBundle.message("action.remove"),
                                                   Messages.getQuestionIcon());
       if (ret == 0) {
-      new WriteCommandAction(domElement.getManager().getProject(), domElement.getRoot().getFile()) {
+      new WriteCommandAction(domElement.getManager().getProject(), DomUtil.getFile(domElement)) {
         protected void run(final Result result) throws Throwable {
           domElement.undefine();
         }
@@ -64,7 +66,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
     boolean enabled = false;
     if (selectedNode instanceof BaseDomElementNode) {
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
-      if (domElement.isValid() && domElement.getXmlElement() != null && !domElement.equals(domElement.getRoot().getRootElement())) {
+      if (domElement.isValid() && domElement.getXmlElement() != null && !(domElement.getParent() instanceof DomFileElement)) {
         enabled = true;
       }
     }

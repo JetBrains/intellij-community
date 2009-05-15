@@ -191,7 +191,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
 
     return new FakePsiElement() {
       public PsiElement getParent() {
-        return mySomeElement.getRoot().getFile();
+        return DomUtil.getFile(mySomeElement);
       }
     };
   }

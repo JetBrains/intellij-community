@@ -34,6 +34,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,11 +124,11 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   abstract protected void setSelectedDomElement(DomElement domElement);
 
   public final void addWatchedElement(@NotNull final DomElement domElement) {
-    addWatchedDocument(getDocumentManager().getDocument(domElement.getRoot().getFile()));
+    addWatchedDocument(getDocumentManager().getDocument(DomUtil.getFile(domElement)));
   }
 
   public final void removeWatchedElement(@NotNull final DomElement domElement) {
-    removeWatchedDocument(getDocumentManager().getDocument(domElement.getRoot().getFile()));
+    removeWatchedDocument(getDocumentManager().getDocument(DomUtil.getFile(domElement)));
   }
 
   public final void addWatchedDocument(final Document document) {

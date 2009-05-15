@@ -9,10 +9,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileDescription;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +64,7 @@ public class DefaultDomAnnotator implements Annotator {
   }
 
   public final void runInspection(final DomElement domElement, final List<Annotation> list) {
-    final DomFileElement root = domElement.getRoot();
+    final DomFileElement root = DomUtil.getFileElement(domElement);
     runInspection(getAnnotationsManager(domElement).getMockInspection(root), root, list);
   }
 

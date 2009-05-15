@@ -22,6 +22,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsErrorPanel;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +130,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
       public HighlightingPass[] createPassesForEditor() {
         if (!element.isValid()) return HighlightingPass.EMPTY_ARRAY;
         
-        final XmlFile psiFile = element.getRoot().getFile();
+        final XmlFile psiFile = DomUtil.getFile(element);
 
         final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
         final Document document = psiDocumentManager.getDocument(psiFile);

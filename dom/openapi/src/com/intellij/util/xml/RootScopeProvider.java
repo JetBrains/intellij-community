@@ -21,9 +21,8 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class RootScopeProvider extends ScopeProvider{
-  public static final RootScopeProvider ROOT_SCOPE_PROVIDER = new RootScopeProvider();
 
   public DomElement getScope(@NotNull DomElement element) {
-    return element.getRoot().getRootElement();
+    return DomUtil.getRoot(element);
   }
 }

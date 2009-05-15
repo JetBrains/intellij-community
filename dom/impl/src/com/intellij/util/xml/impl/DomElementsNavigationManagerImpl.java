@@ -13,6 +13,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
 import com.intellij.util.xml.DomElementsNavigationManager;
+import com.intellij.util.xml.DomUtil;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,7 +58,7 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
     }
 
     public void navigate(DomElement domElement, boolean requestFocus) {
-      VirtualFile file = domElement.getRoot().getFile().getVirtualFile();
+      VirtualFile file = DomUtil.getFile(domElement).getVirtualFile();
       if (file == null) return;
 
       XmlElement xmlElement = domElement.getXmlElement();

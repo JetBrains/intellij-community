@@ -76,11 +76,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
   }
 
   @NotNull
-  public <T extends DomElement> DomFileElementImpl<T> _getRoot() {
-    return (DomFileElementImpl<T>)myParent;
-  }
-
-  public DomElement getParent() {
+  public DomFileElementImpl getParent() {
     checkIsValid();
     return myParent;
   }

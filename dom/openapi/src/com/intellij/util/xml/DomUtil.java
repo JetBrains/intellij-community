@@ -387,4 +387,32 @@ public class DomUtil {
     }
     return null;
   }
+
+  @Nullable
+  public static <T extends DomElement> DomFileElement<T> getFileElement(@NotNull DomElement element) {
+    final DomElement root = getRoot(element);
+    return root instanceof DomFileElement ? (DomFileElement<T>)root : null;
+  }
+
+  @NotNull
+  public static XmlFile getFile(@NotNull DomElement element) {
+    return DomService.getInstance().getContainingFile(element);
+  }
+
+  /**
+   * @param domElement DomElement to search root of
+   * @return the topmost valid DomElement being a parent of the given one. May be and may be not DomFileElement.
+   * If root tag has changed, file may lose its domness, so there will be no DomFileElement, but the inner DomElement's
+   * will be still alive because the underlying XML tags are valid
+   */
+  @NotNull
+  public static DomElement getRoot(@NotNull DomElement domElement) {
+    while (true) {
+      final DomElement parent = domElement.getParent();
+      if (parent == null) {
+        return domElement;
+      }
+      domElement = parent;
+    }
+  }
 }

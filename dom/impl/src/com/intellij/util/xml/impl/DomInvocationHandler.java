@@ -127,21 +127,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return nominalType;
   }
 
-  @NotNull
-  public <T extends DomElement> DomFileElementImpl<T> getRoot() {
-    checkIsValid();
-    return _getRoot();
-  }
-
-  protected <T extends DomElement> DomFileElementImpl<T> _getRoot() {
-    if (myRoot == null) {
-      final DomInvocationHandler parent = getParentHandler();
-      assert parent != null : "getRoot() operation should be performed on the DOM having a parent, your DOM may be not very fresh";
-      myRoot = parent._getRoot();
-    }
-    return myRoot;
-  }
-
   @Nullable
   public DomElement getParent() {
     checkIsValid();
@@ -275,7 +260,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   public final Module getModule() {
     final Module module = ModuleUtil.findModuleForPsiElement(getFile());
-    return module != null ? module : getRoot().getFile().getUserData(DomManagerImpl.MOCK_ELEMENT_MODULE);
+    return module != null ? module : DomUtil.getFile(this).getUserData(DomManagerImpl.MOCK_ELEMENT_MODULE);
   }
 
   public XmlTag ensureTagExists() {
@@ -466,10 +451,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   public final XmlFile getFile() {
-    if (myFile == null) {
-      myFile = _getRoot().getFile();
-    }
-    return myFile;
+    return DomUtil.getFile(this);
   }
 
   @NotNull
@@ -505,7 +487,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public final GlobalSearchScope getResolveScope() {
-    return getRoot().getResolveScope();
+    return DomUtil.getFile(this).getResolveScope();
   }
 
   private static <T extends DomElement> T _getParentOfType(Class<T> requiredClass, DomElement element) {

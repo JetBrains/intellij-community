@@ -16,6 +16,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.MergedObject;
 import com.intellij.util.xml.TypeNameManager;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomElementsGroupNode;
@@ -149,10 +150,8 @@ public class AddElementInCollectionAction extends AddDomElementAction {
       final DefaultActionGroup actionGroup = new DefaultActionGroup(name, true);
 
       for (DomElement implementation : implementations) {
-        final XmlFile xmlFile = implementation.getRoot().getFile();
-        if(xmlFile != null) {
-            actionGroup.add(new MyDefaultAddAction(implementation, xmlFile.getName(), xmlFile.getIcon(0), e, type, description));
-        }
+        final XmlFile xmlFile = DomUtil.getFile(implementation);
+        actionGroup.add(new MyDefaultAddAction(implementation, xmlFile.getName(), xmlFile.getIcon(0), e, type, description));
       }
       return actionGroup;
     }

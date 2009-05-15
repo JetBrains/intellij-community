@@ -100,7 +100,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     myDomManager.addDomEventListener(new DomChangeAdapter() {
       protected void elementChanged(DomElement element) {
         if (element.isValid()) {
-          queueUpdate(element.getRoot().getFile().getVirtualFile());
+          queueUpdate(DomUtil.getFile(element).getVirtualFile());
         } else if (element instanceof DomFileElement) {
           final XmlFile xmlFile = ((DomFileElement)element).getFile();
           queueUpdate(xmlFile.getVirtualFile());
@@ -113,7 +113,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     DomElementAnnotationsManager.getInstance(project).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
       public void highlightingFinished(DomFileElement element) {
         if (element.isValid()) {
-          queueUpdate(element.getRoot().getFile().getVirtualFile());
+          queueUpdate(DomUtil.getFile(element).getVirtualFile());
         }
       }
     }, this);
@@ -122,7 +122,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
   }
 
   protected boolean isRightFile(final VirtualFile file) {
-    return myRootElement == null || (myRootElement.isValid() && file.equals(myRootElement.getRoot().getFile().getVirtualFile()));
+    return myRootElement == null || (myRootElement.isValid() && file.equals(DomUtil.getFile(myRootElement).getVirtualFile()));
   }
 
   private void queueUpdate(final VirtualFile file) {

@@ -311,6 +311,9 @@ public final class DomManagerImpl extends DomManager {
     if (proxy instanceof DomFileElement) {
       return null;
     }
+    if (proxy instanceof DomInvocationHandler) {
+      return (DomInvocationHandler)proxy;
+    }
     final InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
     if (handler instanceof StableInvocationHandler) {
       final DomElement element = ((StableInvocationHandler)handler).getWrappedElement();
@@ -482,8 +485,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   public final boolean isMockElement(DomElement element) {
-    final DomFileElement<? extends DomElement> root = element.getRoot();
-    return root.getFile().getUserData(MOCK) != null;
+    return DomUtil.getFile(element).getUserData(MOCK) != null;
   }
 
   public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
@@ -535,13 +537,13 @@ public final class DomManagerImpl extends DomManager {
 
   @NotNull
   public final DomElement getResolvingScope(GenericDomValue element) {
-    final DomFileDescription description = element.getRoot().getFileDescription();
+    final DomFileDescription description = DomUtil.getFileElement(element).getFileDescription();
     return description.getResolveScope(element);
   }
 
   @Nullable
   public final DomElement getIdentityScope(DomElement element) {
-    final DomFileDescription description = element.getRoot().getFileDescription();
+    final DomFileDescription description = DomUtil.getFileElement(element).getFileDescription();
     return description.getIdentityScope(element);
   }
 

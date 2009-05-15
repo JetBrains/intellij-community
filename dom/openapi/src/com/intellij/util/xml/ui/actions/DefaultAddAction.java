@@ -25,10 +25,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.StableElement;
-import com.intellij.util.xml.TypeChooser;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +79,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     final DomManager domManager = parent.getManager();
     final TypeChooser[] oldChoosers = new TypeChooser[]{null};
     final Type[] aClass = new Type[]{null};
-    final StableElement<T> result = new WriteCommandAction<StableElement<T>>(domManager.getProject(), parent.getRoot().getFile()) {
+    final StableElement<T> result = new WriteCommandAction<StableElement<T>>(domManager.getProject(), DomUtil.getFile(parent)) {
       protected void run(Result<StableElement<T>> result) throws Throwable {
         final DomElement parentDomElement = getParentDomElement();
         final T t = (T)getDomCollectionChildDescription().addValue(parentDomElement, getElementType());

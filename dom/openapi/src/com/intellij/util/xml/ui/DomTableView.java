@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ public class DomTableView extends AbstractTableView<DomElement> {
 
   protected void wrapValueSetting(@NotNull final DomElement domElement, final Runnable valueSetter) {
     if (domElement.isValid()) {
-      new WriteCommandAction(getProject(), domElement.getRoot().getFile()) {
+      new WriteCommandAction(getProject(), DomUtil.getFile(domElement)) {
         protected void run(final Result result) throws Throwable {
           valueSetter.run();
         }

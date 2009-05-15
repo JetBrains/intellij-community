@@ -46,11 +46,6 @@ public class InvocationCache {
           return handler.getParent();
         }
       });
-      ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("getRoot")), new Invocation() {
-        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
-          return handler.getRoot();
-        }
-      });
       ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("accept", DomElementVisitor.class)), new Invocation() {
         public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
           handler.accept((DomElementVisitor)args[0]);

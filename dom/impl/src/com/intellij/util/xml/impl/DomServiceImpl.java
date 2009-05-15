@@ -8,16 +8,18 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +32,32 @@ public class DomServiceImpl extends DomService {
 
   public ModelMerger createModelMerger() {
     return new ModelMergerImpl();
+  }
+
+  @NotNull
+  public XmlFile getContainingFile(@NotNull DomElement domElement) {
+    if (domElement instanceof DomFileElement) {
+      return ((DomFileElement)domElement).getFile();
+    }
+    DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(domElement);
+    assert handler != null : domElement;
+    while (handler != null && !(handler instanceof DomRootInvocationHandler) && handler.getXmlTag() == null) {
+      handler = handler.getParentHandler();
+    }
+    if (handler instanceof DomRootInvocationHandler) {
+      return ((DomRootInvocationHandler)handler).getParent().getFile();
+    }
+    assert handler != null;
+    XmlTag tag = handler.getXmlTag();
+    assert tag != null;
+    while (true) {
+      final PsiElement parentTag = PhysicalDomParentStrategy.getParentTagCandidate(tag);
+      if (!(parentTag instanceof XmlTag)) {
+        return (XmlFile)tag.getContainingFile();
+      }
+
+      tag = (XmlTag)parentTag;
+    }
   }
 
   @NotNull
