@@ -16,13 +16,16 @@
 
 package com.jetbrains.python;
 
+import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import static com.intellij.openapi.editor.SyntaxHighlighterColors.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonFutureAwareLexer;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,18 +34,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 28.05.2005
- * Time: 9:31:26
- * To change this template use File | Settings | File Templates.
+ * Colors and lexer(s) needed for highlighting.
  */
 public class PyHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> keys1;
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new PythonFutureAwareLexer();
+    LayeredLexer ret = new LayeredLexer(new PythonFutureAwareLexer());
+    ret.registerSelfStoppingLayer(
+      new PyStringLiteralLexer(PyTokenTypes.STRING_LITERAL, false), // TODO: set according to 2.x or 3.0 lang level
+      new IElementType[]{PyTokenTypes.STRING_LITERAL}, IElementType.EMPTY_ARRAY
+    );
+    return ret;
   }
 
   private static TextAttributesKey _copy(String name, TextAttributesKey src) {
@@ -94,6 +98,11 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     "PY.BUILTIN_NAME", new TextAttributes(KEYWORD.getDefaultAttributes().getForegroundColor(), null, null, null, Font.PLAIN)
   );
 
+  public static final TextAttributesKey PY_VALID_STRING_ESCAPE = _copy("PY.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE);
+
+  public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = _copy("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);
+
+
   public PyHighlighter() {
     keys1 = new HashMap<IElementType, TextAttributesKey>();
 
@@ -119,6 +128,10 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
     keys1.put(PyTokenTypes.END_OF_LINE_COMMENT, PY_LINE_COMMENT);
     keys1.put(PyTokenTypes.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+
+    keys1.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, PY_VALID_STRING_ESCAPE);
+    keys1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
+    keys1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
   }
 
   @NotNull

@@ -33,7 +33,9 @@ public class PythonColorsPage implements ColorSettingsPage {
     new AttributesDescriptor("Predefined item definition", PyHighlighter.PY_PREDEFINED_DEFINITION),
     new AttributesDescriptor("Decorator", PyHighlighter.PY_DECORATOR),
     new AttributesDescriptor("Built-in name", PyHighlighter.PY_BUILTIN_NAME),
-    new AttributesDescriptor("Predefined name", PyHighlighter.PY_PREDEFINED_USAGE)
+    new AttributesDescriptor("Predefined name", PyHighlighter.PY_PREDEFINED_USAGE),
+    new AttributesDescriptor("Valid escape sequence", PyHighlighter.PY_VALID_STRING_ESCAPE),
+    new AttributesDescriptor("Invalid escape sequence", PyHighlighter.PY_INVALID_STRING_ESCAPE),
   };
 
   @NonNls private static final HashMap<String,TextAttributesKey> ourTagToDescriptorMap = new HashMap<String, TextAttributesKey>();
@@ -86,6 +88,8 @@ public class PythonColorsPage implements ColorSettingsPage {
       "class <classDef>Foo</classDef>:\n"+
       "    def <predefined>__init__</predefined>(self):\n" +
       "        self.sense = None\n" +
+      "        byte_string = 'newline:\\n also newline:\\x0a'\n" +
+      "        text_string = u\"Cyrillic A is \\u0410. Oops: \\u123g\""+
       "    \n" +
       "    def <funcDef>makeSense</funcDef>(self, whatever):\n"+
       "        self.sense = whatever\n"+
