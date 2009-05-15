@@ -48,7 +48,7 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
   private JPanel myPanel;
 
   public static final String ID = "Errors";
-  public static final String DISPLAY_NAME = "Errors";
+  public static final String DISPLAY_NAME = "Inspections";
 
   private JComboBox myProfiles;
   private Map<String, SingleInspectionProfilePanel> myPanels = new HashMap<String, SingleInspectionProfilePanel>();
