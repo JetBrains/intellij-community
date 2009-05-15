@@ -69,6 +69,7 @@ public class PersistentEnumerator<Data> implements Forceable {
   private final MyAppenderStream myKeyStream;
   private final MyDataIS myKeyReadStream;
   private final RandomAccessFile myKeyRaf;
+  private boolean myCorrupted = false;
 
   private static class MyAppenderStream extends DataOutputStream {
     public MyAppenderStream(final File out) throws FileNotFoundException {
@@ -239,86 +240,96 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   private int enumerateImpl(final Data value, final boolean saveNewValue) throws IOException {
-    int depth = 0;
-    final int valueHC = myDataDescriptor.getHashCode(value);
-    int hc = valueHC;
-    int vector = FIRST_VECTOR_OFFSET;
-    int pos;
-    int lastVector;
+    try {
+      int depth = 0;
+      final int valueHC = myDataDescriptor.getHashCode(value);
+      int hc = valueHC;
+      int vector = FIRST_VECTOR_OFFSET;
+      int pos;
+      int lastVector;
 
-    int levelMask = FIRST_LEVEL_MASK;
-    int bitsPerLevel = BITS_PER_FIRST_LEVEL;
-    do {
-      lastVector = vector;
-      pos = vector + (hc & levelMask) * 4;
-      hc >>>= bitsPerLevel;
-      vector = myStorage.getInt(pos);
-      depth++;
-
-      levelMask = LEVEL_MASK;
-      bitsPerLevel = BITS_PER_LEVEL;
-    }
-    while (vector > 0);
-
-    if (vector == 0) {
-      // Empty slot
-      if (!saveNewValue) {
-        return NULL_ID;
-      }
-      final int newId = writeData(value, valueHC);
-      myStorage.putInt(pos, -newId);
-      return newId;
-    }
-    else {
-      int collision = -vector;
-      boolean splitVector = false;
-      int candidateHC;
+      int levelMask = FIRST_LEVEL_MASK;
+      int bitsPerLevel = BITS_PER_FIRST_LEVEL;
       do {
-        candidateHC = hashCodeOf(collision);
-        if (candidateHC != valueHC) {
-          splitVector = true;
-          break;
-        }
+        lastVector = vector;
+        pos = vector + (hc & levelMask) * 4;
+        hc >>>= bitsPerLevel;
+        vector = myStorage.getInt(pos);
+        depth++;
 
-        Data candidate = valueOf(collision);
-        if (myDataDescriptor.isEqual(value, candidate)) {
-          return collision;
-        }
+        levelMask = LEVEL_MASK;
+        bitsPerLevel = BITS_PER_LEVEL;
+      }
+      while (vector > 0);
 
-        collision = nextCanditate(collision);
-      }
-      while (collision != 0);
-      
-      if (!saveNewValue) {
-        return NULL_ID;
-      }
-      
-      final int newId = writeData(value, valueHC);
-      if (splitVector) {
-        depth--;
-        do {
-          final int valueHCByte = hcByte(valueHC, depth);
-          final int oldHCByte = hcByte(candidateHC, depth);
-          if (valueHCByte == oldHCByte) {
-            int newVector = allocVector(EMPTY_VECTOR);
-            myStorage.putInt(lastVector + oldHCByte * 4, newVector);
-            lastVector = newVector;
-          }
-          else {
-            myStorage.putInt(lastVector + valueHCByte * 4, -newId);
-            myStorage.putInt(lastVector + oldHCByte * 4, vector);
-            break;
-          }
-          depth++;
+      if (vector == 0) {
+        // Empty slot
+        if (!saveNewValue) {
+          return NULL_ID;
         }
-        while (true);
+        final int newId = writeData(value, valueHC);
+        myStorage.putInt(pos, -newId);
+        return newId;
       }
       else {
-        // Hashcode collision detected. Insert new string into the list of colliding.
-        myStorage.putInt(newId, vector);
-        myStorage.putInt(pos, -newId);
+        int collision = -vector;
+        boolean splitVector = false;
+        int candidateHC;
+        do {
+          candidateHC = hashCodeOf(collision);
+          if (candidateHC != valueHC) {
+            splitVector = true;
+            break;
+          }
+
+          Data candidate = valueOf(collision);
+          if (myDataDescriptor.isEqual(value, candidate)) {
+            return collision;
+          }
+
+          collision = nextCanditate(collision);
+        }
+        while (collision != 0);
+
+        if (!saveNewValue) {
+          return NULL_ID;
+        }
+
+        final int newId = writeData(value, valueHC);
+        if (splitVector) {
+          depth--;
+          do {
+            final int valueHCByte = hcByte(valueHC, depth);
+            final int oldHCByte = hcByte(candidateHC, depth);
+            if (valueHCByte == oldHCByte) {
+              int newVector = allocVector(EMPTY_VECTOR);
+              myStorage.putInt(lastVector + oldHCByte * 4, newVector);
+              lastVector = newVector;
+            }
+            else {
+              myStorage.putInt(lastVector + valueHCByte * 4, -newId);
+              myStorage.putInt(lastVector + oldHCByte * 4, vector);
+              break;
+            }
+            depth++;
+          }
+          while (true);
+        }
+        else {
+          // Hashcode collision detected. Insert new string into the list of colliding.
+          myStorage.putInt(newId, vector);
+          myStorage.putInt(pos, -newId);
+        }
+        return newId;
       }
-      return newId;
+    }
+    catch (IOException io) {
+      markCorrupted();
+      throw io;
+    }
+    catch (Throwable e) {
+      markCorrupted();
+      throw new RuntimeException(e);
     }
   }
 
@@ -416,11 +427,21 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public synchronized Data valueOf(int idx) throws IOException {
-    myKeyStream.flush();
-    final ResizeableMappedFile storage = myStorage;
-    int addr = storage.getInt(idx + KEY_REF_OFFSET);
-    myKeyReadStream.setup(addr, myKeyStream.size());
-    return myDataDescriptor.read(myKeyReadStream);
+    try {
+      myKeyStream.flush();
+      final ResizeableMappedFile storage = myStorage;
+      int addr = storage.getInt(idx + KEY_REF_OFFSET);
+      myKeyReadStream.setup(addr, myKeyStream.size());
+      return myDataDescriptor.read(myKeyReadStream);
+    }
+    catch (IOException io) {
+      markCorrupted();
+      throw io;
+    }
+    catch (Throwable e) {
+      markCorrupted();
+      throw new RuntimeException(e);
+    }
   }
 
   private static class MyDataIS extends DataInputStream {
@@ -499,9 +520,24 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
 
+  private void markCorrupted() {
+    if (!myCorrupted) {
+      myCorrupted = true;
+      try {
+        markDirty(true);
+        force();
+      }
+      catch (IOException e) {
+        // ignore...
+      }
+    }
+  }
+
   protected void markClean() throws IOException {
-    myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
-    myDirty = false;
+    if (!myCorrupted) {
+      myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
+      myDirty = false;
+    }
   }
 
   private static class FlyweightKey extends CacheKey {
