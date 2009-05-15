@@ -5,6 +5,7 @@ import com.intellij.appengine.sdk.AppEngineSdkManager;
 import com.intellij.javaee.appServerIntegrations.ApplicationServerPersistentData;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,8 @@ public class AppEngineServerData implements ApplicationServerPersistentData {
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    mySdkPath = element.getChildTextTrim("sdk-path");
+    //todo[nik] remove toSystemIndependentName call later. It is needed only to fix incorrect config files
+    mySdkPath = FileUtil.toSystemIndependentName(element.getChildTextTrim("sdk-path"));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

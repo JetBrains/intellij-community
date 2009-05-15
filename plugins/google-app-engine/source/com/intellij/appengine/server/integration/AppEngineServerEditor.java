@@ -25,7 +25,7 @@ public class AppEngineServerEditor extends ApplicationServerPersistentDataEditor
   }
 
   protected void applyEditorTo(AppEngineServerData s) throws ConfigurationException {
-    s.setSdkPath(mySdkHomeField.getText());
+    s.setSdkPath(FileUtil.toSystemIndependentName(mySdkHomeField.getText()));
   }
 
   @NotNull

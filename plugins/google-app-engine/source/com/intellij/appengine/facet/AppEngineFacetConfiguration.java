@@ -7,6 +7,7 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 
@@ -34,7 +35,8 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
   }
 
   public void loadState(AppEngineFacetConfiguration state) {
-    mySdkHomePath = state.getSdkHomePath();
+    //todo[nik] remove toSystemIndependentName call later. It is needed only to fix incorrect config files
+    mySdkHomePath = FileUtil.toSystemIndependentName(state.getSdkHomePath());
     myRunEnhancerOnMake = state.isRunEnhancerOnMake();
   }
 
