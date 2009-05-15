@@ -15,7 +15,9 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see JavaPsiFacade#getShortNamesCache()
  */
-public interface PsiShortNamesCache {
+public abstract class PsiShortNamesCache {
+  public static final ExtensionPointName<PsiShortNamesCache> EP_NAME = ExtensionPointName.create("com.intellij.java.shortNamesCache");
+
   /**
    * Initializes the cache. To be used by custom PsiShortNameCache implementations
-   * registered through {@link JavaPsiFacade#registerShortNamesCache(PsiShortNamesCache)} }.
    */
-  void runStartupActivity();
+  public void runStartupActivity() {
+  }
 
   /**
    * Returns the list of files with the specified name.
@@ -40,7 +44,9 @@ public interface PsiShortNamesCache {
    * @return the list of files in the project which have the specified name.
    */
   @NotNull
-  PsiFile[] getFilesByName(@NotNull String name);
+  public PsiFile[] getFilesByName(@NotNull String name) {
+    return PsiFile.EMPTY_ARRAY;
+  }
 
   /**
    * Returns the list of names of all files in the project.
@@ -48,7 +54,9 @@ public interface PsiShortNamesCache {
    * @return the list of all file names in the project.
    */
   @NotNull
-  String[] getAllFileNames();
+  public String[] getAllFileNames() {
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
 
   /**
    * Returns the list of all classes with the specified name in the specified scope.
@@ -58,7 +66,7 @@ public interface PsiShortNamesCache {
    * @return the list of found classes.
    */
   @NotNull
-  PsiClass[] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
+  public abstract PsiClass[] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all classes in the project and
@@ -67,7 +75,7 @@ public interface PsiShortNamesCache {
    * @return the list of all class names.
    */
   @NotNull
-  String[] getAllClassNames();
+  public abstract String[] getAllClassNames();
 
   /**
    * Adds the names of all classes in the project and (optionally) libraries
@@ -75,7 +83,7 @@ public interface PsiShortNamesCache {
    *
    * @param dest the set to add the names to.
    */
-  void getAllClassNames(@NotNull HashSet<String> dest);
+  public abstract void getAllClassNames(@NotNull HashSet<String> dest);
 
   /**
    * Returns the list of all methods with the specified name in the specified scope.
@@ -85,10 +93,10 @@ public interface PsiShortNamesCache {
    * @return the list of found methods.
    */
   @NotNull
-  PsiMethod[] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope);
+  public abstract PsiMethod[] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope);
 
   @NotNull
-  PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount);
+  public abstract PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount);
 
   /**
    * Returns the list of names of all methods in the project and
@@ -97,7 +105,7 @@ public interface PsiShortNamesCache {
    * @return the list of all method names.
    */
   @NotNull
-  String[] getAllMethodNames();
+  public abstract String[] getAllMethodNames();
 
   /**
    * Adds the names of all methods in the project and (optionally) libraries
@@ -105,7 +113,7 @@ public interface PsiShortNamesCache {
    *
    * @param set the set to add the names to.
    */
-  void getAllMethodNames(@NotNull HashSet<String> set);
+  public abstract void getAllMethodNames(@NotNull HashSet<String> set);
 
   /**
    * Returns the list of all fields with the specified name in the specified scope.
@@ -115,7 +123,7 @@ public interface PsiShortNamesCache {
    * @return the list of found fields.
    */
   @NotNull
-  PsiField[] getFieldsByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
+  public abstract PsiField[] getFieldsByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all fields in the project and
@@ -124,7 +132,7 @@ public interface PsiShortNamesCache {
    * @return the list of all field names.
    */
   @NotNull
-  String[] getAllFieldNames();
+  public abstract String[] getAllFieldNames();
 
   /**
    * Adds the names of all methods in the project and (optionally) libraries
@@ -132,5 +140,5 @@ public interface PsiShortNamesCache {
    *
    * @param set the set to add the names to.
    */
-  void getAllFieldNames(@NotNull HashSet<String> set);
+  public abstract void getAllFieldNames(@NotNull HashSet<String> set);
 }

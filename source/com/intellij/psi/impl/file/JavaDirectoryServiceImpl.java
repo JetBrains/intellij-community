@@ -47,9 +47,8 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     final PsiManager psiManager = dir.getManager();
     for (VirtualFile vFile : vFiles) {
       PsiFile file = psiManager.findFile(vFile);
-      if (file instanceof PsiJavaFile && !PsiUtil.isInJspFile(file)) {
-        PsiClass[] fileClasses = ((PsiJavaFile)file).getClasses();
-        classes.addAll(Arrays.asList(fileClasses));
+      if (file instanceof PsiClassOwner) {
+        classes.addAll(Arrays.asList(((PsiClassOwner)file).getClasses()));
       }
     }
     return classes.toArray(new PsiClass[classes.size()]);

@@ -5,7 +5,6 @@ package com.intellij.psi.impl;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -14,19 +13,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class EmptyShortNamesCacheImpl implements PsiShortNamesCache {
-  public void runStartupActivity() {
-  }
-
-  @NotNull
-  public PsiFile[] getFilesByName(@NotNull String name) {
-    return PsiFile.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public String[] getAllFileNames() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
-  }
+class EmptyShortNamesCacheImpl extends PsiShortNamesCache {
 
   @NotNull
   public PsiClass[] getClassesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {

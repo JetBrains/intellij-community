@@ -77,13 +77,21 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
     elementFinders.add(new PsiElementFinderImpl());
-    elementFinders.addAll(Arrays.asList(myProject.getComponents(PsiElementFinder.class)));
+    elementFinders.addAll(Arrays.asList(myProject.getExtensions(PsiElementFinder.EP_NAME)));
     myElementFinders = elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
 
     myPackagePrefixIndex = new PackagePrefixIndex(myProject);
 
     boolean isProjectDefault = project.isDefault();
-    myShortNamesCache = isProjectDefault ? new EmptyShortNamesCacheImpl() : new PsiShortNamesCacheImpl((PsiManagerEx)PsiManager.getInstance(project));
+
+    if (isProjectDefault) {
+      myShortNamesCache = new EmptyShortNamesCacheImpl();
+    } else {
+      myShortNamesCache = new PsiShortNamesCacheImpl((PsiManagerEx)PsiManager.getInstance(project));
+      for (final PsiShortNamesCache cache : project.getExtensions(PsiShortNamesCache.EP_NAME)) {
+        _registerShortNamesCache(cache);
+      }
+    }
 
     myFileManager = new JavaFileManagerImpl(psiManager, projectRootManagerEx, psiManager.getFileManager(), bus);
     myProgressManager = ProgressManager.getInstance();
@@ -194,6 +202,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   public void registerShortNamesCache(@NotNull PsiShortNamesCache cache) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
+    _registerShortNamesCache(cache);
+  }
+
+  private void _registerShortNamesCache(PsiShortNamesCache cache) {
     assert !(cache instanceof CompositeShortNamesCache) : cache;
     if (myShortNamesCache instanceof CompositeShortNamesCache) {
       ((CompositeShortNamesCache)myShortNamesCache).addCache(cache);
@@ -257,7 +269,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return false;
   }
 
-  private class PsiElementFinderImpl implements PsiElementFinder {
+  private class PsiElementFinderImpl extends PsiElementFinder {
     public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       PsiClass psiClass = myFileManager.findClass(qualifiedName, scope);
 

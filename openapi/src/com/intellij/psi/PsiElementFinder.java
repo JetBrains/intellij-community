@@ -16,15 +16,18 @@
 package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows to extend the mechanism of locating classes and packages by full-qualified name.
- * Implementations of this interface need to be registered as project components in order
+ * Implementations of this interface need to be registered as extensions in order
  * to be picked up by {@link JavaPsiFacade}.
  */
-public interface PsiElementFinder {
+public abstract class PsiElementFinder {
+  public static final ExtensionPointName<PsiElementFinder> EP_NAME = ExtensionPointName.create("com.intellij.java.elementFinder");
+
   /**
    * Searches the specified scope within the project for a class with the specified full-qualified
    * name and returns one if it is found.
@@ -35,7 +38,7 @@ public interface PsiElementFinder {
    * @see JavaPsiFacade#findClass(String, GlobalSearchScope)
    */
   @Nullable
-  PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  public abstract PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the specified scope within the project for classes with the specified full-qualified
@@ -47,7 +50,7 @@ public interface PsiElementFinder {
    * @see JavaPsiFacade#findClasses(String, GlobalSearchScope)
    */
   @NotNull
-  PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  public abstract PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the project for the package with the specified full-qualified name and returns one
@@ -58,7 +61,9 @@ public interface PsiElementFinder {
    * @see JavaPsiFacade#findPackage(String)
    */
   @Nullable
-  PsiPackage findPackage(@NotNull String qualifiedName);
+  public PsiPackage findPackage(@NotNull String qualifiedName) {
+    return null;
+  }
 
   /**
    * Returns the list of subpackages of the specified package in the specified search scope.
@@ -69,7 +74,9 @@ public interface PsiElementFinder {
    * @see PsiPackage#getSubPackages(GlobalSearchScope)
    */
   @NotNull
-  PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope);
+  public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    return new PsiPackage[0];
+  }
 
   /**
    * Returns the list of classes in the specified package and in the specified search scope.
@@ -80,5 +87,7 @@ public interface PsiElementFinder {
    * @see PsiPackage#getClasses(GlobalSearchScope)
    */
   @NotNull
-  PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope);
+  public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    return PsiClass.EMPTY_ARRAY;
+  }
 }

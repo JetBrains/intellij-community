@@ -121,6 +121,7 @@ public abstract class JavaPsiFacade {
    * in addition to the standard IDEA implementation. Should not be used by most plugins.
    *
    * @param cache the short name cache instance.
+   * @deprecated register cache via extension
    */
   public abstract void registerShortNamesCache(@NotNull PsiShortNamesCache cache);
 

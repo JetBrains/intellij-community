@@ -22,14 +22,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-class PsiShortNamesCacheImpl implements PsiShortNamesCache {
+class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   private final PsiManagerEx myManager;
 
   public PsiShortNamesCacheImpl(PsiManagerEx manager) {
     myManager = manager;
-  }
-
-  public void runStartupActivity() {
   }
 
   @NotNull

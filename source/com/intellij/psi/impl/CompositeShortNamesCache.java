@@ -48,7 +48,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-public class CompositeShortNamesCache implements PsiShortNamesCache {
+public class CompositeShortNamesCache extends PsiShortNamesCache {
   private final List<PsiShortNamesCache> myCaches = new ArrayList<PsiShortNamesCache>();
   private PsiShortNamesCache[] myCacheArray = new PsiShortNamesCache[0];
 
