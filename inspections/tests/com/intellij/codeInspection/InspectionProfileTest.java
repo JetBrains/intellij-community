@@ -158,4 +158,29 @@ public class InspectionProfileTest extends TestCase {
 
     return document.getRootElement();
   }
+
+   public void testReloadProfileWithUnknownScopes() throws Exception {
+    final Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
+                                                  "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                  "  <option name=\"myLocal\" value=\"true\" />\n" +
+                                                  "  <inspection_tool class=\"ArgNamesErrorsInspection\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
+                                                  "  <inspection_tool class=\"ArgNamesWarningsInspection\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                                                  "  <inspection_tool class=\"AroundAdviceStyleInspection\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                                                  "  <inspection_tool class=\"DeclareParentsInspection\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
+                                                  "  <inspection_tool class=\"ManifestDomInspection\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
+                                                  "  <inspection_tool class=\"MissingAspectjAutoproxyInspection\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                                                  "  <inspection_tool class=\"UNUSED_IMPORT\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                                  "    <scope name=\"Unknown scope name\" level=\"WARNING\" enabled=\"true\" />\n" +
+                                                  "  </inspection_tool>\n" +
+                                                  "</inspections>").getRootElement();
+    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE);
+    profile.readExternal(element);
+    final ModifiableModel model = profile.getModifiableModel();
+    model.commit();
+    final Element copy = new Element("inspections");
+    profile.writeExternal(copy);
+    StringWriter writer = new StringWriter();
+    JDOMUtil.writeElement(copy, writer, "\n");
+    assertTrue(writer.getBuffer().toString(), JDOMUtil.areElementsEqual(element, copy));
+  }
 }
