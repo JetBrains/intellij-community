@@ -288,7 +288,7 @@ public class PsiImplUtil {
     final String qName = clazz.getQualifiedName();
     if (qName == null) return null;
     final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
-    PsiClass original = facade.findClass(qName, new GlobalSearchScope() {
+    PsiClass original = facade.findClass(qName, new GlobalSearchScope(facade.getProject()) {
       public int compare(VirtualFile file1, VirtualFile file2) {
         return 0;
       }
