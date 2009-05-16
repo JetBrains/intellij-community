@@ -32,6 +32,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private final Set<Module> myModules;
 
   public ModuleWithDependenciesScope(Module module, boolean includeLibraries, boolean includeOtherModules, boolean includeTests) {
+    super(module.getProject());
     myModule = module;
     myIncludeLibraries = includeLibraries;
     myIncludeOtherModules = includeOtherModules;

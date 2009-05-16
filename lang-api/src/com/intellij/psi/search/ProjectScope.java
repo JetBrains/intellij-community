@@ -20,16 +20,16 @@ public class ProjectScope {
   private ProjectScope() {
   }
 
-  public static GlobalSearchScope getAllScope(Project project) {
+  public static GlobalSearchScope getAllScope(final Project project) {
     GlobalSearchScope allScope = project.getUserData(ALL_SCOPE_KEY);
 
     if (allScope == null) {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
       if (projectRootManager == null) {
-        allScope = new EverythingGlobalScope();
+        allScope = new EverythingGlobalScope(project);
       }
       else {
-        allScope = new ProjectAndLibrariesScope(projectRootManager);
+        allScope = new ProjectAndLibrariesScope(project);
       }
 
       project.putUserData(ALL_SCOPE_KEY, allScope);
@@ -37,19 +37,19 @@ public class ProjectScope {
     return allScope;
   }
 
-  public static GlobalSearchScope getProjectScope(Project project) {
+  public static GlobalSearchScope getProjectScope(final Project project) {
     GlobalSearchScope projectScope = project.getUserData(PROJECT_SCOPE_KEY);
     if (projectScope == null) {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
       if (projectRootManager == null) {
-        projectScope = new EverythingGlobalScope() {
+        projectScope = new EverythingGlobalScope(project) {
           public boolean isSearchInLibraries() {
             return false;
           }
         };
       }
       else {
-        projectScope = new GlobalSearchScope() {
+        projectScope = new GlobalSearchScope(project) {
           private final ProjectFileIndex myFileIndex = projectRootManager.getFileIndex();
 
           public boolean contains(VirtualFile file) {

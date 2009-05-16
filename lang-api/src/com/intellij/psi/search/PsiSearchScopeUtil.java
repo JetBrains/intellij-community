@@ -17,6 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,7 +45,8 @@ public class PsiSearchScopeUtil {
     else {
       final GlobalSearchScope _scope1 = (GlobalSearchScope)scope1;
       final GlobalSearchScope _scope2 = (GlobalSearchScope)scope2;
-      return new GlobalSearchScope() {
+      final Project project = _scope1.getProject();
+      return new GlobalSearchScope(project == _scope2.getProject() ? project : null) {
         public boolean contains(VirtualFile file) {
           return _scope1.contains(file) || _scope2.contains(file);
         }

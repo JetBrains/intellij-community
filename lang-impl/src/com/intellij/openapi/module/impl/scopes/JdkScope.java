@@ -26,6 +26,7 @@ public class JdkScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
 
   public JdkScope(Project project, JdkOrderEntry jdk) {
+    super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myJdkName = jdk.getJdkName();
     myEntries.addAll(Arrays.asList(jdk.getFiles(OrderRootType.CLASSES)));

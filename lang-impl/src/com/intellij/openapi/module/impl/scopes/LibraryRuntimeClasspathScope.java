@@ -24,6 +24,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private boolean myJDKProcessed = false;
 
   public LibraryRuntimeClasspathScope(final Project project, final List<Module> modules) {
+    super(project);
     myModules = modules;
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final HashSet<Module> processed = new HashSet<Module>();

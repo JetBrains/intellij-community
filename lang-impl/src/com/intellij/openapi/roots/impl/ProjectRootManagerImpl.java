@@ -520,6 +520,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     private final GlobalSearchScope myOriginal;
 
     public LibrariesOnlyScope(final GlobalSearchScope original) {
+      super(original.getProject());
       myOriginal = original;
     }
 

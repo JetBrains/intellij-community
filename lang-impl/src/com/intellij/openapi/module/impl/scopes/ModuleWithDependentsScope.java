@@ -26,6 +26,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
   private final Set<Module> myModules;
 
   public ModuleWithDependentsScope(Module module, boolean onlyTests) {
+    super(module.getProject());
     myModule = module;
     myOnlyTests = onlyTests;
 

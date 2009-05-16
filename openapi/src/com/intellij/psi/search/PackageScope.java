@@ -21,6 +21,7 @@ public class PackageScope extends GlobalSearchScope {
   private final boolean myIncludeLibraries;
 
   public PackageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages, final boolean includeLibraries) {
+    super(aPackage.getProject());
     myPackage = aPackage;
     myIncludeSubpackages = includeSubpackages;
 

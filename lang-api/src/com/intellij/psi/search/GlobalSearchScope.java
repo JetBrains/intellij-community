@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -33,15 +32,29 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class GlobalSearchScope extends SearchScope implements VirtualFileFilter {
+public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
+  @Nullable private final Project myProject;
+
+  protected GlobalSearchScope(Project project) {
+    myProject = project;
+  }
+
+  protected GlobalSearchScope() {
+    this(null);
+  }
 
   public abstract boolean contains(VirtualFile file);
+
+  public Project getProject() {
+    return myProject;
+  }
 
   /**
    * @param file1
@@ -102,7 +115,7 @@ public abstract class GlobalSearchScope extends SearchScope implements VirtualFi
 
   @NotNull
   public SearchScope union(final LocalSearchScope scope) {
-    return new GlobalSearchScope() {
+    return new GlobalSearchScope(scope.getScope()[0].getProject()) {
       @Override
       public boolean contains(VirtualFile file) {
         return GlobalSearchScope.this.contains(file) || scope.isInScope(file);
@@ -238,6 +251,7 @@ public abstract class GlobalSearchScope extends SearchScope implements VirtualFi
     private final String myDisplayName;
 
     private IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
+      super(scope1 == null ? scope2.getProject() : scope1.getProject());
       myScope1 = scope1;
       myScope2 = scope2;
       myDisplayName = displayName;
@@ -286,6 +300,7 @@ public abstract class GlobalSearchScope extends SearchScope implements VirtualFi
     private final String myDisplayName;
 
     private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
+      super(scope1.getProject() == scope2.getProject() ? scope1.getProject() : null);
       myScope1 = scope1;
       myScope2 = scope2;
       myDisplayName = displayName;
@@ -333,6 +348,7 @@ public abstract class GlobalSearchScope extends SearchScope implements VirtualFi
     private final ProjectFileIndex myFileIndex;
 
     private ProductionScopeFilter(@NotNull Project project) {
+      super(project);
       myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
 
@@ -361,6 +377,7 @@ public abstract class GlobalSearchScope extends SearchScope implements VirtualFi
     private final ProjectFileIndex myFileIndex;
 
     private TestScopeFilter(@NotNull Project project) {
+      super(project);
       myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
 
@@ -390,6 +407,7 @@ public abstract class GlobalSearchScope extends SearchScope implements VirtualFi
     private final boolean myWithSubdirectories;
 
     private DirectoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
+      super(directory.getProject());
       myWithSubdirectories = withSubdirectories;
       myDirectory = directory.getVirtualFile();
     }
@@ -426,6 +444,7 @@ public abstract class GlobalSearchScope extends SearchScope implements VirtualFi
     private final Module myModule;
 
     private FileScope(@NotNull PsiFile psiFile) {
+      super(psiFile.getProject());
       myVirtualFile = psiFile.getVirtualFile();
       Project project = psiFile.getProject();
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -452,18 +471,17 @@ public abstract class GlobalSearchScope extends SearchScope implements VirtualFi
   private static class FilterScopeAdapter extends GlobalSearchScope {
     private final NamedScope mySet;
     private final PsiManager myManager;
-    private final Project myProject;
 
     private FilterScopeAdapter(@NotNull Project project, @NotNull NamedScope set) {
+      super(project);
       mySet = set;
-      myProject = project;
-      myManager = PsiManager.getInstance(myProject);
+      myManager = PsiManager.getInstance(project);
     }
 
     public boolean contains(VirtualFile file) {
       PsiFile psiFile = myManager.findFile(file);
       if (psiFile == null) return false;
-      NamedScopesHolder holder = NamedScopeManager.getInstance(myProject);
+      NamedScopesHolder holder = NamedScopeManager.getInstance(getProject());
       final PackageSet packageSet = mySet.getValue();
       return packageSet != null && packageSet.contains(psiFile, holder);
     }
@@ -497,6 +515,7 @@ public abstract class GlobalSearchScope extends SearchScope implements VirtualFi
     private final FileType[] myFileTypes;
 
     private FileTypeRestrictionScope(@NotNull GlobalSearchScope scope, @NotNull FileType[] fileTypes) {
+      super(scope.getProject());
       myFileTypes = fileTypes;
       myScope = scope;
     }

@@ -205,6 +205,7 @@ public class PackageUtil {
     private final Module myModule;
 
     public ModuleLibrariesSearchScope(final Module module) {
+      super(module.getProject());
       myModule = module;
     }
 
@@ -228,10 +229,9 @@ public class PackageUtil {
   }
 
   private static class ProjectLibrariesSearchScope extends GlobalSearchScope {
-    private final Project myProject;
 
     public ProjectLibrariesSearchScope(final Project project) {
-      myProject = project;
+      super(project);
     }
 
     private static Module[] getModules(final Project project) {
@@ -239,7 +239,7 @@ public class PackageUtil {
     }
 
     public boolean contains(VirtualFile file) {
-      final Module[] modules = getModules(myProject);
+      final Module[] modules = getModules(getProject());
       for (Module module : modules) {
         final OrderEntry orderEntryForFile = ModuleRootManager.getInstance(module).getFileIndex().getOrderEntryForFile(file);
         if (orderEntryForFile instanceof JdkOrderEntry || orderEntryForFile instanceof LibraryOrderEntry) return true;
@@ -248,7 +248,7 @@ public class PackageUtil {
     }
 
     public int compare(VirtualFile file1, VirtualFile file2) {
-      final Module[] modules = getModules(myProject);
+      final Module[] modules = getModules(getProject());
       for (Module module : modules) {
         final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
         final OrderEntry orderEntry1 = fileIndex.getOrderEntryForFile(file1);

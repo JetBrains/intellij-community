@@ -220,7 +220,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
           }
         }
         if (!files.isEmpty()) {
-          model.addElement(new ScopeDescriptor(new GlobalSearchScope() {
+          model.addElement(new ScopeDescriptor(new GlobalSearchScope(myProject) {
             public String getDisplayName() {
               return IdeBundle.message("scope.files.in.previous.search.result");
             }
@@ -268,7 +268,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
 
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(myProject);
     for (final String favorite : favoritesManager.getAvailableFavoritesLists()) {
-      model.addElement(new ScopeDescriptor(new GlobalSearchScope() {
+      model.addElement(new ScopeDescriptor(new GlobalSearchScope(myProject) {
         @Override
         public String getDisplayName() {
           return "Favorite \'" + favorite + "\'";
@@ -308,7 +308,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     }
 
     public SearchScope getScope() {
-      return new GlobalSearchScope() {
+      return new GlobalSearchScope(myProject) {
         public String getDisplayName() {
           return getDisplay();
         }

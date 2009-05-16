@@ -112,7 +112,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     final String fqn = getQualifiedName();
     if (fqn == null) return this;
 
-    PsiClass original = JavaPsiFacade.getInstance(getProject()).findClass(fqn, new GlobalSearchScope() {
+    PsiClass original = JavaPsiFacade.getInstance(getProject()).findClass(fqn, new GlobalSearchScope(getProject()) {
       public int compare(VirtualFile file1, VirtualFile file2) {
         return 0;
       }

@@ -1,6 +1,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
@@ -11,8 +12,9 @@ import java.util.List;
 public class ProjectAndLibrariesScope extends GlobalSearchScope {
   protected final ProjectFileIndex myProjectFileIndex;
 
-  public ProjectAndLibrariesScope(final ProjectRootManager projectRootManager) {
-    myProjectFileIndex = projectRootManager.getFileIndex();
+  public ProjectAndLibrariesScope(final Project project) {
+    super(project);
+    myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
   public boolean contains(VirtualFile file) {

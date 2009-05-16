@@ -11,6 +11,7 @@ public class ModuleContentRootSearchScope extends GlobalSearchScope {
   private final Module myModule;
 
   public ModuleContentRootSearchScope(final Module module) {
+    super(module.getProject());
     myRootManager = ModuleRootManager.getInstance(module);
     myModule = module;
   }

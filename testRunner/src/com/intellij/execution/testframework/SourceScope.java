@@ -148,6 +148,7 @@ public abstract class SourceScope {
     private final Collection<GlobalSearchScope> myScopes = new ArrayList<GlobalSearchScope>();
 
     public ModuleWithDependenciesAndLibsDependencies(final Module module) {
+      super(module.getProject());
       myMainScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
       final Map<Module, Collection<Module>> map = buildAllDependencies(module.getProject());
       if (map == null) return;

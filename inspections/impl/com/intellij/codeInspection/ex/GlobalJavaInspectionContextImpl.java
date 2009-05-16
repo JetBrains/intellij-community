@@ -171,7 +171,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     final RefManager refManager = context.getRefManager();
     final AnalysisScope scope = refManager.getScope();
 
-    final SearchScope searchScope = new GlobalSearchScope() {
+    final SearchScope searchScope = new GlobalSearchScope(refManager.getProject()) {
       public boolean contains(VirtualFile file) {
         return !scope.contains(file) || file.getFileType() != StdFileTypes.JAVA;
       }
