@@ -60,13 +60,18 @@ public class MavenUtil {
     }
   }
 
-  public static void runWhenInitialized(Project project, Runnable r) {
+  public static void runWhenInitialized(final Project project, final Runnable r) {
     if (project.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) {
       if (r instanceof DumbAware) {
         r.run();
       }
       else {
-        DumbService.getInstance().runWhenSmart(r);
+        DumbService.getInstance().runWhenSmart(new Runnable() {
+          public void run() {
+            if (project.isDisposed()) return;
+            r.run();
+          }
+        });
       }
     }
     else {

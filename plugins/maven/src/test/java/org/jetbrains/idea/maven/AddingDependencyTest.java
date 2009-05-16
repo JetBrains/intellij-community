@@ -12,6 +12,7 @@ public class AddingDependencyTest extends MavenImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    initMavenProjectsManager(true);
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
   }
@@ -22,7 +23,8 @@ public class AddingDependencyTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     myProjectsManager.addDependency(myProjectsTree.findProject(myProjectPom),
-                                         new MavenId("junit", "junit", "4.0"));
+                                    new MavenId("junit", "junit", "4.0"));
+    myProjectsManager.flushPendingImportRequestsInTests();
 
     List<MavenArtifact> deps = myProjectsTree.getProjects().get(0).getDependencies();
     assertEquals(1, deps.size());
@@ -35,10 +37,13 @@ public class AddingDependencyTest extends MavenImportingTestCase {
 
   public void testAddingToInvalid() throws Exception {
     importProject("<groupId>test</groupId>" +
-                  "<version>1</version>");
+                  "<artifactId>project</artifactId>" +
+                  "<version");
 
     myProjectsManager.addDependency(myProjectsTree.findProject(myProjectPom),
-                                         new MavenId("junit", "junit", "4.0"));
+                                    new MavenId("junit", "junit", "4.0"));
+    myProjectsManager.flushPendingImportRequestsInTests();
+
 
     List<MavenArtifact> deps = myProjectsTree.getProjects().get(0).getDependencies();
     assertEquals(1, deps.size());
@@ -61,7 +66,9 @@ public class AddingDependencyTest extends MavenImportingTestCase {
     assertFalse(jarFile.exists());
 
     myProjectsManager.addDependency(myProjectsTree.findProject(myProjectPom),
-                                         new MavenId("junit", "junit", "4.0"));
+                                    new MavenId("junit", "junit", "4.0"));
+    myProjectsManager.flushPendingImportRequestsInTests();
+
     assertTrue(jarFile.exists());
   }
 
@@ -73,6 +80,6 @@ public class AddingDependencyTest extends MavenImportingTestCase {
 
     // shouldn't throw 'File is read-only' exception.
     myProjectsManager.addDependency(myProjectsTree.findProject(myProjectPom),
-                                         new MavenId("junit", "junit", "4.0"));
+                                    new MavenId("junit", "junit", "4.0"));
   }
 }

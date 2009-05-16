@@ -125,12 +125,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return myRoot;
   }
 
-  public List<ProjectNode> getProjectNodes() {
-    return new ArrayList<ProjectNode>(myProjectToNodeMapping.values());
-  }
-
   public void buildTree() {
-    updateProjects(myProjectsManager.getProjects());
+    updateProjects(myProjectsManager.getProjects(), Collections.EMPTY_LIST);
   }
 
   public void update(boolean restructure) {
@@ -146,8 +142,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     myTreeBuilder.addSubtreeToUpdateByElement(node);
   }
 
-  public void updateProjects(List<MavenProject> projects) {
-    for (MavenProject each : projects) {
+  public void updateProjects(List<MavenProject> updated, List<MavenProject> deleted) {
+    for (MavenProject each : updated) {
       ProjectNode node = findNodeFor(each);
       if (node == null) {
         node = new ProjectNode(each);
@@ -155,6 +151,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       }
       doUpdateProject(node);
     }
+
+    for (MavenProject each : deleted) {
+      ProjectNode node = myProjectToNodeMapping.remove(each);
+      if (node != null) {
+        ProjectsGroupNode parent = node.getStructuralParent();
+        parent.remove(node);
+        updateFrom(myRoot.getProfilesNode());
+      }
+    }
+
     myRoot.updateProfiles();
   }
 
@@ -200,16 +206,6 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     else {
       newParentNode.sortProjects();
       updateFrom(newParentNode);
-    }
-  }
-
-  public void removeProject(MavenProject project) {
-    ProjectNode node = myProjectToNodeMapping.remove(project);
-    if (node != null) {
-      ProjectsGroupNode parent = node.getStructuralParent();
-      parent.remove(node);
-      myRoot.updateProfiles();
-      updateFrom(myRoot.getProfilesNode());
     }
   }
 

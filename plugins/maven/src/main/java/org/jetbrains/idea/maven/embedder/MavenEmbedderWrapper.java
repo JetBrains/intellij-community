@@ -109,11 +109,6 @@ public class MavenEmbedderWrapper {
                                                    classifier);
   }
 
-  public Artifact createProjectArtifact(String groupId, String artifactId, String version) {
-    ArtifactFactory factory = getComponent(ArtifactFactory.class);
-    return factory.createProjectArtifact(groupId, artifactId, version);
-  }
-
   public <T> T getComponent(Class<? super T> clazz) {
     try {
       return (T)myEmbedder.getPlexusContainer().lookup(clazz.getName());

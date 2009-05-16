@@ -35,8 +35,8 @@ public class MavenEditorTabTitleUpdater extends SimpleProjectComponent {
 
     MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
-      public void projectsRead(List<MavenProject> projects) {
-        updateTabName(projects);
+      public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
+        updateTabName(updated);
       }
     });
   }

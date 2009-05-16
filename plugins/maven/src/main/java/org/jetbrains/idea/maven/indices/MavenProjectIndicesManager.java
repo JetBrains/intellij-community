@@ -20,10 +20,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class MavenProjectIndicesManager extends SimpleProjectComponent {
-  private final AtomicReference<List<MavenIndex>> myProjectIndices = new AtomicReference<List<MavenIndex>>(new ArrayList<MavenIndex>());
+  private volatile List<MavenIndex> myProjectIndices = new ArrayList<MavenIndex>();
   private final MergingUpdateQueue myUpdateQueue;
 
   public static MavenProjectIndicesManager getInstance(Project p) {
@@ -54,12 +53,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
     getMavenProjectManager().addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
-      public void projectsRead(List<MavenProject> projects) {
-        scheduleUpdateIndicesList();
-      }
-
-      @Override
-      public void projectRemoved(MavenProject project) {
+      public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
         scheduleUpdateIndicesList();
       }
 
@@ -71,11 +65,11 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   }
 
   private void scheduleUpdateIndicesList() {
-    myUpdateQueue.queue(new Update(this) {
+    myUpdateQueue.queue(new Update(MavenProjectIndicesManager.this) {
       public void run() {
         List<MavenIndex> newIndices = MavenIndicesManager.getInstance().ensureIndicesExist(
           getLocalRepository(), collectRemoteRepositories());
-        myProjectIndices.set(newIndices);
+        myProjectIndices = newIndices;
       }
     });
   }
@@ -99,11 +93,11 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   }
 
   public List<MavenIndex> getIndices() {
-    return new ArrayList<MavenIndex>(myProjectIndices.get());
+    return new ArrayList<MavenIndex>(myProjectIndices);
   }
 
   public void scheduleUpdateAll() {
-    MavenIndicesManager.getInstance().scheduleUpdate(myProjectIndices.get());
+    MavenIndicesManager.getInstance().scheduleUpdate(myProjectIndices);
   }
 
   public void scheduleUpdate(List<MavenIndex> indices) {
@@ -120,7 +114,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
   public Set<String> getGroupIds() {
     Set<String> result = getProjectGroupIds();
-    for (MavenIndex each : myProjectIndices.get()) {
+    for (MavenIndex each : myProjectIndices) {
       result.addAll(each.getGroupIds());
     }
     return result;
@@ -128,7 +122,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
   public Set<String> getArtifactIds(String groupId) {
     Set<String> result = getProjectArtifactIds(groupId);
-    for (MavenIndex each : myProjectIndices.get()) {
+    for (MavenIndex each : myProjectIndices) {
       result.addAll(each.getArtifactIds(groupId));
     }
     return result;
@@ -136,7 +130,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
   public Set<String> getVersions(String groupId, String artifactId) {
     Set<String> result = getProjectVersions(groupId, artifactId);
-    for (MavenIndex each : myProjectIndices.get()) {
+    for (MavenIndex each : myProjectIndices) {
       result.addAll(each.getVersions(groupId, artifactId));
     }
     return result;
@@ -144,7 +138,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
   public boolean hasGroupId(String groupId) {
     if (hasProjectGroupId(groupId)) return true;
-    for (MavenIndex each : myProjectIndices.get()) {
+    for (MavenIndex each : myProjectIndices) {
       if (each.hasGroupId(groupId)) return true;
     }
     return checkLocalRepository(groupId, null, null);
@@ -168,7 +162,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
   public boolean hasArtifactId(String groupId, String artifactId) {
     if (hasProjectArtifactId(groupId, artifactId)) return true;
-    for (MavenIndex each : myProjectIndices.get()) {
+    for (MavenIndex each : myProjectIndices) {
       if (each.hasArtifactId(groupId, artifactId)) return true;
     }
     return checkLocalRepository(groupId, artifactId, null);
@@ -176,7 +170,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
   public boolean hasVersion(String groupId, String artifactId, String version) {
     if (hasProjectVersion(groupId, artifactId, version)) return true;
-    for (MavenIndex each : myProjectIndices.get()) {
+    for (MavenIndex each : myProjectIndices) {
       if (each.hasVersion(groupId, artifactId, version)) return true;
     }
     return checkLocalRepository(groupId, artifactId, version);
@@ -185,7 +179,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
   public Set<ArtifactInfo> search(Query query, int maxResult) {
     Set<ArtifactInfo> result = new THashSet<ArtifactInfo>();
 
-    for (MavenIndex each : myProjectIndices.get()) {
+    for (MavenIndex each : myProjectIndices) {
       int remained = maxResult - result.size();
       if (remained <= 0) break;
       result.addAll(each.search(query, remained));

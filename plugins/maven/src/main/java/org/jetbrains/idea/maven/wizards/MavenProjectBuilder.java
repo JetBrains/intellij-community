@@ -186,9 +186,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   public void setList(List<MavenProject> nodes) throws ConfigurationException {
-    for (MavenProject node : getParameters().myMavenProjectTree.getRootProjects()) {
-      node.setIncluded(nodes.contains(node));
-    }
   }
 
   public boolean isOpenProjectSettingsAfter() {

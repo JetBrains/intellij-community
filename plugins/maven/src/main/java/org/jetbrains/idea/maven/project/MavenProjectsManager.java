@@ -27,6 +27,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.importing.*;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
@@ -144,8 +145,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     initWorkers();
     listenForSettingsChanges();
     listenForProjectsTreeChanges();
-
-    runWhenInitialized(new DumbAwareRunnable() {
+    
+    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
         if (!isUnitTestMode()) {
           fireActivated();
@@ -240,23 +241,28 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   private void listenForProjectsTreeChanges() {
     myProjectsTree.addListener(new MavenProjectsTree.ListenerAdapter() {
-      public void projectsRead(List<MavenProject> projects) {
-        for (MavenProject each : projects) {
-          scheduleResolvingTasks(each);
+      @Override
+      public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
+        for (MavenProject each : deleted) {
+          unscheduleAllTasks(each);
         }
-        scheduleImport(projects);
+        for (MavenProject each : updated) {
+          scheduleQuickResolve(each);
+        }
+        scheduleImport(updated);
       }
 
+      @Override
       public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-        if (!project.isValid()) return;
         if (quickResolve) {
-          schedulePluginsResolving(project, nativeMavenProject);
+          if (project.hasUnresolvedArtifacts()) {
+            scheduleFullResolve(project);
+          }
+          if (project.hasUnresolvedPlugins()) {
+            schedulePluginsResolving(project, nativeMavenProject);
+          }
         }
         scheduleImport(project);
-      }
-
-      public void projectRemoved(MavenProject project) {
-        unscheduleAllTasks(project);
       }
 
       @Override
@@ -451,16 +457,27 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleReadAllProjects() {
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(myProject, myProjectsTree, getGeneralSettings()));
+    runWhenProjectLoaded(new Runnable() {
+      public void run() {
+        myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(myProject, myProjectsTree, getGeneralSettings()));
+      }
+    });
   }
 
-  private void scheduleResolvingTasks(final MavenProject project) {
-    runWhenInitialized(new DumbAwareRunnable() {
+  private void scheduleQuickResolve(final MavenProject project) {
+    runWhenProjectLoaded(new Runnable() {
       public void run() {
         myQuickResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(true,
                                                                                        project,
                                                                                        myProjectsTree,
                                                                                        getGeneralSettings()));
+      }
+    });
+  }
+
+  private void scheduleFullResolve(final MavenProject project) {
+    runWhenProjectLoaded(new Runnable() {
+      public void run() {
         myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(false,
                                                                                   project,
                                                                                   myProjectsTree,
@@ -469,8 +486,15 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
+  @TestOnly
+  public void scheduleQuickResolveInTests() {
+    for (MavenProject each : getProjects()) {
+      scheduleQuickResolve(each);
+    }
+  }
+
   public void scheduleFoldersResolving() {
-    runWhenInitialized(new DumbAwareRunnable() {
+    runWhenProjectLoaded(new Runnable() {
       public void run() {
         for (MavenProject each : getProjects()) {
           myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each,
@@ -482,7 +506,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void schedulePluginsResolving(final MavenProject project, final org.apache.maven.project.MavenProject nativeMavenProject) {
-    runWhenInitialized(new DumbAwareRunnable() {
+    runWhenProjectLoaded(new Runnable() {
       public void run() {
         myPluginsResolvingProcessor.scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project,
                                                                                                 nativeMavenProject,
@@ -492,7 +516,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public void scheduleArtifactsDownloading() {
-    runWhenInitialized(new DumbAwareRunnable() {
+    runWhenProjectLoaded(new Runnable() {
       public void run() {
         for (MavenProject each : getProjects()) {
           myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each,
@@ -515,9 +539,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleImport() {
-    runWhenInitialized(new Runnable() {
+    runWhenProjectLoaded(new Runnable() {
       public void run() {
-        myImportingQueue.queue(new Update(this) {
+        myImportingQueue.queue(new Update(MavenProjectsManager.this) {
           public void run() {
             importProjects();
           }
@@ -526,7 +550,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  private void runWhenInitialized(Runnable runnable) {
+  private void runWhenProjectLoaded(final Runnable runnable) {
     MavenUtil.runWhenInitialized(myProject, runnable);
   }
 
@@ -669,12 +693,17 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
                                                                  moduleModelsProvider,
                                                                  librariesProvider,
                                                                  getImportingSettings());
-
+        long before = System.currentTimeMillis();
         schedulePostImportTasts(importer.importProject());
+        long after = System.currentTimeMillis();
+        System.out.println("delta:" + (after - before));
         result.setResult(importer.getCreatedModules());
       }
     }.execute().getResultObject();
     VirtualFileManager.getInstance().refresh(isNormalProject());
+
+    // do not block user too often
+    myImportingQueue.restartTimer();
     return result;
   }
 
@@ -715,9 +744,18 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     MavenDomDependency result = new WriteCommandAction<MavenDomDependency>(myProject, "Add Maven Dependency", psiFile) {
       protected void run(Result<MavenDomDependency> result) throws Throwable {
-        result.setResult(mavenProject.addDependency(myProject, artifact[0]));
+        MavenDomProjectModel model = MavenUtil.getMavenModel(myProject, mavenProject.getFile());
+        MavenDomDependency domDependency = model.getDependencies().addDependency();
+        domDependency.getGroupId().setStringValue(artifact[0].getGroupId());
+        domDependency.getArtifactId().setStringValue(artifact[0].getArtifactId());
+        domDependency.getVersion().setStringValue(artifact[0].getVersion());
+        
+        mavenProject.addDependency(artifact[0]);
+        result.setResult(domDependency);
       }
     }.execute().getResultObject();
+
+    scheduleImport(mavenProject);
 
     return result;
   }

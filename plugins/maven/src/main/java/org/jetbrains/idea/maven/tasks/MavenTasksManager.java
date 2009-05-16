@@ -418,13 +418,9 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     }
 
     @Override
-    public void projectsRead(List<MavenProject> projects) {
-      scheduleKeymapUpdate(projects, true);
-    }
-
-    @Override
-    public void projectRemoved(MavenProject project) {
-      scheduleKeymapUpdate(Collections.singletonList(project), false);
+    public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
+      scheduleKeymapUpdate(updated, true);
+      scheduleKeymapUpdate(deleted, false);
     }
 
     @Override
@@ -444,7 +440,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
         }
       }
 
-      Update update = new Update(this) {
+      myUpdateQueue.queue(new Update(MavenTasksManager.this) {
         public void run() {
           List<MavenProject> projectToUpdate;
           List<MavenProject> projectToDelete;
@@ -456,12 +452,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
           MavenKeymapExtension.clearActions(myProject, projectToDelete);
           MavenKeymapExtension.updateActions(myProject, projectToUpdate);
         }
-      };
-      if (isUnitTestMode()) {
-        update.run();
-        return;
-      }
-      myUpdateQueue.queue(update);
+      });
     }
 
     private List<MavenProject> selectScheduledProjects(final boolean forUpdate) {

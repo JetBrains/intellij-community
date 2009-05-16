@@ -75,6 +75,20 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("Unknown", p.getVersion());
   }
 
+  public void testSpacesInTest() throws Exception {
+    createProjectPom("<name>foo bar</name>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    assertEquals("foo bar", p.getName());
+  }
+
+  public void testTextInContainerTag() throws Exception {
+    createProjectPom("foo <name>name</name> bar");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    assertEquals("name", p.getName());
+  }
+
   public void testDefaults() throws Exception {
     VirtualFile file = myProjectRoot.createChildData(this, "pom.xml");
     VfsUtil.saveText(file, "<project>" +

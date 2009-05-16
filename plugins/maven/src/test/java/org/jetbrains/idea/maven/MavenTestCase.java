@@ -309,7 +309,7 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   private void setFileContent(VirtualFile file, String content) throws IOException {
-    file.setBinaryContent(content.getBytes());
+    file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 1);
   }
 
   protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {

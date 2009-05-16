@@ -42,7 +42,8 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public class MavenProjectReader {
-  private static final String UNKNOWN = "Unknown";
+  private static final String UNKNOWN = MavenId.UNKNOWN_VALUE;
+
   private final Map<VirtualFile, Model> myRawModelsCache = new THashMap<VirtualFile, Model>();
 
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
@@ -66,9 +67,9 @@ public class MavenProjectReader {
     mavenProject.setFile(new File(file.getPath()));
     mavenProject.setActiveProfiles(readResult.second);
     JBMavenProjectHelper.setSourceRoots(mavenProject,
-                                      Collections.singletonList(model.getBuild().getSourceDirectory()),
-                                      Collections.singletonList(model.getBuild().getTestSourceDirectory()),
-                                      Collections.singletonList(model.getBuild().getScriptSourceDirectory()));
+                                        Collections.singletonList(model.getBuild().getSourceDirectory()),
+                                        Collections.singletonList(model.getBuild().getTestSourceDirectory()),
+                                        Collections.singletonList(model.getBuild().getScriptSourceDirectory()));
 
     return new MavenProjectReaderResult(true,
                                         activeProfiles,
@@ -441,7 +442,7 @@ public class MavenProjectReader {
       if (parentFile != null && parentFile.isDirectory()) {
         parentFile = parentFile.findFileByRelativePath(MavenConstants.POM_XML);
       }
-      
+
       if (parentFile != null) {
         parentModel = doReadProjectModel(generalSettings,
                                          parentFile,
@@ -491,7 +492,6 @@ public class MavenProjectReader {
       MavenLog.LOG.error(e);
       return model;
     }
-
 
     Map context = MavenEmbedderFactory.collectSystemProperties();
     Map overrideContext = new THashMap();
@@ -662,8 +662,6 @@ public class MavenProjectReader {
       MavenProject project = result.first.getProject();
       if (project == null) return null;
 
-
-
       return new MavenProjectReaderResult(true,
                                           profiles,
                                           problems,
@@ -752,10 +750,7 @@ public class MavenProjectReader {
       }
 
       public void textElement(CharSequence text, CharSequence physical, int startoffset, int endoffset) {
-        String value = text.toString();
-        if (!StringUtil.isEmptyOrSpaces(value)) {
-          stack.getLast().addContent(value);
-        }
+        stack.getLast().addContent(text.toString());
       }
 
       public void attribute(CharSequence name, CharSequence value, int startoffset, int endoffset) {

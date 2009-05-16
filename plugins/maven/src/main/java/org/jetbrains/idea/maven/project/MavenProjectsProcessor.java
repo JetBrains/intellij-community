@@ -14,8 +14,6 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class MavenProjectsProcessor {
   private static final int WAIT_TIMEOUT = 2000;
@@ -25,9 +23,9 @@ public class MavenProjectsProcessor {
 
   private final Thread myThread;
   private final BlockingQueue<MavenProjectsProcessorTask> myQueue = new LinkedBlockingQueue<MavenProjectsProcessorTask>();
-  private final AtomicInteger myQueueSize = new AtomicInteger();
+  private volatile int myQueueSize;
   private volatile boolean isStopped;
-  private final AtomicReference<MavenProgressIndicator> myCurrentProgressIndicator = new AtomicReference<MavenProgressIndicator>();
+  private volatile MavenProgressIndicator myCurrentProgressIndicator;
 
   private final Handler myHandler = new Handler();
   private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
@@ -51,10 +49,10 @@ public class MavenProjectsProcessor {
     synchronized (myQueue) {
       if (myQueue.contains(task)) return;
       myQueue.add(task);
-      myQueueSize.set(myQueue.size());
+      myQueueSize = myQueue.size();
       myQueue.notifyAll();
     }
-    fireQueueChanged(myQueueSize.get());
+    fireQueueChanged(myQueueSize);
   }
 
   public void removeTask(MavenProjectsProcessorTask task) {
@@ -100,11 +98,11 @@ public class MavenProjectsProcessor {
     synchronized (myQueue) {
       myQueue.clear();
       myQueue.notifyAll();
-      myQueueSize.set(0);
+      myQueueSize = 0;
     }
-    fireQueueChanged(myQueueSize.get());
+    fireQueueChanged(myQueueSize);
 
-    MavenProgressIndicator indicator = myCurrentProgressIndicator.get();
+    MavenProgressIndicator indicator = myCurrentProgressIndicator;
     if (indicator != null) indicator.getIndicator().cancel();
   }
 
@@ -133,9 +131,9 @@ public class MavenProjectsProcessor {
           if (isStopped) return false;
         }
         task = myQueue.poll();
-        myQueueSize.set(myQueue.size());
+        myQueueSize = myQueue.size();
       }
-      fireQueueChanged(myQueueSize.get());
+      fireQueueChanged(myQueueSize);
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
@@ -156,8 +154,9 @@ public class MavenProjectsProcessor {
   private void doPerform(MavenProjectsProcessorTask task) {
     try {
       // todo console
-      myCurrentProgressIndicator.set(new MavenProgressIndicator(new EmptyProgressIndicator()));
-      task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), myCurrentProgressIndicator.get());
+      myCurrentProgressIndicator = new MavenProgressIndicator(new EmptyProgressIndicator());
+      task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), myCurrentProgressIndicator);
+      myCurrentProgressIndicator = null;
     }
     catch (MavenProcessCanceledException ignore) {
     }

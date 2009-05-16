@@ -91,7 +91,7 @@ public class MavenProjectsManagerWatcher {
         synchronized (myChangedDocuments) {
           myChangedDocuments.add(doc);
         }
-        myChangedDocumentsQueue.queue(new Update(this) {
+        myChangedDocumentsQueue.queue(new Update(MavenProjectsManagerWatcher.this) {
           public void run() {
             Set<Document> copy;
 

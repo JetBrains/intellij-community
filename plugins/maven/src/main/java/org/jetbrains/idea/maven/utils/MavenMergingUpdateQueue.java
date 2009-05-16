@@ -33,6 +33,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
   public void queue(Update update) {
     if (isPassThrough() && ApplicationManager.getApplication().isUnitTestMode()) {
       update.run();
+      return;
     }
     super.queue(update);
   }

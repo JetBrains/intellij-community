@@ -355,7 +355,9 @@ public class MavenIndicesManager implements ApplicationComponent {
       root.addContent(childElement);
     }
     try {
-      JDOMUtil.writeDocument(new Document(root), getUserArchetypesFile(), "\n");
+      File file = getUserArchetypesFile();
+      file.getParentFile().mkdirs();
+      JDOMUtil.writeDocument(new Document(root), file, "\n");
     }
     catch (IOException e) {
       MavenLog.LOG.warn(e);

@@ -136,14 +136,15 @@ public class MavenProjectImporter {
   }
 
   private void mapModulesToMavenProjects() {
-    for (MavenProject each : myProjectsTree.getProjects()) {
+    List<MavenProject> projects = myProjectsTree.getProjects();
+    for (MavenProject each : projects) {
       Module module = myFileToModuleMapping.get(each.getFile());
       if (module != null) {
         myMavenProjectToModule.put(each, module);
       }
     }
 
-    MavenModuleNameMapper.map(myProjectsTree,
+    MavenModuleNameMapper.map(projects,
                               myMavenProjectToModule,
                               myMavenProjectToModuleName,
                               myMavenProjectToModulePath,

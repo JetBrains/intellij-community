@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 
 public class MavenId implements Serializable, Comparable<MavenId> {
+  public static final String UNKNOWN_VALUE = "Unknown";
+
   public String groupId;
   public String artifactId;
   public String version;

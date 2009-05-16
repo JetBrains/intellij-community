@@ -244,6 +244,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   }
 
   private class MyProjectsListener extends MavenProjectsTree.ListenerAdapter {
+    @Override
     public void projectsIgnoredStateChanged(final List<MavenProject> ignored, final List<MavenProject> unignored) {
       scheduleStructureUpdate(new Runnable() {
         public void run() {
@@ -252,6 +253,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
       });
     }
 
+    @Override
     public void profilesChanged(final List<String> profiles) {
       scheduleStructureUpdate(new Runnable() {
         public void run() {
@@ -260,22 +262,11 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
       });
     }
 
-    public void projectsRead(final List<MavenProject> projects) {
+    @Override
+    public void projectsUpdated(final List<MavenProject> updated, final List<MavenProject> deleted) {
       scheduleStructureUpdate(new Runnable() {
         public void run() {
-          myStructure.updateProjects(projects);
-        }
-      });
-    }
-
-    public void projectAggregatorChanged(MavenProject project) {
-      updateProject(project);
-    }
-
-    public void projectRemoved(final MavenProject project) {
-      scheduleStructureUpdate(new Runnable() {
-        public void run() {
-          myStructure.removeProject(project);
+          myStructure.updateProjects(updated, deleted);
         }
       });
     }
@@ -291,7 +282,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     private void updateProject(final MavenProject project) {
       scheduleStructureUpdate(new Runnable() {
         public void run() {
-          myStructure.updateProjects(Collections.singletonList(project));
+          myStructure.updateProjects(Collections.singletonList(project), Collections.EMPTY_LIST);
         }
       });
     }

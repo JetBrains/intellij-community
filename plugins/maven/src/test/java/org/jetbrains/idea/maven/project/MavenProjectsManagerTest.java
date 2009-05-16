@@ -529,4 +529,30 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(myProjectsManager.getProjectsTreeForTests().getRootProjectsFiles(),
                                     p1, p3);
   }
+  
+  public void testSchedulingReimportWhenPomFileIsDeleted() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
+    importProject();
+    myProjectsManager.flushPendingImportRequestsInTests(); // ensure no pending requests
+    assertModules("project", "m");
+
+    configConfirmationForYesAnswer();
+    m.delete(this);
+    waitForReadingCompletion();
+
+    myProjectsManager.flushPendingImportRequestsInTests();
+    assertModules("project");
+  }
 }

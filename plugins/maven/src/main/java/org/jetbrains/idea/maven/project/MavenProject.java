@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -12,8 +11,6 @@ import org.apache.maven.model.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.facets.FacetImporter;
@@ -22,50 +19,9 @@ import org.jetbrains.idea.maven.utils.*;
 import java.io.*;
 import java.util.*;
 
-public class MavenProject implements Serializable {
-  private transient VirtualFile myFile;
-  private long myLastReadStamp = 0;
-
-  private boolean myValid;
-  private boolean myIncluded;
-
-  private MavenId myMavenId;
-  private MavenId myParentId;
-  private String myPackaging;
-  private String myName;
-
-  private String myFinalName;
-  private String myDefaultGoal;
-
-  private String myBuildDirectory;
-  private String myOutputDirectory;
-  private String myTestOutputDirectory;
-
-  private List<String> mySources;
-  private List<String> myTestSources;
-  private List<MavenResource> myResources;
-  private List<MavenResource> myTestResources;
-
-  private List<String> myFilters;
-  private Properties myProperties;
-  private List<MavenPlugin> myPlugins;
-  private List<MavenArtifact> myExtensions;
-
-  private List<MavenArtifact> myDependencies;
-
-  private Map<String, String> myModulesPathsAndNames;
-
-  private List<String> myProfilesIds;
-
-  private Model myStrippedMavenModel;
-  private List<MavenRemoteRepository> myRemoteRepositories;
-
-  private List<String> myActiveProfilesIds;
-  private List<MavenProjectProblem> myReadingProblems;
-  private Set<MavenId> myUnresolvedArtifactIds;
-  private File myLocalRepository;
-
-  private volatile List<MavenProjectProblem> myAllProblemsCache;
+public class MavenProject {
+  private final VirtualFile myFile;
+  private volatile State myState = new State();
 
   public static MavenProject read(DataInputStream in) throws IOException {
     String path = in.readUTF();
@@ -73,14 +29,18 @@ public class MavenProject implements Serializable {
     byte[] bytes = new byte[length];
     in.readFully(bytes);
 
+    // should read full byte content first!!!
+
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    if (file == null) return null;
+
     ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
     ObjectInputStream os = new ObjectInputStream(bs);
     try {
-      MavenProject result;
       try {
-        result = (MavenProject)os.readObject();
-        result.myFile = LocalFileSystem.getInstance().findFileByPath(path);
-        return result.myFile == null ? null : result;
+        MavenProject result = new MavenProject(file);
+        result.myState = (State)os.readObject();
+        return result;
       }
       catch (ClassNotFoundException e) {
         IOException ioException = new IOException();
@@ -94,13 +54,13 @@ public class MavenProject implements Serializable {
     }
   }
 
-  public synchronized void write(DataOutputStream out) throws IOException {
+  public void write(DataOutputStream out) throws IOException {
     out.writeUTF(getPath());
 
     ByteArrayOutputStream bs = new ByteArrayOutputStream();
     ObjectOutputStream os = new ObjectOutputStream(bs);
     try {
-      os.writeObject(this);
+      os.writeObject(myState);
 
       byte[] bytes = bs.toByteArray();
       out.writeInt(bytes.length);
@@ -112,101 +72,108 @@ public class MavenProject implements Serializable {
     }
   }
 
-  protected MavenProject() {
-  }
-
   public MavenProject(VirtualFile file) {
     myFile = file;
-    myIncluded = true;
   }
 
-  private synchronized void set(MavenProjectReaderResult readerResult, boolean resetDependencies) {
-    resetProblemsCache();
+  private void set(MavenProjectReaderResult readerResult, boolean resetArtifacts) {
+    State newState = myState.clone();
 
-    myLastReadStamp++;
+    newState.myLastReadStamp++;
 
-    myValid = readerResult.isValid;
-    myActiveProfilesIds = readerResult.activeProfiles;
-    myReadingProblems = readerResult.readingProblems;
-    myUnresolvedArtifactIds = readerResult.unresolvedArtifactIds;
-    myLocalRepository = readerResult.localRepository;
+    newState.myValid = readerResult.isValid;
+    newState.myActiveProfilesIds = readerResult.activeProfiles;
+    newState.myReadingProblems = readerResult.readingProblems;
+    newState.myLocalRepository = readerResult.localRepository;
 
     org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
     Model model = nativeMavenProject.getModel();
 
-    myMavenId = new MavenId(model.getGroupId(),
-                            model.getArtifactId(),
-                            model.getVersion());
+    newState.myMavenId = new MavenId(model.getGroupId(),
+                                     model.getArtifactId(),
+                                     model.getVersion());
 
     Parent parent = model.getParent();
-    myParentId = parent != null
-                 ? new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion())
-                 : null;
+    newState.myParentId = parent != null
+                          ? new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion())
+                          : null;
 
-    myPackaging = model.getPackaging();
-    myName = model.getName();
+    newState.myPackaging = model.getPackaging();
+    newState.myName = model.getName();
 
     Build build = model.getBuild();
 
-    myFinalName = build.getFinalName();
-    myDefaultGoal = build.getDefaultGoal();
+    newState.myFinalName = build.getFinalName();
+    newState.myDefaultGoal = build.getDefaultGoal();
 
-    myBuildDirectory = build.getDirectory();
-    myOutputDirectory = build.getOutputDirectory();
-    myTestOutputDirectory = build.getTestOutputDirectory();
+    newState.myBuildDirectory = build.getDirectory();
+    newState.myOutputDirectory = build.getOutputDirectory();
+    newState.myTestOutputDirectory = build.getTestOutputDirectory();
 
-    setFolders(readerResult);
+    doSetFolders(newState, readerResult);
 
-    myFilters = nonNull(build, build.getFilters());
-    myProperties = model.getProperties() != null ? model.getProperties() : new Properties();
+    newState.myFilters = build.getFilters() == null ? Collections.EMPTY_LIST : build.getFilters();
+    newState.myProperties = model.getProperties() != null ? model.getProperties() : new Properties();
 
-    myRemoteRepositories = convertRepositories(model.getRepositories());
-    myPlugins = collectPlugins(model);
-    myExtensions = convertArtifacts(nativeMavenProject.getExtensionArtifacts());
-    setDependencies(readerResult, resetDependencies);
+    doSetResolvedAttributes(newState, readerResult, resetArtifacts);
 
-    myModulesPathsAndNames = collectModulePathsAndNames(model);
+    newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory(), newState.myActiveProfilesIds);
+    newState.myProfilesIds = collectProfilesIds(model);
 
-    myProfilesIds = collectProfilesIds(model);
+    newState.myStrippedMavenModel = MavenUtil.cloneObject(model);
+    MavenUtil.stripDown(newState.myStrippedMavenModel);
 
-    myStrippedMavenModel = MavenUtil.cloneObject(model);
-    MavenUtil.stripDown(myStrippedMavenModel);
+    myState = newState;
   }
 
-  private List nonNull(Build build, List list) {
-    return list == null ? Collections.<String>emptyList() : list;
-  }
-
-  private synchronized void setDependencies(MavenProjectReaderResult readerResult, boolean reset) {
-    resetProblemsCache();
-
+  private static void doSetResolvedAttributes(State state, MavenProjectReaderResult readerResult, boolean reset) {
     org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
-    List<MavenArtifact> newDependencies = convertArtifacts(nativeMavenProject.getArtifacts());
-    if (!reset && myDependencies != null) {
-      LinkedHashSet<MavenArtifact> set = new LinkedHashSet<MavenArtifact>(newDependencies);
-      set.addAll(myDependencies);
-      newDependencies = new ArrayList<MavenArtifact>(set);
+    Model model = nativeMavenProject.getModel();
+
+    Set<MavenId> newUnresolvedArtifacts = new THashSet<MavenId>();
+    LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<MavenRemoteRepository>();
+    LinkedHashSet<MavenArtifact> newDependencies = new LinkedHashSet<MavenArtifact>();
+    LinkedHashSet<MavenPlugin> newPlugins = new LinkedHashSet<MavenPlugin>();
+    LinkedHashSet<MavenArtifact> newExtensions = new LinkedHashSet<MavenArtifact>();
+
+    if (!reset) {
+      if (state.myUnresolvedArtifactIds != null) newUnresolvedArtifacts.addAll(state.myUnresolvedArtifactIds);
+      if (state.myRemoteRepositories != null) newRepositories.addAll(state.myRemoteRepositories);
+      if (state.myDependencies != null) newDependencies.addAll(state.myDependencies);
+      if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
+      if (state.myExtensions != null) newExtensions.addAll(state.myExtensions);
     }
-    myDependencies = newDependencies;
+
+    newUnresolvedArtifacts.addAll(readerResult.unresolvedArtifactIds);
+    newRepositories.addAll(convertRepositories(model.getRepositories()));
+    newDependencies.addAll(convertArtifacts(nativeMavenProject.getArtifacts()));
+    newPlugins.addAll(collectPlugins(model, state.myActiveProfilesIds));
+    newExtensions.addAll(convertArtifacts(nativeMavenProject.getExtensionArtifacts()));
+
+    state.myUnresolvedArtifactIds = newUnresolvedArtifacts;
+    state.myRemoteRepositories = new ArrayList<MavenRemoteRepository>(newRepositories);
+    state.myDependencies = new ArrayList<MavenArtifact>(newDependencies);
+    state.myPlugins = new ArrayList<MavenPlugin>(newPlugins);
+    state.myExtensions = new ArrayList<MavenArtifact>(newExtensions);
   }
 
-  private synchronized void setFolders(MavenProjectReaderResult readerResult) {
-    resetProblemsCache();
+  private void setFolders(MavenProjectReaderResult readerResult) {
+    State newState = myState.clone();
+    doSetFolders(newState, readerResult);
+    myState = newState;
+  }
 
+  private static void doSetFolders(State newState, MavenProjectReaderResult readerResult) {
     org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
 
-    mySources = new ArrayList<String>(nativeMavenProject.getCompileSourceRoots());
-    myTestSources = new ArrayList<String>(nativeMavenProject.getTestCompileSourceRoots());
+    newState.mySources = new ArrayList<String>(nativeMavenProject.getCompileSourceRoots());
+    newState.myTestSources = new ArrayList<String>(nativeMavenProject.getTestCompileSourceRoots());
 
-    myResources = convertResources(nativeMavenProject.getResources());
-    myTestResources = convertResources(nativeMavenProject.getTestResources());
+    newState.myResources = convertResources(nativeMavenProject.getResources());
+    newState.myTestResources = convertResources(nativeMavenProject.getTestResources());
   }
 
-  private void resetProblemsCache() {
-    myAllProblemsCache = null;
-  }
-
-  private List<MavenResource> convertResources(List<Resource> resources) {
+  private static List<MavenResource> convertResources(List<Resource> resources) {
     if (resources == null) return new ArrayList<MavenResource>();
 
     List<MavenResource> result = new ArrayList<MavenResource>(resources.size());
@@ -216,7 +183,7 @@ public class MavenProject implements Serializable {
     return result;
   }
 
-  private List<MavenRemoteRepository> convertRepositories(List<Repository> repositories) {
+  private static List<MavenRemoteRepository> convertRepositories(List<Repository> repositories) {
     if (repositories == null) return new ArrayList<MavenRemoteRepository>();
 
     List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(repositories.size());
@@ -226,7 +193,7 @@ public class MavenProject implements Serializable {
     return result;
   }
 
-  private List<MavenArtifact> convertArtifacts(Collection<Artifact> artifacts) {
+  private static List<MavenArtifact> convertArtifacts(Collection<Artifact> artifacts) {
     if (artifacts == null) return new ArrayList<MavenArtifact>();
 
     List<MavenArtifact> result = new ArrayList<MavenArtifact>(artifacts.size());
@@ -236,18 +203,18 @@ public class MavenProject implements Serializable {
     return result;
   }
 
-  private List<MavenPlugin> collectPlugins(Model mavenModel) {
+  private static List<MavenPlugin> collectPlugins(Model mavenModel, List<String> activeProfilesIds) {
     List<MavenPlugin> result = new ArrayList<MavenPlugin>();
     collectPlugins(mavenModel.getBuild(), result);
-    for (Profile profile : collectActiveProfiles(mavenModel)) {
-      if (getActiveProfilesIds().contains(profile.getId())) {
+    for (Profile profile : collectActiveProfiles(mavenModel, activeProfilesIds)) {
+      if (activeProfilesIds.contains(profile.getId())) {
         collectPlugins(profile.getBuild(), result);
       }
     }
     return result;
   }
 
-  private void collectPlugins(BuildBase build, List<MavenPlugin> result) {
+  private static void collectPlugins(BuildBase build, List<MavenPlugin> result) {
     if (build == null) return;
 
     List<Plugin> plugins = (List<Plugin>)build.getPlugins();
@@ -258,25 +225,27 @@ public class MavenProject implements Serializable {
     }
   }
 
-  private Map<String, String> collectModulePathsAndNames(Model mavenModel) {
-    String basePath = getDirectory() + "/";
+  private static Map<String, String> collectModulePathsAndNames(Model mavenModel,
+                                                                String baseDir,
+                                                                List<String> activeProfilesIds) {
+    String basePath = baseDir + "/";
     Map<String, String> result = new LinkedHashMap<String, String>();
-    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel).entrySet()) {
+    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel, activeProfilesIds).entrySet()) {
       result.put(new Path(basePath + each.getKey()).getPath(), each.getValue());
     }
     return result;
   }
 
-  private Map<String, String> collectModulesRelativePathsAndNames(Model mavenModel) {
+  private static Map<String, String> collectModulesRelativePathsAndNames(Model mavenModel, List<String> activeProfilesIds) {
     LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
     addModulesToList(mavenModel.getModules(), result);
-    for (Profile profile : collectActiveProfiles(mavenModel)) {
+    for (Profile profile : collectActiveProfiles(mavenModel, activeProfilesIds)) {
       addModulesToList(profile.getModules(), result);
     }
     return result;
   }
 
-  private void addModulesToList(List moduleNames, LinkedHashMap<String, String> result) {
+  private static void addModulesToList(List moduleNames, LinkedHashMap<String, String> result) {
     for (String name : (List<String>)moduleNames) {
       if (name.trim().length() == 0) continue;
 
@@ -291,15 +260,15 @@ public class MavenProject implements Serializable {
     }
   }
 
-  private List<Profile> collectActiveProfiles(Model mavenModel) {
-    List<Profile> result = new ArrayList<Profile>(myActiveProfilesIds.size());
+  private static List<Profile> collectActiveProfiles(Model mavenModel, List<String> activeProfilesIds) {
+    List<Profile> result = new ArrayList<Profile>(activeProfilesIds.size());
     for (Profile each : collectProfiles(mavenModel)) {
-      if (myActiveProfilesIds.contains(each.getId())) result.add(each);
+      if (activeProfilesIds.contains(each.getId())) result.add(each);
     }
     return result;
   }
 
-  private List<String> collectProfilesIds(Model mavenModel) {
+  private static List<String> collectProfilesIds(Model mavenModel) {
     List<Profile> profiles = collectProfiles(mavenModel);
     Set<String> result = new THashSet<String>(profiles.size());
     for (Profile each : profiles) {
@@ -308,115 +277,104 @@ public class MavenProject implements Serializable {
     return new ArrayList<String>(result);
   }
 
-  private List<Profile> collectProfiles(Model mavenModel) {
+  private static List<Profile> collectProfiles(Model mavenModel) {
     List<Profile> profiles = (List<Profile>)mavenModel.getProfiles();
     return profiles == null ? Collections.<Profile>emptyList() : profiles;
   }
 
-  public synchronized boolean isIncluded() {
-    return myIncluded;
-  }
-
-  public synchronized void setIncluded(boolean included) {
-    myIncluded = included;
-  }
-
-  public synchronized boolean isValid() {
-    return myValid;
-  }
-
   public long getLastReadStamp() {
-    return myLastReadStamp;
+    return myState.myLastReadStamp;
   }
 
-  public synchronized VirtualFile getFile() {
+  public VirtualFile getFile() {
     return myFile;
   }
 
   @NotNull
-  public synchronized String getPath() {
+  public String getPath() {
     return myFile.getPath();
   }
 
-  public synchronized String getDirectory() {
+  public String getDirectory() {
     return myFile.getParent().getPath();
   }
 
-  public synchronized VirtualFile getDirectoryFile() {
+  public VirtualFile getDirectoryFile() {
     return myFile.getParent();
   }
 
-  public synchronized List<String> getActiveProfilesIds() {
-    return myActiveProfilesIds;
+  public List<String> getActiveProfilesIds() {
+    return myState.myActiveProfilesIds;
   }
 
-  public synchronized String getName() {
-    return myName;
+  public String getName() {
+    return myState.myName;
   }
 
-  public synchronized String getDisplayName() {
-    if (StringUtil.isEmptyOrSpaces(myName)) return myMavenId.artifactId;
-    return myName;
+  public String getDisplayName() {
+    State state = myState;
+    if (StringUtil.isEmptyOrSpaces(state.myName)) return state.myMavenId.artifactId;
+    return state.myName;
   }
 
-  public synchronized Model getMavenModel() {
-    return myStrippedMavenModel;
+  public Model getMavenModel() {
+    return myState.myStrippedMavenModel;
   }
 
-  public synchronized MavenId getMavenId() {
-    return myMavenId;
+  public MavenId getMavenId() {
+    return myState.myMavenId;
   }
 
-  public synchronized MavenId getParentId() {
-    return myParentId;
+  public MavenId getParentId() {
+    return myState.myParentId;
   }
 
-  public synchronized String getPackaging() {
-    return myPackaging;
+  public String getPackaging() {
+    return myState.myPackaging;
   }
 
-  public synchronized String getFinalName() {
-    return myFinalName;
+  public String getFinalName() {
+    return myState.myFinalName;
   }
 
-  public synchronized String getDefaultGoal() {
-    return myDefaultGoal;
+  public String getDefaultGoal() {
+    return myState.myDefaultGoal;
   }
 
-  public synchronized String getBuildDirectory() {
-    return myBuildDirectory;
+  public String getBuildDirectory() {
+    return myState.myBuildDirectory;
   }
 
-  public synchronized String getGeneratedSourcesDirectory() {
+  public String getGeneratedSourcesDirectory() {
     return getBuildDirectory() + "/generated-sources";
   }
 
-  public synchronized String getOutputDirectory() {
-    return myOutputDirectory;
+  public String getOutputDirectory() {
+    return myState.myOutputDirectory;
   }
 
-  public synchronized String getTestOutputDirectory() {
-    return myTestOutputDirectory;
+  public String getTestOutputDirectory() {
+    return myState.myTestOutputDirectory;
   }
 
-  public synchronized List<String> getSources() {
-    return mySources;
+  public List<String> getSources() {
+    return myState.mySources;
   }
 
-  public synchronized List<String> getTestSources() {
-    return myTestSources;
+  public List<String> getTestSources() {
+    return myState.myTestSources;
   }
 
-  public synchronized List<MavenResource> getResources() {
-    return myResources;
+  public List<MavenResource> getResources() {
+    return myState.myResources;
   }
 
-  public synchronized List<MavenResource> getTestResources() {
-    return myTestResources;
+  public List<MavenResource> getTestResources() {
+    return myState.myTestResources;
   }
 
-  public synchronized List<String> getFilters() {
-    return myFilters;
+  public List<String> getFilters() {
+    return myState.myFilters;
   }
 
   public void read(MavenGeneralSettings generalSettings,
@@ -438,124 +396,176 @@ public class MavenProject implements Serializable {
                                                             locator,
                                                             process);
     set(result, result.isValid);
-    return result.nativeMavenProject;
+    return result.isValid ? result.nativeMavenProject : null;
   }
 
-  public void resolveFolders(MavenEmbedderWrapper embedder,
-                              MavenImportingSettings importingSettings,
-                              MavenProjectReader reader,
-                              MavenConsole console,
-                              MavenProgressIndicator p) throws MavenProcessCanceledException {
+  public boolean resolveFolders(MavenEmbedderWrapper embedder,
+                                MavenImportingSettings importingSettings,
+                                MavenProjectReader reader,
+                                MavenConsole console,
+                                MavenProgressIndicator p) throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.generateSources(embedder,
                                                              importingSettings,
                                                              getFile(),
                                                              getActiveProfilesIds(),
                                                              console,
                                                              p);
-    if (result != null && result.isValid) setFolders(result);
+    if (result == null || !result.isValid) return false;
+    setFolders(result);
+    return true;
   }
 
-  public synchronized boolean isAggregator() {
+  public boolean isAggregator() {
     return "pom".equals(getPackaging()) || !getModulePaths().isEmpty();
   }
 
-  public synchronized List<MavenProjectProblem> getProblems() {
-    if (myAllProblemsCache == null) {
-      myAllProblemsCache = collectProblems(myReadingProblems);
+  public List<MavenProjectProblem> getProblems() {
+    State state = myState;
+    if (state.myProblemsCache == null) {
+      synchronized (state) {
+        if (state.myProblemsCache == null) {
+          state.myProblemsCache = collectProblems(state);
+        }
+      }
     }
-    return myAllProblemsCache;
+    return state.myProblemsCache;
   }
 
-  private List<MavenProjectProblem> collectProblems(List<MavenProjectProblem> readingProblems) {
+  private static List<MavenProjectProblem> collectProblems(State state) {
     List<MavenProjectProblem> result = new ArrayList<MavenProjectProblem>();
 
-    validateParent(result);
-    result.addAll(readingProblems);
+    validateParent(state, result);
+    result.addAll(state.myReadingProblems);
 
-    for (Map.Entry<String, String> each : getModulesPathsAndNames().entrySet()) {
+    for (Map.Entry<String, String> each : state.myModulesPathsAndNames.entrySet()) {
       if (LocalFileSystem.getInstance().findFileByPath(each.getKey()) == null) {
         result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.missingModule", each.getValue()), false));
       }
     }
 
-    validate(getDependencies(), "maven.project.problem.unresolvedDependency", result);
-    validateExtensions(result);
-    validatePlugins(result);
+    validateDependencies(state, result);
+    validateExtensions(state, result);
+    validatePlugins(state, result);
 
     return result;
   }
 
-  private void validateParent(List<MavenProjectProblem> result) {
-    // todo try to check the parent the other way
-    MavenId parentId = getParentId();
-    if (myUnresolvedArtifactIds.contains(parentId)) {
-      result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.parentNotFound", parentId), true));
+  private static void validateParent(State state, List<MavenProjectProblem> result) {
+    if (!isParentResolved(state)) {
+      result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.parentNotFound", state.myParentId), true));
     }
   }
 
-  private void validate(List<MavenArtifact> artifacts, String messageKey, List<MavenProjectProblem> result) {
-    for (MavenArtifact each : artifacts) {
-      if (!each.isResolved()) {
-        result.add(new MavenProjectProblem(ProjectBundle.message(messageKey, each.displayStringWithType()), false));
+  private static void validateDependencies(State state, List<MavenProjectProblem> result) {
+    for (MavenArtifact each : getUnresolvedDependencies(state)) {
+      result.add(new MavenProjectProblem(
+        ProjectBundle.message("maven.project.problem.unresolvedDependency", each.displayStringWithType()), false));
+    }
+  }
+
+  private static void validateExtensions(State state, List<MavenProjectProblem> result) {
+    for (MavenArtifact each : getUnresolvedExtensions(state)) {
+      result.add(new MavenProjectProblem(
+        ProjectBundle.message("maven.project.problem.unresolvedExtension", each.displayStringSimple()), false));
+    }
+  }
+
+  private static void validatePlugins(State state, List<MavenProjectProblem> result) {
+    for (MavenPlugin each : getUnresolvedPlugins(state)) {
+      result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.unresolvedPlugin", each), false));
+    }
+  }
+
+  private static boolean isParentResolved(State state) {
+    return !state.myUnresolvedArtifactIds.contains(state.myParentId);
+  }
+
+  private static List<MavenArtifact> getUnresolvedDependencies(State state) {
+    if (state.myUnresolvedDependenciesCache == null) {
+      synchronized (state) {
+        if (state.myUnresolvedDependenciesCache == null) {
+          List<MavenArtifact> result = new ArrayList<MavenArtifact>();
+          for (MavenArtifact each : state.myDependencies) {
+            if (!each.isResolved()) result.add(each);
+          }
+          state.myUnresolvedDependenciesCache = result;
+        }
       }
     }
+    return state.myUnresolvedDependenciesCache;
   }
 
-  private void validateExtensions(List<MavenProjectProblem> result) {
-    Set<MavenId> unresolvedArtifacts = myUnresolvedArtifactIds;
-
-    for (MavenArtifact each : myExtensions) {
-      // Only collect extensions that were attempted to be resolved.
-      // It is because embedder does not even try to resolve extensions that
-      // are not necessary.
-      if (unresolvedArtifacts.contains(each.getMavenId()) && !pomFileExists(each)) {
-        result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.unresolvedExtension", each.displayStringSimple()),
-                                           false));
+  private static List<MavenArtifact> getUnresolvedExtensions(State state) {
+    if (state.myUnresolvedExtensionsCache == null) {
+      synchronized (state) {
+        if (state.myUnresolvedExtensionsCache == null) {
+          List<MavenArtifact> result = new ArrayList<MavenArtifact>();
+          for (MavenArtifact each : state.myExtensions) {
+            // Collect only extensions that were attempted to be resolved.
+            // It is because embedder does not even try to resolve extensions that
+            // are not necessary.
+            if (state.myUnresolvedArtifactIds.contains(each.getMavenId())
+                && !pomFileExists(state.myLocalRepository, each)) {
+              result.add(each);
+            }
+          }
+          state.myUnresolvedExtensionsCache = result;
+        }
       }
     }
+    return state.myUnresolvedExtensionsCache;
   }
 
-  private boolean pomFileExists(MavenArtifact artifact) {
-    return MavenArtifactUtil.hasArtifactFile(myLocalRepository, artifact.getMavenId(), "pom");
+  private static boolean pomFileExists(File localRepository, MavenArtifact artifact) {
+    return MavenArtifactUtil.hasArtifactFile(localRepository, artifact.getMavenId(), "pom");
   }
 
-  private void validatePlugins(List<MavenProjectProblem> result) {
-    for (MavenPlugin each : getPlugins()) {
-      if (!MavenArtifactUtil.hasArtifactFile(myLocalRepository, each.getMavenId())) {
-        String string = each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion();
-        result.add(new MavenProjectProblem(ProjectBundle.message("maven.project.problem.unresolvedPlugin", each), false));
+  private static List<MavenPlugin> getUnresolvedPlugins(State state) {
+    if (state.myUnresolvedPluginsCache == null) {
+      synchronized (state) {
+        if (state.myUnresolvedPluginsCache == null) {
+          List<MavenPlugin> result = new ArrayList<MavenPlugin>();
+          for (MavenPlugin each : state.myPlugins) {
+            if (!MavenArtifactUtil.hasArtifactFile(state.myLocalRepository, each.getMavenId())) {
+              result.add(each);
+            }
+          }
+          state.myUnresolvedPluginsCache = result;
+        }
       }
     }
+    return state.myUnresolvedPluginsCache;
   }
 
-  public synchronized List<VirtualFile> getExistingModuleFiles() {
+  public List<VirtualFile> getExistingModuleFiles() {
     LocalFileSystem fs = LocalFileSystem.getInstance();
 
     List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (String each : getModulePaths()) {
+    Set<String> pathsInStack = getModulePaths();
+    for (String each : pathsInStack) {
       VirtualFile f = fs.findFileByPath(each);
       if (f != null) result.add(f);
     }
     return result;
   }
 
-  public synchronized List<String> getModulePaths() {
-    return new ArrayList<String>(getModulesPathsAndNames().keySet());
+  public Set<String> getModulePaths() {
+    return getModulesPathsAndNames().keySet();
   }
 
-  public synchronized Map<String, String> getModulesPathsAndNames() {
-    return myModulesPathsAndNames;
+  public Map<String, String> getModulesPathsAndNames() {
+    return myState.myModulesPathsAndNames;
   }
 
-  public synchronized List<String> getProfilesIds() {
-    return myProfilesIds;
+  public List<String> getProfilesIds() {
+    return myState.myProfilesIds;
   }
 
-  public synchronized List<MavenArtifact> getDependencies() {
-    return myDependencies;
+  public List<MavenArtifact> getDependencies() {
+    return myState.myDependencies;
   }
 
-  public synchronized boolean isSupportedDependency(MavenArtifact artifact) {
+  public boolean isSupportedDependency(MavenArtifact artifact) {
     String t = artifact.getType();
     if (t.equalsIgnoreCase(MavenConstants.TYPE_JAR)
         || t.equalsIgnoreCase("test-jar")
@@ -570,50 +580,49 @@ public class MavenProject implements Serializable {
     return false;
   }
 
-  public synchronized MavenArtifact findDependency(String groupId, String artifactId) {
-    for (MavenArtifact each : getDependencies()) {
-      if (groupId.equals(each.getGroupId()) && artifactId.equals((artifactId))) return each;
-    }
-    return null;
+  public void addDependency(MavenArtifact dependency) {
+    State state = myState;
+    List<MavenArtifact> dependenciesCopy = new ArrayList<MavenArtifact>(state.myDependencies);
+    dependenciesCopy.add(dependency);
+    state.myDependencies = dependenciesCopy;
   }
 
-  public synchronized MavenDomDependency addDependency(Project p, MavenArtifact artifact) {
-    MavenDomProjectModel model = MavenUtil.getMavenModel(p, getFile());
-
-    MavenDomDependency result = model.getDependencies().addDependency();
-    result.getGroupId().setStringValue(artifact.getGroupId());
-    result.getArtifactId().setStringValue(artifact.getArtifactId());
-    result.getVersion().setStringValue(artifact.getVersion());
-
-    myDependencies.add(artifact);
-    return result;
+  public boolean hasUnresolvedArtifacts() {
+    State state = myState;
+    return !isParentResolved(state)
+           || !getUnresolvedDependencies(state).isEmpty()
+           || !getUnresolvedExtensions(state).isEmpty();
   }
 
-  public synchronized List<MavenPlugin> getPlugins() {
-    return myPlugins;
+  public boolean hasUnresolvedPlugins() {
+    return !getUnresolvedPlugins(myState).isEmpty();
+  }
+
+  public List<MavenPlugin> getPlugins() {
+    return myState.myPlugins;
   }
 
   @Nullable
-  public synchronized String findPluginConfigurationValue(String groupId,
-                                                          String artifactId,
-                                                          String path) {
+  public String findPluginConfigurationValue(String groupId,
+                                             String artifactId,
+                                             String path) {
     Element node = findPluginConfigurationElement(groupId, artifactId, path);
     return node == null ? null : node.getValue();
   }
 
   @Nullable
-  public synchronized Element findPluginConfigurationElement(String groupId, String artifactId, String path) {
+  public Element findPluginConfigurationElement(String groupId, String artifactId, String path) {
     return doFindPluginOrGoalConfigurationElement(groupId, artifactId, null, path);
   }
 
   @Nullable
-  public synchronized String findPluginGoalConfigurationValue(String groupId, String artifactId, String goal, String path) {
+  public String findPluginGoalConfigurationValue(String groupId, String artifactId, String goal, String path) {
     Element node = findPluginGoalConfigurationElement(groupId, artifactId, goal, path);
     return node == null ? null : node.getValue();
   }
 
   @Nullable
-  public synchronized Element findPluginGoalConfigurationElement(String groupId, String artifactId, String goal, String path) {
+  public Element findPluginGoalConfigurationElement(String groupId, String artifactId, String goal, String path) {
     return doFindPluginOrGoalConfigurationElement(groupId, artifactId, goal, path);
   }
 
@@ -647,7 +656,7 @@ public class MavenProject implements Serializable {
   }
 
   @Nullable
-  public synchronized MavenPlugin findPlugin(String groupId, String artifactId) {
+  public MavenPlugin findPlugin(String groupId, String artifactId) {
     for (MavenPlugin each : getPlugins()) {
       if (groupId.equals(each.getGroupId()) && artifactId.equals(each.getArtifactId())) return each;
     }
@@ -691,24 +700,86 @@ public class MavenProject implements Serializable {
     return CompilerLevelTable.table.get(level);
   }
 
-  public synchronized Properties getProperties() {
-    return myProperties;
+  public Properties getProperties() {
+    return myState.myProperties;
   }
 
-  public synchronized File getLocalRepository() {
-    return myLocalRepository;
+  public File getLocalRepository() {
+    return myState.myLocalRepository;
   }
 
-  public synchronized List<MavenRemoteRepository> getRemoteRepositories() {
-    return myRemoteRepositories;
+  public List<MavenRemoteRepository> getRemoteRepositories() {
+    return myState.myRemoteRepositories;
   }
 
-  public synchronized List<FacetImporter> getSuitableFacetImporters() {
+  public List<FacetImporter> getSuitableFacetImporters() {
     return FacetImporter.getSuitableFacetImporters(this);
   }
 
   @Override
   public String toString() {
     return getMavenId().toString();
+  }
+
+  private static class State implements Cloneable, Serializable {
+    long myLastReadStamp = 0;
+
+    boolean myValid;
+
+    MavenId myMavenId;
+    MavenId myParentId;
+    String myPackaging;
+    String myName;
+
+    String myFinalName;
+    String myDefaultGoal;
+
+    String myBuildDirectory;
+    String myOutputDirectory;
+    String myTestOutputDirectory;
+
+    List<String> mySources;
+    List<String> myTestSources;
+    List<MavenResource> myResources;
+    List<MavenResource> myTestResources;
+
+    List<String> myFilters;
+    Properties myProperties;
+    List<MavenPlugin> myPlugins;
+    List<MavenArtifact> myExtensions;
+
+    List<MavenArtifact> myDependencies;
+
+    Map<String, String> myModulesPathsAndNames;
+
+    List<String> myProfilesIds;
+
+    Model myStrippedMavenModel;
+    List<MavenRemoteRepository> myRemoteRepositories;
+
+    List<String> myActiveProfilesIds;
+    List<MavenProjectProblem> myReadingProblems;
+    Set<MavenId> myUnresolvedArtifactIds;
+    File myLocalRepository;
+
+    volatile List<MavenProjectProblem> myProblemsCache;
+    volatile List<MavenArtifact> myUnresolvedDependenciesCache;
+    volatile List<MavenPlugin> myUnresolvedPluginsCache;
+    volatile List<MavenArtifact> myUnresolvedExtensionsCache;
+
+    @Override
+    public State clone() {
+      try {
+        State result = (State)super.clone();
+        result.myProblemsCache = null;
+        result.myUnresolvedDependenciesCache = null;
+        result.myUnresolvedPluginsCache = null;
+        result.myUnresolvedExtensionsCache = null;
+        return result;
+      }
+      catch (CloneNotSupportedException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }
