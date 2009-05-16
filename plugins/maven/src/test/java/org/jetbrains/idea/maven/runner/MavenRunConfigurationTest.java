@@ -3,13 +3,12 @@ package org.jetbrains.idea.maven.runner;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jetbrains.idea.maven.runner.MavenRunConfiguration;
 
 import java.util.Arrays;
 
 public class MavenRunConfigurationTest extends IdeaTestCase {
   public void testSaveLoadRunnerParameters() {
-    MavenRunConfiguration.MavenSettings s = new MavenRunConfiguration.MavenSettings();
+    MavenRunConfiguration.MavenSettings s = new MavenRunConfiguration.MavenSettings(myProject);
     s.myRunnerParameters.setWorkingDirPath("some path");
     s.myRunnerParameters.setGoals(Arrays.asList("clean validate"));
     s.myRunnerParameters.setProfiles(Arrays.asList("prof1 prof2"));

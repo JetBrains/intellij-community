@@ -8,7 +8,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -135,8 +134,8 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     public MavenRunnerSettings myRunnerSettings;
     public MavenRunnerParameters myRunnerParameters;
 
+    /* reflection only */
     public MavenSettings() {
-      this(ProjectManager.getInstance().getDefaultProject());
     }
 
     public MavenSettings(Project project) {
