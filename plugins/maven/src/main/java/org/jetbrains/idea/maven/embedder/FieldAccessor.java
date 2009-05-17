@@ -2,28 +2,22 @@ package org.jetbrains.idea.maven.embedder;
 
 import java.lang.reflect.Field;
 
-public class CustomWagonManagerHelper {
-  private CustomWagonManager myWagonManagerCache;
+public class FieldAccessor<FIELD_TYPE> {
+  private volatile FIELD_TYPE myWagonManagerCache;
   private final Class myHostClass;
   private final Object myHost;
+  private final String myFieldName;
 
-  public <T> CustomWagonManagerHelper(Class<? super T> hostClass, T host) {
+  public <T> FieldAccessor(Class<? super T> hostClass, T host, String fieldName) {
     myHostClass = hostClass;
     myHost = host;
+    myFieldName = fieldName;
   }
 
-  public void open() {
-    getWagonManager().open();
-  }
-
-  public void close() {
-    getWagonManager().close();
-  }
-
-  private CustomWagonManager getWagonManager() {
+  public FIELD_TYPE getField() {
     if (myWagonManagerCache == null) {
-      Object wagon = getFieldValue(myHostClass, "wagonManager", myHost);
-      myWagonManagerCache = (CustomWagonManager)wagon;
+      Object wagon = getFieldValue(myHostClass, myFieldName, myHost);
+      myWagonManagerCache = (FIELD_TYPE)wagon;
     }
     return myWagonManagerCache;
   }

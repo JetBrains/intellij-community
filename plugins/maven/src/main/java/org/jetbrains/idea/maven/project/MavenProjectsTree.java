@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
@@ -399,6 +400,7 @@ public class MavenProjectsTree {
       finally {
         writeUnlock();
       }
+      MavenId oldParentId = mavenProject.getParentId();
       mavenProject.read(generalSettings, myActiveProfiles, reader, myProjectLocator);
 
       writeLock();
@@ -410,12 +412,23 @@ public class MavenProjectsTree {
         writeUnlock();
       }
 
-      timestamp = calculateTimestamp(mavenProject, myActiveProfiles, generalSettings);
+      if (!Comparing.equal(oldParentId, mavenProject.getParentId())) {
+        // ensure timestamp reflects actual parent's timestamp
+        timestamp = calculateTimestamp(mavenProject, myActiveProfiles, generalSettings);
+      }
       myTimestamps.put(mavenProject, timestamp);
+
       resolveIntermoduleDependencies(mavenProject);
     }
 
-    boolean reconnected = reconnect(aggregator, mavenProject);
+    boolean reconnected = isNew;
+    if (isNew) {
+      connect(aggregator, mavenProject);
+    }
+    else {
+      reconnected = reconnect(aggregator, mavenProject);
+    }
+
     if (isChanged || reconnected) {
       updateContext.update(mavenProject);
     }
@@ -446,13 +459,13 @@ public class MavenProjectsTree {
     }
 
     for (VirtualFile each : existingModuleFiles) {
-      MavenProject child = findProject(each);
-      boolean isNewModule = child == null;
+      MavenProject module = findProject(each);
+      boolean isNewModule = module == null;
       if (isNewModule) {
-        child = new MavenProject(each);
+        module = new MavenProject(each);
       }
       else {
-        MavenProject currentAggregator = findAggregator(child);
+        MavenProject currentAggregator = findAggregator(module);
         if (currentAggregator != null && currentAggregator != mavenProject) {
           MavenLog.LOG.info("Module " + each + " is already included into " + mavenProject.getFile());
           continue;
@@ -460,7 +473,7 @@ public class MavenProjectsTree {
       }
 
       if (isChanged || isNewModule || recursive) {
-        doUpdate(child,
+        doUpdate(module,
                  mavenProject,
                  isNewModule,
                  recursive,
@@ -471,8 +484,8 @@ public class MavenProjectsTree {
                  process);
       }
       else {
-        if (reconnect(mavenProject, child)) {
-          updateContext.update(child);
+        if (reconnect(mavenProject, module)) {
+          updateContext.update(module);
         }
       }
     }
@@ -483,7 +496,7 @@ public class MavenProjectsTree {
       doUpdate(each,
                findAggregator(each),
                false,
-               recursive,
+               false, // no need to go recursively in case of inheritance, only when updating modules
                updateContext,
                updateStack,
                reader,
@@ -537,7 +550,7 @@ public class MavenProjectsTree {
 
   private long getFileTimestamp(VirtualFile file) {
     if (file == null) return -1;
-    return file.getModificationStamp();
+    return file.getTimeStamp();
   }
 
   public boolean isManagedFile(VirtualFile moduleFile) {
@@ -561,8 +574,25 @@ public class MavenProjectsTree {
     return false;
   }
 
+  private void connect(MavenProject newAggregator, MavenProject project) {
+    writeLock();
+    try {
+      if (newAggregator != null) {
+        addModule(newAggregator, project);
+      }
+      else {
+        myRootProjects.add(project);
+      }
+    }
+    finally {
+      writeUnlock();
+    }
+  }
+
   private boolean reconnect(MavenProject newAggregator, MavenProject project) {
     MavenProject prevAggregator = findAggregator(project);
+
+    if (prevAggregator == newAggregator) return false; 
 
     writeLock();
     try {
@@ -584,7 +614,7 @@ public class MavenProjectsTree {
       writeUnlock();
     }
 
-    return prevAggregator != newAggregator;
+    return true;
   }
 
   public void delete(List<VirtualFile> files,
@@ -625,7 +655,6 @@ public class MavenProjectsTree {
         if (reconnect(null, each)) {
           updateContext.update(each);
         }
-        ;
       }
       else {
         doDelete(project, each, updateContext);

@@ -22,13 +22,11 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
-import org.jetbrains.idea.maven.utils.MavenUserAwareMegringUpdateQueueHelper;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -52,9 +50,9 @@ public class MavenProjectsManagerWatcher {
   private List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<VirtualFilePointer>();
 
   private final Set<Document> myChangedDocuments = new THashSet<Document>();
-  private final MergingUpdateQueue myChangedDocumentsQueue = new MavenMergingUpdateQueue(getClass() + ": Document changes queue",
-                                                                                         DOCUMENT_SAVE_DELAY,
-                                                                                         false);
+  private final MavenMergingUpdateQueue myChangedDocumentsQueue = new MavenMergingUpdateQueue(getClass() + ": Document changes queue",
+                                                                                              DOCUMENT_SAVE_DELAY,
+                                                                                              false);
 
   public MavenProjectsManagerWatcher(Project project,
                                      MavenProjectsTree tree,
@@ -74,7 +72,7 @@ public class MavenProjectsManagerWatcher {
     myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new MyFileChangeListener());
     myBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
 
-    MavenUserAwareMegringUpdateQueueHelper.attachTo(myProject, myChangedDocumentsQueue);
+    myChangedDocumentsQueue.makeUserAware(myProject);
     myChangedDocumentsQueue.activate();
 
     myDocumentListener = new DocumentAdapter() {

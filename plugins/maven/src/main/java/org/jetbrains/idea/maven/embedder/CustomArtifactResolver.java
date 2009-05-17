@@ -16,7 +16,7 @@ public class CustomArtifactResolver extends DefaultArtifactResolver {
   private boolean myCustomized = false;
 
   private MavenProjectsTree myProjectsTree;
-  private CustomWagonManagerHelper myWagonManagerHelper = new CustomWagonManagerHelper(DefaultArtifactResolver.class, this);
+  private CustomWagonManagerAccessor myWagonManagerHelper = new CustomWagonManagerAccessor(DefaultArtifactResolver.class, this);
 
   public void customize(MavenProjectsTree tree) {
     myCustomized = true;

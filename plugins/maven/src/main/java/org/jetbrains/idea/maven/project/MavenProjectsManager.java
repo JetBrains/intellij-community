@@ -15,13 +15,13 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -59,8 +59,10 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private MavenProjectsProcessor myArtifactsDownloadingProcessor;
   private MavenProjectsProcessor myPostProcessor;
 
-  private MergingUpdateQueue myImportingQueue;
+  private MavenMergingUpdateQueue myImportingQueue;
   private final Set<MavenProject> myProjectsToImport = new THashSet<MavenProject>();
+
+  private MavenMergingUpdateQueue mySchedulesQueue;
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher
     = EventDispatcher.create(MavenProjectsTree.Listener.class);
@@ -224,7 +226,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode());
     myImportingQueue.setPassThrough(false); // by default in unit-test mode it executes request right-away
-    MavenUserAwareMegringUpdateQueueHelper.attachTo(myProject, myImportingQueue);
+    myImportingQueue.makeUserAware(myProject);
+    myImportingQueue.makeDumbAware(myProject);
+
+    mySchedulesQueue = new MavenMergingUpdateQueue(getComponentName() + ": Schedules queue", 1000, true);
+    mySchedulesQueue.setPassThrough(true);
   }
 
   private void listenForSettingsChanges() {
@@ -457,7 +463,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleReadAllProjects() {
-    runWhenProjectLoaded(new Runnable() {
+    // read when postStartupActivitias start
+    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
         myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(myProject, myProjectsTree, getGeneralSettings()));
       }
@@ -465,7 +472,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleQuickResolve(final MavenProject project) {
-    runWhenProjectLoaded(new Runnable() {
+    runWhenFullyOpen(new Runnable() {
       public void run() {
         myQuickResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(true,
                                                                                        project,
@@ -476,7 +483,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleFullResolve(final MavenProject project) {
-    runWhenProjectLoaded(new Runnable() {
+    runWhenFullyOpen(new Runnable() {
       public void run() {
         myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(false,
                                                                                   project,
@@ -494,7 +501,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public void scheduleFoldersResolving() {
-    runWhenProjectLoaded(new Runnable() {
+    runWhenFullyOpen(new Runnable() {
       public void run() {
         for (MavenProject each : getProjects()) {
           myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each,
@@ -506,7 +513,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void schedulePluginsResolving(final MavenProject project, final org.apache.maven.project.MavenProject nativeMavenProject) {
-    runWhenProjectLoaded(new Runnable() {
+    runWhenFullyOpen(new Runnable() {
       public void run() {
         myPluginsResolvingProcessor.scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project,
                                                                                                 nativeMavenProject,
@@ -516,7 +523,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public void scheduleArtifactsDownloading() {
-    runWhenProjectLoaded(new Runnable() {
+    runWhenFullyOpen(new Runnable() {
       public void run() {
         for (MavenProject each : getProjects()) {
           myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each,
@@ -539,7 +546,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleImport() {
-    runWhenProjectLoaded(new Runnable() {
+    runWhenFullyOpen(new Runnable() {
       public void run() {
         myImportingQueue.queue(new Update(MavenProjectsManager.this) {
           public void run() {
@@ -550,8 +557,28 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  private void runWhenProjectLoaded(final Runnable runnable) {
-    MavenUtil.runWhenInitialized(myProject, runnable);
+  private void runWhenFullyOpen(final Runnable runnable) {
+    if (isUnitTestMode()) {
+      runnable.run();
+      return;
+    }
+    
+    final Ref<Runnable> wrapper = new Ref<Runnable>();
+    wrapper.set(new Runnable() {
+      public void run() {
+        if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
+          mySchedulesQueue.queue(new Update(this) {
+            public void run() {
+              wrapper.get().run();
+            }
+          });
+          return;
+        }
+        //MavenUtil.runDumbAware(myProject, runnable);
+        runnable.run();
+      }
+    });
+    MavenUtil.runWhenInitialized(myProject, wrapper.get());
   }
 
   @TestOnly

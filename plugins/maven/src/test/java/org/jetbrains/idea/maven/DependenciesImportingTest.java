@@ -908,6 +908,57 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertTrue(file.exists());
   }
 
+  public void testArtifactTypeProvidedByExtensionPlugin() throws Exception {
+    // This test ensures that we download all necessary extension plugins.
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>swf</packaging>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>com.adobe.flex.framework</groupId>" +
+                  "    <artifactId>framework</artifactId>" +
+                  "    <version>3.2.0.3959</version>" +
+                  "    <type>resource-bundle</type>" +
+                  "    <classifier>en_US</classifier>" +
+                  "  </dependency>" +
+                  "</dependencies>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>info.flex-mojos</groupId>" +
+                  "      <artifactId>flex-compiler-mojo</artifactId>" +
+                  "      <version>2.0M10</version>" +
+                  "      <extensions>true</extensions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>" +
+
+                  "<repositories>" +
+                  "  <repository>" +
+                  "    <id>flex-mojos-repository</id>" +
+                  "    <url>http://svn.sonatype.org/flexmojos/repository/</url>" +
+                  "    <releases>" +
+                  "      <enabled>true</enabled>" +
+                  "    </releases>" +
+                  "  </repository>" +
+                  "</repositories>");
+    resolveDependenciesAndImport();
+
+    // flex plugin handles 'resource-bundle' dependencies in a special way.
+    //
+    assertModuleLibDep("project", "Maven: com.adobe.flex.framework:framework:resource-bundle:en_US:3.2.0.3959",
+                       "jar://" + getRepositoryPath() +
+                       "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-en_US.rb.swc!/",
+                       "jar://" + getRepositoryPath() +
+                       "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-en_US.rb-sources.jar!/",
+                       "jar://" + getRepositoryPath() +
+                       "/com/adobe/flex/framework/framework/3.2.0.3959/framework-3.2.0.3959-en_US.rb-javadoc.jar!/");
+  }
+
   public void testDoNotRemoveLibrariesOnImportIfProjectWasNotChanged() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

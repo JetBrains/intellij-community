@@ -60,23 +60,32 @@ public class MavenUtil {
     }
   }
 
-  public static void runWhenInitialized(final Project project, final Runnable r) {
-    if (project.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) {
-      if (r instanceof DumbAware) {
-        r.run();
-      }
-      else {
-        DumbService.getInstance().runWhenSmart(new Runnable() {
-          public void run() {
-            if (project.isDisposed()) return;
-            r.run();
-          }
-        });
-      }
+  public static void runDumbAware(final Project project, final Runnable r) {
+    if (r instanceof DumbAware) {
+      r.run();
     }
     else {
-      StartupManager.getInstance(project).registerPostStartupActivity(r);
+      DumbService.getInstance().runWhenSmart(new Runnable() {
+        public void run() {
+          if (project.isDisposed()) return;
+          r.run();
+        }
+      });
     }
+  }
+
+  public static void runWhenInitialized(final Project project, final Runnable r) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      r.run();
+      return;
+    }
+
+    if (!project.isInitialized()) {
+      StartupManager.getInstance(project).registerPostStartupActivity(r);
+      return;
+    }
+
+    runDumbAware(project, r);
   }
 
   public static File getPluginSystemDir(String folder) {

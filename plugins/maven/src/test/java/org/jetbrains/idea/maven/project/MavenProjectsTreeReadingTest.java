@@ -75,8 +75,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     List<MavenProject> roots = myTree.getRootProjects();
 
     assertEquals(2, roots.size());
-    assertEquals(m2, roots.get(0).getFile());
-    assertEquals(m1, roots.get(1).getFile());
+    assertEquals(m1, roots.get(0).getFile());
+    assertEquals(m2, roots.get(1).getFile());
 
     assertEquals("updated m1, m2 deleted <none> ", listener.log);
   }
@@ -109,10 +109,10 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     List<MavenProject> roots = myTree.getRootProjects();
     assertEquals(2, roots.size());
-    assertEquals(m1, roots.get(0).getFile());
-    assertEquals(m2, roots.get(1).getFile());
-    assertEquals("m1", roots.get(0).getMavenId().artifactId);
-    assertEquals("m2", roots.get(1).getMavenId().artifactId);
+    assertEquals(m2, roots.get(0).getFile());
+    assertEquals(m1, roots.get(1).getFile());
+    assertEquals("m2", roots.get(0).getMavenId().artifactId);
+    assertEquals("m1", roots.get(1).getMavenId().artifactId);
 
     assertEquals("updated m2, m1 deleted <none> ", listener.log);
   }
@@ -491,6 +491,56 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(myProjectPom);
 
     assertEquals("updated m1 deleted <none> ", listener.log);
+  }
+
+  public void testDoNotUpdateChildAfterParentWasResolved() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>");
+
+    VirtualFile child = createModulePom("child",
+                                        "<groupId>test</groupId>" +
+                                        "<artifactId>child</artifactId>" +
+                                        "<version>1</version>" +
+
+                                        "<parent>" +
+                                        "  <groupId>test</groupId>" +
+                                        "  <artifactId>parent</artifactId>" +
+                                        "  <version>1</version>" +
+                                        "</parent>");
+
+    MyLoggingListener listener = new MyLoggingListener();
+    myTree.addListener(listener);
+
+    updateAll(myProjectPom, child);
+
+    MavenProject parentProject = myTree.findProject(myProjectPom);
+
+    MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(getMavenGeneralSettings());
+    try {
+      final org.apache.maven.project.MavenProject[] nativeProject = new org.apache.maven.project.MavenProject[1];
+      myTree.addListener(new MavenProjectsTree.ListenerAdapter() {
+        @Override
+        public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+          nativeProject[0] = nativeMavenProject;
+        }
+      });
+      myTree.resolve(parentProject,
+                     true,
+                     getMavenGeneralSettings(),
+                     embeddersManager,
+                     NULL_MAVEN_CONSOLE,
+                     EMPTY_MAVEN_PROCESS);
+      myTree.resolvePlugins(parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+      myTree.resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+    }
+    finally {
+      embeddersManager.release();
+    }
+
+    assertEquals("updated parent, child deleted <none> resolved: parent plugins: parent folders: parent ", listener.log);
+    myTree.updateAll(getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    assertEquals("updated parent, child deleted <none> resolved: parent plugins: parent folders: parent ", listener.log);
   }
 
   public void testAddingInheritanceParent() throws Exception {
@@ -1617,7 +1667,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(rootProject, read.findAggregator(read.findProject(m2)));
   }
 
-  public void testPerformanceTest() throws Exception {
+  public void testPerformance() throws Exception {
     if (ignore()) return;
 
     VirtualFile pom = LocalFileSystem.getInstance().findFileByPath("C:\\projects\\mvn\\_projects\\geronimo\\pom.xml");
@@ -1657,7 +1707,17 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     @Override
     public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-      log += "resolved " + project.getMavenId().artifactId + " ";
+      log += "resolved: " + project.getMavenId().artifactId + " ";
+    }
+
+    @Override
+    public void pluginsResolved(MavenProject project) {
+      log += "plugins: " + project.getMavenId().artifactId + " ";
+    }
+
+    @Override
+    public void foldersResolved(MavenProject project) {
+      log += "folders: " + project.getMavenId().artifactId + " ";
     }
   }
 }

@@ -17,14 +17,19 @@ import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.extension.ExtensionManager;
 import org.apache.maven.monitor.event.DefaultEventMonitor;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.MavenProjectBuilder;
+import org.apache.maven.workspace.MavenWorkspaceStore;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenPlugin;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.MavenRemoteRepository;
+import org.jetbrains.idea.maven.project.TransferListenerAdapter;
 import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -262,22 +267,20 @@ public class MavenEmbedderWrapper {
   public static ContainerCustomizer createCustomizer() {
     return new ContainerCustomizer() {
       public void customize(PlexusContainer c) {
-        ComponentDescriptor d;
+        setImplementation(c, MavenTools.class, CustomMavenTools.class);
+        setImplementation(c, MavenWorkspaceStore.class, CustomWorkspaceStore.class);
+        setImplementation(c, MavenProjectBuilder.class, CustomProjectBuilder.class);
+        setImplementation(c, ArtifactFactory.class, CustomArtifactFactory.class);
+        setImplementation(c, ArtifactResolver.class, CustomArtifactResolver.class);
+        setImplementation(c, ExtensionManager.class, CustomExtensionManager.class);
+        setImplementation(c, WagonManager.class, CustomWagonManager.class);
+      }
 
-        d = c.getComponentDescriptor(MavenTools.ROLE);
-        d.setImplementation(CustomMavenTools.class.getName());
-
-        d = c.getComponentDescriptor(ArtifactFactory.ROLE);
-        d.setImplementation(CustomArtifactFactory.class.getName());
-
-        d = c.getComponentDescriptor(ArtifactResolver.ROLE);
-        d.setImplementation(CustomArtifactResolver.class.getName());
-
-        d = c.getComponentDescriptor(WagonManager.ROLE);
-        d.setImplementation(CustomWagonManager.class.getName());
-
-        d = c.getComponentDescriptor(ExtensionManager.class.getName());
-        d.setImplementation(CustomExtensionManager.class.getName());
+      private <T> void setImplementation(PlexusContainer container,
+                                         Class<T> componentClass,
+                                         Class<? extends T> implementationClass) {
+        ComponentDescriptor d = container.getComponentDescriptor(componentClass.getName());
+        d.setImplementation(implementationClass.getName());
       }
     };
   }

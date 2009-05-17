@@ -76,10 +76,10 @@ public class MavenProject {
     myFile = file;
   }
 
-  private void set(MavenProjectReaderResult readerResult, boolean resetArtifacts) {
+  private void set(MavenProjectReaderResult readerResult, boolean updateLastReadStamp, boolean resetArtifacts) {
     State newState = myState.clone();
 
-    newState.myLastReadStamp++;
+    if (updateLastReadStamp) newState.myLastReadStamp++;
 
     newState.myValid = readerResult.isValid;
     newState.myActiveProfilesIds = readerResult.activeProfiles;
@@ -381,7 +381,7 @@ public class MavenProject {
                    List<String> profiles,
                    MavenProjectReader reader,
                    MavenProjectReaderProjectLocator locator) {
-    set(reader.readProject(generalSettings, myFile, profiles, locator), false);
+    set(reader.readProject(generalSettings, myFile, profiles, locator), true, false);
   }
 
   public org.apache.maven.project.MavenProject resolve(MavenGeneralSettings generalSettings,
@@ -395,7 +395,7 @@ public class MavenProject {
                                                             getActiveProfilesIds(),
                                                             locator,
                                                             process);
-    set(result, result.isValid);
+    set(result, false, result.isValid);
     return result.isValid ? result.nativeMavenProject : null;
   }
 
