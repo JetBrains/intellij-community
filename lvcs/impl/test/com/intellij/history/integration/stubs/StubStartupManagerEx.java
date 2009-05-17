@@ -28,6 +28,10 @@ public class StubStartupManagerEx extends StartupManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  public boolean postStartupActivityPassed() {
+    throw new UnsupportedOperationException();
+  }
+
   public void registerPreStartupActivity(Runnable runnable) // should be used only to register to FileSystemSynchronizer!
   {
     throw new UnsupportedOperationException();

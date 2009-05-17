@@ -30,10 +30,11 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
 
-  private FileSystemSynchronizerImpl myFileSystemSynchronizer = new FileSystemSynchronizerImpl();
-  private boolean myStartupActivityRunning = false;
-  private boolean myStartupActivityPassed = false;
-  private boolean myBackgroundIndexing = false;
+  private volatile FileSystemSynchronizerImpl myFileSystemSynchronizer = new FileSystemSynchronizerImpl();
+  private volatile boolean myStartupActivityRunning = false;
+  private volatile boolean myStartupActivityPassed = false;
+  private volatile boolean myPostStartupActivityPassed = false;
+  private volatile boolean myBackgroundIndexing = false;
 
   private final Project myProject;
 
@@ -59,6 +60,10 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public boolean startupActivityPassed() {
     return myStartupActivityPassed;
+  }
+
+  public boolean postStartupActivityPassed() {
+    return myPostStartupActivityPassed;
   }
 
   public void registerPreStartupActivity(Runnable runnable) {
@@ -114,12 +119,14 @@ public class StartupManagerImpl extends StartupManagerEx {
 
           runActivities(myPostStartupActivities);
           myPostStartupActivities.clear();
+          myPostStartupActivityPassed = true;
         }
       });
     }
     else {
       runActivities(myPostStartupActivities);
       myPostStartupActivities.clear();
+      myPostStartupActivityPassed = true;
     }
 
     if (app.isUnitTestMode()) return;
