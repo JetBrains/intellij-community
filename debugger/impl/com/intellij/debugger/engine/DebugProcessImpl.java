@@ -957,18 +957,34 @@ public abstract class DebugProcessImpl implements DebugProcess {
         public void run() {
           ThreadReferenceProxyImpl thread = context.getThread();
           try {
-            //try {
+            try {
               if (LOG.isDebugEnabled()) {
                 final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
                 virtualMachineProxy.logThreads();
                 LOG.debug("Invoke in " + thread.name());
                 assertThreadSuspended(thread, context);
               }
+              if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+                // ensure args are not collected
+                for (Object arg : myArgs) {
+                  if (arg instanceof ObjectReference) {
+                    ((ObjectReference)arg).disableCollection();
+                  }
+                }
+              }
               result[0] = invokeMethod(invokePolicy, myArgs);
-            //}
-            //finally {
-            //  assertThreadSuspended(thread, context);
-            //}
+            }
+            finally {
+              //  assertThreadSuspended(thread, context);
+              if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+                // ensure args are not collected
+                for (Object arg : myArgs) {
+                  if (arg instanceof ObjectReference) {
+                    ((ObjectReference)arg).enableCollection();
+                  }
+                }
+              }
+            }
           }
           catch (Exception e) {
             exception[0] = e;
@@ -1023,7 +1039,18 @@ public abstract class DebugProcessImpl implements DebugProcess {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoke " + method.name());
         }
-        return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
+        try {
+          if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+            // ensure target object wil not be collected
+            objRef.disableCollection();
+          }
+          return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
+        }
+        finally {
+          if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+            objRef.enableCollection();
+          }
+        }
       }
     };
     return invokeCommand.start((EvaluationContextImpl)evaluationContext, method);
