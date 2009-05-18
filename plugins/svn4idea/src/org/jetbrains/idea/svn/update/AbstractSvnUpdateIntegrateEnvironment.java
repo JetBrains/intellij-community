@@ -101,7 +101,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     private final FilePath[] myContentRoots;
     private final UpdatedFiles myUpdatedFiles;
     private final VcsDirtyScopeManager myDirtyScopeManager;
-    private final List<MyConflictWorker> myGroupWorkers;
+    private final List<Runnable> myGroupWorkers;
 
     private MyUpdateSessionAdapter(@NotNull final FilePath[] contentRoots, final UpdatedFiles updatedFiles, final List<VcsException> exceptions) {
       super(exceptions, false);
@@ -114,11 +114,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
           protected List<VirtualFile> merge() {
             return null;
           }
-        }, new MyConflictWorker(SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT) {
-          protected List<VirtualFile> merge() {
-            return null;
-          }
-        });
+        }, new MyTreeConflictWorker());
       } else {
         myGroupWorkers = Collections.emptyList();
       }
@@ -139,8 +135,44 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     public void onRefreshFilesCompleted() {
       dirtyRoots();
 
-      for (MyConflictWorker groupWorker : myGroupWorkers) {
-        groupWorker.execute();
+      for (Runnable groupWorker : myGroupWorkers) {
+        groupWorker.run();
+      }
+    }
+
+    // at the moment no resolve, only refresh files & statuses
+    private class MyTreeConflictWorker implements Runnable {
+      public void run() {
+        final LocalFileSystem lfs = LocalFileSystem.getInstance();
+        final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT);
+        final Collection<String> conflictedFiles = conflictedGroup.getFiles();
+        final Collection<VirtualFile> parents = new ArrayList<VirtualFile>();
+
+        if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
+          for (final String conflictedFile : conflictedFiles) {
+            final File file = new File(conflictedFile);
+            final File parent = file.getParentFile();
+
+            VirtualFile vf = lfs.findFileByIoFile(parent);
+            if (vf == null) {
+              vf = lfs.refreshAndFindFileByIoFile(parent);
+            }
+            if (vf != null) {
+              parents.add(vf);
+            }
+          }
+        }
+
+        if (! parents.isEmpty()) {
+          final RefreshQueue refreshQueue = RefreshQueue.getInstance();
+          final RefreshSession session = refreshQueue.createSession(true, true, new Runnable() {
+            public void run() {
+              myDirtyScopeManager.filesDirty(parents, null);
+            }
+          });
+          session.addAllFiles(parents);
+          session.launch();
+        }
       }
     }
 
@@ -156,7 +188,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       }
     }
 
-    private abstract class MyConflictWorker {
+    private abstract class MyConflictWorker implements Runnable {
       private final String groupId;
       protected final List<VirtualFile> myFiles;
       private LocalFileSystem myLfs;
@@ -187,7 +219,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       @Nullable
       protected abstract List<VirtualFile> merge();
 
-      public void execute() {
+      public void run() {
         fillAndRefreshFiles();
         if (! myFiles.isEmpty()) {
           final List<VirtualFile> merged = merge();
