@@ -835,7 +835,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public boolean isVisible() {
-      return super.isVisible() && (!myProjectsNavigator.getShowBasicPhasesOnly() || BASIC_PHASES.contains(getName()));
+      return super.isVisible() && (!myProjectsNavigator.getShowBasicPhasesOnly() || BASIC_PHASES.contains(getGoal()));
     }
   }
 
