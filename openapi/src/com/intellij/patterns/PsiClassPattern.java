@@ -48,6 +48,13 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
       public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
         return psiClass.isInterface();
       }
+    });}
+
+   public PsiClassPattern nonAnnotationType() {
+    return with(new PatternCondition<PsiClass>("nonAnnotationType") {
+      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
+        return !psiClass.isAnnotationType();
+      }
     });
   }
 
