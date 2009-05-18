@@ -17,6 +17,9 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,9 +56,6 @@ public abstract class IdeFocusManager {
   @Nullable
   public abstract JComponent getFocusTargetFor(@NotNull final JComponent comp);
 
-  public static IdeFocusManager getInstance(@NotNull Project project) {
-    return project.getComponent(IdeFocusManager.class);
-  }
 
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
 
@@ -63,7 +63,44 @@ public abstract class IdeFocusManager {
   public abstract Component getFocusedDescendantFor(final Component comp);
 
   public abstract boolean isFocusTransferInProgress();
+  public abstract boolean isRedispatching();
 
   public abstract boolean dispatch(KeyEvent e);
-  public abstract boolean isRedispatching();
+
+  public static IdeFocusManager getInstance(@NotNull Project project) {
+    return project.getComponent(IdeFocusManager.class);
+  }
+
+  @NotNull
+  public static IdeFocusManager findInstance(@Nullable DataContext context) {
+    IdeFocusManager instance = null;
+    if (context != null) {
+      instance = getInstanceSafe(PlatformDataKeys.PROJECT.getData(context));
+    }
+
+    if (instance == null) {
+      final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      final Component parent = UIUtil.findUltimateParent(focusOwner);
+
+      if (parent instanceof IdeFrame) {
+        instance = getInstanceSafe(((IdeFrame)parent).getProject());
+      }
+    }
+
+    if (instance == null) {
+      instance = PassThroughtIdeFocusManager.getInstance();
+    }
+
+    return instance;
+  }
+
+  @Nullable
+  private static IdeFocusManager getInstanceSafe(@Nullable Project project) {
+    if (project != null && !project.isDisposed()) {
+      return IdeFocusManager.getInstance(project);
+    } else {
+      return null;
+    }
+  }
+
 }

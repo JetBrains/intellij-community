@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.*;
 
 public interface IdeFrame {
@@ -22,4 +25,7 @@ public interface IdeFrame {
   StatusBar getStatusBar();
 
   Rectangle suggestChildFrameBounds();
+
+  @Nullable
+  Project getProject();
 }

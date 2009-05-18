@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -1141,51 +1142,59 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   }
 
-  private void tryToExecuteNow(AnAction action, InputEvent inputEvent, Component contextComponent, String place, final ActionCallback result) {
+  private void tryToExecuteNow(final AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
     final Presentation presenation = (Presentation)action.getTemplatePresentation().clone();
 
-    final DataManager dataManager = DataManager.getInstance();
-    DataContext context = contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
+    IdeFocusManager.findInstance(getContextBy(contextComponent)).doWhenFocusSettlesDown(new Runnable() {
+      public void run() {
+        final DataContext context = getContextBy(contextComponent);
 
-    AnActionEvent event = new AnActionEvent(
-      inputEvent, context,
-      place != null ? place : ActionPlaces.UNKNOWN,
-      presenation, this,
-      inputEvent.getModifiersEx()
-    );
+        AnActionEvent event = new AnActionEvent(
+          inputEvent, context,
+          place != null ? place : ActionPlaces.UNKNOWN,
+          presenation, ActionManagerImpl.this,
+          inputEvent.getModifiersEx()
+        );
 
-    ActionUtil.performDumbAwareUpdate(action, event, false);
-    if (!event.getPresentation().isEnabled()) {
-      result.setRejected();
-      return;
-    }
-
-    ActionUtil.lastUpdateAndCheckDumb(action, event, false);
-    if (!event.getPresentation().isEnabled()) {
-      result.setRejected();
-      return;
-    }
-
-    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
-    if (component != null && !component.isShowing()) {
-      result.setRejected();
-      return;
-    }
-
-    fireBeforeActionPerformed(action, context, event);
-
-    UIUtil.addAwtListener(new AWTEventListener() {
-      public void eventDispatched(AWTEvent event) {
-        if (event.getID() == WindowEvent.WINDOW_OPENED ||event.getID() == WindowEvent.WINDOW_ACTIVATED) {
-          if (!result.isProcessed()) {
-            result.setDone();
-          }
+        ActionUtil.performDumbAwareUpdate(action, event, false);
+        if (!event.getPresentation().isEnabled()) {
+          result.setRejected();
+          return;
         }
-      }
-    }, WindowEvent.WINDOW_EVENT_MASK, result);
 
-    action.actionPerformed(event);
-    result.setDone();
-    queueActionPerformedEvent(action, context, event);
+        ActionUtil.lastUpdateAndCheckDumb(action, event, false);
+        if (!event.getPresentation().isEnabled()) {
+          result.setRejected();
+          return;
+        }
+
+        Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
+        if (component != null && !component.isShowing()) {
+          result.setRejected();
+          return;
+        }
+
+        fireBeforeActionPerformed(action, context, event);
+
+        UIUtil.addAwtListener(new AWTEventListener() {
+          public void eventDispatched(AWTEvent event) {
+            if (event.getID() == WindowEvent.WINDOW_OPENED ||event.getID() == WindowEvent.WINDOW_ACTIVATED) {
+              if (!result.isProcessed()) {
+                result.setDone();
+              }
+            }
+          }
+        }, WindowEvent.WINDOW_EVENT_MASK, result);
+
+        action.actionPerformed(event);
+        result.setDone();
+        queueActionPerformedEvent(action, context, event);
+      }
+    });
+  }
+
+  private DataContext getContextBy(Component contextComponent) {
+    final DataManager dataManager = DataManager.getInstance();
+    return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
   }
 }

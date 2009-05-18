@@ -100,7 +100,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Set<Runnable> myIdleRequests = new HashSet<Runnable>();
   private final Runnable myFlushRunnable = new Runnable() {
     public void run() {
-      flushIdleRequests();
+      if (isFocusTranferInProgress() || (myQueue != null && myQueue.isSuspendMode())) {
+        restartIdleAlarm();
+      } else {
+        flushIdleRequests();
+      }
     }
   };
 
@@ -119,10 +123,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private WeakReference<Component> myFocusedComponentOnDeactivation;
   private WeakReference<Component> myLastFocusedProjectComponent;
 
+  private IdeEventQueue myQueue;
   /**
    * invoked by reflection
    */
   public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx, Application app) {
+    myQueue = IdeEventQueue.getInstance();
     myProject = project;
     myWindowManager = windowManagerEx;
     myListenerList = new EventListenerList();
@@ -1529,7 +1535,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public boolean dispatch(KeyEvent e) {
-    if (isFocusTranferInProgress() && Registry.is("actionSystem.fixLostTyping")) {
+    final boolean inProgress = isFocusTranferInProgress();
+
+    if (inProgress && Registry.is("actionSystem.fixLostTyping")) {
       myToDispatchOnDone.add(e);
       return true;
     } else {
@@ -1838,8 +1846,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (checkForRejectOrByPass(command, forced, result)) return;
 
         if (myRequestFocusCmd == command) {
-          myRequestFocusCmd = null;
-
           command.run().doWhenDone(new Runnable() {
             public void run() {
               LaterInvocator.invokeLater(new Runnable() {
@@ -1852,17 +1858,23 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
             public void run() {
               result.setRejected();
             }
-          });
-
-          restartIdleAlarm();
-
-          if (forced) {
-            myForcedFocusRequestsAlarm.addRequest(new Runnable() {
-              public void run() {
-                setLastEffectiveForcedRequest(null);
+          }).doWhenProcessed(new Runnable() {
+            public void run() {
+              if (myRequestFocusCmd == command) {
+                myRequestFocusCmd = null;
               }
-            }, 250);
-          }
+
+              restartIdleAlarm();
+
+              if (forced) {
+                myForcedFocusRequestsAlarm.addRequest(new Runnable() {
+                  public void run() {
+                    setLastEffectiveForcedRequest(null);
+                  }
+                }, 250);
+              }
+            }
+          });
         }
         else {
           rejectCommand(command, result);

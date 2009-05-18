@@ -14,20 +14,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -495,30 +491,7 @@ public class IdeEventQueue extends EventQueue {
   private boolean shallEnterSuspendMode() {
     if (peekEvent(WindowEvent.WINDOW_OPENED) != null) return true; // Active window is being changed
 
-    final IdeFocusManager ideFocusManager = getIdeFocusManager();
-    if (ideFocusManager != null) {
-      return ideFocusManager.isFocusTransferInProgress();
-    }
-
-    return false;
-  }
-
- @Nullable
-  private IdeFocusManager getIdeFocusManager() {
-    Window currentWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    if (currentWindow != null) {
-      Component topLevel = UIUtil.findUltimateParent(currentWindow);
-      if (topLevel instanceof IdeFrameImpl) {
-        IdeFrameImpl frame = (IdeFrameImpl)topLevel;
-        Project project = frame.getProject();
-
-        if (project != null) {
-          return IdeFocusManager.getInstance(project);
-        }
-      }
-    }
-
-    return null;
+    return IdeFocusManager.findInstance(null).isFocusTransferInProgress();
   }
 
   private boolean processAppActivationEvents(AWTEvent e) {
@@ -562,11 +535,9 @@ public class IdeEventQueue extends EventQueue {
     if (e instanceof KeyEvent) {
       final KeyEvent event = (KeyEvent)e;
       if (!event.isConsumed()) {
-        final IdeFocusManager focusManager = getIdeFocusManager();
-        if (focusManager != null) {
-          if (focusManager.isFocusTransferInProgress() && !focusManager.isRedispatching()) {
-            return focusManager.dispatch(event);
-          }
+        final IdeFocusManager focusManager = IdeFocusManager.findInstance(null);
+        if (focusManager.isFocusTransferInProgress() && !focusManager.isRedispatching()) {
+          return focusManager.dispatch(event);
         }
       }
     }
@@ -677,4 +648,7 @@ public class IdeEventQueue extends EventQueue {
     myMouseEventDispatcher.blockNextEvents(e);
   }
 
+  public boolean isSuspendMode() {
+    return mySuspendMode;
+  }
 }
