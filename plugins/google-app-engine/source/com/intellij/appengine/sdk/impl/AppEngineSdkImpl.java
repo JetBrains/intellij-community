@@ -17,6 +17,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -161,8 +164,28 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return getLibUserDirectoryPath() + "/orm";
   }
 
-  public File getOrmLibSourcesDirectory() {
-    return new File(FileUtil.toSystemDependentName(myHomePath + "/src/orm"));
+  public VirtualFile[] getOrmLibSources() {
+    final File libsDir = new File(FileUtil.toSystemDependentName(myHomePath + "/src/orm"));
+    final File[] files = libsDir.listFiles();
+    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    if (files != null) {
+      for (File file : files) {
+        final String url = VfsUtil.getUrlForLibraryRoot(file);
+        final VirtualFile zipRoot = VirtualFileManager.getInstance().findFileByUrl(url);
+        if (zipRoot != null && zipRoot.isDirectory()) {
+          String fileName = file.getName();
+          final String srcDirName = StringUtil.trimEnd(fileName, "-src.zip");
+          final VirtualFile sourcesDir = zipRoot.findFileByRelativePath(srcDirName + "/src/java");
+          if (sourcesDir != null) {
+            roots.add(sourcesDir);
+          }
+          else {
+            roots.add(zipRoot);
+          }
+        }
+      }
+    }
+    return roots.toArray(new VirtualFile[roots.size()]);
   }
 
   public String getLibUserDirectoryPath() {

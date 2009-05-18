@@ -1,6 +1,7 @@
 package com.intellij.appengine.sdk;
 
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -31,5 +32,5 @@ public interface AppEngineSdk {
 
   String getLibUserDirectoryPath();
 
-  File getOrmLibSourcesDirectory();
+  VirtualFile[] getOrmLibSources();
 }

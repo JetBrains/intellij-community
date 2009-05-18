@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.io.File;
 
 /**
  * @author nik
@@ -90,7 +89,7 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
       runManager.setActiveConfiguration(runSettings);
     }
 
-    final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getLibUserDirectoryPath(), null);
+    final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getLibUserDirectoryPath(), VirtualFile.EMPTY_ARRAY);
     rootModel.addLibraryEntry(apiJar);
     if (addJdoSupport) {
       facetConfiguration.setRunEnhancerOnMake(true);
@@ -110,7 +109,7 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
       catch (IOException e) {
         LOG.error(e);
       }
-      final Library library = addProjectLibrary(module, "AppEngine ORM", sdk.getOrmLibDirectoryPath(), sdk.getOrmLibSourcesDirectory());
+      final Library library = addProjectLibrary(module, "AppEngine ORM", sdk.getOrmLibDirectoryPath(), sdk.getOrmLibSources());
       rootModel.addLibraryEntry(library);
       final JavaeePackagingConfiguration configuration = appEngineFacet.getWebFacet().getPackagingConfiguration();
       configuration.addLibraryLink(library);
@@ -118,7 +117,7 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
     }
   }
 
-  private static Library addProjectLibrary(final Module module, final String name, final String path, @Nullable final File sourcesDirectory) {
+  private static Library addProjectLibrary(final Module module, final String name, final String path, final VirtualFile[] sources) {
     return new WriteAction<Library>() {
       protected void run(final Result<Library> result) {
         final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
@@ -127,13 +126,8 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
           library = libraryTable.createLibrary(name);
           final Library.ModifiableModel model = library.getModifiableModel();
           model.addJarDirectory(VfsUtil.pathToUrl(path), false);
-          if (sourcesDirectory != null) {
-            final File[] files = sourcesDirectory.listFiles();
-            if (files != null) {
-              for (File file : files) {
-                model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.SOURCES);
-              }
-            }
+          for (VirtualFile sourceRoot : sources) {
+            model.addRoot(sourceRoot, OrderRootType.SOURCES);
           }
           model.commit();
         }
