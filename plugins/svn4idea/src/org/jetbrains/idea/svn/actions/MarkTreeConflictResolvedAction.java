@@ -27,6 +27,10 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 public class MarkTreeConflictResolvedAction extends AnAction {
   private final static String myText = SvnBundle.message("action.mark.tree.conflict.resolved.text");
 
@@ -82,7 +86,8 @@ public class MarkTreeConflictResolvedAction extends AnAction {
       final Ref<VcsException> exception = new Ref<VcsException>();
       ProgressManager.getInstance().run(new Task.Backgroundable(checker.getProject(), markText, true, BackgroundFromStartOption.getInstance()) {
         public void run(@NotNull ProgressIndicator indicator) {
-          final FilePath path = checker.getChange().getTreeConflictMarkHolder();
+          final ConflictedSvnChange change = checker.getChange();
+          final FilePath path = change.getTreeConflictMarkHolder();
           final SVNWCClient client = SvnVcs.getInstance(checker.getProject()).createWCClient();
           try {
             client.doResolve(path.getIOFile(), SVNDepth.EMPTY, false, false, true, SVNConflictChoice.MERGED);
@@ -90,12 +95,26 @@ public class MarkTreeConflictResolvedAction extends AnAction {
           catch (SVNException e1) {
             exception.set(new VcsException(e1));
           }
-          VcsDirtyScopeManager.getInstance(checker.getProject()).fileDirty(path);
+          VcsDirtyScopeManager.getInstance(checker.getProject()).filePathsDirty(getDistinctFiles(change), null);
         }
       });
       if (! exception.isNull()) {
         AbstractVcsHelper.getInstance(checker.getProject()).showError(exception.get(), markText);
       }
     }
+  }
+
+  private Collection<FilePath> getDistinctFiles(final Change change) {
+    final List<FilePath> result = new ArrayList<FilePath>(2);
+    if (change.getBeforeRevision() != null) {
+      result.add(change.getBeforeRevision().getFile());
+    }
+    if (change.getAfterRevision() != null) {
+      if ((change.getBeforeRevision() == null) ||
+          ((change.getBeforeRevision() != null) && (change.isMoved() || change.isRenamed()))) {
+        result.add(change.getAfterRevision().getFile());
+      }
+    }
+    return result;
   }
 }
