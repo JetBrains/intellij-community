@@ -97,6 +97,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
@@ -163,6 +164,10 @@ public class SvnVcs extends AbstractVcs {
     // non-optimized writing is fast enough on Linux/MacOS, and somewhat more reliable
     if (SystemInfo.isWindows) {
       SVNAdminArea14.setOptimizedWritingEnabled(true);
+    }
+
+    if (! SVNJNAUtil.isJNAPresent()) {
+      LOG.warn("JNA is not found by svnkit library");
     }
   }
 
