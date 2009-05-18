@@ -305,10 +305,10 @@ public class ErrorViewStructure extends AbstractTreeStructure {
                                         ErrorTreeElementKind kind,
                                          GroupingElement parent,
                                          String[] message,
-                                         final VirtualFile vf,
+                                         @NotNull final VirtualFile vf,
                                          String exportText,
                                          String rendererTextPrefix) {
-      super(kind, parent, message, vf == null ? null : new OpenFileDescriptor(project, vf, -1, -1), exportText, rendererTextPrefix);
+      super(kind, parent, message, new OpenFileDescriptor(project, vf, -1, -1), exportText, rendererTextPrefix);
       myVf = vf;
       myCustomizeColoredTreeCellRenderer = new CustomizeColoredTreeCellRenderer() {
         public void customizeCellRenderer(SimpleColoredComponent renderer,
