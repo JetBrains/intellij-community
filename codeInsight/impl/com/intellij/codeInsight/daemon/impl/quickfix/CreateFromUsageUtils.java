@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -44,6 +45,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -188,7 +190,16 @@ public class CreateFromUsageUtils {
   }
 
   public static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
-                                           final PsiSubstitutor substitutor, final PsiExpression[] arguments)
+                                           final PsiSubstitutor substitutor, final PsiExpression[] arguments) {
+    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map2List(arguments, new Function<PsiExpression, Pair<PsiExpression, PsiType>>() {
+      public Pair<PsiExpression, PsiType> fun(PsiExpression psiExpression) {
+        return Pair.create(psiExpression, null);
+      }
+    }));
+  }
+
+  public static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
+                                           final PsiSubstitutor substitutor, final List<Pair<PsiExpression, PsiType>> arguments)
     throws IncorrectOperationException {
     PsiManager psiManager = method.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
@@ -200,27 +211,32 @@ public class CreateFromUsageUtils {
     GuessTypeParameters guesser = new GuessTypeParameters(factory);
 
     final boolean isInterface = method.getContainingClass().isInterface();
-    for (int i = 0; i < arguments.length; i++) {
-      PsiExpression arg = arguments[i];
+    for (int i = 0; i < arguments.size(); i++) {
+      Pair<PsiExpression, PsiType> arg = arguments.get(i);
+      PsiExpression exp = arg.first;
 
+      PsiType argType = exp == null ? arg.second : exp.getType();
       SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(
-        VariableKind.PARAMETER, null, arg, null);
+        VariableKind.PARAMETER, null, exp, argType);
       @NonNls String[] names = suggestedInfo.names; //TODO: callback about used name
 
       if (names.length == 0) {
         names = new String[]{"p" + i};
       }
 
-      PsiType argType = arg.getType();
       if (argType == null || argType == PsiType.NULL) {
         argType = PsiType.getJavaLangObject(psiManager, resolveScope);
       }
-
-      PsiParameter parameter = factory.createParameter(names[0], argType);
-      if (isInterface) {
-        PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, false);
+      PsiParameter parameter;
+      if (parameterList.getParametersCount() <= i) {
+        parameter = factory.createParameter(names[0], argType);
+        if (isInterface) {
+          PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, false);
+        }
+        parameter = (PsiParameter) parameterList.add(parameter);
+      } else {
+        parameter = parameterList.getParameters()[i];
       }
-      parameter = (PsiParameter) parameterList.add(parameter);
 
       ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
 

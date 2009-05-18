@@ -191,6 +191,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return false;
   }
 
+  @Nullable
   private static PsiExpression getQualifier (PsiElement element) {
     if (element instanceof PsiNewExpression) {
       PsiJavaCodeReferenceElement ref = ((PsiNewExpression) element).getClassReference();

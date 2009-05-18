@@ -110,8 +110,9 @@ public class GuessTypeParameters {
       }
     }
 
+    PsiType[] types = infos.length == 0 ? new PsiType[] {typeElement.getType()} : ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(manager, scope), project);
     builder.replaceElement(typeElement,
-                           new TypeExpression(project, ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(manager, scope), project)));
+                           new TypeExpression(project, types));
   }
 
   private static PsiSubstitutor getRawingSubstitutor(PsiElement context, PsiClass targetClass) {

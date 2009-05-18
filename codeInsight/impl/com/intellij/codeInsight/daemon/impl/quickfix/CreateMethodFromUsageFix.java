@@ -15,11 +15,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,30 +152,36 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
         PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
       }
 
-
       final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
 
-      method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
-      if (method == null) return;
-
-      doCreate(targetClass, method, expression.getArgumentList().getExpressions(), context, getTargetSubstitutor(expression),
-               CreateFromUsageUtils.guessExpectedTypes(expression, true));
+      PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+      doCreate(targetClass, method, ContainerUtil.map2List(arguments, new Function<PsiExpression, Pair<PsiExpression, PsiType>>() {
+        public Pair<PsiExpression, PsiType> fun(PsiExpression psiExpression) {
+          return Pair.create(psiExpression, null);
+        }
+      }), getTargetSubstitutor(expression), CreateFromUsageUtils.guessExpectedTypes(expression, true),
+               context);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
 
-  public static void doCreate(PsiClass targetClass, PsiMethod method, PsiExpression[] expressions, @Nullable PsiElement context,
-                              PsiSubstitutor substitutor, ExpectedTypeInfo[] expectedTypes) {
+  public static void doCreate(PsiClass targetClass, PsiMethod method, List<Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
+                              ExpectedTypeInfo[] expectedTypes, @Nullable PsiElement context) {
 
+    method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
+
+    if (method == null) {
+      return;
+    }
     final Project project = targetClass.getProject();
     final PsiFile targetFile = targetClass.getContainingFile();
     Document document = PsiDocumentManager.getInstance(project).getDocument(targetFile);
 
     TemplateBuilder builder = new TemplateBuilder(method);
 
-    CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, expressions);
+    CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
     new GuessTypeParameters(JavaPsiFacade.getInstance(project).getElementFactory())
       .setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
     PsiCodeBlock body = method.getBody();
