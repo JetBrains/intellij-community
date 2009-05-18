@@ -20,15 +20,13 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitContentRevision;
-import git4idea.GitFileRevision;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
+import git4idea.*;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +70,39 @@ public class GitHistoryUtils {
     String hash = lines[0];
     Date commitDate = GitUtil.parseTimestamp(lines[1]);
     return new GitRevisionNumber(hash, commitDate);
+  }
+
+  /**
+   * Get current revision for the file under git
+   *
+   * @param project  a project
+   * @param filePath a file path
+   * @return a revision number or null if the file is unversioned or new
+   * @throws VcsException if there is problem with running git
+   */
+  @Nullable
+  public static ItemLatestState getLastRevision(final Project project, FilePath filePath) throws VcsException {
+    VirtualFile root = GitUtil.getGitRoot(filePath);
+    GitBranch c = GitBranch.current(project, root);
+    GitBranch t = c == null ? null : c.tracked(project, root);
+    if (t == null) {
+      return new ItemLatestState(getCurrentRevision(project, filePath), true);
+    }
+    filePath = getLastCommitName(project, filePath);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("-n1", "--pretty=format:%H%n%ct", "--name-status", t.getFullName());
+    h.endOptions();
+    h.addRelativePaths(filePath);
+    String result = h.run();
+    if (result.length() == 0) {
+      return null;
+    }
+    String[] lines = result.split("\n");
+    String hash = lines[0];
+    Date commitDate = GitUtil.parseTimestamp(lines[1]);
+    return new ItemLatestState(new GitRevisionNumber(hash, commitDate), lines[2].charAt(0) != 'D');
   }
 
 

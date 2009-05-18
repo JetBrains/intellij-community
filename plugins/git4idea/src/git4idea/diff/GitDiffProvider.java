@@ -20,6 +20,7 @@ package git4idea.diff;
  */
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Set;
 
 /**
@@ -57,11 +57,11 @@ public class GitDiffProvider implements DiffProvider {
   /**
    *
    */
-  private static final Set<FileStatus> myGoodStatuses;
+  private static final Set<FileStatus> ourGoodStatuses;
 
   static {
-    myGoodStatuses = new THashSet<FileStatus>();
-    myGoodStatuses.addAll(
+    ourGoodStatuses = new THashSet<FileStatus>();
+    ourGoodStatuses.addAll(
       Arrays.asList(FileStatus.NOT_CHANGED, FileStatus.DELETED, FileStatus.MODIFIED, FileStatus.MERGE, FileStatus.MERGED_WITH_CONFLICTS));
   }
 
@@ -83,7 +83,12 @@ public class GitDiffProvider implements DiffProvider {
     if (file.isDirectory()) {
       return null;
     }
-    return new GitRevisionNumber(GitRevisionNumber.TIP, new Date());
+    try {
+      return GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file.getPath()));
+    }
+    catch (VcsException e) {
+      return null;
+    }
   }
 
   /**
@@ -94,12 +99,11 @@ public class GitDiffProvider implements DiffProvider {
     if (file.isDirectory()) {
       return null;
     }
-    if (!myGoodStatuses.contains(myStatusManager.getStatus(file))) {
+    if (!ourGoodStatuses.contains(myStatusManager.getStatus(file))) {
       return null;
     }
     try {
-      final VcsRevisionNumber revision = GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file.getPath()));
-      return new ItemLatestState(revision, true);
+      return GitHistoryUtils.getLastRevision(myProject, VcsUtil.getFilePath(file.getPath()));
     }
     catch (VcsException e) {
       return null;
@@ -119,11 +123,21 @@ public class GitDiffProvider implements DiffProvider {
       return null;
     }
     try {
-      for (VcsFileRevision f : GitHistoryUtils.history(myProject, VcsUtil.getFilePath(path))) {
+      FilePath filePath = VcsUtil.getFilePath(path);
+      for (VcsFileRevision f : GitHistoryUtils.history(myProject, filePath)) {
         GitFileRevision gitRevision = (GitFileRevision)f;
         if (f.getRevisionNumber().equals(revisionNumber)) {
           return new GitContentRevision(gitRevision.getPath(), (GitRevisionNumber)revisionNumber, myProject, selectedFile.getCharset());
         }
+      }
+      GitContentRevision candidate =
+        new GitContentRevision(filePath, (GitRevisionNumber)revisionNumber, myProject, selectedFile.getCharset());
+      try {
+        candidate.getContent();
+        return candidate;
+      }
+      catch (VcsException e) {
+        // file does not exists
       }
     }
     catch (VcsException e) {

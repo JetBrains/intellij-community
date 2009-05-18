@@ -246,4 +246,33 @@ public class GitBranch extends GitReference {
   private String trackedRemoteKey() {
     return "branch." + getName() + ".remote";
   }
+
+  /**
+   * Get tracked branch for the current branch
+   *
+   * @param project the project
+   * @param root    the vcs root
+   * @return the tracked branch
+   * @throws VcsException if there is a problem with accessing configuration file
+   */
+  public GitBranch tracked(Project project, VirtualFile root) throws VcsException {
+    String remote = getTrackedRemoteName(project, root);
+    if (remote == null) {
+      return null;
+    }
+    String branch = getTrackedBranchName(project, root);
+    if (branch == null) {
+      return null;
+    }
+    branch = branch.substring(REFS_HEADS_PREFIX.length());
+    boolean remoteFlag;
+    if (!".".equals(remote)) {
+      branch = remote + "/" + branch;
+      remoteFlag = true;
+    }
+    else {
+      remoteFlag = false;
+    }
+    return new GitBranch(branch, false, remoteFlag);
+  }
 }

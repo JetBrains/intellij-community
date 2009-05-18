@@ -27,12 +27,12 @@
    <reference id="Compare.SameVersion"/>
    <reference id="IntegrateFiles"/>  -->
       <reference ref="Annotate"/>
-      <!--<reference id="Compare.SameVersion"/>-->
+      <reference ref="Compare.SameVersion"/>
       <reference ref="Compare.LastVersion"/>
       <reference ref="Compare.Selected"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <!-- <reference id="Vcs.ShowHistoryForBlock"/>  -->
-      <!-- <reference id="ChangesView.Browse"/>   -->
+      <reference id="ChangesView.Browse"/>
       <separator/>
 
       <action id="Git.CurrentBranch" class="git4idea.actions.GitCurrentBranch" text="Current Branch..."/>
