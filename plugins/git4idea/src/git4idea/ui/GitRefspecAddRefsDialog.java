@@ -112,6 +112,7 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
                                     @NotNull SortedSet<String> branches) {
     super(project, true);
     setTitle(GitBundle.getString("addrefspec.title"));
+    setOKButtonText(GitBundle.getString("addrefspec.button"));
     myProject = project;
     myRoot = root;
     myRemote = remote;

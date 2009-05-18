@@ -104,6 +104,7 @@ public class GitUnstashDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     setTitle(GitBundle.getString("unstash.title"));
+    setOKButtonText(GitBundle.getString("unstash.button.apply"));
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
     myStashList.setModel(new DefaultListModel());
     refreshStashList();
@@ -120,6 +121,11 @@ public class GitUnstashDialog extends DialogWrapper {
     });
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
+        updateDialogState();
+      }
+    });
+    myPopStashCheckBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
         updateDialogState();
       }
     });
@@ -217,6 +223,7 @@ public class GitUnstashDialog extends DialogWrapper {
   public void updateDialogState() {
     String branch = myBranchTextField.getText();
     if (branch.length() != 0) {
+      setOKButtonText(GitBundle.getString("unstash.button.branch"));
       myPopStashCheckBox.setEnabled(false);
       myPopStashCheckBox.setSelected(true);
       myReinstateIndexCheckBox.setEnabled(false);
@@ -237,6 +244,8 @@ public class GitUnstashDialog extends DialogWrapper {
         myPopStashCheckBox.setSelected(false);
       }
       myPopStashCheckBox.setEnabled(true);
+      setOKButtonText(
+        myPopStashCheckBox.isSelected() ? GitBundle.getString("unstash.button.pop") : GitBundle.getString("unstash.button.apply"));
       if (!myReinstateIndexCheckBox.isEnabled()) {
         myReinstateIndexCheckBox.setSelected(false);
       }

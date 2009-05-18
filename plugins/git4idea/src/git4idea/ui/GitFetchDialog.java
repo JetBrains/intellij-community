@@ -84,6 +84,7 @@ public class GitFetchDialog extends DialogWrapper {
   public GitFetchDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("fetch.title"));
+    setOKButtonText(GitBundle.getString("fetch.button"));
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRoot, null);
     myProject = project;
     myRefspecs.setProject(project);

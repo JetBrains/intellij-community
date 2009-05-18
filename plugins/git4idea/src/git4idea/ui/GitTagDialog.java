@@ -108,6 +108,7 @@ public class GitTagDialog extends DialogWrapper {
   public GitTagDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("tag.title"));
+    setOKButtonText(GitBundle.getString("tag.button"));
     myProject = project;
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
     myGitRootComboBox.addActionListener(new ActionListener() {

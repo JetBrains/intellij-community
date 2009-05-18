@@ -47,6 +47,7 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
   protected GitRebaseUnstructuredEditor(Project project, VirtualFile root, String path) throws IOException {
     super(project, true);
     setTitle(GitBundle.message("rebase.unstructured.editor.title"));
+    setOKButtonText(GitBundle.message("rebase.unstructured.editor.button"));
     myGitRootLabel.setText(root.getPresentableUrl());
     encoding = GitConfigUtil.getCommitEncoding(project, root);
     myFile = new File(path);

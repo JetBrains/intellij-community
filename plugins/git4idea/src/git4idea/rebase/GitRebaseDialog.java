@@ -132,6 +132,7 @@ public class GitRebaseDialog extends DialogWrapper {
   public GitRebaseDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("rebase.title"));
+    setOKButtonText(GitBundle.getString("rebase.button"));
     init();
     myProject = project;
     final Runnable validateRunnable = new Runnable() {

@@ -107,6 +107,7 @@ public class GitCloneDialog extends DialogWrapper {
     init();
     initListeners();
     setTitle(GitBundle.getString("clone.title"));
+    setOKButtonText(GitBundle.getString("clone.button"));
   }
 
   /**

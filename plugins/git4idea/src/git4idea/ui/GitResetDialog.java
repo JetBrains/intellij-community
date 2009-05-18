@@ -86,6 +86,7 @@ public class GitResetDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     setTitle(GitBundle.getString("reset.title"));
+    setOKButtonText(GitBundle.getString("reset.button"));
     myResetTypeComboBox.addItem(MIXED);
     myResetTypeComboBox.addItem(SOFT);
     myResetTypeComboBox.addItem(HARD);
@@ -118,17 +119,17 @@ public class GitResetDialog extends DialogWrapper {
     GitLineHandler handler = new GitLineHandler(myProject, getGitRoot(), GitHandler.RESET);
     handler.setNoSSH(true);
     String type = (String)myResetTypeComboBox.getSelectedItem();
-    if(SOFT.equals(type)) {
+    if (SOFT.equals(type)) {
       handler.addParameters("--soft");
     }
-    else if(HARD.equals(type)) {
+    else if (HARD.equals(type)) {
       handler.addParameters("--hard");
     }
-    else if(MIXED.equals(type)) {
+    else if (MIXED.equals(type)) {
       handler.addParameters("--mixed");
     }
     final String commit = myCommitTextField.getText().trim();
-    if(commit.length() != 0) {
+    if (commit.length() != 0) {
       handler.addParameters(commit);
     }
     return handler;

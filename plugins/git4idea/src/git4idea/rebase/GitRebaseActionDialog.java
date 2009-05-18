@@ -49,6 +49,7 @@ public class GitRebaseActionDialog extends DialogWrapper {
     super(project, true);
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, null);
     setTitle(title);
+    setOKButtonText(title);
     init();
   }
 

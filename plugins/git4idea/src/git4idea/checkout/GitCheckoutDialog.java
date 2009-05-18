@@ -118,6 +118,7 @@ public class GitCheckoutDialog extends DialogWrapper {
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranch);
     setupIncludeTags();
     setupBranches();
+    setOKButtonText(GitBundle.getString("checkout.branch"));
     myBranchToCkeckoutValidator =
       new GitReferenceValidator(project, myGitRoot, getBranchToCheckoutTextField(), myValidateButton, new Runnable() {
         public void run() {

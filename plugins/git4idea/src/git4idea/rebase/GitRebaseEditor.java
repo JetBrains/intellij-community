@@ -101,6 +101,7 @@ public class GitRebaseEditor extends DialogWrapper {
     myProject = project;
     myGitRoot = gitRoot;
     setTitle(GitBundle.getString("rebase.editor.title"));
+    setOKButtonText(GitBundle.getString("rebase.editor.button"));
     if (SystemInfo.isWindows && file.startsWith(CYGDRIVE_PREFIX)) {
       final int prefixSize = CYGDRIVE_PREFIX.length();
       file = file.substring(prefixSize, prefixSize + 1) + ":" + file.substring(prefixSize + 1);

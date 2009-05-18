@@ -103,6 +103,7 @@ public class GitMergeDialog extends DialogWrapper {
     initBranchChooser();
     GitMergeUtil.setupNoCommitCheckbox(myAddLogInformationCheckBox, myCommitMessage, myNoCommitCheckBox);
     setOKActionEnabled(false);
+    setOKButtonText(GitBundle.getString("merge.branch.button"));
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranchText);
     myGitRoot.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {

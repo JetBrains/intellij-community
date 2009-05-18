@@ -108,6 +108,7 @@ public class GitPullDialog extends DialogWrapper {
         updateRemotes();
       }
     });
+    setOKButtonText(GitBundle.getString("pull.button"));
     updateRemotes();
     setupBranches();
     setupGetBranches();
@@ -301,7 +302,7 @@ public class GitPullDialog extends DialogWrapper {
   protected String getHelpId() {
     return "reference.VersionControl.Git.Pull";
   }
-  
+
   /**
    * @return remote key
    */
