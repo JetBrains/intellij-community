@@ -103,20 +103,20 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
         case NEW:
           // note that this the only change that could happen
           // for HEAD-less working directories.
-          registerFile(myProject, toUnindex, c.getAfterRevision().getFile());
+          registerFile(toUnindex, c.getAfterRevision().getFile(), exceptions);
           break;
         case MOVED:
-          registerFile(myProject, toRevert, c.getBeforeRevision().getFile());
-          registerFile(myProject, toUnindex, c.getAfterRevision().getFile());
+          registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
+          registerFile(toUnindex, c.getAfterRevision().getFile(), exceptions);
           toDelete.add(c.getAfterRevision().getFile());
           break;
         case MODIFICATION:
           // note that changes are also removed from index, if they got into index somehow
-          registerFile(myProject, toUnindex, c.getBeforeRevision().getFile());
-          registerFile(myProject, toRevert, c.getBeforeRevision().getFile());
+          registerFile(toUnindex, c.getBeforeRevision().getFile(), exceptions);
+          registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
           break;
         case DELETED:
-          registerFile(myProject, toRevert, c.getBeforeRevision().getFile());
+          registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
           break;
       }
     }
@@ -196,12 +196,19 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   /**
    * Register file in the map under appropriate root
    *
-   * @param project the context project
-   * @param files   a map to use
-   * @param file    a file to register
+   * @param files      a map to use
+   * @param file       a file to register
+   * @param exceptions the list of exceptions to update
    */
-  private static void registerFile(Project project, Map<VirtualFile, List<FilePath>> files, FilePath file) {
-    final VirtualFile root = GitUtil.getGitRoot(file);
+  private static void registerFile(Map<VirtualFile, List<FilePath>> files, FilePath file, List<VcsException> exceptions) {
+    final VirtualFile root;
+    try {
+      root = GitUtil.getGitRoot(file);
+    }
+    catch (VcsException e) {
+      exceptions.add(e);
+      return;
+    }
     List<FilePath> paths = files.get(root);
     if (paths == null) {
       paths = new ArrayList<FilePath>();

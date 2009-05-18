@@ -92,9 +92,8 @@ public class GitShowAllSubmittedFilesAction extends AnAction {
    * @param file     file affected by the revision
    */
   public static void showSubmittedFiles(final Project project, final String revision, final VirtualFile file) {
-    VirtualFile vcsRoot = GitUtil.getGitRoot(file);
-    assert vcsRoot != null;
     try {
+      VirtualFile vcsRoot = GitUtil.getGitRoot(file);
       final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision);
       if (changeList != null) {
         AbstractVcsHelper.getInstance(project).showChangesListBrowser(changeList, getTitle(revision));

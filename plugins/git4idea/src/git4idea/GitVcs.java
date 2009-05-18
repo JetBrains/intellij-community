@@ -295,8 +295,8 @@ public class GitVcs extends AbstractVcs {
       return new GitRevisionNumber(rev, d);
     }
     if (path != null) {
-      VirtualFile root = GitUtil.getGitRoot(path);
       try {
+        VirtualFile root = GitUtil.getGitRoot(path);
         return GitRevisionNumber.resolve(myProject, root, revision);
       }
       catch (VcsException e) {
@@ -503,7 +503,11 @@ public class GitVcs extends AbstractVcs {
 
     for (int i = 1; i < in.size(); i++) {
       final VirtualFile child = in.get(i);
-      final VirtualFile childRoot = GitUtil.getGitRoot(child);
+      final VirtualFile childRoot = GitUtil.gitRootOrNull(child);
+      if (childRoot == null) {
+        // non-git file actually, skip it
+        continue;
+      }
       for (int j = i - 1; j >= 0; --j) {
         final VirtualFile parent = in.get(j);
         // the method check both that parent is an ancestor of the child and that they share common git root

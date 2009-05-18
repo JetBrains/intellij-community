@@ -148,7 +148,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @SuppressWarnings({"ConstantConditions"})
   public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String message) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    Map<VirtualFile, List<Change>> sortedChanges = sortChangesByGitRoot(changes);
+    Map<VirtualFile, List<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
       Set<FilePath> files = new HashSet<FilePath>();
       final VirtualFile root = entry.getKey();
@@ -442,7 +442,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<VcsException>();
-    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByGitRoot(files);
+    Map<VirtualFile, List<FilePath>> sortedFiles;
+    try {
+      sortedFiles = GitUtil.sortFilePathsByGitRoot(files);
+    }
+    catch (VcsException e) {
+      rc.add(e);
+      return rc;
+    }
     for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
@@ -488,7 +495,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<VcsException>();
-    Map<VirtualFile, List<VirtualFile>> sortedFiles = GitUtil.sortFilesByGitRoot(files);
+    Map<VirtualFile, List<VirtualFile>> sortedFiles;
+    try {
+      sortedFiles = GitUtil.sortFilesByGitRoot(files);
+    }
+    catch (VcsException e) {
+      rc.add(e);
+      return rc;
+    }
     for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
@@ -505,10 +519,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Sort changes by roots
    *
-   * @param changes a change list
+   * @param changes    a change list
+   * @param exceptions exceptions to collect
    * @return sorted changes
    */
-  private Map<VirtualFile, List<Change>> sortChangesByGitRoot(@NotNull List<Change> changes) {
+  private static Map<VirtualFile, List<Change>> sortChangesByGitRoot(@NotNull List<Change> changes, List<VcsException> exceptions) {
     Map<VirtualFile, List<Change>> result = new HashMap<VirtualFile, List<Change>>();
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
@@ -517,7 +532,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       assert beforeRevision != null || afterRevision != null;
       // note that any path will work, because changes could happen within single vcs root
       final FilePath filePath = afterRevision != null ? afterRevision.getFile() : beforeRevision.getFile();
-      final VirtualFile vcsRoot = GitUtil.getGitRoot(filePath);
+      final VirtualFile vcsRoot;
+      try {
+        vcsRoot = GitUtil.getGitRoot(filePath);
+      }
+      catch (VcsException e) {
+        exceptions.add(e);
+        continue;
+      }
       List<Change> changeList = result.get(vcsRoot);
       if (changeList == null) {
         changeList = new ArrayList<Change>();

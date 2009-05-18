@@ -202,16 +202,16 @@ public class GitMergeProvider implements MergeProvider2 {
      */
     MyMergeSession(List<VirtualFile> filesToMerge) {
       // get conflict type by the file
-      for (Map.Entry<VirtualFile, List<VirtualFile>> e : GitUtil.sortFilesByGitRoot(filesToMerge).entrySet()) {
-        Map<String, Conflict> cs = new HashMap<String, Conflict>();
-        VirtualFile root = e.getKey();
-        List<VirtualFile> files = e.getValue();
-        GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitHandler.LS_FILES);
-        h.setNoSSH(true);
-        h.setStdoutSuppressed(true);
-        h.addParameters("--exclude-standard", "--unmerged", "-t", "-z");
-        h.endOptions();
-        try {
+      try {
+        for (Map.Entry<VirtualFile, List<VirtualFile>> e : GitUtil.sortFilesByGitRoot(filesToMerge).entrySet()) {
+          Map<String, Conflict> cs = new HashMap<String, Conflict>();
+          VirtualFile root = e.getKey();
+          List<VirtualFile> files = e.getValue();
+          GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitHandler.LS_FILES);
+          h.setNoSSH(true);
+          h.setStdoutSuppressed(true);
+          h.addParameters("--exclude-standard", "--unmerged", "-t", "-z");
+          h.endOptions();
           String output = h.run();
           StringScanner s = new StringScanner(output);
           while (s.hasMoreData()) {
@@ -256,10 +256,9 @@ public class GitMergeProvider implements MergeProvider2 {
             myConflicts.put(f, c);
           }
         }
-        catch (VcsException ex) {
-          throw new IllegalStateException("The git operation should fail in this context", ex);
-        }
-
+      }
+      catch (VcsException ex) {
+        throw new IllegalStateException("The git operation should not fail in this context", ex);
       }
     }
 
