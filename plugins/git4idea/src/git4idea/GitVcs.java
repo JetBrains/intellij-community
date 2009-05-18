@@ -257,15 +257,6 @@ public class GitVcs extends AbstractVcs {
    * {@inheritDoc}
    */
   @Override
-  @Nullable
-  public UpdateEnvironment getStatusEnvironment() {
-    return getUpdateEnvironment();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
   @NotNull
   public GitAnnotationProvider getAnnotationProvider() {
     return myAnnotationProvider;
@@ -287,14 +278,6 @@ public class GitVcs extends AbstractVcs {
   @Nullable
   public RevisionSelector getRevisionSelector() {
     return myRevSelector;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public UpdateEnvironment getIntegrateEnvironment() {
-    return getUpdateEnvironment();
   }
 
   /**
