@@ -27,13 +27,18 @@ import java.io.File;
  */
 public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   public static PlatformProjectOpenProcessor getInstance() {
+    PlatformProjectOpenProcessor projectOpenProcessor = getInstanceIfItExists();
+    assert projectOpenProcessor != null;
+    return projectOpenProcessor;
+  }
+
+  public static PlatformProjectOpenProcessor getInstanceIfItExists() {
     ProjectOpenProcessor[] processors = Extensions.getExtensions(EXTENSION_POINT_NAME);
     for(ProjectOpenProcessor processor: processors) {
       if (processor instanceof PlatformProjectOpenProcessor) {
         return (PlatformProjectOpenProcessor) processor;
       }
     }
-    assert false;
     return null;
   }
 

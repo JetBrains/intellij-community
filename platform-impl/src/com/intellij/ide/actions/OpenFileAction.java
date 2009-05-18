@@ -16,13 +16,15 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.io.FileTypeFilter;
+import com.intellij.platform.PlatformProjectOpenProcessor;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -42,10 +44,13 @@ public class OpenFileAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null) return;
+    @Nullable Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    if (project == null &&
+        PlatformProjectOpenProcessor.getInstanceIfItExists() == null) {
+      return;
+    }
 
-    String lastFilePath = getLastFilePath(project);
+    String lastFilePath = project != null ? getLastFilePath(project):"";
     //TODO String path = lastFilePath != null ? lastFilePath : RecentProjectsManager.getInstance().getLastProjectPath();
     JFileChooser fileChooser = new JFileChooser(lastFilePath);
     FileView fileView = new FileView() {
@@ -98,7 +103,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     if (files == null) return;
 
     for (File file : files) {
-      setLastFilePath(project, file.getParent());
+      if (project != null) setLastFilePath(project, file.getParent());
       if (isProjectFile(file)) {
         int answer = Messages.showYesNoDialog(project,
                                               IdeBundle.message("message.open.file.is.project", file.getName(),
@@ -115,7 +120,15 @@ public class OpenFileAction extends AnAction implements DumbAware {
       if (type == null) return;
 
       String absolutePath = file.getAbsolutePath();
-      openFile(absolutePath, project);
+
+      if (project != null) {
+        openFile(absolutePath, project);
+      } else {
+        VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(file);
+        if (vfile != null) {
+          PlatformProjectOpenProcessor.getInstance().doOpenProject(vfile, null, false);
+        }
+      }
     }
   }
 
@@ -154,6 +167,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
-    presentation.setEnabled(project != null);
+    presentation.setEnabled(project != null ||
+                            PlatformProjectOpenProcessor.getInstanceIfItExists() != null);
   }
 }
