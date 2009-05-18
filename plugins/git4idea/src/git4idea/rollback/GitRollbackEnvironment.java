@@ -83,7 +83,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * {@inheritDoc}
    */
   public void rollbackIfUnchanged(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException("Explicit file checkout is not supported by GIT.");
+    // do nothing
   }
 
   /**
