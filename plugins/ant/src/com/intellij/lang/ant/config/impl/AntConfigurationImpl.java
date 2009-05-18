@@ -311,7 +311,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         return null; // file was removed
       }
     }
-    final String targetName = (String)pair.second;
+    final String targetName = pair.second;
 
     final AntBuildTarget antBuildTarget = buildFile.getModel().findTarget(targetName);
     if (antBuildTarget != null) {
@@ -635,6 +635,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       // no task assigned
       return true;
     }
+    return executeTargetSynchronously(dataContext, target);
+  }
+
+  public static boolean executeTargetSynchronously(final DataContext dataContext, final AntBuildTarget target) {
     final Semaphore targetDone = new Semaphore();
     final boolean[] result = new boolean[1];
     try {
@@ -841,10 +845,19 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   @Nullable
   ExecuteBeforeRunEvent findExecuteBeforeRunEvent(RunConfiguration configuration) {
-    final ConfigurationType type = configuration.getType();
-    for (final ExecutionEvent e : getEventsByClass(ExecuteBeforeRunEvent.class)) {
+    final List<ExecutionEvent> events = getEventsByClass(ExecuteBeforeRunEvent.class);
+    for (final ExecutionEvent e : events) {
       final ExecuteBeforeRunEvent event = (ExecuteBeforeRunEvent)e;
-      if (event.isFor(type) || event.isFor(configuration)) return event;
+      if (event.isFor(configuration)) {
+        return event;
+      }
+    }
+    final ConfigurationType type = configuration.getType();
+    for (final ExecutionEvent e : events) {
+      final ExecuteBeforeRunEvent event = (ExecuteBeforeRunEvent)e;
+      if (event.isFor(type)) {
+        return event;
+      }
     }
     return null;
   }
