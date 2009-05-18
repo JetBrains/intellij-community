@@ -2,7 +2,7 @@
   <name>Google App Engine Integration</name>
   <id>com.intellij.appengine</id>
   <description>Provides support for developing Google App Engine applications</description>
-  <version>1.1.0</version>
+  <version>1.1.0.1</version>
   <idea-version since-build="9000"/>
   <depends>com.intellij.javaee</depends>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
