@@ -3,6 +3,7 @@ package com.intellij.packaging.impl.artifacts;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,11 +31,8 @@ public class PlainArtifactType extends ArtifactType {
     return ARTIFACT_ICON;
   }
 
-  public String getDefaultPathForDirectory() {
+  public String getDefaultPathFor(@NotNull PackagingSourceItem sourceItem) {
     return "/";
   }
 
-  public String getDefaultPathForJar() {
-    return "..";
-  }
 }

@@ -48,7 +48,7 @@ public class InlineArtifactAction extends AnAction {
     final Artifact artifact = ((ArtifactPackagingElement)element).findArtifact(myEditor.getContext());
     if (artifact != null) {
       for (PackagingElement<?> child : artifact.getRootElement().getChildren()) {
-        parent.addChild(ArtifactUtil.copyWithChildren(child));
+        parent.addOrFindChild(ArtifactUtil.copyWithChildren(child));
       }
     }
     treeComponent.rebuildTree();

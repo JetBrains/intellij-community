@@ -48,12 +48,12 @@ public class ExtractArtifactAction extends AnAction {
       //todo[nik] select type?
       final ModifiableArtifact artifact = myEditor.getContext().getModifiableArtifactModel().addArtifact(name, PlainArtifactType.getInstance());
       for (PackagingElement<?> element : selectedElements) {
-        artifact.getRootElement().addChild(ArtifactUtil.copyWithChildren(element));
+        artifact.getRootElement().addOrFindChild(ArtifactUtil.copyWithChildren(element));
       }
       for (PackagingElement element : selectedElements) {
         parent.removeChild(element);
       }
-      parent.addChild(new ArtifactPackagingElement(name));
+      parent.addOrFindChild(new ArtifactPackagingElement(name));
       treeComponent.rebuildTree();
     }
   }

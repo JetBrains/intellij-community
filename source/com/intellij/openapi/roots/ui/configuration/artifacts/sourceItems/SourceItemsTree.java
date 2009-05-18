@@ -5,7 +5,13 @@ import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SimpleDnDAwareTree;
@@ -18,6 +24,7 @@ import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -43,6 +50,18 @@ public class SourceItemsTree implements DnDSource, Disposable{
     myTree.setShowsRootHandles(true);
     Disposer.register(this, myBuilder);
     DnDManager.getInstance().registerSource(this, myTree);
+    PopupHandler.installPopupHandler(myTree, createPopupGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+  }
+
+  private ActionGroup createPopupGroup() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new PutSourceItemIntoDefaultLocationAction(this, myArtifactsEditor));
+
+    DefaultTreeExpander expander = new DefaultTreeExpander(myTree);
+    final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
+    group.addAction(commonActionsManager.createExpandAllAction(expander, myTree));
+    group.addAction(commonActionsManager.createCollapseAllAction(expander, myTree));
+    return group;
   }
 
   public void rebuildTree() {
@@ -61,21 +80,21 @@ public class SourceItemsTree implements DnDSource, Disposable{
     DnDManager.getInstance().unregisterSource(this, myTree);
   }
 
-  private DefaultMutableTreeNode[] getNodesToDrag() {
+  private DefaultMutableTreeNode[] getSelectedNodes() {
     return myTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
   }
 
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-    return !getItemsToDrag().isEmpty();
+    return !getSelectedItems().isEmpty();
   }
 
   public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
-    List<PackagingSourceItem> items = getItemsToDrag();
+    List<PackagingSourceItem> items = getSelectedItems();
     return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[items.size()])));
   }
 
-  private List<PackagingSourceItem> getItemsToDrag() {
-    final DefaultMutableTreeNode[] nodes = getNodesToDrag();
+  public List<PackagingSourceItem> getSelectedItems() {
+    final DefaultMutableTreeNode[] nodes = getSelectedNodes();
     List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
     for (DefaultMutableTreeNode node : nodes) {
       final Object userObject = node.getUserObject();
@@ -90,7 +109,7 @@ public class SourceItemsTree implements DnDSource, Disposable{
   }
 
   public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-    final DefaultMutableTreeNode[] nodes = getNodesToDrag();
+    final DefaultMutableTreeNode[] nodes = getSelectedNodes();
     if (nodes.length == 1) {
       return DnDAwareTree.getDragImage(myTree, TreeUtil.getPathFromRoot(nodes[0]), dragOrigin);
     }

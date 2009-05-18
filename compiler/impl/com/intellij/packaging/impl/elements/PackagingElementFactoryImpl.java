@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -112,30 +111,20 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return getOrCreateDirectoryOrArchive(parent, relativePath, false);
   }
 
-  private CompositePackagingElement<?> getOrCreateDirectoryOrArchive(CompositePackagingElement<?> parent, String relativePath,
-                                                                    final boolean isDirectory) {
-    final Pair<? extends CompositePackagingElement<?>, ? extends CompositePackagingElement<?>> pair = createDirectoryOrArchiveWithParents(relativePath, isDirectory);
-    if (pair != null) {
-      parent.addChild(pair.getFirst());
-      return pair.getSecond();
-    }
-    return parent;
-  }
-
-  @Nullable
-  private Pair<? extends CompositePackagingElement<?>, ? extends CompositePackagingElement<?>> createDirectoryOrArchiveWithParents(@NotNull @NonNls String path, final boolean directory) {
+  @NotNull
+  private CompositePackagingElement<?> getOrCreateDirectoryOrArchive(@NotNull CompositePackagingElement<?> root,
+                                                                     @NotNull @NonNls String path, final boolean directory) {
     path = StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/");
-    if (path.length() == 0) return null;
+    if (path.length() == 0) {
+      return root;
+    }
     int index = path.lastIndexOf('/');
     String lastName = path.substring(index + 1);
     String parentPath = index != -1 ? path.substring(0, index) : "";
+
+    final CompositePackagingElement<?> parent = getOrCreateDirectoryOrArchive(root, parentPath, true);
     final CompositePackagingElement<?> last = directory ? createDirectory(lastName) : createArchive(lastName);
-    final Pair<? extends CompositePackagingElement<?>, ? extends CompositePackagingElement<?>> parent = createDirectoryOrArchiveWithParents(parentPath, true);
-    if (parent != null) {
-      parent.getSecond().addChild(last);
-      return Pair.create(parent.getFirst(), last);
-    }
-    return Pair.create(last, last);
+    return parent.addOrFindChild(last);
   }
 
   public PackagingElement<?> createModuleOutput(@NotNull String moduleName) {
@@ -188,12 +177,18 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @Override
   public PackagingElement<?> createFileCopy(@NotNull String filePath, @NotNull String relativeOutputPath) {
     final FileCopyPackagingElement file = new FileCopyPackagingElement(filePath);
-    final Pair<? extends CompositePackagingElement<?>, ? extends CompositePackagingElement<?>> pair = createDirectoryOrArchiveWithParents(relativeOutputPath, true);
-    if (pair != null) {
-      pair.getSecond().addChild(file);
-      return pair.getFirst();
+    relativeOutputPath = StringUtil.trimStart(relativeOutputPath, "/");
+    if (relativeOutputPath.length() == 0) {
+      return file;
     }
-    return file;
+    int slash = relativeOutputPath.indexOf('/');
+    if (slash == -1) slash = relativeOutputPath.length();
+    String rootName = relativeOutputPath.substring(0, slash);
+    String pathTail = relativeOutputPath.substring(slash);
+    final DirectoryPackagingElement root = createDirectory(rootName);
+    final CompositePackagingElement<?> last = getOrCreateDirectory(root, pathTail);
+    last.addOrFindChild(file);
+    return root;
   }
 
   private static class DirectoryElementType extends CompositePackagingElementType<DirectoryPackagingElement> {

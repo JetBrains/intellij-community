@@ -19,8 +19,6 @@ public abstract class PackagingElementFactory {
 
   public abstract PackagingElementType<?>[] getNonCompositeElementTypes();
 
-  public abstract PackagingElement<?> createDirectory(@NotNull @NonNls String directoryName);
-
   @NotNull
   public abstract ArtifactRootElement<?> createArtifactRootElement();
 
@@ -29,6 +27,8 @@ public abstract class PackagingElementFactory {
 
   @NotNull
   public abstract CompositePackagingElement<?> getOrCreateArchive(@NotNull CompositePackagingElement<?> parent, @NotNull String relativePath);
+
+  public abstract CompositePackagingElement<?> createDirectory(@NotNull @NonNls String directoryName);
 
   public abstract CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName);
 

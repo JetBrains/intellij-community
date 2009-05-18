@@ -39,7 +39,7 @@ public class ArtifactUtil {
   private static void copyChildren(CompositePackagingElement<?> oldParent, CompositePackagingElement<?> newParent, 
                                    @Nullable Map<PackagingElement<?>, PackagingElement<?>> old2New) {
     for (PackagingElement<?> child : oldParent.getChildren()) {
-      newParent.addChild(copyWithChildren(child, old2New));
+      newParent.addOrFindChild(copyWithChildren(child, old2New));
     }
   }
 
@@ -121,7 +121,7 @@ public class ArtifactUtil {
         if (child.isEqualTo(prevChild)) {
           if (child instanceof CompositePackagingElement<?>) {
             for (PackagingElement<?> childElement : ((CompositePackagingElement<?>)child).getChildren()) {
-              ((CompositePackagingElement<?>)prevChild).addChild(childElement);
+              ((CompositePackagingElement<?>)prevChild).addOrFindChild(childElement);
             }
           }
           merged = true;

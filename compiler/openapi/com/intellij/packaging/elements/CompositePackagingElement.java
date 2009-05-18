@@ -19,25 +19,29 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
     super(type);
   }
 
-  public void addChild(@NotNull PackagingElement<?> child) {
+  public <T extends PackagingElement<?>> T addOrFindChild(@NotNull T child) {
     for (PackagingElement<?> element : myChildren) {
       if (element.isEqualTo(child)) {
         if (element instanceof CompositePackagingElement) {
           final List<PackagingElement<?>> children = ((CompositePackagingElement<?>)child).getChildren();
-          ((CompositePackagingElement<?>)element).addChildren(children);
+          ((CompositePackagingElement<?>)element).addOrFindChildren(children);
         }
-        return;
+        //noinspection unchecked
+        return (T) element;
       }
     }
     myChildren.add(child);
     myUnmodifiableChildren = null;
+    return child;
   }
 
-  public void addChildren(Collection<? extends PackagingElement<?>> children) {
+  public List<? extends PackagingElement<?>> addOrFindChildren(Collection<? extends PackagingElement<?>> children) {
+    List<PackagingElement<?>> added = new ArrayList<PackagingElement<?>>();
     for (PackagingElement<?> child : children) {
-      addChild(child);
+      added.add(addOrFindChild(child));
     }
     myUnmodifiableChildren = null;
+    return added;
   }
 
   public void removeChild(@NotNull PackagingElement<?> child) {

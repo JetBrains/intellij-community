@@ -31,6 +31,10 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
     myArtifactEditor = artifactEditor;
   }
 
+  protected ArtifactEditor getArtifactEditor() {
+    return myArtifactEditor;
+  }
+
   @Override
   protected void update(PresentationData presentation) {
     final Artifact artifact = myArtifactEditor.getArtifact();

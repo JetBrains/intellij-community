@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorUtil
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.elements.PackagingElementFilesKind;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.SourceItemPresentation;
@@ -38,6 +39,17 @@ public class LibrarySourceItem extends PackagingSourceItem {
 
   public int hashCode() {
     return myLibrary.hashCode();
+  }
+
+  @NotNull
+  @Override
+  public PackagingElementFilesKind getKindOfProducedElements() {
+    for (VirtualFile file : myLibrary.getFiles(OrderRootType.CLASSES)) {
+      if (file.isInLocalFileSystem()) {
+        return PackagingElementFilesKind.DIRECTORIES_WITH_CLASSES;
+      }
+    }
+    return PackagingElementFilesKind.JAR_FILES;
   }
 
   @NotNull

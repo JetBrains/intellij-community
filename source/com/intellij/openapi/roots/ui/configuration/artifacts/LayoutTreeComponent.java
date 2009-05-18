@@ -12,9 +12,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
+import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
@@ -129,7 +131,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
     final List<? extends PackagingElement<?>> children = type.createWithDialog(myContext, getArtifact(), parent);
     for (PackagingElement<?> child : children) {
-      parent.addChild(child);
+      parent.addOrFindChild(child);
     }
     updateAndSelect(parentNode, children);
   }
@@ -293,7 +295,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
       for (PackagingElement<?> element : draggingObject.createPackagingElements()) {
         toSelect.add(element);
-        targetElement.addChild(element);
+        targetElement.addOrFindChild(element);
       }
       updateAndSelect(targetNode, toSelect);
       myArtifactsEditor.getSourceItemsTree().rebuildTree();
@@ -337,6 +339,23 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   public void initTree() {
     myBuilder.initRootNode();
     mySelectedElementInfo.showPropertiesPanel();
+  }
+
+  public void putIntoDefaultLocations(@NotNull List<? extends PackagingSourceItem> items) {
+    ensureRootIsWritable();
+
+    final ArtifactRootElement<?> rootElement = getArtifact().getRootElement();
+    final ArtifactType artifactType = getArtifact().getArtifactType();
+    List<PackagingElement<?>> toSelect = new ArrayList<PackagingElement<?>>();
+    for (PackagingSourceItem item : items) {
+      final String path = artifactType.getDefaultPathFor(item);
+      if (path != null) {
+        final CompositePackagingElement<?> directory = PackagingElementFactory.getInstance().getOrCreateDirectory(rootElement, path);
+        final List<? extends PackagingElement<?>> elements = item.createElements();
+        toSelect.addAll(directory.addOrFindChildren(elements));
+      }
+    }
+    updateAndSelect(myTree.getRootPackagingNode(), toSelect);
   }
 
   private class SelectedElementInfo<E extends PackagingElement<?>> {

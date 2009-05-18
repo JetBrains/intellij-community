@@ -115,7 +115,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     final List children = element.getChildren(PACKAGING_ELEMENT_NAME);
     //noinspection unchecked
     for (Element child : (List<? extends Element>)children) {
-      ((CompositePackagingElement<?>)packagingElement).addChild(deserializeElement(child));
+      ((CompositePackagingElement<?>)packagingElement).addOrFindChild(deserializeElement(child));
     }
     return packagingElement;
   }
