@@ -8,10 +8,12 @@ import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,8 +66,25 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       artifactState.setOutputPath(artifact.getOutputPath());
       artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
       artifactState.setArtifactType(artifact.getArtifactType().getId());
+      for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
+        final ArtifactPropertiesState propertiesState = serializeProperties(provider, artifact.getProperties(provider));
+        if (propertiesState != null) {
+          artifactState.getPropertiesList().add(propertiesState);
+        }
+      }
       state.getArtifacts().add(artifactState);
     }
+    return state;
+  }
+
+  @Nullable
+  private static <S> ArtifactPropertiesState serializeProperties(ArtifactPropertiesProvider provider, ArtifactProperties<S> properties) {
+    final ArtifactPropertiesState state = new ArtifactPropertiesState();
+    state.setId(provider.getId());
+    final Element options = new Element("options");
+    XmlSerializer.serializeInto(properties.getState(), options, new SkipDefaultValuesSerializationFilters());
+    if (options.getContent().isEmpty() && options.getAttributes().isEmpty()) return null;
+    state.setOptions(options);
     return state;
   }
 
@@ -114,13 +133,33 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       }
       ArtifactType type = ArtifactType.findById(state.getArtifactType());
       if (type != null) {
-        artifacts.add(new ArtifactImpl(state.getName(), type, state.isBuildOnMake(), rootElement, state.getOutputPath()));
+        final ArtifactImpl artifact = new ArtifactImpl(state.getName(), type, state.isBuildOnMake(), rootElement, state.getOutputPath());
+        final List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
+        for (ArtifactPropertiesState propertiesState : propertiesList) {
+          final ArtifactPropertiesProvider provider = ArtifactPropertiesProvider.findById(propertiesState.getId());
+          if (provider != null) {
+            deserializeProperties(artifact.getProperties(provider), propertiesState);
+          }
+        }
+        artifacts.add(artifact);
       }
       else {
         LOG.info("Unknown artifact type: " + state.getArtifactType());
       }
     }
     myModel.setArtifactsList(artifacts);
+  }
+
+  private static <S> void deserializeProperties(ArtifactProperties<S> artifactProperties, ArtifactPropertiesState propertiesState) {
+    final Element options = propertiesState.getOptions();
+    if (artifactProperties == null || options == null) {
+      return;
+    }
+    final S state = artifactProperties.getState();
+    if (state != null) {
+      XmlSerializer.deserializeInto(state, options);
+      artifactProperties.loadState(state);
+    }
   }
 
   public void disposeComponent() {

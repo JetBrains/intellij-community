@@ -43,7 +43,7 @@ public class TargetChooserDialog extends DialogWrapper {
   private Tree myTree;
 
   protected TargetChooserDialog(final Project project,
-                                final AntBuildTarget selectedTarger,
+                                final @Nullable AntBuildTarget selectedTarger,
                                 final AntConfiguration antConfiguration) {
     super(project, false);
     mySelectedTarget = selectedTarger;
@@ -152,6 +152,7 @@ public class TargetChooserDialog extends DialogWrapper {
            mySelectedTarget.getModel().getBuildFile() == descriptor.getBuildFile();
   }
 
+  @Nullable
   public AntBuildTarget getSelectedTarget() {
     return mySelectedTarget;
   }

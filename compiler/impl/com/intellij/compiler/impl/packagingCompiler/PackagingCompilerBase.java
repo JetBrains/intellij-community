@@ -7,7 +7,6 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.DeploymentUtilImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -362,8 +361,8 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     return new ReadAction<ProcessingItem[]>() {
       protected void run(final Result<ProcessingItem[]> result) {
-        Module[] affectedModules = context.getCompileScope().getAffectedModules();
-        if (affectedModules.length == 0) {
+        final boolean shouldStartBuild = doNotStartBuild(context);
+        if (shouldStartBuild) {
           result.setResult(ProcessingItem.EMPTY_ARRAY);
           return;
         }
@@ -391,6 +390,8 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
       }
     }.execute().getResultObject();
   }
+
+  protected abstract boolean doNotStartBuild(CompileContext context);
 
   protected abstract C createContext(CompileContext context);
 

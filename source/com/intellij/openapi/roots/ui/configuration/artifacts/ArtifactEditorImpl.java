@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.ui.Splitter;
@@ -55,7 +54,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
   private final Artifact myOriginalArtifact;
   private final LayoutTreeComponent myLayoutTreeComponent;
   private TabbedPaneWrapper myTabbedPane;
-  private ArtifactPostprocessingPanel myPostprocessingPanel;
+  private ArtifactPropertiesEditors myPropertiesEditors;
 
   public ArtifactEditorImpl(final PackagingEditorContext context, Artifact artifact) {
     myContext = context;
@@ -63,7 +62,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
     myProject = context.getProject();
     mySourceItemsTree = new SourceItemsTree(myContext, this);
     myLayoutTreeComponent = new LayoutTreeComponent(this, mySubstitutionParameters, myContext, myOriginalArtifact);
-    myPostprocessingPanel = new ArtifactPostprocessingPanel(myContext);
+    myPropertiesEditors = new ArtifactPropertiesEditors(myContext, myOriginalArtifact);
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myLayoutTreeComponent);
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
@@ -79,6 +78,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
     final ModifiableArtifact modifiableArtifact = myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
     modifiableArtifact.setBuildOnMake(myBuildOnMakeCheckBox.isSelected());
     modifiableArtifact.setOutputPath(getConfiguredOutputPath());
+    myPropertiesEditors.applyProperties();
   }
 
   @Nullable
@@ -117,7 +117,6 @@ public class ArtifactEditorImpl implements ArtifactEditor {
   public void rebuildTries() {
     myLayoutTreeComponent.rebuildTree();
     mySourceItemsTree.rebuildTree();
-    myPostprocessingPanel.updateProcessors(getArtifact());
   }
 
 
@@ -170,7 +169,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
 
     myTabbedPane = new TabbedPaneWrapper();
     myTabbedPane.addTab("Output Layout", mySplitter);
-    myTabbedPane.addTab("Validation", myPostprocessingPanel.getMainPanel());
+    myPropertiesEditors.addTabs(myTabbedPane);
     myEditorPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
@@ -227,7 +226,8 @@ public class ArtifactEditorImpl implements ArtifactEditor {
 
   public boolean isModified() {
     return myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
-        || !Comparing.equal(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath());
+        || !Comparing.equal(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath())
+        || myPropertiesEditors.isModified();
   }
 
   public void dispose() {

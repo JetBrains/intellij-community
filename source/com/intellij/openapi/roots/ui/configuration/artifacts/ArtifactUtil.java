@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import com.intellij.util.Processor;
@@ -138,5 +139,9 @@ public class ArtifactUtil {
     for (PackagingElement<?> child : toRemove) {
       parent.removeChild(child);
     }
+  }
+
+  public static <S> void copyProperties(ArtifactProperties<?> from, ArtifactProperties<S> to) {
+    to.loadState((S)from.getState());
   }
 }

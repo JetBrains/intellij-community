@@ -2,8 +2,13 @@ package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author nik
@@ -16,6 +21,7 @@ public class ArtifactState {
   private String myArtifactType = PlainArtifactType.ID;
   private boolean myBuildOnMake;
   private Element myRootElement;
+  private List<ArtifactPropertiesState> myPropertiesList = new ArrayList<ArtifactPropertiesState>();
 
   @Attribute(NAME_ATTRIBUTE)
   public String getName() {
@@ -40,6 +46,16 @@ public class ArtifactState {
   @Tag("root")
   public Element getRootElement() {
     return myRootElement;
+  }
+
+  @Property(surroundWithTag = false)
+  @AbstractCollection(surroundWithTag = false)
+  public List<ArtifactPropertiesState> getPropertiesList() {
+    return myPropertiesList;
+  }
+
+  public void setPropertiesList(List<ArtifactPropertiesState> propertiesList) {
+    myPropertiesList = propertiesList;
   }
 
   public void setArtifactType(String artifactType) {

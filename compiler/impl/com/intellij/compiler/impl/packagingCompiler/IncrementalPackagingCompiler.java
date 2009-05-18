@@ -112,4 +112,9 @@ public class IncrementalPackagingCompiler extends PackagingCompilerBase<OldProce
   protected void onFileCopied(OldProcessingItemsBuilderContext builderContext, ExplodedDestinationInfo explodedDestination) {
     getAffectedParticipants(builderContext.getCompileContext()).add(builderContext.getDestinationOwner(explodedDestination));
   }
+
+  protected boolean doNotStartBuild(CompileContext context) {
+    Module[] affectedModules = context.getCompileScope().getAffectedModules();
+    return affectedModules.length == 0;
+  }
 }

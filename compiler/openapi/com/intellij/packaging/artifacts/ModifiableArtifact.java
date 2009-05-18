@@ -14,4 +14,6 @@ public interface ModifiableArtifact extends Artifact {
   void setName(String name);
 
   void setRootElement(ArtifactRootElement<?> root);
+
+  void setProperties(ArtifactPropertiesProvider provider, ArtifactProperties<?> properties);
 }
