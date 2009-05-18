@@ -184,6 +184,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
         }
       });
       if (ex != null) {
+        LOG.info(ex);
         Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
       }
     }
