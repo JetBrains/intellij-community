@@ -16,6 +16,10 @@
 
 package com.intellij.util.lang;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -41,6 +47,36 @@ class ClassPath {
   private final boolean myCanLockJars;
   private final boolean myCanUseCache;
   private static final long NS_THRESHOLD = 10000000L;
+
+  private static PrintStream ourOrder;
+
+  @SuppressWarnings({"UnusedDeclaration"})
+  private static void printOrder(Loader loader, String resource) {
+    if (ourOrder == null) {
+      final File orderFile = new File(PathManager.getBinPath() + File.separator + "order.txt");
+      if (!orderFile.isFile()) {
+        try {
+          if (!orderFile.createNewFile()) return;
+          ourOrder = new PrintStream(new FileOutputStream(orderFile));
+          ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+            public void run() {
+              ourOrder.close();
+            }
+          });
+        }
+        catch (IOException e) {
+          return;
+        }
+      }
+    }
+
+    if (ourOrder != null) {
+      String jarURL = FileUtil.toSystemIndependentName(loader.getBaseURL().getFile());
+      jarURL = jarURL.replaceFirst(FileUtil.toSystemIndependentName(PathManager.getHomePath()), "");
+      jarURL = StringUtil.trimEnd(StringUtil.trimStart(jarURL, "file:/"), "!/");
+      ourOrder.println(resource + ":" + jarURL);
+    }
+  }
 
   public ClassPath(URL[] urls, boolean canLockJars, boolean canUseCache) {
     myCanLockJars = canLockJars;
@@ -63,6 +99,7 @@ class ClassPath {
         for (Loader loader : loaders) {
           final Resource resource = loader.getResource(s, flag);
           if (resource != null) {
+            //printOrder(loader, s);
             return resource;
           }
         }
