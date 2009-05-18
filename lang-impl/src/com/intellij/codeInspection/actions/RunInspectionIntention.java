@@ -10,7 +10,10 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -19,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -84,12 +86,12 @@ public class RunInspectionIntention implements IntentionAction {
   public void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope,
                               PsiElement psiElement) {
     final InspectionProfileImpl profile = new InspectionProfileImpl(myDisplayName);
-    final ModifiableModel model = profile.getModifiableModel();
+    final InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
     final InspectionProfileEntry[] profileEntries = model.getInspectionTools(null);
     for (InspectionProfileEntry entry : profileEntries) {
-      model.disableTool(entry.getShortName(), (NamedScope)null);
+      model.disableTool(entry.getShortName());
     }
-    model.enableTool(myShortName, (NamedScope)null);
+    model.enableTool(myShortName);
     try {
       Element element = new Element("toCopy");
       baseTool.writeSettings(element);

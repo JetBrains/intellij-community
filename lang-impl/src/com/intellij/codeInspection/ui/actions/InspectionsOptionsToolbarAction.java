@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -135,7 +134,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
       try {
         if (myView.isProfileDefined()) {
           final ModifiableModel model = myView.getCurrentProfile().getModifiableModel();
-          model.disableTool(myKey.toString(), (NamedScope)null);
+          model.disableTool(myKey.toString());
           model.commit();
           myView.updateCurrentProfile();
         } else {
