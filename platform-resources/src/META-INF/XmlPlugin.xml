@@ -188,7 +188,9 @@
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlGtTypedHandler" id="xmlGt"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlAutoPopupHandler"/>
 
+    <!--
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.XmlCopyPastePreProcessor"/>
+    -->
 
     <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
