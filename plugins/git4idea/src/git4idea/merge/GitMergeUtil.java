@@ -17,19 +17,25 @@ package git4idea.merge;
 
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
+import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
+import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -160,5 +166,17 @@ public class GitMergeUtil {
     }
     ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
     manager.showUpdateProjectInfo(files, actionName, actionInfo);
+    Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
+    if (!unmergedNames.isEmpty()) {
+      LocalFileSystem lfs = LocalFileSystem.getInstance();
+      ArrayList<VirtualFile> unmerged = new ArrayList<VirtualFile>();
+      for (String fileName : unmergedNames) {
+        VirtualFile f = lfs.findFileByPath(fileName);
+        if (f != null) {
+          unmerged.add(f);
+        }
+      }
+      AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider());
+    }
   }
 }
