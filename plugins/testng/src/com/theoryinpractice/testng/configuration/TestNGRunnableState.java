@@ -485,7 +485,7 @@ public class TestNGRunnableState extends JavaCommandLineState
           LOG.assertTrue(testAnnotation != null);
           for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, getSearchScope())) {
             if (TestNGUtil.isAnnotatedWithParameter(AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN), "groups", dependencies)) {
-              final PsiClass psiClass = psiMember.getContainingClass();
+              final PsiClass psiClass = psiMember instanceof PsiClass ? ((PsiClass)psiMember) : psiMember.getContainingClass();
               Collection<PsiMethod> psiMethods = results.get(psiClass);
               if (psiMethods == null) {
                 psiMethods = new LinkedHashSet<PsiMethod>();
