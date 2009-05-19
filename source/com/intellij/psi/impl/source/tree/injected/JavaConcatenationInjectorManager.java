@@ -9,9 +9,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.ParameterizedCachedValueImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.CachedValueProvider;
@@ -91,10 +89,14 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
     public CachedValueProvider.Result<Places> compute(PsiElement context) {
       PsiElement element = context;
       PsiElement parent = context.getParent();
-      while (parent instanceof PsiBinaryExpression) {
+      while (parent instanceof PsiBinaryExpression && ((PsiBinaryExpression)parent).getOperationSign().getTokenType() == JavaTokenType.PLUS
+             || parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != element
+             || parent instanceof PsiTypeCastExpression
+             || parent instanceof PsiParenthesizedExpression) {
         element = parent;
         parent = parent.getParent();
       }
+
       PsiElement[] operands;
       PsiElement anchor;
       if (element instanceof PsiBinaryExpression) {
