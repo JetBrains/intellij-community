@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +66,8 @@ public abstract class IdeFocusManager {
   public abstract boolean isRedispatching();
 
   public abstract boolean dispatch(KeyEvent e);
+
+  public abstract void suspendKeyProcessingUntil(ActionCallback done);
 
   public static IdeFocusManager getInstance(@NotNull Project project) {
     return project.getComponent(IdeFocusManager.class);

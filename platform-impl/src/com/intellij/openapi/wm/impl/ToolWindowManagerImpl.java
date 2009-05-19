@@ -1553,6 +1553,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return myRedispatching;
   }
 
+  public void suspendKeyProcessingUntil(final ActionCallback done) {
+    requestFocus(new FocusCommand(done) {
+      public ActionCallback run() {
+        return done;
+      }
+    }, true);
+  }
 
   /**
    * This command creates and shows <code>FloatingDecorator</code>.

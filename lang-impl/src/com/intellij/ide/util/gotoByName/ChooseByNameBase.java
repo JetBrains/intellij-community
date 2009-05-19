@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -81,7 +82,7 @@ public abstract class ChooseByNameBase{
 
   private boolean myListIsUpToDate = false;
   protected boolean myDisposedFlag = false;
-  private String myPosponedOkName;
+  private ActionCallback myPosponedOkAction;
 
   private final String[][] myNames = new String[2][];
   private CalcElementsThread myCalcElementsThread;
@@ -351,7 +352,7 @@ public abstract class ChooseByNameBase{
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
-        myPosponedOkName = null;
+        clearPosponedOkAction(false);
         rebuildList();
       }
     });
@@ -474,14 +475,20 @@ public abstract class ChooseByNameBase{
 
     myListUpdater.cancelAll();
     close(ok);
+
+    clearPosponedOkAction(ok);
   }
 
   private boolean posponeCloseWhenListReady(boolean ok) {
+    if (!Registry.is("actionSystem.fixLostTyping")) return false;
+
     final String text = myTextField.getText();
     if (ok && !myListIsUpToDate && text != null && text.trim().length() > 0) {
-      myPosponedOkName = myTextField.getText().trim();
+      myPosponedOkAction = new ActionCallback();
+      IdeFocusManager.getInstance(myProject).suspendKeyProcessingUntil(myPosponedOkAction);
       return true;
     }
+
     return false;
   }
 
@@ -644,6 +651,7 @@ public abstract class ChooseByNameBase{
       myTextField.setForeground(Color.red);
       myListUpdater.cancelAll();
       hideList();
+      clearPosponedOkAction(false);
       return;
     }
 
@@ -815,13 +823,25 @@ public abstract class ChooseByNameBase{
     }
 
     private void doPostponedOkIfNeeded() {
-      if (myPosponedOkName != null) {
-        myPosponedOkName = null;
-        if (getChosenElement() != null && Registry.is("actionSystem.fixLostTyping")) {
+      if (myPosponedOkAction != null) {
+        if (getChosenElement() != null) {
           close(true);
+          clearPosponedOkAction(myDisposedFlag);
         }
       }
     }
+  }
+
+  private void clearPosponedOkAction(boolean success) {
+    if (myPosponedOkAction != null) {
+      if (success) {
+        myPosponedOkAction.setDone();
+      } else {
+        myPosponedOkAction.setRejected();
+      }
+    }
+
+    myPosponedOkAction = null;
   }
 
   protected abstract void showList();

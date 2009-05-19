@@ -52,6 +52,10 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
+  public void suspendKeyProcessingUntil(ActionCallback done) {
+  }
+
+  @Override
   public boolean isRedispatching() {
     return false;
   }

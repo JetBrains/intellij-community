@@ -3,13 +3,14 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
+import com.intellij.openapi.util.Expirable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
-public abstract class FocusCommand extends ActiveRunnable {
+public abstract class FocusCommand extends ActiveRunnable implements Expirable {
 
   private Component myDominationComponent;
 
