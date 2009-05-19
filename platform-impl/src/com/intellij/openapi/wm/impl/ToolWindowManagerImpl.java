@@ -100,13 +100,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Set<Runnable> myIdleRequests = new HashSet<Runnable>();
   private final Runnable myFlushRunnable = new Runnable() {
     public void run() {
-      if (isFocusTranferInProgress() || (myQueue != null && myQueue.isSuspendMode())) {
-        restartIdleAlarm();
-      } else {
+      if (isFocusSettledDown() && !isRedispatching()) {
         flushIdleRequests();
+      } else {
+        restartIdleAlarm();
       }
     }
   };
+
+  private boolean isFocusSettledDown() {
+    return !(isFocusTranferInProgress() || (myQueue != null && myQueue.isSuspendMode()));
+  }
 
   private FocusCommand myRequestFocusCmd;
   private FocusCommand myUnforcedRequestFocusCmd;
@@ -1504,12 +1508,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myRedispatching = true;
     try {
       final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
-      if (isFocusTranferInProgress()) return;
+      if (!isFocusSettledDown()) return;
       IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
 
       for (int i = 0; i < events.length; i++) {
         KeyEvent each = events[i];
-        if (isFocusTranferInProgress()) return;
+        if (!isFocusSettledDown()) return;
 
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (owner != null) {

@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -80,6 +81,7 @@ public abstract class ChooseByNameBase{
 
   private boolean myListIsUpToDate = false;
   protected boolean myDisposedFlag = false;
+  private String myPosponedOkName;
 
   private final String[][] myNames = new String[2][];
   private CalcElementsThread myCalcElementsThread;
@@ -349,6 +351,7 @@ public abstract class ChooseByNameBase{
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
+        myPosponedOkName = null;
         rebuildList();
       }
     });
@@ -467,8 +470,19 @@ public abstract class ChooseByNameBase{
   }
 
   private void doClose(final boolean ok) {
+    if (posponeCloseWhenListReady(ok)) return;
+
     myListUpdater.cancelAll();
     close(ok);
+  }
+
+  private boolean posponeCloseWhenListReady(boolean ok) {
+    final String text = myTextField.getText();
+    if (ok && !myListIsUpToDate && text != null && text.trim().length() > 0) {
+      myPosponedOkName = myTextField.getText().trim();
+      return true;
+    }
+    return false;
   }
 
   private synchronized void ensureNamesLoaded(boolean checkboxState) {
@@ -790,10 +804,23 @@ public abstract class ChooseByNameBase{
           
           if (!myCommands.isEmpty()) {
             myAlarm.addRequest(this, DELAY);
+          } else {
+            doPostponedOkIfNeeded();
           }
-          showList();
+          if (!myDisposedFlag) {
+            showList();
+          }
         }
       }, DELAY);
+    }
+
+    private void doPostponedOkIfNeeded() {
+      if (myPosponedOkName != null) {
+        myPosponedOkName = null;
+        if (getChosenElement() != null && Registry.is("actionSystem.fixLostTyping")) {
+          close(true);
+        }
+      }
     }
   }
 
