@@ -73,7 +73,7 @@ public class ArtifactImpl implements ModifiableArtifact {
     return artifact;
   }
 
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     myName = name;
   }
 
@@ -83,6 +83,10 @@ public class ArtifactImpl implements ModifiableArtifact {
 
   public void setProperties(ArtifactPropertiesProvider provider, ArtifactProperties<?> properties) {
     myProperties.put(provider, properties);
+  }
+
+  public void setArtifactType(@NotNull ArtifactType selected) {
+    myArtifactType = selected;
   }
 
   public void setBuildOnMake(boolean buildOnMake) {

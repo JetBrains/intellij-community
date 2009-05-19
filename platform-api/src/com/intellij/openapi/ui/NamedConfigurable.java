@@ -33,6 +33,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
   private JPanel myNamePanel;
   private JPanel myWholePanel;
   private JPanel myOptionsPanel;
+  private JPanel myTopRightPanel;
   private JComponent myOptionsComponent;
   private boolean myNameEditable;
 
@@ -43,7 +44,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
   protected NamedConfigurable(boolean isNameEditable, @Nullable final Runnable updateTree) {
     myNameEditable = isNameEditable;
     myNamePanel.setVisible(myNameEditable);
-    if (myNameEditable){
+    if (myNameEditable) {
       myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
         protected void textChanged(DocumentEvent e) {
           setDisplayName(myNameField.getText());
@@ -74,10 +75,22 @@ public abstract class NamedConfigurable<T> implements Configurable {
   public final JComponent createComponent() {
     if (myOptionsComponent == null){
       myOptionsComponent = createOptionsPanel();
+      final JComponent component = createTopRightComponent();
+      if (component == null) {
+        myTopRightPanel.setVisible(false);
+      }
+      else {
+        myTopRightPanel.add(component, BorderLayout.CENTER);
+      }
     }
     myOptionsPanel.add(myOptionsComponent, BorderLayout.CENTER);
     updateName();
     return myWholePanel;
+  }
+
+  @Nullable
+  protected JComponent createTopRightComponent() {
+    return null;
   }
 
   protected void resetOptionsPanel() {

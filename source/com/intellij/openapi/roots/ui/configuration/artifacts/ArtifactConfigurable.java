@@ -2,13 +2,19 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author nik
@@ -71,6 +77,40 @@ public class ArtifactConfigurable extends NamedConfigurable<Artifact> {
 
   public String getHelpTopic() {
     return null;
+  }
+
+  @Override
+  protected JComponent createTopRightComponent() {
+    final ComboBox artifactTypeBox = new ComboBox();
+    for (ArtifactType type : ArtifactType.getAllTypes()) {
+      artifactTypeBox.addItem(type);
+    }
+
+    artifactTypeBox.setRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        final ArtifactType type = (ArtifactType)value;
+        setIcon(type.getIcon());
+        setText(type.getPresentableName());
+        return component;
+      }
+    });
+
+    artifactTypeBox.setSelectedItem(getArtifact().getArtifactType());
+    artifactTypeBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final ArtifactType selected = (ArtifactType)artifactTypeBox.getSelectedItem();
+        if (!Comparing.equal(selected, getArtifact().getArtifactType())) {
+          myPackagingEditorContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setArtifactType(selected);
+        }
+      }
+    });
+
+    final JPanel panel = new JPanel(new FlowLayout());
+    panel.add(new JLabel("Type: "));
+    panel.add(artifactTypeBox);
+    return panel;
   }
 
   public boolean isModified() {
