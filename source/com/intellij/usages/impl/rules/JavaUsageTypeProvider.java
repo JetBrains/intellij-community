@@ -92,6 +92,9 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
   @Nullable
   private static UsageType getClassUsageType(PsiElement element) {
 
+    if (element.getParent() instanceof PsiAnnotation &&
+        element == ((PsiAnnotation)element.getParent()).getNameReferenceElement()) return UsageType.ANNOTATION;
+
     if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) != null) return UsageType.CLASS_IMPORT;
     PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
     if (referenceList != null) {
