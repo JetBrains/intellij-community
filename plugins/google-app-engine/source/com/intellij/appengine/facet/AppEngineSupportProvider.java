@@ -157,7 +157,7 @@ public class AppEngineSupportProvider extends FacetTypeFrameworkSupportProvider<
 
     private AppEngineSupportConfigurable() {
       super(AppEngineSupportProvider.this, ArrayUtil.EMPTY_STRING_ARRAY, null);
-      mySdkEditor = new AppEngineSdkEditor(null);
+      mySdkEditor = new AppEngineSdkEditor(null, true);
       myMainPanel = new JPanel(new BorderLayout());
       myMainPanel.add(mySdkEditor.getMainComponent(), BorderLayout.CENTER);
       myJdoCheckBox = new JCheckBox("JDO persistence");

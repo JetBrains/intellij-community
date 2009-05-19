@@ -20,6 +20,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.NullableFunction;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -151,7 +153,14 @@ public class AppEngineSdkImpl implements AppEngineSdk {
       LOG.info(e);
       return null;
     }
-    final ApplicationServer server = model.createNewApplicationServer(serverInfo.getDefaultName(), serverInfo.getDefaultLibraries(), serverData);
+    UniqueNameGenerator generator = new UniqueNameGenerator(serversManager.getApplicationServers(), new NullableFunction<Object, String>() {
+      public String fun(Object o) {
+        return ((ApplicationServer)o).getName();
+      }
+    });
+    final String name = generator.generateUniqueName(serverInfo.getDefaultName());
+    final ApplicationServer server = model.createNewApplicationServer(name, serverInfo.getDefaultLibraries(), serverData);
+    server.setSourceIntegrationName(integration.getPresentableName());
     new WriteAction() {
       protected void run(final Result result) {
         model.commit();

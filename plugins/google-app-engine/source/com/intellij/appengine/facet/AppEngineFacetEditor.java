@@ -45,7 +45,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   public AppEngineFacetEditor(AppEngineFacetConfiguration facetConfiguration, FacetEditorContext context, FacetValidatorsManager validatorsManager) {
     myFacetConfiguration = facetConfiguration;
     myContext = context;
-    mySdkEditor = new AppEngineSdkEditor(myContext.getProject());
+    mySdkEditor = new AppEngineSdkEditor(myContext.getProject(), false);
     validatorsManager.registerValidator(new FacetEditorValidator() {
       @Override
       public ValidationResult check() {
