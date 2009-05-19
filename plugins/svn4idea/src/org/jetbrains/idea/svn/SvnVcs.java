@@ -239,10 +239,10 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public void postStartup() {
-    myMapping = SvnFileUrlMappingImpl.getInstance(myProject);
+//    myMapping = SvnFileUrlMappingImpl.getInstance(myProject);
     // only mapping for default
     if (myProject.isDefault()) return;
-    myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, myMapping);
+    myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
 
     invokeRefreshSvnRoots(true);
   }
@@ -796,6 +796,9 @@ public class SvnVcs extends AbstractVcs {
 
   @NotNull
   public SvnFileUrlMapping getSvnFileUrlMapping() {
+    if (myMapping == null) {
+      myMapping = SvnFileUrlMappingImpl.getInstance(myProject);
+    }
     return myMapping;
   }
 
@@ -845,7 +848,7 @@ public class SvnVcs extends AbstractVcs {
 
   @Override
   public RootsConvertor getCustomConvertor() {
-    return myMapping;
+    return getSvnFileUrlMapping();
   }
 
   @Override
@@ -879,7 +882,7 @@ public class SvnVcs extends AbstractVcs {
     if (in.size() <= 1) return in;
     
     final List<RootUrlPair> infos = new ArrayList<RootUrlPair>(in.size());
-    final SvnFileUrlMappingImpl mapping = myMapping;
+    final SvnFileUrlMappingImpl mapping = (SvnFileUrlMappingImpl) getSvnFileUrlMapping();
     for (VirtualFile vf : in) {
       final File ioFile = new File(vf.getPath());
       final SVNURL url = mapping.getUrlForFile(ioFile);
