@@ -596,7 +596,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
         if (myProject != null) {
           Project project = myProject.get();
-          if (project != null && !project.isDisposed()) {
+          if (project != null && !project.isDisposed() && project.isInitialized()) {
             IdeFocusManager.getInstance(project).requestFocus(new FocusCommand() {
               public ActionCallback run() {
                 return myFocusedCallback;
