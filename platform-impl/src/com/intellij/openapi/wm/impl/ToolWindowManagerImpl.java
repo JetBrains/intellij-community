@@ -1558,7 +1558,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       public ActionCallback run() {
         return done;
       }
-    }, true);
+    }.saveAllocation(), true);
   }
 
   /**
@@ -1857,6 +1857,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (checkForRejectOrByPass(command, forced, result)) return;
 
         if (myRequestFocusCmd == command) {
+          final ActionCallback.TimedOut focusTimeout = new ActionCallback.TimedOut(Registry.get("actionSystem.commandProcessingTimeout").asInteger(),
+                                                                                   "Focus command timed out, cmd=" + command,
+                                                                                   command.getAllocation()) {
+            @Override
+            protected void onTimeout() {
+              forceFinishFocusSettledown(command, result);
+            }
+          };
+
           command.run().doWhenDone(new Runnable() {
             public void run() {
               LaterInvocator.invokeLater(new Runnable() {
@@ -1885,13 +1894,18 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                 }, 250);
               }
             }
-          });
+          }).notify(focusTimeout);
         }
         else {
           rejectCommand(command, result);
         }
       }
     });
+  }
+
+  private void forceFinishFocusSettledown(FocusCommand cmd, ActionCallback cmdCallback) {
+    rejectCommand(cmd, cmdCallback);
+    myUnforcedRequestFocusCmd = null;
   }
 
   private void fixStickingDialogs() {
@@ -1955,6 +1969,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void rejectCommand(FocusCommand cmd, ActionCallback callback) {
     if (myRequestFocusCmd == cmd) {
       resetCurrentCommand();
+    } else if (myUnforcedRequestFocusCmd == cmd) {
+      resetCurrentUnforcedCommand();
     }
 
     callback.setRejected();
@@ -1962,6 +1978,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private void resetCurrentCommand() {
     myRequestFocusCmd = null;
+  }
+
+  private void resetCurrentUnforcedCommand() {
+    myUnforcedRequestFocusCmd = null;
   }
 
   private boolean canExecuteOnInactiveApplication(FocusCommand cmd) {

@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -13,6 +14,7 @@ import java.util.Arrays;
 public abstract class FocusCommand extends ActiveRunnable implements Expirable {
 
   private Component myDominationComponent;
+  private Throwable myAllocation;
 
   protected FocusCommand() {
   }
@@ -61,6 +63,17 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
     }
 
     return false;
+  }
+
+  public final FocusCommand saveAllocation() {
+    if (Registry.is("ide.debugMode")) {
+      myAllocation = new Exception();
+    }
+    return this;
+  }
+
+  public Throwable getAllocation() {
+    return myAllocation;
   }
 
   @Override

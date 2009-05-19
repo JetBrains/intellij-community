@@ -17,10 +17,14 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ActionCallback implements Disposable {
   private final ExecutionCallback myDone;
@@ -84,6 +88,18 @@ public class ActionCallback implements Disposable {
     });
   }
 
+  public final ActionCallback notify(final ActionCallback child) {
+    return doWhenDone(new Runnable() {
+      public void run() {
+        child.setDone();
+      }
+    }).doWhenRejected(new Runnable() {
+      public void run() {
+        child.setRejected();
+      }
+    });
+  }
+
   public final ActionCallback processOnDone(Runnable runnable, boolean requiresDone) {
     if (requiresDone) {
       return doWhenDone(runnable);
@@ -128,5 +144,56 @@ public class ActionCallback implements Disposable {
 
 
   public void dispose() {
+  }
+
+  public static class TimedOut extends ActionCallback implements Runnable {
+
+    private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.ActionCallback.TimedOut");
+
+    private static Timer myTimer = new Timer();
+    private Throwable myAllocation;
+    private String myMessage;
+    private TimerTask myTask;
+
+    public TimedOut(long timeOut, String message, Throwable allocation) {
+      sheduleCheck(timeOut, message, allocation);
+    }
+
+    public TimedOut(int countToDone, long timeOut, String message, Throwable allocation) {
+      super(countToDone);
+      sheduleCheck(timeOut, message, allocation);
+    }
+
+    private void sheduleCheck(long timeOut, final String message, Throwable allocation) {
+      myMessage = message;
+      myAllocation = allocation;
+      myTask = new TimerTask() {
+        public void run() {
+          SwingUtilities.invokeLater(TimedOut.this);
+        }
+      };
+      myTimer.schedule(myTask, timeOut);
+    }
+
+    public final void run() {
+      if (!isProcessed()) {
+        setRejected();
+        if (myAllocation != null) {
+          LOG.error(myMessage, myAllocation);
+        } else {
+          LOG.error(myMessage);
+        }
+        onTimeout();
+      }
+    }
+
+    @Override
+    public void dispose() {
+      super.dispose();
+      myTask.cancel();
+    }
+
+    protected void onTimeout() {
+    }
   }
 }

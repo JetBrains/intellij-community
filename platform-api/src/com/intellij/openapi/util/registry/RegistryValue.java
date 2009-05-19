@@ -36,6 +36,10 @@ public class RegistryValue {
     return Boolean.valueOf(get(myKey, "false", true));
   }
 
+  public long asInteger() {
+    return Integer.valueOf(get(myKey, "0", true));
+  }
+
   public String getDescription() {
     return get(myKey + ".description", "", false);
   }
@@ -119,4 +123,5 @@ public class RegistryValue {
   public String toString() {
     return myKey + "=" + asString();
   }
+
 }
