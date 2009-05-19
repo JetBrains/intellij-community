@@ -6,6 +6,7 @@ import com.intellij.appengine.server.integration.AppEngineServerIntegration;
 import com.intellij.appengine.server.integration.AppEngineServerData;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
+import com.intellij.javaee.appServerIntegrations.AppServerIntegration;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public class AppEngineSdkManagerImpl extends AppEngineSdkManager {
   @NotNull
   @Override
   public List<? extends AppEngineSdk> getValidSdks() {
-    final List<ApplicationServer> servers = ApplicationServersManager.getInstance().getApplicationServers(AppEngineServerIntegration.getInstance());
+    final List<ApplicationServer> servers = ApplicationServersManager.getInstance().getApplicationServers(new AppServerIntegration[]{AppEngineServerIntegration.getInstance()});
     List<AppEngineSdk> sdkList = new ArrayList<AppEngineSdk>();
     for (ApplicationServer server : servers) {
       final AppEngineSdk sdk = ((AppEngineServerData)server.getPersistentData()).getSdk();

@@ -48,7 +48,6 @@ public class AppEngineServerConfigurationType extends J2EEConfigurationType {
     return new ConfigurationFactory[] {super.getConfigurationFactories()[0]};
   }
 
-  @Override
   public AppServerIntegration getIntegration() {
     return AppEngineServerIntegration.getInstance();
   }

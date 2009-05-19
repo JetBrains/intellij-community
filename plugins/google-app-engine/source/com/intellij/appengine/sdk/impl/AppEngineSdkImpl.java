@@ -10,6 +10,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.javaee.appServerIntegrations.ApplicationServerInfo;
 import com.intellij.javaee.appServerIntegrations.CantFindApplicationServerJarsException;
+import com.intellij.javaee.appServerIntegrations.AppServerIntegration;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
@@ -134,7 +135,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     final ApplicationServersManager serversManager = ApplicationServersManager.getInstance();
     final AppEngineServerIntegration integration = AppEngineServerIntegration.getInstance();
 
-    final List<ApplicationServer> servers = serversManager.getApplicationServers(integration);
+    final List<ApplicationServer> servers = serversManager.getApplicationServers(new AppServerIntegration[]{integration});
     File sdkHomeFile = new File(FileUtil.toSystemDependentName(myHomePath));
     for (ApplicationServer server : servers) {
       final String path = ((AppEngineServerData)server.getPersistentData()).getSdkPath();

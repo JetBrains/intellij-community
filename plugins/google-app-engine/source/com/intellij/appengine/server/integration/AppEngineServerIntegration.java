@@ -27,7 +27,6 @@ public class AppEngineServerIntegration extends AppServerIntegration {
     myServerHelper = new AppEngineServerHelper();
   }
 
-  @Override
   public Icon getIcon() {
     return AppEngineUtil.APP_ENGINE_ICON;
   }
