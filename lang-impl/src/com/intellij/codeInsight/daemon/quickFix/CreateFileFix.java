@@ -3,7 +3,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -16,8 +16,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -59,7 +59,7 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message(myKey, myNewFileName);
+    return CodeInsightBundle.message(myKey, myNewFileName);
   }
 
   @NotNull
@@ -69,7 +69,7 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("create.file.family");
+    return CodeInsightBundle.message("create.file.family");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {

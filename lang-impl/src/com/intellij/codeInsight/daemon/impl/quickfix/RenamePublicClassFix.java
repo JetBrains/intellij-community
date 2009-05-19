@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -28,14 +28,14 @@ public class RenamePublicClassFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("rename.public.class.text",
+    return CodeInsightBundle.message("rename.public.class.text",
                                   myClass.getName(),
                                   myClass.getContainingFile().getVirtualFile().getNameWithoutExtension());
   }
 
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("rename.public.class.family");
+    return CodeInsightBundle.message("rename.public.class.family");
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

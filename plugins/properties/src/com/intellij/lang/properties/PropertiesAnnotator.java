@@ -1,7 +1,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
@@ -82,7 +81,7 @@ public class PropertiesAnnotator implements Annotator {
             annotation.registerFix(new IntentionAction() {
               @NotNull
               public String getText() {
-                return QuickFixBundle.message("unescape");
+                return PropertiesBundle.message("unescape");
               }
 
               @NotNull

@@ -3,15 +3,15 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -35,7 +35,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("rename.file.fix");
+    return CodeInsightBundle.message("rename.file.fix");
   }
 
   @NotNull
@@ -45,7 +45,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("rename.file.fix");
+    return CodeInsightBundle.message("rename.file.fix");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {

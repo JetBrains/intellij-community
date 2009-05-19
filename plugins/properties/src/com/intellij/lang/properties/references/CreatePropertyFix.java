@@ -2,10 +2,10 @@ package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -29,7 +29,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   private String myKey;
   private List<PropertiesFile> myPropertiesFiles;
 
-  public static final String NAME = QuickFixBundle.message("create.property.quickfix.text");
+  public static final String NAME = PropertiesBundle.message("create.property.quickfix.text");
 
   public CreatePropertyFix() {
   }

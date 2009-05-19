@@ -3,17 +3,17 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
-import com.intellij.psi.PsiFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +31,7 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("rename.file.reference.text", myExistingElementName);
+    return CodeInsightBundle.message("rename.file.reference.text", myExistingElementName);
   }
 
   @NotNull
@@ -41,7 +41,7 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
 
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("rename.file.reference.family");
+    return CodeInsightBundle.message("rename.file.reference.family");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
