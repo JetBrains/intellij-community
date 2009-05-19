@@ -117,7 +117,7 @@ public class ArtifactsGenerator {
 
     List<Generator> copyInstructions = new ArrayList<Generator>();
     for (PackagingElement<?> element : artifact.getRootElement().getChildren()) {
-      copyInstructions.addAll(element.computeAntInstructions(myResolvingContext, creator, myContext));
+      copyInstructions.addAll(element.computeAntInstructions(myResolvingContext, creator, myContext, artifact.getArtifactType()));
     }
 
     for (Generator generator : myContext.getAndClearBeforeCurrentArtifact()) {

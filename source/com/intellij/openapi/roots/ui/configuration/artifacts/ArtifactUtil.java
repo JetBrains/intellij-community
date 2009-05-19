@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
 import com.intellij.util.Processor;
@@ -72,7 +73,8 @@ public class ArtifactUtil {
                                                                                  @NotNull Processor<E> processor,
                                                                                  final @NotNull PackagingElementResolvingContext resolvingContext,
                                                                                  final boolean processSubstituions) {
-    if (!processElements(artifact.getRootElement().getChildren(), type, processor, resolvingContext, processSubstituions)) return false;
+    final List<PackagingElement<?>> children = artifact.getRootElement().getChildren();
+    if (!processElements(children, type, processor, resolvingContext, processSubstituions, artifact.getArtifactType())) return false;
     return true;
   }
 
@@ -80,9 +82,9 @@ public class ArtifactUtil {
                                                                          @Nullable PackagingElementType<E> type,
                                                                          @NotNull Processor<E> processor,
                                                                          final @NotNull PackagingElementResolvingContext resolvingContext,
-                                                                         final boolean processSubstituions) {
+                                                                         final boolean processSubstituions, ArtifactType artifactType) {
     for (PackagingElement<?> element : elements) {
-      if (!processElements(element, type, processor, resolvingContext, processSubstituions)) {
+      if (!processElements(element, type, processor, resolvingContext, processSubstituions, artifactType)) {
         return false;
       }
     }
@@ -92,18 +94,21 @@ public class ArtifactUtil {
   private static <E extends PackagingElement<?>> boolean processElements(@NotNull PackagingElement<?> element, @Nullable PackagingElementType<E> type,
                                                                          @NotNull Processor<E> processor,
                                                                          @NotNull PackagingElementResolvingContext resolvingContext,
-                                                                         final boolean processSubstituions) {
+                                                                         final boolean processSubstituions,
+                                                                         ArtifactType artifactType) {
     if (type == null || element.getType().equals(type)) {
       if (!processor.process((E)element)) {
         return false;
       }
     }
     if (element instanceof CompositePackagingElement<?>) {
-      return processElements(((CompositePackagingElement<?>)element).getChildren(), type, processor, resolvingContext, processSubstituions);
+      return processElements(((CompositePackagingElement<?>)element).getChildren(), type, processor, resolvingContext, processSubstituions,
+                             artifactType);
     }
     else if (element instanceof ComplexPackagingElement<?> && processSubstituions) {
-      final List<? extends PackagingElement<?>> substitution = ((ComplexPackagingElement<?>)element).getSubstitution(resolvingContext);
-      return processElements(substitution, type, processor, resolvingContext, processSubstituions);
+      final List<? extends PackagingElement<?>> substitution = ((ComplexPackagingElement<?>)element).getSubstitution(resolvingContext,
+                                                                                                                     artifactType);
+      return processElements(substitution, type, processor, resolvingContext, processSubstituions, artifactType);
     }
     return true;
   }

@@ -1,6 +1,7 @@
 package com.intellij.packaging.elements;
 
 import com.intellij.compiler.ant.Generator;
+import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -67,19 +68,19 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> {
 
   protected List<? extends Generator> computeChildrenGenerators(PackagingElementResolvingContext resolvingContext,
                                                                 final AntCopyInstructionCreator copyInstructionCreator,
-                                                                final ArtifactAntGenerationContext generationContext) {
+                                                                final ArtifactAntGenerationContext generationContext, ArtifactType artifactType) {
     final List<Generator> generators = new ArrayList<Generator>();
     for (PackagingElement<?> child : myChildren) {
-      generators.addAll(child.computeAntInstructions(resolvingContext, copyInstructionCreator, generationContext));
+      generators.addAll(child.computeAntInstructions(resolvingContext, copyInstructionCreator, generationContext, artifactType));
     }
     return generators;
   }
 
   protected void computeChildrenInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
                                              @NotNull PackagingElementResolvingContext resolvingContext,
-                                             @NotNull ArtifactIncrementalCompilerContext compilerContext) {
+                                             @NotNull ArtifactIncrementalCompilerContext compilerContext, ArtifactType artifactType) {
     for (PackagingElement<?> child : myChildren) {
-      child.computeIncrementalCompilerInstructions(creator, resolvingContext, compilerContext);
+      child.computeIncrementalCompilerInstructions(creator, resolvingContext, compilerContext, artifactType);
     }
   }
 }

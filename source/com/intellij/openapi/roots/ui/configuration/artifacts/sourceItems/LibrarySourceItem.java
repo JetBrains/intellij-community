@@ -44,7 +44,11 @@ public class LibrarySourceItem extends PackagingSourceItem {
   @NotNull
   @Override
   public PackagingElementFilesKind getKindOfProducedElements() {
-    for (VirtualFile file : myLibrary.getFiles(OrderRootType.CLASSES)) {
+    return getKindForLibrary(myLibrary);
+  }
+
+  public static PackagingElementFilesKind getKindForLibrary(final Library library) {
+    for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
       if (file.isInLocalFileSystem()) {
         return PackagingElementFilesKind.DIRECTORIES_WITH_CLASSES;
       }

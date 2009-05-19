@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditor;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ComplexElementSubstitutionParameters;
 import com.intellij.packaging.ui.PackagingEditorContext;
+import com.intellij.packaging.artifacts.ArtifactType;
 
 import java.util.Collections;
 
@@ -11,8 +12,9 @@ import java.util.Collections;
  */
 public class ArtifactRootNode extends CompositePackagingElementNode {
   public ArtifactRootNode(ArtifactEditor artifactEditor, PackagingEditorContext context,
-                          ComplexElementSubstitutionParameters substitutionParameters) {
-    super(artifactEditor.getRootElement(), context, null, null, substitutionParameters, Collections.<PackagingNodeSource>emptyList());
+                          ComplexElementSubstitutionParameters substitutionParameters, ArtifactType artifactType) {
+    super(artifactEditor.getRootElement(), context, null, null, substitutionParameters, Collections.<PackagingNodeSource>emptyList(),
+          artifactType);
   }
 
   @Override

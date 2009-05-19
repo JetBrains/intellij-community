@@ -34,16 +34,22 @@ public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPa
   @NotNull
   public List<? extends ModuleOutputPackagingElement> createWithDialog(@NotNull PackagingEditorContext context, Artifact artifact,
                                                                        CompositePackagingElement<?> parent) {
+    List<Module> modules = chooseModules(context, artifact);
+    final List<ModuleOutputPackagingElement> elements = new ArrayList<ModuleOutputPackagingElement>();
+    for (Module module : modules) {
+      elements.add(new ModuleOutputPackagingElement(module.getName()));
+    }
+    return elements;
+  }
+
+  public static List<Module> chooseModules(PackagingEditorContext context, Artifact artifact) {
     ChooseModulesDialog dialog = new ChooseModulesDialog(context.getProject(), getNotAddedModules(context, artifact, context.getModulesProvider().getModules()), ProjectBundle.message("dialog.title.packaging.choose.module"), "");
     dialog.show();
     List<Module> modules = dialog.getChosenElements();
-    final List<ModuleOutputPackagingElement> elements = new ArrayList<ModuleOutputPackagingElement>();
-    if (dialog.isOK()) {
-      for (Module module : modules) {
-        elements.add(new ModuleOutputPackagingElement(module.getName()));
-      }
+    if (!dialog.isOK()) {
+      modules = Collections.emptyList();
     }
-    return elements;
+    return modules;
   }
 
   @NotNull

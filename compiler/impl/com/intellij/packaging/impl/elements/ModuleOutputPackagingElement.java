@@ -10,6 +10,7 @@ import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,9 +38,9 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
   }
 
   @Override
-  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
-                                                           @NotNull AntCopyInstructionCreator creator,
-                                                           @NotNull ArtifactAntGenerationContext generationContext) {
+  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
+                                                          @NotNull ArtifactAntGenerationContext generationContext,
+                                                          @NotNull ArtifactType artifactType) {
     final String moduleOutput = BuildProperties.propertyRef(generationContext.getModuleOutputPath(myModuleName));
     return Collections.singletonList(creator.createDirectoryContentCopyInstruction(moduleOutput));
   }
@@ -47,7 +48,7 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
   @Override
   public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
                                                      @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext) {
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
     final Module module = findModule(resolvingContext);
     if (module != null) {
       final VirtualFile output = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
@@ -55,6 +56,12 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
         creator.addDirectoryCopyInstructions(output);
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public PackagingElementFilesKind getFilesKind(PackagingElementResolvingContext context) {
+    return PackagingElementFilesKind.DIRECTORIES_WITH_CLASSES;
   }
 
   @Override

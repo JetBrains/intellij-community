@@ -8,6 +8,7 @@ import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +39,12 @@ public class ArchivePackagingElement extends CompositePackagingElement<ArchivePa
 
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
-                                                   @NotNull ArtifactAntGenerationContext generationContext) {
+                                                          @NotNull ArtifactAntGenerationContext generationContext,
+                                                          @NotNull ArtifactType artifactType) {
     final String tempJarProperty = generationContext.createNewTempFileProperty("temp.jar.path." + myArchiveFileName, myArchiveFileName);
     String jarPath = BuildProperties.propertyRef(tempJarProperty);
     final Jar jar = new Jar(jarPath, "preserve");
-    for (Generator generator : computeChildrenGenerators(resolvingContext, new ArchiveAntCopyInstructionCreator(""), generationContext)) {
+    for (Generator generator : computeChildrenGenerators(resolvingContext, new ArchiveAntCopyInstructionCreator(""), generationContext, artifactType)) {
       jar.add(generator);
     }
     generationContext.runBeforeCurrentArtifact(jar);
@@ -52,8 +54,8 @@ public class ArchivePackagingElement extends CompositePackagingElement<ArchivePa
   @Override
   public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
                                                      @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext) {
-    computeChildrenInstructions(creator.archive(myArchiveFileName), resolvingContext, compilerContext);
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
+    computeChildrenInstructions(creator.archive(myArchiveFileName), resolvingContext, compilerContext, artifactType);
   }
 
   public ArchivePackagingElement getState() {

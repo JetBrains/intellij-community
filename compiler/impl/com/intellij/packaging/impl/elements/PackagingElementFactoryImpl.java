@@ -40,6 +40,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   private static final PackagingElementType[] STANDARD_TYPES = {
       DIRECTORY_ELEMENT_TYPE, ARCHIVE_ELEMENT_TYPE,
       LibraryElementType.LIBRARY_ELEMENT_TYPE, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE,
+      ModuleWithDependenciesElementType.MODULE_WITH_DEPENDENCIES_TYPE, 
       ArtifactElementType.ARTIFACT_ELEMENT_TYPE, FILE_COPY_ELEMENT_TYPE,
   };
 
@@ -177,9 +178,14 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @Override
   public PackagingElement<?> createFileCopy(@NotNull String filePath, @NotNull String relativeOutputPath) {
     final FileCopyPackagingElement file = new FileCopyPackagingElement(filePath);
+    return createParentDirectories(relativeOutputPath, file);
+  }
+
+  @Override
+  public PackagingElement<?> createParentDirectories(@NotNull String relativeOutputPath, @NotNull PackagingElement<?> element) {
     relativeOutputPath = StringUtil.trimStart(relativeOutputPath, "/");
     if (relativeOutputPath.length() == 0) {
-      return file;
+      return element;
     }
     int slash = relativeOutputPath.indexOf('/');
     if (slash == -1) slash = relativeOutputPath.length();
@@ -187,7 +193,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     String pathTail = relativeOutputPath.substring(slash);
     final DirectoryPackagingElement root = createDirectory(rootName);
     final CompositePackagingElement<?> last = getOrCreateDirectory(root, pathTail);
-    last.addOrFindChild(file);
+    last.addOrFindChild(element);
     return root;
   }
 
@@ -233,8 +239,8 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     }
 
     @Override
-    public PackagingElementPropertiesPanel<ArchivePackagingElement> createElementPropertiesPanel() {
-      return new ArchiveElementPropertiesPanel();
+    public PackagingElementPropertiesPanel<ArchivePackagingElement> createElementPropertiesPanel(PackagingEditorContext context) {
+      return new ArchiveElementPropertiesPanel(context);
     }
 
     public ArchivePackagingElement createComposite(@NotNull PackagingEditorContext context, CompositePackagingElement<?> parent) {

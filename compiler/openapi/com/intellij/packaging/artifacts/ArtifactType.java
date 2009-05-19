@@ -2,6 +2,8 @@ package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,9 @@ public abstract class ArtifactType {
 
   @Nullable
   public abstract String getDefaultPathFor(@NotNull PackagingSourceItem sourceItem);
+
+  @Nullable
+  public abstract String getDefaultPathFor(@NotNull PackagingElement<?> element, @NotNull PackagingElementResolvingContext context);
 
   public static ArtifactType[] getAllTypes() {
     return Extensions.getExtensions(EP_NAME);

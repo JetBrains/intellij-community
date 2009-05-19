@@ -33,15 +33,6 @@ import java.util.List;
 */
 public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTree");
-  private final Convertor<TreePath, String> mySpeedSearchConvertor = new Convertor<TreePath, String>() {
-    public String convert(final TreePath path) {
-      final SimpleNode node = getNodeFor(path);
-      if (node instanceof PackagingElementNode) {
-        return ((PackagingElementNode<?>)node).getElementPresentation().getSearchName();
-      }
-      return "";
-    }
-  };
   private final ArtifactEditorImpl myArtifactsEditor;
 
   public LayoutTree(ArtifactEditorImpl artifactsEditor) {
@@ -58,7 +49,16 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
 
   @Override
   protected void configureUiHelper(TreeUIHelper helper) {
-    new TreeSpeedSearch(this, mySpeedSearchConvertor, true);
+    final Convertor<TreePath, String> convertor = new Convertor<TreePath, String>() {
+      public String convert(final TreePath path) {
+        final SimpleNode node = getNodeFor(path);
+        if (node instanceof PackagingElementNode) {
+          return ((PackagingElementNode<?>)node).getElementPresentation().getSearchName();
+        }
+        return "";
+      }
+    };
+    new TreeSpeedSearch(this, convertor, true);
     helper.installToolTipHandler(this);
   }
 

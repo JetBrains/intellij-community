@@ -83,7 +83,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private JPanel createPropertiesPanel() {
     final JPanel panel = new JPanel(new CardLayout());
     for (PackagingElementType<?> type : PackagingElementFactory.getInstance().getAllElementTypes()) {
-      final PackagingElementPropertiesPanel<? extends PackagingElement<?>> propertiesPanel = type.createElementPropertiesPanel();
+      final PackagingElementPropertiesPanel<? extends PackagingElement<?>> propertiesPanel = type.createElementPropertiesPanel(myContext);
       if (propertiesPanel != null) {
         myPropertiesPanels.put(type.getId(), propertiesPanel);
         panel.add(type.getId(), propertiesPanel.getComponent());
@@ -396,7 +396,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private class LayoutTreeStructure extends SimpleTreeStructure {
     @Override
     public Object getRootElement() {
-      return PackagingTreeNodeFactory.createRootNode(myArtifactsEditor, myContext, mySubstitutionParameters);
+      return PackagingTreeNodeFactory.createRootNode(myArtifactsEditor, myContext, mySubstitutionParameters, getArtifact().getArtifactType());
     }
   }
 }

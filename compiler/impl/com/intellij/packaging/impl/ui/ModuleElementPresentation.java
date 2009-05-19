@@ -46,8 +46,12 @@ public class ModuleElementPresentation extends TreeNodePresentation {
       presentationData.setOpenIcon(myModule.getModuleType().getNodeIcon(true));
       presentationData.setClosedIcon(myModule.getModuleType().getNodeIcon(false));
     }
-    presentationData.addText(CompilerBundle.message("node.text.0.compile.output", myName),
+    presentationData.addText(getNodeText(),
                              myModule != null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
+  }
+
+  protected String getNodeText() {
+    return CompilerBundle.message("node.text.0.compile.output", myName);
   }
 
   @Override

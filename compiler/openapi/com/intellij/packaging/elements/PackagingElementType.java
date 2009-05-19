@@ -55,7 +55,7 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
   }
 
   @Nullable
-  public PackagingElementPropertiesPanel<E> createElementPropertiesPanel() {
+  public PackagingElementPropertiesPanel<E> createElementPropertiesPanel(PackagingEditorContext context) {
     return null;
   }
 }

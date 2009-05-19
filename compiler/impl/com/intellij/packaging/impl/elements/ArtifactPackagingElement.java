@@ -3,6 +3,7 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.Generator;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
@@ -31,7 +32,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     myArtifactName = artifactName;
   }
 
-  public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context) {
+  public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
     final Artifact artifact = findArtifact(context);
     if (artifact != null) {
       final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
@@ -42,15 +43,24 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   }
 
   @Override
-  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
-                                                           @NotNull AntCopyInstructionCreator creator,
-                                                           @NotNull ArtifactAntGenerationContext generationContext) {
+  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
+                                                          @NotNull ArtifactAntGenerationContext generationContext,
+                                                          @NotNull ArtifactType artifactType) {
     final Artifact artifact = findArtifact(resolvingContext);
     if (artifact != null) {
       final String outputPath = BuildProperties.propertyRef(generationContext.getArtifactOutputProperty(artifact));
       return Collections.singletonList(creator.createDirectoryContentCopyInstruction(outputPath));
     }
     return Collections.emptyList();
+  }
+
+  @Override
+  protected ArtifactType getArtifactTypeForSubstitutedElements(PackagingElementResolvingContext resolvingContext, ArtifactType artifactType) {
+    final Artifact artifact = findArtifact(resolvingContext);
+    if (artifact != null) {
+      return artifact.getArtifactType();
+    }
+    return artifactType;
   }
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {

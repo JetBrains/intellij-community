@@ -47,4 +47,6 @@ public abstract class PackagingElementFactory {
   public abstract PackagingElementType[] getAllElementTypes();
 
   public abstract PackagingElement<?> createArtifactElement(@NotNull Artifact artifact);
+
+  public abstract PackagingElement<?> createParentDirectories(@NotNull String relativeOutputPath, @NotNull PackagingElement<?> element);
 }

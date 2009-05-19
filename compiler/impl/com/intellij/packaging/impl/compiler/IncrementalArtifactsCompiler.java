@@ -78,7 +78,7 @@ public class IncrementalArtifactsCompiler extends PackagingCompilerBase<Artifact
     final CopyToDirectoryInstructionCreator instructionCreator =
         new CopyToDirectoryInstructionCreator(builderContext, outputPath, outputFile);
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(getProject()).getResolvingContext();
-    rootElement.computeIncrementalCompilerInstructions(instructionCreator, resolvingContext, builderContext);
+    rootElement.computeIncrementalCompilerInstructions(instructionCreator, resolvingContext, builderContext, artifact.getArtifactType());
   }
 
   protected ArtifactsProcessingItemsBuilderContext createContext(CompileContext context) {

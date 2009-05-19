@@ -6,6 +6,7 @@ import com.intellij.packaging.ui.SourceItemPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.SourceItemWeights;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.impl.elements.ModuleWithDependenciesPackagingElement;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ide.projectView.PresentationData;
@@ -21,7 +22,6 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
   private final Module myModule;
 
   public ModuleSourceItemGroup(Module module) {
-    super(false);
     myModule = module;
   }
 
@@ -39,7 +39,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
 
   @NotNull
   public List<? extends PackagingElement<?>> createElements() {
-    return Collections.emptyList();
+    return Collections.singletonList(new ModuleWithDependenciesPackagingElement(myModule.getName()));
   }
 
   public Module getModule() {

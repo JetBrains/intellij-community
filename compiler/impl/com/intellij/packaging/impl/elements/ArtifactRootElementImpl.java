@@ -7,6 +7,7 @@ import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,15 +57,16 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   }
 
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
-                                                   @NotNull ArtifactAntGenerationContext generationContext) {
+                                                          @NotNull ArtifactAntGenerationContext generationContext,
+                                                          @NotNull ArtifactType artifactType) {
     throw new UnsupportedOperationException("'computeGenerators' not implemented in " + getClass().getName());
   }
 
   @Override
   public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
                                                      @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext) {
-    computeChildrenInstructions(creator, resolvingContext, compilerContext);
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
+    computeChildrenInstructions(creator, resolvingContext, compilerContext, artifactType);
   }
 
   @Override

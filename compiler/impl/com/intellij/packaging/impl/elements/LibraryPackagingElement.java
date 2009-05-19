@@ -1,6 +1,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -8,9 +9,11 @@ import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.PackagingElementFilesKind;
 import com.intellij.packaging.impl.ui.LibraryElementPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +39,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     myName = name;
   }
 
-  public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context) {
+  public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
     final Library library = findLibrary(context);
     if (library != null) {
       final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
@@ -47,6 +50,13 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       return elements;
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public PackagingElementFilesKind getFilesKind(PackagingElementResolvingContext context) {
+    final Library library = findLibrary(context);
+    return library != null ? LibrarySourceItem.getKindForLibrary(library) : PackagingElementFilesKind.OTHER;
   }
 
   public PackagingElementPresentation createPresentation(PackagingEditorContext context) {

@@ -9,6 +9,7 @@ import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.FileCopyPresentation;
 import com.intellij.packaging.ui.PackagingEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,9 +37,9 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
   }
 
   @Override
-  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
-                                                           @NotNull AntCopyInstructionCreator creator,
-                                                           @NotNull ArtifactAntGenerationContext generationContext) {
+  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
+                                                          @NotNull ArtifactAntGenerationContext generationContext,
+                                                          @NotNull ArtifactType artifactType) {
     File file = new File(FileUtil.toSystemDependentName(myFilePath));
     final String path = generationContext.getSubstitutedPath(myFilePath);
     Generator generator;
@@ -54,7 +55,7 @@ public class FileCopyPackagingElement extends PackagingElement<FileCopyPackaging
   @Override
   public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
                                                      @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext) {
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFilePath);
     if (file == null || !file.isValid()) {
       return;
