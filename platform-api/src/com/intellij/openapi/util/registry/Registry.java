@@ -39,6 +39,14 @@ public class Registry  {
     return get(key).asBoolean();
   }
 
+  public static int intValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
+    return get(key).asInteger();
+  }
+
+  public static String stringValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
+    return get(key).asString();
+  }
+
   ResourceBundle getBundle() {
     ResourceBundle bundle = null;
     if (ourBundle != null) bundle = ourBundle.get();
@@ -76,6 +84,10 @@ public class Registry  {
       }
     }
     myLoadedUserProperties.putAll(myUserProperties);
+
+    for (RegistryValue each : myValues.values()) {
+      each.resetCache();
+    }
   }
 
   Map<String, String> getUserProperties() {

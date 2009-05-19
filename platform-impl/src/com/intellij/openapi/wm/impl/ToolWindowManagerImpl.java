@@ -1857,7 +1857,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (checkForRejectOrByPass(command, forced, result)) return;
 
         if (myRequestFocusCmd == command) {
-          final ActionCallback.TimedOut focusTimeout = new ActionCallback.TimedOut(Registry.get("actionSystem.commandProcessingTimeout").asInteger(),
+          final ActionCallback.TimedOut focusTimeout = new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"),
                                                                                    "Focus command timed out, cmd=" + command,
                                                                                    command.getAllocation()) {
             @Override

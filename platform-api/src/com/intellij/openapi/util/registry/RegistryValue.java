@@ -14,7 +14,9 @@ public class RegistryValue {
 
   private boolean myChangedSinceStart;
 
-  private String myCachedValue;
+  private String myStringCachedValue;
+  private Integer myIntCachedValue;
+  private Boolean myBooleanCachedValue;
 
   RegistryValue(Registry registry, String key) {
     myRegistry = registry;
@@ -33,11 +35,19 @@ public class RegistryValue {
   }
 
   public boolean asBoolean() {
-    return Boolean.valueOf(get(myKey, "false", true));
+    if (myBooleanCachedValue == null) {
+      myBooleanCachedValue = Boolean.valueOf(get(myKey, "false", true));
+    }
+
+    return myBooleanCachedValue.booleanValue();
   }
 
-  public long asInteger() {
-    return Integer.valueOf(get(myKey, "0", true));
+  public int asInteger() {
+    if (myIntCachedValue == null) {
+      myIntCachedValue = Integer.valueOf(get(myKey, "0", true));
+    }
+
+    return myIntCachedValue.intValue();
   }
 
   public String getDescription() {
@@ -54,11 +64,11 @@ public class RegistryValue {
 
   private String get(String key, String defaultValue, boolean isValue) {
     if (isValue) {
-      if (myCachedValue == null) {
-        myCachedValue = _get(key, defaultValue);
+      if (myStringCachedValue == null) {
+        myStringCachedValue = _get(key, defaultValue);
       }
 
-      return myCachedValue;
+      return myStringCachedValue;
     } else {
       return _get(key, defaultValue);
     }
@@ -83,7 +93,7 @@ public class RegistryValue {
   }
 
   public void setValue(String value) {
-    myCachedValue = null;
+    resetCache();
 
     for (RegistryValueListener each : myListeners) {
       each.beforeValueChanged(this);
@@ -124,4 +134,9 @@ public class RegistryValue {
     return myKey + "=" + asString();
   }
 
+  void resetCache() {
+    myStringCachedValue = null;
+    myIntCachedValue = null;
+    myBooleanCachedValue = null;
+  }
 }
