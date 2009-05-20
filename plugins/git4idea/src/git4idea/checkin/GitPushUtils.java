@@ -43,7 +43,7 @@ public class GitPushUtils {
    */
   public static GitLineHandler preparePush(Project project, VirtualFile vcsRoot) {
     final GitLineHandler rc = new GitLineHandler(project, vcsRoot, GitHandler.PUSH);
-    rc.addParameters("-v", "--all");
+    rc.addParameters("-v");
     rc.addLineListener(new GitLineHandlerAdapter() {
       @Override
       public void onLineAvailable(final String line, final Key outputType) {
