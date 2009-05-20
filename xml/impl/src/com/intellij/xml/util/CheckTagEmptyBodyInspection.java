@@ -37,7 +37,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override public void visitXmlTag(final XmlTag tag) {
-        if (!CheckEmptyScriptTagInspection.isScriptTag(tag)) {
+        if (!CheckEmptyTagInspection.isTagWithEmptyEndNotAllowed(tag)) {
           final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
 
           if (child != null) {

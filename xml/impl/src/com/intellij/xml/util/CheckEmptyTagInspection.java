@@ -6,6 +6,7 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,15 +24,20 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author Maxim Mossienko
  */
-public class CheckEmptyScriptTagInspection extends XmlSuppressableInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.CheckEmptyScriptTagInspection");
+public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.CheckEmptyTagInspection");
   @NonNls private static final String SCRIPT_TAG_NAME = "script";
+  private static Set<String> ourTagsWithEmptyEndsNotAllowed = new THashSet<String>(Arrays.asList(SCRIPT_TAG_NAME, "div", "iframe"));
 
   public boolean isEnabledByDefault() {
     return true;
@@ -41,7 +47,7 @@ public class CheckEmptyScriptTagInspection extends XmlSuppressableInspectionTool
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override public void visitXmlTag(final XmlTag tag) {
-        if (isScriptTag(tag)) {
+        if (isTagWithEmptyEndNotAllowed(tag)) {
           final ASTNode child = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());
 
           if (child != null) {
@@ -61,7 +67,7 @@ public class CheckEmptyScriptTagInspection extends XmlSuppressableInspectionTool
                 ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(psiFile.getVirtualFile());
 
                 final StringBuilder builder = new StringBuilder(tag.getText());
-                builder.replace(builder.length() - 2, builder.length(), "></" + SCRIPT_TAG_NAME + ">");
+                builder.replace(builder.length() - 2, builder.length(), "></" + tag.getLocalName() + ">");
 
                 try {
                   final FileType fileType = psiFile.getFileType();
@@ -91,10 +97,15 @@ public class CheckEmptyScriptTagInspection extends XmlSuppressableInspectionTool
     };
   }
 
-  static boolean isScriptTag(final XmlTag tag) {
-    return ( SCRIPT_TAG_NAME.equals(tag.getName()) ||
-          (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName()))
-        ) && tag.getLanguage() != XMLLanguage.INSTANCE;
+  static boolean isTagWithEmptyEndNotAllowed(final XmlTag tag) {
+    String tagName = tag.getName();
+    if (tag instanceof HtmlTag) tagName = tagName.toLowerCase();
+
+    Language language = tag.getLanguage();
+    return ourTagsWithEmptyEndsNotAllowed.contains(tagName) &&
+           language != XMLLanguage.INSTANCE ||
+           language == HTMLLanguage.INSTANCE
+      ;
   }
 
   @NotNull
@@ -104,7 +115,7 @@ public class CheckEmptyScriptTagInspection extends XmlSuppressableInspectionTool
 
   @NotNull
   public String getDisplayName() {
-    return XmlBundle.message("html.inspections.check.empty.script.tag");
+    return XmlBundle.message("html.inspections.check.empty.tag");
   }
 
   @NotNull

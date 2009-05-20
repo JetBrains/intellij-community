@@ -13,7 +13,7 @@ public class XmlInspectionToolProvider implements InspectionToolProvider {
       CheckImageSizeInspection.class,
       CheckTagEmptyBodyInspection.class,
       CheckDtdReferencesInspection.class,
-      CheckEmptyScriptTagInspection.class,
+      CheckEmptyTagInspection.class,
       CheckValidXmlInScriptBodyInspection.class,
       CheckXmlFileWithXercesValidatorInspection.class,
       XmlDuplicatedIdInspection.class,
