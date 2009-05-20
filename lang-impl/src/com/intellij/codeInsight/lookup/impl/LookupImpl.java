@@ -453,6 +453,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       return;
     }
 
+    final PsiFile file = getPsiFile();
+    if (file != null && !WriteCommandAction.ensureFilesWritable(myProject, Arrays.asList(file))) {
+      return;
+    }
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         EditorModificationUtil.deleteSelectedText(myEditor);
