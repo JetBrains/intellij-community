@@ -583,6 +583,7 @@ public class RefactoringUtil {
   }
 
   public static boolean isMethodUsage(PsiElement element) {
+    if (element instanceof PsiEnumConstant) return true;
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
     PsiElement parent = element.getParent();
     if (parent instanceof PsiCall) {
@@ -607,7 +608,8 @@ public class RefactoringUtil {
     return null;
   }
 
-  public static PsiCallExpression getCallExpressionByMethodReference(PsiJavaCodeReferenceElement ref) {
+  public static PsiCall getCallExpressionByMethodReference(PsiElement ref) {
+    if (ref instanceof PsiEnumConstant) return (PsiCall)ref;
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiMethodCallExpression) {
       return (PsiMethodCallExpression)parent;

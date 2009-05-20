@@ -5,6 +5,6 @@ public class Bar {
 }
 class S extends Bar {
     public int baz(int anObject) {
-        return super.baz((byte) 0 + 3);    //To change body of overridden methods use File | Settings | File Templates.
+        return super.baz(anObject);    //To change body of overridden methods use File | Settings | File Templates.
     }
 }

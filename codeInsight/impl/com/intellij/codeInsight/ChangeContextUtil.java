@@ -14,12 +14,12 @@ import org.jetbrains.annotations.Nullable;
 public class ChangeContextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ChangeContextUtil");
 
-  private static final Key<String> ENCODED_KEY = Key.create("ENCODED_KEY");
-  private static final Key<PsiClass> THIS_QUALIFIER_CLASS_KEY = Key.create("THIS_QUALIFIER_CLASS_KEY");
-  private static final Key<PsiMember> REF_MEMBER_KEY = Key.create("REF_MEMBER_KEY");
-  private static final Key<Boolean> CAN_REMOVE_QUALIFIER_KEY = Key.create("CAN_REMOVE_QUALIFIER_KEY");
-  private static final Key<PsiClass> REF_CLASS_KEY = Key.create("REF_CLASS_KEY");
-  private static final Key<PsiClass> REF_MEMBER_THIS_CLASS_KEY = Key.create("REF_MEMBER_THIS_CLASS_KEY");
+  public static final Key<String> ENCODED_KEY = Key.create("ENCODED_KEY");
+  public static final Key<PsiClass> THIS_QUALIFIER_CLASS_KEY = Key.create("THIS_QUALIFIER_CLASS_KEY");
+  public static final Key<PsiMember> REF_MEMBER_KEY = Key.create("REF_MEMBER_KEY");
+  public static final Key<Boolean> CAN_REMOVE_QUALIFIER_KEY = Key.create("CAN_REMOVE_QUALIFIER_KEY");
+  public static final Key<PsiClass> REF_CLASS_KEY = Key.create("REF_CLASS_KEY");
+  public static final Key<PsiClass> REF_MEMBER_THIS_CLASS_KEY = Key.create("REF_MEMBER_THIS_CLASS_KEY");
 
   private ChangeContextUtil() {}
 
