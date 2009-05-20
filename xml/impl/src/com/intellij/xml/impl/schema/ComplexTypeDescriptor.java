@@ -1,5 +1,6 @@
 package com.intellij.xml.impl.schema;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
@@ -420,17 +421,44 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   public boolean canContainTag(String localName, String namespace, XmlElement context) {
-    return _canContainTag(localName, namespace, myTag, context, new HashSet<XmlTag>(5));
+    return _canContainTag(localName, namespace, myTag, context, new HashSet<XmlTag>(5),
+                          new CurrentContextInfo(myDocumentDescriptor, myDocumentDescriptor.getDefaultNamespace()));
   }
 
-  private boolean _canContainTag(String localName, String namespace, XmlTag tag, XmlElement context, Set<XmlTag> visited) {
+  static class CurrentContextInfo {
+    final XmlNSDescriptorImpl documentDescriptor;
+    final String expectedDefaultNs;
+
+    public CurrentContextInfo(XmlNSDescriptorImpl _nsDescriptor, String _ns) {
+      documentDescriptor = _nsDescriptor;
+      expectedDefaultNs = _ns;
+    }
+  }
+
+  static CurrentContextInfo getContextInfo(CurrentContextInfo info, String ref) {
+    XmlTag rootTag = info.documentDescriptor.getTag();
+    XmlNSDescriptorImpl nsDescriptor = XmlNSDescriptorImpl.getNSDescriptorToSearchIn(rootTag, ref, info.documentDescriptor);
+    String ns;
+    
+    if (nsDescriptor == info.documentDescriptor) {
+      ns = rootTag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(ref));
+    } else {
+      ns = nsDescriptor.getDefaultNamespace();
+    }
+
+    if (Comparing.equal(info.expectedDefaultNs, ns) && info.documentDescriptor == nsDescriptor) return info;
+    return new CurrentContextInfo(nsDescriptor, ns);
+  }
+
+  private boolean _canContainTag(String localName, String namespace, XmlTag tag, XmlElement context, Set<XmlTag> visited,
+                                 CurrentContextInfo info) {
     if (visited.contains(tag)) return false;
     visited.add(tag);
 
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "any")) {
       myHasAnyInContentModel = true;
       if (OTHER_NAMESPACE_ATTR_VALUE.equals(tag.getAttributeValue("namespace"))) {
-        return namespace == null || !namespace.equals(myDocumentDescriptor.getDefaultNamespace());
+        return namespace == null || !namespace.equals(info.expectedDefaultNs);
       }
       return true;
     }
@@ -438,8 +466,10 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       String ref = tag.getAttributeValue(REF_ATTR_NAME);
 
       if (ref != null) {
-        XmlTag groupTag = myDocumentDescriptor.findGroup(ref);
-        if (groupTag != null && _canContainTag(localName, namespace, groupTag, context, visited)) return true;
+        XmlTag groupTag = info.documentDescriptor.findGroup(ref);
+        if (groupTag != null) {
+          if (_canContainTag(localName, namespace, groupTag, context, visited, getContextInfo(info, ref)))  return true;
+        }
       }
     }
     else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, RESTRICTION_TAG_NAME) ||
@@ -447,11 +477,12 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       String base = tag.getAttributeValue(BASE_ATTR_NAME);
 
       if (base != null) {
-        TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(base);
+        TypeDescriptor descriptor = info.documentDescriptor.findTypeDescriptor(base);
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
-          if (complexTypeDescriptor._canContainTag(localName, namespace, complexTypeDescriptor.myTag, context, visited)) {
+          if (complexTypeDescriptor._canContainTag(localName, namespace, complexTypeDescriptor.myTag, context, visited,
+                                                   getContextInfo(info, base))) {
             myHasAnyInContentModel |= complexTypeDescriptor.myHasAnyInContentModel;
             return true;
           }
@@ -476,8 +507,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(localName, namespace):null;
         final String name = descriptorTag.getAttributeValue(NAME_ATTR_NAME);
 
-        if (descriptor != null &&
-            name != null) {
+        if (descriptor != null && name != null) {
           final String substitutionValue = ((XmlTag)descriptor.getDeclaration()).getAttributeValue("substitutionGroup");
 
           if (substitutionValue != null && name.equals(XmlUtil.findLocalNameByQualifiedName(substitutionValue))) {
@@ -488,7 +518,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
 
     for (XmlTag subTag : tag.getSubTags()) {
-      if (_canContainTag(localName, namespace, subTag, context, visited)) return true;
+      if (_canContainTag(localName, namespace, subTag, context, visited, info)) return true;
     }
 
     return false;

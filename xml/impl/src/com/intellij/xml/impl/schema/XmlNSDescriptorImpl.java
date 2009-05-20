@@ -366,7 +366,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return StringUtil.startsWithConcatenationOf(context.getName(), XSD_PREFIX, ":");
   }
 
-  private static @NotNull XmlNSDescriptorImpl getNSDescriptorToSearchIn(XmlTag rootTag, final String name, XmlNSDescriptorImpl defaultNSDescriptor) {
+  static @NotNull XmlNSDescriptorImpl getNSDescriptorToSearchIn(XmlTag rootTag, final String name, XmlNSDescriptorImpl defaultNSDescriptor) {
     if (name == null) return defaultNSDescriptor;
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(name);
 
