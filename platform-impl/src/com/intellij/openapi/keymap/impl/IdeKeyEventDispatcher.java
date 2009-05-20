@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -79,7 +80,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private final KeyProcessorContext myContext = new KeyProcessorContext();
 
   public IdeKeyEventDispatcher(){
-    Disposer.register(ApplicationManager.getApplication(), this);
+    Application parent = ApplicationManager.getApplication();  // Application is null on early start when e.g. license dialog is shown
+    if (parent != null) Disposer.register(parent, this);
   }
 
   public boolean isWaitingForSecondKeyStroke(){
