@@ -320,6 +320,11 @@ public class PyUtil {
     return null;
   }
 
+  /**
+   * @param element which to process
+   * @param requiredElementType which type of container element is required
+   * @return closest containing element of given type, or element itself, it it is of required type.
+   */
   @Nullable
   public static <T extends PyElement> T getElementOrContaining(final PyElement element, final Class<T> requiredElementType) {
     if (element == null) return null;
@@ -337,13 +342,18 @@ public class PyUtil {
     return null;
   }
 
+  /**
+   * @param element for which to obtain the file
+   * @return PyFile, or null, if there's no containing file, or it is not a PyFile.
+   */
   @Nullable
   public static PyFile getContainingPyFile(PyElement element) {
     final PsiFile containingFile = element.getContainingFile();
     return containingFile instanceof PyFile ? (PyFile)containingFile : null;
   }
 
-    public static void showBalloon(Project project, String message, MessageType messageType) {
+  // TODO: move to a better place
+  public static void showBalloon(Project project, String message, MessageType messageType) {
     // ripped from com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier
     final JFrame frame = WindowManager.getInstance().getFrame(project.isDefault() ? null : project);
     if (frame == null) return;

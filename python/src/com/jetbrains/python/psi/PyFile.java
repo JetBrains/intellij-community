@@ -14,7 +14,8 @@ import java.util.List;
 public interface PyFile extends PyElement, PsiFile {
   
   Key<Boolean> KEY_IS_DIRECTORY = Key.create("Dir impersonated by __init__.py");
-  
+  Key<Boolean> KEY_EXCLUDE_BUILTINS = Key.create("Don't include builtins to processDeclaration results");
+
   List<PyStatement> getStatements();
 
   List<PyClass> getTopLevelClasses();
@@ -26,7 +27,6 @@ public interface PyFile extends PyElement, PsiFile {
   /**
    * Looks for a name exported by this file, preferably in an efficient way.
    * @param name what to find
-   * @param project project to use (useful for out-of-hierarchy files)
    * @return found element, or null.
    */
   @Nullable

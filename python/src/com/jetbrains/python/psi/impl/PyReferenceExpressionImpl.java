@@ -377,13 +377,17 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiNamedElement) {
       if (Comparing.equal(getReferencedName(), ((PsiNamedElement)element).getName())) {
-        return resolve() == element;
+        return resolve() == element; // TODO: handle multi-resolve
       }
     }
     return false;
   }
 
+  
+  private static final Object[] NO_VARIANTS = new Object[0];
+
   public Object[] getVariants() {
+    // qualifier limits the namespace
     final PyExpression qualifier = getQualifier();
     if (qualifier != null) {
       PyType qualifierType = qualifier.getType();
@@ -397,9 +401,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
         else return qualifierType.getCompletionVariants(this);
       }
-      return new Object[0];
+      return NO_VARIANTS;
     }
 
+    // imports are another special case
     if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
       // complete to possible modules
       return ResolveImportUtil.suggestImportVariants(this);

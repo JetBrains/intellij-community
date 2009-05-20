@@ -19,10 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -361,7 +358,7 @@ public class ResolveImportUtil {
   }
 
   static class CollectingRootVisitor implements SdkRootVisitor {
-    List<String> result;
+    Set<String> result;
     PsiManager psimgr;
 
     static String cutExt(String name) {
@@ -369,7 +366,7 @@ public class ResolveImportUtil {
     }
 
     public CollectingRootVisitor(PsiManager psimgr) {
-      result = new ArrayList<String>(25);
+      result = new HashSet<String>();
       this.psimgr = psimgr;
     }
 
@@ -387,7 +384,7 @@ public class ResolveImportUtil {
       return true; // continue forever
     }
 
-    public List<String> getResult() {
+    public Collection<String> getResult() {
       return result;
     }
   }
@@ -500,8 +497,8 @@ public class ResolveImportUtil {
       if (pdir != null) {
         for (VirtualFile a_file : pdir.getChildren()) {
           if (a_file != pfile) {
-            if (pfile.isDirectory()) {
-              if (pfile.findChild(INIT_PY) != null) variants.add(a_file.getName());
+            if (a_file.isDirectory()) {
+              if (a_file.findChild(INIT_PY) != null) variants.add(a_file.getName());
             }
             else { // plain file
               String fname = a_file.getName();

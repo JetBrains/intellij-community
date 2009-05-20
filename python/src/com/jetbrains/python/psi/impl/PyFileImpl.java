@@ -18,7 +18,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -110,7 +109,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
 
     // if we're in a stmt (not place itself), try buitins:
-    if (lastParent != null) {
+    if (lastParent != null && ! substitutor.get(KEY_EXCLUDE_BUILTINS)) {
       final String fileName = getName();
       if (!fileName.equals("__builtin__.py")) {
         final PyFile builtins = PyBuiltinCache.getInstance(getProject()).getBuiltinsFile();
