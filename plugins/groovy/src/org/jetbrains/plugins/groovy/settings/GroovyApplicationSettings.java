@@ -37,11 +37,10 @@ import org.jetbrains.annotations.NonNls;
 )
 public class GroovyApplicationSettings implements PersistentStateComponent<GroovyApplicationSettings> {
 
-  public Boolean SPECIFY_TYPE_EXPLICITLY = null;
-  public Boolean INTRODUCE_LOCAL_CREATE_FINALS = null;
+  public boolean SPECIFY_VAR_TYPE_EXPLICITLY = false;
+  public boolean INTRODUCE_LOCAL_CREATE_FINALS = false;
   public Boolean EXTRACT_METHOD_SPECIFY_TYPE = null;
   public String EXTRACT_METHOD_VISIBILITY = null;
-  public Boolean IS_DEBUG_ENABLED_IN_SCRIPT = null;
   public Boolean CONVERT_PARAM_SPECIFY_MAP_TYPE = null;
   public Boolean CONVERT_PARAM_CREATE_NEW_PARAM = null;
 

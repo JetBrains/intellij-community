@@ -138,22 +138,16 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
       myCbTypeSpec.setEnabled(false);
       myTypeComboBox.setEnabled(false);
     } else {
-      if (GroovyApplicationSettings.getInstance().SPECIFY_TYPE_EXPLICITLY != null) {
-        myCbTypeSpec.setSelected(GroovyApplicationSettings.getInstance().SPECIFY_TYPE_EXPLICITLY);
-        myTypeComboBox.setEnabled(GroovyApplicationSettings.getInstance().SPECIFY_TYPE_EXPLICITLY);
-      } else {
-        myCbTypeSpec.setSelected(true);
-        myTypeComboBox.setEnabled(true);
-      }
+      final boolean specifyVarTypeExplicitly = GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY;
+      myCbTypeSpec.setSelected(specifyVarTypeExplicitly);
+      myTypeComboBox.setEnabled(specifyVarTypeExplicitly);
       myTypeMap = GroovyRefactoringUtil.getCompatibleTypeNames(myType);
       for (String typeName : myTypeMap.keySet()) {
         myTypeComboBox.addItem(typeName);
       }
     }
 
-    if (GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS != null) {
-      myCbIsFinal.setSelected(GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS);
-    }
+    myCbIsFinal.setSelected(GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS);
 
     myCbTypeSpec.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent event) {
@@ -233,7 +227,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
       return;
     }
     if (myCbTypeSpec.isEnabled()) {
-      GroovyApplicationSettings.getInstance().SPECIFY_TYPE_EXPLICITLY = myCbTypeSpec.isSelected();
+      GroovyApplicationSettings.getInstance().SPECIFY_VAR_TYPE_EXPLICITLY = myCbTypeSpec.isSelected();
     }
     if (myCbIsFinal.isEnabled()) {
       GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbIsFinal.isSelected();
