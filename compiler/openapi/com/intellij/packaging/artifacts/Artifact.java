@@ -26,5 +26,6 @@ public interface Artifact {
   Collection<? extends ArtifactPropertiesProvider> getPropertiesProviders();
 
   ArtifactProperties<?> getProperties(@NotNull ArtifactPropertiesProvider propertiesProvider);
-  
+
+  boolean isClearOutputDirectoryOnRebuild();
 }

@@ -19,16 +19,20 @@ public class ArtifactImpl implements ModifiableArtifact {
   private ArtifactRootElement<?> myRootElement;
   private String myName;
   private boolean myBuildOnMake;
+  private boolean myClearOutputDirectoryOnRebuild;
   private String myOutputPath;
   private ArtifactType myArtifactType;
   private Map<ArtifactPropertiesProvider, ArtifactProperties<?>> myProperties;
 
-  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull ArtifactRootElement<?> rootElement, String outputPath) {
+  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull ArtifactRootElement<?> rootElement,
+                      String outputPath,
+                      boolean clearOutputDirectoryOnRebuild) {
     myName = name;
     myArtifactType = artifactType;
     myBuildOnMake = buildOnMake;
     myRootElement = rootElement;
     myOutputPath = outputPath;
+    myClearOutputDirectoryOnRebuild = clearOutputDirectoryOnRebuild;
     myProperties = new HashMap<ArtifactPropertiesProvider, ArtifactProperties<?>>();
     for (ArtifactPropertiesProvider provider : ArtifactPropertiesProvider.getProviders()) {
       if (provider.isAvailableFor(artifactType)) {
@@ -55,6 +59,14 @@ public class ArtifactImpl implements ModifiableArtifact {
     return myRootElement;
   }
 
+  public void setClearOutputDirectoryOnRebuild(boolean clearOutputDirectoryOnRebuild) {
+    myClearOutputDirectoryOnRebuild = clearOutputDirectoryOnRebuild;
+  }
+
+  public boolean isClearOutputDirectoryOnRebuild() {
+    return myClearOutputDirectoryOnRebuild;
+  }
+
   public String getOutputPath() {
     return myOutputPath;
   }
@@ -64,7 +76,8 @@ public class ArtifactImpl implements ModifiableArtifact {
   }
 
   public ArtifactImpl createCopy() {
-    final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath);
+    final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath,
+                                                   myClearOutputDirectoryOnRebuild);
     for (Map.Entry<ArtifactPropertiesProvider, ArtifactProperties<?>> entry : myProperties.entrySet()) {
       final ArtifactProperties newProperties = artifact.myProperties.get(entry.getKey());
       //noinspection unchecked

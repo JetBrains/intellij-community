@@ -45,6 +45,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
   private TextFieldWithBrowseButton myOutputDirectoryField;
   private JCheckBox myShowIncludedCheckBox;
   private JPanel myEditorPanel;
+  private JCheckBox myClearOnRebuildCheckBox;
   private Splitter mySplitter;
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
@@ -66,6 +67,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myLayoutTreeComponent);
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
+    myClearOnRebuildCheckBox.setSelected(artifact.isClearOutputDirectoryOnRebuild());
     final String outputPath = artifact.getOutputPath();
     myOutputDirectoryField.addBrowseFolderListener(CompilerBundle.message("dialog.title.output.directory.for.artifact"),
                                                    CompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
@@ -77,6 +79,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
   public void apply() {
     final ModifiableArtifact modifiableArtifact = myContext.getModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
     modifiableArtifact.setBuildOnMake(myBuildOnMakeCheckBox.isSelected());
+    modifiableArtifact.setClearOutputDirectoryOnRebuild(myClearOnRebuildCheckBox.isSelected());
     modifiableArtifact.setOutputPath(getConfiguredOutputPath());
     myPropertiesEditors.applyProperties();
   }
@@ -227,6 +230,7 @@ public class ArtifactEditorImpl implements ArtifactEditor {
   public boolean isModified() {
     return myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
         || !Comparing.equal(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath())
+        || myClearOnRebuildCheckBox.isSelected() != myOriginalArtifact.isClearOutputDirectoryOnRebuild()
         || myPropertiesEditors.isModified();
   }
 

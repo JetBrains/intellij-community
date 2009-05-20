@@ -20,6 +20,7 @@ public class ArtifactState {
   private String myOutputPath;
   private String myArtifactType = PlainArtifactType.ID;
   private boolean myBuildOnMake;
+  private boolean myClearOutputOnRebuild;
   private Element myRootElement;
   private List<ArtifactPropertiesState> myPropertiesList = new ArrayList<ArtifactPropertiesState>();
 
@@ -48,6 +49,11 @@ public class ArtifactState {
     return myRootElement;
   }
 
+  @Attribute("clear-output-on-rebuild")
+  public boolean isClearOutputOnRebuild() {
+    return myClearOutputOnRebuild;
+  }
+
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
   public List<ArtifactPropertiesState> getPropertiesList() {
@@ -64,6 +70,10 @@ public class ArtifactState {
 
   public void setName(String name) {
     myName = name;
+  }
+
+  public void setClearOutputOnRebuild(boolean clearOutputOnRebuild) {
+    myClearOutputOnRebuild = clearOutputOnRebuild;
   }
 
   public void setOutputPath(String outputPath) {

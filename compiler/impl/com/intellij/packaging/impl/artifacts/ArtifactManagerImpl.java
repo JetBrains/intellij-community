@@ -66,6 +66,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       artifactState.setOutputPath(artifact.getOutputPath());
       artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
       artifactState.setArtifactType(artifact.getArtifactType().getId());
+      artifactState.setClearOutputOnRebuild(artifact.isClearOutputDirectoryOnRebuild());
       for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
         final ArtifactPropertiesState propertiesState = serializeProperties(provider, artifact.getProperties(provider));
         if (propertiesState != null) {
@@ -133,7 +134,8 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       }
       ArtifactType type = ArtifactType.findById(state.getArtifactType());
       if (type != null) {
-        final ArtifactImpl artifact = new ArtifactImpl(state.getName(), type, state.isBuildOnMake(), rootElement, state.getOutputPath());
+        final ArtifactImpl artifact = new ArtifactImpl(state.getName(), type, state.isBuildOnMake(), rootElement, state.getOutputPath(),
+                                                       state.isClearOutputOnRebuild());
         final List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
         for (ArtifactPropertiesState propertiesState : propertiesList) {
           final ArtifactPropertiesProvider provider = ArtifactPropertiesProvider.findById(propertiesState.getId());
@@ -236,6 +238,10 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     finally {
       myInsideCommit = false;
     }
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   private static class ArtifactManagerModel extends ArtifactModelBase {

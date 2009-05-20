@@ -8,6 +8,7 @@ import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.PackagingElement;
@@ -43,13 +44,23 @@ public class ArtifactsGenerator {
     generators.add(initTarget);
     initTarget.add(new Property(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY, BuildProperties.propertyRelativePath(BuildProperties.getProjectBaseDirProperty(), "artifactsTemp")));
 
-    StringBuilder depends = new StringBuilder();
     final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getArtifacts();
+    for (Artifact artifact : artifacts) {
+      if (!myContext.shouldBuildIntoTempDirectory(artifact)) {
+        generators.add(new CleanArtifactTarget(artifact, myContext));
+      }
+      final String outputPath = artifact.getOutputPath();
+      if (!StringUtil.isEmpty(outputPath)) {
+        initTarget.add(new Property(myContext.getConfiguredArtifactOutputProperty(artifact), myContext.getSubstitutedPath(outputPath)));
+      }
+    }
+
+    StringBuilder depends = new StringBuilder();
     for (Artifact artifact : artifacts) {
       Target target = createArtifactTarget(artifact);
       generators.add(target);
 
-      if (artifact.isBuildOnMake()) {
+      if (!StringUtil.isEmpty(artifact.getOutputPath())) {
         if (depends.length() > 0) depends.append(", ");
         depends.append(myContext.getTargetName(artifact));
       }
@@ -61,8 +72,9 @@ public class ArtifactsGenerator {
 
     Target buildAllArtifacts = new Target(BUILD_ALL_ARTIFACTS_TARGET, depends.toString(), "Build all artifacts", null);
     for (Artifact artifact : artifacts) {
-      if (artifact.isBuildOnMake()) {
-        final String outputPath = myContext.getSubstitutedPath(artifact.getOutputPath());
+      final String artifactOutputPath = artifact.getOutputPath();
+      if (!StringUtil.isEmpty(artifactOutputPath) && myContext.shouldBuildIntoTempDirectory(artifact)) {
+        final String outputPath = BuildProperties.propertyRef(myContext.getConfiguredArtifactOutputProperty(artifact));
         buildAllArtifacts.add(new Mkdir(outputPath));
         final Copy copy = new Copy(outputPath);
         copy.add(new FileSet(BuildProperties.propertyRef(myContext.getArtifactOutputProperty(artifact))));
@@ -106,9 +118,12 @@ public class ArtifactsGenerator {
 
     final Target artifactTarget =
         new Target(myContext.getTargetName(artifact), depends.toString(), "Build '" + artifact.getName() + "' artifact", null);
-    final String tempOutputDirectory = BuildProperties.propertyRelativePath(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY,
-                                                                            BuildProperties.convertName(artifact.getName()));
-    artifactTarget.add(new Property(myContext.getArtifactOutputProperty(artifact), tempOutputDirectory));
+
+    if (myContext.shouldBuildIntoTempDirectory(artifact)) {
+      final String outputDirectory = BuildProperties.propertyRelativePath(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY,
+                                                                          BuildProperties.convertName(artifact.getName()));
+      artifactTarget.add(new Property(myContext.getArtifactOutputProperty(artifact), outputDirectory));
+    }
 
     final String outputPath = BuildProperties.propertyRef(myContext.getArtifactOutputProperty(artifact));
     artifactTarget.add(new Mkdir(outputPath));
@@ -129,4 +144,13 @@ public class ArtifactsGenerator {
     return artifactTarget;
   }
 
+  public List<String> getCleanTargetNames() {
+    final List<String> targets = new ArrayList<String>();
+    for (Artifact artifact : ArtifactManager.getInstance(myProject).getArtifacts()) {
+      if (!myContext.shouldBuildIntoTempDirectory(artifact)) {
+        targets.add(myContext.getCleanTargetName(artifact));
+      }
+    }
+    return targets;
+  }
 }

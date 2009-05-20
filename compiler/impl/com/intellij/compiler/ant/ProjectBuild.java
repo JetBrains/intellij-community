@@ -52,10 +52,18 @@ public abstract class ProjectBuild extends Generator {
                                          CompilerBundle.message("generated.ant.build.initialization.section.title"), null);
     initTarget.add(new Comment(CompilerBundle.message("generated.ant.build.initialization.section.comment")));
     myAntProject.add(initTarget, 1);
-    myAntProject.add(new CleanProject(genOptions), 1);
 
+    ArtifactsGenerator artifactsGenerator;
     if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      ArtifactsGenerator artifactsGenerator = new ArtifactsGenerator(project, genOptions);
+      artifactsGenerator = new ArtifactsGenerator(project, genOptions);
+    }
+    else {
+      artifactsGenerator = null;
+    }
+
+    myAntProject.add(new CleanProject(genOptions, artifactsGenerator), 1);
+
+    if (artifactsGenerator != null) {
       List<Generator> generators = artifactsGenerator.generate();
       for (Generator generator : generators) {
         myAntProject.add(generator, 1);

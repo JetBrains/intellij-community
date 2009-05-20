@@ -8,7 +8,9 @@ import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.ArtifactAntGenerationContext;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -30,14 +32,36 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
   private final Project myProject;
   private GenerationOptions myGenerationOptions;
   private List<Generator> myBeforeCurrentArtifact = new ArrayList<Generator>();
+  private Set<Artifact> myArtifactsToClean = new THashSet<Artifact>();
 
   public ArtifactAntGenerationContextImpl(Project project, GenerationOptions generationOptions) {
     myProject = project;
     myGenerationOptions = generationOptions;
+    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+      final String outputPath = artifact.getOutputPath();
+      if (!StringUtil.isEmpty(outputPath) && artifact.isClearOutputDirectoryOnRebuild()) {
+        myArtifactsToClean.add(artifact);
+      }
+    }
+  }
+
+  public String getConfiguredArtifactOutputProperty(@NotNull Artifact artifact) {
+    return "artifact.output." + BuildProperties.convertName(artifact.getName());
   }
 
   public String getArtifactOutputProperty(@NotNull Artifact artifact) {
-    return "artifact.output." + BuildProperties.convertName(artifact.getName());
+    if (shouldBuildIntoTempDirectory(artifact)) {
+      return "artifact.temp.output." + BuildProperties.convertName(artifact.getName());
+    }
+    return getConfiguredArtifactOutputProperty(artifact);
+  }
+
+  public boolean shouldBuildIntoTempDirectory(@NotNull Artifact artifact) {
+    return !myArtifactsToClean.contains(artifact);
+  }
+
+  public String getCleanTargetName(@NotNull Artifact artifact) {
+    return "clean.artifact." + BuildProperties.convertName(artifact.getName());
   }
 
   public String getTargetName(@NotNull Artifact artifact) {
