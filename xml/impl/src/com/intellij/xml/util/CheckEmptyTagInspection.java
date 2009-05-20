@@ -38,6 +38,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.CheckEmptyTagInspection");
   @NonNls private static final String SCRIPT_TAG_NAME = "script";
   private static Set<String> ourTagsWithEmptyEndsNotAllowed = new THashSet<String>(Arrays.asList(SCRIPT_TAG_NAME, "div", "iframe"));
+  private static Set<String> ourTagsWithEmptyEndsAllowed = new THashSet<String>(Arrays.asList("param"));
 
   public boolean isEnabledByDefault() {
     return true;
@@ -102,9 +103,10 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
     if (tag instanceof HtmlTag) tagName = tagName.toLowerCase();
 
     Language language = tag.getLanguage();
-    return ourTagsWithEmptyEndsNotAllowed.contains(tagName) &&
-           language != XMLLanguage.INSTANCE ||
-           language == HTMLLanguage.INSTANCE
+    return (ourTagsWithEmptyEndsNotAllowed.contains(tagName) &&
+           language != XMLLanguage.INSTANCE) ||
+           (language == HTMLLanguage.INSTANCE &&
+            !ourTagsWithEmptyEndsAllowed.contains(tagName))
       ;
   }
 
