@@ -30,7 +30,7 @@ public abstract class LinkMouseListenerBase extends MouseAdapter implements Mous
   }
 
   public void mouseMoved(MouseEvent e) {
-    JTree tree = (JTree) e.getSource();
+    Component tree = (Component)e.getSource();
     if (tree instanceof TreeWithEmptyText && ((TreeWithEmptyText) tree).isModelEmpty()) return;
     Object tag = getTagAt(e);
     if (tag != null) {
