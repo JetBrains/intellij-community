@@ -58,7 +58,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
 
         final Icon icon = overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON;
         final MarkerType type = MarkerType.OVERRIDING_METHOD;
-        return new LineMarkerInfo<PsiMethod>(method, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(), type.<PsiMethod>getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
+        return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(), type.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
       }
     }
 
@@ -144,7 +144,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
         final MarkerType type = MarkerType.SUBCLASSED_CLASS;
         PsiElement range = aClass.getNameIdentifier();
         if (range == null) range = aClass;
-        LineMarkerInfo info = new LineMarkerInfo<PsiClass>(aClass, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.<PsiClass>getNavigationHandler(),
+        LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.getNavigationHandler(),
                                                            GutterIconRenderer.Alignment.RIGHT);
         result.add(info);
       }
@@ -180,7 +180,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       final MarkerType type = MarkerType.OVERRIDEN_METHOD;
       PsiElement range = method.getNameIdentifier();
       if (range == null) range = method;
-      LineMarkerInfo info = new LineMarkerInfo<PsiMethod>(method, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.<PsiMethod>getNavigationHandler(),
+      LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.getNavigationHandler(),
                                                           GutterIconRenderer.Alignment.RIGHT);
       result.add(info);
     }

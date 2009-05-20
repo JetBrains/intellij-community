@@ -32,6 +32,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -112,6 +115,39 @@ public class UpdateHighlightersUtil {
     }
     return false;
   }
+
+  private static class RangeHighlightersToReuse {
+    private final MultiMap<TextRange, RangeHighlighter> info2Pass = new MultiMap<TextRange, RangeHighlighter>(){
+      @Override
+      protected Map<TextRange, Collection<RangeHighlighter>> createMap() {
+        return new THashMap<TextRange, Collection<RangeHighlighter>>();
+      }
+
+      @Override
+      protected Collection<RangeHighlighter> createCollection() {
+        return new SmartList<RangeHighlighter>();
+      }
+    };
+
+    void add(RangeHighlighter highlighter) {
+      info2Pass.putValue(InjectedLanguageUtil.toTextRange(highlighter), highlighter);
+    }
+
+    RangeHighlighter reuseHighlighterAt(int startOffset, int endOffset){
+      TextRange range = new TextRange(startOffset, endOffset);
+      Collection<RangeHighlighter> collection = info2Pass.get(range);
+      for (RangeHighlighter highlighter : collection) {
+        if (!highlighter.isValid()) continue;
+        info2Pass.removeValue(range, highlighter);
+        return highlighter;
+      }
+      return null;
+    }
+    Collection<? extends RangeHighlighter> forAll() {
+      return info2Pass.values();
+    }
+  }
+
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull Document document,
                                              @NotNull Map<TextRange, Collection<HighlightInfo>> infos,
@@ -148,39 +184,31 @@ public class UpdateHighlightersUtil {
     assertMarkupConsistent(markup, oldHighlights, oldHighlightsToRemove);
 
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();
-    MultiMap<HighlightInfo, HighlightInfo> infosToRemove = new MultiMap<HighlightInfo, HighlightInfo>(){
-      @Override
-      protected Map<HighlightInfo, Collection<HighlightInfo>> createMap() {
-        return new THashMap<HighlightInfo, Collection<HighlightInfo>>(DISTINQUISH_INVALID_MARKERS);
-      }
-
-      @Override
-      protected Collection<HighlightInfo> createCollection() {
-        return new ArrayList<HighlightInfo>();
-      }
-    };
+    RangeHighlightersToReuse infosToRemove = new RangeHighlightersToReuse();
 
     boolean changed = false;
+    List<HighlightInfo> toRemoveInAnotherPass = new SmartList<HighlightInfo>();
+
     if (oldHighlights != null) {
-      for (HighlightInfo info : oldHighlights) {
+      List<HighlightInfo> list = ContainerUtil.concat(oldHighlightsToRemove, oldHighlights);
+      for (int i = 0; i < list.size(); i++) {
+        HighlightInfo info = list.get(i);
         RangeHighlighter highlighter = info.highlighter;
         boolean toRemove = !highlighter.isValid() ||
-                           info.group == group && Collections.binarySearch(ranges, new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()),
-                                                                           BY_START_OFFSET_OR_CONTAINS) >= 0;
+                           info.group == group &&
+                           Collections.binarySearch(ranges, new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()),
+                                                    BY_START_OFFSET_OR_CONTAINS) >= 0;
         if (toRemove) {
-          infosToRemove.putValue(info,info);
+          infosToRemove.add(highlighter);
           changed = true;
         }
-        else {
+        else if (i >= oldHighlightsToRemove.size()) {
           result.add(info);
         }
+        else {
+          toRemoveInAnotherPass.add(info);
+        }
       }
-    }
-
-    for (HighlightInfo info : oldHighlightsToRemove) {
-      infosToRemove.putValue(info, info);
-      result.remove(info);
-      changed = true;
     }
 
     Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>(oldHighlights == null ? 10 : oldHighlights.size());
@@ -216,12 +244,9 @@ public class UpdateHighlightersUtil {
         info.text = document.getCharsSequence().subSequence(infoStartOffset, infoEndOffset).toString();
         info.group = group;
 
-        List<HighlightInfo> values = (List<HighlightInfo>)infosToRemove.get(info);
 
-        HighlightInfo toRemove = values.isEmpty() ? null : values.remove(0);
-        RangeHighlighterEx highlighter;
-        if (toRemove != null && toRemove.highlighter.isValid()) {
-          highlighter = toRemove.highlighter;
+        RangeHighlighterEx highlighter = (RangeHighlighterEx)infosToRemove.reuseHighlighterAt(info.startOffset, info.endOffset);
+        if (highlighter != null) {
           ((RangeHighlighterImpl)highlighter).setTextAttributes(info.getTextAttributes(psiFile));
         }
         else {
@@ -252,31 +277,25 @@ public class UpdateHighlightersUtil {
         }
         info.fixMarker = getOrCreate(document, ranges2markersCache, new TextRange(info.fixStartOffset, info.fixEndOffset));
 
-        assert Comparing.equal(info.getTextAttributes(psiFile), highlighter.getTextAttributes()) : "Info: "+info.getTextAttributes(psiFile)+"; highlighter:"+highlighter.getTextAttributes();
-        
+        assert Comparing.equal(info.getTextAttributes(psiFile), highlighter.getTextAttributes()) : "Info: " +
+                                                                                                   info.getTextAttributes(psiFile) +
+                                                                                                   "; highlighter:" +
+                                                                                                   highlighter.getTextAttributes();
+
         result.add(info);
       }
-
-      for (Iterator<HighlightInfo> it = infosToRemove.keySet().iterator(); it.hasNext();) {
-        HighlightInfo info = it.next();
-        if (info.highlighter.isValid()) {
-          if (info.group != group || info.getActualStartOffset() < rangeStartOffset || info.getActualEndOffset() > rangeEndOffset) continue;
-        }
-        Collection<HighlightInfo> values = infosToRemove.get(info);
-        for (HighlightInfo value : values) {
-          markup.removeHighlighter(value.highlighter);
-        }
-        changed = true;
-        it.remove();
-      }
     }
 
-    List<HighlightInfo> listToRemove = infosToRemove.isEmpty() ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infosToRemove.values());
+    for (RangeHighlighter highlighter : infosToRemove.forAll()) {
+      markup.removeHighlighter(highlighter);
+      changed = true;
+    }
+
     if (changed) {
-      DaemonCodeAnalyzerImpl.setHighlights(markup, project, result, listToRemove);
+      DaemonCodeAnalyzerImpl.setHighlights(markup, project, result, toRemoveInAnotherPass);
       clearWhiteSpaceOptimizationFlag(document);
     }
-    assertMarkupConsistent(markup, result, listToRemove);
+    assertMarkupConsistent(markup, result, toRemoveInAnotherPass);
   }
 
   private static RangeHighlighterEx createRangeHighlighter(Project project,
@@ -337,18 +356,20 @@ public class UpdateHighlightersUtil {
                                             int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
-
     List<LineMarkerInfo> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
+    List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>(oldMarkers == null ? markers.size() : oldMarkers.size());
     MarkupModel markupModel = document.getMarkupModel(project);
+    RangeHighlightersToReuse toReuse = new RangeHighlightersToReuse();
     if (oldMarkers != null) {
       for (LineMarkerInfo info : oldMarkers) {
         RangeHighlighter highlighter = info.highlighter;
-        boolean toRemove = !highlighter.isValid() || info.updatePass == group
-                           && startOffset <= highlighter.getStartOffset() && (highlighter.getEndOffset() < endOffset || highlighter.getEndOffset() == document.getTextLength());
+        boolean toRemove = !highlighter.isValid() ||
+                           info.updatePass == group &&
+                           startOffset <= highlighter.getStartOffset() &&
+                           (highlighter.getEndOffset() < endOffset || highlighter.getEndOffset() == document.getTextLength());
 
         if (toRemove) {
-          markupModel.removeHighlighter(highlighter);
+          toReuse.add(highlighter);
         }
         else {
           array.add(info);
@@ -363,14 +384,32 @@ public class UpdateHighlightersUtil {
       LOG.assertTrue(textRange != null, element);
       TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
       if (startOffset <= elementRange.getStartOffset() && elementRange.getEndOffset() <= endOffset) {
-        RangeHighlighter marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, info.textAttributesKey != null ? colorsScheme
-          .getAttributes(info.textAttributesKey) : null, HighlighterTargetArea.EXACT_RANGE);
-        marker.setGutterIconRenderer(info.createGutterRenderer());
-        marker.setLineSeparatorColor(info.separatorColor);
-        marker.setLineSeparatorPlacement(info.separatorPlacement);
+
+        RangeHighlighter marker = toReuse.reuseHighlighterAt(info.startOffset, info.endOffset);
+
+        if (marker == null) {
+          marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                   info.textAttributesKey != null
+                                                   ? colorsScheme.getAttributes(info.textAttributesKey)
+                                                   : null, HighlighterTargetArea.EXACT_RANGE);
+        }
+        GutterIconRenderer renderer = info.createGutterRenderer();
+        if (!Comparing.equal(marker.getGutterIconRenderer() == null ? null : marker.getGutterIconRenderer().getIcon(), renderer == null ? null : renderer.getIcon())) {
+          marker.setGutterIconRenderer(renderer);
+        }
+        if (!Comparing.equal(marker.getLineSeparatorColor(), info.separatorColor)) {
+          marker.setLineSeparatorColor(info.separatorColor);
+        }
+        if (!Comparing.equal(marker.getLineSeparatorPlacement(), info.separatorPlacement)) {
+          marker.setLineSeparatorPlacement(info.separatorPlacement);
+        }
         info.highlighter = marker;
         array.add(info);
       }
+    }
+
+    for (RangeHighlighter highlighter : toReuse.forAll()) {
+      markupModel.removeHighlighter(highlighter);
     }
 
     DaemonCodeAnalyzerImpl.setLineMarkers(document, array, project);
@@ -479,7 +518,9 @@ public class UpdateHighlightersUtil {
   }
 
   private static void assertMarkupConsistent(MarkupModel markup, List<HighlightInfo> highlightsToSet, List<HighlightInfo> highlightsToRemove) {
-    if (DEBUG) { // TODO: [cdr] the checks are quadratic to number of highlights, PLEASE make them more efficient if there is a need to switch them on, there are many problematic tests FAILING for this reason! 
+    if (DEBUG) { // TODO: [cdr] the checks are quadratic to number of highlights,
+                 // PLEASE make them more efficient if there is a need to switch them on,
+                 //  there are many problematic tests FAILING for this reason!
       if (highlightsToSet != null) {
         for (HighlightInfo info : highlightsToSet) {
           assert ((MarkupModelEx)markup).containsHighlighter(info.highlighter);

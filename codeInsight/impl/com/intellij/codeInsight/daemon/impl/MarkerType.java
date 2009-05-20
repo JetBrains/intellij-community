@@ -25,8 +25,9 @@ import java.awt.event.MouseEvent;
 public enum MarkerType {
   OVERRIDING_METHOD(new NullableFunction<PsiElement, String>() {
     public String fun(PsiElement element) {
-      if (!(element instanceof PsiMethod)) return null;
-      PsiMethod method = (PsiMethod)element;
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiMethod)) return null;
+      PsiMethod method = (PsiMethod)parent;
 
       PsiMethod[] superMethods = method.findSuperMethods(false);
       if (superMethods.length == 0) return null;
@@ -47,8 +48,9 @@ public enum MarkerType {
     }
   }, new LineMarkerNavigator(){
     public void browse(MouseEvent e, PsiElement element) {
-      if (!(element instanceof PsiMethod)) return;
-      PsiMethod method = (PsiMethod)element;
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiMethod)) return;
+      PsiMethod method = (PsiMethod)parent;
       PsiMethod[] superMethods = method.findSuperMethods(false);
       if (superMethods.length == 0) return;
       boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(superMethods);
@@ -60,8 +62,9 @@ public enum MarkerType {
   }),
   OVERRIDEN_METHOD(new NullableFunction<PsiElement, String>() {
     public String fun(PsiElement element) {
-      if (!(element instanceof PsiMethod)) return null;
-      PsiMethod method = (PsiMethod)element;
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiMethod)) return null;
+      PsiMethod method = (PsiMethod)parent;
 
       PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
       OverridingMethodsSearch.search(method, method.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
@@ -84,8 +87,9 @@ public enum MarkerType {
     }
   }, new LineMarkerNavigator(){
     public void browse(MouseEvent e, PsiElement element) {
-      if (!(element instanceof PsiMethod)) return;
-      PsiMethod method = (PsiMethod)element;
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiMethod)) return;
+      PsiMethod method = (PsiMethod)parent;
       PsiMethod[] overridings = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
       if (overridings.length == 0) return;
       String title = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
@@ -98,15 +102,11 @@ public enum MarkerType {
 
     }
   }),
-  METHOD_SEPARATOR(Function.NULL, new LineMarkerNavigator(){
-    public void browse(MouseEvent e, PsiElement element) {
-
-    }
-  }),
   SUBCLASSED_CLASS(new NullableFunction<PsiElement, String>() {
     public String fun(PsiElement element) {
-      if (!(element instanceof PsiClass)) return null;
-      PsiClass aClass = (PsiClass)element;
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiClass)) return null;
+      PsiClass aClass = (PsiClass)parent;
       PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5);
       ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
 
@@ -130,8 +130,9 @@ public enum MarkerType {
     }
   }, new LineMarkerNavigator(){
     public void browse(MouseEvent e, PsiElement element) {
-      if (!(element instanceof PsiClass)) return;
-      PsiClass aClass = (PsiClass)element;
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiClass)) return;
+      PsiClass aClass = (PsiClass)parent;
       PsiClass[] inheritors = ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).toArray(PsiClass.EMPTY_ARRAY);
       if (inheritors.length == 0) return;
       String title = aClass.isInterface()

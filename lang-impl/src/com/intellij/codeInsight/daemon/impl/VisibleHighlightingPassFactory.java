@@ -19,7 +19,7 @@ public class VisibleHighlightingPassFactory extends AbstractProjectComponent {
   }
 
   @Nullable
-  protected static TextRange calculateRangeToProcess(Editor editor) {
+  protected TextRange calculateRangeToProcess(Editor editor) {
     TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
     if (dirtyTextRange == null) return null;
     int startOffset = dirtyTextRange.getStartOffset();
