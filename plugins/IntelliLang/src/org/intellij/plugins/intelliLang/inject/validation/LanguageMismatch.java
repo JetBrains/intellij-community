@@ -146,11 +146,11 @@ public class LanguageMismatch extends LocalInspectionTool {
               }
               // context implies language, but declaration isn't annotated
               final PsiAnnotation annotation = annotations[annotations.length - 1];
-              final String initializer = getInitializer(annotation);
+              final String initializer = annotation.getParameterList().getText();
               final AnnotateFix fix = new AnnotateFix(declOwner, annotation.getQualifiedName(), initializer) {
                 @NotNull
                 public String getName() {
-                  return super.getName() + initializer;
+                  return initializer == null ? super.getName() : super.getName() + initializer;
                 }
               };
 
@@ -166,11 +166,6 @@ public class LanguageMismatch extends LocalInspectionTool {
         }
       }
     }
-  }
-
-  @NotNull
-  private String getInitializer(PsiAnnotation annotation) {
-    return annotation.getParameterList().getText();
   }
 
   @NotNull
