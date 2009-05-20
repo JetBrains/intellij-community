@@ -582,6 +582,16 @@
     </entry>
     <entry>
       <MethodParameterInjection>
+        <setting name="LANGUAGE" value="SQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="CLASS" value="javax.persistence.EntityManager"/>
+        <setting name="APPLY_IN_HIERARCHY" value="true"/>
+        <SIGNATURES name="createNativeQuery(java.lang.String)" value="true"/>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
         <setting name="LANGUAGE" value="JPAQL"/>
         <setting name="PREFIX" value=""/>
         <setting name="SUFFIX" value=""/>
