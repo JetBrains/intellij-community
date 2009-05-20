@@ -26,11 +26,14 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
+import static com.intellij.refactoring.util.RefactoringUtil.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
@@ -41,8 +44,7 @@ import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHold
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -52,12 +54,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -75,6 +77,8 @@ public abstract class GroovyRefactoringUtil {
           return type.toString();
         }
       });
+
+  private static final String[] finalModifiers = new String[]{PsiModifier.FINAL};
 
   public static PsiElement getEnclosingContainer(PsiElement place) {
     PsiElement parent = place.getParent();
@@ -618,4 +622,198 @@ public abstract class GroovyRefactoringUtil {
 
   }
 
+  public static GrCall getCallExpressionByMethodReference(PsiElement ref) {
+    if (ref instanceof GrEnumConstant) return (GrEnumConstant)ref;
+    if (ref instanceof GrConstructorInvocation) return (GrCall)ref;
+    PsiElement parent = ref.getParent();
+    if (parent instanceof GrMethodCallExpression) {
+      return (GrMethodCallExpression)parent;
+    }
+    else if (parent instanceof GrNewExpression) {
+      return (GrNewExpression)parent;
+    }
+    else {
+      return null;
+    }
+  }
+
+  public static boolean isMethodUsage(PsiElement ref) {
+    return (ref instanceof GrEnumConstant) || (ref.getParent() instanceof GrCall) || (ref instanceof GrConstructorInvocation);
+  }
+
+  public static String createTempVar(GrExpression expr, final GroovyPsiElement context, boolean declareFinal) {
+    GrStatement anchorStatement = (GrStatement)getParentStatement(context, true);
+    assert (anchorStatement != null && anchorStatement.getParent() != null);
+//    LOG.assertTrue(anchorStatement != null && anchorStatement.getParent() != null);
+
+    Project project = expr.getProject();
+    String[] suggestedNames =GroovyNameSuggestionUtil.suggestVariableNames(expr, new NameValidator() {
+      public String validateName(String name, boolean increaseNumber) {
+        return name;
+      }
+
+      public Project getProject() {
+        return context.getProject();
+      }
+    });
+/*
+      JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expr, null).names;*/
+    final String prefix = suggestedNames[0];
+    final String id = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(prefix, context, true);
+
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
+
+    while (expr instanceof GrParenthesizedExpression) {
+      expr = ((GrParenthesizedExpression)expr).getOperand();
+    }
+    String[] modifiers;
+    if (declareFinal) {
+      modifiers = finalModifiers;
+    }
+    else {
+      modifiers = ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+    GrVariableDeclaration decl = factory.createVariableDeclaration(modifiers, expr, expr.getType(), id);
+/*    if (declareFinal) {
+      com.intellij.psi.util.PsiUtil.setModifierProperty((decl.getMembers()[0]), PsiModifier.FINAL, true);
+    }*/
+    ((GrCodeBlock)anchorStatement.getParent()).addStatementBefore(decl, anchorStatement);
+
+    return id;
+  }
+
+  public static PsiElement getParentStatement(GroovyPsiElement place, boolean skipScopingStatements) {
+    PsiElement parent = place;
+    while (!(parent instanceof GrStatement)) {
+      parent = parent.getParent();
+      if (parent == null) return null;
+    }
+    PsiElement parentStatement = parent;
+    parent = parentStatement.getParent();
+    while (parent instanceof GrStatement) {
+      if (!skipScopingStatements &&
+          ((parent instanceof GrForStatement && parentStatement == ((GrForStatement)parent).getBody()) ||
+           (parent instanceof GrWhileStatement && parentStatement == ((GrWhileStatement)parent).getBody()) ||
+           (parent instanceof GrIfStatement &&
+            (parentStatement == ((GrIfStatement)parent).getThenBranch() || parentStatement == ((GrIfStatement)parent).getElseBranch())))) {
+        return parentStatement;
+      }
+      parentStatement = parent;
+      parent = parent.getParent();
+    }
+    return parentStatement;
+  }
+
+  public static GrExpression convertJavaExpr2GroovyExpr(PsiElement expr) {
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
+
+    final List<PsiLocalVariable> localVariables = new ArrayList<PsiLocalVariable>();
+    final List<PsiField> fields = new ArrayList<PsiField>();
+    final List<PsiParameter> parameters = new ArrayList<PsiParameter>();
+
+    expr.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        final PsiExpression qualifierExpression = expression.getQualifierExpression();
+        if (qualifierExpression != null && !(qualifierExpression instanceof PsiThisExpression)) return;
+
+        PsiElement el = expression.resolve();
+        if (el instanceof PsiField) {
+          fields.add((PsiField)el);
+        }
+        else if (el instanceof PsiParameter) {
+          parameters.add((PsiParameter)el);
+        }
+        else if (el instanceof PsiLocalVariable) {
+          localVariables.add((PsiLocalVariable)el);
+        }
+        super.visitReferenceExpression(expression);
+      }
+    });
+
+    PsiJavaFile file = (PsiJavaFile)expr.getContainingFile();
+
+    StringBuilder cf = new StringBuilder();
+
+    final PsiPackageStatement packageStatement = file.getPackageStatement();
+    if (packageStatement != null) cf.append(packageStatement.getText());
+
+    final PsiImportList importList = file.getImportList();
+    if (importList != null) cf.append(importList.getText());
+
+    cf.append("class A{");
+    for (PsiField field : fields) {
+      cf.append(field.getText());
+    }
+
+    cf.append("void foo(");
+    for (int i = 0, parametersSize = parameters.size() - 1; i < parametersSize; i++) {
+      PsiParameter parameter = parameters.get(i);
+      cf.append(parameter.getText()).append(',');
+    }
+    if (parameters.size() > 0) {
+      cf.append(parameters.get(parameters.size() - 1).getText());
+    }
+    cf.append("){");
+    for (PsiLocalVariable localVariable : localVariables) {
+      cf.append(localVariable.getText());
+    }
+    cf.append("Object _________________ooooooo_______________=");
+    cf.append(expr.getText());
+    cf.append(";}}");
+    final GroovyFile grFile = factory.createGroovyFile(cf.toString(), false, expr);
+
+    final GrMethod method = (GrMethod)grFile.getClasses()[0].getMethods()[0];
+    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)method.getBlock().getStatements()[0];
+    return variableDeclaration.getVariables()[0].getInitializerGroovy();
+  }
+
+  public static int verifySafeCopyExpression(GrExpression expression) {
+    return verifySafeCopyExpressionSubElement(expression);
+  }
+
+  private static int verifySafeCopyExpressionSubElement(PsiElement element) {
+    int result = EXPR_COPY_SAFE;
+    if (element == null) return result;
+
+    if (element instanceof GrThisReferenceExpression || element instanceof GrSuperReferenceExpression || element instanceof GrNamedElement) {
+      return EXPR_COPY_SAFE;
+    }
+
+    if (element instanceof GrMethodCallExpression) {
+      result = EXPR_COPY_UNSAFE;
+    }
+
+    if (element instanceof GrNewExpression) {
+      return EXPR_COPY_PROHIBITED;
+    }
+
+    if (element instanceof GrAssignmentExpression) {
+      return EXPR_COPY_PROHIBITED;
+    }
+
+    if (element instanceof GrClosableBlock) {
+      return EXPR_COPY_PROHIBITED;
+    }
+
+    if (isPlusPlusOrMinusMinus(element)) {
+      return EXPR_COPY_PROHIBITED;
+    }
+
+    PsiElement[] children = element.getChildren();
+
+    for (PsiElement child : children) {
+      int childResult = verifySafeCopyExpressionSubElement(child);
+      result = Math.max(result, childResult);
+    }
+    return result;
+  }
+
+  public static boolean isPlusPlusOrMinusMinus(PsiElement element) {
+    if (element instanceof GrUnaryExpression) {
+      IElementType operandSign = ((GrUnaryExpression)element).getOperationTokenType();
+      return operandSign == GroovyTokenTypes.mDEC || operandSign == GroovyTokenTypes.mINC;
+    }
+    return false;
+  }
 }

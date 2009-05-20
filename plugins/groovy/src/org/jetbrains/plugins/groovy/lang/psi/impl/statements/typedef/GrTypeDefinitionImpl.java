@@ -744,7 +744,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public PsiIdentifier getNameIdentifier() {
-    return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy().getTextRange());
+    return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy());
   }
 
   public PsiElement getScope() {
@@ -928,6 +928,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
       if (memberDeclarations.length == 0 && rBrace != null) {
         anchor = rBrace.getPrevSibling();
+        if (anchor == lBrace) anchor = rBrace;
       } else if (memberDeclarations.length > 0 ) {
         for (GrMembersDeclaration memberDeclaration : memberDeclarations) {
           if (memberDeclaration instanceof GrMethodImpl) {

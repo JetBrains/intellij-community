@@ -18,17 +18,19 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
@@ -163,5 +165,37 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     return namedArgument;
   }
 
+  @Override
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    GrExpression[] params = getExpressionArguments();
+    final ASTNode astNode = getNode();
 
+    if (anchor == null) anchor = getLeftParen();
+
+    PsiElement result;
+    if (params.length == 0) {
+      result = super.addAfter(element, anchor);
+    }
+    else {
+      result = super.addAfter(element, anchor);
+      astNode.addLeaf(mCOMMA, ",", result.getNode());
+    }
+
+    CodeStyleManager.getInstance(getManager().getProject()).reformat(this);
+    return result;
+  }
+
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    ASTNode next = TreeUtil.skipElements(child.getTreeNext(), GroovyTokenTypes.WHITE_SPACES_OR_COMMENTS);
+    if (next != null && next.getElementType() == mCOMMA) {
+      deleteChildInternal(next);
+    }
+    else {
+      ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), GroovyTokenTypes.WHITE_SPACES_OR_COMMENTS);
+      if (prev != null && prev.getElementType() == mCOMMA) {
+        deleteChildInternal(prev);
+      }
+    }
+    super.deleteChildInternal(child);
+  }
 }

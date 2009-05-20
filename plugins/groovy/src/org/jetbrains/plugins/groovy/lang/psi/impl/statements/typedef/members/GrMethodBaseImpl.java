@@ -244,7 +244,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @Nullable
   public PsiIdentifier getNameIdentifier() {
-    return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy().getTextRange());
+    return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy());
   }
 
   private void findSuperMethodRecursilvely(Set<PsiMethod> methods,

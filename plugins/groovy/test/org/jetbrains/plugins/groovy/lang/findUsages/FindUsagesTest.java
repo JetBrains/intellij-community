@@ -30,6 +30,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.impl.JavaTestFixtureFactoryImpl;
 import com.intellij.util.Query;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -44,6 +45,7 @@ public class FindUsagesTest extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+    fixtureFactory.registerFixtureBuilder(JavaModuleFixtureBuilder.class, JavaTestFixtureFactoryImpl.MyJavaModuleFixtureBuilderImpl.class);
     final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
     final JavaModuleFixtureBuilder moduleBuilder = builder.addModule(JavaModuleFixtureBuilder.class);
@@ -82,8 +84,7 @@ public class FindUsagesTest extends UsefulTestCase {
     assertEquals(1, query.findAll().size());
   }
 
-  //todo [ilyas]
-  public void _testConstructor1() throws Throwable {
+  public void testConstructor1() throws Throwable {
     doConstructorTest("A.groovy", 2);
   }
 

@@ -18,14 +18,16 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -121,4 +123,19 @@ public class GrParameterListImpl extends GroovyPsiElementImpl implements GrParam
     return null;
   }
 
+  @Override
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    GrParameter[] params = getParameters();
+    final ASTNode astNode = getNode();
+
+    if (params.length == 0) {
+      astNode.addChild(element.getNode());
+    }
+    else {
+      astNode.addLeaf(mCOMMA, ",", (element = super.addAfter(element, anchor)).getNode());
+    }
+
+    CodeStyleManager.getInstance(getManager().getProject()).reformat(this);
+    return element;
+  }
 }

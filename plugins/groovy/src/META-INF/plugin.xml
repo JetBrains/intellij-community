@@ -56,6 +56,8 @@
   <!--</extensions>-->
 
   <extensions defaultExtensionNs="com.intellij">
+    <refactoring.introduceParameterMethodUsagesProcessor implementation="org.jetbrains.plugins.groovy.refactoring.introduceParameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor"/>
+    <!--<expectedTypesProvider implementation="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider"/>-->
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
@@ -142,9 +144,13 @@
 
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyConstructorUsagesSearcher"/>
     <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
 
     <typedHandler implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyTypedHandler"/>
+
+    <!--<gotoDeclarationHandler implementation="org.jetbrains.plugins.groovy.actions.GotoConstructorDeclarationHandler"/>-->
+    <!--<targetElementEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator"/>-->
 
     <!--<compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>-->
 
@@ -166,7 +172,7 @@
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex"/>
 
-    <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>-->
+    <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.PropertyReferencesSearcher"/>-->
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.TypeAliasReferenceSearcher"/>-->
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.LateBoundReferencesSearcher"/>-->

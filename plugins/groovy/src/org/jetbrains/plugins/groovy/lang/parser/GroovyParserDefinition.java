@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
-import static com.intellij.lang.ParserDefinition.SpaceRequirements.MAY;
+import static com.intellij.lang.ParserDefinition.SpaceRequirements.*;
 import static com.intellij.lang.ParserDefinition.SpaceRequirements.MUST_LINE_BREAK;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
@@ -30,7 +30,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.kIMPORT;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mWS;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 
@@ -79,6 +79,9 @@ public class GroovyParserDefinition implements ParserDefinition {
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     if (right.getElementType() == kIMPORT && left.getElementType() != mWS) {
       return MUST_LINE_BREAK;
+    }
+    else if (left.getElementType() == MODIFIERS && right.getElementType() == MODIFIERS) {
+      return MUST;
     }
     return MAY;
   }

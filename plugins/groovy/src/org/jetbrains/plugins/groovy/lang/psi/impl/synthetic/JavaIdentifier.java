@@ -14,10 +14,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.impl.light.LightIdentifier;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.light.LightIdentifier;
 
 /**
  * @author ven
@@ -26,10 +27,18 @@ public class JavaIdentifier extends LightIdentifier {
   private final PsiFile myFile;
   private final TextRange myRange;
 
-  public JavaIdentifier(PsiManager manager, PsiFile file, TextRange range) {
-    super(manager, range.substring(file.getText()));
+  public JavaIdentifier(PsiManager manager, PsiFile file, PsiElement element) {
+    super(manager, element.getText());
     myFile = file;
-    myRange = range;
+    int startOffset=0;
+    int len=element.getTextLength();
+    if (element.getContainingFile()!=null) {
+      while (!(element instanceof PsiFile)) {
+        startOffset+=element.getStartOffsetInParent();
+        element=element.getParent();
+      }
+    }
+    myRange = TextRange.from(startOffset, len);
   }
 
   public TextRange getTextRange() {
@@ -38,5 +47,10 @@ public class JavaIdentifier extends LightIdentifier {
 
   public PsiFile getContainingFile() {
     return myFile;
+  }
+
+  @Override
+  public int getStartOffsetInParent() {
+    return myRange.getStartOffset();
   }
 }

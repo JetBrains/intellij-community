@@ -37,6 +37,7 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes{
 
   IElementType mWS = new GroovyElementType("white space");
   IElementType mNLS = new GroovyElementType("new line");
+  TokenSet WHITE_SPACES_SET=TokenSet.create(mWS, mNLS);
 
   /* **************************************************************************************************
  *  Comments
@@ -231,4 +232,6 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes{
       mMEMBER_POINTER,
       mDOT
   );
+
+  TokenSet WHITE_SPACES_OR_COMMENTS=TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
 }
