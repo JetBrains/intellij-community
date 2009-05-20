@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,7 +102,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                     return;
                   }
                 }
-                ApplicationManager.getApplication().invokeLater(startRunnable);
+                DumbService.getInstance().smartInvokeLater(startRunnable);
               }
             });
           }
