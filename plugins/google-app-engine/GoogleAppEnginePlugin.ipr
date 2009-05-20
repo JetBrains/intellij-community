@@ -29,6 +29,7 @@
       <entry name="?*.tld" />
       <entry name="?*.ftl" />
       <entry name="?*.ft" />
+      <entry name="?*.txt" />
     </wildcardResourcePatterns>
   </component>
   <component name="CopyrightManager" default="">
@@ -431,7 +432,7 @@
   </component>
   <component name="ProjectFileVersion" converted="true" />
   <component name="ProjectKey">
-    <option name="state" value="app7.labs.intellij.net:1666://" />
+    <option name="state" value="app7.labs.intellij.net:1666:////IDEA/plugins/GoogleAppEngine/GoogleAppEnginePlugin.ipr" />
   </component>
   <component name="ProjectModuleManager">
     <modules>

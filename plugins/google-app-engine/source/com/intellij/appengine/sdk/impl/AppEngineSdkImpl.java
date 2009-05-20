@@ -204,6 +204,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
 
   private Map<String, Set<String>> loadBlackList() throws IOException {
     final InputStream stream = getClass().getResourceAsStream("/data/methodsBlacklist.txt");
+    LOG.assertTrue(stream != null, "/data/methodsBlacklist.txt not found");
     final THashMap<String, Set<String>> map = new THashMap<String, Set<String>>();
     BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
     try {
