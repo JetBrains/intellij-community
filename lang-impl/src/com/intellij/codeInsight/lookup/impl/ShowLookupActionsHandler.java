@@ -29,6 +29,7 @@ public class ShowLookupActionsHandler extends LookupActionHandler {
 
     final Collection<LookupElementAction> actions = lookup.getActionsFor(element);
     if (actions.isEmpty()) {
+      lookup.getEditor().getCaretModel().moveCaretRelatively(1, 0, false, false, true);
       return;
     }
 
