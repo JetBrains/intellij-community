@@ -163,7 +163,8 @@ public class ScriptGenerator {
    */
   public String commandLine() {
     StringBuilder cmd = new StringBuilder();
-    cmd.append(System.getProperty("java.home")).append(File.separatorChar).append("bin").append(File.separatorChar).append("java -cp \"");
+    cmd.append('\"').append(System.getProperty("java.home")).append(File.separatorChar).append("bin").append(File.separatorChar)
+      .append("java\" -cp \"");
     boolean first = true;
     for (String p : myPaths) {
       if (!first) {
