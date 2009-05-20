@@ -13,6 +13,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -22,6 +23,7 @@ import java.util.*;
 /**
  * @author ven
  */
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class GenericInlineHandler {
 
   public static boolean invoke(final PsiElement element, final Editor editor, final InlineHandler languageSpecific) {
@@ -63,6 +65,20 @@ public class GenericInlineHandler {
       if (!conflictsDialog.isOK()) return true;
     }
 
+    HashSet<PsiElement> elements = new HashSet<PsiElement>();
+    for (PsiReference reference : allReferences) {
+      PsiElement refElement = reference.getElement();
+      if (refElement != null) {
+        elements.add(refElement);
+      }
+    }
+    if (!settings.isOnlyOneReferenceToInline()) {
+      elements.add(element);
+    }
+
+    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements)) {
+      return true;
+    }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final String subj = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "element";
