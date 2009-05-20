@@ -173,6 +173,7 @@ public class GitMergeUtil {
       for (String fileName : unmergedNames) {
         VirtualFile f = lfs.findFileByPath(fileName);
         if (f != null) {
+          f.refresh(false, false);
           unmerged.add(f);
         }
       }
