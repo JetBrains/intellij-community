@@ -141,9 +141,6 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
       final ConfigFileMetaData metaData = configuration.getMetaData();
       child.setAttribute(ID_ATTRIBUTE, metaData.getId());
       child.setAttribute(URL_ATTRIBUTE, configuration.getUrl());
-      //for backward compatibility
-      child.setAttribute("optional", "false");
-      child.setAttribute("version", metaData.getDefaultVersion().getName());
       element.addContent(child);
     }
   }
