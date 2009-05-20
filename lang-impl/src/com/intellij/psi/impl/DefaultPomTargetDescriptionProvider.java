@@ -4,9 +4,13 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomDescriptionProvider;
+import com.intellij.pom.PomNamedTarget;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.psi.PsiElement;
+import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.xml.TypeNameManager;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +20,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider {
   public String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location) {
+    if (element instanceof PsiElement) return null;
+    
     if (location == UsageViewTypeLocation.INSTANCE) {
       return TypeNameManager.getTypeName(element.getClass());
+    }
+    if (location == UsageViewNodeTextLocation.INSTANCE) {
+      return TypeNameManager.getTypeName(element.getClass()) + " " + StringUtil.notNullize(element instanceof PomNamedTarget ? ((PomNamedTarget)element).getName() : null, "''");
     }
     return null;
   }
