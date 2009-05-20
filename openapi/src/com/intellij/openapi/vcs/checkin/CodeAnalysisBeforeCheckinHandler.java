@@ -21,6 +21,7 @@ import com.intellij.codeInsight.CodeSmellInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -58,6 +59,10 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       public JComponent getComponent() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(checkBox);
+        if (DumbService.getInstance().isDumb()) {
+          checkBox.setEnabled(false);
+          checkBox.setToolTipText("Code analysis is impossible until indices are up-to-date");
+        }
         return panel;
       }
 
@@ -112,6 +117,17 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   public ReturnResult beforeCheckin(CommitExecutor executor) {
     if (getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
+      if (DumbService.getInstance().isDumb()) {
+        if (Messages.showDialog(myProject,
+                                "Code analysis can't be performed while IntelliJ IDEA updates the indices in background.\n" +
+                                "You can commit the changes without running inspections, or you can wait until indices are built.",
+                                "Code analysis is not possible right now",
+                                new String[]{"&Commit", "&Wait"}, 1, null) != 0) {
+          return ReturnResult.CANCEL;
+        }
+        return ReturnResult.COMMIT;
+      }
+
       try {
         final List<CodeSmellInfo> codeSmells =
           CodeSmellDetector.getInstance(myProject).findCodeSmells(new ArrayList<VirtualFile>(myCheckinPanel.getVirtualFiles()));
