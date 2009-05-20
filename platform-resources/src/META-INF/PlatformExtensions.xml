@@ -152,5 +152,5 @@
   <progressFunComponentProvider implementation="com.intellij.featureStatistics.ProgressFunProvider"/>
   <projectConfigurable implementation="com.intellij.javaee.ExternalResourceConfigurable"/>
 
-  <statusBarComponent implementation="com.intellij.openapi.project.DumbModeIndicator"/>
+  <ideRootPaneNorth implementation="com.intellij.openapi.project.DumbModeIndicator"/>
 </extensions>
