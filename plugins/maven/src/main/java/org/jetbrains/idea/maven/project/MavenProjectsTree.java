@@ -822,13 +822,12 @@ public class MavenProjectsTree {
   }
 
   public void resolve(MavenProject mavenProject,
-                      boolean quickResolve,
                       MavenGeneralSettings generalSettings,
                       MavenEmbeddersManager embeddersManager,
                       MavenConsole console,
                       MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_DEPENDENCIES_RESOLVE);
-    embedder.customizeForResolve(quickResolve, this, console, process);
+    embedder.customizeForResolve(this, console, process);
 
     try {
       process.checkCanceled();
@@ -840,7 +839,7 @@ public class MavenProjectsTree {
                                                                                  myProjectLocator,
                                                                                  process);
       if (nativeProject != null) {
-        fireProjectResolved(quickResolve, mavenProject, nativeProject);
+        fireProjectResolved(mavenProject, nativeProject);
       }
     }
     finally {
@@ -855,6 +854,8 @@ public class MavenProjectsTree {
                              MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_PLUGINS_RESOLVE);
     embedder.customizeForResolve(console, process);
+    embeddersManager.clearCachesFor(mavenProject);
+
     try {
       for (MavenPlugin each : mavenProject.getPlugins()) {
         process.checkCanceled();
@@ -877,6 +878,7 @@ public class MavenProjectsTree {
 
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_FOLDERS_RESOLVE);
     embedder.customizeForStrictResolve(this, console, process);
+    embeddersManager.clearCachesFor(mavenProject);
 
     try {
       process.checkCanceled();
@@ -1001,9 +1003,9 @@ public class MavenProjectsTree {
     }
   }
 
-  private void fireProjectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+  private void fireProjectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
     for (Listener each : myListeners) {
-      each.projectResolved(quickResolve, project, nativeMavenProject);
+      each.projectResolved(project, nativeMavenProject);
     }
   }
 
@@ -1167,7 +1169,7 @@ public class MavenProjectsTree {
 
     void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted);
 
-    void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject);
+    void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject);
 
     void pluginsResolved(MavenProject project);
 
@@ -1186,7 +1188,7 @@ public class MavenProjectsTree {
     public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
     }
 
-    public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+    public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
     }
 
     public void pluginsResolved(MavenProject project) {

@@ -271,7 +271,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
       });
     }
 
-    public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+    public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
       updateProject(project);
     }
 

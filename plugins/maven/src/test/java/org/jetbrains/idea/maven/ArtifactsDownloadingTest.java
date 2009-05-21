@@ -88,6 +88,9 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
   }
 
   public void testDownloadBuildExtensionsOnResolve() throws Exception {
+    File f = new File(getRepositoryPath(), "/org/apache/maven/wagon/wagon/1.0-alpha-6/wagon-1.0-alpha-6.pom");
+    assertFalse(f.exists());
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -101,11 +104,6 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
                   "    </extension>" +
                   "  </extensions>" +
                   "</build>");
-
-    File f = new File(getRepositoryPath(), "/org/apache/maven/wagon/wagon/1.0-alpha-6/wagon-1.0-alpha-6.pom");
-    assertFalse(f.exists());
-
-    resolveDependenciesAndImport();
 
     assertTrue(f.exists());
   }

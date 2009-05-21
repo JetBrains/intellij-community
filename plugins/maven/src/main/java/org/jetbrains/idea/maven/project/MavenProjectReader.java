@@ -24,21 +24,18 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
-import org.apache.maven.project.interpolation.RegexBasedModelInterpolator;
+import org.apache.maven.project.interpolation.ModelInterpolator;
 import org.apache.maven.project.path.DefaultPathTranslator;
+import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.reactor.MissingModuleException;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.embedder.MavenConsoleHelper;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.embedder.*;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.*;
 
 public class MavenProjectReader {
@@ -481,17 +478,7 @@ public class MavenProjectReader {
   }
 
   private Model expandProperties(Model model, File basedir) {
-    RegexBasedModelInterpolator interpolator;
-    try {
-      interpolator = new RegexBasedModelInterpolator();
-      Field f = RegexBasedModelInterpolator.class.getDeclaredField("pathTranslator");
-      f.setAccessible(true);
-      f.set(interpolator, createPathTranslator());
-    }
-    catch (Exception e) {
-      MavenLog.LOG.error(e);
-      return model;
-    }
+    ModelInterpolator interpolator = new CustomModelInterpolator(new DefaultPathTranslator());
 
     Map context = MavenEmbedderFactory.collectSystemProperties();
     Map overrideContext = new THashMap();
@@ -507,14 +494,10 @@ public class MavenProjectReader {
   }
 
   private void alignModel(Model model, File basedir) {
-    DefaultPathTranslator pathTranslator = createPathTranslator();
+    PathTranslator pathTranslator = new DefaultPathTranslator();
     pathTranslator.alignToBaseDirectory(model, basedir);
     Build build = model.getBuild();
     build.setScriptSourceDirectory(pathTranslator.alignToBaseDirectory(build.getScriptSourceDirectory(), basedir));
-  }
-
-  private DefaultPathTranslator createPathTranslator() {
-    return new DefaultPathTranslator();
   }
 
   public MavenProjectReaderResult resolveProject(MavenGeneralSettings generalSettings,
@@ -546,6 +529,7 @@ public class MavenProjectReader {
         problems.add(new MavenProjectProblem(message, true));
       }
       MavenLog.LOG.info(e);
+      MavenLog.printInTests(e); // print exception since we need to know if something wrong with our logic
     }
 
     if (mavenProject == null) {
@@ -572,7 +556,7 @@ public class MavenProjectReader {
                                                             MavenProgressIndicator p) throws MavenProcessCanceledException {
     MavenExecutionRequest request = createRequest(embedder, path, profiles);
     Pair<MavenExecutionResult, Set<MavenId>> result = embedder.resolveProject(request, p);
-    if (!validate(result.first, problems)) return null;
+    validate(result.first, problems);
     return Pair.create(result.first.getProject(), result.second);
   }
 

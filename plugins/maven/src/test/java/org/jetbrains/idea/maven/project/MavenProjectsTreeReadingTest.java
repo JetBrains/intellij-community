@@ -2,10 +2,8 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.ProfilingUtil;
 
 import java.io.File;
 import java.util.Arrays;
@@ -521,12 +519,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       final org.apache.maven.project.MavenProject[] nativeProject = new org.apache.maven.project.MavenProject[1];
       myTree.addListener(new MavenProjectsTree.ListenerAdapter() {
         @Override
-        public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+        public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
           nativeProject[0] = nativeMavenProject;
         }
       });
       myTree.resolve(parentProject,
-                     true,
                      getMavenGeneralSettings(),
                      embeddersManager,
                      NULL_MAVEN_CONSOLE,
@@ -1667,22 +1664,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(rootProject, read.findAggregator(read.findProject(m2)));
   }
 
-  public void testPerformance() throws Exception {
-    if (ignore()) return;
-
-    VirtualFile pom = LocalFileSystem.getInstance().findFileByPath("C:\\projects\\mvn\\_projects\\geronimo\\pom.xml");
-
-    long before = System.currentTimeMillis();
-    ProfilingUtil.startCPUProfiling();
-    updateAll(pom);
-    System.out.println(ProfilingUtil.captureCPUSnapshot());
-    ProfilingUtil.stopCPUProfiling();
-
-    long after = System.currentTimeMillis();
-
-    System.out.println("delta:" + (after - before));
-  }
-
   private static class MyLoggingListener extends MavenProjectsTree.ListenerAdapter {
     String log = "";
 
@@ -1706,7 +1687,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     }
 
     @Override
-    public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+    public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
       log += "resolved: " + project.getMavenId().artifactId + " ";
     }
 

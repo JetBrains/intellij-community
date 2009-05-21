@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.embedder;
 
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.manager.DefaultWagonManager;
@@ -12,25 +13,22 @@ import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class CustomWagonManager extends DefaultWagonManager {
-  private boolean myCustomized;
-  private boolean myUseRemoteRepository;
-  private boolean myFailOnUnresolved;
-
+  private boolean myFailOnUnresolved = true;
   private Set<MavenId> myUnresolvedIds = new THashSet<MavenId>();
-  private int myOpenCount;
-  private boolean myInProcess = false;
 
-  public void customize(boolean useRemoteRepository, boolean failOnUnresolved) {
-    myCustomized = true;
-    myUseRemoteRepository = useRemoteRepository;
+  private boolean myInProcess = false;
+  private Map<String, CachedValue> myCache = new THashMap<String, CachedValue>();
+
+  public void customize(boolean failOnUnresolved) {
     myFailOnUnresolved = failOnUnresolved;
   }
 
   public void reset() {
-    myCustomized = false;
+    myFailOnUnresolved = true;
   }
 
   public Set<MavenId> retrieveUnresolvedIds() {
@@ -40,46 +38,24 @@ public class CustomWagonManager extends DefaultWagonManager {
   }
 
   @Override
-  public void getArtifact(Artifact artifact, List remoteRepositories) throws TransferFailedException, ResourceDoesNotExistException {
-    if (!myCustomized || myInProcess) {
-      super.getArtifact(artifact, remoteRepositories);
-      return;
-    }
-
-    myInProcess = true;
-    try {
-      if (isOpen()) {
-        try {
-          super.getArtifact(artifact, remoteRepositories);
-        }
-        catch (WagonException ignore) {
-        }
-      }
-      postResolve(artifact);
-    }
-    finally {
-      myInProcess = false;
-    }
-  }
-
-  @Override
   public void getArtifact(Artifact artifact, List remoteRepositories, boolean force)
     throws TransferFailedException, ResourceDoesNotExistException {
-    if (!myCustomized || myInProcess) {
+    if (myInProcess) {
       super.getArtifact(artifact, remoteRepositories, force);
       return;
     }
 
     myInProcess = true;
     try {
-      if (isOpen()) {
+      if (!takeFromCache(artifact)) {
         try {
           super.getArtifact(artifact, remoteRepositories, force);
         }
         catch (WagonException ignore) {
         }
+        cache(artifact);
       }
-      postResolve(artifact);
+      setResolved(artifact);
     }
     finally {
       myInProcess = false;
@@ -95,21 +71,22 @@ public class CustomWagonManager extends DefaultWagonManager {
   @Override
   public void getArtifact(Artifact artifact, ArtifactRepository repository, boolean force)
     throws TransferFailedException, ResourceDoesNotExistException {
-    if (!myCustomized || myInProcess) {
+    if (myInProcess) {
       super.getArtifact(artifact, repository, force);
       return;
     }
 
     myInProcess = true;
     try {
-      if (isOpen()) {
+      if (!takeFromCache(artifact)) {
         try {
           super.getArtifact(artifact, repository, force);
         }
         catch (WagonException ignore) {
         }
+        cache(artifact);
       }
-      postResolve(artifact);
+      setResolved(artifact);
     }
     finally {
       myInProcess = false;
@@ -119,38 +96,54 @@ public class CustomWagonManager extends DefaultWagonManager {
   @Override
   public void getArtifactMetadata(ArtifactMetadata metadata, ArtifactRepository repository, File destination, String checksumPolicy)
     throws TransferFailedException, ResourceDoesNotExistException {
-
-    if (!myCustomized || isOpen()) {
-      super.getArtifactMetadata(metadata, repository, destination, checksumPolicy);
-    }
+    // todo use cache here
+    super.getArtifactMetadata(metadata, repository, destination, checksumPolicy);
   }
 
   @Override
   public void getArtifactMetadataFromDeploymentRepository(ArtifactMetadata metadata,
                                                           ArtifactRepository repository,
                                                           File destination,
-                                                          String checksumPolicy)
-    throws TransferFailedException, ResourceDoesNotExistException {
-    if (!myCustomized || isOpen()) {
-      super.getArtifactMetadataFromDeploymentRepository(metadata, repository, destination, checksumPolicy);
-    }
+                                                          String checksumPolicy) throws TransferFailedException,
+                                                                                        ResourceDoesNotExistException {
+    // todo use cache here
+    super.getArtifactMetadataFromDeploymentRepository(metadata, repository, destination, checksumPolicy);
   }
 
-  private void postResolve(Artifact artifact) {
+  private boolean takeFromCache(Artifact artifact) {
+    CachedValue cached = myCache.get(getKey(artifact));
+    if (cached == null) return false;
+
+    boolean fileWasDeleted = cached.wasResolved && !artifact.getFile().exists();
+    if (fileWasDeleted) return false; // need to resolve again
+
+    artifact.setResolved(cached.wasResolved);
+
+    return true;
+  }
+
+  private void setResolved(Artifact artifact) {
     if (!artifact.isResolved()) myUnresolvedIds.add(new MavenId(artifact));
     if (!myFailOnUnresolved) artifact.setResolved(true);
   }
 
-  private boolean isOpen() {
-    return myUseRemoteRepository || myOpenCount > 0;
+  private void cache(Artifact artifact) {
+    myCache.put(getKey(artifact), new CachedValue(artifact.isResolved()));
   }
 
-  public void open() {
-    myOpenCount++;
+  private String getKey(Artifact artifact) {
+    return artifact.getGroupId()
+           + ":" + artifact.getArtifactId()
+           + ":" + artifact.getVersion()
+           + ":" + artifact.getType()
+           + ":" + artifact.getClassifier();
   }
 
-  public void close() {
-    assert myOpenCount > 0;
-    myOpenCount--;
+  private static class CachedValue {
+    boolean wasResolved;
+
+    public CachedValue(boolean wasResolved) {
+      this.wasResolved = wasResolved;
+    }
   }
 }

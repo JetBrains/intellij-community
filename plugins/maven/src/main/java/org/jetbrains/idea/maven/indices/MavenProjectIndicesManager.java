@@ -58,7 +58,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
       }
 
       @Override
-      public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+      public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
         scheduleUpdateIndicesList();
       }
     });

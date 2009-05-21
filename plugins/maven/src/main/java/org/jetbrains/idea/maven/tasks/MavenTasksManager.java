@@ -424,7 +424,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
     }
 
     @Override
-    public void projectResolved(boolean quickResolve, MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+    public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
       scheduleKeymapUpdate(Collections.singletonList(project), true);
     }
 

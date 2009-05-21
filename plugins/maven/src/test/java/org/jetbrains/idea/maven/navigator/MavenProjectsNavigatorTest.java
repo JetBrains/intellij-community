@@ -14,7 +14,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    initMavenProjectsManager(false);
+    initProjectsManager(false);
 
     myNavigator = MavenProjectsNavigator.getInstance(myProject);
     myNavigator.initForTests();

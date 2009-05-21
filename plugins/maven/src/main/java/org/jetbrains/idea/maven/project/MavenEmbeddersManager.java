@@ -1,9 +1,12 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.containers.SoftValueHashMap;
+import gnu.trove.THashMap;
+import org.jetbrains.idea.maven.embedder.CustomWorkspaceStore;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.embedder.MavenSharedCache;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -13,18 +16,35 @@ import java.util.Map;
 public class MavenEmbeddersManager {
   private final MavenGeneralSettings myGeneralSettings;
 
-  private final Map<Object, LinkedList<MavenEmbedderWrapper>> myPools = new SoftHashMap<Object, LinkedList<MavenEmbedderWrapper>>();
+  private final Map<Object, LinkedList<MavenEmbedderWrapper>> myPools = new SoftValueHashMap<Object, LinkedList<MavenEmbedderWrapper>>();
 
   private final MultiMap<Object, MavenEmbedderWrapper> myEmbeddersInUse = new MultiMap<Object, MavenEmbedderWrapper>();
   private final List<MavenEmbedderWrapper> myEmbeddersToReset = new ArrayList<MavenEmbedderWrapper>();
 
+  private volatile Map myContext;
+
   public MavenEmbeddersManager(MavenGeneralSettings generalSettings) {
     myGeneralSettings = generalSettings;
+    resetContext();
   }
 
   public synchronized void reset() {
     releasePooledEmbedders();
     myEmbeddersToReset.addAll(myEmbeddersInUse.values());
+    resetContext();
+  }
+
+  public synchronized void clearCaches() {
+    ((MavenSharedCache)myContext.get(CustomWorkspaceStore.SHARED_CACHE)).clear();
+  }
+
+  public synchronized void clearCachesFor(MavenProject project) {
+    ((MavenSharedCache)myContext.get(CustomWorkspaceStore.SHARED_CACHE)).clearCachesFor(project);
+  }
+
+  private synchronized void resetContext() {
+    myContext = new THashMap();
+    myContext.put(CustomWorkspaceStore.SHARED_CACHE, new MavenSharedCache());
   }
 
   public MavenEmbedderWrapper getEmbedder(Object id) {
@@ -40,7 +60,7 @@ public class MavenEmbeddersManager {
       }
     }
 
-    MavenEmbedderWrapper result = MavenEmbedderFactory.createEmbedder(myGeneralSettings);
+    MavenEmbedderWrapper result = MavenEmbedderFactory.createEmbedder(myGeneralSettings, myContext);
     synchronized (this) {
       myEmbeddersInUse.putValue(id, result);
     }
@@ -87,7 +107,9 @@ public class MavenEmbeddersManager {
   }
 
   private synchronized void releasePooledEmbedders() {
-    for (LinkedList<MavenEmbedderWrapper> eachPool : myPools.values()) {
+    for (Object eachKey : myPools.keySet()) {
+      LinkedList<MavenEmbedderWrapper> eachPool = myPools.get(eachKey);
+      if (eachPool == null) continue; // collected
       for (MavenEmbedderWrapper each : eachPool) {
         each.release();
       }

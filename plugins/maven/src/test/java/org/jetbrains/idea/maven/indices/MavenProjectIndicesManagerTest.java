@@ -46,6 +46,8 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
     removeFromLocalRepository("junit/junit/4.0");
     myIndicesFixture.getProjectIndicesManager().scheduleUpdate(myIndicesFixture.getProjectIndicesManager().getIndices());
 
+    assertFalse(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -57,10 +59,6 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
                   "    <version>4.0</version>" +
                   "  </dependency>" +
                   "</dependencies>");
-
-    assertFalse(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
-
-    resolveDependenciesAndImport();
 
     assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
   }

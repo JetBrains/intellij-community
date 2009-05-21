@@ -93,7 +93,7 @@ public class MavenIndicesManager implements ApplicationComponent {
     if (myIndices != null) return;
 
     MavenGeneralSettings defaultSettings = new MavenGeneralSettings();
-    myEmbedder = MavenEmbedderFactory.createEmbedder(defaultSettings).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedder(defaultSettings, Collections.EMPTY_MAP).getEmbedder();
     File dir = myTestIndicesDir == null
                ? MavenUtil.getPluginSystemDir("Indices")
                : myTestIndicesDir;

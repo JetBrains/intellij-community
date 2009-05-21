@@ -881,6 +881,9 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     setRepositoryPath(fixture.getTestDataPath("local1"));
     removeFromLocalRepository("junit");
 
+    File file = fixture.getTestData("local1/junit/junit/4.0/junit-4.0.pom");
+    assertFalse(file.exists());
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -899,11 +902,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    <version>4.0</version>" +
                   "  </dependency>" +
                   "</dependencies>");
-
-    File file = fixture.getTestData("local1/junit/junit/4.0/junit-4.0.pom");
-    assertFalse(file.exists());
-
-    resolveDependenciesAndImport();
 
     assertTrue(file.exists());
   }

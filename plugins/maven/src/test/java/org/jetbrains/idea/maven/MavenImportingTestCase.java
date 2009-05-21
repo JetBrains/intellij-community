@@ -308,15 +308,15 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   private void doImportProjects(List<VirtualFile> files, String... profiles) {
     myProfilesList = Arrays.asList(profiles);
 
-    initMavenProjectsManager(false);
+    initProjectsManager(false);
     myProjectsManager.resetManagedFilesAndProfilesInTests(files, myProfilesList);
-    myProjectsManager.waitForQuickResolvingCompletion();
+    myProjectsManager.waitForResolvingCompletion();
     // todo replace with myMavenProjectsManager.flushPendingImportRequestsInTests();
     myProjectsManager.scheduleImportInTests(files);
     myProjectsManager.importProjects();
   }
 
-  protected void initMavenProjectsManager(boolean enableEventHandling) {
+  protected void initProjectsManager(boolean enableEventHandling) {
     myProjectsManager.initForTests();
     myProjectsTree = myProjectsManager.getProjectsTreeForTests();
     if (enableEventHandling) myProjectsManager.listenForExternalChanges();
@@ -327,7 +327,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveDependenciesAndImport() {
-    myProjectsManager.waitForQuickResolvingCompletion();
     myProjectsManager.waitForResolvingCompletionAndImport();
   }
 

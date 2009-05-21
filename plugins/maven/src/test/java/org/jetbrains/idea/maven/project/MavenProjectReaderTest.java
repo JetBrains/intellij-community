@@ -285,6 +285,20 @@ public class MavenProjectReaderTest extends MavenTestCase {
   public void testExpandingProperties() throws Exception {
     createProjectPom("<properties>" +
                      "  <prop1>value1</prop1>" +
+                     "  <prop2>value2</prop2>" +
+                     "</properties>" +
+
+                     "<name>${prop1}</name>" +
+                     "<packaging>${prop2}</packaging>");
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+
+    assertEquals("value1", p.getName());
+    assertEquals("value2", p.getPackaging());
+  }
+
+  public void testExpandingPropertiesRecursively() throws Exception {
+    createProjectPom("<properties>" +
+                     "  <prop1>value1</prop1>" +
                      "  <prop2>${prop1}2</prop2>" +
                      "</properties>" +
 
@@ -294,6 +308,20 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     assertEquals("value1", p.getName());
     assertEquals("value12", p.getPackaging());
+  }
+
+  public void testHandlingRecursionProprietly() throws Exception {
+    createProjectPom("<properties>" +
+                     "  <prop1>${prop2}</prop1>" +
+                     "  <prop2>${prop1}</prop2>" +
+                     "</properties>" +
+
+                     "<name>${prop1}</name>" +
+                     "<packaging>${prop2}</packaging>");
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+
+    assertEquals("${prop1}", p.getName());
+    assertEquals("${prop2}", p.getPackaging());
   }
 
   public void testExpandingSystemAndEnvProperties() throws Exception {

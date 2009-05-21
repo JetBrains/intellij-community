@@ -9,7 +9,7 @@ public class IgnoresImportingTest extends MavenImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    initMavenProjectsManager(false);
+    initProjectsManager(false);
   }
 
   public void testDoNotImportIgnoredProjects() throws Exception {

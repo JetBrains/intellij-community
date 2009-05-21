@@ -16,7 +16,7 @@ public class MavenTasksManagerTest extends MavenImportingTestCase {
     super.setUp();
     myEventsManager = MavenTasksManager.getInstance(myProject);
     myEventsManager.doInit();
-    initMavenProjectsManager(true);
+    initProjectsManager(true);
   }
 
   public void testRefreshingActionsOnImport() throws Exception {

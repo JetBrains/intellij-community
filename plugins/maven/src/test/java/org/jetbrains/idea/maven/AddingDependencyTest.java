@@ -12,7 +12,7 @@ public class AddingDependencyTest extends MavenImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    initMavenProjectsManager(true);
+    initProjectsManager(true);
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
   }

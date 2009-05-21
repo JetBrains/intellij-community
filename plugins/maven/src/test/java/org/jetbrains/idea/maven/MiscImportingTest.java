@@ -131,7 +131,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
 
     removeFromLocalRepository("junit");
 
-    myProjectsManager.scheduleQuickResolveInTests(); // force resolving
+    myProjectsManager.scheduleResolveInTests(); // force resolving
     resolveDependenciesAndImport();
 
     File jarFile = new File(getRepositoryFile(), "junit/junit/4.0/junit-4.0.jar");
@@ -156,7 +156,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertFalse(jarFile.exists());
 
     try {
-      myProjectsManager.scheduleQuickResolveInTests(); // force resolving
+      myProjectsManager.scheduleResolveInTests(); // force resolving
       resolveDependenciesAndImport();
     }
     finally {
@@ -168,7 +168,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
 
     restoreSettingsFile();
 
-    myProjectsManager.scheduleQuickResolveInTests(); // force resolving
+    myProjectsManager.scheduleResolveInTests(); // force resolving
     resolveDependenciesAndImport();
     assertTrue(jarFile.exists());
   }

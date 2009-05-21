@@ -8,6 +8,7 @@ import org.apache.maven.MavenTools;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
@@ -18,6 +19,8 @@ import org.apache.maven.extension.ExtensionManager;
 import org.apache.maven.monitor.event.DefaultEventMonitor;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectBuilder;
+import org.apache.maven.project.workspace.ProjectWorkspace;
+import org.apache.maven.project.interpolation.ModelInterpolator;
 import org.apache.maven.workspace.MavenWorkspaceStore;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
@@ -33,6 +36,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -207,31 +211,33 @@ public class MavenEmbedderWrapper {
     }
 
     if (cancelled[0]) throw new MavenProcessCanceledException();
-    if (exception[0] != null) throw new RuntimeException(exception[0]);
+    if (exception[0] != null) {
+      if (exception[0] instanceof RuntimeException) throw (RuntimeException)exception[0];
+      throw new RuntimeException(exception[0]);
+    }
 
     return result.get();
   }
 
   public void customizeForResolve(MavenConsole console,
                                   MavenProgressIndicator process) {
-    doCustomize(null, true, false, console, process);
+    doCustomize(null, false, console, process);
   }
 
-  public void customizeForResolve(boolean quickResolve,
-                                  MavenProjectsTree tree,
-                                  MavenConsole console,
-                                  MavenProgressIndicator process) {
-    doCustomize(tree, !quickResolve, false, console, process);
+  public void customizeForResolve(
+    MavenProjectsTree tree,
+    MavenConsole console,
+    MavenProgressIndicator process) {
+    doCustomize(tree, false, console, process);
   }
 
   public void customizeForStrictResolve(MavenProjectsTree tree,
                                         MavenConsole console,
                                         MavenProgressIndicator process) {
-    doCustomize(tree, true, true, console, process);
+    doCustomize(tree, true, console, process);
   }
 
   private void doCustomize(MavenProjectsTree tree,
-                           boolean useRemoteRepository,
                            boolean failOnUnresolved,
                            MavenConsole console,
                            MavenProgressIndicator process) {
@@ -239,7 +245,7 @@ public class MavenEmbedderWrapper {
     if (tree != null) {
       this.<CustomArtifactResolver>getComponent(ArtifactResolver.class).customize(tree);
     }
-    this.<CustomWagonManager>getComponent(WagonManager.class).customize(useRemoteRepository, failOnUnresolved);
+    this.<CustomWagonManager>getComponent(WagonManager.class).customize(failOnUnresolved);
     this.<CustomExtensionManager>getComponent(ExtensionManager.class).customize();
 
     setConsoleAndLogger(console, process);
@@ -261,16 +267,23 @@ public class MavenEmbedderWrapper {
     this.<CustomArtifactFactory>getComponent(ArtifactFactory.class).reset();
     this.<CustomArtifactResolver>getComponent(ArtifactResolver.class).reset();
     this.<CustomWagonManager>getComponent(WagonManager.class).reset();
+    this.<CustomArtifactHandlerManager>getComponent(ArtifactHandlerManager.class).reset();
     this.<CustomExtensionManager>getComponent(ExtensionManager.class).reset();
   }
 
-  public static ContainerCustomizer createCustomizer() {
+  public static ContainerCustomizer createCustomizer(final Map<Object, Object> context) {
     return new ContainerCustomizer() {
       public void customize(PlexusContainer c) {
+        for (Map.Entry each : context.entrySet()) {
+          c.addContextValue(each.getKey(), each.getValue());
+        }
         setImplementation(c, MavenTools.class, CustomMavenTools.class);
+        setImplementation(c, ProjectWorkspace.class, CustomProjectWorkspace.class);
         setImplementation(c, MavenWorkspaceStore.class, CustomWorkspaceStore.class);
+        setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
         setImplementation(c, MavenProjectBuilder.class, CustomProjectBuilder.class);
         setImplementation(c, ArtifactFactory.class, CustomArtifactFactory.class);
+        setImplementation(c, ArtifactHandlerManager.class, CustomArtifactHandlerManager.class);
         setImplementation(c, ArtifactResolver.class, CustomArtifactResolver.class);
         setImplementation(c, ExtensionManager.class, CustomExtensionManager.class);
         setImplementation(c, WagonManager.class, CustomWagonManager.class);

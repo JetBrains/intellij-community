@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Collections;
 
 public class NexusIndexerTest extends MavenTestCase {
   private MavenCustomRepositoryHelper myRepositoryHelper;
@@ -34,7 +35,7 @@ public class NexusIndexerTest extends MavenTestCase {
     super.setUp();
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1_index", "local1", "remote");
 
-    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings()).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings(), Collections.EMPTY_MAP).getEmbedder();
 
     PlexusContainer p = myEmbedder.getPlexusContainer();
     myIndexer = (NexusIndexer)p.lookup(NexusIndexer.class);

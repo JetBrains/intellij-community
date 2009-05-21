@@ -13,7 +13,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    initMavenProjectsManager(true);
+    initProjectsManager(true);
   }
 
   public void testShouldReturnNullForUnprocessedFiles() throws Exception {

@@ -150,10 +150,10 @@ public class MavenEmbedderFactory {
     return Arrays.asList(phases);
   }
 
-  public static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings settings) {
+  public static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings settings, Map context) {
     Configuration configuration = new DefaultConfiguration();
 
-    configuration.setConfigurationCustomizer(MavenEmbedderWrapper.createCustomizer());
+    configuration.setConfigurationCustomizer(MavenEmbedderWrapper.createCustomizer(context));
     configuration.setClassLoader(settings.getClass().getClassLoader());
     configuration.setLocalRepository(settings.getEffectiveLocalRepository());
 

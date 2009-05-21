@@ -38,7 +38,7 @@ public class MavenProjectsManagerWatcher {
   private static final int DOCUMENT_SAVE_DELAY = 1000;
 
   private final Project myProject;
-  private final MavenProjectsTree myTree;
+  private final MavenProjectsTree myProjectsTree;
   private final MavenGeneralSettings myGeneralSettings;
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenEmbeddersManager myEmbeddersManager;
@@ -55,12 +55,12 @@ public class MavenProjectsManagerWatcher {
                                                                                               false);
 
   public MavenProjectsManagerWatcher(Project project,
-                                     MavenProjectsTree tree,
+                                     MavenProjectsTree projectsTree,
                                      MavenGeneralSettings generalSettings,
                                      MavenProjectsProcessor readingProcessor,
                                      MavenEmbeddersManager embeddersManager) {
     myProject = project;
-    myTree = tree;
+    myProjectsTree = projectsTree;
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
     myEmbeddersManager = embeddersManager;
@@ -148,32 +148,32 @@ public class MavenProjectsManagerWatcher {
   }
 
   public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> profiles) {
-    myTree.addManagedFilesWithProfiles(files, profiles);
+    myProjectsTree.addManagedFilesWithProfiles(files, profiles);
     scheduleUpdate(files, Collections.<VirtualFile>emptyList());
   }
 
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> profiles) {
-    myTree.resetManagedFilesAndProfiles(files, profiles);
+    myProjectsTree.resetManagedFilesAndProfiles(files, profiles);
     scheduleUpdateAll();
   }
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {
-    myTree.removeManagedFiles(files);
+    myProjectsTree.removeManagedFiles(files);
     scheduleUpdate(Collections.<VirtualFile>emptyList(), files);
   }
 
   public synchronized void setActiveProfiles(List<String> profiles) {
-    myTree.setActiveProfiles(profiles);
+    myProjectsTree.setActiveProfiles(profiles);
     scheduleUpdateAll();
   }
 
   private void scheduleUpdateAll() {
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(myProject, myTree, myGeneralSettings));
+    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(myProject, myProjectsTree, myGeneralSettings));
   }
 
   private void scheduleUpdate(List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete) {
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(myProject,
-                                                                          myTree,
+                                                                          myProjectsTree,
                                                                           myGeneralSettings,
                                                                           filesToUpdate,
                                                                           filesToDelete));
@@ -190,11 +190,11 @@ public class MavenProjectsManagerWatcher {
 
     public void rootsChanged(ModuleRootEvent event) {
       // todo is this logic necessary?
-      List<VirtualFile> existingFiles = myTree.getProjectsFiles();
+      List<VirtualFile> existingFiles = myProjectsTree.getProjectsFiles();
       List<VirtualFile> newFiles = new ArrayList<VirtualFile>();
       List<VirtualFile> deletedFiles = new ArrayList<VirtualFile>();
 
-      for (VirtualFile f : myTree.getExistingManagedFiles()) {
+      for (VirtualFile f : myProjectsTree.getExistingManagedFiles()) {
         if (!existingFiles.contains(f)) {
           newFiles.add(f);
         }
@@ -210,14 +210,14 @@ public class MavenProjectsManagerWatcher {
 
   private boolean isPomFile(String path) {
     if (!path.endsWith("/" + MavenConstants.POM_XML)) return false;
-    return myTree.isPotentialProject(path);
+    return myProjectsTree.isPotentialProject(path);
   }
 
   private boolean isProfilesFile(String path) {
     String suffix = "/" + MavenConstants.PROFILES_XML;
     if (!path.endsWith(suffix)) return false;
     int pos = path.lastIndexOf(suffix);
-    return myTree.isPotentialProject(path.substring(0, pos) + "/" + MavenConstants.POM_XML);
+    return myProjectsTree.isPotentialProject(path.substring(0, pos) + "/" + MavenConstants.POM_XML);
   }
 
   private boolean isSettingsFile(String path) {
