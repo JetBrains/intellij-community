@@ -15,12 +15,13 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,7 +29,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +101,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
             }
           PsiField field = null;
           if (ignoreOnVolatileVariables) {
-            field = statementAssignsField(innerIf);
+            field = findCheckedField(innerIf);
             if (field != null && field.hasModifierProperty(PsiModifier.VOLATILE)) {
               return;
             }
@@ -109,35 +109,29 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
           registerStatementError(statement, field);
         }
 
-        private PsiField statementAssignsField(
-                PsiIfStatement statement) {
-            PsiStatement innerThen = statement.getThenBranch();
-            innerThen = ControlFlowUtils.stripBraces(innerThen);
-            if (!(innerThen instanceof PsiExpressionStatement)) {
-                return null;
+        @Nullable
+        private PsiField findCheckedField(PsiIfStatement statement) {
+          final PsiExpression expression = statement.getCondition();
+          if (expression instanceof PsiBinaryExpression) {
+            PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+            if (binaryExpression.getOperationTokenType() == JavaTokenType.EQEQ) {
+              final PsiExpression lOperand = binaryExpression.getLOperand();
+              final PsiExpression rOperand = binaryExpression.getROperand();
+
+              PsiExpression fieldReference = null;
+              if (lOperand.getType() == PsiType.NULL) {
+                fieldReference = rOperand;
+              } else if (rOperand != null && rOperand.getType() == PsiType.NULL) {
+                fieldReference = lOperand;
+              }
+
+              if (fieldReference instanceof PsiReferenceExpression) {
+                final PsiElement resolved = ((PsiReferenceExpression)fieldReference).resolve();
+                return resolved instanceof PsiField ? (PsiField)resolved : null;
+              }
             }
-            final PsiExpressionStatement expressionStatement =
-                    (PsiExpressionStatement)innerThen;
-            final PsiExpression expression =
-                    expressionStatement.getExpression();
-            if (!(expression instanceof PsiAssignmentExpression)) {
-                return null;
-            }
-            final PsiAssignmentExpression assignmentExpression =
-                    (PsiAssignmentExpression)expression;
-            final PsiExpression lhs =
-                    assignmentExpression.getLExpression();
-            if (!(lhs instanceof PsiReferenceExpression)) {
-                return null;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression)lhs;
-            final PsiElement element =
-                    referenceExpression.resolve();
-            if (!(element instanceof PsiField)) {
-                return null;
-            }
-          return (PsiField)element;
+          }
+          return null;
         }
     }
 
