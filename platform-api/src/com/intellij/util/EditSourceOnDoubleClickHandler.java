@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ui.Table;
 
@@ -40,6 +41,7 @@ public class EditSourceOnDoubleClickHandler {
     treeTable.addMouseListener(new MouseAdapter(){
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() != 2) return;
+        if (ModalityState.current().dominates(ModalityState.NON_MODAL)) return;
         if (treeTable.getTree().getPathForLocation(e.getX(), e.getY()) == null) return;
         DataContext dataContext = DataManager.getInstance().getDataContext(treeTable);
         Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -53,6 +55,7 @@ public class EditSourceOnDoubleClickHandler {
     table.addMouseListener(new MouseAdapter(){
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() != 2) return;
+        if (ModalityState.current().dominates(ModalityState.NON_MODAL)) return;
         if (table.columnAtPoint(e.getPoint()) < 0) return;
         if (table.rowAtPoint(e.getPoint()) < 0) return;
         DataContext dataContext = DataManager.getInstance().getDataContext(table);
