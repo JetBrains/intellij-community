@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -387,11 +388,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           throwable[0] = th;
         } finally {
           try {
-            SwingUtilities.invokeAndWait(new Runnable() {
+            ApplicationManager.getApplication().invokeAndWait(new Runnable() {
               public void run() {
                 cleanupApplicationCaches();
               }
-            });
+            }, ModalityState.NON_MODAL);
           }
           catch (Throwable e) {
             // Ignore
