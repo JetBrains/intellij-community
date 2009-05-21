@@ -9,8 +9,10 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -43,11 +45,15 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(ConfigurationType type);
 
-  public abstract void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean isShared, Map<String,Boolean> method);
+  public abstract void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean isShared, Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks);
 
   public abstract void addConfiguration(final RunnerAndConfigurationSettingsImpl settings, final boolean isShared);
 
   public abstract boolean isConfigurationShared(RunnerAndConfigurationSettingsImpl settings);
 
-  public abstract Map<String,Boolean> getStepsBeforeLaunch(RunConfiguration settings);
+  public abstract <T extends BeforeRunTask> Map<Key<T>, BeforeRunTask> getBeforeRunTasks(RunConfiguration settings);
+
+  public abstract <T extends BeforeRunTask> T getBeforeRunTask(RunConfiguration settings, Key<T> taskProviderID);
+
+  public abstract <T extends BeforeRunTask> Collection<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks);
 }

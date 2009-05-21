@@ -218,7 +218,7 @@
                   interface="com.intellij.execution.RunConfigurationExtension"/>
 
   <extensionPoint name="stepsBeforeRunProvider"
-                  interface="com.intellij.execution.StepsBeforeRunProvider"
+                  interface="com.intellij.execution.BeforeRunTaskProvider"
                   area="IDEA_PROJECT"/>
 
   <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider"/>

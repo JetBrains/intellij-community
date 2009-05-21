@@ -1,8 +1,10 @@
-package com.intellij.execution;
+package com.intellij.compiler.options;
 
+import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
-import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -21,35 +23,33 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author spleaner
  */
-public class CompileStepBeforeRun implements StepsBeforeRunProvider {
+public class CompileStepBeforeRun implements BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> {
+  public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
   private static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
-  @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
+  @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
   private final Project myProject;
 
   public CompileStepBeforeRun(@NotNull final Project project) {
     myProject = project;
   }
 
-  public String getStepName() {
+  public Key<MakeBeforeRunTask> getId() {
+    return ID;
+  }
+
+  public String getDescription(final RunConfiguration runConfiguration, MakeBeforeRunTask task) {
     return ExecutionBundle.message("before.launch.compile.step");
   }
 
-  public String getStepDescription(final RunConfiguration runConfiguration) {
-    return getStepName();
+  public MakeBeforeRunTask createTask(RunConfiguration runConfiguration) {
+    return new MakeBeforeRunTask();
   }
 
-  public boolean hasTask(final RunConfiguration configuration) {
-    return configuration instanceof RunProfileWithCompileBeforeLaunchOption &&
-           !(configuration instanceof RemoteConfiguration) &&
-           getConfig().isCompileBeforeRunning(configuration);
+  public void configureTask(RunConfiguration runConfiguration, MakeBeforeRunTask task) {
   }
 
-  private RunManagerConfig getConfig() {
-    return RunManagerEx.getInstanceEx(myProject).getConfig();
-  }
-
-  public boolean executeTask(final DataContext context, final RunConfiguration configuration) {
+  public boolean executeTask(DataContext context, final RunConfiguration configuration, MakeBeforeRunTask task) {
     final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
     final Semaphore done = new Semaphore();
     final boolean[] result = new boolean[1];
@@ -94,25 +94,23 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
     return result[0];
   }
 
-  public void copyTaskData(final RunConfiguration from, final RunConfiguration to) {
-    System.out.println(from.getName() + "--->" + to.getName());
-    // TODO: do we need this?
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   public boolean hasConfigurationButton() {
     return false;
-  }
-
-  public String configureStep(final RunConfiguration runConfiguration) {
-    return getStepName();
   }
 
   @Nullable
   public static RunConfiguration getRunConfiguration(final CompileContext context) {
     return context.getCompileScope().getUserData(RUN_CONFIGURATION);
+  }
+
+  @Nullable
+  public static RunConfiguration getRunConfiguration(final CompileScope compileScope) {
+    return compileScope.getUserData(RUN_CONFIGURATION);
+  }
+
+  public static class MakeBeforeRunTask extends BeforeRunTask {
+    private MakeBeforeRunTask() {
+      setEnabled(true);
+    }
   }
 }

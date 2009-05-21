@@ -1,7 +1,8 @@
 package com.intellij.execution.impl;
 
+import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.StepsBeforeRunProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -14,13 +15,13 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -83,13 +84,19 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         if (configuration instanceof RunConfiguration) {
           final RunConfiguration runConfiguration = (RunConfiguration)configuration;
           final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
-          final Map<String, Boolean> beforeRun = runManager.getStepsBeforeLaunch(runConfiguration);
 
-          final Collection<StepsBeforeRunProvider> activeProviders = new ArrayList<StepsBeforeRunProvider>();
-          for (final StepsBeforeRunProvider provider : Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME, myProject)) {
-            final Boolean enabled = beforeRun.get(provider.getStepName());
-            if (enabled != null && enabled.booleanValue() && provider.hasTask(runConfiguration)) {
-              activeProviders.add(provider);
+          final Map<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask> activeProviders = new HashMap<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask>();
+          for (final BeforeRunTaskProvider<BeforeRunTask> provider : Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
+            final BeforeRunTask task = runManager.getBeforeRunTask(runConfiguration, provider.getId());
+            if (task.isEnabled()) {
+              activeProviders.put(provider, task);
+            }
+            else {
+              final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(runConfiguration.getFactory());
+              final BeforeRunTask templateTask = runManager.getBeforeRunTask(template.getConfiguration(), provider.getId());
+              if (templateTask.isEnabled()) {
+                activeProviders.put(provider, templateTask);
+              }
             }
           }
 
@@ -97,8 +104,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
             ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
               public void run() {
                 final DataContext dataContext = SimpleDataContext.getProjectContext(myProject);
-                for (StepsBeforeRunProvider provider : activeProviders) {
-                  if(!provider.executeTask(dataContext, runConfiguration)) {
+                for (BeforeRunTaskProvider<BeforeRunTask> provider : activeProviders.keySet()) {
+                  if(!provider.executeTask(dataContext, runConfiguration, activeProviders.get(provider))) {
                     return;
                   }
                 }

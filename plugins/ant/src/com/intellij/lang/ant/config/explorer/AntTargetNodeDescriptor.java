@@ -1,7 +1,10 @@
 package com.intellij.lang.ant.config.explorer;
 
+import com.intellij.execution.RunManagerEx;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
+import com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider;
 import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
 import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -14,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
@@ -71,6 +75,16 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
       if (!addedNames.contains(presentableName)) {
         addedNames.add(presentableName);
         myHighlightedText.getEnding().addText(" (" + presentableName + ')', ourPostfixAttributes);
+      }
+    }
+    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    final VirtualFile vFile = buildFile.getVirtualFile();
+    if (vFile != null) {
+      for (AntBeforeRunTask task : runManager.getBeforeRunTasks(AntBeforeRunTaskProvider.ID, true)) {
+        if (task.isRunningTarget(myTarget)) {
+          myHighlightedText.getEnding().addText(" (Before Run/Debug)", ourPostfixAttributes);
+          break;
+        }
       }
     }
     myName = myHighlightedText.getText();

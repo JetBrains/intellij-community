@@ -7,8 +7,8 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   private Map<String, RunnerAndConfigurationSettingsImpl> myConfigurations =
       new LinkedHashMap<String, RunnerAndConfigurationSettingsImpl>(); // template configurations are not included here
   private final Map<Integer, Boolean> mySharedConfigurations = new TreeMap<Integer, Boolean>();
-  private final Map<Integer, Map<String, Boolean>> myMethod2CompileBeforeRun = new TreeMap<Integer, Map<String, Boolean>>();
+  /**
+   * configurationID -> [BeforeTaskProviderName->BeforeRunTask]
+   */
+  private final Map<Integer, Map<Key<? extends BeforeRunTask>, BeforeRunTask>> myConfigurationToBeforeTasksMap = new TreeMap<Integer, Map<Key<? extends BeforeRunTask>, BeforeRunTask>>();
 
   private final Map<String, RunnerAndConfigurationSettingsImpl> myTemplateConfigurationsMap =
       new HashMap<String, RunnerAndConfigurationSettingsImpl>();
@@ -100,22 +103,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public RunnerAndConfigurationSettingsImpl createConfiguration(final RunConfiguration runConfiguration,
                                                                 final ConfigurationFactory factory) {
     RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(factory);
-    setCompileMethodBeforeRun(runConfiguration, getStepsBeforeLaunch(template.getConfiguration()));
+    myConfigurationToBeforeTasksMap.put(runConfiguration.getUniqueID(), getBeforeRunTasks(template.getConfiguration()));
     shareConfiguration(runConfiguration, isConfigurationShared(template));
-    createStepsBeforeRun(template, runConfiguration);
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this, runConfiguration, false);
     settings.importRunnerAndConfigurationSettings(template);
     return settings;
-  }
-
-  public void createStepsBeforeRun(final RunnerAndConfigurationSettingsImpl template, final RunConfiguration configuration) {
-    final RunConfiguration templateConfiguration = template.getConfiguration();
-    for (final StepsBeforeRunProvider provider : Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME, myProject)) {
-      final Boolean enabled = getStepsBeforeLaunch(templateConfiguration).get(provider.getStepName());
-      if (enabled != null && enabled.booleanValue()) {
-        provider.copyTaskData(templateConfiguration, configuration);
-      }
-    }
   }
 
   public void projectClosed() {
@@ -208,15 +200,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return template;
   }
 
-  public void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean shared, Map<String, Boolean> method) {
-    final String configName = getUniqueName(settings.getConfiguration());
+  public void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean shared, Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks) {
+    final RunConfiguration configuration = settings.getConfiguration();
+    final String configName = getUniqueName(configuration);
 
     myConfigurations.put(configName, settings);
     checkRecentsLimit();
 
-    int id = settings.getConfiguration().getUniqueID();
-    mySharedConfigurations.put(id, shared);
-    myMethod2CompileBeforeRun.put(id, method);
+    mySharedConfigurations.put(configuration.getUniqueID(), shared);
+    setBeforeRunTasks(configuration, tasks);
   }
 
   void checkRecentsLimit() {    
@@ -374,17 +366,16 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     parentNode.addContent(configurationElement);
     template.writeExternal(configurationElement);
     if (!(template.getConfiguration() instanceof UnknownRunConfiguration)) {
-      final Map<String, Boolean> methods = myMethod2CompileBeforeRun.get(template.getConfiguration().getUniqueID());
-      if (methods != null) {
-        Element methodsElement = new Element(METHOD);
-        for (String key : methods.keySet()) {
-          final Element child = new Element(OPTION);
-          child.setAttribute(NAME_ATTR, key);
-          child.setAttribute(VALUE, String.valueOf(methods.get(key)));
-          methodsElement.addContent(child);
-        }
-        configurationElement.addContent(methodsElement);
+      final Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks = getBeforeRunTasks(template.getConfiguration());
+      final Element methodsElement = new Element(METHOD);
+      for (Key<? extends BeforeRunTask> providerName : tasks.keySet()) {
+        final Element child = new Element(OPTION);
+        child.setAttribute(NAME_ATTR, providerName.toString());
+        final BeforeRunTask beforeRunTask = tasks.get(providerName);
+        beforeRunTask.writeExternal(child);
+        methodsElement.addContent(child);
       }
+      configurationElement.addContent(methodsElement);
     }
   }
 
@@ -423,53 +414,60 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
   }
 
-  public void clear() {
+  private void clear() {
     myConfigurations.clear();
     myUnloadedElements = null;
-    myMethod2CompileBeforeRun.clear();
+    myConfigurationToBeforeTasksMap.clear();
     mySharedConfigurations.clear();
   }
 
   @Nullable
   public RunnerAndConfigurationSettingsImpl loadConfiguration(final Element element, boolean isShared) throws InvalidDataException {
-    RunnerAndConfigurationSettingsImpl configuration = new RunnerAndConfigurationSettingsImpl(this);
-    configuration.readExternal(element);
-    ConfigurationFactory factory = configuration.getFactory();
+    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this);
+    settings.readExternal(element);
+    ConfigurationFactory factory = settings.getFactory();
     if (factory == null) {
       return null;
     }
 
     final Element methodsElement = element.getChild(METHOD);
-    final Map<String, Boolean> map = updateStepsBeforeRun(methodsElement);
-    if (configuration.isTemplate()) {
-      myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), configuration);
-      setCompileMethodBeforeRun(configuration.getConfiguration(), map);
+    final Map<Key<? extends BeforeRunTask>, BeforeRunTask> map = readStepsBeforeRun(methodsElement, settings);
+    if (settings.isTemplate()) {
+      myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), settings);
+      setBeforeRunTasks(settings.getConfiguration(), map);
     }
     else {
       if (Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR)).booleanValue()) { //to support old style
-        mySelectedConfiguration = configuration;
+        mySelectedConfiguration = settings;
       }
-      addConfiguration(configuration, isShared, map);
+      addConfiguration(settings, isShared, map);
     }
-    return configuration;
+    return settings;
   }
 
-  @Nullable
-  private static Map<String, Boolean> updateStepsBeforeRun(final Element child) {
-    if (child == null) {
-      return null;
-    }
-    final List list = child.getChildren(OPTION);
-    final Map<String, Boolean> map = new HashMap<String, Boolean>();
-    for (Object o : list) {
-      Element methodElement = (Element)o;
-      final String methodName = methodElement.getAttributeValue(NAME_ATTR);
-      final Boolean enabled = Boolean.valueOf(methodElement.getAttributeValue(VALUE));
-      map.put(methodName, enabled);
+  @NotNull
+  private Map<Key<? extends BeforeRunTask>, BeforeRunTask> readStepsBeforeRun(final Element child, RunnerAndConfigurationSettingsImpl settings) {
+    final Map<Key<? extends BeforeRunTask>, BeforeRunTask> map = new HashMap<Key<? extends BeforeRunTask>, BeforeRunTask>();
+    if (child != null) {
+      for (Object o : child.getChildren(OPTION)) {
+        final Element methodElement = (Element)o;
+        final String providerName = methodElement.getAttributeValue(NAME_ATTR);
+        Key<? extends BeforeRunTask> id = getProviderKey(providerName);
+        if (id != null) {
+          final BeforeRunTask beforeRunTask = getProvider(id).createTask(settings.getConfiguration());
+          beforeRunTask.readExternal(methodElement);
+          map.put(id, beforeRunTask);
+        }
+      }
     }
     return map;
   }
 
+
+  @Nullable
+  public ConfigurationType getConfigurationType(final String typeName) {
+    return myTypesByName.get(typeName);
+  }
 
   @Nullable
   public ConfigurationFactory getFactory(final String typeName, String factoryName) {
@@ -516,7 +514,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     tempConfiguration.setTemporary(true);
 
     addConfiguration(tempConfiguration, isConfigurationShared(tempConfiguration),
-                     getStepsBeforeLaunch(tempConfiguration.getConfiguration()));
+                     getBeforeRunTasks(tempConfiguration.getConfiguration()));
     setActiveConfiguration(tempConfiguration);
   }
 
@@ -573,35 +571,93 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return shared != null && shared.booleanValue();
   }
 
-  public Map<String, Boolean> getStepsBeforeLaunch(final RunConfiguration settings) {
-    Map<String, Boolean> method = myMethod2CompileBeforeRun.get(settings.getUniqueID());
-    if (method == null) {
-      final RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(settings.getFactory());
-      method = myMethod2CompileBeforeRun.get(template.getConfiguration().getUniqueID());
-    }
-    if (method == null) {
-      method = new HashMap<String, Boolean>();
-      for (StepsBeforeRunProvider provider : Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME, myProject)) {
-        if (provider.isEnabledByDefault()) {
-          method.put(provider.getStepName(), Boolean.TRUE);
+  public <T extends BeforeRunTask> Collection<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks) {
+    final Collection<T> tasks = new ArrayList<T>();
+    if (includeOnlyActiveTasks) {
+      final Set<RunnerAndConfigurationSettingsImpl> checkedTemplates = new HashSet<RunnerAndConfigurationSettingsImpl>();
+      for (RunnerAndConfigurationSettingsImpl settings : myConfigurations.values()) {
+        final BeforeRunTask runTask = getBeforeRunTask(settings.getConfiguration(), taskProviderID);
+        if (runTask.isEnabled()) {
+          tasks.add((T)runTask);
+        }
+        else {
+          final RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(settings.getFactory());
+          if (!checkedTemplates.contains(template)) {
+            checkedTemplates.add(template);
+            final BeforeRunTask templateTask = getBeforeRunTask(template.getConfiguration(), taskProviderID);
+            if (templateTask.isEnabled()) {
+              tasks.add((T)templateTask);
+            }
+          }
         }
       }
     }
-    return new HashMap<String, Boolean>(method);
+    else {
+      for (RunnerAndConfigurationSettingsImpl settings : myTemplateConfigurationsMap.values()) {
+        tasks.add((T)getBeforeRunTask(settings.getConfiguration(), taskProviderID));
+      }
+      for (RunnerAndConfigurationSettingsImpl settings : myConfigurations.values()) {
+        tasks.add((T)getBeforeRunTask(settings.getConfiguration(), taskProviderID));
+      }
+    }
+    return tasks;
+  }
+
+  public <T extends BeforeRunTask> T getBeforeRunTask(RunConfiguration settings, Key<T> taskProviderID) {
+    Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks = myConfigurationToBeforeTasksMap.get(settings.getUniqueID());
+    if (tasks == null) {
+      tasks = getBeforeRunTasks(settings);
+    }
+    return (T)tasks.get(taskProviderID);
+  }
+
+  public Map<Key<? extends BeforeRunTask>, BeforeRunTask> getBeforeRunTasks(final RunConfiguration settings) {
+    final Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks = myConfigurationToBeforeTasksMap.get(settings.getUniqueID());
+    if (tasks != null) {
+      final Map<Key<? extends BeforeRunTask>, BeforeRunTask> _tasks = new HashMap<Key<? extends BeforeRunTask>, BeforeRunTask>();
+      for (Map.Entry<Key<? extends BeforeRunTask>, BeforeRunTask> entry : tasks.entrySet()) {
+        _tasks.put(entry.getKey(), entry.getValue().clone());
+      }
+      return _tasks;
+    }
+
+    final RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(settings.getFactory());
+    final Map<Key<? extends BeforeRunTask>, BeforeRunTask> templateTasks = myConfigurationToBeforeTasksMap.get(template.getConfiguration().getUniqueID());
+    if (templateTasks != null) {
+      final Map<Key<? extends BeforeRunTask>, BeforeRunTask> _tasks = new HashMap<Key<? extends BeforeRunTask>, BeforeRunTask>();
+      for (Map.Entry<Key<? extends BeforeRunTask>, BeforeRunTask> entry : templateTasks.entrySet()) {
+        _tasks.put(entry.getKey(), entry.getValue().clone());
+      }
+      return _tasks;
+    }
+
+    final Map<Key<? extends BeforeRunTask>, BeforeRunTask> _tasks = new HashMap<Key<? extends BeforeRunTask>, BeforeRunTask>();
+    for (BeforeRunTaskProvider<? extends BeforeRunTask> provider : Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
+      _tasks.put(provider.getId(), provider.createTask(settings));
+    }
+    return _tasks;
   }
 
   public void shareConfiguration(final RunConfiguration runConfiguration, final boolean shareConfiguration) {
     mySharedConfigurations.put(runConfiguration.getUniqueID(), shareConfiguration);
   }
 
-  public void setCompileMethodBeforeRun(final RunConfiguration runConfiguration, Map<String, Boolean> method) {
-    myMethod2CompileBeforeRun.put(runConfiguration.getUniqueID(), method);
+  public final void setBeforeRunTasks(final RunConfiguration runConfiguration, Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks) {
+    final Map<Key<? extends BeforeRunTask>, BeforeRunTask> taskMap = getBeforeRunTasks(runConfiguration);
+    for (Map.Entry<Key<? extends BeforeRunTask>, BeforeRunTask> entry : tasks.entrySet()) {
+      if (taskMap.containsKey(entry.getKey())) {
+        taskMap.put(entry.getKey(), entry.getValue());
+      }
+    }
+    myConfigurationToBeforeTasksMap.put(runConfiguration.getUniqueID(), taskMap);
+  }
+
+  public final void resetBeforeRunTasks(final RunConfiguration runConfiguration) {
+    myConfigurationToBeforeTasksMap.remove(runConfiguration.getUniqueID());
   }
 
   public void addConfiguration(final RunnerAndConfigurationSettingsImpl settings, final boolean isShared) {
-    final HashMap<String, Boolean> map = new HashMap<String, Boolean>();
-    map.put(RunManagerConfig.MAKE, Boolean.TRUE);
-    addConfiguration(settings, isShared, map);
+    addConfiguration(settings, isShared, Collections.<Key<? extends BeforeRunTask>, BeforeRunTask>emptyMap());
   }
 
   public static RunManagerImpl getInstanceImpl(final Project project) {
@@ -617,4 +673,33 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
     }
   }
+
+  private Map<Key<? extends BeforeRunTask>, BeforeRunTaskProvider> myBeforeStepsMap;
+  private Map<String, Key<? extends BeforeRunTask>> myProviderKeysMap;
+
+  private synchronized BeforeRunTaskProvider getProvider(Key<? extends BeforeRunTask> providerId) {
+    if (myBeforeStepsMap == null) {
+      initProviderMaps();
+    }
+    return myBeforeStepsMap.get(providerId);
+  }
+
+  private synchronized Key<? extends BeforeRunTask> getProviderKey(String keyString) {
+    if (myProviderKeysMap == null) {
+      initProviderMaps();
+    }
+    return myProviderKeysMap.get(keyString);
+  }
+
+  private void initProviderMaps() {
+    myBeforeStepsMap = new HashMap<Key<? extends BeforeRunTask>, BeforeRunTaskProvider>();
+    myProviderKeysMap = new HashMap<String, Key<? extends BeforeRunTask>>();
+    for (BeforeRunTaskProvider<? extends BeforeRunTask> provider : Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
+      final Key<? extends BeforeRunTask> id = provider.getId();
+      myBeforeStepsMap.put(id, provider);
+      myProviderKeysMap.put(id.toString(), id);
+    }
+  }
+
+
 }

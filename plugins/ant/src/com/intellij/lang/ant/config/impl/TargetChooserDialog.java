@@ -38,16 +38,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class TargetChooserDialog extends DialogWrapper {
+  private final Project myProject;
   private AntBuildTarget mySelectedTarget;
-  private final AntConfiguration myAntConfiguration;
   private Tree myTree;
 
-  protected TargetChooserDialog(final Project project,
-                                final @Nullable AntBuildTarget selectedTarger,
-                                final AntConfiguration antConfiguration) {
+  protected TargetChooserDialog(final Project project, final AntBuildTarget selectedTarget) {
     super(project, false);
-    mySelectedTarget = selectedTarger;
-    myAntConfiguration = antConfiguration;
+    myProject = project;
+    mySelectedTarget = selectedTarget;
     setTitle(AntBundle.message("ant.target.choser.title"));
     init();
   }
@@ -111,14 +109,15 @@ public class TargetChooserDialog extends DialogWrapper {
     });
 
     DefaultMutableTreeNode selectedNode = null;
-    final AntBuildFile[] antBuildFiles = myAntConfiguration.getBuildFiles();
+    final AntConfiguration antConfiguration = AntConfigurationImpl.getInstance(myProject);
+    final AntBuildFile[] antBuildFiles = antConfiguration.getBuildFiles();
     for (AntBuildFile buildFile : antBuildFiles) {
       final DefaultMutableTreeNode buildFileNode = new DefaultMutableTreeNode(buildFile);
-      DefaultMutableTreeNode selection = processFileTargets(myAntConfiguration.getMetaTargets(buildFile), buildFile, buildFileNode);
+      DefaultMutableTreeNode selection = processFileTargets(antConfiguration.getMetaTargets(buildFile), buildFile, buildFileNode);
       if (selection != null){
         selectedNode = selection;
       }
-      selection = processFileTargets(myAntConfiguration.getModel(buildFile).getTargets(), buildFile, buildFileNode);
+      selection = processFileTargets(antConfiguration.getModel(buildFile).getTargets(), buildFile, buildFileNode);
       if (selection != null){
         selectedNode = selection;
       }

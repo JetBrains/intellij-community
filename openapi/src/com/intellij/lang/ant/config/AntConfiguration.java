@@ -16,8 +16,6 @@
 
 package com.intellij.lang.ant.config;
 
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -29,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AntConfiguration {
 
   private final Project myProject;
-  public static final String ANT = AntBundle.message("run.ant.target.step.before.run");
   @NonNls public static final String ACTION_ID_PREFIX = "Ant_";
 
   protected AntConfiguration(final Project project) {
@@ -84,15 +81,8 @@ public abstract class AntConfiguration {
   @Nullable
   public abstract AntBuildFile findBuildFileByActionId(final String id);
 
-  public abstract boolean hasTasksToExecuteBeforeRun(final RunConfiguration configuration);
-
-  public abstract boolean executeTaskBeforeRun(final DataContext context, final RunConfiguration configuration);
-
   public abstract boolean executeTargetBeforeCompile(DataContext context);
 
   public abstract boolean executeTargetAfterCompile(DataContext context);
 
-  public abstract AntBuildTarget getTargetForBeforeRunEvent(RunConfiguration configuration);
-
-  public abstract void setTargetForBeforeRunEvent(AntBuildFile buildFile, String targetName, RunConfiguration configuration);
 }

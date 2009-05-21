@@ -1,14 +1,10 @@
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.util.StoringPropertyContainer;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.util.config.BooleanProperty;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.Map;
 
 public class RunManagerConfig {
   public static final String MAKE = ExecutionBundle.message("before.run.property.make");
@@ -31,15 +27,6 @@ public class RunManagerConfig {
 
   public void setShowSettingsBeforeRun(final boolean value) {
     SHOW_SETTINGS.primSet(myProperties, value);
-  }
-
-  public boolean isCompileBeforeRunning(RunProfile runProfile){
-    if (runProfile instanceof RunConfiguration){
-      final Map<String,Boolean> beforeRun = myManager.getStepsBeforeLaunch((RunConfiguration)runProfile);
-      final Boolean makeBeforeRun = beforeRun.get(MAKE);
-      return Boolean.TRUE.equals(makeBeforeRun);
-    }
-    return false;
   }
 
   public int getRecentsLimit() {

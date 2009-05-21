@@ -42,7 +42,7 @@ public class AntArtifactPostprocessingPropertiesEditor extends ArtifactPropertie
   }
 
   private void selectTarget() {
-    final TargetChooserDialog dialog = new TargetChooserDialog(myProject, myTarget, AntConfiguration.getInstance(myProject));
+    final TargetChooserDialog dialog = new TargetChooserDialog(myProject, myTarget);
     dialog.show();
     if (dialog.isOK()) {
       myTarget = dialog.getSelectedTarget();

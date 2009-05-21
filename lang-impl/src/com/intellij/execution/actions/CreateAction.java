@@ -3,11 +3,11 @@ package com.intellij.execution.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.Presentation;
 
 import java.util.List;
@@ -106,9 +106,7 @@ public class CreateAction extends BaseRunConfigurationAction {
       final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
       final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(configuration.getFactory());
       final RunConfiguration templateConfiguration = template.getConfiguration();
-      runManager.addConfiguration(configuration, runManager.isConfigurationShared(template), runManager.getStepsBeforeLaunch(
-        templateConfiguration));
-      runManager.createStepsBeforeRun(template, configuration.getConfiguration());
+      runManager.addConfiguration(configuration, runManager.isConfigurationShared(template), runManager.getBeforeRunTasks( templateConfiguration));
       runManager.setActiveConfiguration(configuration);
     }
   }
@@ -124,7 +122,7 @@ public class CreateAction extends BaseRunConfigurationAction {
         final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
         runManager.addConfiguration(configuration,
                                     runManager.isConfigurationShared(configuration),
-                                    runManager.getStepsBeforeLaunch(configuration.getConfiguration()));
+                                    runManager.getBeforeRunTasks(configuration.getConfiguration()));
         runManager.setActiveConfiguration(configuration);
       }
     }

@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
@@ -447,7 +448,7 @@ class RunConfigurable extends BaseConfigurable {
           RunnerAndConfigurationSettingsImpl settings = (RunnerAndConfigurationSettingsImpl)userObject;
             stableConfigurations.add(new RunConfigurationBean(settings,
                                                               manager.isConfigurationShared(settings),
-                                                              manager.getStepsBeforeLaunch(settings.getConfiguration())));
+                                                              manager.getBeforeRunTasks(settings.getConfiguration())));
         }
       }
     }
@@ -944,15 +945,15 @@ class RunConfigurable extends BaseConfigurable {
   private static class RunConfigurationBean {
     private final RunnerAndConfigurationSettingsImpl mySettings;
     private final boolean myShared;
-    private final Map<String, Boolean> myStepsBeforeLaunch;
+    private final Map<Key<? extends BeforeRunTask>, BeforeRunTask> myStepsBeforeLaunch;
     private final SingleConfigurationConfigurable myConfigurable;
 
     public RunConfigurationBean(final RunnerAndConfigurationSettingsImpl settings,
                                 final boolean shared,
-                                final Map<String, Boolean> stepsBeforeLaunch) {
+                                final Map<Key<? extends BeforeRunTask>, BeforeRunTask> stepsBeforeLaunch) {
       mySettings = settings;
       myShared = shared;
-      myStepsBeforeLaunch = stepsBeforeLaunch;
+      myStepsBeforeLaunch = Collections.unmodifiableMap(stepsBeforeLaunch);
       myConfigurable = null;
     }
 
@@ -972,7 +973,7 @@ class RunConfigurable extends BaseConfigurable {
       return myShared;
     }
 
-    public Map<String, Boolean> getStepsBeforeLaunch() {
+    public Map<Key<? extends BeforeRunTask>, BeforeRunTask> getStepsBeforeLaunch() {
       return myStepsBeforeLaunch;
     }
 

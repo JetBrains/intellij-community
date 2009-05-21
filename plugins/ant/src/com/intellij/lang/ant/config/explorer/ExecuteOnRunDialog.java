@@ -1,16 +1,20 @@
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.AntConfigurationBase;
-import com.intellij.lang.ant.config.ExecutionEvent;
-import com.intellij.lang.ant.config.impl.ExecuteBeforeRunEvent;
+import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
+import com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.treeStructure.Tree;
@@ -131,12 +135,11 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
   private DefaultMutableTreeNode buildNodes() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(new Descriptor());
     RunManager runManager = RunManager.getInstance(myProject);
-    ConfigurationType[] configurationFactories = runManager.getConfigurationFactories();
+    final ConfigurationType[] configTypes = runManager.getConfigurationFactories();
 
-    for (final ConfigurationType type : configurationFactories) {
+    for (final ConfigurationType type : configTypes) {
       final Icon icon = type.getIcon();
-      DefaultMutableTreeNode typeNode =
-        new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
+      DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
       root.add(typeNode);
       final Set<String> addedNames = StringSetSpinAllocator.alloc();
       try {
@@ -162,50 +165,58 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
 
 
   private boolean isConfigurationAssigned(ConfigurationType type) {
-    for (final ExecutionEvent event : AntConfigurationBase.getInstance(myProject).getEventsForTarget(myTarget)) {
-      if (event instanceof ExecuteBeforeRunEvent) {
-        ExecuteBeforeRunEvent beforeRunEvent = (ExecuteBeforeRunEvent)event;
-        if (beforeRunEvent.isFor(type))  return true;
+    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    for (ConfigurationFactory factory : type.getConfigurationFactories()) {
+      final RunnerAndConfigurationSettingsImpl settings = ((RunManagerImpl)runManager).getConfigurationTemplate(factory);
+      final AntBeforeRunTask task = runManager.getBeforeRunTask(settings.getConfiguration(), AntBeforeRunTaskProvider.ID);
+      if (task.isRunningTarget(myTarget)) {
+        return true;
       }
     }
     return false;
   }
   private boolean isConfigurationAssigned(RunConfiguration configuration) {
-    for (final ExecutionEvent event : AntConfigurationBase.getInstance(myProject).getEventsForTarget(myTarget)) {
-      if (event instanceof ExecuteBeforeRunEvent) {
-        ExecuteBeforeRunEvent beforeRunEvent = (ExecuteBeforeRunEvent)event;
-        if (beforeRunEvent.isFor(configuration))  return true;
-      }
-    }
-    return false;
+    final AntBeforeRunTask task = RunManagerEx.getInstanceEx(myProject).getBeforeRunTask(configuration, AntBeforeRunTaskProvider.ID);
+    return task.isRunningTarget(myTarget);
   }
 
   protected void doOKAction() {
-    final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
-    // remove old events
-    for (final ExecutionEvent event : antConfiguration.getEventsForTarget(myTarget)) {
-      if (event instanceof ExecuteBeforeRunEvent) {
-        antConfiguration.clearTargetForEvent(event);
+    final RunManagerImpl runManager = (RunManagerImpl)RunManagerEx.getInstanceEx(myProject);
+    for (Enumeration nodes = myRoot.depthFirstEnumeration(); nodes.hasMoreElements(); ) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodes.nextElement();
+      final Descriptor descriptor = (Descriptor)node.getUserObject();
+      final boolean isChecked = descriptor.isChecked();
+      final String targetName;
+      final String antfileUrl;
+      if (isChecked) {
+        final VirtualFile vFile = myTarget.getModel().getBuildFile().getVirtualFile();
+        targetName = vFile != null? myTarget.getName() : null;
+        antfileUrl = vFile != null? vFile.getUrl() : null;
       }
-    }
-
-    // add new events
-
-    Enumeration nodes = myRoot.depthFirstEnumeration();
-    while (nodes.hasMoreElements()) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodes.nextElement();
-      Descriptor descriptor = (Descriptor)node.getUserObject();
-      if (!descriptor.isChecked()) continue;
+      else {
+        targetName = null;
+        antfileUrl = null;
+      }
       if (descriptor instanceof ConfigurationTypeDescriptor) {
-        ConfigurationTypeDescriptor configurationTypeDescriptor = (ConfigurationTypeDescriptor)descriptor;
-        ExecuteBeforeRunEvent event = new ExecuteBeforeRunEvent(configurationTypeDescriptor.getConfigurationFactory());
-        antConfiguration.setTargetForEvent(myFile, myTarget.getName(), event);
+        final ConfigurationTypeDescriptor configurationTypeDescriptor = (ConfigurationTypeDescriptor)descriptor;
+        for (ConfigurationFactory factory : configurationTypeDescriptor.getConfigurationType().getConfigurationFactories()) {
+          final RunnerAndConfigurationSettingsImpl settings = runManager.getConfigurationTemplate(factory);
+          final AntBeforeRunTask task = runManager.getBeforeRunTask(settings.getConfiguration(), AntBeforeRunTaskProvider.ID);
+          if (isChecked || task.isRunningTarget(myTarget)) {
+            task.setEnabled(isChecked);
+            task.setAntFileUrl(antfileUrl);
+            task.setTargetName(targetName);
+          }
+        }
       }
       else if (descriptor instanceof ConfigurationDescriptor) {
-        ConfigurationDescriptor configurationDescriptor = (ConfigurationDescriptor)descriptor;
-        ExecuteBeforeRunEvent event =
-          new ExecuteBeforeRunEvent(configurationDescriptor.getConfiguration());
-        antConfiguration.setTargetForEvent(myFile, myTarget.getName(), event);
+        final ConfigurationDescriptor configurationDescriptor = (ConfigurationDescriptor)descriptor;
+        final AntBeforeRunTask task = runManager.getBeforeRunTask(configurationDescriptor.getConfiguration(), AntBeforeRunTaskProvider.ID);
+        if (isChecked || task.isRunningTarget(myTarget)) {
+          task.setEnabled(isChecked);
+          task.setAntFileUrl(antfileUrl);
+          task.setTargetName(targetName);
+        }
       }
     }
 
@@ -234,7 +245,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
       setChecked(isChecked);
     }
 
-    public ConfigurationType getConfigurationFactory() {
+    public ConfigurationType getConfigurationType() {
       return myConfigurationType;
     }
 
@@ -300,7 +311,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
       if (descriptor instanceof ConfigurationTypeDescriptor) {
         ConfigurationTypeDescriptor configurationTypeDescriptor = (ConfigurationTypeDescriptor)descriptor;
         myLabel.setFont(tree.getFont());
-        myLabel.setText(configurationTypeDescriptor.getConfigurationFactory().getDisplayName());
+        myLabel.setText(configurationTypeDescriptor.getConfigurationType().getDisplayName());
         myLabel.setIcon(configurationTypeDescriptor.getIcon());
       }
       else if (descriptor instanceof ConfigurationDescriptor) {

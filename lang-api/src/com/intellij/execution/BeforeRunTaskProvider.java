@@ -25,25 +25,23 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 
-public interface StepsBeforeRunProvider {
-  @NonNls ExtensionPointName<StepsBeforeRunProvider> EXTENSION_POINT_NAME =
-    new ExtensionPointName<StepsBeforeRunProvider>("com.intellij.stepsBeforeRunProvider");
+public interface BeforeRunTaskProvider<T extends BeforeRunTask> {
+  @NonNls ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>> EXTENSION_POINT_NAME = new ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>>("com.intellij.stepsBeforeRunProvider");
 
-  String getStepName();
+  Key<T> getId();
 
-  String getStepDescription(final RunConfiguration runConfiguration);
-
-  boolean hasTask(RunConfiguration configuration);
-
-  boolean executeTask(DataContext context, RunConfiguration configuration);
-
-  void copyTaskData(RunConfiguration from, RunConfiguration to);
-
-  boolean isEnabledByDefault();
+  String getDescription(final RunConfiguration runConfiguration, T task);
 
   boolean hasConfigurationButton();
 
-  String configureStep(final RunConfiguration runConfiguration);
+  // lifecycle methods:
+  
+  T createTask(final RunConfiguration runConfiguration);
+  
+  void configureTask(final RunConfiguration runConfiguration, T task);
+
+  boolean executeTask(DataContext context, RunConfiguration configuration, T task);
 }

@@ -63,10 +63,10 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
     return RunManagerEx.getInstanceEx(project).createConfiguration("", myConfigurationFactory);
   }
 
+  // todo: looks like may be removed safely
   protected void copyStepsBeforeRun(Project project, RunConfiguration runConfiguration) {
     final RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
     final RunnerAndConfigurationSettingsImpl template = manager.getConfigurationTemplate(myConfigurationFactory);
-    manager.createStepsBeforeRun(template, runConfiguration);
   }
 
   protected ConfigurationFactory getConfigurationFactory() {

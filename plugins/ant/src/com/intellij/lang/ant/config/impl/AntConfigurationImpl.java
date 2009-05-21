@@ -1,8 +1,11 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.ide.DataAccessors;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
@@ -508,25 +511,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return null;
   }
 
-  public boolean hasTasksToExecuteBeforeRun(final RunConfiguration configuration) {
-    return findExecuteBeforeRunEvent(configuration) != null;
-  }
-
-  public boolean executeTaskBeforeRun(final DataContext context, final RunConfiguration configuration) {
-    final ExecuteBeforeRunEvent foundEvent = findExecuteBeforeRunEvent(configuration);
-    return runTargetSynchronously(context, foundEvent);
-  }
-
-  public AntBuildTarget getTargetForBeforeRunEvent(RunConfiguration configuration) {
-    return getTargetForEvent(new ExecuteBeforeRunEvent(configuration));
-  }
-
-  public void setTargetForBeforeRunEvent(AntBuildFile buildFile,
-                                         String targetName,
-                                         RunConfiguration configuration) {
-    setTargetForEvent(buildFile, targetName, new ExecuteBeforeRunEvent(configuration));
-  }
-
   private AntBuildModelBase createModel(final AntBuildFile buildFile) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       // otherwise commitAllDocuments() must have been called before the whole process was started
@@ -742,19 +726,31 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                 for (Pair<Element, AntBuildFileBase> pair : buildFiles) {
                   final AntBuildFileBase buildFile = pair.getSecond();
                   buildFile.updateProperties();
+                  final VirtualFile vFile = buildFile.getVirtualFile();
+                  final String buildFileUrl = vFile != null? vFile.getUrl() : null; 
+
                   for (final Object o1 : pair.getFirst().getChildren(EXECUTE_ON_ELEMENT)) {
-                    Element e = (Element)o1;
-                    String eventId = e.getAttributeValue(EVENT_ELEMENT);
+                    final Element e = (Element)o1;
+                    final String eventId = e.getAttributeValue(EVENT_ELEMENT);
                     ExecutionEvent event = null;
-                    String targetName = e.getAttributeValue(TARGET_ELEMENT);
+                    final String targetName = e.getAttributeValue(TARGET_ELEMENT);
                     if (ExecuteBeforeCompilationEvent.TYPE_ID.equals(eventId)) {
                       event = ExecuteBeforeCompilationEvent.getInstance();
                     }
                     else if (ExecuteAfterCompilationEvent.TYPE_ID.equals(eventId)) {
                       event = ExecuteAfterCompilationEvent.getInstance();
                     }
-                    else if (ExecuteBeforeRunEvent.TYPE_ID.equals(eventId)) {
-                      event = new ExecuteBeforeRunEvent();
+                    else if ("beforeRun".equals(eventId)) {
+                      /*
+                      for compatibility with previous format
+
+                      <buildFile url="file://$PROJECT_DIR$/module/src/support-scripts.xml">
+                        <executeOn event="beforeRun" target="prebuild-steps" runConfigurationType="Application" runConfigurationName="Main" />
+                      </buildFile>
+                      */
+                      final String configType = e.getAttributeValue("runConfigurationType");
+                      final String configName = e.getAttributeValue("runConfigurationName");
+                      convertToBeforeRunTask(myProject, buildFileUrl, targetName, configType, configName);
                     }
                     else if (ExecuteCompositeTargetEvent.TYPE_ID.equals(eventId)) {
                       try {
@@ -800,7 +796,37 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       }
     });
   }
-  
+
+  private static void convertToBeforeRunTask(Project project, String buildFileUrl, String targetName, String configType, String configName) {
+    if (buildFileUrl == null || targetName == null || configType == null) {
+      return;
+    }
+    final RunManagerImpl runManager = (RunManagerImpl)RunManagerEx.getInstanceEx(project);
+    final ConfigurationType type = runManager.getConfigurationType(configType);
+    if (type == null) {
+      return;
+    }
+    if (configName != null) {
+      for (RunConfiguration configuration : runManager.getConfigurations(type)) {
+        if (configName.equals(configuration.getName())) {
+          final AntBeforeRunTask task = runManager.getBeforeRunTask(configuration, AntBeforeRunTaskProvider.ID);
+          task.setEnabled(true);
+          task.setTargetName(targetName);
+          task.setAntFileUrl(buildFileUrl);
+        }
+      }
+    }
+    else {
+      for (ConfigurationFactory factory : type.getConfigurationFactories()) {
+        final RunConfiguration template = runManager.getConfigurationTemplate(factory).getConfiguration();
+        final AntBeforeRunTask task = runManager.getBeforeRunTask(template, AntBeforeRunTaskProvider.ID);
+        task.setEnabled(true);
+        task.setTargetName(targetName);
+        task.setAntFileUrl(buildFileUrl);
+      }
+    }
+  }
+
   private static void queueLater(final Task task) {
     final Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
@@ -843,33 +869,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }.findContext(file, new HashSet<PsiElement>());
   }
 
-  @Nullable
-  ExecuteBeforeRunEvent findExecuteBeforeRunEvent(RunConfiguration configuration) {
-    final List<ExecutionEvent> events = getEventsByClass(ExecuteBeforeRunEvent.class);
-    for (final ExecutionEvent e : events) {
-      final ExecuteBeforeRunEvent event = (ExecuteBeforeRunEvent)e;
-      if (event.isFor(configuration)) {
-        return event;
-      }
-    }
-    final ConfigurationType type = configuration.getType();
-    for (final ExecutionEvent e : events) {
-      final ExecuteBeforeRunEvent event = (ExecuteBeforeRunEvent)e;
-      if (event.isFor(type)) {
-        return event;
-      }
-    }
-    return null;
-  }
-
   private static class EventElementComparator implements Comparator<Element> {
     static final Comparator<? super Element> INSTANCE = new EventElementComparator();
     
     private static final String[] COMPARABLE_ATTRIB_NAMES = new String[] {
       EVENT_ELEMENT, 
       TARGET_ELEMENT, 
-      ExecuteBeforeRunEvent.RUN_CONFIGURATION_TYPE_ATTR, 
-      ExecuteBeforeRunEvent.RUN_CONFIUGRATION_NAME_ATTR,
       ExecuteCompositeTargetEvent.PRESENTABLE_NAME
     };
     

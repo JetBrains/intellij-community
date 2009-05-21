@@ -1,6 +1,7 @@
 package com.intellij.execution.impl;
 
-import com.intellij.execution.StepsBeforeRunProvider;
+import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.openapi.extensions.Extensions;
@@ -8,13 +9,14 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -28,15 +30,13 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private JPanel myWholePanel;
 
   private JPanel myStepsPanel;
-  private Map<String,Boolean> myStepsBeforeLaunch;
+  private Map<Key<? extends BeforeRunTask>, BeforeRunTask> myStepsBeforeLaunch;
 
   private boolean myStoreProjectConfiguration;
 
   private final ConfigurationSettingsEditor myEditor;
-  private final RunnerAndConfigurationSettingsImpl mySettings;
 
   public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettingsImpl settings) {
-    mySettings = settings;
     myEditor = new ConfigurationSettingsEditor(settings);
     Disposer.register(this, myEditor);
     doReset(settings);
@@ -46,9 +46,9 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
 
-    myStepsBeforeLaunch = runManager.getStepsBeforeLaunch(runConfiguration);
+    myStepsBeforeLaunch = runManager.getBeforeRunTasks(runConfiguration);
 
-    final StepsBeforeRunProvider[] providers = Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME,
+    final BeforeRunTaskProvider[] providers = Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME,
                                                                         runConfiguration.getProject());
     myStepsPanel.removeAll();
     if (providers.length == 0 || runConfiguration instanceof UnknownRunConfiguration) {
@@ -56,7 +56,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     }
     else {
       myStepsPanel.setLayout(new GridLayout(providers.length, 1));
-      for (StepsBeforeRunProvider provider: providers) {
+      for (BeforeRunTaskProvider provider: providers) {
         final StepBeforeLaunchRow stepRow = new StepBeforeLaunchRow(runConfiguration, myStepsBeforeLaunch, provider);
         myStepsPanel.add(stepRow);
       }
@@ -102,13 +102,12 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private void doApply(final RunnerAndConfigurationSettingsImpl settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    runManager.createStepsBeforeRun(mySettings, runConfiguration);
-    runManager.setCompileMethodBeforeRun(runConfiguration, myStepsBeforeLaunch);
+    runManager.setBeforeRunTasks(runConfiguration, myStepsBeforeLaunch);
     runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
   }
 
-  public Map<String, Boolean> getStepsBeforeLaunch() {
-    return myStepsBeforeLaunch;
+  public Map<Key<? extends BeforeRunTask>, BeforeRunTask> getStepsBeforeLaunch() {
+    return Collections.unmodifiableMap(myStepsBeforeLaunch);
   }
 
   public boolean isStoreProjectConfiguration() {
@@ -119,60 +118,40 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     private final JCheckBox myCheckBox;
     private FixedSizeButton myButton;
 
-    public StepBeforeLaunchRow(final RunConfiguration runConfiguration,
-                               final Map<String, Boolean> methodsBeforeRun,
-                               final StepsBeforeRunProvider provider) {
+    public StepBeforeLaunchRow(final RunConfiguration runConfiguration, final Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks, final BeforeRunTaskProvider<BeforeRunTask> provider) {
       super(new GridBagLayout());
-      final Boolean checkedValue = methodsBeforeRun.get(provider.getStepName());
-      boolean isChecked = checkedValue != null && checkedValue.booleanValue();
-      myCheckBox = new JCheckBox(provider.getStepName(), isChecked);
+      final BeforeRunTask beforeRunTask = tasks.get(provider.getId());
+      final boolean isChecked = beforeRunTask.isEnabled();
+      myCheckBox = new JCheckBox(provider.getDescription(runConfiguration, beforeRunTask), isChecked);
       GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0 , 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0);
       add(myCheckBox, gc);
       gc.weightx = 1;
       if (provider.hasConfigurationButton()) {
-        String descriptionByName = null;
-        if (isChecked) {
-          descriptionByName = provider.getStepDescription(runConfiguration);
-        }
-        myCheckBox.setText(getCheckboxText(descriptionByName, provider.getStepName()));
-
         myButton = new FixedSizeButton(20);
         add(myButton, gc);
 
         myButton.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            final String description = provider.configureStep(runConfiguration);
-            myCheckBox.setText(getCheckboxText(description, provider.getStepName()));
+            provider.configureTask(runConfiguration, beforeRunTask);
+            myCheckBox.setText(provider.getDescription(runConfiguration, beforeRunTask));
           }
         });
-      } else {
+      }
+      else {
         add(Box.createHorizontalBox(), gc);
       }
       enableSettings();
       myCheckBox.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          methodsBeforeRun.put(provider.getStepName(), myCheckBox.isSelected());
+          beforeRunTask.setEnabled(myCheckBox.isSelected());
           enableSettings();
         }
       });
     }
 
-    private String getCheckboxText(final String description, final String methodName) {
-      return methodName + " " + (description != null ? description : "");
-    }
-
     private void enableSettings() {
       if (myButton != null) {
         myButton.setEnabled(myCheckBox.isSelected());
-      }
-    }
-
-    public void enableRow(boolean state){
-      myCheckBox.setEnabled(state);
-      if (state) {
-        enableSettings();
-      } else {
-        UIUtil.setEnabled(this, false, true);
       }
     }
   }
