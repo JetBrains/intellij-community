@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.FileColorManager;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.TimedDeadzone;
@@ -158,6 +159,10 @@ final class EditorTabbedContainer implements Disposable {
     myTabs.getTabAt(index).setTooltipText(text);
   }
 
+  public void setBackgroundColorAt(final int index, final Color color) {
+    myTabs.getTabAt(index).setTabColor(color);
+  }
+  
   public void setTabLayoutPolicy(final int policy) {
     switch (policy) {
       case JTabbedPane.SCROLL_TAB_LAYOUT:
@@ -201,8 +206,9 @@ final class EditorTabbedContainer implements Disposable {
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) return;
 
-
-    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file);
+    final FileColorManager fileColorManager = FileColorManagerImpl.getInstance(myProject);
+    final Color color = fileColorManager.isEnabledForTabs() ? fileColorManager.getFileColor(file) : null;
+    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file).setTabColor(color);
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
     tabActions.add(new CloseTab(comp, tab));
@@ -220,6 +226,11 @@ final class EditorTabbedContainer implements Disposable {
     }
 
     return file.getPresentableName();
+  }
+
+  public static Color calcTabColor(final Project project, final VirtualFile file) {
+    final FileColorManager colorManager = FileColorManagerImpl.getInstance(project);
+    return colorManager.isEnabledForTabs() ? colorManager.getFileColor(file) : null;
   }
 
   public Component getComponentAt(final int i) {

@@ -16,6 +16,7 @@ public final class TabInfo {
 
   public static final String ACTION_GROUP = "actionGroup";
   public static final String ICON = "icon";
+  public static final String TAB_COLOR = "color";
   public static final String COMPONENT = "component";
   public static final String TEXT = "text";
   public static final String TAB_ACTION_GROUP = "tabActionGroup";
@@ -60,6 +61,7 @@ public final class TabInfo {
   private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(IconLoader.getIcon("/nodes/tabAlert.png"));
 
   private boolean myEnabled = true;
+  private Color myTabColor = null;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -311,4 +313,14 @@ public final class TabInfo {
     return myTooltipText;
   }
 
+  public TabInfo setTabColor(Color color) {
+    Color old = myTabColor;
+    myTabColor = color;
+    myChangeSupport.firePropertyChange(TAB_COLOR, old, color);
+    return this;
+  }
+
+  public Color getTabColor() {
+    return myTabColor;
+  }
 }

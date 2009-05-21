@@ -216,6 +216,12 @@ public class EditorWindow {
     }
   }
 
+  private void setBackgroundColorAt(final int index, final Color color) {
+    if (myTabbedPane != null) {
+      myTabbedPane.setBackgroundColorAt(index, color);
+    }
+  }
+
   private void setToolTipTextAt(final int index, final String text) {
     if (myTabbedPane != null) {
       myTabbedPane.setToolTipTextAt(index, text);
@@ -260,6 +266,14 @@ public class EditorWindow {
 
   public void setAsCurrentWindow(final boolean requestFocus) {
     myOwner.setCurrentWindow(this, requestFocus);
+  }
+
+  public void updateFileBackgroundColor(final VirtualFile file) {
+    final int index = findEditorIndex(findFileComposite(file));
+    if (index != -1) {
+      final Color color = EditorTabbedContainer.calcTabColor(getManager().getProject(), file);
+      setBackgroundColorAt(index, color);
+    }
   }
 
   protected static class TComp extends JPanel implements DataProvider{

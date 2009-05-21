@@ -52,6 +52,16 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     return CopyPasteManager.getInstance().isCutElement(getValue());
   }
 
+  public PresentableNodeDescriptor getChildToHighlightAt(int index) {
+    final Collection<? extends AbstractTreeNode> kids = getChildren();
+    int i = 0;
+    for (final AbstractTreeNode kid : kids) {
+      if (i == index) return kid;
+      i++;
+    }
+
+    return null;
+  }
 
   @Override
   protected void postprocess(PresentationData presentation) {

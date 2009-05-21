@@ -92,7 +92,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setIconOpaque(false);
     }
     else {
-      super.setOpaque(myOpaque || selected && hasFocus); // draw selection background even for non-opaque tree
+      super.setOpaque(myOpaque || selected && hasFocus || selected && tree.hasFocus()); // draw selection background even for non-opaque tree
     }
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 

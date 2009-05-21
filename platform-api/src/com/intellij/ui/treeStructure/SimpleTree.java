@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -261,11 +260,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   protected void paintComponent(Graphics g) {
-    g.setColor(getBackground());
-    g.fillRect(0, 0, getWidth(), getHeight());
-
-    paintNodeContent(g);
-
     super.paintComponent(g);
 
     if (isEditing()) {
@@ -540,115 +534,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
   public void processKeyEvent(final KeyEvent e) {
     super.processKeyEvent(e);
   }
-
-  private void paintNodeContent(Graphics g) {
-    if (!(getUI() instanceof BasicTreeUI)) return;
-
-    if (AbstractTreeBuilder.getBuilderFor(this) == null) return;
-
-    GraphicsConfig config = new GraphicsConfig(g);
-    config.setAntialiasing(true);
-
-    BasicTreeUI ui = (BasicTreeUI)getUI();
-
-    for (int eachRow = 0; eachRow < getRowCount(); eachRow++) {
-
-      final TreePath path = getPathForRow(eachRow);
-      SimpleNode node = toSimpleNode(path.getLastPathComponent());
-      if (node == null) continue;
-
-      if (!node.isContentHighlighted()) continue;
-
-//todo: to investigate why it might happen under 1.6: http://www.productiveme.net:8080/browse/PM-217
-      if (node.getParent() == null) continue;
-
-      final SimpleNode[] kids = node.getChildren();
-      if (kids.length == 0) continue;
-
-
-      SimpleNode first = null;
-      SimpleNode last = null;
-      int lastIndex = -1;
-      for (int i = 0; i < kids.length; i++) {
-        SimpleNode eachKid = kids[i];
-        if (!node.isHighlightableContentNode(eachKid)) continue;
-        if (first == null) {
-          first = eachKid;
-        }
-        last = eachKid;
-        lastIndex = i;
-      }
-
-      if (first == null || last == null) continue;
-      Rectangle firstBounds = getPathBounds(getPath(first));
-
-      if (isExpanded(getPath(last))) {
-        if (lastIndex + 1 < kids.length) {
-          SimpleNode nextKid = kids[lastIndex + 1];
-          int nextRow = getRowForPath(getPath(nextKid));
-          last = toSimpleNode(getPathForRow(nextRow - 1).getLastPathComponent());
-        }
-        else {
-          SimpleNode parentNode = node.getParent();
-          int nodeIndex = parentNode.getIndex(node);
-          if (nodeIndex + 1 < parentNode.getChildCount()) {
-            SimpleNode nextChild = (SimpleNode)parentNode.getChildAt(nodeIndex + 1);
-            int nextRow = getRowForPath(getPath(nextChild));
-            last = toSimpleNode(getPathForRow(nextRow - 1).getLastPathComponent());
-          }
-          else {
-            int lastRow = getRowForPath(getPath(last));
-            SimpleNode lastParent = last;
-            boolean lastWasFound = false;
-            for (int i = lastRow + 1; i < getRowCount(); i++) {
-              SimpleNode eachNode = toSimpleNode(getPathForRow(i).getLastPathComponent());
-              if (!node.isParentOf(eachNode)) {
-                last = lastParent;
-                lastWasFound = true;
-                break;
-              }
-              lastParent = eachNode;
-            }
-            if (!lastWasFound) {
-              last = toSimpleNode(getPathForRow(getRowCount() - 1).getLastPathComponent());
-            }
-          }
-        }
-      }
-
-      Rectangle lastBounds = getPathBounds(getPath(last));
-
-      if (firstBounds == null || lastBounds == null) continue;
-
-      Rectangle toPaint = new Rectangle(firstBounds.x, firstBounds.y, 0, (int)lastBounds.getMaxY() - firstBounds.y - 1);
-
-      toPaint.width = getWidth() - toPaint.x - 4;
-
-      g.setColor(new Color(245, 245, 245));
-      g.fillRoundRect(toPaint.x, toPaint.y, toPaint.width, toPaint.height, 4, 4);
-      g.setColor(new Color(180, 180, 180));
-      g.drawRoundRect(toPaint.x, toPaint.y, toPaint.width, toPaint.height, 4, 4);
-    }
-
-    config.restore();
-  }
-
-  @Nullable
-  private SimpleNode toSimpleNode(final Object pathComponent) {
-    if (!(pathComponent instanceof DefaultMutableTreeNode)) return null;
-    final Object userObject = ((DefaultMutableTreeNode)pathComponent).getUserObject();
-    if (!(userObject instanceof SimpleNode)) return null;
-    return (SimpleNode)userObject;
-  }
-
-
-  public TreePath getPath(SimpleNode node) {
-    final AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
-    final DefaultMutableTreeNode treeNode = builder.getNodeForElement(node);
-
-    return treeNode != null ? new TreePath(treeNode.getPath()) : new TreePath(node);
-   }
-
 
   private int getBoxWidth(TreePath path) {
     final Object root = getModel().getRoot();

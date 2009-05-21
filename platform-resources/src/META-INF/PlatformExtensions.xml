@@ -106,6 +106,12 @@
   <projectService serviceInterface="com.intellij.ui.content.MessageView"
                   serviceImplementation="com.intellij.ui.content.impl.MessageViewImpl"/>
 
+  <projectService serviceInterface="com.intellij.ui.FileColorManager"
+                  serviceImplementation="com.intellij.ui.tabs.FileColorManagerImpl"/>
+
+  <projectService serviceInterface="com.intellij.ui.tabs.FileColorSharedConfigurationManager"
+                  serviceImplementation="com.intellij.ui.tabs.FileColorSharedConfigurationManager"/>
+
   <applicationService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
 
   <!-- General -->
@@ -130,6 +136,9 @@
   <applicationConfigurable implementation="com.intellij.ide.plugins.PluginManagerConfigurable"/>
   <applicationConfigurable implementation="com.intellij.util.net.HttpConfigurable"/>
   <applicationConfigurable implementation="com.intellij.openapi.diff.impl.external.DiffOptionsForm"/>
+
+  <!-- Colored Tabs -->
+  <projectConfigurable implementation="com.intellij.ui.tabs.FileColorsConfigurable" id="fileColors"/>
 
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"

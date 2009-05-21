@@ -28,8 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import javax.swing.border.Border;
 import javax.swing.plaf.ProgressBarUI;
+import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
@@ -982,6 +984,25 @@ public class UIUtil {
 
   public static void setFocusProxy(JComponent c, boolean isProxy) {
     c.putClientProperty(FOCUS_PROXY_KEY, isProxy ? Boolean.TRUE : null);
+  }
+
+  public static class LeglessTreeUi extends BasicTreeUI {
+    @Override
+    protected void paintHorizontalPartOfLeg(final Graphics g,
+                                            final Rectangle clipBounds,
+                                            final Insets insets,
+                                            final Rectangle bounds,
+                                            final TreePath path,
+                                            final int row,
+                                            final boolean isExpanded,
+                                            final boolean hasBeenExpanded,
+                                            final boolean isLeaf) {
+
+    }
+
+    @Override
+    protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
+    }
   }
 
 }

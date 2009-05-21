@@ -7,7 +7,7 @@ import java.awt.*;
 /**
  * @author spleaner
  */
-public class StickyButtonUI extends BasicToggleButtonUI {
+public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonUI {
   public static final float FONT_SIZE = 11.0f;
 
   @Override
@@ -18,7 +18,7 @@ public class StickyButtonUI extends BasicToggleButtonUI {
 
   @Override
   public void paint(final Graphics g, final JComponent c) {
-    AbstractButton button = (AbstractButton) c;
+    B button = (B) c;
 
     final int width = button.getWidth();
     final int height = button.getHeight();
@@ -27,22 +27,54 @@ public class StickyButtonUI extends BasicToggleButtonUI {
 
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+    final int arcSize = getArcSize();
+
+    if (c.isOpaque()) {
+      g2.setColor(c.getBackground());
+      g2.fillRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
+    }
+
     final ButtonModel model = button.getModel();
     if (model.isSelected()) {
-      g2.setColor(Color.GRAY);
-      g2.fillRoundRect(0, 0, width - 1, height - 1, 10, 10);
+      g2.setColor(getSelectionColor(button));
+      g2.fillRoundRect(0, 0, width - 1, height - 1, getArcSize(), getArcSize());
     } else if (model.isRollover()) {
-      g2.setColor(Color.LIGHT_GRAY);
-      g2.fillRoundRect(0, 0, width - 1, height - 1, 10, 10);
+      g2.setColor(getRolloverColor(button));
+      g2.fillRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
+    } else {
+      final Color bg = getBackgroundColor(button);
+      if (bg != null) {
+        g2.setColor(bg);
+        g2.fillRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
+      }
     }
 
     if (button.hasFocus()) {
-      g2.setColor(new Color(100, 100, 100));
-      g2.drawRoundRect(0, 0, width - 1, height - 1, 10, 10);
+      g2.setColor(getFocusColor(button));
+      g2.drawRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
     }
 
     g2.dispose();
     super.paint(g, c);
   }
 
+  protected Color getFocusColor(B button) {
+    return new Color(100, 100, 100);
+  }
+
+  protected Color getSelectionColor(final B button) {
+    return Color.GRAY;
+  }
+
+  protected Color getRolloverColor(final B button) {
+    return Color.LIGHT_GRAY;
+  }
+
+  protected Color getBackgroundColor(final B button) {
+    return null;
+  }
+
+  protected int getArcSize() {
+    return 10;
+  }
 }

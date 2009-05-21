@@ -1,9 +1,7 @@
 package com.intellij.ui.tabs.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
@@ -781,6 +779,9 @@ public class JBTabsImpl extends JComponent
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       updateIcon(tabInfo);
     }
+    else if (TabInfo.TAB_COLOR.equals(evt.getPropertyName())) {
+      updateColor(tabInfo);
+    }
     else if (TabInfo.ALERT_STATUS.equals(evt.getPropertyName())) {
       boolean start = ((Boolean)evt.getNewValue()).booleanValue();
       updateAttraction(tabInfo, start);
@@ -869,6 +870,14 @@ public class JBTabsImpl extends JComponent
     updateTab(new Runnable() {
       public void run() {
         myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+      }
+    }, tabInfo);
+  }
+
+  private void updateColor(final TabInfo tabInfo) {
+    updateTab(new Runnable() {
+      public void run() {
+        // nothing, just repaint
       }
     }, tabInfo);
   }
@@ -1352,6 +1361,16 @@ public class JBTabsImpl extends JComponent
     config.restore();
   }
 
+  private Color getActiveTabColor(final Color c) {
+    final TabInfo info = getSelectedInfo();
+    if (info == null) {
+      return c;
+    }
+
+    final Color tabColor = info.getTabColor();
+    return tabColor == null ? c : tabColor;
+  }
+
   private void paintSelectionAndBorder(Graphics2D g2d) {
     if (getSelectedLabel() == null) return;
 
@@ -1361,19 +1380,19 @@ public class JBTabsImpl extends JComponent
       g2d.fill(shapeInfo.fillPath.getShape());
     }
 
-
     final int alpha;
     int paintTopY = shapeInfo.labelTopY;
     int paintBottomY = shapeInfo.labelBottomY;
     final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null);
     Color bgPreFill = null;
     if (paintFocused) {
-      if (getActiveTabFillIn() == null) {
+      final Color bgColor = getActiveTabColor(getActiveTabFillIn());
+      if (bgColor == null) {
         shapeInfo.from = UIUtil.getFocusedFillColor();
         shapeInfo.to = UIUtil.getFocusedFillColor();
       }
       else {
-        bgPreFill = getActiveTabFillIn();
+        bgPreFill = bgColor;
         alpha = 255;
         paintBottomY = shapeInfo.labelTopY + shapeInfo.labelPath.deltaY(getArcSize() - 2);
         shapeInfo.from = UIUtil.toAlpha(UIUtil.getFocusedFillColor(), alpha);
@@ -1381,22 +1400,23 @@ public class JBTabsImpl extends JComponent
       }
     }
     else {
+      final Color bgColor = getActiveTabColor(getActiveTabFillIn());
       if (isPaintFocus()) {
-        if (getActiveTabFillIn() == null) {
+        if (bgColor == null) {
           alpha = 150;
           shapeInfo.from = UIUtil.toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
           shapeInfo.to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
         }
         else {
           alpha = 255;
-          shapeInfo.from = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
-          shapeInfo.to = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
+          shapeInfo.from = UIUtil.toAlpha(bgColor, alpha);
+          shapeInfo.to = UIUtil.toAlpha(bgColor, alpha);
         }
       }
       else {
         alpha = 255;
-        shapeInfo.from = UIUtil.toAlpha(Color.white, alpha);
-        shapeInfo.to = UIUtil.toAlpha(Color.white, alpha);
+        shapeInfo.from = UIUtil.toAlpha(bgColor == null ? Color.white : bgColor, alpha);
+        shapeInfo.to = UIUtil.toAlpha(bgColor == null ? Color.white : bgColor, alpha);
       }
     }
 
@@ -1416,7 +1436,8 @@ public class JBTabsImpl extends JComponent
       g2d.fill(shapeInfo.fillPath.getShape());
     }
 
-    Color borderColor = UIUtil.getBoundsColor(paintFocused);
+    final Color tabColor = getActiveTabColor(null);
+    Color borderColor = tabColor == null ? UIUtil.getBoundsColor(paintFocused) : tabColor.darker();
     g2d.setColor(borderColor);
 
     if (!isHideTabs()) {
@@ -1594,9 +1615,19 @@ public class JBTabsImpl extends JComponent
     int tabIndex = myVisibleInfos.indexOf(each);
 
     final int arc = getArcSize();
-    final Color topBlickColor = getTopBlickColor();
-    final Color rightBlockColor = getRightBlockColor();
-    final Color boundsColor = getBoundsColor();
+    Color topBlickColor = getTopBlickColor();
+    Color rightBlockColor = getRightBlockColor();
+    Color boundsColor = getBoundsColor();
+    Color backgroundColor = getBackground();
+
+    final Color tabColor = each.getTabColor();
+    if (tabColor != null) {
+      backgroundColor = tabColor;
+      boundsColor = tabColor.darker();
+      topBlickColor = tabColor.brighter().brighter();
+      rightBlockColor = tabColor;
+    }
+
     final TabInfo selected = getSelectedInfo();
     final int selectionTabVShift = getSelectionTabVShift();
 
@@ -1646,8 +1677,23 @@ public class JBTabsImpl extends JComponent
 
     shape.closePath();
 
-    g2d.setColor(getBackground());
+    g2d.setColor(backgroundColor);
     g2d.fill(shape.getShape());
+
+    // TODO
+
+    final Line2D.Float gradientLine =
+      shape.transformLine(0, topY, 0, topY + shape.deltaY((int) (shape.getHeight() / 1.5 )));
+
+    final GradientPaint gp =
+      new GradientPaint(gradientLine.x1, gradientLine.y1,
+                        shape.transformY1(backgroundColor.brighter().brighter(), backgroundColor),
+                        gradientLine.x2, gradientLine.y2,
+                        shape.transformY1(backgroundColor, backgroundColor.brighter().brighter()));
+    final Paint old = g2d.getPaint();
+    g2d.setPaint(gp);
+    g2d.fill(shape.getShape());
+    g2d.setPaint(old);
 
     g2d.setColor(topBlickColor);
     g2d.draw(
@@ -1692,7 +1738,7 @@ public class JBTabsImpl extends JComponent
         }
       }
       else {
-        Color tabFillColor = getActiveTabFillIn();
+        Color tabFillColor = getActiveTabColor(getActiveTabFillIn());
         if (tabFillColor == null) {
           tabFillColor = shape.path.transformY1(shape.to, shape.from);
         }

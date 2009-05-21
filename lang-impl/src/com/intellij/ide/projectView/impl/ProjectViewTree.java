@@ -3,9 +3,13 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.plaf.TreeUI;
+import java.awt.event.KeyEvent;
 
 /**
  * @author Eugene Zhuravlev
@@ -15,7 +19,44 @@ import javax.swing.tree.TreeModel;
 public abstract class ProjectViewTree extends DnDAwareTree {
   protected ProjectViewTree(TreeModel newModel) {
     super(newModel);
-    setCellRenderer(new NodeRenderer());
+    setUI(new UIUtil.LeglessTreeUi());
+
+    final NodeRenderer renderer = new NodeRenderer();
+    renderer.setOpaque(false);
+    renderer.setIconOpaque(false);
+    setCellRenderer(renderer);
+
+    setOpaque(false);
+  }
+
+  @Override
+  public void setUI(final TreeUI ui) {
+    TreeUI actualUI = ui;
+    if (!(ui instanceof UIUtil.LeglessTreeUi)) {
+      actualUI = new UIUtil.LeglessTreeUi();
+    }
+
+    super.setUI(actualUI);
+  }
+
+  @Override
+  public void processKeyEvent(final KeyEvent e) {
+    TreePath path = getSelectionPath();
+    if (path != null) {
+      if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+        if (isExpanded(path)) {
+          collapsePath(path);
+          return;
+        }
+      } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+        if (isCollapsed(path)) {
+          expandPath(path);
+          return;
+        }
+      }
+    }
+
+    super.processKeyEvent(e);
   }
 
   public final int getToggleClickCount() {

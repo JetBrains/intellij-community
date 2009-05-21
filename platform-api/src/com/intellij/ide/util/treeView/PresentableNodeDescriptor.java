@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
   private PresentationData myTemplatePresentation;
@@ -83,6 +85,38 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     }
 
     return myTemplatePresentation;
+  }
+
+  public boolean isContentHighlighted() {
+    return false;
+  }
+
+  public boolean isHighlightableContentNode(final PresentableNodeDescriptor kid) {
+    return true;
+  }
+
+  public abstract PresentableNodeDescriptor getChildToHighlightAt(int index);
+
+  public boolean isParentOf(NodeDescriptor eachNode) {
+    NodeDescriptor eachParent = eachNode.getParentDescriptor();
+    while (eachParent != null) {
+      if (eachParent == this) return true;
+      eachParent = eachParent.getParentDescriptor();
+    }
+    return false;
+  }
+
+  public boolean isAncestorOrSelf(NodeDescriptor selectedNode) {
+    NodeDescriptor node = selectedNode;
+    while (node != null) {
+      if (equals(node)) return true;
+      node = node.getParentDescriptor();
+    }
+    return false;
+  }
+
+  public Color getHighlightColor() {
+    return new Color(245, 245, 245);
   }
 
   public static class ColoredFragment {

@@ -49,6 +49,23 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     this(parent == null ? null : parent.myProject, parent);
   }
 
+  public PresentableNodeDescriptor getChildToHighlightAt(int index) {
+    return getChildAt(index);
+  }
+
+  @Override
+  public int getIndex() {
+    int index = super.getIndex();
+    if (index == -1) {
+      final SimpleNode parent = getParent();
+      if (parent != null) {
+        index = parent.getIndex(this);
+      }
+    }
+
+    return index;
+  }
+
   protected SimpleNode() {
     super(null, null);
   }
@@ -259,14 +276,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return NONE;
   }
 
-  public boolean isContentHighlighted() {
-    return false;
-  }
-
-  public boolean isHighlightableContentNode(final SimpleNode kid) {
-    return true;
-  }
-
   public int getChildCount() {
     return getChildren().length;
   }
@@ -275,24 +284,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return getChildren()[i];
   }
 
-  public boolean isParentOf(SimpleNode eachNode) {
-    SimpleNode eachParent = eachNode.getParent();
-    while (eachParent != null) {
-      if (eachParent == this) return true;
-      eachParent = eachParent.getParent();
-    }
-    return false;
-  }
-
-
-  public boolean isAncestorOrSelf(SimpleNode selectedNode) {
-    SimpleNode node = selectedNode;
-    while (node != null) {
-      if (equals(node)) return true;
-      node = node.getParent();
-    }
-    return false;
-  }
 
   public final boolean equals(Object o) {
     return ComparableObjectCheck.equals(this, o);

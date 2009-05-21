@@ -158,6 +158,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   }
 
+
   ActionCallback select(@Nullable Configurable configurable) {
     return queueSelection(configurable);
   }
@@ -569,6 +570,11 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     private MyTree() {
       getInputMap().clear();
+    }
+
+    @Override
+    protected boolean highlightSingleNode() {
+      return false;
     }
 
     @Override

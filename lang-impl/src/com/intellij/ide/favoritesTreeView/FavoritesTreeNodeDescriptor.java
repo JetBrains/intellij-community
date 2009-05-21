@@ -93,4 +93,8 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
     }
     return descriptor;
   }
+
+  public PresentableNodeDescriptor getChildToHighlightAt(int index) {
+    return myElement.getChildToHighlightAt(index);
+  }
 }

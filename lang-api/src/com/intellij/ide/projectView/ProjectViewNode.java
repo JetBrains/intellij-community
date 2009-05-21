@@ -16,6 +16,7 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -24,9 +25,11 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.FileColorManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -182,5 +185,30 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
   public boolean validate() {
     update();
     return getValue() != null;
+  }
+
+  @Override
+  public boolean isContentHighlighted() {
+    final VirtualFile virtualFile = getVirtualFile();
+    if (virtualFile == null) {
+      return false;
+    }
+
+    final FileColorManager colorManager = FileColorManager.getInstance(myProject);
+    if (!colorManager.isEnabled()) {
+      return false;
+    }
+
+    return colorManager.getFileColor(virtualFile, true) != null;
+  }
+
+  @Override
+  public boolean isHighlightableContentNode(PresentableNodeDescriptor kid) {
+    return false;
+  }
+
+  @Override
+  public Color getHighlightColor() {
+    return FileColorManager.getInstance(myProject).getFileColor(getVirtualFile(), true);
   }
 }

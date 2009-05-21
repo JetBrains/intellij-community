@@ -202,6 +202,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     getSplitters().updateFileColor(file);
   }
 
+  private void updateFileBackgroundColor(final VirtualFile file) {
+    getSplitters().updateFileBackgroundColor(file);
+  }
 
   /**
    * Updates tab icon for the specified <code>file</code>. The <code>file</code>
@@ -1315,6 +1318,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
         final VirtualFile file = openFiles[i];
         updateFileIcon(file);
         updateFileName(file);
+        updateFileBackgroundColor(file);
       }
     }
   }

@@ -381,6 +381,13 @@ public final class EditorsSplitters extends JPanel {
     myCurrentWindow = currentWindow;
   }
 
+  public void updateFileBackgroundColor(final VirtualFile file) {
+    final EditorWindow[] windows = getWindows();
+    for (int i = 0; i != windows.length; ++ i) {
+      windows [i].updateFileBackgroundColor(file);
+    }
+  }
+
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
     public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
       if (myCurrentWindow != null) {
