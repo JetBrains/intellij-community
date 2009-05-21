@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -175,6 +176,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
     checkValid();
+    ProgressManager.getInstance().checkCanceled();
 
     for (VirtualFile vFile : myFile.getChildren()) {
       if (processor instanceof PsiFileSystemItemProcessor &&
