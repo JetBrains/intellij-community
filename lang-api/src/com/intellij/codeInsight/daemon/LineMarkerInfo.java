@@ -90,6 +90,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     return null;
   }
 
+  @Nullable
   public T getElement() {
     return elementRef.get();
   }

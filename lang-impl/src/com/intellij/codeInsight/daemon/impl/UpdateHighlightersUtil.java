@@ -380,6 +380,10 @@ public class UpdateHighlightersUtil {
     final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme(); // TODO: editor color scheme
     for (LineMarkerInfo info : markers) {
       PsiElement element = info.getElement();
+      if (element == null) {
+        continue;
+      }
+
       TextRange textRange = element.getTextRange();
       LOG.assertTrue(textRange != null, element);
       TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);

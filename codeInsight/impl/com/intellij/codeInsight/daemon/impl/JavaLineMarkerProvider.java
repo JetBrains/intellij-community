@@ -166,8 +166,10 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
         public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
           final PsiMethod superMethod = pair.getFirst();
-          overridden.add(superMethod);
-          methods.remove(superMethod);
+          if (superMethod.isPhysical() && pair.getSecond().isPhysical() //groovy, scala
+              && methods.remove(superMethod)) {
+            overridden.add(superMethod);
+          }
           return !methods.isEmpty();
         }
       });
