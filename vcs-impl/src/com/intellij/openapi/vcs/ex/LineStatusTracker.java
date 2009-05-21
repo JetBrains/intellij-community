@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
@@ -524,7 +525,7 @@ public class LineStatusTracker {
     return null;
   }
 
-  public static abstract class MyAction extends AnAction {
+  public static abstract class MyAction extends AnAction implements DumbAware {
     protected final LineStatusTracker myLineStatusTracker;
     protected final Range myRange;
 
