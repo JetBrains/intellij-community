@@ -150,7 +150,8 @@ public class IdeEventQueue extends EventQueue {
 
 
   private void addIdleTimeCounterRequest() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    Application application = ApplicationManager.getApplication();
+    if (application != null && application.isUnitTestMode()) return;
 
     myIdleTimeCounterAlarm.cancelAllRequests();
     myLastActiveTime = System.currentTimeMillis();
