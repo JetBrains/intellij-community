@@ -103,7 +103,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   public synchronized void runPostStartupActivities() {
     final Application app = ApplicationManager.getApplication();
     app.assertIsDispatchThread();
-    if (myBackgroundIndexing) {
+    if (myBackgroundIndexing || DumbService.getInstance().isDumb()) {
       final List<Runnable> dumbAware = CollectionFactory.arrayList();
       for (Iterator<Runnable> iterator = myPostStartupActivities.iterator(); iterator.hasNext();) {
         Runnable runnable = iterator.next();
