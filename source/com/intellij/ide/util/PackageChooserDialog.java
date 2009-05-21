@@ -228,29 +228,46 @@ public class PackageChooserDialog extends PackageChooser {
     });
   }
 
-  private void addPackage(PsiPackage aPackage) {
-    if (findNodeForPackage(aPackage.getQualifiedName()) == null) {
-      PsiPackage parentPackage = aPackage.getParentPackage();
-      if (parentPackage == null) {
-        if (aPackage.getQualifiedName().equals("")) {
-          ((DefaultMutableTreeNode)myModel.getRoot()).setUserObject(aPackage);
-        }
-        else {
-          PsiPackage defaultPackage = JavaPsiFacade.getInstance(myProject).findPackage("");
-          addPackage(defaultPackage);
-          DefaultMutableTreeNode defaultPackageNode = findNodeForPackage("");
-          LOG.assertTrue(defaultPackageNode != null);
-          defaultPackageNode.add(new DefaultMutableTreeNode(aPackage));
-        }
+  @NotNull
+  private DefaultMutableTreeNode addPackage(PsiPackage aPackage) {
+    final String qualifiedPackageName = aPackage.getQualifiedName();
+    final PsiPackage parentPackage = aPackage.getParentPackage();
+    if (parentPackage == null) {
+      final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)myModel.getRoot();
+      if (qualifiedPackageName.length() == 0) {
+        rootNode.setUserObject(aPackage);
+        return rootNode;
       }
       else {
-        addPackage(parentPackage);
-        DefaultMutableTreeNode node = findNodeForPackage(parentPackage.getQualifiedName());
-        if (node != null) {
-          node.add(new DefaultMutableTreeNode(aPackage));
-        }
+        DefaultMutableTreeNode packageNode = findPackageNode(rootNode, qualifiedPackageName);
+        if (packageNode != null) return packageNode;
+        packageNode = new DefaultMutableTreeNode(aPackage);
+        rootNode.add(packageNode);
+        return packageNode;
       }
     }
+    else {
+      final DefaultMutableTreeNode parentNode = addPackage(parentPackage);
+      DefaultMutableTreeNode packageNode = findPackageNode(parentNode, qualifiedPackageName);
+      if (packageNode != null) {
+        return packageNode;
+      }
+      packageNode = new DefaultMutableTreeNode(aPackage);
+      parentNode.add(packageNode);
+      return packageNode;
+    }
+  }
+
+  @Nullable
+  private static DefaultMutableTreeNode findPackageNode(DefaultMutableTreeNode rootNode, String qualifiedName) {
+    for (int i = 0; i < rootNode.getChildCount(); i++) {
+      final DefaultMutableTreeNode child = (DefaultMutableTreeNode)rootNode.getChildAt(i);
+      final PsiPackage nodePackage = (PsiPackage)child.getUserObject();
+      if (nodePackage != null) {
+        if (Comparing.equal(nodePackage.getQualifiedName(), qualifiedName)) return child;
+      }
+    }
+    return null;
   }
 
   private DefaultMutableTreeNode findNodeForPackage(String qualifiedPackageName) {
