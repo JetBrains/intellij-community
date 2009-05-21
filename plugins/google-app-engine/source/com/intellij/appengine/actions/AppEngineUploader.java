@@ -3,8 +3,13 @@ package com.intellij.appengine.actions;
 import com.intellij.CommonBundle;
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.sdk.AppEngineSdk;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.CommandLineBuilder;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
@@ -31,10 +36,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 
 /**
  * @author nik
@@ -69,12 +71,12 @@ public class AppEngineUploader {
     });
   }
 
-  private void compileAndUpload(WebFacet webFacet, final AppEngineSdk sdk, final String explodedPath) {
+  private void compileAndUpload(final WebFacet webFacet, final AppEngineSdk sdk, final String explodedPath) {
     final Runnable startUploading = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            startUploadingProcess(sdk, explodedPath);
+            startUploadingProcess(webFacet.getModule(), sdk, explodedPath);
           }
         });
       }
@@ -107,16 +109,25 @@ public class AppEngineUploader {
     }
   }
 
-  private void startUploadingProcess(AppEngineSdk sdk, String explodedPath) {
-    final ProcessBuilder processBuilder = new ProcessBuilder().command(sdk.getAppCfgFile().getAbsolutePath(), "update",
-                                                                       FileUtil.toSystemDependentName(explodedPath));
-    final String commandLine = StringUtil.join(processBuilder.command(), " ");
+  private void startUploadingProcess(Module module, AppEngineSdk sdk, String explodedPath) {
     final Process process;
+    final GeneralCommandLine commandLine;
+
     try {
-      process = processBuilder.start();
+      JavaParameters parameters = new JavaParameters();
+      parameters.configureByModule(module, JavaParameters.JDK_ONLY);
+      parameters.setMainClass("com.google.appengine.tools.admin.AppCfg");
+      parameters.getClassPath().add(sdk.getToolsApiJarFile().getAbsolutePath());
+
+      final ParametersList programParameters = parameters.getProgramParametersList();
+      programParameters.add("update");
+      programParameters.add(FileUtil.toSystemDependentName(explodedPath));
+
+      commandLine = CommandLineBuilder.createFromJavaParameters(parameters);
+      process = commandLine.createProcess();
     }
-    catch (final IOException e) {
-      Messages.showErrorDialog(myProject, "Cannot start 'appcfg' script: " + e.getMessage(), CommonBundle.getErrorTitle());
+    catch (ExecutionException e) {
+      Messages.showErrorDialog(myProject, "Cannot start uploading: " + e.getMessage(), CommonBundle.getErrorTitle());
       return;
     }
 
@@ -127,7 +138,7 @@ public class AppEngineUploader {
     ui.getOptions().setLeftToolbar(group, ActionPlaces.UNKNOWN);
     ui.addContent(ui.createContent("upload", console.getComponent(), "Upload Application", null, console.getPreferredFocusableComponent()));
 
-    ProcessHandler processHandler = new OSProcessHandler(process, commandLine);
+    ProcessHandler processHandler = new OSProcessHandler(process, commandLine.getCommandLineString());
     console.attachToProcess(processHandler);
     final RunContentDescriptor contentDescriptor = new RunContentDescriptor(console, processHandler, ui.getComponent(), "Upload Application");
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));

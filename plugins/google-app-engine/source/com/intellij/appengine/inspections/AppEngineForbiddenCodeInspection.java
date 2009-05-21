@@ -89,21 +89,15 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
         final PsiElement element = methodExpression.resolve();
         if (element instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)element;
-          if (method.getModifierList().hasModifierProperty(PsiModifier.NATIVE)) {
-            problems.add(manager.createProblemDescriptor(methodExpression, "App Engine application should not call native methods",
-                                                         LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-          }
-          else {
-            final PsiClass psiClass = method.getContainingClass();
-            if (psiClass != null) {
-              final String qualifiedName = psiClass.getQualifiedName();
-              final String methodName = method.getName();
-              if (qualifiedName != null && appEngineSdk.isMethodInBlacklist(qualifiedName, methodName)) {
-                final String message =
-                    "AppEngine application should not call '" + StringUtil.getShortName(qualifiedName) + "." + methodName + "' method";
-                problems.add(manager.createProblemDescriptor(methodExpression, message, LocalQuickFix.EMPTY_ARRAY,
-                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-              }
+          final PsiClass psiClass = method.getContainingClass();
+          if (psiClass != null) {
+            final String qualifiedName = psiClass.getQualifiedName();
+            final String methodName = method.getName();
+            if (qualifiedName != null && appEngineSdk.isMethodInBlacklist(qualifiedName, methodName)) {
+              final String message =
+                  "AppEngine application should not call '" + StringUtil.getShortName(qualifiedName) + "." + methodName + "' method";
+              problems.add(manager.createProblemDescriptor(methodExpression, message, LocalQuickFix.EMPTY_ARRAY,
+                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
           }
         }
