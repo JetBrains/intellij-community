@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -174,6 +173,8 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   }
 
   private static void resetBeforeRunTasks(RunManager runManager, MavenRunConfiguration runConfiguration) {
-    ((RunManagerImpl)runManager).setCompileMethodBeforeRun(runConfiguration, new THashMap<String, Boolean>());
+    // todo [jeka]: if I understood author's intention right, this code should reset settings to defaults
+    //((RunManagerImpl)runManager).setBeforeRunTasks(runConfiguration, new HashMap<Key<? extends BeforeRunTask>, BeforeRunTask>());
+    ((RunManagerImpl)runManager).resetBeforeRunTasks(runConfiguration);
   }
 }

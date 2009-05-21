@@ -27,7 +27,7 @@
 
     <projectConfigurable implementation="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
 
-    <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenStepsBeforeRunProvider"/>
+    <!--<stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenStepsBeforeRunProvider"/>-->
     <keymapExtension implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.runner.MavenRunConfigurationType"/>

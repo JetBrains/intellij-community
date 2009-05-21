@@ -1,14 +1,14 @@
 package org.jetbrains.idea.maven.tasks;
 
-import com.intellij.execution.StepsBeforeRunProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -16,7 +16,7 @@ import java.util.Arrays;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
+public class MavenStepsBeforeRunProvider /*implements BeforeRunTaskProvider*/ {
   private final Project myProject;
 
   public MavenStepsBeforeRunProvider(Project project) {
@@ -75,5 +75,11 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
 
   private MavenTasksManager getEventsHandler() {
     return myProject.getComponent(MavenTasksManager.class);
+  }
+
+  public void writeExternal(Element element, RunConfiguration config, boolean isTemplate) {
+  }
+
+  public void readExternal(Element element, RunConfiguration config, boolean isTemplate) {
   }
 }
