@@ -194,7 +194,12 @@ public class TargetElementUtilBase {
       for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
         searcher.findDeclarationsAt(parent, offset, consumer);
         if (!targets.isEmpty()) {
-          return new PomTargetPsiElementImpl(element.getProject(), targets.get(0));
+          PomTarget target = targets.get(0);
+          if (target instanceof PsiElement) {
+            return (PsiElement)target;
+          }
+
+          return new PomTargetPsiElementImpl(element.getProject(), target);
         }
       }
       offset -= parent.getStartOffsetInParent();
