@@ -63,7 +63,6 @@ public abstract class IdeFocusManager {
   public abstract Component getFocusedDescendantFor(final Component comp);
 
   public abstract boolean isFocusTransferInProgress();
-  public abstract boolean isRedispatching();
 
   public abstract boolean dispatch(KeyEvent e);
 
@@ -74,19 +73,14 @@ public abstract class IdeFocusManager {
   }
 
   @NotNull
-  public static IdeFocusManager findInstance(@Nullable DataContext context) {
+  public static IdeFocusManager findInstanceByContext(@Nullable DataContext context) {
     IdeFocusManager instance = null;
     if (context != null) {
       instance = getInstanceSafe(PlatformDataKeys.PROJECT.getData(context));
     }
 
     if (instance == null) {
-      final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      final Component parent = UIUtil.findUltimateParent(focusOwner);
-
-      if (parent instanceof IdeFrame) {
-        instance = getInstanceSafe(((IdeFrame)parent).getProject());
-      }
+      instance = findByComponent(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow());
     }
 
     if (instance == null) {
@@ -96,9 +90,26 @@ public abstract class IdeFocusManager {
     return instance;
   }
 
+  @NotNull
+  public static IdeFocusManager findInstanceByComponent(@NotNull Component c) {
+    final IdeFocusManager instance = findByComponent(c);
+    return instance != null ? instance : findInstanceByContext(null);
+  }
+
+
+  @Nullable
+  private static IdeFocusManager findByComponent(Component c) {
+    final Component parent = UIUtil.findUltimateParent(c);
+    if (parent instanceof IdeFrame) {
+      return getInstanceSafe(((IdeFrame)parent).getProject());
+    }
+    return null;
+  }
+
+
   @Nullable
   private static IdeFocusManager getInstanceSafe(@Nullable Project project) {
-    if (project != null && !project.isDisposed()) {
+    if (project != null && !project.isDisposed() && project.isInitialized()) {
       return IdeFocusManager.getInstance(project);
     } else {
       return null;

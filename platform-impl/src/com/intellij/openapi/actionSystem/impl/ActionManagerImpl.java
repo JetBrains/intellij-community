@@ -1145,7 +1145,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private void tryToExecuteNow(final AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
     final Presentation presenation = (Presentation)action.getTemplatePresentation().clone();
 
-    IdeFocusManager.findInstance(getContextBy(contextComponent)).doWhenFocusSettlesDown(new Runnable() {
+    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(new Runnable() {
       public void run() {
         final DataContext context = getContextBy(contextComponent);
 

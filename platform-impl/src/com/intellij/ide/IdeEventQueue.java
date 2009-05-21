@@ -408,14 +408,10 @@ public class IdeEventQueue extends EventQueue {
     if (processAppActivationEvents(e)) return;
 
     if (!myPopupManager.isPopupActive()) {
-
-      // Enter to suspend mode if necessary. Suspend will cancel processing of actions mapped to the keyboard shortcuts.
-      if (e instanceof KeyEvent) {
-        if (!mySuspendMode && shallEnterSuspendMode()) {
-          enterSuspendMode();
-        }
-      }
+      enterSuspendModeIfNeeded(e);
     }
+
+    if (typeAheadDispatchToFocusManager(e)) return;
 
     if (e instanceof WindowEvent) {
       ActivityTracker.getInstance().inc();
@@ -488,13 +484,19 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private boolean shallEnterSuspendMode() {
-    if (peekEvent(WindowEvent.WINDOW_OPENED) != null) return true; // Active window is being changed
-
-    return IdeFocusManager.findInstance(null).isFocusTransferInProgress();
+  private void enterSuspendModeIfNeeded(AWTEvent e) {
+    if (e instanceof KeyEvent) {
+      if (!mySuspendMode && shallEnterSuspendMode()) {
+        enterSuspendMode();
+      }
+    }
   }
 
-  private boolean processAppActivationEvents(AWTEvent e) {
+  private boolean shallEnterSuspendMode() {
+    return peekEvent(WindowEvent.WINDOW_OPENED) != null; 
+  }
+
+  private static boolean processAppActivationEvents(AWTEvent e) {
     final Application app = ApplicationManager.getApplication();
     if (!(app instanceof ApplicationImpl)) return false;
 
@@ -520,8 +522,6 @@ public class IdeEventQueue extends EventQueue {
 
   private void defaultDispatchEvent(final AWTEvent e) {
     try {
-      if (dispatchToIdeFocusManager(e)) return;
-
       super.dispatchEvent(e);
     }
     catch (ProcessCanceledException pce) {
@@ -531,14 +531,12 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private boolean dispatchToIdeFocusManager(AWTEvent e) {
+  private static boolean typeAheadDispatchToFocusManager(AWTEvent e) {
     if (e instanceof KeyEvent) {
       final KeyEvent event = (KeyEvent)e;
       if (!event.isConsumed()) {
-        final IdeFocusManager focusManager = IdeFocusManager.findInstance(null);
-        if (focusManager.isFocusTransferInProgress() && !focusManager.isRedispatching()) {
+        final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(event.getComponent());
           return focusManager.dispatch(event);
-        }
       }
     }
 

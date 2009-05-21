@@ -54,7 +54,7 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
 
   @Override
   public boolean isFocusTransferInProgress() {
-    return myToolWindowManager.isFocusTranferInProgress();
+    return !myToolWindowManager.isFocusTransferReady();
   }
 
   public boolean dispatch(KeyEvent e) {
@@ -64,11 +64,6 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public void suspendKeyProcessingUntil(ActionCallback done) {
     myToolWindowManager.suspendKeyProcessingUntil(done);
-  }
-
-  @Override
-  public boolean isRedispatching() {
-    return myToolWindowManager.isRedispatching();
   }
 
 

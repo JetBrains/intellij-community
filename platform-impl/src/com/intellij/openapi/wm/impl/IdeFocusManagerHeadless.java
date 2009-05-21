@@ -47,8 +47,4 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   public void suspendKeyProcessingUntil(ActionCallback done) {
   }
 
-  @Override
-  public boolean isRedispatching() {
-    return false;
-  }
 }

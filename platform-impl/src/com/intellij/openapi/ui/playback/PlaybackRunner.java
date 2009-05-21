@@ -453,22 +453,12 @@ public class PlaybackRunner {
       public boolean dispatchKeyEvent(KeyEvent e) {
         switch (e.getID()) {
           case KeyEvent.KEY_PRESSED:
-            System.out.print("pressed ");
             break;
           case KeyEvent.KEY_RELEASED:
-            System.out.print("  released ");
             break;
           case KeyEvent.KEY_TYPED:
-            System.out.print(" typed ");
             break;
         }
-
-        System.out.print(e.isShiftDown() ? "shift " : "");
-        System.out.print(e.isControlDown() ? "control " : "");
-        System.out.print(e.isAltDown() ? "alt " : "");
-        System.out.print(e.isMetaDown() ? "meta " : "");
-
-        System.out.println(e.getKeyChar() + " code=" + e.getKeyCode());
 
         return false;
       }

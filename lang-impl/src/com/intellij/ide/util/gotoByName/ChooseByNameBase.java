@@ -471,6 +471,8 @@ public abstract class ChooseByNameBase{
   }
 
   private void doClose(final boolean ok) {
+    if (myDisposedFlag) return;
+
     if (posponeCloseWhenListReady(ok)) return;
 
     myListUpdater.cancelAll();
@@ -825,7 +827,7 @@ public abstract class ChooseByNameBase{
     private void doPostponedOkIfNeeded() {
       if (myPosponedOkAction != null) {
         if (getChosenElement() != null) {
-          close(true);
+          doClose(true);
           clearPosponedOkAction(myDisposedFlag);
         }
       }

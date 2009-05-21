@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -92,15 +91,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   @NonNls private static final String HEIGHT_ATTR = "height";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
 
-  private final Alarm myFocusedComponentAlaram;
+  private final EdtAlarm myFocusedComponentAlaram;
+  private final EdtAlarm myForcedFocusRequestsAlarm;
 
-  private final Alarm myForcedFocusRequestsAlarm;
-
-  private final Alarm myIdleAlarm;
+  private final EdtAlarm myIdleAlarm;
   private final Set<Runnable> myIdleRequests = new HashSet<Runnable>();
-  private final Runnable myFlushRunnable = new Runnable() {
-    public void run() {
-      if (isFocusSettledDown() && !isRedispatching()) {
+  private final EdtRunnable myIdleRunnable = new EdtRunnable() {
+    public void runEdt() {
+      if (isFocusTransferReady() && !isIdleQueueEmpty()) {
         flushIdleRequests();
       } else {
         restartIdleAlarm();
@@ -108,15 +106,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   };
 
-  private boolean isFocusSettledDown() {
-    return !(isFocusTranferInProgress() || (myQueue != null && myQueue.isSuspendMode()));
-  }
-
   private FocusCommand myRequestFocusCmd;
   private FocusCommand myUnforcedRequestFocusCmd;
 
   private ArrayList<KeyEvent> myToDispatchOnDone = new ArrayList<KeyEvent>();
-  private boolean myRedispatching;
+  private int myFlushingIdleRequestsEntryCount = 0;
 
   private WeakReference<FocusCommand> myLastForcedRequest = new WeakReference<FocusCommand>(null);
   private Application myApp;
@@ -128,6 +122,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private WeakReference<Component> myLastFocusedProjectComponent;
 
   private IdeEventQueue myQueue;
+
   /**
    * invoked by reflection
    */
@@ -154,9 +149,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myActiveStack = new ActiveStack();
     mySideStack = new SideStack();
 
-    myFocusedComponentAlaram = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-    myForcedFocusRequestsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-    myIdleAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myFocusedComponentAlaram = new EdtAlarm(project);
+    myForcedFocusRequestsAlarm = new EdtAlarm(project);
+    myIdleAlarm = new EdtAlarm(project);
 
     myApp = app;
     myAppListener = new AppListener();
@@ -1493,64 +1488,82 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+    final boolean needsRestart = isIdleQueueEmpty();
     myIdleRequests.add(runnable);
-    if (myIdleAlarm.getActiveRequestCount() == 0) {
+    if (needsRestart) {
       restartIdleAlarm();
     }
   }
 
   private void restartIdleAlarm() {
     myIdleAlarm.cancelAllRequests();
-    myIdleAlarm.addRequest(myFlushRunnable, 20);
+    myIdleAlarm.addRequest(myIdleRunnable, 20);
   }
 
   private void flushIdleRequests() {
-    myRedispatching = true;
     try {
+      myFlushingIdleRequestsEntryCount++;
+
       final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
-      if (!isFocusSettledDown()) return;
       IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
 
       for (int i = 0; i < events.length; i++) {
         KeyEvent each = events[i];
-        if (!isFocusSettledDown()) return;
+        if (!isFocusTransferReady()) break;
 
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (owner != null) {
+        if (owner != null && SwingUtilities.getWindowAncestor(owner) != null) {
+          myToDispatchOnDone.remove(each);
           IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(), each.getKeyLocation()));
+        } else {
+          break;
         }
+      }
 
-        myToDispatchOnDone.remove(each);
+
+      if (isPendingKeyEventsRedispatched()) {
+        final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
+        myIdleRequests.clear();
+        for (Runnable each : all) {
+          each.run();
+        }
       }
     }
     finally {
-      myRedispatching = false;
-    }
-
-    final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
-    myIdleRequests.clear();
-    for (Runnable each : all) {
-      each.run();
+      myFlushingIdleRequestsEntryCount--;
+      if (!isIdleQueueEmpty()) {
+        restartIdleAlarm();
+      }
     }
   }
 
-  public boolean isFocusTranferInProgress() {
-    return myRequestFocusCmd != null || myUnforcedRequestFocusCmd != null;
+  private String toString(KeyEvent e) {
+    return KeyStroke.getKeyStrokeForEvent(e).toString();
+  }
+
+  public boolean isFocusTransferReady() {
+    return myRequestFocusCmd == null && myUnforcedRequestFocusCmd == null && (myQueue == null || !myQueue.isSuspendMode());
+  }
+
+  private boolean isIdleQueueEmpty() {
+    return isPendingKeyEventsRedispatched() && myIdleRequests.size() == 0;
+  }
+
+  private boolean isPendingKeyEventsRedispatched() {
+    return myToDispatchOnDone.size() == 0;
   }
 
   public boolean dispatch(KeyEvent e) {
-    final boolean inProgress = isFocusTranferInProgress();
+    if (!Registry.is("actionSystem.fixLostTyping")) return false;
 
-    if (inProgress && Registry.is("actionSystem.fixLostTyping")) {
+    if (myFlushingIdleRequestsEntryCount > 0) return false;
+
+    if (!isFocusTransferReady() || !isPendingKeyEventsRedispatched()) {
       myToDispatchOnDone.add(e);
       return true;
     } else {
       return false;
     }
-  }
-
-  public boolean isRedispatching() {
-    return myRedispatching;
   }
 
   public void suspendKeyProcessingUntil(final ActionCallback done) {
@@ -1685,8 +1698,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myFocusedComponentAlaram.cancelAllRequests();
 
       if (!info.isActive()) {
-        myFocusedComponentAlaram.addRequest(new Runnable() {
-          public void run() {
+        myFocusedComponentAlaram.addRequest(new EdtRunnable() {
+          public void runEdt() {
             if (!myLayout.isToolWindowRegistered(myId)) return;
             activateToolWindow(myId, false, false);
           }
@@ -1835,13 +1848,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       _requestFocus(command, forced, result);
     }
 
+    result.doWhenProcessed(new Runnable() {
+      public void run() {
+        restartIdleAlarm();
+      }
+    });
+
     return result;
   }
 
   private void _requestFocus(final FocusCommand command, final boolean forced, final ActionCallback result) {
     if (checkForRejectOrByPass(command, forced, result)) return;
-
-    restartIdleAlarm();
 
     myRequestFocusCmd = command;
 
@@ -1868,7 +1885,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
           command.run().doWhenDone(new Runnable() {
             public void run() {
-              LaterInvocator.invokeLater(new Runnable() {
+              SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                   result.setDone();
                 }
@@ -1884,11 +1901,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                 myRequestFocusCmd = null;
               }
 
-              restartIdleAlarm();
-
               if (forced) {
-                myForcedFocusRequestsAlarm.addRequest(new Runnable() {
-                  public void run() {
+                myForcedFocusRequestsAlarm.addRequest(new EdtRunnable() {
+                  public void runEdt() {
                     setLastEffectiveForcedRequest(null);
                   }
                 }, 250);
@@ -2053,4 +2068,25 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
   }
+
+  private static class EdtAlarm {
+    private Alarm myAlarm;
+
+    public EdtAlarm(Disposable parent) {
+      myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, parent);
+    }
+
+    public int getActiveRequestCount() {
+      return myAlarm.getActiveRequestCount();
+    }
+
+    public void cancelAllRequests() {
+      myAlarm.cancelAllRequests();
+    }
+
+    public void addRequest(EdtRunnable runnable, int delay) {
+      myAlarm.addRequest(runnable, delay);
+    }
+  }
+
 }
