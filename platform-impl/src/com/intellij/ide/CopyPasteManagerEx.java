@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.CutElementMarker;
@@ -16,10 +17,14 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CopyPasteManagerEx");
+
   private final ArrayList<Transferable> myDatas;
 
 //  private static long ourWastedMemory = 0;
@@ -73,7 +78,15 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       try {
         accessorFuture.get(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS, TimeUnit.MILLISECONDS);
       }
-      catch (Exception e) { /*  no luck */ }
+      catch (InterruptedException e) {
+        // {no luck}
+      }
+      catch (TimeoutException e) {
+        // {no luck}
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
 
       if (success[0]) return contents[0];
       accessorFuture.cancel(true);
