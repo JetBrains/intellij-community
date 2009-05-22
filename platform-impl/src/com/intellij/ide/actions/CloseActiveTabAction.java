@@ -3,11 +3,12 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
 
-public class CloseActiveTabAction extends AnAction {
+public class CloseActiveTabAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(e.getDataContext(), true);
     if (contentManager != null && contentManager.canCloseContents()) {
