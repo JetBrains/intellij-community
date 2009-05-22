@@ -26,6 +26,10 @@ public class ProjectFormatPanel {
     return myWholePanel;
   }
 
+  public JComboBox getStorageFormatComboBox() {
+    return myStorageFormatCombo;
+  }
+
   public void updateData(WizardContext context) {
     context.setProjectStorageFormat(
       FILE_BASED.equals(myStorageFormatCombo.getSelectedItem()) ? StorageScheme.DEFAULT : StorageScheme.DIRECTORY_BASED);

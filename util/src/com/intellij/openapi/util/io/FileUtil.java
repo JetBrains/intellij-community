@@ -661,6 +661,10 @@ public class FileUtil {
     return SystemInfo.isFileSystemCaseSensitive? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
 
+  public static int comparePaths(String path1, String path2) {
+    return SystemInfo.isFileSystemCaseSensitive? path1.compareTo(path2) : path1.compareToIgnoreCase(path2);
+  }
+
   @NotNull
   public static String getExtension(@NotNull String fileName) {
     int index = fileName.lastIndexOf('.');
