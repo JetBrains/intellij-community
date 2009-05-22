@@ -107,7 +107,7 @@ public class TemplateImpl implements Template, SchemeElement {
   }
 
 
-  public void addTextSegment(String text) {
+  public void addTextSegment(@NotNull String text) {
     text = StringUtil.convertLineSeparators(text);
     myTemplateText += text;
   }

@@ -1,9 +1,10 @@
 package com.intellij.codeInsight.template;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public interface Template {
-  void addTextSegment(String text);
+  void addTextSegment(@NotNull String text);
   void addVariableSegment(@NonNls String name);
 
   void addVariable(@NonNls String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt);

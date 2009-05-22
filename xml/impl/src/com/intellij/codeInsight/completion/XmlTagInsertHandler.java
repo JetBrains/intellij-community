@@ -177,9 +177,12 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
       if ((!(tag instanceof HtmlTag) || !HtmlUtil.isSingleHtmlTag(tag.getName())) && tag.getAttributes().length == 0) {
         if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag()) {
-          template.addTextSegment("</");
-          template.addTextSegment(descriptor.getName(tag));
-          template.addTextSegment(">");
+          final String name = descriptor.getName(tag);
+          if (name != null) {
+            template.addTextSegment("</");
+            template.addTextSegment(name);
+            template.addTextSegment(">");
+          }
         }
       }
     }
