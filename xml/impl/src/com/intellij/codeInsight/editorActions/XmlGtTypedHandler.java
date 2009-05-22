@@ -36,10 +36,11 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       FileViewProvider provider = editedFile.getViewProvider();
       int offset = editor.getCaretModel().getOffset();
 
-      PsiElement element;
+      PsiElement element, elementAtCaret = null;
 
       if (offset < editor.getDocument().getTextLength()) {
-        element = provider.findElementAt(offset, XMLLanguage.class);
+        elementAtCaret = element = provider.findElementAt(offset, XMLLanguage.class);
+        
         if (!(element instanceof PsiWhiteSpace)) {
           boolean nonAcceptableDelimiter = true;
 
@@ -55,6 +56,10 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
                   element = previousElement;
                   nonAcceptableDelimiter = false;
                 }
+              }
+            } else if (tokenType == XmlTokenType.XML_NAME) {
+              if (element.getNextSibling() instanceof PsiErrorElement) {
+                nonAcceptableDelimiter = false;
               }
             }
 
@@ -127,7 +132,10 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       final XmlToken startToken = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_START_TAG_START);
       if (startToken == null || !startToken.getText().equals("<")) return Result.CONTINUE;
 
-      final String name = tag.getName();
+      String name = tag.getName();
+      if (elementAtCaret instanceof XmlToken && ((XmlToken)elementAtCaret).getTokenType() == XmlTokenType.XML_NAME) {
+        name = name.substring(0, offset - elementAtCaret.getTextOffset());
+      }
       if (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name)) return Result.CONTINUE;
       if ("".equals(name)) return Result.CONTINUE;
 
