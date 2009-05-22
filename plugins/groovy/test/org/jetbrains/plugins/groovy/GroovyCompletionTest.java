@@ -58,7 +58,7 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
   private void doSmartTest() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART);
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
   }
 
   public void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable {
@@ -69,51 +69,67 @@ public class GroovyCompletionTest extends JavaCodeInsightFixtureTestCase {
     doSmartTest();
   }
 
-  public void testEachMethodForList() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  public void testSmartCompletionAfterNewInDeclarationWithArray() throws Throwable {
+    doSmartTest();
+  }
+
+  public void testSmartCompletionAfterNewInDeclarationWithIntArray() throws Throwable {
+    doSmartTest();
   }
   
-  public void testEachMethodForMapWithKeyValue() throws Throwable {
+  public void testShortenNamesInSmartCompletionAfterNewInDeclaration() throws Throwable {
+    doSmartTest();
+  }
+
+  public void testEachMethodForList() throws Throwable {
+    doBasicTest();
+  }
+
+  private void doBasicTest() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  }
+
+  public void testEachMethodForMapWithKeyValue() throws Throwable {
+    doBasicTest();
   }
 
   public void testEachMethodForMapWithEntry() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+    doBasicTest();
   }
 
   public void testWithMethod() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");       
+    doBasicTest();
   }
 
   public void testInjectMethodForCollection() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+    doBasicTest();
   }
 
   public void testInjectMethodForArray() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+    doBasicTest();
   }
 
   public void testInjectMethodForMap() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+    doBasicTest();
   }
 
   public void testClosureDefaultParameterInEachMethod() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+    doBasicTest();
   }
 
   public void testArrayLikeAccessForList() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+    doBasicTest();
   }
 
   public void testArrayLikeAccessForMap() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+    doBasicTest();
   }
 
   public void testEachMethodForRanges() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+    doBasicTest();
   }
 
   public void testEachMethodForEnumRanges() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+    doBasicTest();
   }
 }
