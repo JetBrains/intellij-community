@@ -46,10 +46,6 @@ public class StandardFileTypeRegistrator implements FileTypeRegistrator {
       return myAbstractFileType.getSyntaxTable().getLineComment();
     }
 
-    public static boolean isLineCommentPrefixOnZeroColumn() {
-      return true;
-    }
-
     public String getBlockCommentPrefix() {
       return myAbstractFileType.getSyntaxTable().getStartComment();
     }

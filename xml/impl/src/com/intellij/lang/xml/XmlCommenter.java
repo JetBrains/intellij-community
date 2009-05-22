@@ -11,10 +11,6 @@ public class XmlCommenter implements Commenter {
     return null;
   }
 
-  public boolean isLineCommentPrefixOnZeroColumn() {
-    return false;
-  }
-
   public String getBlockCommentPrefix() {
     return "<!--";
   }
