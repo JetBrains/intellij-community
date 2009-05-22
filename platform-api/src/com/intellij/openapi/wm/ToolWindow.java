@@ -40,6 +40,8 @@ public interface ToolWindow {
 
   void activate(@Nullable Runnable runnable, boolean autoFocusContents);
 
+  void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced);
+
   /**
    * @return whether the tool window is visible or not.
    * @exception IllegalStateException if tool window isn't installed.

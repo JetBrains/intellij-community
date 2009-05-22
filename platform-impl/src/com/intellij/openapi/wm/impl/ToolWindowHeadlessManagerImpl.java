@@ -142,6 +142,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     public void activate(@Nullable final Runnable runnable, final boolean autoFocusContents) {
     }
+
+    public void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced) {
+    }
   };
 
   @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
