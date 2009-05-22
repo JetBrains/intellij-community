@@ -22,7 +22,11 @@ public abstract class BeforeRunTask implements Cloneable{
   }
   
   public void readExternal(Element element) {
-    myIsEnabled = Boolean.valueOf(element.getAttributeValue("enabled")).booleanValue();
+    String attribValue = element.getAttributeValue("enabled");
+    if (attribValue == null) {
+      attribValue = element.getAttributeValue("value"); // maintain compatibility with old format
+    }
+    myIsEnabled = Boolean.valueOf(attribValue).booleanValue();
   }
 
   public BeforeRunTask clone() {
