@@ -82,6 +82,32 @@ public class MavenTasksManagerTest extends MavenImportingTestCase {
     assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
   }
 
+  public void testActionWhenSeveralSimilarPlugins() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-surefire-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-surefire-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    resolvePlugins();
+
+    assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
+  }
+
   public void testRefreshingOnProjectAddition() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

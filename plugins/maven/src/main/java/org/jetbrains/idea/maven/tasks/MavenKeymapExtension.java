@@ -99,13 +99,13 @@ public class MavenKeymapExtension implements KeymapExtension {
     ActionManager manager = ActionManager.getInstance();
     for (MavenProject eachProject : mavenProjects) {
       String actionIdPrefix = getActionPrefix(project, eachProject);
-      for (MavenGoalAction eachAction : collectActions(project, eachProject)) {
+      for (MavenGoalAction eachAction : collectActions(eachProject)) {
         manager.registerAction(actionIdPrefix + eachAction.getGoal(), eachAction);
       }
     }
   }
 
-  private static List<MavenGoalAction> collectActions(Project project, MavenProject mavenProject) {
+  private static List<MavenGoalAction> collectActions(MavenProject mavenProject) {
     List<MavenGoalAction> result = new ArrayList<MavenGoalAction>();
     for (String eachGoal : collectGoals(mavenProject)) {
       result.add(new MavenGoalAction(mavenProject, eachGoal));
@@ -130,17 +130,17 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   private static List<String> collectGoals(MavenProject project) {
-    List<String> result = new ArrayList<String>();
+    LinkedHashSet<String> result = new LinkedHashSet<String>(); // may contains similar plugins or somethig
     result.addAll(MavenEmbedderFactory.getPhasesList());
 
     for (MavenPlugin each : project.getPlugins()) {
       collectGoals(project.getLocalRepository(), each, result);
     }
 
-    return result;
+    return new ArrayList<String>(result);
   }
 
-  private static void collectGoals(File repository, MavenPlugin plugin, List<String> list) {
+  private static void collectGoals(File repository, MavenPlugin plugin, LinkedHashSet<String> list) {
     MavenPluginInfo info = MavenArtifactUtil.readPluginInfo(repository, plugin.getMavenId());
     if (info == null) return;
 

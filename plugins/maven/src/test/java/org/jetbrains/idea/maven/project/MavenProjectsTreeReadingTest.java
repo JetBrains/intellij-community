@@ -35,8 +35,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
-
-                     "<modules>" +
+"<modules>" +
                      "  <module>m</module>" +
                      "</modules>");
 
@@ -1631,7 +1630,25 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "<modules>" +
                      "  <module>m1</module>" +
                      "  <module>m2</module>" +
-                     "</modules>");
+                     "</modules>" +
+
+                     // stripping down plugins
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <source>1.4</source>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>" +
+
+                     // stripping down Xpp3Dom fields
+                     "<reports>" +
+                     "  <someTag/>" +
+                     "</reports>");
 
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
@@ -1644,6 +1661,16 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                      "<version>1</version>");
 
     updateAll(myProjectPom);
+
+    MavenProject parentProject = myTree.findProject(myProjectPom);
+
+    MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(getMavenGeneralSettings());
+    try {
+      myTree.resolve(parentProject, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS);
+    }
+    finally {
+      embeddersManager.release();
+    }
 
     File f = new File(myDir, "tree.dat");
     myTree.save(f);

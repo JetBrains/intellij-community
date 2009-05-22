@@ -26,6 +26,7 @@ import com.intellij.util.xml.DomManager;
 import gnu.trove.THashSet;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.maven.model.Model;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -203,13 +204,17 @@ public class MavenUtil {
       for (Field each : ReflectionUtil.collectFields(object.getClass())) {
         Class<?> type = each.getType();
         each.setAccessible(true);
-        if (type.isArray() || Collection.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type)) {
+        Object value = each.get(object);
+        if (value != null 
+            && (value.getClass().isArray()
+                || value instanceof Collection
+                || value instanceof Map
+                || value instanceof Xpp3Dom)) {
           each.set(object, null);
         }
         else {
           Package pack = type.getPackage();
           if (pack != null && Model.class.getPackage().getName().equals(pack.getName())) {
-            Object value = each.get(object);
             if (value != null) stripDown(value);
           }
         }
