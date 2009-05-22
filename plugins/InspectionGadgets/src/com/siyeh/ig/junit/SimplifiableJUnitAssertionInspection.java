@@ -672,7 +672,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             return false;
         }
         final PsiType type = expression2.getType();
-        return type == PsiType.BOOLEAN;
+      return PsiType.BOOLEAN.equals(type);
     }
 
     private static boolean isEqualityComparison(PsiExpression expression) {

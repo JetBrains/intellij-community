@@ -105,8 +105,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
                 return;
             }
             if (ignoreIntegerCharCasts) {
-                if (operandType == PsiType.INT &&
-                        castType == PsiType.CHAR) {
+                if (PsiType.INT.equals(operandType) && PsiType.CHAR.equals(castType)) {
                     return;
                 }
             }

@@ -96,7 +96,7 @@ public class ExtractMethodInfoHelper {
         myOutputType = returnType == null ? PsiType.VOID : returnType;
       }
     }
-    mySpecifyType = !(myOutputType == PsiType.VOID || myOutputType.equalsToText("java.lang.Object"));
+    mySpecifyType = !(PsiType.VOID.equals(myOutputType) || myOutputType.equalsToText("java.lang.Object"));
   }
 
   private PsiType referTypeFromContext(GrStatement[] statements) {

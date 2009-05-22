@@ -131,11 +131,12 @@ public class ConstantMathCallInspection extends BaseInspection {
             if (newExpression == null) {
                 return;
             }
-            if (type == PsiType.LONG) {
-                replaceExpressionAndShorten(call, newExpression + 'L');
-            } else {
-                replaceExpressionAndShorten(call, newExpression);
-            }
+          if (PsiType.LONG.equals(type)) {
+            replaceExpressionAndShorten(call, newExpression + 'L');
+          }
+          else {
+            replaceExpressionAndShorten(call, newExpression);
+          }
         }
     }
     

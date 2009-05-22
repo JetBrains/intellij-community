@@ -297,7 +297,7 @@ public class GroovyPsiManager {
     if (!type.isValid()) {
       LOG.error("Type is invalid: " + type);
     }
-    return type == PsiType.NULL ? null : type;
+    return PsiType.NULL.equals(type) ? null : type;
   }
 
   public GrTypeDefinition getArrayClass() {

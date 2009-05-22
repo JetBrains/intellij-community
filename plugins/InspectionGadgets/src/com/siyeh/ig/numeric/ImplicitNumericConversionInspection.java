@@ -329,14 +329,14 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
                 return;
             }
-            if (expressionType == PsiType.CHAR) {
-                if (ignoreCharConversions) {
-                    return;
-                }
-                if (isArgumentOfStringIndexOf(parent)) {
-                    return;
-                }
+          if (PsiType.CHAR.equals(expressionType)) {
+            if (ignoreCharConversions) {
+              return;
             }
+            if (isArgumentOfStringIndexOf(parent)) {
+              return;
+            }
+          }
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression, true);
             if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
@@ -349,7 +349,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
                     expectedType)) {
                 return;
             }
-            if (ignoreCharConversions && expectedType == PsiType.CHAR) {
+            if (ignoreCharConversions && PsiType.CHAR.equals(expectedType)) {
                 return;
             }
             registerError(expression, expression, expressionType, expectedType);

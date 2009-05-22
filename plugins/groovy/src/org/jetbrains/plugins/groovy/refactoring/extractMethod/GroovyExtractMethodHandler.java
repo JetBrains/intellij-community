@@ -125,8 +125,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
     if (declarationOwner == null &&
         ExtractMethodUtil.isSingleExpression(statements) &&
-        statements[0] instanceof GrExpression &&
-        PsiType.VOID == ((GrExpression) statements[0]).getType()) {
+        statements[0] instanceof GrExpression && PsiType.VOID.equals(((GrExpression)statements[0]).getType())) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(message, project, editor);
       return false;

@@ -119,9 +119,10 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
               final PsiExpression rOperand = binaryExpression.getROperand();
 
               PsiExpression fieldReference = null;
-              if (lOperand.getType() == PsiType.NULL) {
+              if (PsiType.NULL.equals(lOperand.getType())) {
                 fieldReference = rOperand;
-              } else if (rOperand != null && rOperand.getType() == PsiType.NULL) {
+              }
+              else if (rOperand != null && PsiType.NULL.equals(rOperand.getType())) {
                 fieldReference = lOperand;
               }
 

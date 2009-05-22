@@ -123,7 +123,7 @@ public class GroovyPropertyUtils {
       return false;
     }
 
-    return method.getReturnType() == null || method.getReturnType() == PsiType.VOID || method.getReturnTypeElement() == null;
+    return method.getReturnType() == null || PsiType.VOID.equals(method.getReturnType()) || method.getReturnTypeElement() == null;
   }
 
 }

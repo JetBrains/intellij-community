@@ -151,7 +151,7 @@ class FormatDecode{
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
 
-            return type == PsiType.LONG || "java.lang.Long".equals(text) ||
+            return PsiType.LONG.equals(type) || "java.lang.Long".equals(text) ||
                     "java.util.Date".equals(text) ||
                     "java.util.Calendar".equals(text);
         }
@@ -165,7 +165,7 @@ class FormatDecode{
 
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
-            return type == PsiType.CHAR || "java.lang.Character".equals(text);
+            return PsiType.CHAR.equals(type) || "java.lang.Character".equals(text);
         }
 
         public String type(){
@@ -177,10 +177,10 @@ class FormatDecode{
 
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
-            return type == PsiType.INT || "java.lang.Integer".equals(text) ||
-                    type == PsiType.LONG || "java.lang.Long".equals(text) ||
-                    type == PsiType.SHORT || "java.lang.Short".equals(text) ||
-                    type == PsiType.BYTE || "java.lang.Byte".equals(text) ||
+            return PsiType.INT.equals(type) || "java.lang.Integer".equals(text) ||
+                   PsiType.LONG.equals(type) || "java.lang.Long".equals(text) ||
+                   PsiType.SHORT.equals(type) || "java.lang.Short".equals(text) ||
+                   PsiType.BYTE.equals(type) || "java.lang.Byte".equals(text) ||
                     "java.math.BigInteger".equals(text);
         }
 
@@ -193,8 +193,8 @@ class FormatDecode{
 
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
-            return type == PsiType.DOUBLE || "java.lang.Double".equals(text) ||
-                    type == PsiType.FLOAT || "java.lang.Float".equals(text) ||
+            return PsiType.DOUBLE.equals(type) || "java.lang.Double".equals(text) ||
+                   PsiType.FLOAT.equals(type) || "java.lang.Float".equals(text) ||
                     "java.math.BigDecimal".equals(text);
         }
 

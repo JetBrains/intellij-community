@@ -342,7 +342,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
       final PsiType nominal = refExpr.getNominalTypeImpl();
-      if (inferred == null || inferred == PsiType.NULL) {
+      if (inferred == null || PsiType.NULL.equals(inferred)) {
         if (nominal == null) {
           /*inside nested closure we could still try to infer from variable initializer.
           * Not sound, but makes sense*/

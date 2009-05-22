@@ -148,7 +148,7 @@ public class GrGenerateEqualsHelper {
 
 
   private void addDoubleFieldComparison(final StringBuffer buffer, final PsiField field) {
-    final @NonNls String type = field.getType() == PsiType.DOUBLE ? "Double" : "Float";
+    final @NonNls String type = PsiType.DOUBLE.equals(field.getType()) ? "Double" : "Float";
     final Object[] parameters = new Object[]{type, myClassInstanceName, field.getName()};
     DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
   }
@@ -184,9 +184,10 @@ public class GrGenerateEqualsHelper {
   private void addFieldComparison(StringBuffer buffer, PsiField field) {
     boolean canBeNull = !myNonNullSet.contains(field);
     if (canBeNull) {
-      if (PsiType.BOOLEAN == TypesUtil.unboxPrimitiveTypeWrapper(field.getType())) {
+      if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(field.getType()))) {
         BOOLEAN_FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
-      } else {
+      }
+      else {
         FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
       }
     } else {
@@ -278,7 +279,7 @@ public class GrGenerateEqualsHelper {
           if (type instanceof PsiArrayType) {
             addArrayEquals(buffer, field);
           } else if (type instanceof PsiPrimitiveType) {
-            if (type == PsiType.DOUBLE || type == PsiType.FLOAT) {
+            if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
               addDoubleFieldComparison(buffer, field);
             } else {
               addPrimitiveFieldComparison(buffer, field);
@@ -383,7 +384,7 @@ public class GrGenerateEqualsHelper {
   }
 
   private static void addTempAssignment(PsiField field, StringBuilder buffer, String tempName) {
-    if (field.getType() == PsiType.DOUBLE) {
+    if (PsiType.DOUBLE.equals(field.getType())) {
       buffer.append(tempName);
       addTempForDoubleInitialization(field, buffer);
     }
@@ -399,7 +400,7 @@ public class GrGenerateEqualsHelper {
   @SuppressWarnings("HardCodedStringLiteral")
   private String addTempDeclaration(StringBuilder buffer) {
     for (PsiField hashCodeField : myHashCodeFields) {
-      if (PsiType.DOUBLE == hashCodeField.getType()) {
+      if (PsiType.DOUBLE.equals(hashCodeField.getType())) {
         final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
         buffer.append("long ").append(name).append(";\n");
         return name;
@@ -410,7 +411,7 @@ public class GrGenerateEqualsHelper {
 
   @SuppressWarnings("HardCodedStringLiteral")
   private String addTempForOneField(PsiField field, StringBuilder buffer) {
-    if (field.getType() == PsiType.DOUBLE) {
+    if (PsiType.DOUBLE.equals(field.getType())) {
       final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
       CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
       if (settings.GENERATE_FINAL_LOCALS) {
@@ -419,7 +420,8 @@ public class GrGenerateEqualsHelper {
       buffer.append("long ").append(name);
       addTempForDoubleInitialization(field, buffer);
       return name;
-    } else {
+    }
+    else {
       return null;
     }
   }

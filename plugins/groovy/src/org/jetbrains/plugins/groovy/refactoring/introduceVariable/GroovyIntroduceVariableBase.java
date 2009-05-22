@@ -105,7 +105,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     PsiType type = selectedExpr.getType();
     if (type != null) type = TypeConversionUtil.erasure(type);
 
-    if (type == PsiType.VOID) {
+    if (PsiType.VOID.equals(type)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, editor, message);
       return false;

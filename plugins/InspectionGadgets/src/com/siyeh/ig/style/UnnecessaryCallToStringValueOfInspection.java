@@ -134,9 +134,9 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
             if (argumentType instanceof PsiArrayType) {
                 final PsiArrayType arrayType = (PsiArrayType) argumentType;
                 final PsiType componentType = arrayType.getComponentType();
-                if (PsiType.CHAR == componentType) {
-                    return;
-                }
+              if (PsiType.CHAR.equals(componentType)) {
+                return;
+              }
             }
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {

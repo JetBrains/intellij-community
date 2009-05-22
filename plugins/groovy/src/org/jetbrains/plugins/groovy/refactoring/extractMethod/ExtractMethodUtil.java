@@ -95,7 +95,7 @@ public class ExtractMethodUtil {
     PsiType type = helper.getOutputType();
     GrStatement[] statements = helper.getStatements();
     GrMethodCallExpression callExpression = createMethodCallByHelper(methodName, helper);
-    if ((name == null || type == PsiType.VOID) && !helper.isReturnStatement()) return callExpression;
+    if ((name == null || PsiType.VOID.equals(type)) && !helper.isReturnStatement()) return callExpression;
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     if (helper.isReturnStatement()) {
       return factory.createStatementFromText("return " + callExpression.getText());
@@ -255,7 +255,7 @@ public class ExtractMethodUtil {
       while (expr instanceof GrParenthesizedExpression) {
         expr = ((GrParenthesizedExpression) expr).getOperand();
       }
-      buffer.append(PsiType.VOID == type ? "" : "return ").append(expr != null ? expr.getText() : "");
+      buffer.append(PsiType.VOID.equals(type) ? "" : "return ").append(expr != null ? expr.getText() : "");
     }
 
     buffer.append("\n}");

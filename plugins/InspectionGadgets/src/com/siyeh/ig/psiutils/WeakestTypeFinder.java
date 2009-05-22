@@ -46,9 +46,9 @@ public class WeakestTypeFinder {
         } else if (variableOrMethod instanceof PsiMethod) {
             final PsiMethod method = (PsiMethod) variableOrMethod;
             variableOrMethodType = method.getReturnType();
-            if (variableOrMethodType == PsiType.VOID) {
-                return Collections.EMPTY_LIST;
-            }
+          if (PsiType.VOID.equals(variableOrMethodType)) {
+            return Collections.EMPTY_LIST;
+          }
         } else {
             throw new IllegalArgumentException(
                     "PsiMethod or PsiVariable expected: " +

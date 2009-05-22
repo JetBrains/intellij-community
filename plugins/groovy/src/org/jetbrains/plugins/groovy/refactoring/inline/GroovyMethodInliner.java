@@ -171,7 +171,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       GrExpression replaced = null;
       if (replaceCall && (!isTailMethodCall || hasTailExpr)) {
         GrExpression resultExpr;
-        if (PsiType.VOID == methodType) {
+        if (PsiType.VOID.equals(methodType)) {
           resultExpr = factory.createExpressionFromText("null");
         } else if (hasReturnStatements) {
           resultExpr = factory.createExpressionFromText(resultName);
@@ -222,7 +222,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           }
         }
       }
-      if (PsiType.VOID == methodType && !isTailMethodCall) {
+      if (PsiType.VOID.equals(methodType) && !isTailMethodCall) {
         for (GrReturnStatement returnStatement : returnStatements) {
           returnStatement.removeStatement();
         }
