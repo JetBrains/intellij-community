@@ -17,8 +17,6 @@
   <extensionPoint name="entryPoint"
                   interface="com.intellij.codeInspection.reference.EntryPoint"/>
 
-  <extensionPoint name="duplicatesProfile" interface="com.intellij.dupLocator.DuplicatesProfile"/>
-
   <!-- Code Insight -->
   <extensionPoint name="highlightVisitor"
                   interface="com.intellij.codeInsight.daemon.impl.HighlightVisitor"
@@ -78,6 +76,8 @@
 
   <extensionPoint name="module.converter"
                     interface="com.intellij.ide.impl.convert.ModuleConverter"/>
+
+  <extensionPoint name="duplicatesProfile" interface="com.intellij.dupLocator.DuplicatesProfile"/>
 
   <extensionPoint name="annotator"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
