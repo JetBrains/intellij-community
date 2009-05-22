@@ -50,17 +50,19 @@ public class ReorderJarsMain {
         });
 
 
-        final File newJarFile = new File(destinationHomePath, jarUrl);
-
-        newJarFile.getParentFile().mkdirs();
-
-        final JBZipFile file = new JBZipFile(newJarFile);
+        final File tempJarFile = FileUtil.createTempFile("__reorder__", "");
+        final JBZipFile file = new JBZipFile(tempJarFile);
         for (JBZipEntry entry : entries) {
           final JBZipEntry zipEntry = file.getOrCreateEntry(entry.getName());
           zipEntry.setData(entry.getData());
   
         }
         file.close();
+
+        final File resultJarFile = new File(destinationHomePath, jarUrl);
+        resultJarFile.getParentFile().mkdirs();
+        FileUtil.rename(tempJarFile, resultJarFile);
+        FileUtil.delete(tempJarFile);
       }
       System.exit(0);
     }
