@@ -27,10 +27,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.EditorMouseAdapter;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -42,6 +39,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -54,9 +52,12 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -65,6 +66,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.io.IOException;
@@ -163,11 +166,61 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
 
   private final CompositeFilter myMessageFilter = new CompositeFilter();
 
+  private ArrayList<String> myHistory = new ArrayList<String>();
+  private int myHistorySize = 20;
+
+  private ArrayList<ConsoleInputListener> myConsoleInputListeners = new ArrayList<ConsoleInputListener>();
+
+  public void addConsoleUserInputLestener(ConsoleInputListener consoleInputListener) {
+    myConsoleInputListeners.add(consoleInputListener);
+  }
+
+  /**
+   * By default history works for one session. If
+   * you want to import previous session, set it up here.
+   * @param history where you can save history
+   */
+  public void importHistory(Collection<String> history) {
+    this.myHistory.clear();
+    this.myHistory.addAll(history);
+    while (this.myHistory.size() > myHistorySize) {
+      this.myHistory.remove(0);
+    }
+  }
+
+  public List<String> getHistory() {
+    return Collections.unmodifiableList(myHistory);
+  }
+
+  public void setHistorySize(int historySize) {
+    this.myHistorySize = historySize;
+  }
+
+  public int getHistorySize() {
+    return myHistorySize;
+  }
+
+  private FileType myFileType;
+
+  /**
+   * Use it for custom highlighting for user text.
+   * This will be highlighted as appropriate file to this file type.
+   * @param fileType according to which use highlighting
+   */
+  public void setFileType(FileType fileType) {
+    myFileType = fileType;
+  }
+
   public ConsoleViewImpl(final Project project, boolean viewer) {
+    this(project, viewer, null);
+  }
+
+  public ConsoleViewImpl(final Project project, boolean viewer, FileType fileType) {
     super(new BorderLayout());
     isViewer = viewer;
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
     myProject = project;
+    myFileType = fileType;
 
     final ConsoleFilterProvider[] filterProviders = Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS);
     for (ConsoleFilterProvider filterProvider : filterProviders) {
@@ -478,6 +531,16 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   private Editor doCreateEditor() {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     final Document editorDocument = editorFactory.createDocument("");
+    editorDocument.addDocumentListener(new DocumentListener() {
+      public void beforeDocumentChange(DocumentEvent event) {
+      }
+
+      public void documentChanged(DocumentEvent event) {
+        if (myFileType != null) {
+          highlightUserTokens();
+        }
+      }
+    });
 
     final int bufferSize = USE_CYCLIC_BUFFER ? CYCLIC_BUFFER_SIZE : 0;
     editorDocument.setCyclicBufferSize(bufferSize);
@@ -508,7 +571,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     });
 
     editor.addEditorMouseListener(
-          new EditorMouseAdapter(){
+      new EditorMouseAdapter(){
         public void mouseReleased(final EditorMouseEvent e){
           final MouseEvent mouseEvent = e.getMouseEvent();
           if (!mouseEvent.isPopupTrigger()){
@@ -519,7 +582,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     );
 
     editor.getContentComponent().addMouseMotionListener(
-          new MouseMotionAdapter(){
+      new MouseMotionAdapter(){
         public void mouseMoved(final MouseEvent e){
           final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getPoint());
           if (info != null){
@@ -532,15 +595,88 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       }
     );
 
+    final ConsoleViewImpl consoleView = this;
+    editor.getContentComponent().addKeyListener(new KeyListener() {
+      private int historyPosition = myHistory.size();
+
+      public void keyTyped(KeyEvent e) {
+
+      }
+
+      public void keyPressed(KeyEvent e) {
+      }
+
+      public void keyReleased(KeyEvent e) {
+        if (e.isAltDown() && !e.isControlDown() && !e.isMetaDown() && !e.isShiftDown()) {
+          if (e.getKeyCode() == KeyEvent.VK_UP) {
+            historyPosition--;
+            if (historyPosition < 0) historyPosition = 0;
+            replaceString();
+            e.consume();
+          } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            historyPosition++;
+            if (historyPosition > myHistory.size()) historyPosition = myHistory.size();
+            replaceString();
+            e.consume();
+          }
+        } else {
+          historyPosition = myHistory.size();
+        }
+      }
+
+      private void replaceString() {
+        final String str;
+
+        if (myHistory.size() == historyPosition) str = "";
+        else str = myHistory.get(historyPosition);
+        synchronized (LOCK) {
+          if (myTokens.isEmpty()) return;
+          final TokenInfo info = myTokens.get(myTokens.size() - 1);
+          if (info.contentType != ConsoleViewContentType.USER_INPUT) {
+            consoleView.insertUserText(str, 0);
+          } else {
+            consoleView.replaceUserText(str, info.startOffset, info.endOffset);
+          }
+        }
+      }
+    });
+
     setEditorUpActions(editor);
 
     return editor;
+  }
+
+  private void highlightUserTokens() {
+    if (myTokens.isEmpty()) return;
+    final TokenInfo token = myTokens.get(myTokens.size() - 1);
+    if (token.contentType == ConsoleViewContentType.USER_INPUT) {
+      String text = myEditor.getDocument().getText().substring(token.startOffset, token.endOffset);
+      PsiFile file = PsiFileFactory.getInstance(myProject).
+        createFileFromText("dummy", myFileType, text, LocalTimeCounter.currentTime(), true);
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+      assert document != null;
+      Editor editor = EditorFactory.getInstance().createEditor(document, myProject, myFileType, false);
+      RangeHighlighter[] allHighlighters = myEditor.getMarkupModel().getAllHighlighters();
+      for (RangeHighlighter highlighter : allHighlighters) {
+        if (highlighter.getStartOffset() >= token.startOffset) {
+          myEditor.getMarkupModel().removeHighlighter(highlighter);
+        }
+      }
+      HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(0);
+      while (!iterator.atEnd()) {
+        myEditor.getMarkupModel().addRangeHighlighter(iterator.getStart() + token.startOffset, iterator.getEnd() + token.startOffset, HighlighterLayer.SYNTAX,
+                                                      iterator.getTextAttributes(),
+                                                      HighlighterTargetArea.EXACT_RANGE);
+        iterator.advance();
+      }
+    }
   }
 
   private static void setEditorUpActions(final Editor editor) {
     new EnterHandler().registerCustomShortcutSet(CommonShortcuts.ENTER, editor.getContentComponent());
     registerActionHandler(editor, IdeActions.ACTION_EDITOR_PASTE, new PasteHandler());
     registerActionHandler(editor, IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler());
+    registerActionHandler(editor, IdeActions.ACTION_EDITOR_DELETE, new DeleteHandler());
   }
 
   private static void registerActionHandler(final Editor editor, final String actionId, final AnAction action) {
@@ -684,6 +820,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
         private int myIndex = startIndex;
 
         public TextAttributes getTextAttributes() {
+          if (myFileType != null && getTokenInfo().contentType == ConsoleViewContentType.USER_INPUT) {
+            return ConsoleViewContentType.NORMAL_OUTPUT.getAttributes();
+          }
           return getTokenInfo() == null ? null : getTokenInfo().attributes;
         }
 
@@ -763,8 +902,12 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       }
       else{
         final String s = String.valueOf(charTyped);
-        consoleView.print(s, ConsoleViewContentType.USER_INPUT);
-        consoleView.flushDeferredText();
+        SelectionModel selectionModel = editor.getSelectionModel();
+        if (selectionModel.hasSelection()) {
+          consoleView.replaceUserText(s, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+        } else {
+          consoleView.insertUserText(s, editor.getCaretModel().getOffset());
+        }
       }
     }
   }
@@ -800,8 +943,22 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
 
   private static class EnterHandler extends ConsoleAction {
     public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
+      synchronized (consoleView.LOCK) {
+        String str = consoleView.myDeferredUserInput.toString();
+        if (StringUtil.isNotEmpty(str)) {
+          consoleView.myHistory.remove(str);
+          consoleView.myHistory.add(str);
+          if (consoleView.myHistory.size() > consoleView.myHistorySize) consoleView.myHistory.remove(0);
+        }
+        for (ConsoleInputListener listener : consoleView.myConsoleInputListeners) {
+          listener.textEntered(str);
+        }
+      }
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
       consoleView.flushDeferredText();
+      final Editor editor = consoleView.myEditor;
+      editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
 
@@ -817,8 +974,13 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
         consoleView.myEditor.getComponent().getToolkit().beep();
       }
       if (s == null) return;
-      consoleView.print(s, ConsoleViewContentType.USER_INPUT);
-      consoleView.flushDeferredText();
+      Editor editor = consoleView.myEditor;
+      SelectionModel selectionModel = editor.getSelectionModel();
+      if (selectionModel.hasSelection()) {
+        consoleView.replaceUserText(s, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      } else {
+        consoleView.insertUserText(s, editor.getCaretModel().getOffset());
+      }
     }
   }
 
@@ -837,28 +999,42 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
         return;
       }
 
-      synchronized(consoleView.LOCK){
-        if (consoleView.myTokens.isEmpty()) return;
-        final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
-        if (info.contentType != ConsoleViewContentType.USER_INPUT) return;
-        if (consoleView.myDeferredUserInput.length() == 0) return;
+      SelectionModel selectionModel = editor.getSelectionModel();
+      if (selectionModel.hasSelection()) {
+        consoleView.deleteUserText(selectionModel.getSelectionStart(),
+                                   selectionModel.getSelectionEnd() - selectionModel.getSelectionStart());
+      } else if (editor.getCaretModel().getOffset() > 0) {
+        consoleView.deleteUserText(editor.getCaretModel().getOffset() - 1, 1);
+      }
+    }
 
-        consoleView.myDeferredUserInput.setLength(consoleView.myDeferredUserInput.length() - 1);
-        info.endOffset -= 1;
-        if (info.startOffset == info.endOffset){
-          consoleView.myTokens.remove(consoleView.myTokens.size() - 1);
-        }
-        consoleView.myContentSize--;
+    private static EditorActionHandler getDefaultActionHandler() {
+      return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
+    }
+  }
+
+  private static class DeleteHandler extends ConsoleAction {
+    public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
+      final Editor editor = consoleView.myEditor;
+
+      if (IncrementalSearchHandler.isHintVisible(editor)) {
+        getDefaultActionHandler().execute(editor, context);
+        return;
       }
 
-      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, consoleView.myProject) {
-        public void run() {
-          document.deleteString(length - 1, length);
-          editor.getCaretModel().moveToOffset(length - 1);
-          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          editor.getSelectionModel().removeSelection();
-        }
-      });
+      final Document document = editor.getDocument();
+      final int length = document.getTextLength();
+      if (length == 0) {
+        return;
+      }
+
+      SelectionModel selectionModel = editor.getSelectionModel();
+      if (selectionModel.hasSelection()) {
+        consoleView.deleteUserText(selectionModel.getSelectionStart(),
+                                   selectionModel.getSelectionEnd() - selectionModel.getSelectionStart());
+      } else {
+        consoleView.deleteUserText(editor.getCaretModel().getOffset(), 1);
+      }
     }
 
     private static EditorActionHandler getDefaultActionHandler() {
@@ -1003,4 +1179,198 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       }
     });
   }
+
+  /**
+   * insert text to document
+   * @param s inserted text
+   * @param offset relativly to all document text
+   */
+  private void insertUserText(final String s, int offset) {
+    final ConsoleViewImpl consoleView = this;
+    final Editor editor = consoleView.myEditor;
+    final Document document = editor.getDocument();
+    final int startOffset;
+
+    synchronized (consoleView.LOCK) {
+      if (consoleView.myTokens.isEmpty()) return;
+      final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
+      if (info.contentType != ConsoleViewContentType.USER_INPUT && !s.contains("\n")) {
+        consoleView.print(s, ConsoleViewContentType.USER_INPUT);
+        consoleView.flushDeferredText();
+        editor.getCaretModel().moveToOffset(document.getTextLength());
+        editor.getSelectionModel().removeSelection();
+        return;
+      } else if (info.contentType != ConsoleViewContentType.USER_INPUT) {
+        insertUserText("temp", offset);
+        final TokenInfo newInfo = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
+        replaceUserText(s, newInfo.startOffset, newInfo.endOffset);
+        return;
+      }
+      int charCountToAdd;
+
+
+      if (offset > info.endOffset) {
+        startOffset = info.endOffset;
+      }
+      else if (offset < info.startOffset) {
+        startOffset = info.startOffset;
+      } else {
+        startOffset = offset;
+      }
+      charCountToAdd = s.length();
+
+      if (consoleView.myDeferredUserInput.length() < info.endOffset - info.startOffset) return; //user was quick
+
+      consoleView.myDeferredUserInput.insert(startOffset - info.startOffset, s);
+
+      info.endOffset += charCountToAdd;
+      consoleView.myContentSize += charCountToAdd;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        document.insertString(startOffset, s);
+        editor.getCaretModel().moveToOffset(startOffset + s.length());
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
+    });
+  }
+
+  /**
+   * replace text
+   * @param s text for replace
+   * @param start relativly to all document text
+   * @param end relativly to all document text
+   */
+  private void replaceUserText(final String s, int start, int end) {
+    if (start == end) {
+      insertUserText(s, start);
+      return;
+    }
+    final ConsoleViewImpl consoleView = this;
+    final Editor editor = consoleView.myEditor;
+    final Document document = editor.getDocument();
+    final int startOffset;
+    final int endOffset;
+
+    synchronized (consoleView.LOCK) {
+      if (consoleView.myTokens.isEmpty()) return;
+      final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
+      if (info.contentType != ConsoleViewContentType.USER_INPUT) {
+        consoleView.print(s, ConsoleViewContentType.USER_INPUT);
+        consoleView.flushDeferredText();
+        editor.getCaretModel().moveToOffset(document.getTextLength());
+        editor.getSelectionModel().removeSelection();
+        return;
+      }
+      if (consoleView.myDeferredUserInput.length() == 0) return;
+      int charCountToReplace;
+
+      startOffset = getStartOffset(start, info);
+      endOffset = getEndOffset(end, info);
+
+      if (startOffset == -1 ||
+          endOffset == -1 ||
+          endOffset <= startOffset) {
+        editor.getSelectionModel().removeSelection();
+        editor.getCaretModel().moveToOffset(start);
+        return;
+      }
+      charCountToReplace = s.length() - endOffset + startOffset;
+
+      if (consoleView.myDeferredUserInput.length() < info.endOffset - info.startOffset) return; //user was quick
+
+      consoleView.myDeferredUserInput.replace(startOffset - info.startOffset, endOffset - info.startOffset, s);
+
+      info.endOffset += charCountToReplace;
+      if (info.startOffset == info.endOffset) {
+        consoleView.myTokens.remove(consoleView.myTokens.size() - 1);
+      }
+      consoleView.myContentSize += charCountToReplace;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        document.replaceString(startOffset, endOffset, s);
+        editor.getCaretModel().moveToOffset(startOffset + s.length());
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        editor.getSelectionModel().removeSelection();
+      }
+    });
+  }
+
+  /**
+   * delete text
+   * @param offset relativly to all document text
+   * @param length lenght of deleted text
+   */
+  private void deleteUserText(int offset, int length) {
+    ConsoleViewImpl consoleView = this;
+    final Editor editor = consoleView.myEditor;
+    final Document document = editor.getDocument();
+    final int startOffset;
+    final int endOffset;
+
+    synchronized (consoleView.LOCK) {
+      if (consoleView.myTokens.isEmpty()) return;
+      final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
+      if (info.contentType != ConsoleViewContentType.USER_INPUT) return;
+      if (consoleView.myDeferredUserInput.length() == 0) return;
+      int charCountToDelete;
+
+      startOffset = getStartOffset(offset, info);
+      endOffset = getEndOffset(offset + length, info);
+      if (startOffset == -1 ||
+          endOffset == -1 ||
+          endOffset <= startOffset) {
+        editor.getSelectionModel().removeSelection();
+        editor.getCaretModel().moveToOffset(offset);
+        return;
+      }
+
+      consoleView.myDeferredUserInput.delete(startOffset - info.startOffset, endOffset - info.startOffset);
+      charCountToDelete = endOffset - startOffset;
+
+      info.endOffset -= charCountToDelete;
+      if (info.startOffset == info.endOffset) {
+        consoleView.myTokens.remove(consoleView.myTokens.size() - 1);
+      }
+      consoleView.myContentSize -= charCountToDelete;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        document.deleteString(startOffset, endOffset);
+        editor.getCaretModel().moveToOffset(startOffset);
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        editor.getSelectionModel().removeSelection();
+      }
+    });
+  }
+
+  //util methods for add, replace, delete methods
+  private int getStartOffset(int offset, TokenInfo info) {
+    int startOffset;
+    if (offset >= info.startOffset && offset < info.endOffset) {
+      startOffset = offset;
+    } else if (offset < info.startOffset) {
+      startOffset = info.startOffset;
+    } else {
+      startOffset = -1;
+    }
+    return startOffset;
+  }
+
+  private int getEndOffset(int offset, TokenInfo info) {
+    int endOffset;
+    if (offset > info.endOffset) {
+      endOffset = info.endOffset;
+    } else if (offset <= info.startOffset) {
+      endOffset = -1;
+    } else {
+      endOffset = offset;
+    }
+    return endOffset;
+  }
 }
+
