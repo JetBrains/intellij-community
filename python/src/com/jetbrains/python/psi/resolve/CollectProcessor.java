@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ public class CollectProcessor implements PyClassScopeProcessor {
     return true; // collect till we drop
   }
 
-  public <T> T getHint(final Class<T> hintClass) {
+  public <T> T getHint(final Key<T> hintKey) {
     return null;
   }
 

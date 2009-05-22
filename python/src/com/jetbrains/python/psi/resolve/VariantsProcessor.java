@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.resolve;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
@@ -100,7 +101,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
   }
 
   @Nullable
-  public <T> T getHint(Class<T> hintClass) {
+  public <T> T getHint(Key<T> hintKey) {
     return null;
   }
 

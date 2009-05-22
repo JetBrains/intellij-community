@@ -1,11 +1,12 @@
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.psi.PyReferenceExpression;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MultiResolveProcessor implements PsiScopeProcessor {
   private final String _name;
@@ -36,7 +37,7 @@ public class MultiResolveProcessor implements PsiScopeProcessor {
     return true;
   }
 
-  public <T> T getHint(Class<T> hintClass) {
+  public <T> T getHint(Key<T> hintKey) {
     return null;
   }
 

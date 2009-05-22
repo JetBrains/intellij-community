@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -93,7 +94,7 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
       return true;
     }
 
-    public <T> T getHint(Class<T> hintClass) {
+    public <T> T getHint(Key<T> hintKey) {
       return null;
     }
 

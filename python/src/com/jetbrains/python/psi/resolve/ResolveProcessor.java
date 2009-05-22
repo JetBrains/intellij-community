@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -9,7 +10,6 @@ import com.jetbrains.python.psi.NameDefiner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -101,7 +101,7 @@ public class ResolveProcessor implements PyAsScopeProcessor {
   }
 
   @Nullable
-  public <T> T getHint(Class<T> hintClass) {
+  public <T> T getHint(Key<T> hintKey) {
     return null;
   }
 
