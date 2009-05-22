@@ -58,7 +58,7 @@ public abstract class MavenRunnerConfigurable implements Configurable {
     myProject = p;
 
     propertiesPanel = new MyPropertiesPanel();
-    panelForPropertiesEditor.add(propertiesPanel);
+    panelForPropertiesEditor.add(propertiesPanel, BorderLayout.CENTER);
 
     textFieldVMParameters.setDialogCaption(labelVMParameters.getText());
 

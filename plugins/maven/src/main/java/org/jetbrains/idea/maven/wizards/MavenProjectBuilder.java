@@ -147,7 +147,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     return getParameters().mySelectedProfiles;
   }
 
-  public boolean setSelectedProfiles(List<String> profiles) throws ConfigurationException {
+  public boolean setSelectedProfiles(List<String> profiles) {
     getParameters().myMavenProjectTree = null;
     getParameters().mySelectedProfiles = profiles;
 
@@ -159,14 +159,13 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     });
   }
 
-  private boolean runConfigurationProcess(String message, MavenTask p) throws ConfigurationException {
+  private boolean runConfigurationProcess(String message, MavenTask p) {
     try {
       MavenUtil.run(null, message, p);
     }
     catch (MavenProcessCanceledException e) {
       return false;
     }
-
     return true;
   }
 
@@ -181,11 +180,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     return getParameters().myMavenProjectTree.getRootProjects();
   }
 
-  public boolean isMarked(final MavenProject element) {
-    return true;
+  public void setList(List<MavenProject> projects) {
   }
 
-  public void setList(List<MavenProject> nodes) throws ConfigurationException {
+  public boolean isMarked(final MavenProject element) {
+    return true;
   }
 
   public boolean isOpenProjectSettingsAfter() {

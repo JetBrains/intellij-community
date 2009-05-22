@@ -33,7 +33,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
 
     myChildren = new ArrayList<Configurable>();
     myChildren.add(new MavenImportingConfigurable(MavenProjectsManager.getInstance(myProject).getImportingSettings()));
-    myChildren.add(new MavenIgnoreConfigurable(MavenProjectsManager.getInstance(myProject)));
+    myChildren.add(new MavenIgnoredFilesConfigurable(MavenProjectsManager.getInstance(myProject)));
     myChildren.add(new MavenDownloadingConfigurable(MavenProjectsManager.getInstance(myProject).getDownloadingSettings()));
 
     myChildren.add(new MavenRunnerConfigurable(myProject, false) {

@@ -14,49 +14,62 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.*;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.*;
 
-public class MavenProjectRootStep extends ProjectImportWizardStep {
+public class MavenProjectImportStep extends ProjectImportWizardStep {
   private final JPanel myPanel;
   private final NamePathComponent myRootPathComponent;
-  private final MavenImportingSettingsForm myImporterSettingsForm;
+  private final MavenImportingSettingsForm myImportingSettingsForm;
 
-  public MavenProjectRootStep(WizardContext wizardContext) {
+  public MavenProjectImportStep(WizardContext wizardContext) {
     super(wizardContext);
 
-    myImporterSettingsForm = new MavenImportingSettingsForm(true) {
+    myImportingSettingsForm = new MavenImportingSettingsForm(true) {
       public String getDefaultModuleDir() {
         return myRootPathComponent.getPath();
       }
     };
 
-    myPanel = new JPanel(new GridBagLayout());
-    myPanel.setBorder(BorderFactory.createEtchedBorder());
-
     myRootPathComponent = new NamePathComponent("",
                                                 ProjectBundle.message("maven.import.label.select.root"),
                                                 ProjectBundle.message("maven.import.title.select.root"),
-                                                "", false);
+                                                "",
+                                                false,
+                                                false);
 
-    myRootPathComponent.setNameComponentVisible(false);
-
-    myPanel.add(myRootPathComponent, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                            GridBagConstraints.HORIZONTAL, new Insets(5, 6, 0, 6), 0, 0));
-
-    myPanel.add(myImporterSettingsForm.createComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                                                 GridBagConstraints.HORIZONTAL, new Insets(15, 6, 0, 6),
-                                                                                 0, 0));
-    JButton advancedButton = new JButton(ProjectBundle.message("maven.advanced.button.name"));
-    myPanel.add(advancedButton, new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHEAST, 0, new Insets(15, 6, 0, 6),
-                                                       0, 0));
-
-    advancedButton.addActionListener(new ActionListener() {
+    JButton envSettingsButton = new JButton(ProjectBundle.message("maven.import.environment.settings"));
+    envSettingsButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ShowSettingsUtil.getInstance().editConfigurable(myPanel, new MavenEnvironmentConfigurable());
       }
     });
+
+    myPanel = new JPanel(new GridBagLayout());
+    myPanel.setBorder(BorderFactory.createEtchedBorder());
+
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridx = 0;
+    c.gridy = 0;
+    c.weightx = 1;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.insets = new Insets(4, 4, 0, 4);
+
+    myPanel.add(myRootPathComponent, c);
+
+    c.gridy = 1;
+    c.insets = new Insets(4, 4, 0, 4);
+    myPanel.add(myImportingSettingsForm.createComponent(), c);
+
+    c.gridy = 2;
+    c.fill = GridBagConstraints.NONE;
+    c.anchor = GridBagConstraints.NORTHEAST;
+    c.weighty = 1;
+    c.insets = new Insets(4 + envSettingsButton.getPreferredSize().height, 4, 4, 4);
+    myPanel.add(envSettingsButton, c);
+
+    myRootPathComponent.setNameComponentVisible(false);
   }
 
   public JComponent getComponent() {
@@ -65,7 +78,10 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
 
   public void updateDataModel() {
     MavenImportingSettings settings = getImportingSettings();
-    myImporterSettingsForm.getData(settings);
+    myImportingSettingsForm.getData(settings);
+    if (getWizardContext().isCreatingNewProject()) {
+      myImportingSettingsForm.updateData(getWizardContext());
+    }
     suggestProjectNameAndPath(settings.getDedicatedModuleDir(), myRootPathComponent.getPath());
   }
 
@@ -89,7 +105,7 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
         myRootPathComponent.getPathComponent().selectAll();
       }
     }
-    myImporterSettingsForm.setData(getImportingSettings());
+    myImportingSettingsForm.setData(getImportingSettings());
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -119,7 +135,7 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
 
     @Nls
     public String getDisplayName() {
-      return ProjectBundle.message("maven.paths.configurable.name");
+      return ProjectBundle.message("maven.import.environment.settings.title");
     }
 
     @Nullable

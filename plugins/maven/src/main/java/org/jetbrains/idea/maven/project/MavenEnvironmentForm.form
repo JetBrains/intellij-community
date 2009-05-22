@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
-          <text value="Maven &amp;Home Directory"/>
+          <text value="Maven &amp;home directory"/>
         </properties>
       </component>
       <component id="7c064" class="com.intellij.openapi.ui.LabeledComponent" binding="mavenSettingsFileComponent">
@@ -23,7 +23,7 @@
         </constraints>
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
-          <text value="Maven User &amp;Settings File"/>
+          <text value="Maven user &amp;settings file"/>
         </properties>
       </component>
       <component id="3d84d" class="javax.swing.JCheckBox" binding="mavenSettingsFileOverrideCheckBox" default-binding="true">
@@ -48,7 +48,7 @@
         </constraints>
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
-          <text value="Local &amp;Repository"/>
+          <text value="Local &amp;repository directory"/>
         </properties>
       </component>
       <component id="30d3a" class="javax.swing.JCheckBox" binding="localRepositoryOverrideCheckBox" default-binding="true">

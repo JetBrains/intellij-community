@@ -52,7 +52,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     JavaCommandLineState state = new JavaCommandLineState(env) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
         return MavenExternalParameters
-          .createJavaParameters(mySettings.myRunnerParameters, mySettings.myCoreSettings, mySettings.myRunnerSettings);
+          .createJavaParameters(mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings);
       }
     };
     state.setConsoleBuilder(MavenConsoleImpl.createConsoleBuilder(getProject()));
@@ -72,11 +72,11 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   }
 
   public MavenGeneralSettings getGeneralSettings() {
-    return mySettings.myCoreSettings;
+    return mySettings.myGeneralSettings;
   }
 
   public void setGeneralSettings(MavenGeneralSettings settings) {
-    mySettings.myCoreSettings = settings;
+    mySettings.myGeneralSettings = settings;
   }
 
   public MavenRunnerSettings getRunnerSettings() {
@@ -107,6 +107,10 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
       if (MavenConstants.POM_XML.equals(workingDir.getName())) {
         mySettings.myRunnerParameters.setWorkingDirPath(workingDir.getParent());
       }
+
+      if (mySettings.myGeneralSettings == null) mySettings.myGeneralSettings = new MavenGeneralSettings();
+      if (mySettings.myRunnerSettings == null) mySettings.myRunnerSettings = new MavenRunnerSettings();
+      if (mySettings.myRunnerParameters == null) mySettings.myRunnerParameters = new MavenRunnerParameters(); 
     }
   }
 
@@ -130,7 +134,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   public static class MavenSettings implements Cloneable {
     public static final String TAG = "MavenSettings";
 
-    public MavenGeneralSettings myCoreSettings;
+    public MavenGeneralSettings myGeneralSettings;
     public MavenRunnerSettings myRunnerSettings;
     public MavenRunnerParameters myRunnerParameters;
 
@@ -144,18 +148,14 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
            new MavenRunnerParameters());
     }
 
-    public MavenSettings(MavenSettings that) {
-      this(that.myCoreSettings, that.myRunnerSettings, that.myRunnerParameters);
-    }
-
     private MavenSettings(MavenGeneralSettings cs, MavenRunnerSettings rs, MavenRunnerParameters rp) {
-      myCoreSettings = cs.clone();
+      myGeneralSettings = cs.clone();
       myRunnerSettings = rs.clone();
       myRunnerParameters = rp.clone();
     }
 
     protected MavenSettings clone() {
-      return new MavenSettings(this);
+      return new MavenSettings(myGeneralSettings, myRunnerSettings, myRunnerParameters);
     }
   }
 }

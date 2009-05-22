@@ -8,17 +8,28 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Vladislav.Kaznacheev
- */
-public class MavenImportingConfigurable implements Configurable {
+public class MavenImportingConfigurable extends MavenImportingSettingsForm implements Configurable {
   private final MavenImportingSettings myImportingSettings;
-
-  private JPanel panel;
-  private MavenImportingSettingsForm mySettingsForm;
+  private final MavenImportingSettingsForm mySettingsForm = new MavenImportingSettingsForm(false);
 
   public MavenImportingConfigurable(MavenImportingSettings importingSettings) {
+    super(false);
     myImportingSettings = importingSettings;
+  }
+
+  public void disposeUIResources() {
+  }
+
+  public boolean isModified() {
+    return mySettingsForm.isModified(myImportingSettings);
+  }
+
+  public void apply() throws ConfigurationException {
+    mySettingsForm.getData(myImportingSettings);
+  }
+
+  public void reset() {
+    mySettingsForm.setData(myImportingSettings);
   }
 
   @Nls
@@ -37,22 +48,4 @@ public class MavenImportingConfigurable implements Configurable {
     return "reference.settings.project.maven.importing";
   }
 
-  public JComponent createComponent() {
-    return panel;
-  }
-
-  public boolean isModified() {
-    return mySettingsForm.isModified(myImportingSettings);
-  }
-
-  public void apply() throws ConfigurationException {
-    mySettingsForm.getData(myImportingSettings);
-  }
-
-  public void reset() {
-    mySettingsForm.setData(myImportingSettings);
-  }
-
-  public void disposeUIResources() {
-  }
 }

@@ -1,64 +1,69 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.projectImport.ProjectFormatPanel;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MavenImportingSettingsForm {
+  private JPanel myPanel;
 
-  private JPanel panel;
-  private JCheckBox myModuleDirCheckBox;
-  private TextFieldWithBrowseButton myModuleDirControl;
-  private JCheckBox myUseExhaustiveSearchCheckBox;
-  private JCheckBox myAutoSyncCheckBox;
+  private JCheckBox mySearchRecursivelyCheckBox;
+
+  private JLabel myProjectFormatLabel;
+  private JComboBox myProjectFormatComboBox;
+  private ProjectFormatPanel myProjectFormatPanel;
+  private JCheckBox mySeparateModulesDirCheckBox;
+  private TextFieldWithBrowseButton mySeparateModulesDirChooser;
+
   private JCheckBox myCreateModulesForAggregators;
   private JCheckBox myCreateGroupsCheckBox;
-  private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myUpdateFoldersOnImportCheckBox;
   private JComboBox myUpdateFoldersOnImportPhaseComboBox;
-  private JPanel myFormatPanel;
-  private ProjectFormatPanel myProjectFormatPanel;
-
-  public MavenImportingSettingsForm() {
-    this(false);
-  }
+  private JCheckBox myUseMavenOutputCheckBox;
 
   public MavenImportingSettingsForm(boolean isImportStep) {
+    if(!isImportStep){
+      mySearchRecursivelyCheckBox.setVisible(false);
+      myProjectFormatLabel.setVisible(false);
+      myProjectFormatComboBox.setVisible(false);
+      mySeparateModulesDirCheckBox.setVisible(false);
+      mySeparateModulesDirChooser.setVisible(false);
+    }
 
     ActionListener listener = new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        enableControls();
+      public void actionPerformed(ActionEvent e) {
+        updateControls();
       }
     };
-    myModuleDirCheckBox.addActionListener(listener);
+    mySeparateModulesDirCheckBox.addActionListener(listener);
+    myUpdateFoldersOnImportCheckBox.addActionListener(listener);
 
-    myModuleDirControl.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
+    mySeparateModulesDirChooser.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
                                                new FileChooserDescriptor(false, true, false, false, false, false));
-
-    if(isImportStep){
-      myProjectFormatPanel = new ProjectFormatPanel();
-      myFormatPanel.add(myProjectFormatPanel.getPanel(), BorderLayout.WEST);
-    } else {
-      myUseExhaustiveSearchCheckBox.setVisible(false);
-    }
 
     myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
   }
 
-  private void enableControls() {
-    final boolean dedicated = myModuleDirCheckBox.isSelected();
-    myModuleDirControl.setEnabled(dedicated);
-    if (dedicated && StringUtil.isEmptyOrSpaces(myModuleDirControl.getText())) {
-      myModuleDirControl.setText(FileUtil.toSystemDependentName(getDefaultModuleDir()));
+  private void createUIComponents() {
+    myProjectFormatPanel = new ProjectFormatPanel();
+    myProjectFormatComboBox = myProjectFormatPanel.getStorageFormatComboBox();
+  }
+
+  private void updateControls() {
+    boolean useSeparateDir = mySeparateModulesDirCheckBox.isSelected();
+    mySeparateModulesDirChooser.setEnabled(useSeparateDir);
+    if (useSeparateDir && StringUtil.isEmptyOrSpaces(mySeparateModulesDirChooser.getText())) {
+      mySeparateModulesDirChooser.setText(FileUtil.toSystemDependentName(getDefaultModuleDir()));
     }
+
+    myUpdateFoldersOnImportPhaseComboBox.setEnabled(myUseMavenOutputCheckBox.isSelected());
   }
 
   public String getDefaultModuleDir() {
@@ -66,33 +71,37 @@ public class MavenImportingSettingsForm {
   }
 
   public JComponent createComponent() {
-    return panel;
+    return myPanel;
   }
 
   public void getData(MavenImportingSettings data) {
-    data.setDedicatedModuleDir(myModuleDirCheckBox.isSelected() ? myModuleDirControl.getText() : "");
-    data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
-    data.setAutoSync(myAutoSyncCheckBox.isSelected());
+    data.setLookForNested(mySearchRecursivelyCheckBox.isSelected());
+    data.setDedicatedModuleDir(mySeparateModulesDirCheckBox.isSelected() ? mySeparateModulesDirChooser.getText() : "");
+
     data.setCreateModulesForAggregators(myCreateModulesForAggregators.isSelected());
-    data.setLookForNested(myUseExhaustiveSearchCheckBox.isSelected());
-    data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
+    data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
+
     data.setUpdateFoldersOnImport(myUpdateFoldersOnImportCheckBox.isSelected());
     data.setUpdateFoldersOnImportPhase((String)myUpdateFoldersOnImportPhaseComboBox.getSelectedItem());
+
+    data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
   }
 
-  public void setData(final MavenImportingSettings data) {
-    myModuleDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
-    myModuleDirControl.setText(data.getDedicatedModuleDir());
+  public void setData(MavenImportingSettings data) {
+    mySearchRecursivelyCheckBox.setSelected(data.isLookForNested());
 
-    myAutoSyncCheckBox.setSelected(data.isAutoSync());
+    mySeparateModulesDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
+    mySeparateModulesDirChooser.setText(data.getDedicatedModuleDir());
+
     myCreateModulesForAggregators.setSelected(data.isCreateModulesForAggregators());
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
-    myUseExhaustiveSearchCheckBox.setSelected(data.isLookForNested());
-    myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
+
     myUpdateFoldersOnImportCheckBox.setSelected(data.isUpdateFoldersOnImport());
     myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
 
-    enableControls();
+    myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
+
+    updateControls();
   }
 
   public boolean isModified(MavenImportingSettings settings) {

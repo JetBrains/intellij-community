@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -16,14 +15,8 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public class MavenUIUtil {
   public static void executeAction(final String actionId, final InputEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
@@ -38,24 +31,15 @@ public class MavenUIUtil {
     }
   }
 
-  public static <E> void addElements(final ElementsChooser<E> chooser, final Collection<E> all, final Collection<E> selected) {
-    for (E element : all) {
+  public static <E> void setElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator){
+    java.util.List<E> selection = chooser.getSelectedElements();
+    chooser.clear();
+    Collection<E> sorted = new TreeSet<E>(comparator);
+    sorted.addAll(all);
+    for (E element : sorted) {
       chooser.addElement( element, selected.contains(element));
     }
-  }
-
-  public static <E> void addElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator){
-    final Collection<E> sorted = new TreeSet<E>(comparator);
-    sorted.addAll(all);
-    addElements(chooser, sorted, selected);
-  }
-
-  public static <T> boolean equalAsSets(final Collection<T> collection1, final Collection<T> collection2) {
-    return setize(collection1).equals(setize(collection2));
-  }
-
-  private static <T> Collection<T> setize(final Collection<T> collection) {
-    return (collection instanceof Set ? collection : new THashSet<T>(collection));
+    chooser.selectElements(selection);
   }
 
   public static void installCheckboxRenderer(final SimpleTree tree, final CheckboxHandler handler) {

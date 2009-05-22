@@ -190,7 +190,7 @@ public class MavenProjectsTree {
 
   public List<String> getIgnoredFilesPaths() {
     synchronized (myIgnoresLock) {
-      return myIgnoredFilesPaths;
+      return new ArrayList<String>(myIgnoredFilesPaths);
     }
   }
 
@@ -224,7 +224,7 @@ public class MavenProjectsTree {
 
   public List<String> getIgnoredFilesPatterns() {
     synchronized (myIgnoresLock) {
-      return myIgnoredFilesPatterns;
+      return new ArrayList<String>(myIgnoredFilesPatterns);
     }
   }
 
@@ -232,7 +232,7 @@ public class MavenProjectsTree {
     doChangeIgnoreStatus(new Runnable() {
       public void run() {
         myIgnoredFilesPatternsCache = null;
-        myIgnoredFilesPatterns = patterns;
+        myIgnoredFilesPatterns = new ArrayList<String>(patterns);
       }
     });
   }

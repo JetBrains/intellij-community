@@ -42,7 +42,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable 
   }
 
   public String getDisplayName() {
-    return RunnerBundle.message("maven.tab.project");
+    return RunnerBundle.message("maven.runner.parameters.title");
   }
 
   @Nullable

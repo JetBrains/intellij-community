@@ -25,7 +25,7 @@ public class AddManagedFilesAction extends MavenAction {
 
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        if (!MavenUtil.isMavenProjectFile(file)) return false;
+        if (!file.isDirectory() && !MavenUtil.isMavenProjectFile(file)) return false;
         return super.isFileVisible(file, showHiddenFiles);
       }
     };

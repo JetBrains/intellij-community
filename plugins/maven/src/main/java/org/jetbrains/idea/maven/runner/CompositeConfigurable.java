@@ -28,7 +28,9 @@ public class CompositeConfigurable implements Configurable {
   public JComponent createComponent() {
     tabbedPane = new JTabbedPane();
     for (Configurable configurable : configurables) {
-      tabbedPane.add(configurable.getDisplayName(), configurable.createComponent());
+      JComponent component = configurable.createComponent();
+      component.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+      tabbedPane.add(configurable.getDisplayName(), component);
     }
     return tabbedPane;
   }

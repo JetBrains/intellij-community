@@ -23,7 +23,6 @@ public class MavenImportingSettings implements Cloneable {
 
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
-  private boolean autoSync = false;
   private boolean createModulesForAggregators = true;
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
@@ -47,14 +46,6 @@ public class MavenImportingSettings implements Cloneable {
 
   public void setLookForNested(boolean lookForNested) {
     this.lookForNested = lookForNested;
-  }
-
-  public boolean isAutoSync() {
-    return autoSync;
-  }
-
-  public void setAutoSync(boolean autoSync) {
-    this.autoSync = autoSync;
   }
 
   public boolean isCreateModuleGroups() {
@@ -106,7 +97,6 @@ public class MavenImportingSettings implements Cloneable {
 
     MavenImportingSettings that = (MavenImportingSettings)o;
 
-    if (autoSync != that.autoSync) return false;
     if (createModuleGroups != that.createModuleGroups) return false;
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
     if (lookForNested != that.lookForNested) return false;
@@ -126,7 +116,6 @@ public class MavenImportingSettings implements Cloneable {
   public int hashCode() {
     int result = dedicatedModuleDir.hashCode();
     result = 31 * result + (lookForNested ? 1 : 0);
-    result = 31 * result + (autoSync ? 1 : 0);
     result = 31 * result + (createModulesForAggregators ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);

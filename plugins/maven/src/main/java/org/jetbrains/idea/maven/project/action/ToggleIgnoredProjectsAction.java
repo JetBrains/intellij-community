@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import org.jetbrains.idea.maven.project.MavenIgnoreConfigurable;
+import org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
@@ -70,7 +70,7 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
     List<MavenProject> projects = e.getData(MavenDataKeys.MAVEN_PROJECTS);
 
     if (isIgnoredInSettings(projectsManager, projects)) {
-      ShowSettingsUtil.getInstance().editConfigurable(getProject(e), new MavenIgnoreConfigurable(projectsManager));
+      ShowSettingsUtil.getInstance().editConfigurable(getProject(e), new MavenIgnoredFilesConfigurable(projectsManager));
     }
     else {
       projectsManager.setIgnoredState(projects, !isIgnored(projectsManager, projects));

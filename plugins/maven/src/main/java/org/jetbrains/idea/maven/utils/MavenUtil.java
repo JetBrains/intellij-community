@@ -23,6 +23,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import gnu.trove.THashSet;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -107,6 +109,14 @@ public class MavenUtil {
         return project.getFile();
       }
     });
+  }
+
+  public static <T> boolean equalAsSets(final Collection<T> collection1, final Collection<T> collection2) {
+    return toSet(collection1).equals(toSet(collection2));
+  }
+
+  private static <T> Collection<T> toSet(final Collection<T> collection) {
+    return (collection instanceof Set ? collection : new THashSet<T>(collection));
   }
 
   public static VirtualFile getMavenProjectFileFromContext(DataContext dataContext) {

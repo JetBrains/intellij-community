@@ -21,7 +21,7 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
 
   public ModuleWizardStep[] createSteps(WizardContext wizardContext) {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
-    return new ModuleWizardStep[]{new MavenProjectRootStep(wizardContext), new SelectProfilesStep(wizardContext),
+    return new ModuleWizardStep[]{new MavenProjectImportStep(wizardContext), new SelectProfilesStep(wizardContext),
       new SelectImportedProjectsStep<MavenProject>(wizardContext) {
         protected String getElementText(final MavenProject project) {
           final StringBuilder stringBuilder = new StringBuilder();
