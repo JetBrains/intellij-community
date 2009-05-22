@@ -604,10 +604,10 @@ public class ExpectedTypesProvider {
         else {
           ExpectedTypeInfoImpl info;
           if (anotherType instanceof PsiPrimitiveType) {
-            if (PsiType.BOOLEAN == anotherType) {
+            if (PsiType.BOOLEAN.equals(anotherType)) {
               info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, TailType.NONE);
             }
-            else if (anotherType == PsiType.NULL) {
+            else if (PsiType.NULL.equals(anotherType)) {
               PsiType objectType = factory.createTypeByFQClassName("java.lang.Object", myExpr.getResolveScope());
               info = createInfoImpl(objectType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, objectType, TailType.NONE);
             }
@@ -650,7 +650,7 @@ public class ExpectedTypesProvider {
         }
         else {
           ExpectedTypeInfoImpl info;
-          if (PsiType.BOOLEAN == anotherType) {
+          if (PsiType.BOOLEAN.equals(anotherType)) {
             info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, TailType.NONE);
           }
           else {
@@ -903,7 +903,7 @@ public class ExpectedTypesProvider {
 
         PsiType returnType = method.getReturnType();
         if (returnType != null) returnType = substitutor.substitute(returnType);
-        return (returnType == PsiType.VOID || returnType == null) && call.getParent() instanceof PsiStatement
+        return (PsiType.VOID.equals(returnType) || returnType == null) && call.getParent() instanceof PsiStatement
                ? TailTypes.CALL_RPARENTH_SEMICOLON
                : TailTypes.CALL_RPARENTH;
       }

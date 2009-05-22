@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.text.StringUtil;
@@ -131,8 +132,7 @@ public class JavaCompletionUtil {
     final VariableKind variableKind = JavaCodeStyleManager.getInstance(var.getProject()).getVariableKind(var);
 
     final String prefix = matcher.getPrefix();
-    if (var.getType() == PsiType.VOID ||
-        prefix.startsWith(IS_PREFIX) ||
+    if (PsiType.VOID.equals(var.getType()) || prefix.startsWith(IS_PREFIX) ||
         prefix.startsWith(GET_PREFIX) ||
         prefix.startsWith(SET_PREFIX)) {
       completeVariableNameForRefactoring(var.getProject(), set, matcher, var.getType(), variableKind);
@@ -377,9 +377,8 @@ public class JavaCompletionUtil {
     final Collection<CandidateInfo> methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, true);
     for (final CandidateInfo candidateInfo : methodsToOverrideImplement) {
       final PsiElement element = candidateInfo.getElement();
-      if (typeByPsiElement == PsiUtil.getTypeByPsiElement(element) && element instanceof PsiNamedElement) {
-        overides
-          .add(((PsiNamedElement)element).getName());
+      if (Comparing.equal(typeByPsiElement, PsiUtil.getTypeByPsiElement(element)) && element instanceof PsiNamedElement) {
+        overides.add(((PsiNamedElement)element).getName());
       }
     }
     return ArrayUtil.toStringArray(overides);
@@ -390,9 +389,8 @@ public class JavaCompletionUtil {
     final Collection<CandidateInfo> methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, false);
     for (final CandidateInfo candidateInfo : methodsToOverrideImplement) {
       final PsiElement element = candidateInfo.getElement();
-      if (typeByPsiElement == PsiUtil.getTypeByPsiElement(element) && element instanceof PsiNamedElement) {
-        overides
-          .add(((PsiNamedElement)element).getName());
+      if (Comparing.equal(typeByPsiElement,PsiUtil.getTypeByPsiElement(element)) && element instanceof PsiNamedElement) {
+        overides.add(((PsiNamedElement)element).getName());
       }
     }
     return ArrayUtil.toStringArray(overides);

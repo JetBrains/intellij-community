@@ -512,7 +512,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
           try{
             for (PsiGenerationInfo<PsiMethod> prototype : prototypes) {
               PsiStatement[] statements = prototype.getPsiMember().getBody().getStatements();
-              if (statements.length > 0 && prototype.getPsiMember().getReturnType() == PsiType.VOID) {
+              if (statements.length > 0 && PsiType.VOID.equals(prototype.getPsiMember().getReturnType())) {
                 statements[0].delete(); // remove "super(..)" call
               }
             }

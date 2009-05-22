@@ -221,9 +221,9 @@ public class SystemBuilder {
         else if (currentSubstitution instanceof PsiWildcardType) {
           if (substitution instanceof PsiWildcardType) return PsiType.NULL;
         }
-        else if (currentSubstitution == PsiType.NULL) continue;
+        else if (PsiType.NULL.equals(currentSubstitution)) continue;
 
-        if (substitution == PsiType.NULL) {
+        if (PsiType.NULL.equals(substitution)) {
           substitution = currentSubstitution;
           continue;
         }
@@ -236,7 +236,7 @@ public class SystemBuilder {
       }
     }
 
-    if (substitution == PsiType.NULL) {
+    if (PsiType.NULL.equals(substitution)) {
       substitution = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, system);
     }
     return substitution;
@@ -288,7 +288,7 @@ public class SystemBuilder {
     PsiType guess = JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper()
       .getSubstitutionForTypeParameter(typeParameter, returnType, type, false, PsiUtil.getLanguageLevel(parent));
 
-    if (guess == PsiType.NULL) {
+    if (PsiType.NULL.equals(guess)) {
       PsiType superType = substitutor.substitute(typeParameter.getSuperTypes()[0]);
       return superType == null ? PsiType.getJavaLangObject(methodCall.getManager(), methodCall.getResolveScope()) : superType;
     }

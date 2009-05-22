@@ -21,7 +21,7 @@ public class SemicolonFixer implements Fixer {
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiReturnStatement) {
       PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
-      if (method != null && PsiType.VOID == method.getReturnType()) {
+      if (method != null && PsiType.VOID.equals(method.getReturnType())) {
         PsiReturnStatement stmt = (PsiReturnStatement)psiElement;
         if (stmt.getReturnValue() != null) {
           Document doc = editor.getDocument();

@@ -91,7 +91,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return false;
     }
 
-    if (tempType == PsiType.VOID) {
+    if (PsiType.VOID.equals(tempType)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;

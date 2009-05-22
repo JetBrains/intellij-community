@@ -381,7 +381,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         final PsiType type = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, getMethod().getParameterList().getParameters(),
                                                                            methodCallExpression.getArgumentList().getExpressions(),
                                                                            PsiSubstitutor.EMPTY, methodCallExpression, false);
-        if (type == null || type == PsiType.NULL) {
+        if (type == null || PsiType.NULL.equals(type)) {
           return "";
         }
         typeSignature.add(type.getPresentableText());

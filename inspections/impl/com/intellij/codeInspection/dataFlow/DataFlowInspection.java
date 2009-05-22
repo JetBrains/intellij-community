@@ -271,7 +271,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   private static boolean isNullLiteralExpression(PsiExpression expr) {
     if (expr instanceof PsiLiteralExpression) {
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expr;
-      return literalExpression.getType() == PsiType.NULL;
+      return PsiType.NULL.equals(literalExpression.getType());
     }
     return false;
   }

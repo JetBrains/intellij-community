@@ -127,7 +127,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
       IElementType op = expression.getOperationSign().getTokenType();
       PsiType type = expression.getType();
-      boolean isBoolean = type == PsiType.BOOLEAN;
+      boolean isBoolean = PsiType.BOOLEAN.equals(type);
       if (op == JavaTokenType.EQ) {
         rExpr.accept(this);
         generateBoxingUnboxingInstructionFor(rExpr, type);
@@ -848,7 +848,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         else if (op == JavaTokenType.OROR) {
           generateOrExpression(lExpr, rExpr, type);
         }
-        else if (op == JavaTokenType.XOR && type == PsiType.BOOLEAN) {
+        else if (op == JavaTokenType.XOR && PsiType.BOOLEAN.equals(type)) {
           generateXorExpression(expression, lExpr, rExpr, type);
         }
         else {

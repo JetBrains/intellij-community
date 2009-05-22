@@ -152,16 +152,16 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             wildcardToCapture = (PsiWildcardType) type;
             break;
           case SUPERTYPE:
-            if (lowerBound == PsiType.NULL) {
+            if (PsiType.NULL.equals(lowerBound)) {
               lowerBound = type;
             }
             else if (!lowerBound.equals(type)) {
-                lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, type, typeParameter.getManager());
-                if (lowerBound == null) return getFailedInferenceConstraint(typeParameter);
+              lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, type, typeParameter.getManager());
+              if (lowerBound == null) return getFailedInferenceConstraint(typeParameter);
             }
             break;
           case SUBTYPE:
-            if (upperBound == PsiType.NULL) {
+            if (PsiType.NULL.equals(upperBound)) {
               upperBound = type;
             }
         }
@@ -262,7 +262,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                 break OtherParameters;
               }
               else if (currentConstraintType == ConstraintType.SUPERTYPE) {
-                if (substitutionFromBounds == PsiType.NULL) {
+                if (PsiType.NULL.equals(substitutionFromBounds)) {
                   substitutionFromBounds = currentSubstitution;
                 }
                 else {
@@ -332,7 +332,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             break;
           }
           else if (constraintType == ConstraintType.SUBTYPE) {
-            if (substitution == PsiType.NULL) {
+            if (PsiType.NULL.equals(substitution)) {
               substitution = current;
             }
             else {
@@ -340,7 +340,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             }
           }
           else {
-            if (lowerBound == PsiType.NULL) {
+            if (PsiType.NULL.equals(lowerBound)) {
               lowerBound = current;
             }
             else {
@@ -350,7 +350,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         }
       }
 
-      if (substitution == PsiType.NULL) {
+      if (PsiType.NULL.equals(substitution)) {
         substitution = lowerBound;
       }
 

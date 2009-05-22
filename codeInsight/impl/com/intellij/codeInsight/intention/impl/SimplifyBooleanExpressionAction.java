@@ -35,7 +35,7 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
     if (element == null) return null;
     PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiExpression.class);
     PsiElement parent = expression;
-    while (parent instanceof PsiExpression && (((PsiExpression)parent).getType() == PsiType.BOOLEAN || parent instanceof PsiConditionalExpression)) {
+    while (parent instanceof PsiExpression && (PsiType.BOOLEAN.equals(((PsiExpression)parent).getType()) || parent instanceof PsiConditionalExpression)) {
       expression = (PsiExpression)parent;
       parent = parent.getParent();
     }

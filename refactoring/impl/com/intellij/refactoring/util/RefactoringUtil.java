@@ -464,7 +464,7 @@ public class RefactoringUtil {
     if (refClass instanceof PsiAnonymousClass) {
       type = ((PsiAnonymousClass)refClass).getBaseClassType();
     }
-    if (type == PsiType.NULL) {
+    if (PsiType.NULL.equals(type)) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(expr.getProject()).getExpectedTypes(expr, false);
       if (infos.length == 1) {
         type = infos[0].getType();

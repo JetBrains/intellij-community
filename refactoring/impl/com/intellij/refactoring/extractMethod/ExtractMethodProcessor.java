@@ -345,8 +345,8 @@ public class ExtractMethodProcessor implements MatchProvider {
         for (PsiStatement exitStatement : myExitStatements) {
           if (exitStatement instanceof PsiReturnStatement) {
             final PsiExpression returnValue = ((PsiReturnStatement)exitStatement).getReturnValue();
-            myNullConditionalCheck &= returnValue == null || returnValue instanceof PsiLiteralExpression &&
-                                      returnValue.getType() == PsiType.NULL;
+            myNullConditionalCheck &= returnValue == null ||
+                                      returnValue instanceof PsiLiteralExpression && PsiType.NULL.equals(returnValue.getType());
           }
         }
         myNullConditionalCheck &= isNotNull(myOutputVariables[0]);

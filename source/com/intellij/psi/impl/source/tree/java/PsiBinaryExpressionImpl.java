@@ -134,7 +134,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
       return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
     }
     if (sign == JavaTokenType.LTLT || sign == JavaTokenType.GTGT || sign == JavaTokenType.GTGTGT) {
-      if (lType == PsiType.BYTE || lType == PsiType.CHAR || lType == PsiType.SHORT) {
+      if (PsiType.BYTE.equals(lType) || PsiType.CHAR.equals(lType) || PsiType.SHORT.equals(lType)) {
         return PsiType.INT;
       }
       return lType;
@@ -154,8 +154,8 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
       if (rType instanceof PsiClassType) rType = PsiPrimitiveType.getUnboxedType(rType);
 
       if (lType == null && rType == null) return null;
-      if (lType == PsiType.BOOLEAN || rType == PsiType.BOOLEAN) return PsiType.BOOLEAN;
-      if (lType == PsiType.LONG || rType == PsiType.LONG) return PsiType.LONG;
+      if (PsiType.BOOLEAN.equals(lType) || PsiType.BOOLEAN.equals(rType)) return PsiType.BOOLEAN;
+      if (PsiType.LONG.equals(lType) || PsiType.LONG.equals(rType)) return PsiType.LONG;
       return PsiType.INT;
     }
     LOG.assertTrue(false);

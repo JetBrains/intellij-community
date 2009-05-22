@@ -59,7 +59,7 @@ public class PropertyUtil {
           && (methodName.length() == "get".length() + 1 || Character.isLowerCase(methodName.charAt("get".length() + 1)))) {
         return false;
       }
-      if (returnType != null && returnType == PsiType.VOID) return false;
+      if (returnType != null && PsiType.VOID.equals(returnType)) return false;
     }
     else if (methodName.startsWith("is")) {
       return isBoolean(returnType);
@@ -87,7 +87,7 @@ public class PropertyUtil {
 
     final PsiType returnType = method.getReturnType();
 
-    if (returnType == null || returnType == PsiType.VOID) {
+    if (returnType == null || PsiType.VOID.equals(returnType)) {
       return true;
     }
 
@@ -313,7 +313,8 @@ public class PropertyUtil {
   }
 
   private static boolean isBoolean(@Nullable PsiType propertyType) {
-    return propertyType == PsiType.BOOLEAN || propertyType != null && CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyType.getCanonicalText());
+    return PsiType.BOOLEAN.equals(propertyType) ||
+           propertyType != null && CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyType.getCanonicalText());
   }
 
   @NonNls
@@ -576,9 +577,10 @@ public class PropertyUtil {
       final PsiStatement[] statements = body == null? null : body.getStatements();
       final PsiStatement statement = statements == null || statements.length != 1? null : statements[0];
       final PsiElement target;
-      if (returnType == PsiType.VOID) {
-        final PsiExpression expression = statement instanceof PsiExpressionStatement? ((PsiExpressionStatement)statement).getExpression() : null;
-        target = expression instanceof PsiAssignmentExpression? ((PsiAssignmentExpression)expression).getLExpression() : null;
+      if (PsiType.VOID.equals(returnType)) {
+        final PsiExpression expression =
+          statement instanceof PsiExpressionStatement ? ((PsiExpressionStatement)statement).getExpression() : null;
+        target = expression instanceof PsiAssignmentExpression ? ((PsiAssignmentExpression)expression).getLExpression() : null;
       }
       else {
         target = statement instanceof PsiReturnStatement ? ((PsiReturnStatement)statement).getReturnValue() : null;

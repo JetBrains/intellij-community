@@ -112,7 +112,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       return false;
     }
 
-    if (!invokedOnDeclaration && typeByExpression == PsiType.VOID) {
+    if (!invokedOnDeclaration && PsiType.VOID.equals(typeByExpression)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, message, editor);
       return false;

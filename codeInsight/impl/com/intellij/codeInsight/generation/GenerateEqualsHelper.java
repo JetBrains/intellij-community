@@ -174,7 +174,7 @@ public class GenerateEqualsHelper implements Runnable {
             addArrayEquals(buffer, field);
           }
           else if (type instanceof PsiPrimitiveType) {
-            if (type == PsiType.DOUBLE || type == PsiType.FLOAT) {
+            if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
               addDoubleFieldComparison(buffer, field);
             }
             else {
@@ -205,7 +205,7 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private void addDoubleFieldComparison(final StringBuffer buffer, final PsiField field) {
-    @NonNls final String type = field.getType() == PsiType.DOUBLE ? "Double" : "Float";
+    @NonNls final String type = PsiType.DOUBLE.equals(field.getType()) ? "Double" : "Float";
     final Object[] parameters = new Object[]{type, myClassInstanceName, field.getName()};
     DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
   }
@@ -381,7 +381,7 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private static void addTempAssignment(PsiField field, StringBuilder buffer, String tempName) {
-    if (field.getType() == PsiType.DOUBLE) {
+    if (PsiType.DOUBLE.equals(field.getType())) {
       buffer.append(tempName);
       addTempForDoubleInitialization(field, buffer);
     }
@@ -397,7 +397,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   private String addTempDeclaration(@NonNls StringBuilder buffer, boolean resultDeclarationCompleted) {
     for (PsiField hashCodeField : myHashCodeFields) {
-      if (PsiType.DOUBLE == hashCodeField.getType()) {
+      if (PsiType.DOUBLE.equals(hashCodeField.getType())) {
         final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
         if (!resultDeclarationCompleted) {
           buffer.append("\n;");
@@ -413,7 +413,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   @SuppressWarnings("HardCodedStringLiteral")
   private String addTempForOneField(PsiField field, StringBuilder buffer) {
-    if (field.getType() == PsiType.DOUBLE) {
+    if (PsiType.DOUBLE.equals(field.getType())) {
       final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
       CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
       if (settings.GENERATE_FINAL_LOCALS) {

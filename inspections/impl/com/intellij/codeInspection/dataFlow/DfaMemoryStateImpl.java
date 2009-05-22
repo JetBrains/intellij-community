@@ -325,7 +325,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return cacheable((DfaConstValue)valueToWrap);
     }
     else if (valueToWrap instanceof DfaVariableValue) {
-      if (((DfaVariableValue)valueToWrap).getPsiVariable().getType() == PsiType.BOOLEAN) return true;
+      if (PsiType.BOOLEAN.equals(((DfaVariableValue)valueToWrap).getPsiVariable().getType())) return true;
       List<DfaValue> values = ((DfaMemoryStateImpl)memoryState).getEqClassesFor(valueToWrap);
       for (DfaValue value : values) {
         if (value instanceof DfaConstValue && cacheable((DfaConstValue)value)) return true;

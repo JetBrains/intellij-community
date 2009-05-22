@@ -35,7 +35,7 @@ public class HighlightControlFlowUtil {
     PsiCodeBlock body = method.getBody();
     if (body == null
         || method.getReturnType() == null
-        || PsiType.VOID == method.getReturnType()) {
+        || PsiType.VOID.equals(method.getReturnType())) {
       return null;
     }
     // do not compute constant expressions for if() statement condition

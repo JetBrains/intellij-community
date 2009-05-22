@@ -349,7 +349,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       return false;
     }
 
-    if(originalType == PsiType.VOID) {
+    if (PsiType.VOID.equals(originalType)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, editor, message);
       return false;

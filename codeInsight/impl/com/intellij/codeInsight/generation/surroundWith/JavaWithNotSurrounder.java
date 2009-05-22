@@ -11,7 +11,7 @@ import com.intellij.util.IncorrectOperationException;
 
 class JavaWithNotSurrounder extends JavaExpressionSurrounder{
   public boolean isApplicable(PsiExpression expr) {
-    return PsiType.BOOLEAN == expr.getType();
+    return PsiType.BOOLEAN.equals(expr.getType());
   }
 
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {

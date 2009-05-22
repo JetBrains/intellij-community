@@ -517,7 +517,7 @@ public class HighlightUtil {
     }
     else {
       PsiType returnType = method != null ? method.getReturnType() : null/*JSP page returns void*/;
-      boolean isMethodVoid = returnType == null || PsiType.VOID == returnType;
+      boolean isMethodVoid = returnType == null || PsiType.VOID.equals(returnType);
       final PsiExpression returnValue = statement.getReturnValue();
       if (returnValue != null) {
         PsiType valueType = returnValue.getType();
@@ -899,7 +899,7 @@ public class HighlightUtil {
         String message =
           JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), formatType(type));
         errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
-        if (PsiType.LONG == type || PsiType.FLOAT == type || PsiType.DOUBLE == type) {
+        if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
           QuickFixAction.registerQuickFixAction(errorResult, new AddTypeCastFix(PsiType.INT, expression));
         }
       }
@@ -1761,7 +1761,8 @@ public class HighlightUtil {
     PsiType rRawType = rType1 instanceof PsiClassType ? ((PsiClassType)rType1).rawType() : rType1;
     boolean assignable = lRawType == null || rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
 
-    String toolTip = JavaErrorMessages.message("incompatible.types.html.tooltip", redIfNotMatch(lRawType, assignable), requredRow,
+    String toolTip = JavaErrorMessages.message("incompatible.types.html.tooltip",
+                                               redIfNotMatch(lRawType, assignable), requredRow,
                                                redIfNotMatch(rRawType, assignable), foundRow);
 
     String description = JavaErrorMessages.message("incompatible.types", formatType(lType1), formatType(rType1));

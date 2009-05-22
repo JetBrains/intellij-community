@@ -357,7 +357,7 @@ public class JavaCompletionContributor extends CompletionContributor {
           }
           else if (scope instanceof PsiMethod){
             final PsiMethod method = (PsiMethod)scope;
-            if(method.isConstructor() || PsiType.VOID == method.getReturnType()) {
+            if(method.isConstructor() || PsiType.VOID.equals(method.getReturnType())) {
               item.setTailType(TailType.SEMICOLON);
             }
             else item.setTailType(TailType.SPACE);

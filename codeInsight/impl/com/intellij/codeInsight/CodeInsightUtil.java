@@ -275,7 +275,7 @@ public class CodeInsightUtil {
                                                                                      arg,
                                                                                      true,
                                                                                      PsiUtil.getLanguageLevel(context));
-                if (substitution == PsiType.NULL || substitution instanceof PsiWildcardType) continue;
+                if (PsiType.NULL.equals(substitution) || substitution instanceof PsiWildcardType) continue;
                 if (substitution == null) {
                   result.add(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
                   return true;

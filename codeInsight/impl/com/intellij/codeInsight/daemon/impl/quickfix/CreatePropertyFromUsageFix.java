@@ -183,7 +183,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     }
     else {
       type = myMethodCall.getArgumentList().getExpressions()[0].getType();
-      if (type == null || type == PsiType.NULL) type = PsiType.getJavaLangObject(manager, myMethodCall.getResolveScope());
+      if (type == null || PsiType.NULL.equals(type)) type = PsiType.getJavaLangObject(manager, myMethodCall.getResolveScope());
       expectedTypes = new PsiType[]{type};
     }
 

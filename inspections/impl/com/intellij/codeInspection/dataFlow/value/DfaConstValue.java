@@ -36,7 +36,7 @@ public class DfaConstValue extends DfaValue {
     @Nullable
     public DfaValue create(PsiLiteralExpression expr) {
       PsiType type = expr.getType();
-      if (type == PsiType.NULL) return dfaNull;
+      if (PsiType.NULL.equals(type)) return dfaNull;
       Object value = expr.getValue();
       if (value == null) return null;
       return createFromValue(value, type);
@@ -72,7 +72,7 @@ public class DfaConstValue extends DfaValue {
       if (value == Boolean.FALSE) return dfaFalse;
 
       if (TypeConversionUtil.isNumericType(type)) {
-        if (type == PsiType.DOUBLE || type == PsiType.FLOAT) {
+        if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
           //double dbVal = type == PsiType.DOUBLE ? ((Double)value).doubleValue() : ((Float)value).doubleValue();
           //// 5.0f == 5
           //if (Math.floor(dbVal) == dbVal) value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);

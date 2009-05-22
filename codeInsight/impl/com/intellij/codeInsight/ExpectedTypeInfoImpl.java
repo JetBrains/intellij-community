@@ -42,18 +42,16 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     this.myTailType = myTailType;
     this.dimCount = dimCount;
 
-    if (type == defaultType) {
-      if (type instanceof PsiClassType) {
-        final PsiClassType psiClassType = (PsiClassType)type;
-        final PsiClass psiClass = psiClassType.resolve();
-        if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-          final PsiType[] parameters = psiClassType.getParameters();
-          if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType) {
-            final PsiType bound = ((PsiWildcardType)parameters[0]).getExtendsBound();
-            if (bound instanceof PsiClassType) {
-              final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-              defaultType = factory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + bound.getCanonicalText() + ">", null);
-            }
+    if (type == defaultType && type instanceof PsiClassType) {
+      final PsiClassType psiClassType = (PsiClassType)type;
+      final PsiClass psiClass = psiClassType.resolve();
+      if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
+        final PsiType[] parameters = psiClassType.getParameters();
+        if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType) {
+          final PsiType bound = ((PsiWildcardType)parameters[0]).getExtendsBound();
+          if (bound instanceof PsiClassType) {
+            final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+            defaultType = factory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + bound.getCanonicalText() + ">", null);
           }
         }
       }

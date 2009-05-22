@@ -70,7 +70,7 @@ public class PsiTypesUtil {
       return buffer.toString();
     }
     else if (type instanceof PsiPrimitiveType) {
-      if (PsiType.BOOLEAN == type) {
+      if (PsiType.BOOLEAN.equals(type)) {
         return PsiKeyword.FALSE;
       }
       else {
