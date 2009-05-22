@@ -1,9 +1,8 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.KeyDescriptor;
@@ -19,45 +18,39 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class PropertyFileIndex extends ScalarIndexExtension<FileType> {
+public class PropertyFileIndex extends ScalarIndexExtension<String> {
   public static boolean DEBUG = false;
 
-  @NonNls public static final ID<FileType, Void> NAME = ID.create("PropertyFileIndex");
+  @NonNls public static final ID<String, Void> NAME = ID.create("PropertyFileIndex");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyInputFilter myInputFilter = new MyInputFilter();
-  private final KeyDescriptor<FileType> myKeyDescriptor = new KeyDescriptor<FileType>() {
-    public int getHashCode(FileType value) {
-      return value.getName().hashCode();
+  private final KeyDescriptor<String> myKeyDescriptor = new KeyDescriptor<String>() {
+    public int getHashCode(String value) {
+      return value.hashCode();
     }
 
-    public boolean isEqual(FileType val1, FileType val2) {
+    public boolean isEqual(String val1, String val2) {
       return val1.equals(val2);
     }
 
-    public void save(DataOutput out, FileType value) throws IOException {
-      out.writeUTF(value.getName());
+    public void save(DataOutput out, String value) throws IOException {
+      out.writeUTF(value);
     }
 
-    public FileType read(DataInput in) throws IOException {
-      final String s = in.readUTF();
-      for (FileType type : FileTypeManager.getInstance().getRegisteredFileTypes()) {
-        if (type.getName().equals(s)) {
-          return type;
-        }
-      }
-      throw new AssertionError(s);
+    public String read(DataInput in) throws IOException {
+      return in.readUTF();
     }
   };
 
-  public ID<FileType,Void> getName() {
+  public ID<String,Void> getName() {
     return NAME;
   }
 
-  public DataIndexer<FileType, Void, FileContent> getIndexer() {
+  public DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
-  public KeyDescriptor<FileType> getKeyDescriptor() {
+  public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
@@ -70,12 +63,12 @@ public class PropertyFileIndex extends ScalarIndexExtension<FileType> {
   }
 
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
-  private static class MyDataIndexer implements DataIndexer<FileType, Void, FileContent> {
+  private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
     @NotNull
-    public Map<FileType, Void> map(final FileContent inputData) {
+    public Map<String, Void> map(final FileContent inputData) {
       final FileType fileType = inputData.getFileType();
       if (DEBUG) {
         System.out.println("FileTypeIndex$MyDataIndexer.map");
@@ -83,7 +76,7 @@ public class PropertyFileIndex extends ScalarIndexExtension<FileType> {
         System.out.println("fileType = " + fileType);
       }
 
-      return Collections.singletonMap(fileType, null);
+      return Collections.singletonMap(fileType.getName(), null);
     }
   }
 

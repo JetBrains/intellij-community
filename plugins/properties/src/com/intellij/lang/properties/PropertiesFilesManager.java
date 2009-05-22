@@ -57,11 +57,11 @@ public class PropertiesFilesManager {
 
   @Deprecated
   public static Collection<VirtualFile> getAllPropertiesFiles() {
-    return FileBasedIndex.getInstance().getContainingFiles(PropertyFileIndex.NAME, PropertiesFileType.FILE_TYPE, VirtualFileFilter.ALL);
+    return FileBasedIndex.getInstance().getContainingFiles(PropertyFileIndex.NAME, PropertiesFileType.FILE_TYPE.getName(), VirtualFileFilter.ALL);
   }
 
   public static Collection<VirtualFile> getAllPropertiesFiles(@NotNull Project project) {
-    return FileBasedIndex.getInstance().getContainingFiles(PropertyFileIndex.NAME, PropertiesFileType.FILE_TYPE, GlobalSearchScope.allScope(project));
+    return FileBasedIndex.getInstance().getContainingFiles(PropertyFileIndex.NAME, PropertiesFileType.FILE_TYPE.getName(), GlobalSearchScope.allScope(project));
   }
 
 }
