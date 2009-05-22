@@ -12,7 +12,10 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.Descriptor;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
@@ -652,7 +655,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     for (Descriptor descriptor : myDescriptors.keySet()) {
       final List<Descriptor> descriptors = myDescriptors.get(descriptor);
-      if (descriptor.getTool() != null && !(descriptor.getTool()instanceof LocalInspectionToolWrapper)) continue;
       if (filter != null && filter.length() > 0 && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quated)) {
         continue;
       }
