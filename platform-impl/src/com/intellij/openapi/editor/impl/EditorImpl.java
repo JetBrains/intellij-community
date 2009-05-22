@@ -290,7 +290,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!ourIsUnitTestMode) {
       UiNotifyConnector.doWhenFirstShown(myEditorComponent, new Runnable() {
         public void run() {
-          if (!isDisposed()) {
+          if (!isDisposed() && !myScrollingModel.isScrollingNow()) {
             myScrollingModel.disableAnimation();
             myScrollingModel.scrollHorizontally(0);
             myScrollingModel.enableAnimation();

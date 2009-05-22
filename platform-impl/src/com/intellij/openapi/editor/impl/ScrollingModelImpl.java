@@ -318,6 +318,10 @@ public class ScrollingModelImpl implements ScrollingModel {
     cancelAnimatedScrolling(true);
   }
 
+  public boolean isScrollingNow() {
+    return myCurrentAnimationRequest != null;
+  }
+
   private class AnimatedScrollingRunnable {
     private static final int SCROLL_DURATION = 150;
     private static final int SCROLL_INTERVAL = 10;
