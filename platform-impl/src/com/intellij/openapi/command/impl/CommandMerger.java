@@ -1,6 +1,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.NoneGroupId;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
@@ -19,7 +20,7 @@ import java.util.*;
  * author: lesya
  */
 
-class CommandMerger {
+public class CommandMerger {
   private final UndoManagerImpl myManager;
   private Object myLastGroupId = null;
   private boolean myIsComplex = false;
@@ -111,7 +112,11 @@ class CommandMerger {
         nextCommandToMerge.myOnlyUndoTransparents && nextCommandToMerge.myHasUndoTransparents) {
       return myAffectedDocuments.equals(nextCommandToMerge.myAffectedDocuments);
     }
-    return !myIsComplex && !nextCommandToMerge.isComplex() && groupId != null && Comparing.equal(myLastGroupId, groupId);
+    return !myIsComplex && !nextCommandToMerge.isComplex() && canMergeGroup(groupId, myLastGroupId);
+  }
+
+  public static boolean canMergeGroup(Object groupId, Object lastGroupId) {
+    return groupId != null && !(groupId instanceof NoneGroupId) && Comparing.equal(lastGroupId, groupId);
   }
 
   boolean isComplex() {

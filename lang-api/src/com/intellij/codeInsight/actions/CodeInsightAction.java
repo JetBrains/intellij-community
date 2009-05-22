@@ -66,7 +66,7 @@ public abstract class CodeInsightAction extends AnAction {
           action.run();
         }
       }
-    }, getCommandName(), editor.getDocument());
+    }, getCommandName(), CommandProcessor.noneGroupId(editor.getDocument()));
   }
 
   public void update(AnActionEvent event) {

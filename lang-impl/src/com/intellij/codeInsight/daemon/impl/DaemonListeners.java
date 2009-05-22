@@ -314,8 +314,12 @@ public class DaemonListeners implements Disposable {
       if (affectedDocument != null) return affectedDocument;
       Object id = event.getCommandGroupId();
 
-      if (id instanceof Document) affectedDocument = (Document)id;
-      if (id instanceof Ref && ((Ref)id).get() instanceof Document) affectedDocument = (Document)((Ref)id).get();
+      if (id instanceof Document) {
+        affectedDocument = (Document)id;
+      }
+      else if (id instanceof Ref && ((Ref)id).get() instanceof Document) {
+        affectedDocument = (Document)((Ref)id).get();
+      }
       return affectedDocument;
     }
 

@@ -60,4 +60,13 @@ public abstract class CommandProcessor {
                              String name,
                              Object groupId,
                              UndoConfirmationPolicy undoConfirmationPolicy, Document document);
+
+  /**
+   * Use this to pass to com.intellij.openapi.command.CommandProcessor#executeCommand(java.lang.Runnable, java.lang.String, java.lang.Object) as groupId
+   * if the command should not be merged with any other
+   * @param param optional
+   */
+  public static NoneGroupId noneGroupId(Object param) {
+    return new NoneGroupId(param);
+  }
 }

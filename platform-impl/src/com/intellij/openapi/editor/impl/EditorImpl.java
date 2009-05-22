@@ -2328,7 +2328,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           processMousePressed(e);
         }
       };
-      myCommandProcessor.executeCommand(myProject, runnable, "", getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument());
+      myCommandProcessor.executeCommand(myProject, runnable, "", CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
     }
     else {
       processMousePressed(e);
@@ -2363,7 +2363,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           processMouseReleased(e);
         }
       };
-      myCommandProcessor.executeCommand(myProject, runnable, "", getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument());
+      myCommandProcessor.executeCommand(myProject, runnable, "", CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
     }
     else {
       processMouseReleased(e);
@@ -3073,7 +3073,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
               }
             }
-          }, EditorBundle.message("move.cursor.command.name"), getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument());
+          }, EditorBundle.message("move.cursor.command.name"), CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
         }
       });
       myTimer.start();

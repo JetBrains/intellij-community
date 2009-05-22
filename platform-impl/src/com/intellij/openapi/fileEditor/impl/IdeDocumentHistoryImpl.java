@@ -5,6 +5,7 @@ import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.impl.CommandMerger;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
@@ -214,7 +215,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     if (myCommandStartPlace != null) {
       if (myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
         if (!myBackInProgress) {
-          if (commandGroupId == null || !commandGroupId.equals(myLastGroupId) || commandGroupId instanceof Document) {
+          if (!CommandMerger.canMergeGroup(commandGroupId, myLastGroupId)) {
             putLastOrMerge(myBackPlaces, myCommandStartPlace, BACK_QUEUE_LIMIT);
           }
           if (!myForwardInProgress) {

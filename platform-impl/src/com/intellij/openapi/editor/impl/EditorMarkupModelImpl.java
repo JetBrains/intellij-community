@@ -545,7 +545,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             doMouseClicked(e);
           }
         },
-        EditorBundle.message("move.caret.command.name"), getDocument(), UndoConfirmationPolicy.DEFAULT, getDocument()
+        EditorBundle.message("move.caret.command.name"), CommandProcessor.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument()
       );
     }
 

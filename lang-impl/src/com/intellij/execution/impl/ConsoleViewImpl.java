@@ -263,7 +263,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
           public void run() {
             document.deleteString(0, document.getTextLength());
           }
-        }, null, document);
+        }, null, CommandProcessor.noneGroupId(document));
       }
     });
   }
@@ -443,7 +443,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
               fireChange();
             }
           }
-        }, null, document);
+        }, null, CommandProcessor.noneGroupId(document));
       }
     });
     myPsiDisposedCheck.performCheck();
