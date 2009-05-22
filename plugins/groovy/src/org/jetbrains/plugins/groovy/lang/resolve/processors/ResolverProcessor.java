@@ -1,20 +1,22 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -28,9 +30,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author ven
@@ -111,12 +113,12 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return myCandidates.toArray(new GroovyResolveResult[myCandidates.size()]);
   }
 
-  public <T> T getHint(Class<T> hintClass) {
-    if (NameHint.class == hintClass && myName != null) {
+  public <T> T getHint(Key<T> hintKey) {
+    if (NameHint.KEY == hintKey && myName != null) {
       return (T) this;
-    } else if (ClassHint.class == hintClass) {
+    } else if (ClassHint.KEY == hintKey) {
       return (T) this;
-    } else if (ElementClassHint.class == hintClass) {
+    } else if (ElementClassHint.KEY == hintKey) {
       return (T) this;
     }
 
@@ -161,4 +163,5 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     //todo[DIANA] implement me!
     return myName;
   }
+
 }
