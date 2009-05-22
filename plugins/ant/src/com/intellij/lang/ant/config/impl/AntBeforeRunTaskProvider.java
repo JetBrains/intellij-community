@@ -31,6 +31,9 @@ public class AntBeforeRunTaskProvider implements BeforeRunTaskProvider<AntBefore
 
   public String getDescription(final RunConfiguration runConfiguration, AntBeforeRunTask task) {
     final String targetName = task.getTargetName();
+    if (targetName == null && !task.isEnabled()) {
+      return AntBundle.message("ant.target.before.run.description.empty");
+    }
     return AntBundle.message("ant.target.before.run.description", targetName != null? targetName : "<not selected>");
   }
 

@@ -140,19 +140,20 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
       else {
         add(Box.createHorizontalBox(), gc);
       }
-      enableSettings();
+      enableSettings(provider, runConfiguration, beforeRunTask);
       myCheckBox.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           beforeRunTask.setEnabled(myCheckBox.isSelected());
-          enableSettings();
+          enableSettings(provider, runConfiguration, beforeRunTask);
         }
       });
     }
 
-    private void enableSettings() {
+    private void enableSettings(BeforeRunTaskProvider<BeforeRunTask> provider, final RunConfiguration runConfiguration, final BeforeRunTask task) {
       if (myButton != null) {
         myButton.setEnabled(myCheckBox.isSelected());
       }
+      myCheckBox.setText(provider.getDescription(runConfiguration, task));
     }
   }
 }
