@@ -41,6 +41,7 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
       new BracePair(GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN, GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN, false),
 
       new BracePair(GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, GroovyTokenTypes.mGSTRING_SINGLE_END, false),
+      new BracePair(GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, GroovyTokenTypes.mWRONG_GSTRING_LITERAL, false),
       new BracePair(GroovyTokenTypes.mREGEX_BEGIN, GroovyTokenTypes.mREGEX_END, false)
   };
 
@@ -56,7 +57,8 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
         || tokenType == GroovyTokenTypes.mCOMMA
         || tokenType == GroovyTokenTypes.mRPAREN
         || tokenType == GroovyTokenTypes.mRBRACK
-        || tokenType == GroovyTokenTypes.mRCURLY;
+        || tokenType == GroovyTokenTypes.mRCURLY
+        || tokenType == GroovyTokenTypes.mWRONG_GSTRING_LITERAL;
   }
 
   public int getCodeConstructStart(PsiFile file, int openingBraceOffset) {
