@@ -129,39 +129,40 @@ public class SingleInspectionProfilePanel extends JPanel {
 
 
   private void wereToolSettingsModified() {
-    for (Descriptor key : myDescriptors.keySet()) {
-      for (Descriptor descriptor : myDescriptors.get(key)) {
-        if (mySelectedProfile.getErrorLevel(descriptor.getKey(), descriptor.getScope()) != descriptor.getLevel()) {
-          myModified = true;
-          return;
-        }
-        InspectionProfileEntry tool = descriptor.getTool();
-        if (tool != null) {
-          if (mySelectedProfile.isToolEnabled(descriptor.getKey())) {
-            Element oldConfig = descriptor.getConfig();
-            if (oldConfig == null) continue;
-            @NonNls Element newConfig = new Element("options");
-            try {
-              tool.writeSettings(newConfig);
-            }
-            catch (WriteExternalException e) {
-              LOG.error(e);
-            }
-            if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
-              myAlarm.cancelAllRequests();
-              myAlarm.addRequest(new Runnable() {
-                public void run() {
-                  myTree.repaint();
-                }
-              }, 300);
-              myModified = true;
-              return;
-            }
-          }
-        }
+    for (Descriptor defaultDescriptor : myDescriptors.keySet()) {
+      if (wereToolSettingsModified(defaultDescriptor)) return;
+      for (Descriptor descriptor : myDescriptors.get(defaultDescriptor)) {
+        if (wereToolSettingsModified(descriptor)) return;
       }
     }
     myModified = false;
+  }
+
+  private boolean wereToolSettingsModified(Descriptor descriptor) {
+    InspectionProfileEntry tool = descriptor.getTool();
+    if (tool != null) {
+      if (mySelectedProfile.isToolEnabled(descriptor.getKey())) {
+        Element oldConfig = descriptor.getConfig();
+        @NonNls Element newConfig = new Element("options");
+        try {
+          tool.writeSettings(newConfig);
+        }
+        catch (WriteExternalException e) {
+          LOG.error(e);
+        }
+        if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(new Runnable() {
+            public void run() {
+              myTree.repaint();
+            }
+          }, 300);
+          myModified = true;
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private void updateProperSettingsForSelection() {
@@ -722,7 +723,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         chooser.getComboBox().addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope) != chooser.getLevel();
-            mySelectedProfile.setErrorLevel(key, chooser.getLevel(), node.getParent().getIndex(node));
+            mySelectedProfile.setErrorLevel(key, chooser.getLevel(), node.isInspectionNode() ? -1 : node.getParent().getIndex(node));
             if (toUpdate) node.isProperSetting = mySelectedProfile.isProperSetting(key);
           }
         });
