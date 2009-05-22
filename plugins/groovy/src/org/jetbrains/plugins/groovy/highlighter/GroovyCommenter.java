@@ -30,10 +30,6 @@ public class GroovyCommenter implements CodeDocumentationAwareCommenter {
     return "//";
   }
 
-  public boolean isLineCommentPrefixOnZeroColumn() {
-    return false;
-  }
-
   public String getBlockCommentPrefix() {
     return "/*";
   }
