@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -30,7 +31,6 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -227,6 +227,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       result.addAll(myCachedGutters);
       Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
         public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
+          final IntentionAction action1 = o1.getAction();
+          final IntentionAction action2 = o2.getAction();
+          if (action1 instanceof EmptyIntentionAction && !(action2 instanceof EmptyIntentionAction)) return 1;
+          if (action2 instanceof EmptyIntentionAction && !(action1 instanceof EmptyIntentionAction)) return -1;
           int weight1 = myCachedErrorFixes.contains(o1) ? 2 : myCachedInspectionFixes.contains(o1) ? 1 : 0;
           int weight2 = myCachedErrorFixes.contains(o2) ? 2 : myCachedInspectionFixes.contains(o2) ? 1 : 0;
           if (weight1 != weight2) {
@@ -316,7 +320,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
       if (myCachedErrorFixes.contains(value) != myCachedErrorFixes.contains(prev)
         || myCachedInspectionFixes.contains(value) != myCachedInspectionFixes.contains(prev)
-        || myCachedIntentions.contains(value) != myCachedIntentions.contains(prev)) {
+        || myCachedIntentions.contains(value) != myCachedIntentions.contains(prev)
+        || value.getAction() instanceof EmptyIntentionAction != prev.getAction() instanceof EmptyIntentionAction) {
         return new ListSeparator();
       }
       return null;
