@@ -1016,6 +1016,10 @@ public abstract class DialogWrapper {
     return 0l;
   }
 
+  public boolean isToDispatchTypeAhead() {
+    return isOK();   
+  }
+
   private class OkAction extends AbstractAction {
     private OkAction() {
       putValue(NAME, CommonBundle.getOkButtonText());

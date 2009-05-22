@@ -885,8 +885,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       private Context myContextOnFinish;
       private ArrayList<KeyEvent> myEvents = new ArrayList<KeyEvent>();
+      private DialogWrapper myWrapper;
 
       private MyFocusCommand(DialogWrapper wrapper) {
+        myWrapper = getDialogWrapper();
+
         Disposer.register(wrapper.getDisposable(), new Disposable() {
           public void dispose() {
             if (!myTypeAheadDone.isProcessed()) {
@@ -908,18 +911,21 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
 
       public Boolean dispatch(KeyEvent e, Context context) {
-        final DialogWrapper wrapper = getDialogWrapper();
-        if (wrapper == null) return null;
+        if (myWrapper == null) return null;
 
         myEvents.addAll(context.getQueue());
         context.getQueue().clear();
 
-        if (Character.isLetterOrDigit(e.getKeyChar())) {
+        if (isToDipatchToDialogNow(e)) {
+          return false;
+        } else {
           myEvents.add(e);
           return true;
-        } else {
-          return false;
         }
+      }
+
+      private boolean isToDipatchToDialogNow(KeyEvent e) {
+        return e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_ESCAPE || e.getKeyCode() == KeyEvent.VK_TAB;        
       }
 
       public void finish(Context context) {
@@ -927,7 +933,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
 
       private void flushEvents() {
-        myContextOnFinish.dispatch(myEvents);
+        if (myWrapper.isToDispatchTypeAhead()) {
+          myContextOnFinish.dispatch(myEvents);
+        }
       }
     }
   }
