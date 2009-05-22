@@ -107,6 +107,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   };
 
   private FocusCommand myRequestFocusCmd;
+  private ArrayList<FocusCommand> myFocusRequests = new ArrayList<FocusCommand>();
+
   private FocusCommand myUnforcedRequestFocusCmd;
 
   private ArrayList<KeyEvent> myToDispatchOnDone = new ArrayList<KeyEvent>();
@@ -122,6 +124,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private WeakReference<Component> myLastFocusedProjectComponent;
 
   private IdeEventQueue myQueue;
+  private KeyProcessorConext myKeyProcessorContext = new KeyProcessorConext();
 
   /**
    * invoked by reflection
@@ -1542,7 +1545,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public boolean isFocusTransferReady() {
-    return myRequestFocusCmd == null && myUnforcedRequestFocusCmd == null && (myQueue == null || !myQueue.isSuspendMode());
+    return myFocusRequests.isEmpty() && (myQueue == null || !myQueue.isSuspendMode());
   }
 
   private boolean isIdleQueueEmpty() {
@@ -1559,6 +1562,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (myFlushingIdleRequestsEntryCount > 0) return false;
 
     if (!isFocusTransferReady() || !isPendingKeyEventsRedispatched()) {
+      for (FocusCommand each : myFocusRequests) {
+        final KeyEventProcessor processor = each.getProcessor();
+        if (processor != null) {
+          final Boolean result = processor.dispatch(e, myKeyProcessorContext);
+
+          if (result != null) {
+            return result.booleanValue();
+          }
+        }
+      }
+
       myToDispatchOnDone.add(e);
       return true;
     } else {
@@ -1834,12 +1848,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     if (!forced) {
       myUnforcedRequestFocusCmd = command;
+      myFocusRequests.add(command);
+
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          if (myUnforcedRequestFocusCmd == command) {
-            myUnforcedRequestFocusCmd = null;
-          }
-
+          resetUnforcedCommand(command);
           _requestFocus(command, forced, result);
         }
       });
@@ -1860,7 +1873,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void _requestFocus(final FocusCommand command, final boolean forced, final ActionCallback result) {
     if (checkForRejectOrByPass(command, forced, result)) return;
 
-    myRequestFocusCmd = command;
+    setCommand(command);
 
     if (forced) {
       myForcedFocusRequestsAlarm.cancelAllRequests();
@@ -1876,7 +1889,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (myRequestFocusCmd == command) {
           final ActionCallback.TimedOut focusTimeout = new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"),
                                                                                    "Focus command timed out, cmd=" + command,
-                                                                                   command.getAllocation()) {
+                                                                                   command.getAllocation(), true) {
             @Override
             protected void onTimeout() {
               forceFinishFocusSettledown(command, result);
@@ -1897,9 +1910,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
             }
           }).doWhenProcessed(new Runnable() {
             public void run() {
-              if (myRequestFocusCmd == command) {
-                myRequestFocusCmd = null;
-              }
+              resetCommand(command);
 
               if (forced) {
                 myForcedFocusRequestsAlarm.addRequest(new EdtRunnable() {
@@ -1982,21 +1993,33 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void rejectCommand(FocusCommand cmd, ActionCallback callback) {
-    if (myRequestFocusCmd == cmd) {
-      resetCurrentCommand();
-    } else if (myUnforcedRequestFocusCmd == cmd) {
-      resetCurrentUnforcedCommand();
-    }
+    resetCommand(cmd);
+    resetUnforcedCommand(cmd);
 
     callback.setRejected();
   }
 
-  private void resetCurrentCommand() {
-    myRequestFocusCmd = null;
+  private void setCommand(FocusCommand command) {
+    myRequestFocusCmd = command;
+    myFocusRequests.add(command);
   }
 
-  private void resetCurrentUnforcedCommand() {
+  private void resetCommand(FocusCommand cmd) {
+    if (cmd == myRequestFocusCmd) {
+      myRequestFocusCmd = null;
+    }
+
+    final KeyEventProcessor processor = cmd.getProcessor();
+    if (processor != null) {
+      processor.finish(myKeyProcessorContext);
+    }
+
+    myFocusRequests.remove(cmd);
+  }
+
+  private void resetUnforcedCommand(FocusCommand cmd) {
     myUnforcedRequestFocusCmd = null;
+    myFocusRequests.remove(cmd);
   }
 
   private boolean canExecuteOnInactiveApplication(FocusCommand cmd) {
@@ -2089,4 +2112,18 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
+  private class KeyProcessorConext implements KeyEventProcessor.Context {
+    public List<KeyEvent> getQueue() {
+      return myToDispatchOnDone;
+    }
+
+    public void dispatch(final List<KeyEvent> events) {
+      doWhenFocusSettlesDown(new Runnable() {
+        public void run() {
+          myToDispatchOnDone.addAll(events);
+          restartIdleAlarm();
+        }
+      });
+    }
+  }
 }

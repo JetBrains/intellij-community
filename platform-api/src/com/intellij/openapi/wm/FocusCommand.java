@@ -50,6 +50,11 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   }
 
   @Nullable
+  public KeyEventProcessor getProcessor() {
+    return null;
+  }
+
+  @Nullable
   public final Component getDominationComponent() {
     return myDominationComponent;
   }

@@ -62,11 +62,9 @@ public abstract class IdeFocusManager {
   @Nullable
   public abstract Component getFocusedDescendantFor(final Component comp);
 
-  public abstract boolean isFocusTransferInProgress();
-
   public abstract boolean dispatch(KeyEvent e);
 
-  public abstract void suspendKeyProcessingUntil(ActionCallback done);
+  public abstract void suspendKeyProcessingUntil(@NotNull ActionCallback done);
 
   public static IdeFocusManager getInstance(@NotNull Project project) {
     return project.getComponent(IdeFocusManager.class);

@@ -35,16 +35,12 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
     return null;
   }
 
-  public boolean isFocusTransferInProgress() {
-    return false;
-  }
-
   public boolean dispatch(KeyEvent e) {
     return false;
   }
 
   @Override
-  public void suspendKeyProcessingUntil(ActionCallback done) {
+  public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
   }
 
 }

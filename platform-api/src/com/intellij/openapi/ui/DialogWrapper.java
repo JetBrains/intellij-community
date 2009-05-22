@@ -1012,6 +1012,10 @@ public abstract class DialogWrapper {
     }
   }
 
+  public long getTypeAheadTimeoutMs() {
+    return 0l;
+  }
+
   private class OkAction extends AbstractAction {
     private OkAction() {
       putValue(NAME, CommonBundle.getOkButtonText());

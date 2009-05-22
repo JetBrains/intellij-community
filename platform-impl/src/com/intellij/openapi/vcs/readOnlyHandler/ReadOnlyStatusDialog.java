@@ -8,6 +8,7 @@ import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -55,6 +56,11 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     setTitle(VcsBundle.message("dialog.title.clear.read.only.file.status"));
 
     init();
+  }
+
+  @Override
+  public long getTypeAheadTimeoutMs() {
+    return Registry.intValue("actionSystem.typeAheadTimeBeforeDialog");
   }
 
   private void initFileList() {

@@ -4,6 +4,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,13 +18,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.KeyEventProcessor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -63,7 +62,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   private final java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
   private Project myProject;
 
-  private ActionCallback myWindowFocusedCallback = new ActionCallback();
+  private ActionCallback myWindowFocusedCallback = new ActionCallback("DialogFocusedCallback");
+  private ActionCallback myTypeAheadDone = new ActionCallback("DialogTypeAheadDone");
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
@@ -173,10 +173,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   private void createDialog(Window owner, boolean canBeParent) {
     if (owner instanceof Frame) {
-      myDialog = new MyDialog((Frame)owner, myWrapper, myProject, myWindowFocusedCallback);
+      myDialog = new MyDialog((Frame)owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone);
     }
     else {
-      myDialog = new MyDialog((Dialog)owner, myWrapper, myProject, myWindowFocusedCallback);
+      myDialog = new MyDialog((Dialog)owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone);
     }
     myDialog.setModal(true);
     myCanBeParent = canBeParent;
@@ -442,23 +442,26 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     private final WeakReference<Project> myProject;
     private ActionCallback myFocusedCallback;
+    private ActionCallback myTypeAheadDone;
 
-    public MyDialog(Dialog owner, DialogWrapper dialogWrapper, Project project, ActionCallback focused) {
+    public MyDialog(Dialog owner, DialogWrapper dialogWrapper, Project project, ActionCallback focused, ActionCallback typeAheadDone) {
       super(owner);
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
       myProject = project != null ? new WeakReference<Project>(project) : null;
-      initDialog(focused);
+      initDialog(focused, typeAheadDone);
     }
 
-    public MyDialog(Frame owner, DialogWrapper dialogWrapper, Project project, ActionCallback focused) {
+    public MyDialog(Frame owner, DialogWrapper dialogWrapper, Project project, ActionCallback focused, ActionCallback typeAheadDone) {
       super(owner);
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
       myProject = project != null ? new WeakReference<Project>(project) : null;
-      initDialog(focused);
+      initDialog(focused, typeAheadDone);
     }
 
-    private void initDialog(ActionCallback focused) {
+    private void initDialog(ActionCallback focused, ActionCallback typeAheadDone) {
       myFocusedCallback = focused;
+      myTypeAheadDone = typeAheadDone;
+
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
@@ -597,11 +600,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         if (myProject != null) {
           Project project = myProject.get();
           if (project != null && !project.isDisposed() && project.isInitialized()) {
-            IdeFocusManager.getInstance(project).requestFocus(new FocusCommand() {
-              public ActionCallback run() {
-                return myFocusedCallback;
-              }
-            }, false);
+            IdeFocusManager.findInstanceByComponent(this).requestFocus(new MyFocusCommand(dialogWrapper), true);
           }
         }
       }
@@ -754,13 +753,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         }
       }
 
-      public void windowOpened(WindowEvent e) {
+      public void windowOpened(final WindowEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             myOpened = true;
             final DialogWrapper activeWrapper = getActiveWrapper();
             if (activeWrapper == null) {
-              myFocusedCallback.setDone();
+              myFocusedCallback.setRejected();
+              myTypeAheadDone.setRejected();
               return;
             }
 
@@ -776,15 +776,29 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               final JComponent toRequest = toFocus;
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  toRequest.requestFocus();
-                  myFocusedCallback.setDone();
+                  IdeFocusManager.findInstanceByComponent(e.getWindow()).requestFocus(toRequest, true);
+                  notifyFocused(activeWrapper);
                 }
               });
             } else {
-              myFocusedCallback.setDone();
+              notifyFocused(activeWrapper);
             }
           }
         });
+      }
+
+      private void notifyFocused(DialogWrapper wrapper) {
+        myFocusedCallback.setDone();
+        final long timeout = wrapper.getTypeAheadTimeoutMs();
+        if (timeout > 0) {
+          SimpleTimer.getInstance().setUp(new EdtRunnable() {
+            public void runEdt() {
+              myTypeAheadDone.setDone();
+            }
+          }, timeout);
+        } else {
+          myTypeAheadDone.setDone();
+        }
       }
 
       private DialogWrapper getActiveWrapper() {
@@ -867,6 +881,55 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
 
 
+    private class MyFocusCommand extends FocusCommand implements KeyEventProcessor {
+
+      private Context myContextOnFinish;
+      private ArrayList<KeyEvent> myEvents = new ArrayList<KeyEvent>();
+
+      private MyFocusCommand(DialogWrapper wrapper) {
+        Disposer.register(wrapper.getDisposable(), new Disposable() {
+          public void dispose() {
+            if (!myTypeAheadDone.isProcessed()) {
+              myTypeAheadDone.setDone();
+            }
+
+            flushEvents();
+          }
+        });
+      }
+
+      public ActionCallback run() {
+        return myTypeAheadDone;
+      }
+
+      @Override
+      public KeyEventProcessor getProcessor() {
+        return this;
+      }
+
+      public Boolean dispatch(KeyEvent e, Context context) {
+        final DialogWrapper wrapper = getDialogWrapper();
+        if (wrapper == null) return null;
+
+        myEvents.addAll(context.getQueue());
+        context.getQueue().clear();
+
+        if (Character.isLetterOrDigit(e.getKeyChar())) {
+          myEvents.add(e);
+          return true;
+        } else {
+          return false;
+        }
+      }
+
+      public void finish(Context context) {
+        myContextOnFinish = context;
+      }
+
+      private void flushEvents() {
+        myContextOnFinish.dispatch(myEvents);
+      }
+    }
   }
 
   private static void setupSelectionOnPreferredComponent(final JComponent component) {

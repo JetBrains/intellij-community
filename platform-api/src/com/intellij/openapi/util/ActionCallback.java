@@ -23,19 +23,31 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.Timer;
 import java.util.TimerTask;
 
 public class ActionCallback implements Disposable {
   private final ExecutionCallback myDone;
   private final ExecutionCallback myRejected;
 
+  private final String myName;
+
   public ActionCallback() {
+    this(null);
+  }
+
+  public ActionCallback(String name) {
+    myName = name;
     myDone = new ExecutionCallback();
     myRejected = new ExecutionCallback();
   }
 
   public ActionCallback(int countToDone) {
+    this(null, countToDone);
+  }
+
+  public ActionCallback(String name, int countToDone) {
+    myName = name;
+
     assert countToDone >= 1;
 
     myDone = new ExecutionCallback(countToDone);
@@ -121,6 +133,11 @@ public class ActionCallback implements Disposable {
     }
   }
 
+  @Override
+  public String toString() {
+    return myName != null ? myName : super.toString();
+  }
+
   public static class Chunk {
 
     Set<ActionCallback> myCallbacks = new LinkedHashSet<ActionCallback>();
@@ -150,29 +167,31 @@ public class ActionCallback implements Disposable {
 
     private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.ActionCallback.TimedOut");
 
-    private static Timer myTimer = new Timer();
     private Throwable myAllocation;
     private String myMessage;
     private TimerTask myTask;
 
-    public TimedOut(long timeOut, String message, Throwable allocation) {
-      sheduleCheck(timeOut, message, allocation);
+    public TimedOut(long timeOut, String message, Throwable allocation, boolean isEdt) {
+      sheduleCheck(timeOut, message, allocation, isEdt);
     }
 
-    public TimedOut(int countToDone, long timeOut, String message, Throwable allocation) {
+    public TimedOut(int countToDone, long timeOut, String message, Throwable allocation, boolean isEdt) {
       super(countToDone);
-      sheduleCheck(timeOut, message, allocation);
+      sheduleCheck(timeOut, message, allocation, isEdt);
     }
 
-    private void sheduleCheck(long timeOut, final String message, Throwable allocation) {
+    private void sheduleCheck(long timeOut, final String message, Throwable allocation, final boolean isEdt) {
       myMessage = message;
       myAllocation = allocation;
-      myTask = new TimerTask() {
+      myTask = SimpleTimer.getInstance().setUp(new Runnable() {
         public void run() {
-          SwingUtilities.invokeLater(TimedOut.this);
+          if (isEdt) {
+            SwingUtilities.invokeLater(TimedOut.this);
+          } else {
+            TimedOut.this.run();
+          }
         }
-      };
-      myTimer.schedule(myTask, timeOut);
+      }, timeOut);
     }
 
     public final void run() {
