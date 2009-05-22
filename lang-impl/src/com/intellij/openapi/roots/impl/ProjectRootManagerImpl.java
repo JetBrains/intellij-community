@@ -388,6 +388,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
 
       public void exitDumbMode() {
+        if (myProject.isDisposed()) return;
+
         fireBeforeRootsChanged(true, true);
         fireRootsChanged(true, true);
       }
