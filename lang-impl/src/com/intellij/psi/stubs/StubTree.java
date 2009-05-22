@@ -9,13 +9,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -78,11 +81,12 @@ public class StubTree {
   }
 
   @Nullable
-  public static StubTree readFromVFile(final VirtualFile vFile) {
+  public static StubTree readFromVFile(Project project, final VirtualFile vFile) {
     if (DumbService.getInstance().isDumb()) {
-      /*
       try {
-        final StubElement element = createStubElement(project, vFile);
+        final FileContent fc = new FileContent(vFile, vFile.contentsToByteArray());
+        fc.putUserData(FileBasedIndex.PROJECT, project);
+        final StubElement element = StubUpdatingIndex.buildStubTree(fc);
         if (element instanceof PsiFileStub) {
           return new StubTree((PsiFileStub)element);
         }
@@ -90,7 +94,6 @@ public class StubTree {
       catch (IOException e) {
         LOG.error(e);
       }
-      */
       return null;
     }
 

@@ -126,7 +126,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   }
 
   @Nullable
-  private static StubElement buildStubTree(final FileContent inputData) {
+  static StubElement buildStubTree(final FileContent inputData) {
     final FileType fileType = inputData.getFileType();
 
     if (fileType.isBinary()) {

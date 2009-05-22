@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -104,10 +103,6 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   public PsiElement getMirror() {
     synchronized (ClsFileImpl.MIRROR_LOCK) {
       if (myMirror == null) {
-        if (DumbService.getInstance().isDumb()) {
-          return null;
-        }
-
         final ClsFileImpl file = (ClsFileImpl)getContainingFile();
         file.getMirror();
       }

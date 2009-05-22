@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsParameterImpl");
@@ -40,6 +42,10 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
 
   public String getName() {
     if (myName == null) {
+      if (DumbService.getInstance().isDumb()) {
+        return null;
+      }
+      
       ClsMethodImpl method = (ClsMethodImpl)getDeclarationScope();
       PsiMethod sourceMethod = (PsiMethod)method.getNavigationElement();
       if (sourceMethod == method) return null;
@@ -108,6 +114,11 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
   private String getMirrorName() {
     synchronized (LAZY_BUILT_LOCK) {
       if (myMirrorName == null) {
+        PsiParameter[] parms = ((PsiParameterList) getParent()).getParameters();
+        if (DumbService.getInstance().isDumb()) {
+          return "p" + Arrays.asList(parms).indexOf(this);
+        }
+
         @NonNls String name = getName();
         if (name != null) return name;
 
@@ -119,7 +130,6 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
           name = nameSuggestions[0];
         }
 
-        PsiParameter[] parms = ((PsiParameterList) getParent()).getParameters();
         AttemptsLoop:
         while (true) {
           for (PsiParameter parm : parms) {

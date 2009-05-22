@@ -186,7 +186,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
               if (stubTree != null || psiFile != null) {
                 if (stubTree == null) {
-                  stubTree = StubTree.readFromVFile(file);
+                  stubTree = StubTree.readFromVFile(project, file);
                   if (stubTree != null) {
                     final List<StubElement<?>> plained = stubTree.getPlainList();
                     for (int i = 0; i < value.size(); i++) {
