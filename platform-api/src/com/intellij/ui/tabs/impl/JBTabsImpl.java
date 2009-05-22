@@ -1415,8 +1415,9 @@ public class JBTabsImpl extends JComponent
       }
       else {
         alpha = 255;
-        shapeInfo.from = UIUtil.toAlpha(bgColor == null ? Color.white : bgColor, alpha);
-        shapeInfo.to = UIUtil.toAlpha(bgColor == null ? Color.white : bgColor, alpha);
+        final Color tabColor = getActiveTabColor(null);
+        shapeInfo.from = UIUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
+        shapeInfo.to = UIUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
       }
     }
 
@@ -1738,7 +1739,7 @@ public class JBTabsImpl extends JComponent
         }
       }
       else {
-        Color tabFillColor = getActiveTabColor(getActiveTabFillIn());
+        Color tabFillColor = getActiveTabColor(null);
         if (tabFillColor == null) {
           tabFillColor = shape.path.transformY1(shape.to, shape.from);
         }
