@@ -51,7 +51,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       }
     }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.block");
-    final Commenter commenter = getCommenter();
+    final Commenter commenter = findCommenter(myFile, myEditor);
     if (commenter == null) return;
 
     final SelectionModel selectionModel = myEditor.getSelectionModel();
@@ -199,9 +199,14 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
     Language lang = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
 
+    return getCommenter(file, editor, lang);
+  }
+
+  public static Commenter getCommenter(PsiFile file, Editor editor, Language lang) {
     if (lang == null || LanguageCommenters.INSTANCE.forLanguage(lang) == null) {
       lang = file.getLanguage();
     }
+
     final FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider instanceof TemplateLanguageFileViewProvider &&
         lang == ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage()) {
@@ -209,10 +214,6 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     }
 
     return LanguageCommenters.INSTANCE.forLanguage(lang);
-  }
-
-  private Commenter getCommenter() {
-    return findCommenter(myFile, myEditor);
   }
 
   @Nullable

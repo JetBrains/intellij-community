@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.generation;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -19,8 +18,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
@@ -28,6 +25,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CommentByLineCommentHandler implements CodeInsightActionHandler {
@@ -153,7 +151,6 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       myDocument.getCharsSequence(), myDocument.getLineEndOffset(myEndLine), " \t\n"), myFile);
 
     Commenter blockSuitableCommenter = languageSuitableForCompleteFragment == null ? LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage()) : null;
-
     if (blockSuitableCommenter == null && myFile.getFileType() instanceof AbstractFileType) {
       blockSuitableCommenter = new Commenter() {
         final SyntaxTable mySyntaxTable = ((AbstractFileType)myFile.getFileType()).getSyntaxTable();
@@ -287,15 +284,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     int offset = myDocument.getLineStartOffset(line);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
-    final FileViewProvider viewProvider = myFile.getViewProvider();
     final Language language = PsiUtilBase.getLanguageAtOffset(myFile, offset);
-    if (viewProvider instanceof TemplateLanguageFileViewProvider &&
-        language == ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage()) {
-      return LanguageCommenters.INSTANCE.forLanguage(viewProvider.getBaseLanguage());
-    }
-
-    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
-    return commenter == null ? LanguageCommenters.INSTANCE.forLanguage(viewProvider.getBaseLanguage()) : commenter;
+    return CommentByBlockCommentHandler.getCommenter(myFile, myEditor, language);
   }
 
   private Indent computeMinIndent(int line1, int line2, CharSequence chars, CodeStyleManager codeStyleManager, FileType fileType) {
