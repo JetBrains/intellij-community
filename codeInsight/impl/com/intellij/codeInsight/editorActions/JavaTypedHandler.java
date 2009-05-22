@@ -80,10 +80,6 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       handleAfterJavaLT(editor);
       return Result.STOP;
     }
-    final FileType type = getOriginalFileType(file);
-    if (type == StdFileTypes.JAVA && c == '{') {
-      if (handleJavaArrayInitializerLBrace(editor)) return Result.STOP;
-    }
     return Result.CONTINUE;
   }
 
@@ -103,16 +99,6 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     editor.getCaretModel().moveToOffset(offset + 1);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    return true;
-  }
-
-  private static boolean handleJavaArrayInitializerLBrace(final Editor editor) {
-    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
-
-    int offset = editor.getCaretModel().getOffset();
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
-    if (!checkArrayInitializerLBrace(iterator)) return false;
-    editor.getDocument().insertString(offset, "}");
     return true;
   }
 

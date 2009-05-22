@@ -177,7 +177,7 @@ public class TypedHandler implements TypedActionHandler {
 
     myOriginalHandler.execute(editor, charTyped, dataContext);
 
-    if (('(' == charTyped || '[' == charTyped) && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+    if (('(' == charTyped || '[' == charTyped || '{' == charTyped) && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
       handleAfterLParen(editor, fileType, charTyped);
     }
     else if ('}' == charTyped) {
@@ -257,7 +257,8 @@ public class TypedHandler implements TypedActionHandler {
     BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
     if (iterator.atEnd()) return;
     IElementType braceTokenType = iterator.getTokenType();
-    if (!braceMatcher.isLBraceToken(iterator, editor.getDocument().getCharsSequence(), fileType)) return;
+    final CharSequence fileText = editor.getDocument().getCharsSequence();
+    if (!braceMatcher.isLBraceToken(iterator, fileText, fileType)) return;
 
     if (!iterator.atEnd()) {
       iterator.advance();
@@ -267,14 +268,18 @@ public class TypedHandler implements TypedActionHandler {
         return;
       }
 
+      if (!iterator.atEnd() && BraceMatchingUtil.isLBraceToken(iterator, fileText, fileType)) {
+        return;
+      }
+
       iterator.retreat();
     }
 
-    int lparenOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceTokenType, editor.getDocument().getCharsSequence(),fileType);
+    int lparenOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceTokenType, fileText,fileType);
     if (lparenOffset < 0) lparenOffset = 0;
 
     iterator = ((EditorEx)editor).getHighlighter().createIterator(lparenOffset);
-    boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true);
+    boolean matched = BraceMatchingUtil.matchBrace(fileText, fileType, iterator, true);
 
     if (!matched) {
       String text;
@@ -286,6 +291,9 @@ public class TypedHandler implements TypedActionHandler {
       }
       else if (lparenChar == '<') {
         text = ">";
+      }
+      else if (lparenChar == '{') {
+        text = "}";
       }
       else {
         LOG.error("Unknown char "+lparenChar);
