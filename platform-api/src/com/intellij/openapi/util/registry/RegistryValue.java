@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.Disposable;
 
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.MissingResourceException;
 
 public class RegistryValue {
 
@@ -59,25 +60,25 @@ public class RegistryValue {
   }
 
   public boolean isChangedFromDefault() {
-    return !getBundleValue(myKey).equals(asString());
+    return !getBundleValue(myKey, true).equals(asString());
   }
 
   private String get(String key, String defaultValue, boolean isValue) {
     if (isValue) {
       if (myStringCachedValue == null) {
-        myStringCachedValue = _get(key, defaultValue);
+        myStringCachedValue = _get(key, defaultValue, isValue);
       }
 
       return myStringCachedValue;
     } else {
-      return _get(key, defaultValue);
+      return _get(key, defaultValue, isValue);
     }
   }
 
-  private String _get(String key, String defaultValue) {
+  private String _get(String key, String defaultValue, boolean mustExistInBundle) {
     final String userValue = myRegistry.getUserProperties().get(key);
     if (userValue == null) {
-      final String bundleValue = getBundleValue(key);
+      final String bundleValue = getBundleValue(key, mustExistInBundle);
       if (bundleValue != null) {
         return bundleValue;
       } else {
@@ -88,8 +89,17 @@ public class RegistryValue {
     }
   }
 
-  private String getBundleValue(String key) {
-    return myRegistry.getBundle().getString(key);
+  private String getBundleValue(String key, boolean mustExist) {
+    try {
+      return myRegistry.getBundle().getString(key);
+    }
+    catch (MissingResourceException e) {
+      if (mustExist) {
+        throw e;
+      }
+    }
+
+    return null;
   }
 
   public void setValue(String value) {
@@ -117,7 +127,7 @@ public class RegistryValue {
   }
 
   public void resetToDefault() {
-    setValue(getBundleValue(myKey));
+    setValue(getBundleValue(myKey, true));
   }
 
   public void addListener(final RegistryValueListener listener, Disposable parent) {
