@@ -2,7 +2,6 @@ package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -12,8 +11,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -25,8 +22,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -297,24 +292,26 @@ public class RegistryUi implements Disposable {
       myLabel.setIcon(null);
       myLabel.setText(null);
       myLabel.setHorizontalAlignment(JLabel.LEFT);
-      switch (column) {
-        case 0:
-          myLabel.setIcon(v.isRestartRequired() ? RESTART_ICON : null);
-          myLabel.setHorizontalAlignment(JLabel.CENTER);
-          break;
-        case 1:
-          myLabel.setText(v.getKey());
-          break;
-        case 2:
-          myLabel.setText(v.asString());
+      
+      if (v != null) {
+        switch (column) {
+          case 0:
+            myLabel.setIcon(v.isRestartRequired() ? RESTART_ICON : null);
+            myLabel.setHorizontalAlignment(JLabel.CENTER);
+            break;
+          case 1:
+            myLabel.setText(v.getKey());
+            break;
+          case 2:
+            myLabel.setText(v.asString());
+        }
+
+        myLabel.setOpaque(true);
+
+        myLabel.setFont(myLabel.getFont().deriveFont(v.isChangedFromDefault() ? Font.BOLD : Font.PLAIN));
+        myLabel.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
+        myLabel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
       }
-
-      myLabel.setOpaque(true);
-
-      myLabel.setFont(myLabel.getFont().deriveFont(v.isChangedFromDefault() ? Font.BOLD : Font.PLAIN));
-      myLabel.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
-      myLabel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-
 
       return myLabel;
     }
