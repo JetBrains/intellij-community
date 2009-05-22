@@ -62,12 +62,14 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   public V put(K key, V value) {
-    return getMap().put(getKey(key), value == null ? (V)NULL : value);
+    V v = getMap().put(getKey(key), value == null ? (V)NULL : value);
+    return v == NULL ? null : v;
   }
 
   public V remove(Object key) {
     if (myMap == null) return null;
-    return myMap.remove(key);
+    V v = myMap.remove(key);
+    return v == NULL ? null : v;
   }
 
   public Set<K> keySet() {
