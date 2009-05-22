@@ -3,7 +3,7 @@
   <id>com.intellij.appengine</id>
   <description>Provides support for developing Google App Engine applications</description>
   <version>1.1.0.5</version>
-  <idea-version since-build="9000" until-build="10291"/>
+  <idea-version since-build="9000"/>
   <depends>com.intellij.javaee</depends>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <category>Web/JavaEE Technologies</category>
