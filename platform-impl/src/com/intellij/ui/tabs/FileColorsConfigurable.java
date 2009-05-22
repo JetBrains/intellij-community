@@ -2,7 +2,6 @@ package com.intellij.ui.tabs;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.FileColorManager;
@@ -14,7 +13,7 @@ import javax.swing.*;
 /**
  * @author spleaner
  */
-public class FileColorsConfigurable implements Configurable, SearchableConfigurable {
+public class FileColorsConfigurable implements Configurable {
   private Project myProject;
   private FileColorsConfigurablePanel myPanel;
 
@@ -58,13 +57,5 @@ public class FileColorsConfigurable implements Configurable, SearchableConfigura
   public void disposeUIResources() {
     Disposer.dispose(myPanel);
     myPanel = null;
-  }
-
-  public String getId() {
-    return "ColoredTabsConfigurable";
-  }
-
-  public Runnable enableSearch(final String option) {
-    return null;
   }
 }

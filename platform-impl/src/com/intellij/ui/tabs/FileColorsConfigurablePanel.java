@@ -2,6 +2,7 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -199,7 +200,8 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable, L
       final Project project = manager.getProject();
 
       final TableColumn pathColumn = columnModel.getColumn(0);
-      pathColumn.setCellRenderer(new PathCellRenderer(project.getBaseDir().getPath()));
+      final VirtualFile baseDir = project.getBaseDir();
+      pathColumn.setCellRenderer(new PathCellRenderer(baseDir == null ? "" : baseDir.getPath()));
       pathColumn.setMinWidth(300);
 
       final TableColumn colorColumn = columnModel.getColumn(1);
