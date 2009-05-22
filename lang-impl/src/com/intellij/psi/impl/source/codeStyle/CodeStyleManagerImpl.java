@@ -113,7 +113,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
 
   public void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException {
-
     CheckUtil.checkWritable(file);
     if (!SourceTreeToPsiMap.hasTreeElement(file)) {
       return;
@@ -125,17 +124,23 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     FileType fileType = file.getFileType();
     Helper helper = HelperFactory.createHelper(fileType, myProject);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
-    final PsiElement start = findElementInTreeWithFormatterEnabled(file.getContainingFile(), startOffset);
-    final PsiElement end = findElementInTreeWithFormatterEnabled(file.getContainingFile(), endOffset);
+    LOG.assertTrue(file.isValid());
+    final PsiElement start = findElementInTreeWithFormatterEnabled(file, startOffset);
+    final PsiElement end = findElementInTreeWithFormatterEnabled(file, endOffset);
+    if (start != null && !start.isValid()) {
+      LOG.assertTrue(false, "start=" + start + "; file=" + file);
+    }
+    if (end != null && !end.isValid()) {
+      LOG.assertTrue(false, "end=" + start + "; end=" + file);
+    }
 
     boolean formatFromStart = startOffset == 0;
     boolean formatToEnd = endOffset == file.getTextLength();
 
-    final SmartPsiElementPointer startPointer = start == null ? null : SmartPointerManager.getInstance(getProject())
-      .createSmartPsiElementPointer(start);
+    final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
+    final SmartPsiElementPointer startPointer = start == null ? null : smartPointerManager.createSmartPsiElementPointer(start);
 
-    final SmartPsiElementPointer endPointer = end == null ? null : SmartPointerManager.getInstance(getProject())
-      .createSmartPsiElementPointer(end);
+    final SmartPsiElementPointer endPointer = end == null ? null : smartPointerManager.createSmartPsiElementPointer(end);
 
     codeFormatter.processText(file, startOffset, endOffset);
     final PsiElement startElement = startPointer == null ? null : startPointer.getElement();
