@@ -37,6 +37,8 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
     if (scope instanceof GlobalSearchScope) {
       return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         public Boolean compute() {
+          if (!clazz.isValid()) return true;
+
           final PsiClass[] candidates = GroovyCacheUtil.getDeriverCandidates(clazz, (GlobalSearchScope) scope);
           for (PsiClass candidate : candidates) {
             if (candidate.isInheritor(clazz, false)) {
@@ -46,7 +48,7 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
 
           return true;
         }
-      });
+      }).booleanValue();
     }
 
     return true;
