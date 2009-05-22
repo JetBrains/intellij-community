@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -56,7 +57,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
 
   private RefManager myRefManager;
-  private final ContentManager myContentManager;
+  private final NotNullLazyValue<ContentManager> myContentManager;
 
   private AnalysisScope myCurrentScope;
   private final Project myProject;
@@ -84,25 +85,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   private final AnalysisUIOptions myUIOptions;
 
-  public GlobalInspectionContextImpl(Project project, ContentManager contentManager) {
+  public GlobalInspectionContextImpl(Project project, NotNullLazyValue<ContentManager> contentManager) {
     myProject = project;
 
     myUIOptions = AnalysisUIOptions.getInstance(myProject).copy();
     myRefManager = null;
     myCurrentScope = null;
     myContentManager = contentManager;
-    if (myContentManager != null) { //test || offline
-      myContentManager.addContentManagerListener(new ContentManagerAdapter() {
-        public void contentRemoved(ContentManagerEvent event) {
-          if (event.getContent() == myContent){
-            if (myView != null) {
-              close(false);
-            }
-            myContent = null;
-          }
-        }
-      });
-    }
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final GlobalInspectionContextExtension extension = factory.createGlobalInspectionContextExtension();
       myExtensions.put(extension.getID(), extension);
@@ -119,7 +108,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public ContentManager getContentManager() {
-    return myContentManager;
+    return myContentManager.getValue();
   }
 
   public InspectionProfile getCurrentProfile() {
@@ -177,6 +166,17 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
 
   public void addView(InspectionResultsView view, String title) {
+    myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
+      public void contentRemoved(ContentManagerEvent event) {
+        if (event.getContent() == myContent){
+          if (myView != null) {
+            close(false);
+          }
+          myContent = null;
+        }
+      }
+    });
+
     myView = view;
     ContentManager contentManager = getContentManager();
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);

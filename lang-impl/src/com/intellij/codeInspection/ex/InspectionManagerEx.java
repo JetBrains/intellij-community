@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -35,12 +36,36 @@ public class InspectionManagerEx extends InspectionManager {
   private GlobalInspectionContextImpl myGlobalInspectionContext = null;
   private final Project myProject;
   @NonNls private String myCurrentProfileName;
-  private ContentManager myContentManager = null;
+  private final NotNullLazyValue<ContentManager> myContentManager;
 
   private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<GlobalInspectionContextImpl>();
 
   public InspectionManagerEx(Project project) {
     myProject = project;
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myContentManager = new NotNullLazyValue<ContentManager>() {
+        @NotNull
+        @Override
+        protected ContentManager compute() {
+          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+          ToolWindow toolWindow =
+            toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, myProject);
+          ContentManager contentManager = toolWindow.getContentManager();
+          toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
+          new ContentManagerWatcher(toolWindow, contentManager);
+          return contentManager;
+        }
+      };
+    }
+    else {
+      myContentManager = new NotNullLazyValue<ContentManager>() {
+        @NotNull
+        @Override
+        protected ContentManager compute() {
+          return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, myProject);
+        }
+      };
+    }
   }
 
   @NotNull
@@ -104,19 +129,6 @@ public class InspectionManagerEx extends InspectionManager {
   }
 
   public GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
-    if (myContentManager == null) {
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        ToolWindow toolWindow =
-          toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, myProject);
-        myContentManager = toolWindow.getContentManager();
-        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
-        new ContentManagerWatcher(toolWindow, myContentManager);
-      }
-      else {
-        myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, myProject);
-      }
-    }
     if (reuse) {
       if (myGlobalInspectionContext == null) {
         myGlobalInspectionContext = new GlobalInspectionContextImpl(myProject, myContentManager);
