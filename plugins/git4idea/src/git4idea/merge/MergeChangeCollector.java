@@ -113,14 +113,16 @@ public class MergeChangeCollector {
         // and they are merged using TreeSet class (that also sorts the changes).
         File mergeHeadsFile = new File(root, ".git/MERGE_HEAD");
         try {
-          String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, GitConfigUtil.UTF8_ENCODING));
-          for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
-            String head = s.line();
-            if (head.length() == 0) {
-              continue;
+          if (mergeHeadsFile.exists()) {
+            String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, GitConfigUtil.UTF8_ENCODING));
+            for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
+              String head = s.line();
+              if (head.length() == 0) {
+                continue;
+              }
+              // note that "..." cause the diff to start from common parent between head and merge head
+              processDiff(root, updated, created, removed, myStart.getRev() + "..." + head);
             }
-            // note that "..." cause the diff to start from common parent between head and merge head
-            processDiff(root, updated, created, removed, myStart.getRev() + "..." + head);
           }
         }
         catch (IOException e) {
