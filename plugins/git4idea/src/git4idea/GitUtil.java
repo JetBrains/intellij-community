@@ -443,6 +443,9 @@ public class GitUtil {
   public static void refreshFiles(@NotNull final Project project, @NotNull final Collection<VirtualFile> affectedFiles) {
     final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
     for (VirtualFile file : affectedFiles) {
+      if (!file.isValid()) {
+        continue;
+      }
       file.refresh(false, true);
       if (file.isDirectory()) {
         dirty.dirDirtyRecursively(file);
