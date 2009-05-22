@@ -30,10 +30,6 @@ public class PythonCommenter implements Commenter {
     return "#";
   }
 
-  public boolean isLineCommentPrefixOnZeroColumn() {
-    return false;
-  }
-
   public String getBlockCommentPrefix() {
     return null;
   }
