@@ -468,7 +468,9 @@ public class PluginManager {
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
 
     loadDescriptors(PathManager.getPluginsPath(), result);
-    loadDescriptors(PathManager.getPreinstalledPluginsPath(), result);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      loadDescriptors(PathManager.getPreinstalledPluginsPath(), result);
+    }
 
     loadDescriptorsFromProperty(result);
 
