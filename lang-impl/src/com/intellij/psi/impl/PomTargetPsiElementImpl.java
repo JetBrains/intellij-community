@@ -58,7 +58,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
   }
 
   public String getTypeName() {
-    throw new UnsupportedOperationException("Method getTypeName is not yet implemented in " + getClass().getName());
+    throw new UnsupportedOperationException("Method getTypeName is not yet implemented for " + myTarget.getClass().getName() + "; see PomDescriptionProvider");
   }
 
   public Icon getIcon() {
