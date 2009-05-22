@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -747,7 +748,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myScope;
   }
 
-  private class CloseAction extends AnAction {
+  private class CloseAction extends AnAction implements DumbAware {
     private CloseAction() {
       super(CommonBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
     }

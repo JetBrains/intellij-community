@@ -20,10 +20,11 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 
-public class CloseAction extends AnAction {
+public class CloseAction extends AnAction implements DumbAware {
   private RunContentDescriptor myContentDescriptor;
   private final Project myProject;
   private Executor myExecutor;

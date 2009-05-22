@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -34,8 +35,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.*;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
@@ -458,13 +459,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private final class CloseAction extends AnAction {
+  private final class CloseAction extends AnAction implements DumbAware {
     public CloseAction() {
       super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"), IconLoader.getIcon("/actions/cancel.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myUsagesPanel.dispose();
+      Disposer.dispose(myUsagesPanel);
       ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
     }

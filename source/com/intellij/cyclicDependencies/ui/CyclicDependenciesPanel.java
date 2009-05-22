@@ -7,6 +7,7 @@ import com.intellij.cyclicDependencies.actions.CyclicDependenciesHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -19,8 +20,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.*;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -402,13 +403,13 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private final class CloseAction extends AnAction {
+  private final class CloseAction extends AnAction implements DumbAware {
     public CloseAction() {
       super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"), IconLoader.getIcon("/actions/cancel.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myUsagesPanel.dispose();
+      Disposer.dispose(myUsagesPanel);
       ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
     }

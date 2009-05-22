@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -66,7 +67,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider, Cv
     return myAddToolbar ? this : myComponent;
   }
 
-  private class CloseAction extends AnAction {
+  private class CloseAction extends AnAction implements DumbAware {
     public CloseAction() {
       super(com.intellij.CvsBundle.message("close.tab.action.name"), "", IconLoader.getIcon("/actions/cancel.png"));
     }

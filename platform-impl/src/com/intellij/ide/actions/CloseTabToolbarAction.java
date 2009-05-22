@@ -5,9 +5,10 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 
-public abstract class CloseTabToolbarAction extends AnAction {
+public abstract class CloseTabToolbarAction extends AnAction implements DumbAware {
   public CloseTabToolbarAction() {
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
     Presentation presentation = getTemplatePresentation();
