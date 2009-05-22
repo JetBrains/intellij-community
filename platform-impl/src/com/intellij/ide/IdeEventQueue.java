@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProfilingUtil;
@@ -533,13 +532,14 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static boolean typeAheadDispatchToFocusManager(AWTEvent e) {
-    if (e instanceof KeyEvent) {
-      final KeyEvent event = (KeyEvent)e;
-      if (!event.isConsumed()) {
-        final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(event.getComponent());
-          return focusManager.dispatch(event);
-      }
-    }
+    // todo[kirillk]
+    //if (e instanceof KeyEvent) {
+    //  final KeyEvent event = (KeyEvent)e;
+    //  if (!event.isConsumed()) {
+    //    final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(event.getComponent());
+    //      return focusManager.dispatch(event);
+    //  }
+    //}
 
     return false;
   }
