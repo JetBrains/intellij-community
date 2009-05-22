@@ -43,4 +43,9 @@ public class FilterPattern extends ObjectPattern<Object,FilterPattern> {
   public int hashCode() {
     return (myFilter != null ? myFilter.hashCode() : 0);
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + " & " + myFilter;
+  }
 }
