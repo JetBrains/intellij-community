@@ -54,6 +54,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
   public String targets;
   public String scriptPath;
   public String workDir;
+  public String antHome = "";
 
   @NonNls public static final String GANT_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
   @NonNls public static final String GANT_MAIN = "gant.Gant";
@@ -110,6 +111,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     if (!".".equals(wrk)) {
       workDir = wrk;
     }
+    antHome  = JDOMExternalizer.readString(element, "antHome");
     isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
   }
 
@@ -122,6 +124,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     JDOMExternalizer.write(element, "targets", targets);
     JDOMExternalizer.write(element, "workDir", workDir);
     JDOMExternalizer.write(element, "debug", isDebugEnabled);
+    JDOMExternalizer.write(element, "antHome", antHome);
   }
 
   protected ModuleBasedConfiguration createInstance() {
@@ -144,7 +147,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     final String confpath = gantHome + GANT_STARTER_CONF;
 
     // -Dant.home
-    params.getVMParametersList().addParametersString("-Dant.home=");
+    params.getVMParametersList().addParametersString("-Dant.home=" + antHome);
     // -Dgant.home
     params.getVMParametersList().addParametersString(DGANT_HOME + "\"" + gantHome + "\"");
     // -Dscript/name
