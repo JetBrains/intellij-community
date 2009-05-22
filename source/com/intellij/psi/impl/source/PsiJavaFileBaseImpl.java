@@ -194,8 +194,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       myNameToFilter = nameToFilter;
     }
 
-    public <T> T getHint(Class<T> hintClass) {
-      return myDelegate.getHint(hintClass);
+    public <T> T getHint(Key<T> hintKey) {
+      return myDelegate.getHint(hintKey);
     }
 
     public void handleEvent(Event event, Object associated) {
@@ -251,8 +251,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private boolean processDeclarationsNoGuess(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place){
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
-    final NameHint nameHint = processor.getHint(NameHint.class);
+    final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    final NameHint nameHint = processor.getHint(NameHint.KEY);
     final String name = nameHint != null ? nameHint.getName(state) : null;
     if (classHint == null || classHint.shouldProcess(PsiClass.class)){
       if(processor instanceof ClassResolverProcessor){

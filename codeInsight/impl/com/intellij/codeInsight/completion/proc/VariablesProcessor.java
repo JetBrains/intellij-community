@@ -7,6 +7,7 @@
  */
 package com.intellij.codeInsight.completion.proc;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiVariable;
@@ -71,5 +72,14 @@ public class VariablesProcessor
     PsiVariable[] ret = new PsiVariable[myResultList.size()];
     myResultList.toArray(ret);
     return ret;
+  }
+
+  @Override
+  public <T> T getHint(Key<T> hintKey) {
+    if (hintKey == ElementClassHint.KEY) {
+      return (T)this;
+    }
+
+    return super.getHint(hintKey);
   }
 }

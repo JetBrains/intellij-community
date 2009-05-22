@@ -71,9 +71,9 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
-    ElementClassHint classHint = processor.getHint(ElementClassHint.class);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
-      final NameHint nameHint = processor.getHint(NameHint.class);
+      final NameHint nameHint = processor.getHint(NameHint.KEY);
       final String name = nameHint != null ? nameHint.getName(state) : null;
       //"pseudo-imports"
       if (name != null) {

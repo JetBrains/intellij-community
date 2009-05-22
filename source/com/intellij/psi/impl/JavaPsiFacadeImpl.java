@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
@@ -96,14 +98,19 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     myFileManager = new JavaFileManagerImpl(psiManager, projectRootManagerEx, psiManager.getFileManager(), bus);
     myProgressManager = ProgressManager.getInstance();
 
-    psiManager.registerRunnableToRunOnChange(new Runnable() {
-      public void run() {
-        myPackageCache.clear();
+    final PsiModificationTrackerImpl modificationTracker = (PsiModificationTrackerImpl) psiManager.getModificationTracker();
+    psiManager.addTreeChangePreprocessor(new JavaCodeBlockModificationListener(modificationTracker));
+
+    bus.connect().subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
+      private long lastTimeSeen = -1L;
+      public void modificationCountChanged() {
+        final long now = modificationTracker.getOutOfCodeBlockModificationCount();
+        if (lastTimeSeen != now) {
+          lastTimeSeen = now;
+          myPackageCache.clear();
+        }
       }
     });
-
-    PsiModificationTrackerImpl modificationTracker = (PsiModificationTrackerImpl) psiManager.getModificationTracker();
-    psiManager.addTreeChangePreprocessor(new JavaCodeBlockModificationListener(modificationTracker));
 
     startupManager.registerStartupActivity(
       new Runnable() {
@@ -118,7 +125,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
     HelperFactory.setFactory(new JavaHelperFactory());
     JavaElementType.ANNOTATION.getIndex(); // Initialize stubs.
-
     Disposer.register(project, this);
   }
 

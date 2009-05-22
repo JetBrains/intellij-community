@@ -135,7 +135,7 @@ public class PsiImplUtil {
                                                     ResolveState state,
                                                     PsiElement lastParent,
                                                     PsiElement place) {
-    final ElementClassHint hint = processor.getHint(ElementClassHint.class);
+    final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, method);
     if (hint == null || hint.shouldProcess(PsiClass.class)) {
       final PsiTypeParameterList list = method.getTypeParameterList();

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.scope;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -152,5 +153,14 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
 
   public boolean shouldProcess(Class elementClass){
     return myFilter.isClassAcceptable(elementClass);
+  }
+
+  @Override
+  public <T> T getHint(Key<T> hintKey) {
+    if (hintKey == ElementClassHint.KEY) {
+      return (T)this;
+    }
+
+    return super.getHint(hintKey);
   }
 }

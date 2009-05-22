@@ -11,6 +11,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -210,7 +211,7 @@ public class JavaI18nUtil extends I18nUtil {
         return true;
       }
 
-      public <T> T getHint(Class<T> hintClass) {
+      public <T> T getHint(Key<T> hintKey) {
         return null;
       }
 

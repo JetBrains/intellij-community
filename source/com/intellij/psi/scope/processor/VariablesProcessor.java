@@ -1,5 +1,6 @@
 package com.intellij.psi.scope.processor;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiVariable;
@@ -58,5 +59,14 @@ public abstract class VariablesProcessor extends BaseScopeProcessor implements E
 
   public PsiVariable getResult(int i){
     return myResultList.get(i);
+  }
+
+  @Override
+  public <T> T getHint(Key<T> hintKey) {
+    if (hintKey == ElementClassHint.KEY) {
+      return (T)this;
+    }
+
+    return super.getHint(hintKey);
   }
 }

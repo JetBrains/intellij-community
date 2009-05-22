@@ -1,10 +1,11 @@
 package com.intellij.psi.scope.processor;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
+import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
@@ -43,5 +44,14 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
 
   public boolean execute(PsiElement element, ResolveState state) {
     return !myStopAcceptingCandidates && super.execute(element, state);
+  }
+
+  @Override
+  public <T> T getHint(Key<T> hintKey) {
+    if (hintKey == ElementClassHint.KEY) {
+      return (T)this;
+    }
+
+    return super.getHint(hintKey);
   }
 }

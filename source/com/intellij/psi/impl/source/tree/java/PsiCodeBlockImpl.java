@@ -190,9 +190,9 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     boolean conflict = pair == null;
     final Set<String> classesSet = conflict ? null : pair.getFirst();
     final Set<String> variablesSet = conflict ? null : pair.getSecond();
-    final NameHint hint = processor.getHint(NameHint.class);
+    final NameHint hint = processor.getHint(NameHint.KEY);
     if (hint != null && !conflict) {
-      final ElementClassHint elementClassHint = processor.getHint(ElementClassHint.class);
+      final ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
       final String name = hint.getName(state);
       if ((elementClassHint == null || elementClassHint.shouldProcess(PsiClass.class)) && classesSet.contains(name)) {
         return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);

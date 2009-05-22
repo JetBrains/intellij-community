@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.scope;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,6 @@ public interface PsiScopeProcessor {
   boolean execute(PsiElement element, ResolveState state);
 
   @Nullable
-  <T> T getHint(Class<T> hintClass);
+  <T> T getHint(Key<T> hintKey);
   void handleEvent(Event event, Object associated);
 }

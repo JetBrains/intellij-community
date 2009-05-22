@@ -20,6 +20,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -100,8 +101,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
           return !(element instanceof PsiClass || element instanceof PsiPackage) || processor.execute(element, state);
         }
 
-        public <V> V getHint(Class<V> hintClass) {
-          return processor.getHint(hintClass);
+        public <V> V getHint(Key<V> hintKey) {
+          return processor.getHint(hintKey);
         }
 
         public void handleEvent(Event event, Object associated) {

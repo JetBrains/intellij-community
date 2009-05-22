@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
@@ -76,5 +77,14 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
     }
 
     return super.execute(element, state);
+  }
+
+  @Override
+  public <T> T getHint(Key<T> hintKey) {
+    if (hintKey == ElementClassHint.KEY) {
+      return (T)this;
+    }
+
+    return super.getHint(hintKey);
   }
 }

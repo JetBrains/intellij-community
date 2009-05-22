@@ -444,8 +444,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
             final PsiMethod valueOfMethod = elementFactory.createMethodFromText("public static " + name + " valueOf(String name) throws IllegalArgumentException {}", this);
             myValueOfMethod = new LightMethod(getManager(), valueOfMethod, this);
           }
-          final NameHint nameHint = processor.getHint(NameHint.class);
-          final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
+          final NameHint nameHint = processor.getHint(NameHint.KEY);
+          final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
           if (nameHint == null || VALUES_METHOD.equals(nameHint.getName(state))) {
             if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
               if (!processor.execute(myValuesMethod, ResolveState.initial())) return false;

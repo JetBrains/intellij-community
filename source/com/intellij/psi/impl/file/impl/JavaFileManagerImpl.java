@@ -43,6 +43,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
   private Set<String> myNontrivialPackagePrefixes = null;
   private boolean myInitialized = false;
   private boolean myDisposed = false;
+  private final PackageIndex myPackageIndex;
 
 
   public JavaFileManagerImpl(final PsiManagerEx manager, final ProjectRootManager projectRootManager, FileManager fileManager, MessageBus bus) {
@@ -84,6 +85,8 @@ public class JavaFileManagerImpl implements JavaFileManager {
         clearNonRepositoryMaps();
       }
     });
+    
+    myPackageIndex = PackageIndex.getInstance(myManager.getProject());
   }
 
   public void initialize() {
@@ -103,7 +106,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
   @Nullable
   public PsiPackage findPackage(@NotNull String packageName) {
-    Query<VirtualFile> dirs = PackageIndex.getInstance(myManager.getProject()).getDirsByPackageName(packageName, false);
+    Query<VirtualFile> dirs = myPackageIndex.getDirsByPackageName(packageName, false);
     if (dirs.findFirst() == null) return null;
     return new PsiPackageImpl(myManager, packageName);
   }

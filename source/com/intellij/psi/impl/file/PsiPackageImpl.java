@@ -33,16 +33,18 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.refactoring.rename.RenameUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiPackageImpl");
@@ -50,6 +52,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   private final PsiManagerEx myManager;
   private final String myQualifiedName;
   private volatile CachedValue<PsiModifierList> myAnnotationList;
+
+  private volatile Set<String> myPublicClassNamesCache;
+  private final Object myPublicClassNamesCacheLock = new String("package classnames cache lock");
+  private static final boolean NOT_IN_TESTS = !ApplicationManager.getApplication().isUnitTestMode();
 
   public PsiPackageImpl(PsiManagerEx manager, String qualifiedName) {
     myManager = manager;
@@ -128,7 +134,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       dir.setName(name);
     }
     String nameAfterRename = RenameUtil.getQualifiedNameAfterRename(getQualifiedName(), name);
-    return JavaPsiFacade.getInstance(getProject()).findPackage(nameAfterRename);
+    return getFacade().findPackage(nameAfterRename);
   }
 
   public void checkSetName(@NotNull String name) throws IncorrectOperationException {
@@ -333,7 +339,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   public boolean isValid() {
     if (new DirectoriesSearch().search(GlobalSearchScope.allScope(getProject())).findFirst() != null) return true;
-    return ((JavaPsiFacadeImpl)JavaPsiFacade.getInstance(getProject())).packagePrefixExists(myQualifiedName);
+    return getFacade().packagePrefixExists(myQualifiedName);
   }
 
   public boolean isWritable() {
@@ -389,17 +395,39 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return (JavaPsiFacadeImpl)JavaPsiFacade.getInstance(myManager.getProject());
   }
 
+  private Set<String> buildClassnamesCache() {
+    Set<String> classNames = new THashSet<String>();
+    for (PsiClass aClass: getClasses()) {
+      classNames.add(aClass.getName());
+    }
+    return classNames;
+  }
+
+  private Set<String> getClassNamesCache() {
+    if (myPublicClassNamesCache == null) {
+      synchronized (myPublicClassNamesCacheLock) {
+        if (myPublicClassNamesCache == null) {
+          myPublicClassNamesCache = buildClassnamesCache();
+        }
+      }
+    }
+
+    return myPublicClassNamesCache;
+  }
+
   @NotNull
-  private PsiClass[] findClassesByName(String name, GlobalSearchScope scope) {
+  private PsiClass[] findClassesByName(String name, GlobalSearchScope scope, PsiMigrationImpl migration) {
+    if (NOT_IN_TESTS && migration == null && !getClassNamesCache().contains(name)) return PsiClass.EMPTY_ARRAY;
+
     final String qName = getQualifiedName();
     final String classQName = qName.length() > 0 ? qName + "." + name : name;
-    return JavaPsiFacade.getInstance(myManager.getProject()).findClasses(classQName, scope);
+    return getFacade().findClasses(classQName, scope);
   }
 
   private PsiPackage findSubPackageByName(String name, GlobalSearchScope scope) {
     final String qName = getQualifiedName();
     final String subpackageQName = qName.length() > 0 ? qName + "." + name : name;
-    PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(subpackageQName);
+    PsiPackage aPackage = getFacade().findPackage(subpackageQName);
     if (aPackage == null) return null;
     //if (aPackage.getDirectories(scope).length == 0) return null;
     return aPackage;
@@ -412,18 +440,20 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     GlobalSearchScope scope = place.getResolveScope();
 
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    ElementClassHint classHint = processor.getHint(ElementClassHint.class);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+
+    final JavaPsiFacadeImpl facade = getFacade();
+    final PsiMigrationImpl migration = facade.getCurrentMigration();
 
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
-      NameHint nameHint = processor.getHint(NameHint.class);
+      NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
-        final PsiClass[] classes = findClassesByName(nameHint.getName(state), scope);
+        final PsiClass[] classes = findClassesByName(nameHint.getName(state), scope, migration);
         if (!processClasses(processor, state, place, classes)) return false;
       }
       else {
         PsiClass[] classes = getClasses(scope);
         if (!processClasses(processor, state, place, classes)) return false;
-        final PsiMigrationImpl migration = getFacade().getCurrentMigration();
         if (migration != null) {
           for (PsiClass psiClass : migration.getMigrationClasses(getQualifiedName())) {
             if (!processor.execute(psiClass, state)) {
@@ -434,7 +464,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       }
     }
     if (classHint == null || classHint.shouldProcess(PsiPackage.class)) {
-      NameHint nameHint = processor.getHint(NameHint.class);
+      NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
         PsiPackage aPackage = findSubPackageByName(nameHint.getName(state), scope);
         if (aPackage != null) {
@@ -446,14 +476,14 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         for (PsiPackage pack : packs) {
           final String packageName = pack.getName();
           if (packageName == null) continue;
-          if (!JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
+          if (!facade.getNameHelper().isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
             continue;
           }
           if (!processor.execute(pack, state)) {
             return false;
           }
         }
-        final PsiMigrationImpl migration = getFacade().getCurrentMigration();
+
         if (migration != null) {
           for (PsiPackage aPackage : migration.getMigrationPackages(getQualifiedName())) {
             if (!processor.execute(aPackage, state)) {
@@ -469,8 +499,9 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   private boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiElement place, PsiClass[] classes) {
     boolean placePhysical = place.isPhysical();
 
+    final PsiResolveHelper helper = getFacade().getResolveHelper();
     for (PsiClass aClass : classes) {
-      if (!placePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null)) {
+      if (!placePhysical || helper.isAccessible(aClass, place, null)) {
         if (!processor.execute(aClass, state)) return false;
       }
     }
@@ -525,7 +556,8 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         }
       }
 
-      for (PsiClass aClass : JavaPsiFacade.getInstance(getProject()).findClasses(getQualifiedName() + ".package-info", ProjectScope.getAllScope(getProject()))) {
+      final JavaPsiFacadeImpl facade = getFacade();
+      for (PsiClass aClass : facade.findClasses(getQualifiedName() + ".package-info", ProjectScope.getAllScope(getProject()))) {
         ContainerUtil.addIfNotNull(aClass.getModifierList(), list);
       }
 

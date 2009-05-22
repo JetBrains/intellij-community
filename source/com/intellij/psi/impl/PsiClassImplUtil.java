@@ -356,8 +356,8 @@ public class PsiClassImplUtil {
       return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw, factory);
     }
 
-    final NameHint nameHint = processor.getHint(NameHint.class);
-    final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
+    final NameHint nameHint = processor.getHint(NameHint.KEY);
+    final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
     if (nameHint != null) {
       if (classHint == null || classHint.shouldProcess(PsiField.class)) {
@@ -476,8 +476,8 @@ public class PsiClassImplUtil {
     if (visited == null) visited = new THashSet<PsiClass>();
     if (!visited.add(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
-    final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
-    final NameHint nameHint = processor.getHint(NameHint.class);
+    final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    final NameHint nameHint = processor.getHint(NameHint.KEY);
 
 
     if (classHint == null || classHint.shouldProcess(PsiField.class)) {

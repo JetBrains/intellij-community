@@ -154,10 +154,10 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
+    final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
-      final NameHint nameHint = processor.getHint(NameHint.class);
+      final NameHint nameHint = processor.getHint(NameHint.KEY);
       final String name = nameHint != null ? nameHint.getName(state) : null;
       if (name != null) {
         String qNameImported = myPseudoImports.get(name);

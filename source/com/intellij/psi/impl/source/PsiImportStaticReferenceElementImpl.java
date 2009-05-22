@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
@@ -286,6 +287,15 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
     public String getName(ResolveState state) {
       return getReferenceName();
+    }
+
+    @Override
+    public <T> T getHint(Key<T> hintKey) {
+      if (hintKey == NameHint.KEY) {
+        return (T)this;
+      }
+
+      return super.getHint(hintKey);
     }
   }
 

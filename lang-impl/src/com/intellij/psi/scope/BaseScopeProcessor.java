@@ -1,16 +1,11 @@
 package com.intellij.psi.scope;
 
-import com.intellij.util.ReflectionCache;
+import com.intellij.openapi.util.Key;
 
 public abstract class BaseScopeProcessor implements PsiScopeProcessor{
 
-  public <T> T getHint(Class<T> hintClass) {
-    if (ReflectionCache.isAssignable(hintClass, getClass())){
-      return (T)this;
-    }
-    else{
-      return null;
-    }
+  public <T> T getHint(Key<T> hintKey) {
+    return null;
   }
 
   public void handleEvent(Event event, Object associated){}

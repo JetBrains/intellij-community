@@ -1,5 +1,6 @@
 package com.intellij.psi.scope.processor;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
@@ -84,12 +85,10 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     myName = name;
   }
 
-  public <T> T getHint(Class<T> hintClass) {
-    if (hintClass.equals(NameHint.class)){
-      if(myName == null){
-        return null;
-      }
+  public <T> T getHint(Key<T> hintKey) {
+    if (hintKey == NameHint.KEY){
+      return myName != null ? (T)this : null;
     }
-    return super.getHint(hintClass);
+    return super.getHint(hintKey);
   }
 }

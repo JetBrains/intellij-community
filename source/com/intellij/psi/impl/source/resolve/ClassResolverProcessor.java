@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
@@ -174,4 +175,12 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     myResult = result;
   }
 
+  @Override
+  public <T> T getHint(Key<T> hintKey) {
+    if (hintKey == ElementClassHint.KEY || hintKey == NameHint.KEY) {
+      return (T)this;
+    }
+
+    return super.getHint(hintKey);
+  }
 }
