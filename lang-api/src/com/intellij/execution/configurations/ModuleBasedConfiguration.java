@@ -50,7 +50,6 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   }
 
   public void setModule(final Module module) {
-    if (module == null) return;
     myModule.setModule(module);
   }
 
