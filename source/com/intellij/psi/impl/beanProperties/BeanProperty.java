@@ -15,7 +15,7 @@ import javax.swing.*;
 
 public class BeanProperty {
 
-  static final Icon ICON = IconLoader.getIcon("/nodes/property.png");
+  public static final Icon ICON = IconLoader.getIcon("/nodes/property.png");
 
   private final PsiMethod myMethod;
 

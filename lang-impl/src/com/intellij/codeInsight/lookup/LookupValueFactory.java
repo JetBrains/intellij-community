@@ -49,8 +49,13 @@ public class LookupValueFactory {
       return myIcon;
     }
 
+    @Override
+    public int hashCode() {
+      return getPresentation().hashCode();
+    }
+
     public boolean equals(Object a) {
-      return a instanceof PresentableLookupValue && ((PresentableLookupValue)a).getPresentation().equals(myName);
+      return a instanceof PresentableLookupValue && ((PresentableLookupValue)a).getPresentation().equals(getPresentation());
     }
   }
 
