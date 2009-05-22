@@ -63,8 +63,10 @@ public abstract class AddScopeAction extends AnAction {
     final int idx = Messages.showChooseDialog(myTree, "Scope:", "Choose Scope",
                                               availableScopes.toArray(new String[availableScopes.size()]), availableScopes.get(0), Messages.getQuestionIcon());
     if (idx == -1) return;
-    final ScopeToolState scopeToolState = getSelectedProfile().addScope(tool, NamedScopesHolder.getScope(project, availableScopes.get(idx)),
-                                                                     descriptor.getLevel(), tool.isEnabledByDefault());
+    final NamedScope chosenScope = NamedScopesHolder.getScope(project, availableScopes.get(idx));
+    final ScopeToolState scopeToolState = getSelectedProfile().addScope(tool, chosenScope,
+                                                                        getSelectedProfile().getErrorLevel(descriptor.getKey(), chosenScope),
+                                                                        getSelectedProfile().isToolEnabled(descriptor.getKey()));
     final Descriptor addedDescriptor = new Descriptor(scopeToolState, getSelectedProfile());
     if (node.getChildCount() == 0) {
       node.add(new InspectionConfigTreeNode(descriptor, scopeToolState, true, true, false));
