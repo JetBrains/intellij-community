@@ -4,12 +4,12 @@
 package com.intellij.psi.impl.source.jsp;
 
 import com.intellij.lang.jsp.IBaseJspManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
@@ -25,12 +25,12 @@ import java.util.Set;
 /**
  * @author peter
  */
-public abstract class JspManager implements ProjectComponent, IBaseJspManager {
+public abstract class JspManager implements IBaseJspManager {
 
   public static final Key<VirtualFile[]> DIRECTORIES_KEY = Key.create("TagDirOriginalDirs");
 
   public static JspManager getInstance(@NotNull Project project) {
-    return project.getComponent(JspManager.class);
+    return ServiceManager.getService(project, JspManager.class);
   }
 
   @NotNull
