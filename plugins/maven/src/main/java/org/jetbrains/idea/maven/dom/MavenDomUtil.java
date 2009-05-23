@@ -12,8 +12,8 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.io.File;
 

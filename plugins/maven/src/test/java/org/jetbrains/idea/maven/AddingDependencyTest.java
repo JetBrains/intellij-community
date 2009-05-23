@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenArtifact;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.project.MavenId;
 
 import java.io.File;
 import java.util.List;

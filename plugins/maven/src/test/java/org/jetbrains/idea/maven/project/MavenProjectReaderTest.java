@@ -7,7 +7,7 @@ import org.apache.maven.model.Build;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.Resource;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.project.MavenId;
 
 import java.io.File;
 import java.util.Arrays;

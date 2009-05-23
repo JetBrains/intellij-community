@@ -26,11 +26,11 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 

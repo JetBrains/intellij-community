@@ -249,13 +249,21 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
         myEmbeddersManager.clearCaches();
 
-        for (MavenProject each : deleted) {
-          unscheduleAllTasks(each);
+        unscheduleAllTasks(deleted);
+
+        // resolve updated, theirs dependents, and dependents of deleted
+        Set<MavenProject> toResolve = new THashSet<MavenProject>(updated);
+        for (MavenProject each : ContainerUtil.concat(updated, deleted)) {
+          toResolve.addAll(myProjectsTree.getDependentProjects(each));
         }
+        scheduleResolve(new ArrayList<MavenProject>(toResolve));
+
+        // import only updated and the dependents
+        Set<MavenProject> toImport = new THashSet<MavenProject>(updated);
         for (MavenProject each : updated) {
-          scheduleResolve(each);
+          toImport.addAll(myProjectsTree.getDependentProjects(each));
         }
-        scheduleImport(updated);
+        scheduleImport(toImport);
       }
 
       @Override
@@ -465,26 +473,21 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  private void scheduleResolve(final MavenProject project) {
+  public void scheduleResolve(final List<MavenProject> projects) {
     runWhenFullyOpen(new Runnable() {
       public void run() {
-        myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(project,
-                                                                                  myProjectsTree,
-                                                                                  getGeneralSettings()));
+        for (MavenProject each : projects) {
+          myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(each,
+                                                                                    myProjectsTree,
+                                                                                    getGeneralSettings()));
+        }
       }
     });
   }
 
   @TestOnly
-  public void scheduleResolveInTests() {
-    scheduleResolveInTests(getProjects());
-  }
-
-  @TestOnly
-  public void scheduleResolveInTests(List<MavenProject> projects) {
-    for (MavenProject each : projects) {
-      scheduleResolve(each);
-    }
+  public void scheduleResolveAllInTests() {
+    scheduleResolve(getProjects());
   }
 
   public void scheduleFoldersResolving() {
@@ -522,10 +525,10 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private void scheduleImport(MavenProject project) {
-    scheduleImport(Collections.singletonList(project));
+    scheduleImport(Collections.singleton(project));
   }
 
-  private void scheduleImport(List<MavenProject> projects) {
+  private void scheduleImport(Set<MavenProject> projects) {
     synchronized (myProjectsToImport) {
       myProjectsToImport.addAll(projects);
     }
@@ -584,23 +587,23 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     }
   }
 
-  private void unscheduleAllTasks(MavenProject project) {
-    MavenProjectsProcessorEmptyTask dummyTask = new MavenProjectsProcessorEmptyTask(project);
+  private void unscheduleAllTasks(List<MavenProject> projects) {
+    for (MavenProject each : projects) {
+      MavenProjectsProcessorEmptyTask dummyTask = new MavenProjectsProcessorEmptyTask(each);
 
-    myProjectsToImport.remove(project);
+      myProjectsToImport.remove(each);
 
-    myResolvingProcessor.removeTask(dummyTask);
-    myPluginsResolvingProcessor.removeTask(dummyTask);
-    myFoldersResolvingProcessor.removeTask(dummyTask);
-    myArtifactsDownloadingProcessor.removeTask(dummyTask);
-    myPostProcessor.removeTask(dummyTask);
+      myResolvingProcessor.removeTask(dummyTask);
+      myPluginsResolvingProcessor.removeTask(dummyTask);
+      myFoldersResolvingProcessor.removeTask(dummyTask);
+      myArtifactsDownloadingProcessor.removeTask(dummyTask);
+      myPostProcessor.removeTask(dummyTask);
+    }
   }
 
   @TestOnly
   public void unscheduleAllTasksInTests() {
-    for (MavenProject each : getProjects()) {
-      unscheduleAllTasks(each);
-    }
+    unscheduleAllTasks(getProjects());
   }
 
   public void waitForReadingCompletion() {

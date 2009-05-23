@@ -555,4 +555,110 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.flushPendingImportRequestsInTests();
     assertModules("project");
   }
+
+  public void testSchedulingResolveOfDependentProjectWhenDependencyChanges() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDeps("m1");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>junit</groupId>" +
+                          "    <artifactId>junit</artifactId>" +
+                          "    <version>4.0</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    myProjectsManager.waitForReadingCompletion();
+    myProjectsManager.waitForResolvingCompletionAndImport();
+
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
+  }
+
+  public void testSchedulingResolveOfDependentProjectWhenDependencyIsDeleted() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
+                                           "<artifactId>m2</artifactId>" +
+                                           "<version>1</version>" +
+
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>junit</groupId>" +
+                                           "    <artifactId>junit</artifactId>" +
+                                           "    <version>4.0</version>" +
+                                           "  </dependency>" +
+                                           "</dependencies>");
+
+    importProject();
+
+    assertModules("project", "m1", "m2");
+
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
+
+    m2.delete(this);
+
+    configConfirmationForYesAnswer(); // should update deps even if module is not removed
+
+    myProjectsManager.waitForReadingCompletion();
+    myProjectsManager.waitForResolvingCompletionAndImport();
+
+    assertModules("project", "m1");
+
+    assertModuleModuleDeps("m1");
+    assertModuleLibDeps("m1", "Maven: test:m2:1");
+  }
 }

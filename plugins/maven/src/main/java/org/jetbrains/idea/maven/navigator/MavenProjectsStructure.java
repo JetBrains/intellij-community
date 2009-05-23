@@ -982,10 +982,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       myPluginInfo = MavenArtifactUtil.readPluginInfo(myProjectsManager.getLocalRepository(), myPlugin.getMavenId());
       if (myPluginInfo == null) {
-        setNameAndDescription(myPlugin.getMavenId().toString(), null);
+        setNameAndDescription(myPlugin.getDisplayString(), null);
       }
       else {
-        setNameAndDescription(myPluginInfo.getGoalPrefix(), null, getPlugin().toString());
+        setNameAndDescription(myPluginInfo.getGoalPrefix(), null, myPlugin.getDisplayString());
       }
       setNodeErrorLevel(myPluginInfo == null ? ErrorLevel.WARNING : ErrorLevel.NONE);
 

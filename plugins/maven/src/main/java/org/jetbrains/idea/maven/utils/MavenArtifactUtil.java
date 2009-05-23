@@ -4,6 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
+import org.jetbrains.idea.maven.project.MavenId;
 
 import java.io.File;
 import java.io.IOException;

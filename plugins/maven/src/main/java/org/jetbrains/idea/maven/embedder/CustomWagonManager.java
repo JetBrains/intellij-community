@@ -9,7 +9,7 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.WagonException;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.project.MavenId;
 
 import java.io.File;
 import java.util.List;
@@ -134,8 +134,8 @@ public class CustomWagonManager extends DefaultWagonManager {
   private String getKey(Artifact artifact) {
     return artifact.getGroupId()
            + ":" + artifact.getArtifactId()
-           + ":" + artifact.getVersion()
            + ":" + artifact.getType()
+           + ":" + artifact.getVersion()
            + ":" + artifact.getClassifier();
   }
 

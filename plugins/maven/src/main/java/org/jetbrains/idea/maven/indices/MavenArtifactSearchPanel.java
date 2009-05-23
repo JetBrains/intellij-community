@@ -9,7 +9,7 @@ import com.intellij.util.Alarm;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.sonatype.nexus.index.ArtifactInfo;
 

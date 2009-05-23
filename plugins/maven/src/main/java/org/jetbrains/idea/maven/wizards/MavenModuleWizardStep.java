@@ -19,7 +19,7 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.project.MavenId;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -368,8 +368,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private String formatProjectString(MavenProject project) {
     if (project == null) return "<none>";
-    MavenId id = project.getMavenId();
-    return id.groupId + ":" + id.artifactId + ":" + id.version;
+    return project.getMavenId().displayString();
   }
 
   @Override

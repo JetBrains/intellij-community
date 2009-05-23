@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.RuntimeInterruptedException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
@@ -395,7 +395,9 @@ public class MavenProjectsTree {
     if (isChanged) {
       writeLock();
       try {
-        if (!isNew) myMavenIdToProjectMapping.remove(mavenProject.getMavenId());
+        if (!isNew) {
+          myMavenIdToProjectMapping.remove(mavenProject.getMavenId());
+        }
       }
       finally {
         writeUnlock();
@@ -417,8 +419,6 @@ public class MavenProjectsTree {
         timestamp = calculateTimestamp(mavenProject, myActiveProfiles, generalSettings);
       }
       myTimestamps.put(mavenProject, timestamp);
-
-      resolveIntermoduleDependencies(mavenProject);
     }
 
     boolean reconnected = isNew;
@@ -507,19 +507,6 @@ public class MavenProjectsTree {
     updateStack.pop();
   }
 
-  private void resolveIntermoduleDependencies(MavenProject mavenProject) {
-    // todo!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // todo!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // todo!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // todo!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    for (MavenArtifact eachDependency : mavenProject.getDependencies()) {
-      MavenProject dependencyProject = findProject(eachDependency.getMavenId());
-      if (dependencyProject != null) {
-        eachDependency.setResolved(new File(dependencyProject.getPath()));
-      }
-    }
-  }
-
   private MavenProjectTimestamp calculateTimestamp(final MavenProject mavenProject,
                                                    final List<String> activeProfiles,
                                                    final MavenGeneralSettings generalSettings) {
@@ -572,49 +559,6 @@ public class MavenProjectsTree {
       if (each.getModulePaths().contains(path)) return true;
     }
     return false;
-  }
-
-  private void connect(MavenProject newAggregator, MavenProject project) {
-    writeLock();
-    try {
-      if (newAggregator != null) {
-        addModule(newAggregator, project);
-      }
-      else {
-        myRootProjects.add(project);
-      }
-    }
-    finally {
-      writeUnlock();
-    }
-  }
-
-  private boolean reconnect(MavenProject newAggregator, MavenProject project) {
-    MavenProject prevAggregator = findAggregator(project);
-
-    if (prevAggregator == newAggregator) return false; 
-
-    writeLock();
-    try {
-      if (prevAggregator != null) {
-        removeModule(prevAggregator, project);
-      }
-      else {
-        myRootProjects.remove(project);
-      }
-
-      if (newAggregator != null) {
-        addModule(newAggregator, project);
-      }
-      else {
-        myRootProjects.add(project);
-      }
-    }
-    finally {
-      writeUnlock();
-    }
-
-    return true;
   }
 
   public void delete(List<VirtualFile> files,
@@ -679,6 +623,49 @@ public class MavenProjectsTree {
     }
 
     updateContext.deleted(project);
+  }
+
+  private void connect(MavenProject newAggregator, MavenProject project) {
+    writeLock();
+    try {
+      if (newAggregator != null) {
+        addModule(newAggregator, project);
+      }
+      else {
+        myRootProjects.add(project);
+      }
+    }
+    finally {
+      writeUnlock();
+    }
+  }
+
+  private boolean reconnect(MavenProject newAggregator, MavenProject project) {
+    MavenProject prevAggregator = findAggregator(project);
+
+    if (prevAggregator == newAggregator) return false;
+
+    writeLock();
+    try {
+      if (prevAggregator != null) {
+        removeModule(prevAggregator, project);
+      }
+      else {
+        myRootProjects.remove(project);
+      }
+
+      if (newAggregator != null) {
+        addModule(newAggregator, project);
+      }
+      else {
+        myRootProjects.add(project);
+      }
+    }
+    finally {
+      writeUnlock();
+    }
+
+    return true;
   }
 
   public List<MavenProject> getRootProjects() {
@@ -817,6 +804,21 @@ public class MavenProjectsTree {
     for (MavenProject each : getProjects()) {
       if (each == project) continue;
       if (id.equals(each.getParentId())) result.add(each);
+    }
+    return result;
+  }
+
+  public List<MavenProject> getDependentProjects(MavenProject project) {
+    MavenId projectId = project.getMavenId();
+    List<MavenProject> result = new ArrayList<MavenProject>();
+    for (MavenProject eachProject : getProjects()) {
+      if (eachProject == project) continue;
+      for (MavenArtifact eachDependency : eachProject.getDependencies()) {
+        if (eachDependency.getMavenId().equals(projectId)) {
+          result.add(eachProject);
+          break;
+        }
+      }
     }
     return result;
   }

@@ -19,7 +19,8 @@ package org.jetbrains.idea.maven.project;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.jetbrains.idea.maven.embedder.CustomArtifact;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.MavenConstants;
+import static org.jetbrains.idea.maven.project.MavenId.append;
 
 import java.io.File;
 import java.io.Serializable;
@@ -82,12 +83,8 @@ public class MavenArtifact implements Serializable {
     return myVersion;
   }
 
-  public String getBaseVersion() {
-    return myBaseVersion;
-  }
-
   public MavenId getMavenId() {
-    return new MavenId(myGroupId, myArtifactId, myVersion, myBaseVersion, myType, myClassifier);
+    return new MavenId(myGroupId, myArtifactId, myVersion);
   }
 
   public String getType() {
@@ -129,32 +126,58 @@ public class MavenArtifact implements Serializable {
     myStubbed = false;
   }
 
+  public String getDisplayStringSimple() {
+    StringBuilder builder = new StringBuilder();
+
+    append(builder, myGroupId);
+    append(builder, myArtifactId);
+    append(builder, myVersion);
+
+    return builder.toString();
+  }
+
+  public String getDisplayStringWithType() {
+    StringBuilder builder = new StringBuilder();
+
+    append(builder, myGroupId);
+    append(builder, myArtifactId);
+    append(builder, myType);
+    append(builder, myVersion);
+
+    return builder.toString();
+  }
+
+  public String getDisplayStringFull() {
+    StringBuilder builder = new StringBuilder();
+
+    append(builder, myGroupId);
+    append(builder, myArtifactId);
+    append(builder, myType);
+    if (myClassifier != null) append(builder, myClassifier);
+    append(builder, myVersion);
+    if (myScope != null) append(builder, myScope);
+
+    return builder.toString();
+  }
+
+  public String getDisplayStringForLibraryName() {
+    StringBuilder builder = new StringBuilder();
+
+    append(builder, myGroupId);
+    append(builder, myArtifactId);
+
+    if (myType != null && !MavenConstants.TYPE_JAR.equals(myType)) append(builder, myType);
+    if (myClassifier != null) append(builder, myClassifier);
+
+    String version = myBaseVersion != null ? myBaseVersion : myVersion;
+    if (version != null) append(builder, version);
+
+    return builder.toString();
+  }
+
   @Override
   public String toString() {
-    return displayStringFull();
-  }
-
-  public String displayStringSimple() {
-    return myGroupId + ":" + myArtifactId + ":" + myVersion;
-  }
-
-  public String displayStringWithType() {
-    return myGroupId + ":" + myArtifactId + ":" + myType + ":" + myVersion;
-  }
-
-  public String displayStringWithTypeAndClassifier() {
-    String result = myGroupId + ":" + myArtifactId + ":" + myType;
-    if (myClassifier != null) result += ":" + myClassifier;
-    result += ":" + myVersion;
-    return result;
-  }
-
-  public String displayStringFull() {
-    String result = myGroupId + ":" + myArtifactId + ":" + myType;
-    if (myClassifier != null) result += ":" + myClassifier;
-    result += ":" + myVersion;
-    if (myScope != null) result += ":" + myScope;
-    return result;
+    return getDisplayStringFull();
   }
 
   @Override

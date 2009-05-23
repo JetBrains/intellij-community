@@ -5,7 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.project.MavenId;
 
 import java.io.File;
 import java.util.ArrayList;

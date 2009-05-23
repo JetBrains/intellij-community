@@ -30,6 +30,7 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenId;
 
 import java.io.File;
 import java.io.Serializable;

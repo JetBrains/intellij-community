@@ -459,14 +459,14 @@ public class MavenProject {
   private static void validateDependencies(State state, List<MavenProjectProblem> result) {
     for (MavenArtifact each : getUnresolvedDependencies(state)) {
       result.add(new MavenProjectProblem(
-        ProjectBundle.message("maven.project.problem.unresolvedDependency", each.displayStringWithType()), false));
+        ProjectBundle.message("maven.project.problem.unresolvedDependency", each.getDisplayStringWithType()), false));
     }
   }
 
   private static void validateExtensions(State state, List<MavenProjectProblem> result) {
     for (MavenArtifact each : getUnresolvedExtensions(state)) {
       result.add(new MavenProjectProblem(
-        ProjectBundle.message("maven.project.problem.unresolvedExtension", each.displayStringSimple()), false));
+        ProjectBundle.message("maven.project.problem.unresolvedExtension", each.getDisplayStringSimple()), false));
     }
   }
 

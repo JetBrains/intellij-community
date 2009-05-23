@@ -10,12 +10,12 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenArtifact;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenArtifact;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 import java.text.MessageFormat;
@@ -67,8 +67,7 @@ public class MavenRootModelAdapter {
       }
       if (e instanceof ModuleOrderEntry) {
         Module m = ((ModuleOrderEntry)e).getModule();
-        if (m == null) continue;
-        if (!MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m)) continue;
+        if (m != null && !MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m)) continue;
       }
       myRootModel.removeOrderEntry(e);
     }
@@ -285,19 +284,19 @@ public class MavenRootModelAdapter {
     return myRootModel.processOrder(new RootPolicy<Library>() {
       @Override
       public Library visitLibraryOrderEntry(LibraryOrderEntry e, Library result) {
-        String name = newType ? makeLibraryName(artifact) : artifact.getMavenId().toString();
+        String name = newType ? makeLibraryName(artifact) : artifact.getDisplayStringForLibraryName();
         return name.equals(e.getLibraryName()) ? e.getLibrary() : result;
       }
     }, null);
   }
 
   private String makeLibraryName(MavenArtifact artifact) {
-    return MAVEN_LIB_PREFIX + artifact.getMavenId().toString();
+    return MAVEN_LIB_PREFIX + artifact.getDisplayStringForLibraryName();
   }
 
   public static boolean isMavenLibrary(Library library) {
     if (library == null) return false;
-    
+
     String name = library.getName();
     return name != null && name.startsWith(MAVEN_LIB_PREFIX);
   }

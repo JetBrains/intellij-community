@@ -30,7 +30,7 @@ import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;

@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.project.MavenId;
 
 import java.util.Set;
 

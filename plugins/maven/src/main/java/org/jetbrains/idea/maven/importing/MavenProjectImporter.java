@@ -101,11 +101,11 @@ public class MavenProjectImporter {
     List<MavenProjectsProcessorPostConfigurationTask> postTasks = new ArrayList<MavenProjectsProcessorPostConfigurationTask>();
 
     mapModulesToMavenProjects();
-    deleteObsoleteModules();
     importModules(postTasks);
     configModuleGroups();
     refreshResolvedArtifacts();
     configSettings();
+    deleteObsoleteModules();
     removeUnusedProjectLibraries();
 
     myModuleModelsProvider.commit(myModuleModel, myRootModelsToCommit.toArray(new ModifiableRootModel[myRootModelsToCommit.size()]));

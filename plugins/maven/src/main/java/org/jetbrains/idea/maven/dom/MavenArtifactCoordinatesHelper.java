@@ -4,7 +4,7 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortMavenArtifactCoordinates;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.project.MavenId;
 
 public class MavenArtifactCoordinatesHelper {
   public static MavenId getId(ConvertContext context) {

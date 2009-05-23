@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
 import org.apache.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.project.MavenId;
 
 import java.io.File;
 import java.util.List;

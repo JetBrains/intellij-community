@@ -21,7 +21,7 @@ import org.apache.maven.model.PluginExecution;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.MavenId;
+import static org.jetbrains.idea.maven.project.MavenId.append;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -90,9 +90,19 @@ public class MavenPlugin implements Serializable {
     return myExecutions;
   }
 
+  public String getDisplayString() {
+    StringBuilder builder = new StringBuilder();
+
+    append(builder, myGroupId);
+    append(builder, myArtifactId);
+    append(builder, myVersion);
+
+    return builder.toString();
+  }
+
   @Override
   public String toString() {
-    return myGroupId + ":" + myArtifactId + ":" + myVersion;
+    return getDisplayString();
   }
 
   @Override

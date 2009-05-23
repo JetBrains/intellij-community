@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import org.jdom.Element;
+import static org.jetbrains.idea.maven.project.MavenId.append;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -82,7 +83,14 @@ public class MavenPluginInfo {
     }
 
     public String getQualifiedGoal() {
-      return myGroupId + ":" + myArtifactId + ":" + myVersion + ":" + myGoal;
+      StringBuilder builder = new StringBuilder();
+
+      append(builder, myGroupId);
+      append(builder, myArtifactId);
+      append(builder, myVersion);
+      append(builder, myGoal);
+
+      return builder.toString();
     }
   }
 }
