@@ -58,18 +58,12 @@
     <applicationConfigurable implementation="org.intellij.plugins.intelliLang.Settings"/>
 
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.ConcatenationInjector"/>
+
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.IntelliLangLanguageInjector"/>
+    <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.inject.LanguageReferenceProvider"/>
+
+    <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.CustomLanguageInjector"
+                    serviceImplementation="org.intellij.plugins.intelliLang.inject.CustomLanguageInjector"/>
   </extensions>
 
-  <application-components>
-    <component>
-      <implementation-class>org.intellij.plugins.intelliLang.inject.formatting.Loader</implementation-class>
-    </component>
-
-  </application-components>
-  
-  <project-components>
-    <component>
-      <implementation-class>org.intellij.plugins.intelliLang.inject.CustomLanguageInjector</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>

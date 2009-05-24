@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.patterns.PsiJavaPatterns;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotationParameterFilter;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Provides references to Language-IDs and RegExp enums for completion.
  */
-final class LanguageReferenceProvider extends PsiReferenceProvider {
+final class LanguageReferenceProvider extends PsiReferenceContributor {
   private final Configuration myConfig = Configuration.getInstance();
 
   private final Computable<String> ANNOTATION_NAME = new Computable<String>() {
@@ -37,34 +38,40 @@ final class LanguageReferenceProvider extends PsiReferenceProvider {
     }
   };
 
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull ProcessingContext context) {
-    if (PsiUtilEx.isStringOrCharacterLiteral(psiElement)) {
-      final PsiLiteralExpression expression = (PsiLiteralExpression)psiElement;
+  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+    registrar.registerReferenceProvider(PsiJavaPatterns.literalExpression(), new PsiReferenceProvider() {
+      @NotNull
+      @Override
+      public PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull ProcessingContext context) {
+        if (PsiUtilEx.isStringOrCharacterLiteral(psiElement)) {
+          final PsiLiteralExpression expression = (PsiLiteralExpression)psiElement;
 
-      final PsiNameValuePair valuePair =
-          PsiTreeUtil.getParentOfType(psiElement, PsiNameValuePair.class, true, PsiStatement.class, PsiMember.class, PsiFile.class);
+          final PsiNameValuePair valuePair =
+              PsiTreeUtil.getParentOfType(psiElement, PsiNameValuePair.class, true, PsiStatement.class, PsiMember.class, PsiFile.class);
 
-      if (AnnotationParameterFilter.isAccepted(valuePair, "value", ANNOTATION_NAME)) {
-        assert valuePair != null;
+          if (AnnotationParameterFilter.isAccepted(valuePair, "value", ANNOTATION_NAME)) {
+            assert valuePair != null;
 
-        final PsiAnnotationMemberValue value = valuePair.getValue();
-        if (value == psiElement) {
-          return new PsiReference[]{new LanguageReference(expression)};
-        }
-      }
-      else {
-        final PsiModifierListOwner owner =
-            AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_DECLARATION);
-        if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
-          final PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(owner, myConfig.getPatternAnnotationPair(), true);
-          if (annotations.length > 0) {
-            final String pattern = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
-            return new PsiReference[]{new RegExpEnumReference(expression, pattern)};
+            final PsiAnnotationMemberValue value = valuePair.getValue();
+            if (value == psiElement) {
+              return new PsiReference[]{new LanguageReference(expression)};
+            }
+          }
+          else {
+            final PsiModifierListOwner owner =
+                AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_DECLARATION);
+            if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
+              final PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(owner, myConfig.getPatternAnnotationPair(), true);
+              if (annotations.length > 0) {
+                final String pattern = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
+                return new PsiReference[]{new RegExpEnumReference(expression, pattern)};
+              }
+            }
           }
         }
+        return PsiReference.EMPTY_ARRAY;
       }
-    }
-    return PsiReference.EMPTY_ARRAY;
+    });
   }
+
 }

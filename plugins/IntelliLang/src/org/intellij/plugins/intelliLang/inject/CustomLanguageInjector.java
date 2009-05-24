@@ -17,29 +17,25 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.*;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -51,38 +47,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * <p/>
  * It also tries to deal with the "glued token" problem by removing or adding whitespace to the prefix/suffix.
  */
-public final class CustomLanguageInjector implements ProjectComponent {
-  private static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
-    public int compare(final TextRange o1, final TextRange o2) {
-      if (o1.intersects(o2)) return 0;
-      return o1.getStartOffset() - o2.getStartOffset();
-    }
-  };
-
+public final class CustomLanguageInjector {
   private final Project myProject;
   private final Configuration myInjectionConfiguration;
 
   @SuppressWarnings({"unchecked"})
   private final List<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> myTempPlaces = new CopyOnWriteArrayList<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>>();
   static final Key<Boolean> HAS_UNPARSABLE_FRAGMENTS = Key.create("HAS_UNPARSABLE_FRAGMENTS");
-  private final MyLanguageInjector myInjector = new MyLanguageInjector(this);
-  private final LanguageReferenceProvider myProvider = new LanguageReferenceProvider();
 
   public CustomLanguageInjector(Project project, Configuration configuration) {
     myProject = project;
     myInjectionConfiguration = configuration;
   }
 
-  public void initComponent() {
-    InjectedLanguageManager.getInstance(myProject).registerMultiHostInjector(myInjector);
-    ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(TrueFilter.INSTANCE, PsiLiteralExpression.class, myProvider);
-  }
-  public void disposeComponent() {
-    InjectedLanguageManager.getInstance(myProject).unregisterMultiHostInjector(myInjector);
-    ReferenceProvidersRegistry.getInstance(myProject).unregisterReferenceProvider(PsiLiteralExpression.class, myProvider);
-  }
-
-  private void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
+  void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     // optimization
     if (place instanceof PsiLiteralExpression && !PsiUtilEx.isStringOrCharacterLiteral(place)) return;
 
@@ -198,17 +176,6 @@ public final class CustomLanguageInjector implements ProjectComponent {
     }
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "IntelliLang.CustomLanguageInjector";
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
   public void addTempInjection(PsiLanguageInjectionHost host, InjectedLanguage selectedValue) {
     final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
     final SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = manager.createSmartPsiElementPointer(host);
@@ -216,46 +183,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
     myTempPlaces.add(Pair.create(pointer, selectedValue));
   }
 
-  private static class MyLanguageInjector implements MultiHostInjector {
-    private final CustomLanguageInjector myInjector;
-
-    MyLanguageInjector(CustomLanguageInjector injector) {
-      myInjector = injector;
-    }
-
-
-    @NotNull
-    public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-      final THashSet<Class<? extends PsiElement>> elements = new THashSet<Class<? extends PsiElement>>();
-      for (CustomLanguageInjectorExtension o : Extensions.getExtensions(CustomLanguageInjectorExtension.EP_NAME)) {
-        o.elementsToInjectIn(elements);
-      }
-      elements.addAll(Arrays.asList(PsiLiteralExpression.class, XmlTag.class, XmlAttributeValue.class, PsiBinaryExpression.class));
-      return Arrays.<Class<? extends PsiElement>>asList(elements.toArray(new Class[elements.size()]));
-    }
-
-    public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement host) {
-      final TreeSet<TextRange> ranges = new TreeSet<TextRange>(RANGE_COMPARATOR);
-      final PsiFile containingFile = host.getContainingFile();
-      myInjector.getInjectedLanguage(host, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
-        public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
-          for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-            if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
-          }
-          for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-            final PsiLanguageInjectionHost host = trinity.first;
-            if (host.getContainingFile() != containingFile) continue;
-            final TextRange textRange = trinity.third;
-            ranges.add(textRange.shiftRight(host.getTextRange().getStartOffset()));
-          }
-          registerInjection(language, list, containingFile, registrar);
-          return true;
-        }
-      });
-    }
-  }
-  private static void addPlaceSafe(MultiHostRegistrar registrar, String prefix, String suffix, PsiLanguageInjectionHost host, TextRange textRange,
-                                   Language language) {
+  private static void addPlaceSafe(MultiHostRegistrar registrar, String prefix, String suffix, PsiLanguageInjectionHost host, TextRange textRange) {
     registrar.addPlace(prefix, suffix, host, textRange);
   }
 
@@ -341,10 +269,10 @@ public final class CustomLanguageInjector implements ProjectComponent {
         final StringBuilder suffix = new StringBuilder(injectedLanguage.getSuffix());
         adjustPrefixAndSuffix(getUnescapedText(host, textRange.substring(host.getText())), prefix, suffix);
 
-        addPlaceSafe(registrar, prefix.toString(), suffix.toString(), host, textRange, language);
+        addPlaceSafe(registrar, prefix.toString(), suffix.toString(), host, textRange);
       }
       else {
-        addPlaceSafe(registrar, injectedLanguage.getPrefix(), injectedLanguage.getSuffix(), host, textRange, language);
+        addPlaceSafe(registrar, injectedLanguage.getPrefix(), injectedLanguage.getSuffix(), host, textRange);
       }
     }
     //try {
@@ -361,7 +289,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
   }
 
   public static CustomLanguageInjector getInstance(Project project) {
-    return project.getComponent(CustomLanguageInjector.class);
+    return ServiceManager.getService(project, CustomLanguageInjector.class);
   }
 
 }
