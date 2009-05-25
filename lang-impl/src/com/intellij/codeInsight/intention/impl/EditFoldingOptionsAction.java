@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.application.options.editor.CodeFoldingConfigurable;
 import com.intellij.application.options.editor.EditorOptions;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -31,12 +32,13 @@ public class EditFoldingOptionsAction implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     EditorOptions editorOptions = ShowSettingsUtil.getInstance().findApplicationConfigurable(EditorOptions.class);
-    final DefaultSearchableConfigurable configurable = new DefaultSearchableConfigurable(editorOptions);
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-      public void run() {
-        configurable.enableSearch(ApplicationBundle.message("group.code.folding"));
+    final Configurable[] configurables = editorOptions.getConfigurables();
+    for (Configurable c : configurables) {
+      if (c instanceof CodeFoldingConfigurable) {
+        ShowSettingsUtil.getInstance().editConfigurable(project, c);
+        break;
       }
-    });
+    }
   }
 
   public boolean startInWriteAction() {
