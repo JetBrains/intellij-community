@@ -185,8 +185,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     new GuessTypeParameters(JavaPsiFacade.getInstance(project).getElementFactory())
       .setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
     PsiCodeBlock body = method.getBody();
-    assert body != null;
-    builder.setEndVariableAfter(targetClass.isInterface() ? method : body.getLBrace());
+    builder.setEndVariableAfter(targetClass.isInterface() || body == null ? method : body.getLBrace());
     method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
     if (method == null) return;
 
