@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 
 /**
  * @author yole
@@ -13,7 +13,13 @@ public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
   }
 
   public boolean isDeclarationWriteAccess(final PsiElement element) {
-    return element instanceof PsiVariable && ((PsiVariable) element).getInitializer() != null;
+    if (element instanceof PsiVariable && ((PsiVariable)element).getInitializer() != null) {
+      return true;
+    }
+    if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiForeachStatement) {
+      return true;
+    }
+    return false;
   }
 
   public Access getReferenceAccess(final PsiElement referencedElement, final PsiReference reference) {
