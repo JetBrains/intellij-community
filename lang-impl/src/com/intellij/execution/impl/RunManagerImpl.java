@@ -367,11 +367,17 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     template.writeExternal(configurationElement);
     if (!(template.getConfiguration() instanceof UnknownRunConfiguration)) {
       final Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks = getBeforeRunTasks(template.getConfiguration());
+      final List<Key<? extends BeforeRunTask>> order = new ArrayList<Key<? extends BeforeRunTask>>(tasks.keySet());
+      Collections.sort(order, new Comparator<Key<? extends BeforeRunTask>>() {
+        public int compare(Key<? extends BeforeRunTask> o1, Key<? extends BeforeRunTask> o2) {
+          return o1.toString().compareToIgnoreCase(o2.toString());
+        }
+      });
       final Element methodsElement = new Element(METHOD);
-      for (Key<? extends BeforeRunTask> providerName : tasks.keySet()) {
+      for (Key<? extends BeforeRunTask> providerID : order) {
         final Element child = new Element(OPTION);
-        child.setAttribute(NAME_ATTR, providerName.toString());
-        final BeforeRunTask beforeRunTask = tasks.get(providerName);
+        child.setAttribute(NAME_ATTR, providerID.toString());
+        final BeforeRunTask beforeRunTask = tasks.get(providerID);
         beforeRunTask.writeExternal(child);
         methodsElement.addContent(child);
       }
