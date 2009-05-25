@@ -4,8 +4,11 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
+
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -15,12 +18,15 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
   private final boolean isEnumConstant;
   private final StringRef myName;
   private final String[] myAnnotations;
+  @Nullable
+  private final Set<String>[] myNamedParameters;
 
-  public GrFieldStubImpl(StubElement parent, StringRef name, boolean isEnumConstant, final String[] annotations, final IStubElementType elemType) {
+  public GrFieldStubImpl(StubElement parent, StringRef name, boolean isEnumConstant, final String[] annotations, @Nullable Set<String>[] namedParameters, final IStubElementType elemType) {
     super(parent, elemType);
     myName = name;
     this.isEnumConstant = isEnumConstant;
     myAnnotations = annotations;
+    myNamedParameters = namedParameters;
   }
 
   public boolean isEnumConstant() {
@@ -33,5 +39,10 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
 
   public String[] getAnnotations() {
     return myAnnotations;
+  }
+
+  @Nullable
+  public Set<String>[] getNamedParameters() {
+    return myNamedParameters;
   }
 }

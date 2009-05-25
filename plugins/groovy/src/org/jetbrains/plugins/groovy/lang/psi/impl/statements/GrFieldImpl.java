@@ -34,8 +34,12 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -44,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
+import java.util.*;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -120,13 +125,13 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     if (parent instanceof GrTypeDefinitionBody) {
       final PsiElement pparent = parent.getParent();
       if (pparent instanceof PsiClass) {
-        return (PsiClass) pparent;
+        return (PsiClass)pparent;
       }
     }
 
     final PsiFile file = getContainingFile();
     if (file instanceof GroovyFileBase) {
-      return ((GroovyFileBase) file).getScriptClass();
+      return ((GroovyFileBase)file).getScriptClass();
     }
 
     assert false;
@@ -188,9 +193,15 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
         }
 
         if (getter1 != null || getter2 != null) {
-          if (getter1 != null && getter2 != null) myGetters = new GrAccessorMethod[]{getter1, getter2};
-          else if (getter1 != null) myGetters = new GrAccessorMethod[]{getter1};
-          else myGetters = new GrAccessorMethod[]{getter2};
+          if (getter1 != null && getter2 != null) {
+            myGetters = new GrAccessorMethod[]{getter1, getter2};
+          }
+          else if (getter1 != null) {
+            myGetters = new GrAccessorMethod[]{getter1};
+          }
+          else {
+            myGetters = new GrAccessorMethod[]{getter2};
+          }
         }
       }
 
@@ -201,9 +212,9 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   private boolean hasContradictingMethods(GrAccessorMethod proto, PsiClass clazz) {
-    PsiMethod[] methods = clazz instanceof GrTypeDefinition ?
-            ((GrTypeDefinition) clazz).findCodeMethodsBySignature(proto, true) :
-            clazz.findMethodsBySignature(proto, true);
+    PsiMethod[] methods = clazz instanceof GrTypeDefinition
+                          ? ((GrTypeDefinition)clazz).findCodeMethodsBySignature(proto, true)
+                          : clazz.findMethodsBySignature(proto, true);
     for (PsiMethod method : methods) {
       if (clazz.equals(method.getContainingClass())) return true;
 
@@ -214,8 +225,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     PsiClass aSuper = clazz.getSuperClass();
     if (aSuper != null) {
       PsiField field = aSuper.findFieldByName(getName(), true);
-      if (field instanceof GrField && ((GrField) field).isProperty() && field.hasModifierProperty(PsiModifier.FINAL))
-        return true;
+      if (field instanceof GrField && ((GrField)field).isProperty() && field.hasModifierProperty(PsiModifier.FINAL)) return true;
     }
 
     return false;
@@ -260,7 +270,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   public PsiElement getOriginalElement() {
     final PsiClass containingClass = getContainingClass();
     if (containingClass == null) return this;
-    PsiClass originalClass = (PsiClass) containingClass.getOriginalElement();
+    PsiClass originalClass = (PsiClass)containingClass.getOriginalElement();
     PsiField originalField = originalClass.findFieldByName(getName(), false);
     return originalField != null ? originalField : this;
   }
@@ -277,5 +287,55 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     rowIcon.setIcon(superIcon, 0);
     rowIcon.setIcon(GroovyIcons.DEF, 1);
     return rowIcon;
+  }
+
+  @Nullable
+  public Set<String>[] getNamedParametersArray() {
+    final GrExpression initializerGroovy = getInitializerGroovy();
+
+    List<Set<String>> namedParameters = new LinkedList<Set<String>>();
+    if (initializerGroovy instanceof GrClosableBlock) {
+      final GrClosableBlock closure = (GrClosableBlock)initializerGroovy;
+
+      final PsiParameter[] parameters = closure.getAllParameters();
+      final List<PsiParameter> parameterList = Arrays.asList(parameters);
+
+      for (int i = 0, parameterListSize = parameterList.size(); i < parameterListSize; i++) {
+        PsiParameter parameter = parameterList.get(i);
+        final String paramName = parameter.getName();
+        final HashSet<String> set = new HashSet<String>();
+        namedParameters.add(i, set);
+
+        closure.accept(new GroovyRecursiveElementVisitor() {
+          @Override
+          public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+            final GrExpression expression = referenceExpression.getQualifierExpression();
+            if (!(expression instanceof GrReferenceExpression)) {
+              super.visitReferenceExpression(referenceExpression);
+              return;
+            }
+
+            final GrReferenceExpression qualifierExpr = (GrReferenceExpression)expression;
+
+            if (paramName.equals(qualifierExpr.getName())) {
+              set.add(referenceExpression.getName());
+            }
+
+            super.visitReferenceExpression(referenceExpression);
+          }
+        });
+      }
+    }
+    return namedParameters.toArray(new HashSet[0]);
+  }
+
+  @Nullable
+  public Set<String> getNamedParameters(int paramNumber) {
+    final Set<String>[] namedParameters = getNamedParametersArray();
+    assert namedParameters != null;
+
+    if (namedParameters.length <= paramNumber) return null;
+
+    return namedParameters[paramNumber];
   }
 }

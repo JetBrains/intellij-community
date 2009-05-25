@@ -61,4 +61,6 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   @NotNull
   GrModifierList getModifierList();
 
+  //@Nullable
+  //Set<String> getNamedParameters(int paramNumber);
 }

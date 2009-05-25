@@ -3,10 +3,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.StubBasedPsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationMethodStub;
+
+import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -29,5 +32,10 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl<GrAnnotationMethodS
 
   public String toString() {
     return "Default annotation member";
+  }
+
+  @Nullable
+  public Set<String> getNamedParameters(int paramNumber) {
+    return null;
   }
 }

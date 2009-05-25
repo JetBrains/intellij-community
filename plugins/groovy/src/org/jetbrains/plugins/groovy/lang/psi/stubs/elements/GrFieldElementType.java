@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 
 import java.io.IOException;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -60,7 +61,12 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
       }, new String[annotations.length]);
     }
 
-    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), false, annNames, FIELD);
+    Set<String>[] namedParametersArray = null;
+    if (psi instanceof GrFieldImpl){
+      namedParametersArray = ((GrFieldImpl)psi).getNamedParametersArray();
+    }
+
+    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), false, annNames, namedParametersArray, FIELD);
   }
 
   public void serialize(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
@@ -86,6 +92,19 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     for (String s : annotations) {
       dataStream.writeName(s);
     }
+
+    final Set<String>[] namedParameters = stub.getNamedParameters();
+
+    if (namedParameters != null) {
+      dataStream.writeByte(namedParameters.length);
+
+      for (Set<String> namedParameterSet : namedParameters) {
+        dataStream.writeByte(namedParameterSet.size());
+        for (String namepParameter : namedParameterSet) {
+          dataStream.writeUTF(namepParameter);
+        }
+      }
+    }
     dataStream.writeBoolean(stub.isEnumConstant());
   }
 
@@ -96,8 +115,26 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     for (int i = 0; i < b; i++) {
       annNames[i] = dataStream.readName().toString();
     }
+
+    //named parameters
+    final byte namedParametersSetNumber = dataStream.readByte();
+    final List<Set<String>> namedParametersSets = new ArrayList<Set<String>>();
+
+    for (int i = 0; i < namedParametersSetNumber; i++) {
+      final byte curNamedParameterSetSize = dataStream.readByte();
+      final String[] namedParameterSetArray = new String[curNamedParameterSetSize];
+
+      for (int j = 0; j < curNamedParameterSetSize; j++) {
+        namedParameterSetArray[j] = dataStream.readUTF();
+      }
+      Set<String> curSet = new HashSet<String>();
+      curSet.addAll(Arrays.asList(namedParameterSetArray));
+      namedParametersSets.add(curSet);
+    }
+
     boolean isEnumConstant = dataStream.readBoolean();
-    return new GrFieldStubImpl(parentStub, ref, isEnumConstant, annNames, isEnumConstant ? ENUM_CONSTANT : FIELD);
+    return new GrFieldStubImpl(parentStub, ref, isEnumConstant, annNames, namedParametersSets.toArray(new HashSet[0]),
+                               isEnumConstant ? ENUM_CONSTANT : FIELD);
   }
 
   static void indexFieldStub(GrFieldStub stub, IndexSink sink) {
