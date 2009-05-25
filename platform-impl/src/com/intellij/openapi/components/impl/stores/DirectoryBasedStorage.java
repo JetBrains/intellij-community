@@ -138,8 +138,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         assert componentName != null;
         storageData.put(componentName, file, element);
       }
-
-      storageData.backup();
     }
     catch (IOException e) {
       throw new StateStorageException(e);
@@ -230,11 +228,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       myStorageData.process(new StorageDataProcessor() {
         public void process(final String componentName, final IFile file, final Element element) {
           currentNames.remove(file.getName());
-          if (myStorageData.hasChangedSinceLastAccess(file)) {
-            // will not create file if it was removed or modified externally
-            return;
-          }
-
           StorageUtil.save(file, element);
         }
       });
@@ -243,14 +236,10 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         public void run() {
           for (String name : currentNames) {
             IFile child = myDir.getChild(name);
-            if (!myStorageData.existedEarlier(child)) {
-              continue;
-            }
 
             final VirtualFile virtualFile = StorageUtil.getVirtualFile(child);
             assert virtualFile != null : "Can't find vFile for: " + child;
             try {
-              myStorageData.removeBackup(child);
               LOG.debug("Removing configuration file: " + virtualFile.getPresentableUrl());
               virtualFile.delete(DirectoryBasedStorage.this);
             }
@@ -260,8 +249,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           }
         }
       });
-
-      myStorageData.updateBackupTimeStamps();
 
       myStorageData.clear();
     }
@@ -310,7 +297,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           if (currentChildNames.contains(file.getName())) {
             currentChildNames.remove(file.getName());
 
-            if (myStorageData.hasChangedSinceLastAccess(file)) return;
             final byte[] text = StorageUtil.printElement(element);
             try {
               if (!Arrays.equals(file.loadBytes(), text)) {
@@ -344,7 +330,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   private static class MyStorageData {
     private Map<String, Map<IFile, Element>> myStates = new HashMap<String, Map<IFile, Element>>();
-    private Map<IFile, Long> myBackup;
 
     public Set<String> getComponentNames() {
       return myStates.keySet();
@@ -393,7 +378,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     protected MyStorageData clone() {
       final MyStorageData result = new MyStorageData();
       result.myStates = new HashMap<String, Map<IFile, Element>>(myStates);
-      result.myBackup = myBackup;
       return result;
     }
 
@@ -407,40 +391,6 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
     public void removeComponent(final String componentName) {
       myStates.remove(componentName);
-    }
-
-    public void backup() {
-      myBackup = getAllStorageFiles();
-    }
-
-    public boolean existedEarlier(IFile file) {
-      if (myBackup == null) return false;
-      return myBackup.containsKey(file);
-    }
-
-    public boolean hasChangedSinceLastAccess(IFile file) {
-      if (myBackup == null) return false;
-
-      final Long ts = myBackup.get(file);
-      if (ts == null) return false;
-      if (!file.exists()) return true;
-      if (ts.longValue() < file.getTimeStamp()) return true;
-      return false;
-    }
-
-    public void updateBackupTimeStamps() {
-      if (myBackup == null) return;
-      
-      for (final Map.Entry<IFile, Long> entry : myBackup.entrySet()) {
-        final IFile file = entry.getKey();
-        if (file.exists()) {
-          entry.setValue(file.getTimeStamp());
-        }
-      }
-    }
-
-    public void removeBackup(final IFile child) {
-      myBackup.remove(child);
     }
   }
 
