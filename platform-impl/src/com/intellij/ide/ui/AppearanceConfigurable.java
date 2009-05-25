@@ -105,8 +105,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       shouldUpdateUI = true;
     }
     settings.ANIMATE_WINDOWS = myComponent.myAnimateWindowsCheckBox.isSelected();
-    boolean update = settings.SHOW_WINDOW_SHORTCUTS != myComponent.myWindowShortcutsCheckBox.isSelected();
-    settings.SHOW_WINDOW_SHORTCUTS = myComponent.myWindowShortcutsCheckBox.isSelected();
+    boolean update = settings.SHOW_TOOL_WINDOW_NUMBERS != myComponent.myWindowShortcutsCheckBox.isSelected();
+    settings.SHOW_TOOL_WINDOW_NUMBERS = myComponent.myWindowShortcutsCheckBox.isSelected();
     update |= settings.HIDE_TOOL_STRIPES != !myComponent.myShowToolStripesCheckBox.isSelected();
     settings.HIDE_TOOL_STRIPES = !myComponent.myShowToolStripesCheckBox.isSelected();
     update |= settings.SHOW_ICONS_IN_MENUS != myComponent.myCbDisplayIconsInMenu.isSelected();
@@ -168,7 +168,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myFontCombo.setSelectedItem(settings.FONT_FACE);
     myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.FONT_SIZE));
     myComponent.myAnimateWindowsCheckBox.setSelected(settings.ANIMATE_WINDOWS);
-    myComponent.myWindowShortcutsCheckBox.setSelected(settings.SHOW_WINDOW_SHORTCUTS);
+    myComponent.myWindowShortcutsCheckBox.setSelected(settings.SHOW_TOOL_WINDOW_NUMBERS);
     myComponent.myShowToolStripesCheckBox.setSelected(!settings.HIDE_TOOL_STRIPES);
     myComponent.myCbDisplayIconsInMenu.setSelected(settings.SHOW_ICONS_IN_MENUS);
     myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.SHOW_MEMORY_INDICATOR);
@@ -205,7 +205,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= !Comparing.equal(myComponent.myFontCombo.getSelectedItem(), settings.FONT_FACE);
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
     isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.ANIMATE_WINDOWS;
-    isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.SHOW_WINDOW_SHORTCUTS;
+    isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.SHOW_TOOL_WINDOW_NUMBERS;
     isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.HIDE_TOOL_STRIPES;
     isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.SHOW_ICONS_IN_MENUS;
     isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.SHOW_MEMORY_INDICATOR;

@@ -229,7 +229,7 @@ public final class StripeButton extends JToggleButton implements ActionListener 
   void updateText() {
     final String toolWindowId = getWindowInfo().getId();
     String text = toolWindowId;
-    if (UISettings.getInstance().SHOW_WINDOW_SHORTCUTS) {
+    if (UISettings.getInstance().SHOW_TOOL_WINDOW_NUMBERS) {
       final int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindowId);
       if (mnemonic != -1) {
         text = ((char)mnemonic) + ": " + text;

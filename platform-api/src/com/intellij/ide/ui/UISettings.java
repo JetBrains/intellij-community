@@ -58,7 +58,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public int EDITOR_TAB_LIMIT = 10;
   public boolean ANIMATE_WINDOWS = true;
   public int ANIMATION_SPEED = 2000; // Pixels per second
-  public boolean SHOW_WINDOW_SHORTCUTS = true;
+  public boolean SHOW_TOOL_WINDOW_NUMBERS = true;
   public boolean HIDE_TOOL_STRIPES = false;
   public boolean SHOW_MEMORY_INDICATOR = true;
   public boolean SHOW_MAIN_TOOLBAR = true;
