@@ -24,6 +24,7 @@ import java.util.List;
 
 /**
  * @author peter
+ * @see DomManager#createModelMerger() 
  */
 public interface ModelMerger {
   <T> T mergeModels(Class<T> aClass, T... implementations);
