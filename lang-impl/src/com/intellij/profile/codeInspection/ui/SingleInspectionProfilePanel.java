@@ -944,6 +944,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     return false;
   }
 
+  public Tree getTree() {
+    return myTree;
+  }
 
   private class LevelSelection implements ActionListener {
     private final HighlightDisplayLevel myLevel;

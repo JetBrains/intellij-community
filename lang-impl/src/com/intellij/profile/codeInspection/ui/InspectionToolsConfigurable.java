@@ -16,7 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -43,7 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-public abstract class InspectionToolsConfigurable implements Configurable, ErrorsConfigurable {
+public abstract class InspectionToolsConfigurable extends BaseConfigurable implements ErrorsConfigurable {
   private CardLayout myLayout = new CardLayout();
   private JPanel myPanel;
 
@@ -266,4 +266,10 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
     return (InspectionProfileImpl)myProfiles.getSelectedItem();
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    final InspectionProfileImpl inspectionProfile = getSelectedObject();
+    assert inspectionProfile != null;
+    return myPanels.get(inspectionProfile.getName()).getTree();
+  }
 }
