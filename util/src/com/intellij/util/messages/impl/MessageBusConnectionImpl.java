@@ -92,20 +92,20 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
     final Topic topic = message.getTopic();
     final Object handler = mySubscriptions.get(topic);
-    
-    if (handler == myDefaultHandler) {
-      myDefaultHandler.handle(message.getListenerMethod(), message.getArgs());
-    }
-    else {
-      try {
+
+    try {
+      if (handler == myDefaultHandler) {
+        myDefaultHandler.handle(message.getListenerMethod(), message.getArgs());
+      }
+      else {
         message.getListenerMethod().invoke(handler, message.getArgs());
       }
-      catch (AbstractMethodError e) {
-        //Do nothing. This listener just does not implement something newly added yet.
-      }
-      catch(Throwable e) {
-        LOG.error(e.getCause());
-      }
+    }
+    catch (AbstractMethodError e) {
+      //Do nothing. This listener just does not implement something newly added yet.
+    }
+    catch(Throwable e) {
+      LOG.error(e.getCause());
     }
   }
 
