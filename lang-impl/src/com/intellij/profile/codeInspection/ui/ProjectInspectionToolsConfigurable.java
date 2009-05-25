@@ -32,7 +32,9 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   }
 
   protected void deleteProfile(String name) {
-    myProjectProfileManager.deleteProfile(name);
+    if (myProjectProfileManager.getProfile(name, false) != null) {
+      myProjectProfileManager.deleteProfile(name);
+    }
   }
 
   protected Collection<Profile> getProfiles() {

@@ -199,8 +199,12 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
   }
 
   protected void deleteProfile(String name) {
-    myProfileManager.deleteProfile(name);
-    myProjectProfileManager.deleteProfile(name);
+    if (myProfileManager.getProfile(name, false) != null) {
+      myProfileManager.deleteProfile(name);
+    }
+    if (myProjectProfileManager.getProfile(name, false) != null) {
+      myProjectProfileManager.deleteProfile(name);
+    }
   }
 
   protected abstract void setCurrentProfile(InspectionProfileImpl profile);
