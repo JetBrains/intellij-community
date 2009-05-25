@@ -1180,7 +1180,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
           public void eventDispatched(AWTEvent event) {
             if (event.getID() == WindowEvent.WINDOW_OPENED ||event.getID() == WindowEvent.WINDOW_ACTIVATED) {
               if (!result.isProcessed()) {
-                result.setDone();
+                final WindowEvent we = (WindowEvent)event;
+                IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(new Runnable() {
+                  public void run() {
+                    result.setDone();
+                  }
+                });
               }
             }
           }

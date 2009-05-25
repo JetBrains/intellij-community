@@ -42,7 +42,6 @@ public class PlaybackRunner {
       myActionCallback = new ActionCallback();
 
       myRobot = new Robot();
-      myRobot.setAutoDelay(Registry.intValue("actionSystem.playback.autodelay"));
 
       parse();
 
@@ -249,6 +248,7 @@ public class PlaybackRunner {
 
       final ActionCallback result = new ActionCallback();
 
+      robot.delay(Registry.intValue("actionSystem.playback.autodelay")); 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           ActionManager.getInstance().tryToExecute(action, input, null, null, false).notifyWhenDone(result);
@@ -342,6 +342,7 @@ public class PlaybackRunner {
       }
 
       robot.keyPress(keyStroke.getKeyCode());
+      robot.delay(Registry.intValue("actionSystem.playback.autodelay"));
       robot.keyRelease(keyStroke.getKeyCode());
 
       if (shift) {
