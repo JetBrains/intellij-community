@@ -966,14 +966,14 @@ public class SingleInspectionProfilePanel extends JPanel {
           node.isProperSetting = false;
           for (int j = 0; j < node.getChildCount(); j++) {
             final InspectionConfigTreeNode child = (InspectionConfigTreeNode)node.getChildAt(j);
-            if (child.getUserObject()instanceof List) {     //group node
+            if (child.getUserObject()instanceof Descriptor) {     //group node
               updateErrorLevel(child, showOptionsAndDescriptorPanels);
             }
             else {                                               //root node
               child.isProperSetting = false;
               for (int k = 0; k < child.getChildCount(); k++) {
                 final InspectionConfigTreeNode descriptorNode = (InspectionConfigTreeNode)child.getChildAt(k);
-                if (descriptorNode.getUserObject()instanceof List) {
+                if (descriptorNode.getUserObject()instanceof Descriptor) {
                   updateErrorLevel(descriptorNode, showOptionsAndDescriptorPanels);
                 }
                 child.isProperSetting |= descriptorNode.isProperSetting;
