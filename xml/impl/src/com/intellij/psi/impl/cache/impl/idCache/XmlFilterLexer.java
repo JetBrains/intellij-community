@@ -29,6 +29,9 @@ public class XmlFilterLexer extends BaseFilterLexer {
     else if (tokenType == XmlElementType.XML_ENTITY_REF_TOKEN || tokenType == XmlElementType.XML_CHAR_ENTITY_REF) {
       scanWordsInToken(UsageSearchContext.IN_CODE, false, false);
     }
+    else if (tokenType == XmlElementType.XML_TEXT) {
+      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, false);
+    }
     else {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
