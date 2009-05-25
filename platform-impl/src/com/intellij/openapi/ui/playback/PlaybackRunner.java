@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.text.StringTokenizer;
 
 import javax.swing.*;
@@ -41,6 +42,7 @@ public class PlaybackRunner {
       myActionCallback = new ActionCallback();
 
       myRobot = new Robot();
+      myRobot.setAutoDelay(Registry.intValue("actionSystem.playback.autodelay"));
 
       parse();
 

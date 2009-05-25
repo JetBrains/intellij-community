@@ -8,9 +8,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
@@ -36,6 +36,8 @@ public class FrameWrapper implements Disposable {
   private FocusTrackback myFocusTrackback;
   private FocusWatcher myFocusWatcher;
 
+  private ActionCallback myFocusedCallback;
+
   public FrameWrapper(@NonNls String dimensionServiceKey) {
     myDimensionKey = dimensionServiceKey;
   }
@@ -51,6 +53,12 @@ public class FrameWrapper implements Disposable {
   }
 
   public void show() {
+    myFocusedCallback = new ActionCallback();
+
+    if (myProject != null) {
+      IdeFocusManager.getInstance(myProject).suspendKeyProcessingUntil(myFocusedCallback);
+    }
+
     final JFrame frame = getFrame();
 
     myFocusTrackback = new FocusTrackback(this, null, true);
@@ -62,6 +70,8 @@ public class FrameWrapper implements Disposable {
           myPreferedFocus.requestFocusInWindow();
           myFocusTrackback.registerFocusComponent(myPreferedFocus);
         }
+
+        myFocusedCallback.setDone();
       }
     };
     frame.addWindowListener(focusListener);
@@ -77,6 +87,7 @@ public class FrameWrapper implements Disposable {
       }
     };
     myFocusWatcher.install(myComponent);
+
 
     frame.setVisible(true);
   }
@@ -184,6 +195,7 @@ public class FrameWrapper implements Disposable {
         myFocusWatcher.deinstall(myComponent);
       }
       myFocusWatcher = null;
+      myFocusedCallback = null;
 
       super.dispose();
     }

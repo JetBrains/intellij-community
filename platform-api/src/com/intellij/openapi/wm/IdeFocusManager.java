@@ -67,6 +67,7 @@ public abstract class IdeFocusManager {
   public abstract void suspendKeyProcessingUntil(@NotNull ActionCallback done);
 
   public static IdeFocusManager getInstance(@NotNull Project project) {
+    if (project.isDisposed() || !project.isInitialized()) return PassThroughtIdeFocusManager.getInstance();
     return project.getComponent(IdeFocusManager.class);
   }
 
