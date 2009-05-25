@@ -93,9 +93,13 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
         try {
           profile.readExternal(JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(files[0])).getRootElement());
 
+          if (myProjectProfileManager.getProfile(profile.getName(), false) != null) {
+            if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exist. Do you want to override it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+          }
           if (Messages.showYesNoDialog(myWholePanel, "Do you want the profile to be saved to current project?", "Choose Profile Purpose", Messages.getQuestionIcon())
               == DialogWrapper.OK_EXIT_CODE) {
             addProjectProfile(profile);
+            profile.setProfileManager(myProjectProfileManager);
           } else {
             myProfileManager.addProfile(profile);
           }
@@ -138,10 +142,13 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
   }
 
   private void addProjectProfile(InspectionProfileImpl model) {
-    final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(model.getName(), model);
-    myPanel.add(model.getName(), panel);
-    myPanels.put(model.getName(), panel);
-    ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
+    final String modelName = model.getName();
+    final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(modelName, model);
+    myPanel.add(modelName, panel);
+    if (!myPanels.containsKey(modelName)) {
+      ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
+    }
+    myPanels.put(modelName, panel);
     myProfiles.setSelectedItem(model);
   }
 
