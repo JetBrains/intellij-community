@@ -3,12 +3,13 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import javax.swing.plaf.TreeUI;
 import java.awt.event.KeyEvent;
 
 /**
@@ -19,7 +20,8 @@ import java.awt.event.KeyEvent;
 public abstract class ProjectViewTree extends DnDAwareTree {
   protected ProjectViewTree(TreeModel newModel) {
     super(newModel);
-    setUI(new UIUtil.LeglessTreeUi());
+
+    if (SystemInfo.isMac) setUI(new UIUtil.LeglessTreeUi());
 
     final NodeRenderer renderer = new NodeRenderer();
     renderer.setOpaque(false);
@@ -32,7 +34,7 @@ public abstract class ProjectViewTree extends DnDAwareTree {
   @Override
   public void setUI(final TreeUI ui) {
     TreeUI actualUI = ui;
-    if (!(ui instanceof UIUtil.LeglessTreeUi)) {
+    if (SystemInfo.isMac && !(ui instanceof UIUtil.LeglessTreeUi)) {
       actualUI = new UIUtil.LeglessTreeUi();
     }
 
