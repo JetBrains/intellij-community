@@ -382,7 +382,12 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         super.dispose();
       }
       finally {
-        ((StubIndexImpl)StubIndex.getInstance()).dispose();
+        try {
+          ((StubIndexImpl)StubIndex.getInstance()).dispose();
+        }
+        finally {
+          ((SerializationManagerImpl)SerializationManager.getInstance()).disposeComponent();
+        }
       }
     }
   }
