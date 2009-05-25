@@ -16,8 +16,10 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.RunManager;
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -65,5 +67,13 @@ public abstract class ConfigurationFactory {
   @NotNull
   public ConfigurationType getType() {
     return myType;
+  }
+
+  /**
+   * In this method you can configure defaults for the task, which are preferable to be used for your particular configuration type
+   * @param providerID
+   * @param task
+   */
+  public void configureBeforeRunTaskDefaults(Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
   }
 }
