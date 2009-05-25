@@ -1,15 +1,23 @@
-package org.jetbrains.idea.maven.tasks;
+package org.jetbrains.idea.maven.tasks.actions;
 
-import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.tasks.MavenBeforeRunTask;
+import org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider;
+import org.jetbrains.idea.maven.tasks.MavenTasksManager;
+import org.jetbrains.idea.maven.tasks.TasksBundle;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -25,19 +33,24 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Set;
 
-/**
- * @author Vladislav.Kaznacheev
- */
+public class SelectBeforeRunTaskDialog extends DialogWrapper {
+  private final RunManagerEx myRunManager;
+  private final MavenTasksManager myTasksManager;
 
-public abstract class ExecuteOnRunDialog extends DialogWrapper {
+  private final MavenProject myMavenProject;
+  private final String myGoal;
+
   private DefaultMutableTreeNode myRoot;
-  private final RunManager myRunManager;
 
-  public ExecuteOnRunDialog(final Project project, final String title) {
+  public SelectBeforeRunTaskDialog(Project project, MavenProject mavenProject, String goal) {
     super(project, true);
-    myRunManager = RunManager.getInstance(project);
-    setTitle(title);
-    init();    
+    myRunManager = RunManagerEx.getInstanceEx(project);
+    myTasksManager = MavenTasksManager.getInstance(project);
+    myMavenProject = mavenProject;
+    myGoal = goal;
+
+    setTitle(TasksBundle.message("maven.tasks.before.run.action"));
+    init();
   }
 
   protected JComponent createCenterPanel() {
@@ -151,13 +164,48 @@ public abstract class ExecuteOnRunDialog extends DialogWrapper {
     return root;
   }
 
-  abstract protected boolean isAssigned(ConfigurationType type, RunConfiguration configuration);
+  private boolean isAssigned(ConfigurationType type, RunConfiguration configuration) {
+    if (configuration == null) {
+      for (ConfigurationFactory each : type.getConfigurationFactories()) {
+        RunnerAndConfigurationSettingsImpl settings = ((RunManagerImpl)myRunManager).getConfigurationTemplate(each);
+        if (doIsAssigned(settings.getConfiguration())) return true;
+      }
+      return false;
+    }
 
-  abstract protected void clearAll();
+    return doIsAssigned(configuration);
+  }
 
-  abstract protected void assign (ConfigurationType type, RunConfiguration configuration);
+  private boolean doIsAssigned(RunConfiguration configuration) {
+    MavenBeforeRunTask task = myRunManager.getBeforeRunTask(configuration, MavenBeforeRunTasksProvider.TASK_ID);
+    return task.isEnabled() && task.isFor(myMavenProject, myGoal);
+  }
 
+  private void assign(ConfigurationType type, RunConfiguration configuration) {
+    if (configuration == null) {
+      for (ConfigurationFactory each : type.getConfigurationFactories()) {
+        RunnerAndConfigurationSettingsImpl settings = ((RunManagerImpl)myRunManager).getConfigurationTemplate(each);
+        doAssign(settings.getConfiguration());
+      }
+    } else {
+      doAssign(configuration);
+    }
+    myTasksManager.fireTasksChanged();
+  }
 
+  private void doAssign(RunConfiguration configuration) {
+    MavenBeforeRunTask task = myRunManager.getBeforeRunTask(configuration, MavenBeforeRunTasksProvider.TASK_ID);
+    task.setProjectPath(myMavenProject.getPath());
+    task.setGoal(myGoal);
+    task.setEnabled(true);
+  }
+
+  private void clearAll() {
+    for (MavenBeforeRunTask each : myRunManager.getBeforeRunTasks(MavenBeforeRunTasksProvider.TASK_ID, false)) {
+      each.setEnabled(false);
+    }
+    myTasksManager.fireTasksChanged();
+  }
 
   protected void doOKAction() {
     clearAll();
@@ -169,7 +217,7 @@ public abstract class ExecuteOnRunDialog extends DialogWrapper {
       if (!descriptor.isChecked()) continue;
       if (descriptor instanceof DescriptorBase) {
         DescriptorBase descriptorBase = (DescriptorBase)descriptor;
-        assign ( descriptorBase.getConfigurationType(), descriptorBase.getConfiguration());
+        assign(descriptorBase.getConfigurationType(), descriptorBase.getConfiguration());
       }
     }
 
@@ -240,7 +288,6 @@ public abstract class ExecuteOnRunDialog extends DialogWrapper {
       return myName;
     }
   }
-
 
   private static final class MyTreeCellRenderer extends JPanel implements TreeCellRenderer {
     private final JLabel myLabel;

@@ -11,13 +11,12 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
@@ -44,6 +43,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
   private final MavenProjectsManager myProjectsManager;
   private final MavenTasksManager myTasksManager;
+  private final MavenShortcutsManager myShortcutsManager;
 
   private SimpleTree myTree;
   private MavenStatusPanel myStatusPanel;
@@ -53,10 +53,14 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     return project.getComponent(MavenProjectsNavigator.class);
   }
 
-  public MavenProjectsNavigator(Project project, MavenProjectsManager projectsManager, MavenTasksManager tasksManager) {
+  public MavenProjectsNavigator(Project project,
+                                MavenProjectsManager projectsManager,
+                                MavenTasksManager tasksManager,
+                                MavenShortcutsManager shortcutsManager) {
     super(project);
     myProjectsManager = projectsManager;
     myTasksManager = tasksManager;
+    myShortcutsManager = shortcutsManager;
   }
 
   public MavenProjectsNavigatorState getState() {
@@ -167,7 +171,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
-    myStructure = new MavenProjectsStructure(myProject, myProjectsManager, myTasksManager, this, myTree);
+    myStructure = new MavenProjectsStructure(myProject, myProjectsManager, myTasksManager, myShortcutsManager, this, myTree);
     myStatusPanel = new MavenStatusPanel(myProject, myProjectsManager);
   }
 
@@ -187,31 +191,23 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   private void listenForProjectsChanges() {
     myProjectsManager.addProjectsTreeListener(new MyProjectsListener());
 
-    myTasksManager.addListener(new MavenTasksManager.Listener() {
+    myShortcutsManager.addListener(new MavenShortcutsManager.Listener() {
       public void shortcutsUpdated() {
         scheduleStructureUpdate(new Runnable() {
           public void run() {
-            myStructure.updateShortcuts();
+            myStructure.updateGoals();
           }
         });
       }
     });
 
-    myTasksManager.installTaskSelector(new MavenTasksManager.TaskSelector() {
-      SelectMavenGoalDialog myDialog;
-
-      public boolean select(Project project, @Nullable String pomPath, @Nullable String goal, @NotNull String title) {
-        myDialog = new SelectMavenGoalDialog(project, pomPath, goal, title);
-        myDialog.show();
-        return myDialog.isOK();
-      }
-
-      public String getSelectedPomPath() {
-        return myDialog.getSelectedProjectPath();
-      }
-
-      public String getSelectedGoal() {
-        return myDialog.getSelectedGoal();
+    myTasksManager.addListener(new MavenTasksManager.Listener() {
+      public void compileTasksChanged() {
+        scheduleStructureUpdate(new Runnable() {
+          public void run() {
+            myStructure.updateGoals();
+          }
+        });
       }
     });
   }

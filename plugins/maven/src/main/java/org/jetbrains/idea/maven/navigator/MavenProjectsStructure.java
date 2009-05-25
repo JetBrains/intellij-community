@@ -4,14 +4,12 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.ui.treeStructure.SimpleTreeBuilder;
-import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.ui.treeStructure.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -21,6 +19,7 @@ import org.jetbrains.idea.maven.project.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
@@ -73,6 +72,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
   private final MavenTasksManager myTasksManager;
+  private final MavenShortcutsManager myShortcutsManager;
   private final MavenProjectsNavigator myProjectsNavigator;
 
   private final SimpleTreeBuilder myTreeBuilder;
@@ -83,11 +83,13 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public MavenProjectsStructure(Project project,
                                 MavenProjectsManager projectsManager,
                                 MavenTasksManager tasksManager,
+                                MavenShortcutsManager shortcutsManager,
                                 MavenProjectsNavigator projectsNavigator,
                                 SimpleTree tree) {
     myProject = project;
     myProjectsManager = projectsManager;
     myTasksManager = tasksManager;
+    myShortcutsManager = shortcutsManager;
     myProjectsNavigator = projectsNavigator;
 
     configureTree(tree);
@@ -222,9 +224,13 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  public void updateShortcuts() {
+  public void accept(SimpleNodeVisitor visitor) {
+    ((SimpleTree)myTreeBuilder.getTree()).accept(myTreeBuilder, visitor);
+  }
+
+  public void updateGoals() {
     for (ProjectNode each : myProjectToNodeMapping.values()) {
-      each.updateShortcuts();
+      each.updateGoals();
       updateFrom(each);
     }
   }
@@ -242,18 +248,23 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return myProjectToNodeMapping.get(project);
   }
 
-  private boolean shouldDisplayNode(CustomNode node) {
+  enum DisplayKind { ALWAYS, NEVER, NORMAL}
+  private DisplayKind getDisplayKind(CustomNode node) {
     Class[] visibles = getVisibleNodesClasses();
-    if (visibles == null) return true;
+    if (visibles == null) return DisplayKind.NORMAL;
 
     for (Class each : visibles) {
-      if (each.isInstance(node)) return true;
+      if (each.isInstance(node)) return DisplayKind.ALWAYS;
     }
-    return false;
+    return DisplayKind.NORMAL;
   }
 
   protected Class<? extends CustomNode>[] getVisibleNodesClasses() {
     return null;
+  }
+
+  protected boolean showDescriptions() {
+    return true;
   }
 
   public static <T extends CustomNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
@@ -339,7 +350,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public boolean isVisible() {
-      return shouldDisplayNode(this);
+      return getDisplayKind() != DisplayKind.NEVER;
+    }
+
+    public DisplayKind getDisplayKind() {
+      return MavenProjectsStructure.this.getDisplayKind(this);
     }
 
     public CustomNode[] getChildren() {
@@ -410,7 +425,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     protected void setNameAndDescription(String name, String description, @Nullable String hint) {
       setNameAndDescription(name, description, getPlainAttributes());
-      if (hint != null) {
+      if (showDescriptions() && !StringUtil.isEmptyOrSpaces(hint)) {
         addColoredFragment(" (" + hint + ")", description, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
     }
@@ -459,9 +474,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public boolean isVisible() {
-      if (!super.isVisible()) return false;
+      if (getDisplayKind() == DisplayKind.ALWAYS) return true;
+
       for (CustomNode each : getStructuralChildren()) {
-        if (each.isVisible()) return true;
+        if (each.isVisible()) {
+          return true;
+        }
       }
       return false;
     }
@@ -535,7 +553,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  public class ProjectNode extends CustomNode {
+  public class ProjectNode extends GroupNode {
     private final MavenProject myMavenProject;
     private final LifecycleNode myLifecycleNode;
     private final PluginsNode myPluginsNode;
@@ -727,9 +745,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return result;
     }
 
-    public void updateShortcuts() {
-      myLifecycleNode.updateShortcuts();
-      myPluginsNode.updateShortcuts();
+    public void updateGoals() {
+      myLifecycleNode.updateGoals();
+      myPluginsNode.updateGoals();
     }
   }
 
@@ -756,7 +774,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return myGoalNodes;
     }
 
-    public void updateShortcuts() {
+    public void updateGoals() {
       for (GoalNode each : myGoalNodes) {
         each.update();
       }
@@ -783,7 +801,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      String hint = myTasksManager.getActionDescription(getProjectPath(), myGoal);
+      String hint = StringUtil.join(Arrays.asList(myShortcutsManager.getDescription(myMavenProject, myGoal),
+                                                  myTasksManager.getDescription(myMavenProject, myGoal)),
+                                    ", ");
       setNameAndDescription(myDisplayName, null, hint);
     }
 
@@ -957,9 +977,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return false;
     }
 
-    public void updateShortcuts() {
+    public void updateGoals() {
       for (PluginNode each : myPluginNodes) {
-        each.updateShortcuts();
+        each.updateGoals();
       }
     }
   }

@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 
 public abstract class MavenToggleAction extends ToggleAction implements DumbAware {
   @Override
@@ -34,7 +34,8 @@ public abstract class MavenToggleAction extends ToggleAction implements DumbAwar
     return MavenProjectsManager.getInstance(getProject(e));
   }
 
-  protected MavenTasksManager getTasksManager(AnActionEvent e) {
-    return MavenTasksManager.getInstance(getProject(e));
+  protected VirtualFile getMavenProjectFile(AnActionEvent e) {
+    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    return MavenUtil.isMavenProjectFile(file) ? file : null;
   }
 }

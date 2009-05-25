@@ -5,17 +5,18 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.compiler.options.CompileStepBeforeRun;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -43,9 +44,14 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
       }
 
       public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {
-        MavenRunConfiguration result = new MavenRunConfiguration(project, this, "");
-        resetBeforeRunTasks(runManager, result);
-        return result;
+        return new MavenRunConfiguration(project, this, "");
+      }
+
+      @Override
+      public void configureBeforeRunTaskDefaults(Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
+        if (providerID == CompileStepBeforeRun.ID) {
+          task.setEnabled(false);
+        }
       }
     };
   }
@@ -157,7 +163,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
                                                                                      MavenRunnerSettings runnerSettings,
                                                                                      MavenRunnerParameters params,
                                                                                      Project project,
-                                                                                     boolean resetBeforeRunTasks) {
+                                                                                     boolean diableMakeBeforeRun) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
     final RunnerAndConfigurationSettingsImpl settings = RunManagerEx.getInstanceEx(project)
@@ -167,14 +173,12 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     if (generalSettings != null) runConfiguration.setGeneralSettings(generalSettings);
     if (runnerSettings != null) runConfiguration.setRunnerSettings(runnerSettings);
 
-    if (resetBeforeRunTasks) resetBeforeRunTasks(RunManager.getInstance(project), runConfiguration);
+    if (diableMakeBeforeRun) disableMakeBeforeRun(RunManager.getInstance(project), runConfiguration);
 
     return settings;
   }
 
-  private static void resetBeforeRunTasks(RunManager runManager, MavenRunConfiguration runConfiguration) {
-    // todo [jeka]: if I understood author's intention right, this code should reset settings to defaults
-    //((RunManagerImpl)runManager).setBeforeRunTasks(runConfiguration, new HashMap<Key<? extends BeforeRunTask>, BeforeRunTask>());
-    ((RunManagerImpl)runManager).resetBeforeRunTasks(runConfiguration);
+  private static void disableMakeBeforeRun(RunManager runManager, MavenRunConfiguration runConfiguration) {
+    //((RunManagerEx)runManager).getBeforeRunTask(runConfiguration, CompileStepBeforeRun.ID).setEnabled(false);
   }
 }

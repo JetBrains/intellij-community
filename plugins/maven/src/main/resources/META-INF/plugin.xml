@@ -27,7 +27,7 @@
 
     <projectConfigurable implementation="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
 
-    <!--<stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenStepsBeforeRunProvider"/>-->
+    <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
     <keymapExtension implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.runner.MavenRunConfigurationType"/>
@@ -60,13 +60,13 @@
 
   <application-components>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.dom.MavenSchemaRegistrar</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.idea.maven.indices.MavenIndicesManager</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.dom.MavenSchemaRegistrar</implementation-class>
     </component>
   </application-components>
 
@@ -79,12 +79,6 @@
       <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectsNavigator</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.idea.maven.runner.MavenRunner</implementation-class>
       <option name="workspace" value="true"/>
     </component>
@@ -92,7 +86,16 @@
       <implementation-class>org.jetbrains.idea.maven.indices.MavenProjectIndicesManager</implementation-class>
     </component>
     <component>
+      <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectsNavigator</implementation-class>
+    </component>
+    <component>
       <implementation-class>org.jetbrains.idea.maven.tasks.MavenTasksManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.tasks.MavenShortcutsManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater</implementation-class>
     </component>
   </project-components>
 
@@ -188,15 +191,15 @@
 
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.BeforeCompileAction" text="Execute Before Make"
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Make"
               description="Execute this goal before IntelliJ IDEA Make">
       </action>
       <action id="Maven.AfterCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.AfterCompileAction" text="Execute After Make"
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction" text="Execute After Make"
               description="Execute this goal after IntelliJ IDEA Make">
       </action>
       <action id="Maven.BeforeRun"
-              class="org.jetbrains.idea.maven.tasks.actions.BeforeRunAction" text="Execute Before Run/debug..."
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRunTaskAction" text="Execute Before Run/Debug..."
               description="Execute this goal before launching Run/Debug configuration">
       </action>
       <separator/>

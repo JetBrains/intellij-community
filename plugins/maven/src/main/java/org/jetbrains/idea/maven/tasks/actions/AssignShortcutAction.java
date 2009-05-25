@@ -8,6 +8,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenAction;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
+import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 
 import java.util.List;
 
@@ -43,7 +44,11 @@ public class AssignShortcutAction extends MavenAction {
     List<String> goals = e.getData(MavenDataKeys.MAVEN_GOALS);
     String goal = (goals == null || goals.size() != 1) ? null : goals.get(0);
 
-    return getTasksManager(e).getActionId(file.getPath(), goal);
+    return getShortcutsManager(e).getActionId(file.getPath(), goal);
+  }
+
+  protected MavenShortcutsManager getShortcutsManager(AnActionEvent e) {
+    return MavenShortcutsManager.getInstance(getProject(e));
   }
 }
 

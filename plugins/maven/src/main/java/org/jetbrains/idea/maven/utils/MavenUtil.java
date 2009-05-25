@@ -1,7 +1,5 @@
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -29,8 +27,8 @@ import org.apache.maven.model.Model;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.Serializable;
@@ -119,11 +117,6 @@ public class MavenUtil {
 
   private static <T> Collection<T> toSet(final Collection<T> collection) {
     return (collection instanceof Set ? collection : new THashSet<T>(collection));
-  }
-
-  public static VirtualFile getMavenProjectFileFromContext(DataContext dataContext) {
-    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    return isMavenProjectFile(file) ? file : null;
   }
 
   public static boolean isMavenProjectFile(VirtualFile file) {

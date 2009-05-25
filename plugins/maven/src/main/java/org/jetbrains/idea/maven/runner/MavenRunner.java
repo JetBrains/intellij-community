@@ -35,6 +35,10 @@ public class MavenRunner extends SimpleProjectComponent implements PersistentSta
     super(project);
   }
 
+  public MavenRunnerSettings getSettings() {
+    return mySettings;
+  }
+
   public MavenRunnerSettings getState() {
     return mySettings;
   }

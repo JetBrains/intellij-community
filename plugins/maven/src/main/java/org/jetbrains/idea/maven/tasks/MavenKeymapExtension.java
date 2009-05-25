@@ -29,7 +29,7 @@ import java.util.*;
 
 public class MavenKeymapExtension implements KeymapExtension {
   public KeymapGroup createGroup(Condition<AnAction> condition, Project project) {
-    KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(TasksBundle.message("maven.event.action.group.name"),
+    KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(TasksBundle.message("maven.tasks.action.group.name"),
                                                                       MavenProjectsStructure.OPEN_PHASES_ICON,
                                                                       MavenProjectsStructure.CLOSED_PHASES_ICON);
     if (project == null) return result;
@@ -152,7 +152,7 @@ public class MavenKeymapExtension implements KeymapExtension {
   @TestOnly
   public static String getActionPrefix(Project project, MavenProject mavenProject) {
     String pomPath = mavenProject == null ? null : mavenProject.getPath();
-    return MavenTasksManager.getInstance(project).getActionId(pomPath, null);
+    return MavenShortcutsManager.getInstance(project).getActionId(pomPath, null);
   }
 
   private static class MavenGoalAction extends MavenAction {
@@ -168,9 +168,11 @@ public class MavenKeymapExtension implements KeymapExtension {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      MavenRunnerParameters params = new MavenGoalTask(myMavenProject.getPath(), myGoal).createRunnerParameters(getProjectsManager(e));
-      if (params == null) return;
       try {
+        MavenRunnerParameters params = new MavenRunnerParameters(true,
+                                                                 myMavenProject.getDirectory(),
+                                                                 Arrays.asList(myGoal),
+                                                                 getProjectsManager(e).getActiveProfiles());
         MavenRunConfigurationType.runConfiguration(getProject(e), params, e.getDataContext());
       }
       catch (ExecutionException ex) {

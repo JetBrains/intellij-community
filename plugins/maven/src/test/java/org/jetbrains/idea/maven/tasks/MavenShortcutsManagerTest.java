@@ -8,14 +8,14 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import java.util.Arrays;
 import java.util.List;
 
-public class MavenTasksManagerTest extends MavenImportingTestCase {
-  private MavenTasksManager myEventsManager;
+public class MavenShortcutsManagerTest extends MavenImportingTestCase {
+  private MavenShortcutsManager myShortcutsManager;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myEventsManager = MavenTasksManager.getInstance(myProject);
-    myEventsManager.doInit();
+    myShortcutsManager = MavenShortcutsManager.getInstance(myProject);
+    myShortcutsManager.doInit();
     initProjectsManager(true);
   }
 
@@ -177,12 +177,12 @@ public class MavenTasksManagerTest extends MavenImportingTestCase {
   }
 
   private void assertKeymapContains(VirtualFile pomFile, String goal) {
-    String id = myEventsManager.getActionId(pomFile.getPath(), goal);
+    String id = myShortcutsManager.getActionId(pomFile.getPath(), goal);
     assertTrue("Action " + id + " not found among: \n" + StringUtil.join(getProjectActions(), "\n"), getProjectActions().contains(id));
   }
 
   private void assertKeymapDoesNotContain(VirtualFile pomFile, String goal) {
-    String id = myEventsManager.getActionId(pomFile.getPath(), goal);
+    String id = myShortcutsManager.getActionId(pomFile.getPath(), goal);
     assertFalse(getProjectActions().contains(id));
   }
 

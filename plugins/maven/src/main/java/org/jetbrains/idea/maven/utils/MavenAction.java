@@ -7,7 +7,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 
 public abstract class MavenAction extends AnAction implements DumbAware {
   @Override
@@ -28,11 +27,8 @@ public abstract class MavenAction extends AnAction implements DumbAware {
     return MavenProjectsManager.getInstance(getProject(e));
   }
 
-  protected MavenTasksManager getTasksManager(AnActionEvent e) {
-    return MavenTasksManager.getInstance(getProject(e));
-  }
-  
   protected VirtualFile getMavenProjectFile(AnActionEvent e) {
-    return MavenUtil.getMavenProjectFileFromContext(e.getDataContext());
+    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    return MavenUtil.isMavenProjectFile(file) ? file : null;
   }
 }
