@@ -998,7 +998,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     private void updateErrorLevel(final InspectionConfigTreeNode child, final boolean showOptionsAndDescriptorPanels) {
       final HighlightDisplayKey key = child.getDesriptor().getKey();
-      mySelectedProfile.setErrorLevel(key, myLevel);
+      mySelectedProfile.setErrorLevel(key, myLevel, child.isInspectionNode() || child.isByDefault() ? -1 : child.getParent().getIndex(child));
       child.isProperSetting = mySelectedProfile.isProperSetting(key);
       if (showOptionsAndDescriptorPanels) {
         updateOptionsAndDescriptionPanel(new TreePath(child.getPath()));
