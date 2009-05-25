@@ -84,7 +84,7 @@ public class GitVFSListener extends VcsVFSListener {
       try {
         final VirtualFile root = e.getKey();
         GitFileUtils.addFiles(myProject, root, e.getValue());
-        GitUtil.refreshFiles(myProject, e.getValue());
+        GitUtil.markFilesDirty(myProject, e.getValue());
       }
       catch (VcsException ex) {
         ((GitVcs)myVcs).showMessages(ex.getMessage());
@@ -111,7 +111,7 @@ public class GitVFSListener extends VcsVFSListener {
       try {
         final VirtualFile root = e.getKey();
         GitFileUtils.addPaths(myProject, root, e.getValue());
-        GitUtil.refreshFiles(myProject, e.getValue());
+        GitUtil.markFilesDirty(myProject, e.getValue());
       }
       catch (VcsException ex) {
         ((GitVcs)myVcs).showMessages(ex.getMessage());
@@ -156,7 +156,7 @@ public class GitVFSListener extends VcsVFSListener {
       try {
         final VirtualFile root = e.getKey();
         GitFileUtils.delete(myProject, root, e.getValue());
-        GitUtil.refreshFiles(myProject, e.getValue());
+        GitUtil.markFilesDirty(myProject, e.getValue());
       }
       catch (VcsException ex) {
         ((GitVcs)myVcs).showMessages(ex.getMessage());
