@@ -94,7 +94,7 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
           profile.readExternal(JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(files[0])).getRootElement());
 
           if (myProjectProfileManager.getProfile(profile.getName(), false) != null) {
-            if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exist. Do you want to override it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+            if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exists. Do you want to overwrite it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
           }
           if (Messages.showYesNoDialog(myWholePanel, "Do you want the profile to be saved to current project?", "Choose Profile Purpose", Messages.getQuestionIcon())
               == DialogWrapper.OK_EXIT_CODE) {
