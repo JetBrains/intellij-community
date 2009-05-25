@@ -227,7 +227,7 @@ public class PlaybackRunner {
     }
   }
 
-  private static class Action extends AbstractCommand {
+  private static class Action extends TypeCommand {
 
     static String PREFIX = CMD_PREFIX + "action";
 
@@ -242,6 +242,26 @@ public class PlaybackRunner {
       if (action == null) {
         dumpError(cb, "Unknown action: " + actionName);
         return new ActionCallback.Rejected();
+      }
+
+
+      final Shortcut[] sc = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionName);
+      KeyStroke stroke = null;
+      for (Shortcut each : sc) {
+        if (each instanceof KeyboardShortcut) {
+          final KeyboardShortcut ks = (KeyboardShortcut)each;
+          final KeyStroke first = ks.getFirstKeyStroke();
+          final KeyStroke second = ks.getSecondKeyStroke();
+          if (first != null && second == null) {
+            stroke = KeyStroke.getKeyStroke(first.getKeyCode(), first.getModifiers(), false);
+          }
+        }
+      }
+
+      if (stroke != null) {
+        cb.message("Invoking action via shortcut: " + stroke.toString(), getLine());
+        type(robot, stroke);
+        return new ActionCallback.Done(); 
       }
 
       final InputEvent input = getInputEvent(actionName);
