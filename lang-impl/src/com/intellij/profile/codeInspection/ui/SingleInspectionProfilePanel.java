@@ -772,6 +772,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       //Can't be
     }
     myOptionsPanel.validate();
+    myOptionsPanel.repaint();
   }
 
   private static InspectionConfigTreeNode getGroupNode(InspectionConfigTreeNode root, String[] groupPath, boolean properSetting) {
