@@ -718,7 +718,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         chooser.getComboBox().addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope) != chooser.getLevel();
-            mySelectedProfile.setErrorLevel(key, chooser.getLevel(), node.isInspectionNode() ? -1 : node.getParent().getIndex(node));
+            mySelectedProfile.setErrorLevel(key, chooser.getLevel(), node.isInspectionNode() || node.isByDefault() ? -1 : node.getParent().getIndex(node));
             if (toUpdate) node.isProperSetting = mySelectedProfile.isProperSetting(key);
           }
         });
