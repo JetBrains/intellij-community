@@ -38,6 +38,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -81,7 +82,16 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     doPostponedFormatting(myProject);
 
-    Disposer.dispose(myProject);
+    Runnable runnable = new Runnable() {
+      public void run() {
+        Disposer.dispose(myProject);
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    } else {
+      SwingUtilities.invokeAndWait(runnable);
+    }
 
     for (final File fileToDelete : myFilesToDelete) {
       boolean deleted = FileUtil.delete(fileToDelete);
