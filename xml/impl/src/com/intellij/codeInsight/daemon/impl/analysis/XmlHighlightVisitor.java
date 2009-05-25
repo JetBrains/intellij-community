@@ -443,11 +443,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     XmlTag tag = attribute.getParent();
 
     XmlElementDescriptor elementDescriptor = tag.getDescriptor();
-    if (elementDescriptor == null) return;
-    XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
-    if (attributeDescriptor == null) return;
+    XmlAttributeDescriptor attributeDescriptor = elementDescriptor != null ? elementDescriptor.getAttributeDescriptor(attribute):null;
 
-    if (value.getUserData(DO_NOT_VALIDATE_KEY) == null) {
+    if (attributeDescriptor != null && value.getUserData(DO_NOT_VALIDATE_KEY) == null) {
       String error = attributeDescriptor.validateValue(value, attribute.getValue());
 
       if (error != null) {
