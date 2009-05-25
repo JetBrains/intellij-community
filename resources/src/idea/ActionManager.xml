@@ -315,6 +315,8 @@
       <add-to-group group-id="ChangeFileEncodingGroup" anchor="last"/>
     </action>
 
+    <action id="AnalyzeStacktraceOnError" class="com.intellij.unscramble.AnalyzeStacktraceOnErrorAction" text="Analyze Stacktrace"/>
+
     <group id="EditorPopupMenu2">
       <separator/>
       <reference ref="EvaluateExpression"/>

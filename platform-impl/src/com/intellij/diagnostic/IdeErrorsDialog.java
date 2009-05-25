@@ -9,6 +9,8 @@ package com.intellij.diagnostic;
  */
 
 import com.intellij.ExtensionPoints;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -16,6 +18,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -26,6 +29,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -44,7 +48,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.List;
 
-public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener {
+public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, TypeSafeDataProvider {
+  public static DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.IdeErrorsDialog");
   private JTextPane myDetailsPane;
   private List<AbstractMessage> myFatalErrors;
@@ -84,6 +90,46 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   protected Action[] createActions() {
     return new Action[]{new ShutdownAction(), new ClearFatalsAction(), new CloseAction()};
+  }
+
+  @Override
+  protected Action[] createLeftSideActions() {
+    if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+      final AnAction analyze = ActionManager.getInstance().getAction("AnalyzeStacktraceOnError");
+      if (analyze != null) {
+        return new Action[] {new AbstractAction(analyze.getTemplatePresentation().getText()) {
+          public void actionPerformed(ActionEvent e) {
+            final DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest((Component)e.getSource());
+
+            AnActionEvent event = new AnActionEvent(
+              null, dataContext,
+              ActionPlaces.UNKNOWN,
+              analyze.getTemplatePresentation(),
+              ActionManager.getInstance(),
+              e.getModifiers()
+            );
+
+            final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+            setEnabled(project != null);
+            if (project != null) {
+              analyze.actionPerformed(event);
+              doOKAction();
+            }
+          }
+        }};
+      }
+    }
+
+    return new Action[0];
+  }
+
+  public void calcData(DataKey key, DataSink sink) {
+    if (CURRENT_TRACE_KEY == key) {
+      final AbstractMessage msg = getMessageAt(myIndex);
+      if (msg != null) {
+        sink.put(CURRENT_TRACE_KEY, msg.getThrowableText());
+      }
+    }
   }
 
   private ActionToolbar createNavigationToolbar() {
