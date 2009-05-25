@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author dsl
@@ -145,5 +146,11 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
 
   protected String getCommandName() {
     return RefactoringBundle.message("extract.subclass.command");
+  }
+
+  @NotNull
+  @Override
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
+    return ((ExtractSuperClassViewDescriptor) descriptor).getMembersToMakeWritable();
   }
 }

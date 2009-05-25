@@ -5,10 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.usageView.UsageViewDescriptor;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 /**
  * @author dsl
@@ -52,11 +48,5 @@ public class ExtractSuperClassProcessor extends ExtractSuperBaseProcessor {
       return doMemberInfosContain(method);
     }
     return false;
-  }
-
-  @NotNull
-  @Override
-  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
-    return ((ExtractSuperClassViewDescriptor) descriptor).getMembersToMakeWritable();
   }
 }
