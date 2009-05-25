@@ -4,6 +4,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
@@ -21,7 +22,7 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
   @Nullable
   private final Set<String>[] myNamedParameters;
 
-  public GrFieldStubImpl(StubElement parent, StringRef name, boolean isEnumConstant, final String[] annotations, @Nullable Set<String>[] namedParameters, final IStubElementType elemType) {
+  public GrFieldStubImpl(StubElement parent, StringRef name, boolean isEnumConstant, final String[] annotations, @NotNull Set<String>[] namedParameters, final IStubElementType elemType) {
     super(parent, elemType);
     myName = name;
     this.isEnumConstant = isEnumConstant;
@@ -41,7 +42,7 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
     return myAnnotations;
   }
 
-  @Nullable
+  @NotNull
   public Set<String>[] getNamedParameters() {
     return myNamedParameters;
   }

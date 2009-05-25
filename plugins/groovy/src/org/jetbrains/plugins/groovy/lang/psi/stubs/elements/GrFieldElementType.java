@@ -61,7 +61,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
       }, new String[annotations.length]);
     }
 
-    Set<String>[] namedParametersArray = null;
+    Set<String>[] namedParametersArray = new Set[0];
     if (psi instanceof GrFieldImpl){
       namedParametersArray = ((GrFieldImpl)psi).getNamedParametersArray();
     }
@@ -95,14 +95,11 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
 
     final Set<String>[] namedParameters = stub.getNamedParameters();
 
-    if (namedParameters != null) {
-      dataStream.writeByte(namedParameters.length);
-
-      for (Set<String> namedParameterSet : namedParameters) {
-        dataStream.writeByte(namedParameterSet.size());
-        for (String namepParameter : namedParameterSet) {
-          dataStream.writeUTF(namepParameter);
-        }
+    dataStream.writeByte(namedParameters.length);
+    for (Set<String> namedParameterSet : namedParameters) {
+      dataStream.writeByte(namedParameterSet.size());
+      for (String namepParameter : namedParameterSet) {
+        dataStream.writeUTF(namepParameter);
       }
     }
     dataStream.writeBoolean(stub.isEnumConstant());

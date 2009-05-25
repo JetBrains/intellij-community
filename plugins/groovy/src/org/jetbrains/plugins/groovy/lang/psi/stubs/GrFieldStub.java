@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.stubs.NamedStub;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
 import java.util.Set;
@@ -18,7 +18,7 @@ public interface GrFieldStub extends NamedStub<GrField> {
 
   boolean isEnumConstant();
 
-  @Nullable
+  @NotNull
   Set<String>[] getNamedParameters();
 
 }
