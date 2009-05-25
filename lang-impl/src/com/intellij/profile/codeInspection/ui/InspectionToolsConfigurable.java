@@ -126,7 +126,11 @@ public abstract class InspectionToolsConfigurable implements Configurable, Error
         try {
           final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
           profile.writeExternal(element);
-          JDOMUtil.writeDocument(new Document(element), files[0].getPath() + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml", SystemProperties.getLineSeparator());
+          final String filePath = files[0].getPath() + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml";
+          if (new File(filePath).isFile()) {
+            if (Messages.showOkCancelDialog(myWholePanel, "File \'" + filePath + "\' already exist. Do you want to override it?", "Warning", Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+          }
+          JDOMUtil.writeDocument(new Document(element), filePath, SystemProperties.getLineSeparator());
         }
         catch (WriteExternalException e1) {
           LOG.error(e1);
