@@ -195,6 +195,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     @Nullable
     protected VirtualFile getInitialFile() {
       String directoryName = getComponentText();
+      if (directoryName.length() == 0) return null;
       return LocalFileSystem.getInstance().findFileByPath(directoryName.replace(File.separatorChar, '/'));
     }
 
