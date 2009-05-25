@@ -264,9 +264,12 @@ public class ToolsImpl implements Tools {
     if (myTools == null || element == null) return myDefaultState.isEnabled();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
     for (ScopeToolState state : myTools) {
-      final PackageSet set = state.getScope().getValue();
-      if (set != null && set.contains(element.getContainingFile(), manager)) {
-        return state.isEnabled();
+      final NamedScope scope = state.getScope();
+      if (scope != null) {
+        final PackageSet set = scope.getValue();
+        if (set != null && set.contains(element.getContainingFile(), manager)) {
+          return state.isEnabled();
+        }
       }
     }
     return myDefaultState.isEnabled();
@@ -278,9 +281,12 @@ public class ToolsImpl implements Tools {
     if (myTools == null || element == null) return myDefaultState.isEnabled() ? (InspectionTool)myDefaultState.getTool() : null;
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
     for (ScopeToolState state : myTools) {
-      final PackageSet set = state.getScope().getValue();
-      if (set != null && set.contains(element.getContainingFile(), manager)) {
-        return state.isEnabled() ? (InspectionTool)state.getTool() : null;
+      final NamedScope scope = state.getScope();
+      if (scope != null) {
+        final PackageSet set = scope.getValue();
+        if (set != null && set.contains(element.getContainingFile(), manager)) {
+          return state.isEnabled() ? (InspectionTool)state.getTool() : null;
+        }
       }
     }
     return myDefaultState.isEnabled() ? (InspectionTool)myDefaultState.getTool() : null;
