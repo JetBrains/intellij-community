@@ -37,7 +37,7 @@ public abstract class DeleteScopeAction extends AnAction {
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
     if (nodes.length > 0) {
       for (InspectionConfigTreeNode node : nodes) {
-        if (node.getScope() == null || node.isByDefault()) return;
+        if (node.getScopeName() == null || node.isByDefault()) return;
       }
       presentation.setEnabled(true);
     }
