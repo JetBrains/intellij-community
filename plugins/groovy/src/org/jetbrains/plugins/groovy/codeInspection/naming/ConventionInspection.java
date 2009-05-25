@@ -42,7 +42,7 @@ public abstract class ConventionInspection extends BaseInspection {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return "Naming Conventions (Groovy)";
+    return "Naming Conventions";
   }
 
   /**
