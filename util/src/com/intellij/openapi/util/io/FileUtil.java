@@ -50,21 +50,36 @@ public class FileUtil {
   public static File createFileByRelativePath(@NotNull final File absoluteBase, @NotNull final String relativeTail) {
     // assert absoluteBase.isAbsolute() && absoluteBase.isDirectory(); : assertion seem to be too costly
 
-    File point = absoluteBase;
-    final String[] parts = relativeTail.replace('\\', '/').split("/");
-    // do not validate, just apply rules
-    for (String part : parts) {
-      final String trimmed = part.trim();
-      if (trimmed.length() == 0) continue;
-      if (".".equals(trimmed)) continue;
-      if ("..".equals(trimmed)) {
-        point = point.getParentFile();
-        if (point == null) return null;
+    String basePath = absoluteBase.getPath();
+    StringBuilder resultPath = new StringBuilder(basePath);
+    if (basePath.length() > 1 && (basePath.endsWith("/") || basePath.endsWith("\\"))) {
+      resultPath.setLength(resultPath.length() - 1);
+    }
+
+    StringTokenizer tokenizer = new StringTokenizer(relativeTail, "/\\", false);
+    while (tokenizer.hasMoreTokens()) {
+      String token = tokenizer.nextToken().trim();
+      if (token.length() == 0) continue;
+      if (".".equals(token)) continue;
+      if ("..".equals(token)) {
+        int parentDelim = resultPath.lastIndexOf("/");
+        if (parentDelim > 0) {
+          resultPath.setLength(parentDelim);
+        }
+        else {
+          parentDelim = resultPath.lastIndexOf("\\");
+          if (parentDelim > 0) {
+            resultPath.setLength(parentDelim);
+          }
+          return null;
+        }
         continue;
       }
-      point = new File(point, trimmed);
+      resultPath.append('/');
+      resultPath.append(token);
     }
-    return point;
+
+    return new File(resultPath.toString());
   }
 
   @Nullable
