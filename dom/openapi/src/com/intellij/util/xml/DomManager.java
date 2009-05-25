@@ -135,9 +135,6 @@ public abstract class DomManager implements ModificationTracker {
   @Deprecated
   public abstract void addPsiReferenceFactoryForClass(Class clazz, PsiReferenceFactory psiReferenceFactory);
 
-  /**
-   * @deprecated use {@link DomService#createModelMerger()} instead
-   */
   public abstract ModelMerger createModelMerger();
 
 
