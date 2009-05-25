@@ -168,7 +168,7 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
 
-    if (')' == charTyped || ']' == charTyped){
+    if (')' == charTyped || ']' == charTyped || '}' == charTyped){
       if (handleRParen(editor, fileType, charTyped)) return;
     }
     else if ('"' == charTyped || '\'' == charTyped){
