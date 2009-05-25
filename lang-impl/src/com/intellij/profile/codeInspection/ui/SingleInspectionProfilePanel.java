@@ -57,10 +57,7 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.DefaultTreeSelectionModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -123,6 +120,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     repaintTableData();
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
+      TreeUtil.selectNode(myTree, (TreeNode)selectionPath.getLastPathComponent());
       TreeUtil.showRowCentered(myTree, myTree.getRowForPath(selectionPath), false);
     }
   }
@@ -206,7 +204,6 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void postProcessModification() {
-    initDescriptors();
     wereToolSettingsModified();
     //resetup configs
     for (ScopeToolState state : mySelectedProfile.getAllTools()) {
@@ -652,18 +649,19 @@ public class SingleInspectionProfilePanel extends JPanel {
       keySetList.addAll(SearchUtil.findKeys(filter, quated));
     }
     for (Descriptor descriptor : myDescriptors.keySet()) {
-      final List<Descriptor> descriptors = myDescriptors.get(descriptor);
       if (filter != null && filter.length() > 0 && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quated)) {
         continue;
       }
+      final List<ScopeToolState> nonDefaultTools = mySelectedProfile.getNonDefaultTools(descriptor.getKey().toString());
       final HighlightDisplayKey key = descriptor.getKey();
       final boolean enabled = mySelectedProfile.isToolEnabled(key);
       final boolean properSetting = mySelectedProfile.isProperSetting(key);
-      final InspectionConfigTreeNode node = new InspectionConfigTreeNode(descriptor, null, descriptors.isEmpty(), enabled, properSetting, descriptors.isEmpty());
+      boolean hasNonDefaultScope = nonDefaultTools != null && !nonDefaultTools.isEmpty();
+      final InspectionConfigTreeNode node = new InspectionConfigTreeNode(descriptor, null, !hasNonDefaultScope, enabled, properSetting, !hasNonDefaultScope);
       getGroupNode(myRoot, descriptor.getGroup(), properSetting).add(node);
-      if (!descriptors.isEmpty()) {
-        for (Descriptor des : descriptors) {
-          node.add(new InspectionConfigTreeNode(des, des.getState(), false, properSetting, false));
+      if (hasNonDefaultScope) {
+        for (ScopeToolState nonDefaultState : nonDefaultTools) {
+          node.add(new InspectionConfigTreeNode(new Descriptor(nonDefaultState, mySelectedProfile), nonDefaultState, false, properSetting, false));
         }
         node.add(new InspectionConfigTreeNode(descriptor, descriptor.getState(), true, properSetting, false));
       }
