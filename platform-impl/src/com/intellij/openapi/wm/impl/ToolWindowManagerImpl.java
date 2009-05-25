@@ -1566,7 +1566,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         final KeyEventProcessor processor = each.getProcessor();
         if (processor != null) {
           final Boolean result = processor.dispatch(e, myKeyProcessorContext);
-
           if (result != null) {
             return result.booleanValue();
           }
@@ -1574,6 +1573,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
 
       myToDispatchOnDone.add(e);
+      restartIdleAlarm();
+
       return true;
     } else {
       return false;
