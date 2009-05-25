@@ -369,7 +369,12 @@ public class ToolsImpl implements Tools {
     if (myTools != null && myTools.size() > idx && idx >= 0) {
       final ScopeToolState scopeToolState = myTools.get(idx);
       myTools.remove(idx);
-      myTools.add(idx, new ScopeToolState(scopeToolState.getScope(), scopeToolState.getTool(), scopeToolState.isEnabled(), level));
+      final NamedScope scope = scopeToolState.getScope();
+      if (scope != null) {
+        myTools.add(idx, new ScopeToolState(scope, scopeToolState.getTool(), scopeToolState.isEnabled(), level));
+      } else {
+        myTools.add(idx, new ScopeToolState(scopeToolState.getScopeName(), scopeToolState.getTool(), scopeToolState.isEnabled(), level));
+      }
     } else if (idx == - 1) {
       myDefaultState.setLevel(level);
     }
