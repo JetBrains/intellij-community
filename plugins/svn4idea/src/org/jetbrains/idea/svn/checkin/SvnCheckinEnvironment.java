@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
@@ -30,13 +31,12 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -87,7 +87,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     final Collection<VirtualFile> deletedFiles = new ArrayList<VirtualFile>();
     if (progress != null) {
       committer.setEventHandler(new ISVNEventHandler() {
-        public void handleEvent(SVNEvent event, double p) {
+        public void handleEvent(final SVNEvent event, double p) {
           final String path = SvnUtil.getPathForProgress(event);
           if (path == null) {
             return;
@@ -116,10 +116,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
           else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
             progress.setText2(SvnBundle.message("progress.text2.transmitting.delta", path));
           }
-          else if (event.getAction() == SVNEventAction.COMMIT_COMPLETED) {
-            WindowManager.getInstance().getStatusBar(mySvnVcs.getProject())
-              .setInfo(SvnBundle.message("status.text.comitted.revision", event.getRevision()));
-          }
+          // do not need COMMIT_COMPLETED: same info is get another way
         }
 
         public void checkCancelled() throws SVNCancelException {
@@ -192,9 +189,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         }
       }
     }
-    StringBuffer committedRevisions = new StringBuffer();
-    for (int i = 0; i < results.length; i++) {
-      SVNCommitInfo result = results[i];
+    final StringBuffer committedRevisions = new StringBuffer();
+    for (SVNCommitInfo result : results) {
       if (result.getErrorMessage() != null) {
         exception.add(new VcsException(result.getErrorMessage().getFullMessage()));
       }
@@ -206,10 +202,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (committedRevisions.length() > 0) {
-      final StatusBar bar = WindowManager.getInstance().getStatusBar(mySvnVcs.getProject());
-      if (bar != null) {
-        bar.setInfo(SvnBundle.message("status.text.committed.revision", committedRevisions));
-      }
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          new ChangesViewBalloonProblemNotifier(mySvnVcs.getProject(),
+                                                SvnBundle.message("status.text.comitted.revision", committedRevisions),
+                                                MessageType.INFO).run();
+        }
+      });
     }
   }
 
