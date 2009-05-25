@@ -331,6 +331,12 @@ public class SingleInspectionProfilePanel extends JPanel {
       protected InspectionProfileImpl getSelectedProfile() {
         return mySelectedProfile;
       }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        super.actionPerformed(e);
+        updateOptionsAndDescriptionPanel(myTree.getSelectionPath());
+      }
     });
     actions.add(new DeleteScopeAction(myTree){
       protected InspectionProfileImpl getSelectedProfile() {
