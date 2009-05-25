@@ -580,17 +580,13 @@ public class JavaFoldingBuilder extends FoldingBuilderEx {
 
     if (!hasEmptyConstructor) return false;
 
-    boolean hasAbstract = false;
-    for (final PsiMethod method : baseClass.getMethods()) {
+    for (final PsiMethod method : baseClass.getAllMethods()) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        hasAbstract = true;
-        break;
+        return true;
       }
     }
 
-    if (!hasAbstract) return false;
-
-    return true;
+    return false;
   }
 
   private static boolean addToFold(List<FoldingDescriptor> list, PsiElement elementToFold, Document document, boolean allowOneLiners) {
