@@ -108,4 +108,9 @@ public class Descriptor {
   public ScopeToolState getState() {
     return myState;
   }
+
+  @Override
+  public String toString() {
+    return myKey.toString();
+  }
 }
