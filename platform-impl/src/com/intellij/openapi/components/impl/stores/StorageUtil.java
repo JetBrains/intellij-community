@@ -119,11 +119,15 @@ public class StorageUtil {
 
   public static byte[] printDocument(final Document document) throws StateStorage.StateStorageException {
     try {
-      return JDOMUtil.writeDocument(document, SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8);
+      return printDocumentToString(document).getBytes(CharsetToolkit.UTF8);
     }
     catch (IOException e) {
       throw new StateStorage.StateStorageException(e);
     }
+  }
+
+  public static String printDocumentToString(Document document) {
+    return JDOMUtil.writeDocument(document, SystemProperties.getLineSeparator());
   }
 
   static byte[] printElement(Element element) throws StateStorage.StateStorageException {

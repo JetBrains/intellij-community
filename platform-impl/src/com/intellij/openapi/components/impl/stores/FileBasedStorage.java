@@ -10,11 +10,13 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
@@ -136,10 +138,11 @@ public class FileBasedStorage extends XmlElementStorage {
     protected boolean phisicalContentNeedsSave() {
       if (!myFile.exists()) return true;
 
-      final byte[] text = StorageUtil.printDocument(getDocumentToSave());
-
+      final String text = StorageUtil.printDocumentToString(getDocumentToSave());
       try {
-        return !Arrays.equals(myFile.loadBytes(), text);
+        String fileText = new String(myFile.loadBytes(), CharsetToolkit.UTF8);
+        final String convertedFileText = StringUtil.convertLineSeparators(fileText, SystemProperties.getLineSeparator());
+        return !convertedFileText.equals(text);
       }
       catch (IOException e) {
         LOG.debug(e);
