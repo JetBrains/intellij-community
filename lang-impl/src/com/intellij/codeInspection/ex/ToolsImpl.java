@@ -62,8 +62,12 @@ public class ToolsImpl implements Tools {
         }
         else {
           final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(element.getProject());
-          if (state.getScope() != null && state.getScope().getValue().contains(element.getContainingFile(), validationManager)) {
-            return state.getTool();
+          final NamedScope scope = state.getScope();
+          if (scope != null) {
+            final PackageSet packageSet = scope.getValue();
+            if (packageSet != null && packageSet.contains(element.getContainingFile(), validationManager)) {
+              return state.getTool();
+            }
           }
         }
       }
@@ -241,7 +245,8 @@ public class ToolsImpl implements Tools {
     if (myTools == null || element == null) return myDefaultState.getLevel();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
     for (ScopeToolState state : myTools) {
-      final PackageSet set = state.getScope().getValue();
+      final NamedScope scope = state.getScope();
+      final PackageSet set = scope != null ? scope.getValue() : null;
       if (set != null && set.contains(element.getContainingFile(), manager)) {
         return state.getLevel();
       }
@@ -326,9 +331,12 @@ public class ToolsImpl implements Tools {
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
         final NamedScope scope = state.getScope();
-        if (scope != null && scope.getValue().contains(element.getContainingFile(), validationManager)) {
-          state.setEnabled(false);
-          return;
+        if (scope != null) {
+          final PackageSet packageSet = scope.getValue();
+          if (packageSet != null && packageSet.contains(element.getContainingFile(), validationManager)) {
+            state.setEnabled(false);
+            return;
+          }
         }
       }
       myDefaultState.setEnabled(false);

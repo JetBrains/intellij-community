@@ -44,7 +44,7 @@ public abstract class AddScopeAction extends AnAction {
     if (nodes.length > 0) {
       final InspectionConfigTreeNode node = nodes[0];
       final Descriptor descriptor = node.getDesriptor();
-      if (descriptor != null && node.getScope() == null && !getAvailableScopes(descriptor, project).isEmpty()) {
+      if (descriptor != null && node.getScopeName() == null && !getAvailableScopes(descriptor, project).isEmpty()) {
         presentation.setEnabled(true);
       }
     }
