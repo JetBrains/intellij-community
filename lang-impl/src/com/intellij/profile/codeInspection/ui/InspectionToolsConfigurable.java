@@ -71,6 +71,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         if (model != null) {
           addProjectProfile((InspectionProfileImpl)model);
           myDeletedProfiles.remove(model.getName());
+          myDeleteButton.setEnabled(true);
         }
       }
     });
@@ -79,7 +80,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl selectedProfile = (InspectionProfileImpl)myProfiles.getSelectedItem();
         ((DefaultComboBoxModel)myProfiles.getModel()).removeElement(selectedProfile);
-         myDeletedProfiles.add(selectedProfile.getName());
+        myDeletedProfiles.add(selectedProfile.getName());
+        myDeleteButton.setEnabled(myProfiles.getModel().getSize() > 1);
       }
     });
 
@@ -103,6 +105,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
           } else {
             myProfileManager.addProfile(profile);
           }
+          myDeleteButton.setEnabled(true);
         }
         catch (InvalidDataException e1) {
           LOG.error(e1);
@@ -233,6 +236,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
     myProfiles.setSelectedItem(getCurrentProfile());
     myLayout.show(myPanel, getCurrentProfile().getName());
+    myDeleteButton.setEnabled(getProfiles().size() > 1);
   }
 
   protected Collection<Profile> getProfiles() {
