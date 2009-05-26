@@ -231,6 +231,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     InspectionProfileImpl inspectionProfile =
         new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
+    inspectionProfile.initInspectionTools();
       final ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
       if (initValue == -1) {
         final InspectionProfileEntry[] profileEntries = profileModifiableModel.getInspectionTools(null);
