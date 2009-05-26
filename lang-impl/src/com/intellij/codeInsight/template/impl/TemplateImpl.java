@@ -15,7 +15,7 @@ import java.util.*;
 /**
  *
  */
-public class TemplateImpl implements Template, SchemeElement {
+public class TemplateImpl extends Template implements SchemeElement {
   private String myKey;
   private String myString = null;
   private String myDescription;

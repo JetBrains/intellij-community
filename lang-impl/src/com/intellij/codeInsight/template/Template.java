@@ -3,36 +3,39 @@ package com.intellij.codeInsight.template;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public interface Template {
-  void addTextSegment(@NotNull String text);
-  void addVariableSegment(@NonNls String name);
+public abstract class Template {
+  public abstract void addTextSegment(@NotNull String text);
+  public abstract void addVariableSegment(@NonNls String name);
 
-  void addVariable(@NonNls String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt);
-  void addVariable(@NonNls String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
+  public void addVariable(@NonNls String name, @NotNull Expression defaultValueExpression, boolean isAlwaysStopAt) {
+    addVariable(name, defaultValueExpression, defaultValueExpression, isAlwaysStopAt);     
+  }
+  public abstract void addVariable(@NonNls String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt);
+  public abstract void addVariable(@NonNls String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
 
-  void addEndVariable();
-  void addSelectionStartVariable();
-  void addSelectionEndVariable();
+  public abstract void addEndVariable();
+  public abstract void addSelectionStartVariable();
+  public abstract void addSelectionEndVariable();
 
-  String getId();
-  String getKey();
+  public abstract String getId();
+  public abstract String getKey();
 
-  String getDescription();
+  public abstract String getDescription();
 
-  void setToReformat(boolean toReformat);
+  public abstract void setToReformat(boolean toReformat);
 
-  void setToIndent(boolean toIndent);
+  public abstract void setToIndent(boolean toIndent);
 
-  void setInline(boolean isInline);
+  public abstract void setInline(boolean isInline);
 
-  int getSegmentsCount();
+  public abstract int getSegmentsCount();
 
-  String getSegmentName( int segmentIndex);
+  public abstract String getSegmentName( int segmentIndex);
 
-  int getSegmentOffset(int segmentIndex);
+  public abstract int getSegmentOffset(int segmentIndex);
 
-  String getTemplateText();
+  public abstract String getTemplateText();
 
-  boolean isToShortenLongNames();
-  void setToShortenLongNames(boolean toShortenLongNames);
+  public abstract boolean isToShortenLongNames();
+  public abstract void setToShortenLongNames(boolean toShortenLongNames);
 }
