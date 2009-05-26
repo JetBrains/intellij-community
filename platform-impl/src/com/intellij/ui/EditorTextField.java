@@ -392,8 +392,8 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
   private Color getBackgroundColor(boolean enabled){
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
-    return enabled ? UIUtil.getActiveTextColor()
-           : UIUtil.getInactiveTextColor();
+    return enabled ? UIUtil.getActiveTextFieldBackgroundColor()
+           : UIUtil.getInactiveTextFieldBackgroundColor();
   }
 
   public Dimension getPreferredSize() {

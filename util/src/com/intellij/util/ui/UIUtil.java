@@ -213,6 +213,14 @@ public class UIUtil {
     return UIManager.getColor("textInactiveText");
   }
 
+  public static Color getActiveTextFieldBackgroundColor() {
+    return UIManager.getColor("TextField.background");
+  }
+
+  public static Color getInactiveTextFieldBackgroundColor() {
+    return UIManager.getColor("TextField.inactiveBackground");
+  }
+
   public static Font getTreeFont() {
     return UIManager.getFont("Tree.font");
   }
