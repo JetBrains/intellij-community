@@ -48,6 +48,7 @@ public class VisibleTreeState implements JDOMExternalizable{
             }
           }
         }
+        if (o1 instanceof String && o2 instanceof String) return o1.equals(o2);
         return false;
       }
     };
