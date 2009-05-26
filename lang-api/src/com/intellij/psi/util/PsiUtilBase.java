@@ -402,8 +402,7 @@ public class PsiUtilBase {
                                             ? selectionModel.getSelectionStart()
                                             : caretOffset;
     PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
-    Language lang = elt != null ? findLanguageFromElement(elt): null;
-    if (lang == null) return null;
+    Language lang = findLanguageFromElement(elt);
 
     if (selectionModel.hasSelection()) {
       final Language rangeLanguage = evaluateLanguageInRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), file);
@@ -445,7 +444,6 @@ public class PsiUtilBase {
 
   public static PsiFile getPsiFileAtOffset(final PsiFile file, final int offset) {
     PsiElement elt = getElementAtOffset(file, offset);
-    if (elt == null) return file;
 
     assert elt.isValid() : elt + "; file: "+file + "; isvalid: "+file.isValid();
     return elt.getContainingFile();
@@ -457,7 +455,7 @@ public class PsiUtilBase {
     int curOffset = start;
     do {
       PsiElement elt = getElementAtOffset(file, curOffset);
-      if (elt == null) break;
+
       if (!(elt instanceof PsiWhiteSpace)) {
         final Language language = findLanguageFromElement(elt);
         if (lang == null) {
@@ -481,7 +479,7 @@ public class PsiUtilBase {
     PsiElement elt = getElementAtOffset(file, start);
 
     TextRange selectionRange = new TextRange(start, end);
-    if (elt != null && !(elt instanceof PsiFile)) {
+    if (!(elt instanceof PsiFile)) {
       elt = elt.getParent();
       TextRange range = elt.getTextRange();
       assert range != null : "Range is null for " + elt + "; " + elt.getClass();
@@ -500,13 +498,15 @@ public class PsiUtilBase {
     return reallyEvaluateLanguageInRange(start, end, file);
   }
 
-  @Nullable
+  @NotNull
   public static PsiElement getElementAtOffset(@NotNull PsiFile file, int offset) {
     PsiElement elt = file.findElementAt(offset);
     if (elt == null && offset > 0) {
       elt = file.findElementAt(offset - 1);
     }
-
+    if (elt == null) {
+      return file;
+    }
     return elt;
   }
 

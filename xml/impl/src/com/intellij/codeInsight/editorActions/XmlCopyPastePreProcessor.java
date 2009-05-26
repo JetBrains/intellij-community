@@ -36,26 +36,24 @@ public class XmlCopyPastePreProcessor implements CopyPastePreProcessor {
     int caretOffset = editor.getCaretModel().getOffset();
     PsiElement element = PsiUtilBase.getElementAtOffset(file, caretOffset);
 
-    if (element != null) {
-      ASTNode node = element.getNode();
-      if (node != null) {
-        boolean hasMarkup = text.indexOf('>') >= 0 || text.indexOf('<') >= 0;
-        if (element.getTextOffset() == caretOffset &&
-            node.getElementType() == XmlElementType.XML_END_TAG_START &&
-            node.getTreePrev().getElementType() == XmlElementType.XML_TAG_END) {
+    ASTNode node = element.getNode();
+    if (node != null) {
+      boolean hasMarkup = text.indexOf('>') >= 0 || text.indexOf('<') >= 0;
+      if (element.getTextOffset() == caretOffset &&
+          node.getElementType() == XmlElementType.XML_END_TAG_START &&
+          node.getTreePrev().getElementType() == XmlElementType.XML_TAG_END) {
 
-           return hasMarkup ? text : encode(text, element);
-        } else {
-          XmlElement parent = PsiTreeUtil.getParentOfType(element, XmlText.class, XmlAttributeValue.class);
-          if (parent != null) {
-            if (parent instanceof XmlText && hasMarkup) {
-              return text;
-            }
+         return hasMarkup ? text : encode(text, element);
+      } else {
+        XmlElement parent = PsiTreeUtil.getParentOfType(element, XmlText.class, XmlAttributeValue.class);
+        if (parent != null) {
+          if (parent instanceof XmlText && hasMarkup) {
+            return text;
+          }
 
-            if (TreeUtil.findParent(node, XmlElementType.XML_CDATA) == null &&
-                TreeUtil.findParent(node, XmlElementType.XML_COMMENT) == null) {
-              return encode(text, element);
-            }
+          if (TreeUtil.findParent(node, XmlElementType.XML_CDATA) == null &&
+              TreeUtil.findParent(node, XmlElementType.XML_COMMENT) == null) {
+            return encode(text, element);
           }
         }
       }

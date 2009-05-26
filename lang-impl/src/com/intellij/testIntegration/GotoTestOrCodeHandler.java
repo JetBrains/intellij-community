@@ -12,6 +12,8 @@ import com.intellij.psi.util.PsiUtilBase;
 
 import java.util.Collection;
 
+import org.jetbrains.annotations.NotNull;
+
 public class GotoTestOrCodeHandler extends GotoTargetHandler {
   protected String getFeatureUsedKey() {
     return "navigation.goto.testOrCode";
@@ -32,6 +34,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     return new Pair<PsiElement, PsiElement[]>(sourceElement, candidates.toArray(new PsiElement[candidates.size()]));
   }
 
+  @NotNull
   public static PsiElement getSelectedElement(Editor editor, PsiFile file) {
     return PsiUtilBase.getElementAtOffset(file, editor.getCaretModel().getOffset());
   }
