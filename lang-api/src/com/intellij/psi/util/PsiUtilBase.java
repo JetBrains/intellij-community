@@ -460,17 +460,15 @@ public class PsiUtilBase {
         final Language language = findLanguageFromElement(elt);
         if (lang == null) {
           lang = language;
-        } else if (lang != language) {
+        }
+        else if (lang != language) {
           return null;
         }
       }
       int endOffset = elt.getTextRange().getEndOffset();
-      if (endOffset == curOffset) {
-        endOffset++;
-      }
-      curOffset = endOffset;
+      curOffset = endOffset <= curOffset ? curOffset + 1 : endOffset;
     }
-    while(curOffset < end);
+    while (curOffset < end);
     return narrowLanguage(lang, file.getLanguage());
   }
 
