@@ -37,6 +37,10 @@ import java.util.*;
  * The action is available if there is at least one git root.
  */
 public abstract class GitRepositoryAction extends AnAction {
+  /**
+   * The task delayed until end of the primary action. These tasks happen after repository refresh.
+   */
+  final LinkedList<TransactionRunnable> myDelayedTasks = new LinkedList<TransactionRunnable>();
 
   /**
    * {@inheritDoc}
@@ -100,9 +104,21 @@ public abstract class GitRepositoryAction extends AnAction {
           exceptions.add(e);
         }
         GitUtil.refreshFiles(project, affectedRoots);
+        for (TransactionRunnable task : myDelayedTasks) {
+          task.run(exceptions);
+        }
       }
     }, null);
     vcs.showErrors(exceptions, actionName);
+  }
+
+  /**
+   * Delay task to be executed after refresh
+   *
+   * @param task the task to run
+   */
+  public final void delayTask(@NotNull TransactionRunnable task) {
+    myDelayedTasks.add(task);
   }
 
   /**

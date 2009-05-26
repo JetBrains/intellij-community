@@ -15,6 +15,8 @@
  */
 package git4idea.actions;
 
+import com.intellij.history.Label;
+import com.intellij.history.LocalHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.ActionInfo;
@@ -57,6 +59,7 @@ public class GitPull extends GitRepositoryAction {
     if (!dialog.isOK()) {
       return;
     }
+    Label beforeLabel = LocalHistory.putSystemLabel(project, "Before update");
     GitLineHandler h = dialog.pullHandler();
     final VirtualFile root = dialog.gitRoot();
     affectedRoots.add(root);
@@ -70,7 +73,7 @@ public class GitPull extends GitRepositoryAction {
     if (exceptions.size() != 0) {
       return;
     }
-    GitMergeUtil.showUpdates(project, exceptions, root, currentRev, getActionName(), ActionInfo.UPDATE);
+    GitMergeUtil.showUpdates(this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
   }
 
 }
