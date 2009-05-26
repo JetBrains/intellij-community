@@ -116,13 +116,14 @@ public class TemplateImpl extends Template implements SchemeElement {
     mySegments.add(new Segment(name, myTemplateText.length()));
   }
 
-  public void addVariable(String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
+  public Variable addVariable(String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
     if (mySegments != null) {
       Segment segment = new Segment(name, myTemplateText.length());
       mySegments.add(segment);
     }
     Variable variable = new Variable(name, expression, defaultValueExpression, isAlwaysStopAt);
     myVariables.add(variable);
+    return variable;
   }
 
   public void addEndVariable() {
@@ -281,9 +282,10 @@ public class TemplateImpl extends Template implements SchemeElement {
     mySegments = null;
   }
 
-  public void addVariable(String name, String expression, String defaultValue, boolean isAlwaysStopAt) {
+  public Variable addVariable(String name, String expression, String defaultValue, boolean isAlwaysStopAt) {
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
     myVariables.add(variable);
+    return variable;
   }
 
   public int getVariableCount() {
