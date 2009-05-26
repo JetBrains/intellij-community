@@ -299,9 +299,8 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
 
   public TestState.StateInterval calculateInterval(final SuiteState state) {
     final SuiteState.SuiteStateInterval result = new SuiteState.SuiteStateInterval(state, getChildAt(0).getState().getInterval());
-    for (int i = 0; i < getChildCount(); i++) {
-      final TestState.StateInterval interval = getChildAt(i).getState().getInterval();
-      result.updateFrom(interval);
+    for (TestProxy proxy : getChildren()) {
+      result.updateFrom(proxy.getState().getInterval());
     }
     return result;
   }
