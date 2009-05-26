@@ -9,4 +9,5 @@ public interface TemplateEditingListener {
   void beforeTemplateFinished(TemplateState state, Template template);
   void templateFinished(Template template);
   void templateCancelled(Template template);
+  void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex);
 }

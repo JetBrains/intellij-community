@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 /**
  * @author ven
  */
-public class TemplateEditingAdapter implements TemplateEditingListener {
+public abstract class TemplateEditingAdapter implements TemplateEditingListener {
 
   public void beforeTemplateFinished(final TemplateState state, final Template template) {
   }
@@ -14,5 +14,8 @@ public class TemplateEditingAdapter implements TemplateEditingListener {
   }
 
   public void templateCancelled(Template template) {
+  }
+
+  public void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex) {
   }
 }

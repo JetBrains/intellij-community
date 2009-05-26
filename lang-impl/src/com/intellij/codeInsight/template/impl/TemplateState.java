@@ -4,10 +4,9 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.Result;
 import com.intellij.lang.LanguageLiteralEscapers;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
@@ -127,14 +126,24 @@ public class TemplateState implements Disposable {
   }
 
   private void setCurrentVariableNumber(int variableNumber) {
+    final int oldVariableNumber = myCurrentVariableNumber;
     myCurrentVariableNumber = variableNumber;
     ((DocumentEx)myDocument).setStripTrailingSpacesEnabled(variableNumber < 0);
     if (variableNumber < 0) {
       myCurrentSegmentNumber = -1;
-      releaseAll();
     } else {
       myCurrentSegmentNumber = getCurrentSegmentNumber();
     }
+    fireCurrentVariableChanged(oldVariableNumber, variableNumber);
+    if (myCurrentSegmentNumber < 0) {
+      releaseAll();
+    }
+  }
+
+  @Nullable
+  public String getTrimmedVariableValue(int variableIndex) {
+    final TextResult value = getVariableValue(myTemplate.getVariableNameAt(variableIndex));
+    return value == null ? null : value.getText().trim();
   }
 
   @Nullable
@@ -941,6 +950,13 @@ public class TemplateState implements Disposable {
     TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
     for (TemplateEditingListener listener : listeners) {
       listener.beforeTemplateFinished(this, myTemplate);
+    }
+  }
+
+  private void fireCurrentVariableChanged(int oldIndex, int newIndex) {
+    TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
+    for (TemplateEditingListener listener : listeners) {
+      listener.currentVariableChanged(this, myTemplate, oldIndex, newIndex);
     }
   }
 
