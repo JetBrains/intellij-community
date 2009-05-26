@@ -73,6 +73,8 @@ public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInject
     myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);
 
     myLocalName = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getAttributeName());
+
+    myNamespace = new ComboBox(200);
   }
 
   private void $$$setupUI$$$() {
