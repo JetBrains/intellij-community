@@ -89,15 +89,15 @@ public class TemplateState implements Disposable {
         if (myEditor != null) {
           final int offset = myEditor.getCaretModel().getOffset();
           myDocumentChangesTerminateTemplate = myCurrentSegmentNumber >= 0 &&
-              (offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
-                                   offset > mySegments.getSegmentEnd(myCurrentSegmentNumber));
+                                               (offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
+                                                offset > mySegments.getSegmentEnd(myCurrentSegmentNumber));
         }
         started = true;
       }
 
       public void beforeCommandFinished(CommandEvent event) {
         if (started) {
-        afterChangedUpdate();
+          afterChangedUpdate();
         }
       }
     };
@@ -126,18 +126,10 @@ public class TemplateState implements Disposable {
   }
 
   private void setCurrentVariableNumber(int variableNumber) {
-    final int oldVariableNumber = myCurrentVariableNumber;
     myCurrentVariableNumber = variableNumber;
-    ((DocumentEx)myDocument).setStripTrailingSpacesEnabled(variableNumber < 0);
-    if (variableNumber < 0) {
-      myCurrentSegmentNumber = -1;
-    } else {
-      myCurrentSegmentNumber = getCurrentSegmentNumber();
-    }
-    fireCurrentVariableChanged(oldVariableNumber, variableNumber);
-    if (myCurrentSegmentNumber < 0) {
-      releaseAll();
-    }
+    final boolean isFinished = variableNumber < 0;
+    ((DocumentEx)myDocument).setStripTrailingSpacesEnabled(isFinished);
+    myCurrentSegmentNumber = isFinished ? -1 : getCurrentSegmentNumber();
   }
 
   @Nullable
@@ -175,6 +167,11 @@ public class TemplateState implements Disposable {
     int number = getCurrentSegmentNumber();
     if (number == -1) return null;
     return new TextRange(mySegments.getSegmentStart(number), mySegments.getSegmentEnd(number));
+  }
+
+  @Nullable
+  public TextRange getVariableRange(int variableIndex) {
+    return getVariableRange(myTemplate.getVariableNameAt(variableIndex));
   }
 
   @Nullable
@@ -219,7 +216,9 @@ public class TemplateState implements Disposable {
           if (myDocument != null) {
             fireTemplateCancelled();
             LookupManager.getInstance(myProject).hideActiveLookup();
+            int oldVar = myCurrentVariableNumber;
             setCurrentVariableNumber(-1);
+            currentVariableChanged(oldVar);
           }
         }
 
@@ -297,6 +296,7 @@ public class TemplateState implements Disposable {
             initTabStopHighlighters();
             initListeners();
             focusCurrentExpression();
+            currentVariableChanged(-1);
           }
         }
       }
@@ -338,7 +338,9 @@ public class TemplateState implements Disposable {
     LOG.assertTrue(myTemplate != null);
     if (myDocumentChanged) {
       if (myDocumentChangesTerminateTemplate || mySegments.isInvalid()) {
+        final int oldIndex = myCurrentVariableNumber;
         setCurrentVariableNumber(-1);
+        currentVariableChanged(oldIndex);
         fireTemplateCancelled();
       } else {
         calcResults(true);
@@ -374,7 +376,7 @@ public class TemplateState implements Disposable {
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
 
     final int currentSegmentNumber = getCurrentSegmentNumber();
-    
+
     lockSegmentAtTheSameOffsetIfAny();
 
     if (currentSegmentNumber < 0) return;
@@ -420,7 +422,7 @@ public class TemplateState implements Disposable {
     if (lookupManager.isDisposed()) return;
 
     final CompletionParameters parameters =
-        new CompletionParameters(psiFile, psiFile, CompletionType.BASIC, myEditor.getCaretModel().getOffset(), 1);
+      new CompletionParameters(psiFile, psiFile, CompletionType.BASIC, myEditor.getCaretModel().getOffset(), 1);
     final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems, new CompletionPreferencePolicy(parameters));
     toProcessTab = false;
     lookup.addLookupListener(new LookupAdapter() {
@@ -575,14 +577,14 @@ public class TemplateState implements Disposable {
     if (result instanceof RecalculatableResult) {
       shortenReferences();
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      ((RecalculatableResult) result).handleRecalc(psiFile, myDocument, 
+      ((RecalculatableResult) result).handleRecalc(psiFile, myDocument,
                                                    mySegments.getSegmentStart(segmentNumber), mySegments.getSegmentEnd(segmentNumber));
     }
   }
 
   private void replaceString(String newValue, int start, int end, int segmentNumber) {
     String oldText = myDocument.getCharsSequence().subSequence(start, end).toString();
-    
+
     if (!oldText.equals(newValue)) {
       int segmentNumberWithTheSameStart = mySegments.getSegmentWithTheSameStart(segmentNumber, start);
       mySegments.setNeighboursGreedy(segmentNumber, false);
@@ -608,13 +610,15 @@ public class TemplateState implements Disposable {
 
     myDocumentChangesTerminateTemplate = false;
 
-    int previousVariableNumber = getPreviousVariableNumber(myCurrentVariableNumber);
+    final int oldVar = myCurrentVariableNumber;
+    int previousVariableNumber = getPreviousVariableNumber(oldVar);
     if (previousVariableNumber >= 0) {
       focusCurrentHighlighter(false);
       calcResults(false);
       doReformat();
       setCurrentVariableNumber(previousVariableNumber);
       focusCurrentExpression();
+      currentVariableChanged(oldVar);
     }
   }
 
@@ -628,7 +632,8 @@ public class TemplateState implements Disposable {
 
     myDocumentChangesTerminateTemplate = false;
 
-    int nextVariableNumber = getNextVariableNumber(myCurrentVariableNumber);
+    final int oldVar = myCurrentVariableNumber;
+    int nextVariableNumber = getNextVariableNumber(oldVar);
     if (nextVariableNumber == -1) {
       calcResults(false);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -644,6 +649,7 @@ public class TemplateState implements Disposable {
     doReformat();
     setCurrentVariableNumber(nextVariableNumber);
     focusCurrentExpression();
+    currentVariableChanged(oldVar);
   }
 
   private void lockSegmentAtTheSameOffsetIfAny() {
@@ -718,7 +724,9 @@ public class TemplateState implements Disposable {
     }
     fireBeforeTemplateFinished();
     final Editor editor = myEditor;
+    int oldVar = myCurrentVariableNumber;
     setCurrentVariableNumber(-1);
+    currentVariableChanged(oldVar);
     ((TemplateManagerImpl)TemplateManager.getInstance(myProject)).clearTemplateState(editor);
     fireTemplateFinished();
     myListeners.clear();
@@ -953,10 +961,13 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void fireCurrentVariableChanged(int oldIndex, int newIndex) {
+  private void currentVariableChanged(int oldIndex) {
     TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
     for (TemplateEditingListener listener : listeners) {
-      listener.currentVariableChanged(this, myTemplate, oldIndex, newIndex);
+      listener.currentVariableChanged(this, myTemplate, oldIndex, myCurrentVariableNumber);
+    }
+    if (myCurrentSegmentNumber < 0) {
+      releaseAll();
     }
   }
 
