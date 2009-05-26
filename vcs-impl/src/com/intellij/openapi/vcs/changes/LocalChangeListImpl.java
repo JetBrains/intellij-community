@@ -68,7 +68,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   @NotNull
   @Override
-  public String getId() {
+  public synchronized String getId() {
     if (myId == null) {
       myId = UUID.randomUUID().toString();
     }
