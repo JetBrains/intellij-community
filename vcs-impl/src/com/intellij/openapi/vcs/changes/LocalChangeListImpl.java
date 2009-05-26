@@ -43,7 +43,6 @@ public class LocalChangeListImpl extends LocalChangeList {
   private LocalChangeListImpl(Project project, final String name) {
     myProject = project;
     myName = name;
-    myId = UUID.randomUUID().toString();
   }
 
   private LocalChangeListImpl(LocalChangeListImpl origin) {
@@ -70,6 +69,10 @@ public class LocalChangeListImpl extends LocalChangeList {
   @NotNull
   @Override
   public String getId() {
+    if (myId == null) {
+      myId = UUID.randomUUID().toString();
+    }
+
     return myId;
   }
 
