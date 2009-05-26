@@ -76,7 +76,6 @@ public class ChooseFileIntentionAction implements IntentionAction {
 
   private MavenDomDependency getDependency(PsiFile file, Editor editor) {
     PsiElement el = PsiUtilBase.getElementAtOffset(file, editor.getCaretModel().getOffset());
-    if (el == null) return null;
 
     XmlTag tag = PsiTreeUtil.getParentOfType(el, XmlTag.class, false);
     if (tag == null) return null;
