@@ -32,7 +32,7 @@ public final class FileContent extends UserDataHolderBase {
     return getUserData(FileBasedIndex.PROJECT);
   }
 
-  private final Key<PsiFile> ourCachedPsiFromContentKey = Key.create("cached psi from content");
+  private final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
 
   /**
    * @return psiFile associated with the content. If the file was not set on FileContentCreation, it will be created on the spot
@@ -41,7 +41,7 @@ public final class FileContent extends UserDataHolderBase {
     PsiFile psi = getUserData(FileBasedIndex.PSI_FILE);
 
     if (psi == null) {
-      psi = getUserData(ourCachedPsiFromContentKey);
+      psi = getUserData(CACHED_PSI);
     }
 
     if (psi == null) {
@@ -64,7 +64,7 @@ public final class FileContent extends UserDataHolderBase {
       );
 
       psi.putUserData(FileBasedIndex.VIRTUAL_FILE, getFile());
-      putUserData(ourCachedPsiFromContentKey, psi);
+      putUserData(CACHED_PSI, psi);
     }
     return psi;
   }

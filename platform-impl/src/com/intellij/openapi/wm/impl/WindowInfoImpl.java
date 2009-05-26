@@ -235,44 +235,59 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   }
 
   @SuppressWarnings({"EmptyCatchBlock"})
-  public void readExternal(final Element element){
-    myId=element.getAttributeValue(ID_ATTR);
+  public void readExternal(final Element element) {
+    myId = element.getAttributeValue(ID_ATTR);
     myWasRead = true;
-    try{
-      myActive=Boolean.valueOf(element.getAttributeValue(ACTIVE_ATTR)).booleanValue();
-    }catch(NumberFormatException ignored){}
-    try{
-      myAnchor= parseToolWindowAnchor(element.getAttributeValue(ANCHOR_ATTR));
-    }catch(IllegalArgumentException ignored){}
-      myAutoHide=Boolean.valueOf(element.getAttributeValue(AUTOHIDE_ATTR)).booleanValue();
-    try{
-      myInternalType= parseToolWindowType(element.getAttributeValue(INTERNAL_TYPE_ATTR));
-    }catch(IllegalArgumentException ignored){}
-    try{
-      myType=parseToolWindowType(element.getAttributeValue(TYPE_ATTR));
-    }catch(IllegalArgumentException ignored){}
-      myVisible=Boolean.valueOf(element.getAttributeValue(VISIBLE_ATTR)).booleanValue();
-    try{
-      myWeight=Float.parseFloat(element.getAttributeValue(WEIGHT_ATTR));
-    }catch(NumberFormatException ignored){}
-    try{
+    try {
+      myActive = Boolean.valueOf(element.getAttributeValue(ACTIVE_ATTR)).booleanValue();
+    }
+    catch (NumberFormatException ignored) {
+    }
+    try {
+      myAnchor = parseToolWindowAnchor(element.getAttributeValue(ANCHOR_ATTR));
+    }
+    catch (IllegalArgumentException ignored) {
+    }
+    myAutoHide = Boolean.valueOf(element.getAttributeValue(AUTOHIDE_ATTR)).booleanValue();
+    try {
+      myInternalType = parseToolWindowType(element.getAttributeValue(INTERNAL_TYPE_ATTR));
+    }
+    catch (IllegalArgumentException ignored) {
+    }
+    try {
+      myType = parseToolWindowType(element.getAttributeValue(TYPE_ATTR));
+    }
+    catch (IllegalArgumentException ignored) {
+    }
+    myVisible = Boolean.valueOf(element.getAttributeValue(VISIBLE_ATTR)).booleanValue();
+    try {
+      myWeight = Float.parseFloat(element.getAttributeValue(WEIGHT_ATTR));
+    }
+    catch (NumberFormatException ignored) {
+    }
+    try {
       String value = element.getAttributeValue(SIDE_WEIGHT_ATTR);
       if (value != null) {
-        mySideWeight=Float.parseFloat(value);
-      }      
-    }catch(NumberFormatException ignored){}
-    try{
-      myOrder=Integer.valueOf(element.getAttributeValue(ORDER_ATTR)).intValue();
-    }catch(NumberFormatException ignored){}
-    try{
-      myFloatingBounds=new Rectangle(
-        Integer.parseInt(element.getAttributeValue(X_ATTR)),
-        Integer.parseInt(element.getAttributeValue(Y_ATTR)),
-        Integer.parseInt(element.getAttributeValue(WIDTH_ATTR)),
-        Integer.parseInt(element.getAttributeValue(HEIGHT_ATTR))
-      );
-    }catch(NumberFormatException ignored){}
-    mySplitMode =Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR));
+        mySideWeight = Float.parseFloat(value);
+      }
+    }
+    catch (NumberFormatException ignored) {
+    }
+    try {
+      myOrder = Integer.valueOf(element.getAttributeValue(ORDER_ATTR)).intValue();
+    }
+    catch (NumberFormatException ignored) {
+    }
+    try {
+      int x = Integer.parseInt(element.getAttributeValue(X_ATTR));
+      int y = Integer.parseInt(element.getAttributeValue(Y_ATTR));
+      int width = Integer.parseInt(element.getAttributeValue(WIDTH_ATTR));
+      int height = Integer.parseInt(element.getAttributeValue(HEIGHT_ATTR));
+      myFloatingBounds = new Rectangle(x, y, width, height);
+    }
+    catch (NumberFormatException ignored) {
+    }
+    mySplitMode = Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR));
   }
 
   /**

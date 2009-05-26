@@ -184,7 +184,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         for (final ExpectedTypeInfo info : infos) {
           final JavaSmartCompletionParameters parameters = new JavaSmartCompletionParameters(params, info);
           final PsiType type = info.getType();
-          final boolean isVoid = type == PsiType.VOID;
+          final boolean isVoid = PsiType.VOID.equals(type);
           final AssignableFromFilter assignableFromFilter = new AssignableFromFilter(type);
           final ElementFilter filter = new ReturnTypeFilter(new ElementFilter() {
             public boolean isAcceptable(Object element, PsiElement context) {
