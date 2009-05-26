@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -87,7 +88,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
     myImportButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+        final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false){
+          @Override
+          public boolean isFileSelectable(VirtualFile file) {
+            return file.getFileType().equals(StdFileTypes.XML);
+          }
+        };
         descriptor.setDescription("Choose profile file");
         final VirtualFile[] files = FileChooser.chooseFiles(myWholePanel, descriptor);
         if (files.length == 0) return;
