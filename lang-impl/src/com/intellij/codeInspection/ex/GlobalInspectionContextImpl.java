@@ -78,7 +78,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   private InspectionProfile myExternalProfile = null;
 
   private final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<Key, GlobalInspectionContextExtension>();
-  public boolean RUN_WITH_EDITOR_PROFILE = false;
   private boolean RUN_GLOBAL_TOOLS_ONLY = false;
 
   private final Map<String, Tools> myTools = new THashMap<String, Tools>();
@@ -263,9 +262,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
     myCurrentScope = scope;
 
-    final boolean oldProfileSetting = RUN_WITH_EDITOR_PROFILE;
     InspectionTool.setOutputPath(outputPath);
-    RUN_WITH_EDITOR_PROFILE = runWithEditorSettings;
     final boolean oldToolsSettings = RUN_GLOBAL_TOOLS_ONLY;
     RUN_GLOBAL_TOOLS_ONLY = runGlobalToolsOnly;
     try {
@@ -332,7 +329,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
     finally {
       InspectionTool.setOutputPath(null);
-      RUN_WITH_EDITOR_PROFILE = oldProfileSetting;
       RUN_GLOBAL_TOOLS_ONLY = oldToolsSettings;
     }
   }
@@ -370,7 +366,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public boolean isToCheckMember(final PsiElement element, final InspectionTool tool) {
-    if (RUN_WITH_EDITOR_PROFILE) {
+    if (true) {
       final Tools tools = myTools.get(tool.getShortName());
       for (ScopeToolState state : tools.getTools()) {
         final NamedScope namedScope = state.getScope();
@@ -437,7 +433,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           public void run() {
             LOG.info("Code inspection finished");
 
-            final InspectionResultsView view = new InspectionResultsView(myProject, RUN_WITH_EDITOR_PROFILE ? null : getCurrentProfile(),
+            final InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(),
                                                                          scope, GlobalInspectionContextImpl.this,
                                                                          new InspectionRVContentProviderImpl(myProject));
             if (!view.update() && !getUIOptions().SHOW_ONLY_DIFF) {
@@ -523,7 +519,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
     if (RUN_GLOBAL_TOOLS_ONLY) return;
 
-    if (RUN_WITH_EDITOR_PROFILE || !localTools.isEmpty()) {
+    if (true || !localTools.isEmpty()) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
       scope.accept(new PsiRecursiveElementVisitor() {

@@ -10,7 +10,6 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -102,8 +101,7 @@ public class RunInspectionIntention implements IntentionAction {
     }
     model.setEditable(myDisplayName);
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
-    inspectionContext.setExternalProfile((InspectionProfile)model);
-    inspectionContext.RUN_WITH_EDITOR_PROFILE = false;
+    inspectionContext.setExternalProfile(model);
     inspectionContext.doInspections(scope, managerEx);
   }
 

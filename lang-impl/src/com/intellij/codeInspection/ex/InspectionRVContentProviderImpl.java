@@ -44,7 +44,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
 
   public void appendToolNodeContent(final InspectionNode toolNode, final InspectionTreeNode parentNode, final boolean showStructure) {
     final InspectionTool tool = toolNode.getTool();
-    final boolean runWithEditorProfile = tool.getContext().RUN_WITH_EDITOR_PROFILE;
+
 
     final Map<RefEntity, CommonProblemDescriptor[]> problems =
       tool instanceof DescriptorProviderInspection ? ((DescriptorProviderInspection)tool).getProblemElements() : null;
@@ -67,7 +67,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     List<InspectionTreeNode> list = buildTree(contents, false, tool, computeContainer, showStructure);
 
     for (InspectionTreeNode node : list) {
-      merge(node, toolNode, runWithEditorProfile);
+      merge(node, toolNode, true);
     }
 
     if (tool.isOldProblemsIncluded()) {
@@ -86,7 +86,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         merge(node, toolNode, true);
       }
     }
-    merge(toolNode, parentNode, runWithEditorProfile);
+    merge(toolNode, parentNode, true);
   }
 
   protected void appendDescriptor(final InspectionTool tool,
