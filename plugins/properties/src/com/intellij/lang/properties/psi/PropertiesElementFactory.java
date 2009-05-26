@@ -18,16 +18,27 @@ package com.intellij.lang.properties.psi;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * @author cdr
  */
 public class PropertiesElementFactory {
+  private static final UserDataCache<PropertiesFile,Project,Void> PROPERTIES = new UserDataCache<PropertiesFile, Project, Void>("system.properties.file") {
+
+    protected PropertiesFile compute(Project project, Void p) {
+      return createPropertiesFile(project, System.getProperties(), "system");
+    }
+  };
+
   @NotNull
   public static Property createProperty(@NotNull Project project, @NonNls @NotNull String name, @NonNls @NotNull String value) {
     String text = escape(name) + "=" + value;
@@ -38,8 +49,27 @@ public class PropertiesElementFactory {
   @NotNull
   public static PropertiesFile createPropertiesFile(@NotNull Project project, @NonNls @NotNull String text) {
     @NonNls String filename = "dummy." + StdFileTypes.PROPERTIES.getDefaultExtension();
-    return (PropertiesFile)PsiFileFactory.getInstance(PsiManager.getInstance(project).getProject())
+    return (PropertiesFile)PsiFileFactory.getInstance(project)
       .createFileFromText(filename, StdFileTypes.PROPERTIES, text);
+  }
+
+  @NotNull
+  public static PropertiesFile createPropertiesFile(@NotNull Project project, Properties properties, String fileName) {
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    try {
+      properties.store(stream, "");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    @NonNls String filename = fileName + "." + StdFileTypes.PROPERTIES.getDefaultExtension();
+    return (PropertiesFile)PsiFileFactory.getInstance(project)
+      .createFileFromText(filename, StdFileTypes.PROPERTIES, stream.toString());
+  }
+
+  @NotNull
+  public static PropertiesFile getSystemProperties(@NotNull Project project) {
+    return PROPERTIES.get(project, null);
   }
 
   @NotNull

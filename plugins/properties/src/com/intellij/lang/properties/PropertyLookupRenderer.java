@@ -22,14 +22,23 @@ public class PropertyLookupRenderer implements ElementLookupRenderer<Property> {
     presentation.setItemText(property.getUnescapedKey());
 
     PropertiesFile propertiesFile = property.getContainingFile();
-    PropertiesFile defaultPropertiesFile = propertiesFile.getResourceBundle().getDefaultPropertiesFile(propertiesFile.getProject());
-    Property defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getUnescapedKey());
-    String value = defaultProperty == null ? property.getValue() : defaultProperty.getValue();
+    ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
+    String value = property.getValue();
+    boolean hasBundle = resourceBundle != ResourceBundleImpl.NULL;
+    if (hasBundle) {
+      PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile(propertiesFile.getProject());
+      Property defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getUnescapedKey());
+      if (defaultProperty != null) {
+        value = defaultProperty.getValue();
+      }
+    }
+
     if (presentation.trimText() && value != null && value.length() > 10) value = value.substring(0, 10) + "...";
 
     TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_VALUE);
     presentation.setTailText("="+ value, attrs.getForegroundColor(), true, false);
-
-    presentation.setTypeText(property.getContainingFile().getResourceBundle().getBaseName(), PropertiesFileType.FILE_ICON);
+    if (hasBundle) {
+      presentation.setTypeText(resourceBundle.getBaseName(), PropertiesFileType.FILE_ICON);
+    }
   }
 }
