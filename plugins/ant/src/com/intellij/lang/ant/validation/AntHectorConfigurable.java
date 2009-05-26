@@ -9,12 +9,10 @@ import com.intellij.lang.ant.psi.impl.AntImportsIndex;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NonNls;
@@ -22,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -39,7 +38,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
   private String myOriginalContext = NONE;
   
   private JComboBox myCombo;
-  private final VirtualFileFilter myFileFilter;
+  private final GlobalSearchScope myFileFilter;
 
   public AntHectorConfigurable(AntFile file) {
     myFile = file;
@@ -47,12 +46,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     myLocalPath = PathUtil.getLocalPath(selfVFile);
     
     final Project project = file.getProject();
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myFileFilter = new VirtualFileFilter() {
-      public boolean accept(final VirtualFile file) {
-        return !selfVFile.equals(file) && projectFileIndex.isInContent(file);
-      }
-    };
+    myFileFilter = GlobalSearchScope.projectScope(project);
   }
 
   public boolean canClose() {
@@ -77,7 +71,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     final Collection<VirtualFile> antFiles = fbi.getContainingFiles(AntImportsIndex.INDEX_NAME, AntImportsIndex.ANT_FILES_WITH_IMPORTS_KEY, myFileFilter);
     for (VirtualFile file : antFiles) {
       final AntFile antFile = AntSupport.toAntFile(file, myFile.getProject());
-      if (antFile != null) {
+      if (antFile != null && !antFile.equals(myFile)) {
         final String path = PathUtil.getLocalPath(file);
         final AntFile previous = myPathToFileMap.put(path, antFile);
         assert previous == null;
@@ -95,7 +89,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
       }
     }
 
-    final java.util.List<String> paths = new ArrayList<String>(myPathToFileMap.keySet());
+    final List<String> paths = new ArrayList<String>(myPathToFileMap.keySet());
     Collections.sort(paths, new Comparator<String>() {
       public int compare(final String o1, final String o2) {
         return o1.compareTo(o2);

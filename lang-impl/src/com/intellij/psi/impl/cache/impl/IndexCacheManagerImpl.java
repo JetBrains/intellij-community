@@ -9,14 +9,13 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
@@ -88,7 +87,7 @@ public class IndexCacheManagerImpl implements CacheManager{
         final int mask = value.intValue();
         return (mask & occurrenceMask) == 0 || !vFiles.add(file) || virtualFileProcessor.process(file);
       }
-    }, VirtualFileFilter.ALL);
+    }, GlobalSearchScope.allScope(myProject));
   }
 
   @NotNull
@@ -99,7 +98,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     for (IndexPattern indexPattern : CacheUtil.getIndexPatterns()) {
       final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
         TodoIndex.NAME, 
-        new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), VirtualFileFilter.ALL);
+        new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(myProject));
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           for (VirtualFile file : files) {
@@ -131,7 +130,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     return fetchCount(FileBasedIndex.getInstance(), file, pattern);
   }
 
-  private static int fetchCount(final FileBasedIndex fileBasedIndex, final VirtualFile file, final IndexPattern indexPattern) {
+  private int fetchCount(final FileBasedIndex fileBasedIndex, final VirtualFile file, final IndexPattern indexPattern) {
     final int[] count = {0};
     fileBasedIndex.processValues(
       TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,
@@ -140,7 +139,7 @@ public class IndexCacheManagerImpl implements CacheManager{
           count[0] += value.intValue();
           return true;
         }
-      }, VirtualFileFilter.ALL);
+      }, GlobalSearchScope.allScope(myProject));
     return count[0];
   }
 

@@ -7,7 +7,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -66,7 +65,7 @@ public class DomServiceImpl extends DomService {
   }
 
   public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project) {
-    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, description.getName(), VirtualFileFilter.ALL);
+    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, description.getName(), GlobalSearchScope.allScope(project));
   }
 
   public <T extends DomElement> List<DomFileElement<T>> getFileElements(final Class<T> clazz, final Project project, @Nullable final GlobalSearchScope scope) {

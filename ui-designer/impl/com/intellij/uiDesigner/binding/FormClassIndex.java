@@ -3,11 +3,8 @@ package com.intellij.uiDesigner.binding;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -85,16 +82,9 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   public static List<PsiFile> findFormsBoundToClass(final Project project,
                                                     final String className,
                                                     final GlobalSearchScope scope) {
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    final VirtualFileFilter filter = new VirtualFileFilter() {
-      public boolean accept(final VirtualFile file) {
-        return index.isInContent(file) && scope.contains(file);
-      }
-    };
-
     return ApplicationManager.getApplication().runReadAction(new Computable<List<PsiFile>>() {
       public List<PsiFile> compute() {
-        final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, className, filter);
+        final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, className, GlobalSearchScope.projectScope(project).intersectWith(scope));
         if (files.isEmpty()) return Collections.emptyList();
         List<PsiFile> result = new ArrayList<PsiFile>();
         for(VirtualFile file: files) {

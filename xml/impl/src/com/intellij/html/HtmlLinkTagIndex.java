@@ -15,12 +15,12 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
@@ -185,7 +185,7 @@ public class HtmlLinkTagIndex extends SingleEntryFileBasedIndexExtension<HtmlLin
           }
           return true;
         }
-      }, VirtualFileFilter.ALL);
+      }, GlobalSearchScope.allScope(project));
 
     return result;
   }

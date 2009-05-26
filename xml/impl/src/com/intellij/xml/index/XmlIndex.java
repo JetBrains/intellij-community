@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -30,13 +31,27 @@ public abstract class XmlIndex<V> implements FileBasedIndexExtension<String, V> 
     }
   };
 
-  protected static VirtualFileFilter createFilter(final Project project) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return new VirtualFileFilter() {
-      public boolean accept(final VirtualFile file) {
+  protected static GlobalSearchScope createFilter(final Project project) {
+    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
+    return new GlobalSearchScope(project) {
+      public int compare(VirtualFile file1, VirtualFile file2) {
+        return projectScope.compare(file1, file2);
+      }
+
+      public boolean isSearchInModuleContent(@NotNull Module aModule) {
+        return true;
+      }
+
+      @Override
+      public boolean contains(VirtualFile file) {
         final VirtualFile parent = file.getParent();
         assert parent != null;
-        return fileIndex.isInContent(file) || fileIndex.isInLibraryClasses(file) || parent.getName().equals("standardSchemas");
+        return parent.getName().equals("standardSchemas") || projectScope.contains(file);
+      }
+
+      @Override
+      public boolean isSearchInLibraries() {
+        return true;
       }
     };
   }

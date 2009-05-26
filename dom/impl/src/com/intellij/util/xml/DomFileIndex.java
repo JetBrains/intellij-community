@@ -5,12 +5,8 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -21,7 +17,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
@@ -69,18 +68,6 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
 
   public ID<String, Void> getName() {
     return NAME;
-  }
-
-  public static List<VirtualFile> getAllFiles(Class<? extends DomFileDescription> description, Project project, final GlobalSearchScope scope) {
-    return ContainerUtil.findAll(getAllFiles(description, project), new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile file) {
-        return scope.contains(file);
-      }
-    });
-  }
-
-  public static Collection<VirtualFile> getAllFiles(Class<? extends DomFileDescription> description, Project project) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, description.getName(), VirtualFileFilter.ALL);
   }
 
   public DataIndexer<String, Void, FileContent> getIndexer() {
