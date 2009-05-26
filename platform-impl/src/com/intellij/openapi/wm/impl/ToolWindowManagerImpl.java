@@ -625,6 +625,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     deactivateToolWindowImpl(id, true, commandList);
 
     if (hideSide || info.isFloating()) {
+      final List<String> ids = myLayout.getVisibleIdsOn(info.getAnchor(), this);
+      for (String each : ids) {
+        myActiveStack.remove(each, true);
+      }
+
+
       while (!mySideStack.isEmpty(info.getAnchor())) {
         mySideStack.pop(info.getAnchor());
       }
