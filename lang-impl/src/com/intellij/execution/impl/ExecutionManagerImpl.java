@@ -91,13 +91,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
             if (task.isEnabled()) {
               activeProviders.put(provider, task);
             }
-            else {
-              final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(runConfiguration.getFactory());
-              final BeforeRunTask templateTask = runManager.getBeforeRunTask(template.getConfiguration(), provider.getId());
-              if (templateTask.isEnabled()) {
-                activeProviders.put(provider, templateTask);
-              }
-            }
           }
 
           if (!activeProviders.isEmpty()) {
