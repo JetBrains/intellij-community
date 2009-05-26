@@ -46,6 +46,11 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_JOIN_LINES = "EditorJoinLines";
   @NonNls String ACTION_EDITOR_COMPLETE_STATEMENT = "EditorCompleteStatement";
 
+  @NonNls String ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE = "NextTemplateVariable";
+  @NonNls String ACTION_EDITOR_PREVIOUS_TEMPLATE_VARIABLE = "PreviousTemplateVariable";
+
+
+
   @NonNls String ACTION_COMMENT_LINE = "CommentByLineComment";
   @NonNls String ACTION_COMMENT_BLOCK = "CommentByBlockComment";
 
