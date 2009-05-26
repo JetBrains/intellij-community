@@ -733,7 +733,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public ScopeToolState addScope(InspectionProfileEntry tool, NamedScope scope, HighlightDisplayLevel level, boolean enabled) {
-    return myTools.get(tool.getShortName()).addTool(scope, tool, enabled, level);
+    return myTools.get(tool.getShortName()).prependTool(scope, tool, enabled, level);
   }
 
 

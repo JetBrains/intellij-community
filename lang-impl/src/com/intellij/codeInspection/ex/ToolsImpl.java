@@ -46,13 +46,22 @@ public class ToolsImpl implements Tools {
 
 
   public ScopeToolState addTool(NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+    return insertTool(scope, tool, enabled, level, myTools != null ? myTools.size() : 0);
+  }
+
+  public ScopeToolState prependTool(NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+    return insertTool(scope, tool, enabled, level, 0);
+  }
+
+  private ScopeToolState insertTool(NamedScope scope, InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level, int idx) {
     if (myTools == null) {
       myTools = new ArrayList<ScopeToolState>();
     }
     final ScopeToolState scopeToolState = new ScopeToolState(scope, tool, enabled, level);
-    myTools.add(scopeToolState);
+    myTools.add(idx, scopeToolState);
     return scopeToolState;
   }
+
 
   public InspectionProfileEntry getInspectionTool(PsiElement element) {
     if (myTools != null) {
