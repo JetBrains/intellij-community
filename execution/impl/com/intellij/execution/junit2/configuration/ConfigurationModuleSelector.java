@@ -29,6 +29,7 @@ public class ConfigurationModuleSelector {
       return -1;
     }
   });
+  private static final String NO_MODULE = "<no module>";
 
   public ConfigurationModuleSelector(final Project project, final JComboBox modulesList) {
     myProject = project;
@@ -37,6 +38,8 @@ public class ConfigurationModuleSelector {
       protected String getElementText(Object element) {
         if (element instanceof Module){
           return ((Module)element).getName();
+        } else if (element == null) {
+          return NO_MODULE;
         }
         return super.getElementText(element);
       }
@@ -50,7 +53,7 @@ public class ConfigurationModuleSelector {
           setIcon(module.getModuleType().getNodeIcon(true));
           setText(module.getName());
         } else if (value == null) {
-          setText("<no module>");
+          setText(NO_MODULE);
         }
         return component;
       }
