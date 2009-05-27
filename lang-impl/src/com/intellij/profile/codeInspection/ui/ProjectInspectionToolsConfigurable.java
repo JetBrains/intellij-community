@@ -7,11 +7,9 @@ package com.intellij.profile.codeInspection.ui;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.Profile;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-
-import java.util.Collection;
 
 public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigurable {
   public static ProjectInspectionToolsConfigurable getInstance(Project project) {
@@ -28,16 +26,12 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   }
 
   protected void setCurrentProfile(InspectionProfileImpl profile) {
-    myProjectProfileManager.setProjectProfile(profile.getName());
+    myProjectProfileManager.setProjectProfile(getActiveProfile().getName());
   }
 
-  protected void deleteProfile(String name) {
-    if (myProjectProfileManager.getProfile(name, false) != null) {
-      myProjectProfileManager.deleteProfile(name);
-    }
-  }
-
-  protected Collection<Profile> getProfiles() {
-    return myProjectProfileManager.getProfiles();
+  @Override
+  public boolean isModified() {
+    if (!Comparing.strEqual(((InspectionProfileImpl)myProfiles.getSelectedItem()).getName(), getActiveProfile().getName())) return true;
+    return super.isModified();
   }
 }

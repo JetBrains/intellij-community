@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.actions.AddScopeAction;
 import com.intellij.profile.codeInspection.ui.actions.DeleteScopeAction;
@@ -93,8 +94,16 @@ public class SingleInspectionProfilePanel extends JPanel {
   @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
   private boolean myIsInRestore = false;
 
+  private JCheckBox myShareProfile = new JCheckBox("Share profile");
+  private final InspectionProjectProfileManager myProjectProfileManager;
+
   public SingleInspectionProfilePanel(final String inspectionProfileName, final ModifiableModel profile) {
+    this(null, inspectionProfileName, profile);
+  }
+
+  public SingleInspectionProfilePanel(InspectionProjectProfileManager projectProfileManager, final String inspectionProfileName, final ModifiableModel profile) {
     super(new BorderLayout());
+    myProjectProfileManager = projectProfileManager;
     mySelectedProfile = (InspectionProfileImpl)profile;
     myInitialProfile = inspectionProfileName;
     add(createInspectionProfileSettingsPanel(), BorderLayout.CENTER);
@@ -112,6 +121,14 @@ public class SingleInspectionProfilePanel extends JPanel {
     });
     myUserActivityWatcher.register(myOptionsPanel);
     updateSelectedProfileState();
+    final JPanel sharePanel = new JPanel(new BorderLayout());
+    sharePanel.add(myShareProfile, BorderLayout.EAST);
+    add(sharePanel, BorderLayout.NORTH);
+    myShareProfile.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        mySelectedProfile.setProfileManager(myShareProfile.isSelected() ? myProjectProfileManager : InspectionProfileManager.getInstance());
+      }
+    });
   }
 
   private void updateSelectedProfileState() {
@@ -887,6 +904,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     final String filter = myProfileFilter.getFilter();
     myProfileFilter.reset();
     myProfileFilter.setSelectedItem(filter);
+    myShareProfile.setVisible(myProjectProfileManager != null);
+    myShareProfile.setSelected(mySelectedProfile.getProfileManager() instanceof InspectionProjectProfileManager);
   }
 
   public void apply() throws ConfigurationException {
