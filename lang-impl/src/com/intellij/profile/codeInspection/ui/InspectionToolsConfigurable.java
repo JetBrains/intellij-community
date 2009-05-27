@@ -284,6 +284,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       panel.disposeUI();
     }
     myPanels.clear();
+    myActiveProfile = null;
   }
 
   public void selectProfile(String name) {
