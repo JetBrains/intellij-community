@@ -69,7 +69,12 @@ public class DialogAppender extends AppenderSkeleton {
           }
         };
 
-        ApplicationManager.getApplication().executeOnPooledThread(myDialogRunnable);
+        final Application app = ApplicationManager.getApplication();
+        if (app == null) {
+          new Thread(myDialogRunnable).start();  
+        } else {
+          app.executeOnPooledThread(myDialogRunnable);
+        }
 
         break;
       }
