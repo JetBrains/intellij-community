@@ -83,7 +83,12 @@ public class StartupManagerImpl extends StartupManagerEx {
             runActivities(myPreStartupActivities);
             if (myFileSystemSynchronizer != null || !ApplicationManager.getApplication().isUnitTestMode()) {
               myFileSystemSynchronizer.setCancelable(true);
-              myFileSystemSynchronizer.executeFileUpdate();
+              try {
+                myFileSystemSynchronizer.executeFileUpdate();
+              }
+              catch (Throwable e) {
+                LOG.error(e);
+              }
               myFileSystemSynchronizer = null;
             }
             myStartupActivityRunning = true;
