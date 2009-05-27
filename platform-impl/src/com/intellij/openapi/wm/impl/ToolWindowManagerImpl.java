@@ -2008,7 +2008,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private void setCommand(FocusCommand command) {
     myRequestFocusCmd = command;
-    myFocusRequests.add(command);
+
+    if (!myFocusRequests.contains(command)) {
+      myFocusRequests.add(command);
+    }
   }
 
   private void resetCommand(FocusCommand cmd) {
