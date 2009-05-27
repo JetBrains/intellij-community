@@ -128,7 +128,7 @@ final class Stripe extends JPanel{
     if (toFitWith != null) {
       LayoutData layoutData = recomputeBounds(false, null, true);
       if (data.horizontal) {
-        gap = toFitWith.width - layoutData.size.width - data.eachX;
+        gap = toFitWith.width - myManager.getToolWindowsPane().getHorizontalInsetX() - layoutData.size.width - data.eachX ;
       }
       else {
         gap = toFitWith.height - layoutData.size.height - data.eachY;
