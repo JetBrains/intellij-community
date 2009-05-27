@@ -19,6 +19,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,15 +134,23 @@ public class PaletteManager implements ProjectComponent {
     mySelectionListeners.remove(l);
   }
 
-  private void processFileEditorChange(@Nullable VirtualFile selectedFile) {
-    myPaletteWindow.refreshPaletteIfChanged(selectedFile);
-    if (myPaletteWindow.getActiveGroupCount() == 0) {
-      myPaletteToolWindow.setAvailable(false, null);
-    }
-    else {
-      myPaletteToolWindow.setAvailable(true, null);
-      myPaletteToolWindow.show(null);
-    }
+  private MergingUpdateQueue myQueue = new MergingUpdateQueue("palette", 200, true, null);
+
+  private void processFileEditorChange(@Nullable final VirtualFile selectedFile) {
+
+    myQueue.cancelAllUpdates();
+    myQueue.queue(new Update("update") {
+      public void run() {
+        myPaletteWindow.refreshPaletteIfChanged(selectedFile);
+        if (myPaletteWindow.getActiveGroupCount() == 0) {
+          myPaletteToolWindow.setAvailable(false, null);
+        }
+        else {
+          myPaletteToolWindow.setAvailable(true, null);
+          myPaletteToolWindow.show(null);
+        }
+      }
+    });
   }
 
   void notifyKeyEvent(final KeyEvent e) {

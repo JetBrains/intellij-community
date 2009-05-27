@@ -24,6 +24,8 @@ import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,29 +111,36 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   public void disposeComponent() {
   }
 
-  private void processFileEditorChange(UIFormEditor newEditor) {
-    if (!myToolWindowReady || myToolWindowDisposed) return;
-    GuiEditor activeFormEditor = newEditor != null ? newEditor.getEditor() : null;
-    if (myToolWindow == null) {
-      if (activeFormEditor == null) return;
-      initToolWindow();
-    }
-    if (myComponentTreeBuilder != null) {
-      Disposer.dispose(myComponentTreeBuilder);
-      myComponentTreeBuilder = null;
-    }
-    myComponentTree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    myComponentTree.setEditor(activeFormEditor);
-    myComponentTree.setFormEditor(newEditor);
-    myPropertyInspector.setEditor(activeFormEditor);
-    if (activeFormEditor == null) {
-      myToolWindow.setAvailable(false, null);
-    }
-    else {
-      myComponentTreeBuilder = new ComponentTreeBuilder(myComponentTree, activeFormEditor);
-      myToolWindow.setAvailable(true, null);
-      myToolWindow.show(null);
-    }
+  private MergingUpdateQueue myQueue = new MergingUpdateQueue("property.inspector", 200, true, null);
+
+  private void processFileEditorChange(final UIFormEditor newEditor) {
+    myQueue.cancelAllUpdates();
+    myQueue.queue(new Update("update") {
+      public void run() {
+        if (!myToolWindowReady || myToolWindowDisposed) return;
+        GuiEditor activeFormEditor = newEditor != null ? newEditor.getEditor() : null;
+        if (myToolWindow == null) {
+          if (activeFormEditor == null) return;
+          initToolWindow();
+        }
+        if (myComponentTreeBuilder != null) {
+          Disposer.dispose(myComponentTreeBuilder);
+          myComponentTreeBuilder = null;
+        }
+        myComponentTree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
+        myComponentTree.setEditor(activeFormEditor);
+        myComponentTree.setFormEditor(newEditor);
+        myPropertyInspector.setEditor(activeFormEditor);
+        if (activeFormEditor == null) {
+          myToolWindow.setAvailable(false, null);
+        }
+        else {
+          myComponentTreeBuilder = new ComponentTreeBuilder(myComponentTree, activeFormEditor);
+          myToolWindow.setAvailable(true, null);
+          myToolWindow.show(null);
+        }
+      }
+    });
   }
 
   @Nullable
