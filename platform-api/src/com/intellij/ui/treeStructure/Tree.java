@@ -121,12 +121,12 @@ public class Tree extends JTree implements Autoscroll {
   private void paintNodeContent(Graphics g) {
     if (!(getUI() instanceof BasicTreeUI)) return;
 
-    if (AbstractTreeBuilder.getBuilderFor(this) == null) return;
+    final AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
+    if (builder == null || builder.isDisposed()) return;
 
     GraphicsConfig config = new GraphicsConfig(g);
     config.setAntialiasing(true);
 
-    final AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
     final AbstractTreeStructure structure = builder.getTreeStructure();
 
     for (int eachRow = 0; eachRow < getRowCount(); eachRow++) {
