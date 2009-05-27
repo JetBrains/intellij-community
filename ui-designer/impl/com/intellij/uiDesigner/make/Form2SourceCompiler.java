@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -25,13 +24,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.make.Form2SourceCompiler");
-
-  private final Project myProject;
-
-  public Form2SourceCompiler(final Project project) {
-    myProject = project;
-  }
 
   @NotNull
   public String getDescription() {
@@ -44,7 +36,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
-    if (GuiDesignerConfiguration.getInstance(myProject).INSTRUMENT_CLASSES) {
+    final Project project = context.getProject();
+    if (GuiDesignerConfiguration.getInstance(project).INSTRUMENT_CLASSES) {
       return ProcessingItem.EMPTY_ARRAY;
     }
 
@@ -56,8 +49,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
         final CompileScope projectScope = context.getProjectCompileScope();
 
         final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
-        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-        final BindingsCache bindingsCache = new BindingsCache(myProject);
+        final CompilerManager compilerManager = CompilerManager.getInstance(project);
+        final BindingsCache bindingsCache = new BindingsCache(project);
 
         try {
           final HashMap<String, VirtualFile> class2form = new HashMap<String, VirtualFile>();
@@ -136,7 +129,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
     int formsProcessed = 0;
 
-    final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(myProject);
+    final Project project = context.getProject();
+    final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(project);
 
     final HashSet<Module> processedModules = new HashSet<Module>();
 
@@ -147,10 +141,10 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
       final VirtualFile formFile = item.getFormFile();
 
-      if (GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT) {
+      if (GuiDesignerConfiguration.getInstance(project).COPY_FORMS_RUNTIME_TO_OUTPUT) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            final Module module = ModuleUtil.findModuleForFile(formFile, myProject);
+            final Module module = ModuleUtil.findModuleForFile(formFile, project);
             if (module != null && !processedModules.contains(module)) {
               processedModules.add(module);
               final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
@@ -178,11 +172,11 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         public void run() {
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
             public void run() {
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
-                  PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                  PsiDocumentManager.getInstance(project).commitAllDocuments();
                   generator.generate(formFile);
                   final ArrayList<FormErrorInfo> errors = generator.getErrors();
                   if (errors.size() == 0) {
@@ -204,9 +198,9 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);
   }
 
-  private void addError(final CompileContext context, final FormErrorInfo e, final VirtualFile formFile) {
+  private static void addError(final CompileContext context, final FormErrorInfo e, final VirtualFile formFile) {
     if (formFile != null) {
-      FormElementNavigatable navigatable = new FormElementNavigatable(myProject, formFile, e.getComponentId());
+      FormElementNavigatable navigatable = new FormElementNavigatable(context.getProject(), formFile, e.getComponentId());
       context.addMessage(CompilerMessageCategory.ERROR,
                          formFile.getPresentableUrl() + ": " + e.getErrorMessage(), 
                          formFile.getUrl(), -1, -1, navigatable);

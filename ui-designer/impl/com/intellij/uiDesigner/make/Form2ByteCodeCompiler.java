@@ -43,12 +43,6 @@ import java.util.StringTokenizer;
 public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.make.Form2ByteCodeCompiler");
 
-  private final Project myProject;
-
-  public Form2ByteCodeCompiler(final Project project) {
-    myProject = project;
-  }
-
   @NotNull
   public String getDescription() {
     return UIDesignerBundle.message("component.gui.designer.form.to.bytecode.compiler");
@@ -75,7 +69,8 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
-    if (!GuiDesignerConfiguration.getInstance(myProject).INSTRUMENT_CLASSES) {
+    final Project project = context.getProject();
+    if (!GuiDesignerConfiguration.getInstance(project).INSTRUMENT_CLASSES) {
       return ProcessingItem.EMPTY_ARRAY;
     }
 
@@ -88,10 +83,10 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
         final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
         if (formFiles.length==0) return;
-        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-        final BindingsCache bindingsCache = new BindingsCache(myProject);
+        final CompilerManager compilerManager = CompilerManager.getInstance(project);
+        final BindingsCache bindingsCache = new BindingsCache(project);
 
-        final HashMap<Module, ArrayList<VirtualFile>> module2formFiles = sortByModules(formFiles);
+        final HashMap<Module, ArrayList<VirtualFile>> module2formFiles = sortByModules(project, formFiles);
 
         try {
           for (final Module module : module2formFiles.keySet()) {
@@ -165,10 +160,10 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     return sourceFile != null && compileScope.belongs(sourceFile.getUrl());
   }
 
-  private HashMap<Module, ArrayList<VirtualFile>> sortByModules(final VirtualFile[] formFiles) {
+  private static HashMap<Module, ArrayList<VirtualFile>> sortByModules(final Project project, final VirtualFile[] formFiles) {
     final HashMap<Module, ArrayList<VirtualFile>> module2formFiles = new HashMap<Module,ArrayList<VirtualFile>>();
     for (final VirtualFile formFile : formFiles) {
-      final Module module = ModuleUtil.findModuleForFile(formFile, myProject);
+      final Module module = ModuleUtil.findModuleForFile(formFile, project);
       if (module != null) {
         ArrayList<VirtualFile> list = module2formFiles.get(module);
         if (list == null) {
@@ -184,13 +179,13 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     return module2formFiles;
   }
 
-  private HashMap<Module, ArrayList<MyInstrumentationItem>> sortByModules(final ProcessingItem[] items) {
+  private static HashMap<Module, ArrayList<MyInstrumentationItem>> sortByModules(final Project project, final ProcessingItem[] items) {
     final HashMap<Module, ArrayList<MyInstrumentationItem>> module2formFiles = new HashMap<Module,ArrayList<MyInstrumentationItem>>();
     for (ProcessingItem item1 : items) {
       final MyInstrumentationItem item = (MyInstrumentationItem)item1;
       final VirtualFile formFile = item.getFormFile();
 
-      final Module module = ModuleUtil.findModuleForFile(formFile, myProject);
+      final Module module = ModuleUtil.findModuleForFile(formFile, project);
       if (module != null) {
         ArrayList<MyInstrumentationItem> list = module2formFiles.get(module);
         if (list == null) {
@@ -252,7 +247,8 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     context.getProgressIndicator().pushState();
     context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));
 
-    final HashMap<Module, ArrayList<MyInstrumentationItem>> module2itemsList = sortByModules(items);
+    final Project project = context.getProject();
+    final HashMap<Module, ArrayList<MyInstrumentationItem>> module2itemsList = sortByModules(project, items);
 
     int formsProcessed = 0;
 
@@ -261,7 +257,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         ProjectRootsTraversing.collectRoots(module, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
       final ClassLoader loader = createClassLoader(classPath);
 
-      if (GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT) {
+      if (GuiDesignerConfiguration.getInstance(project).COPY_FORMS_RUNTIME_TO_OUTPUT) {
         final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
         try {
           if (moduleOutputPath != null) {
@@ -338,19 +334,19 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);
   }
 
-  private void addMessage(final CompileContext context,
+  private static void addMessage(final CompileContext context,
                           final String s,
                           final VirtualFile formFile,
                           final CompilerMessageCategory severity) {
     addMessage(context, new FormErrorInfo(null, s), formFile, severity);
   }
 
-  private void addMessage(final CompileContext context,
+  private static void addMessage(final CompileContext context,
                           final FormErrorInfo e,
                           final VirtualFile formFile,
                           final CompilerMessageCategory severity) {
     if (formFile != null) {
-      FormElementNavigatable navigatable = new FormElementNavigatable(myProject, formFile, e.getComponentId());
+      FormElementNavigatable navigatable = new FormElementNavigatable(context.getProject(), formFile, e.getComponentId());
       context.addMessage(severity,
                          formFile.getPresentableUrl() + ": " + e.getErrorMessage(),
                          formFile.getUrl(), -1, -1, navigatable);
