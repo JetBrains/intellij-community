@@ -842,20 +842,32 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
 
     private void refreshFile(VcsFileRevision revision) {
-      if (getVirtualFile() == null) {
+      Runnable refresh = null;
+      final VirtualFile vf = getVirtualFile();
+      if (vf == null) {
         final LocalHistoryAction action = startLocalHistoryAction(revision);
-        if (getVirtualParent() != null) {
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        final VirtualFile vp = getVirtualParent();
+        if (vp != null) {
+          refresh = new Runnable() {
             public void run() {
-              getVirtualParent().refresh(false, true, new Runnable() {
+              vp.refresh(false, true, new Runnable() {
                 public void run() {
                   myFilePath.refresh();
                   action.finish();
                 }
               });
-            } 
-          }, "Refreshing files...", false, myProject);
+            }
+          };
         }
+      } else {
+        refresh = new Runnable() {
+          public void run() {
+            vf.refresh(false, false);
+          }
+        };
+      }
+      if (refresh != null) {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(refresh, "Refreshing files...", false, myProject);
       }
     }
 
