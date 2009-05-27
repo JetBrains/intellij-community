@@ -15,7 +15,6 @@ import java.util.List;
  */
 @SuppressWarnings({"UnusedDeclaration"})
 public class MavenGeneralSettings implements Cloneable {
-
   private boolean workOffline = false;
   @NotNull private String mavenHome = "";
   @NotNull private String mavenSettingsFile = "";

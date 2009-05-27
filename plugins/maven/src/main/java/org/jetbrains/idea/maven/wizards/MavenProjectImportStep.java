@@ -150,7 +150,7 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
     }
 
     public JComponent createComponent() {
-      return myForm.getPanel();
+      return myForm.createComponent();
     }
 
     public boolean isModified() {
@@ -166,6 +166,6 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
     }
 
     public void disposeUIResources() {
-    }
+    }                             
   }
 }

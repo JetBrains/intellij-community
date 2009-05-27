@@ -63,7 +63,7 @@ public class MavenImportingSettingsForm {
       mySeparateModulesDirChooser.setText(FileUtil.toSystemDependentName(getDefaultModuleDir()));
     }
 
-    myUpdateFoldersOnImportPhaseComboBox.setEnabled(myUseMavenOutputCheckBox.isSelected());
+    myUpdateFoldersOnImportPhaseComboBox.setEnabled(myUpdateFoldersOnImportCheckBox.isSelected());
   }
 
   public String getDefaultModuleDir() {

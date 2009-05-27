@@ -81,7 +81,11 @@ public abstract class MavenGeneralConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
+    mavenPathsForm.createComponent(); // have to initialize all listeners
     return panel;
+  }
+
+  public void disposeUIResources() {
   }
 
   public boolean isModified() {
@@ -131,9 +135,6 @@ public abstract class MavenGeneralConfigurable implements Configurable {
     ComboBoxUtil.select(comboboxModelChecksumPolicy, data.getChecksumPolicy());
     ComboBoxUtil.select(comboboxModelMultiprojectBuildFailPolicy, data.getFailureBehavior());
     ComboBoxUtil.select(comboboxModelPluginUpdatePolicy, data.getPluginUpdatePolicy());
-  }
-
-  public void disposeUIResources() {
   }
 
   @Nls

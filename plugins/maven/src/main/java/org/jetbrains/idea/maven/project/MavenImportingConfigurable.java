@@ -8,13 +8,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class MavenImportingConfigurable extends MavenImportingSettingsForm implements Configurable {
+public class MavenImportingConfigurable implements Configurable {
   private final MavenImportingSettings myImportingSettings;
   private final MavenImportingSettingsForm mySettingsForm = new MavenImportingSettingsForm(false);
 
   public MavenImportingConfigurable(MavenImportingSettings importingSettings) {
-    super(false);
     myImportingSettings = importingSettings;
+  }
+
+  public JComponent createComponent() {
+    return mySettingsForm.createComponent();
   }
 
   public void disposeUIResources() {
