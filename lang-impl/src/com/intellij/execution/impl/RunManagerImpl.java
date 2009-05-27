@@ -639,7 +639,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     final Map<Key<? extends BeforeRunTask>, BeforeRunTask> _tasks = new HashMap<Key<? extends BeforeRunTask>, BeforeRunTask>();
     for (BeforeRunTaskProvider<? extends BeforeRunTask> provider : Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
-      _tasks.put(provider.getId(), provider.createTask(settings));
+      BeforeRunTask task = provider.createTask(settings);
+      Key<? extends BeforeRunTask> providerID = provider.getId();
+      _tasks.put(providerID, task);
+      settings.getFactory().configureBeforeRunTaskDefaults(providerID, task);
     }
     return _tasks;
   }
