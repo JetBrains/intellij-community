@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
@@ -201,9 +202,13 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   private File getProjectsTreeFile() {
-    File dir = MavenUtil.getPluginSystemDir("Projects/" + myProject.getLocationHash());
-    dir.mkdirs();
-    return new File(dir, "tree.dat");
+    File file = new File(getProjectsTreesDir(), myProject.getLocationHash() + "/tree.dat");
+    file.getParentFile().mkdirs();
+    return file;
+  }
+
+  private File getProjectsTreesDir() {
+    return MavenUtil.getPluginSystemDir("Projects");
   }
 
   private void initWorkers() {
@@ -301,6 +306,10 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myPostProcessor.cancelAndStop();
 
     myEmbeddersManager.release();
+
+    if (isUnitTestMode()) {
+      FileUtil.delete(getProjectsTreesDir());
+    }
   }
 
   private boolean isInitialized() {

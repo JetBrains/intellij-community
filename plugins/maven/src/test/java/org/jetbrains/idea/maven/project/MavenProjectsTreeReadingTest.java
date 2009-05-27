@@ -1432,7 +1432,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "  <sourceDirectory>${prop}</sourceDirectory>" +
                      "</build>");
 
-    createProfilesXml("<profile>" +
+    createProfilesXmlOldStyle("<profile>" +
                       "  <id>one</id>" +
                       "  <activation>" +
                       "    <activeByDefault>true</activeByDefault>" +
@@ -1449,7 +1449,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenProject project = roots.get(0);
     assertUnorderedElementsAreEqual(project.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
 
-    createProfilesXml("<profile>" +
+    createProfilesXmlOldStyle("<profile>" +
                       "  <id>one</id>" +
                       "  <activation>" +
                       "    <activeByDefault>true</activeByDefault>" +
@@ -1471,7 +1471,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                          "<version>1</version>" +
                                          "<packaging>pom</packaging>");
 
-    createProfilesXml("parent",
+    createProfilesXmlOldStyle("parent",
                       "<profile>" +
                       "  <id>one</id>" +
                       "  <activation>" +
@@ -1504,7 +1504,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenProject childProject = roots.get(1);
     assertUnorderedElementsAreEqual(childProject.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
 
-    createProfilesXml("parent",
+    createProfilesXmlOldStyle("parent",
                       "<profile>" +
                       "  <id>one</id>" +
                       "  <activation>" +
@@ -1529,7 +1529,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "  <module>m</module>" +
                      "</modules>");
 
-    createProfilesXml("<profile>" +
+    createProfilesXmlOldStyle("<profile>" +
                       "  <id>one</id>" +
                       "  <activation>" +
                       "    <activeByDefault>true</activeByDefault>" +
@@ -1559,7 +1559,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenProject childNode = myTree.getModules(myTree.getRootProjects().get(0)).get(0);
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
 
-    createProfilesXml("<profile>" +
+    createProfilesXmlOldStyle("<profile>" +
                       "  <id>one</id>" +
                       "  <activation>" +
                       "    <activeByDefault>true</activeByDefault>" +
@@ -1592,7 +1592,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                     "  <sourceDirectory>${prop}</sourceDirectory>" +
                     "</build>");
 
-    createProfilesXml("<profile>" +
+    createProfilesXmlOldStyle("<profile>" +
                       " <id>one</id>" +
                       "  <activation>" +
                       "    <activeByDefault>true</activeByDefault>" +
@@ -1607,7 +1607,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MyLoggingListener l = new MyLoggingListener();
     myTree.addListener(l);
 
-    createProfilesXml("<profile>" +
+    createProfilesXmlOldStyle("<profile>" +
                       "  <id>one</id>" +
                       "  <activation>" +
                       "    <activeByDefault>true</activeByDefault>" +

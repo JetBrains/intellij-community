@@ -181,7 +181,10 @@ public class MavenProjectReader {
 
     VirtualFile profilesFile = file.getParent().findChild(MavenConstants.PROFILES_XML);
     if (profilesFile != null) {
-      List<Element> xmlProfiles = findChildrenByPath(readXml(profilesFile), "profiles", "profile");
+      Element profilesFileElement = readXml(profilesFile);
+      Element rootElement = findChildByPath(profilesFileElement, "profiles");
+      if (rootElement == null) rootElement = findChildByPath(profilesFileElement, "profilesXml.profiles");
+      List<Element> xmlProfiles = collectChildren(rootElement, "profile");
       collectProfiles(xmlProfiles, result);
     }
 
@@ -768,7 +771,10 @@ public class MavenProjectReader {
   }
 
   private List<Element> findChildrenByPath(Element element, String path, String childrenName) {
-    Element container = findChildByPath(element, path);
+    return collectChildren(findChildByPath(element, path), childrenName);
+  }
+
+  private List<Element> collectChildren(Element container, String childrenName) {
     if (container == null) return Collections.emptyList();
 
     List<Element> result = new ArrayList<Element>();

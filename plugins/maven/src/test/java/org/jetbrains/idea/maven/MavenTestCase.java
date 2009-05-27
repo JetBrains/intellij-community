@@ -18,7 +18,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import junit.framework.TestCase;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
@@ -248,27 +247,39 @@ public abstract class MavenTestCase extends TestCase {
            "</project>";
   }
 
-  protected void createProfilesXml(String xml) throws IOException {
-    createProfilesFile(myProjectRoot, xml);
+  protected void createProfilesXmlOldStyle(String xml) throws IOException {
+    createProfilesFile(myProjectRoot, xml, true);
   }
 
-  protected void createProfilesXml(String relativePath, String xml) throws IOException {
-    createProfilesFile(createProjectSubDir(relativePath), xml);
+  protected void createProfilesXmlNewStyle(String xml) throws IOException {
+    createProfilesFile(myProjectRoot, xml, false);
   }
 
-  private void createProfilesFile(VirtualFile dir, String xml) throws IOException {
+  protected void createProfilesXmlOldStyle(String relativePath, String xml) throws IOException {
+    createProfilesFile(createProjectSubDir(relativePath), xml, true);
+  }
+
+  private void createProfilesFile(VirtualFile dir, String xml, boolean oldStyle) throws IOException {
     VirtualFile f = dir.findChild("profiles.xml");
     if (f == null) {
       f = dir.createChildData(null, "profiles.xml");
     }
-    setFileContent(f, createValidProfiles(xml));
+    setFileContent(f, createValidProfiles(xml, oldStyle));
   }
 
-  private String createValidProfiles(String xml) {
+  private String createValidProfiles(String xml, boolean oldStyle) {
+    if (oldStyle) {
+      return "<?xml version=\"1.0\"?>" +
+             "<profiles>" +
+             xml +
+             "</profiles>";
+    }
     return "<?xml version=\"1.0\"?>" +
+           "<profilesXml>" +
            "<profiles>" +
            xml +
-           "</profiles>";
+           "</profiles>" +
+           "</profilesXml>";
   }
 
   protected void deleteProfilesXml() throws IOException {

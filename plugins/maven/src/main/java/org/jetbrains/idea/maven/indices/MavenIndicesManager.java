@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
@@ -111,6 +112,9 @@ public class MavenIndicesManager implements ApplicationComponent {
 
   public void disposeComponent() {
     doShutdown();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      FileUtil.delete(getIndicesDir());
+    }
   }
 
   private synchronized void doShutdown() {

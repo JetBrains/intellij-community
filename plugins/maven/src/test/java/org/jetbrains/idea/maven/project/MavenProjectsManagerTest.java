@@ -413,7 +413,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                     "  <sourceDirectory>${prop}</sourceDirectory>" +
                     "</build>");
 
-    createProfilesXml("<profile>" +
+    createProfilesXmlOldStyle("<profile>" +
                       "  <id>one</id>" +
                       "  <activation>" +
                       "    <activeByDefault>true</activeByDefault>" +
@@ -433,7 +433,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
 
-    createProfilesXml("<profile>" +
+    createProfilesXmlOldStyle("<profile>" +
                       "  <id>one</id>" +
                       "  <activation>" +
                       "    <activeByDefault>true</activeByDefault>" +
@@ -453,7 +453,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/${prop}"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}"));
 
-    createProfilesXml("<profile>" +
+    createProfilesXmlOldStyle("<profile>" +
                       "  <id>one</id>" +
                       "  <activation>" +
                       "    <activeByDefault>true</activeByDefault>" +

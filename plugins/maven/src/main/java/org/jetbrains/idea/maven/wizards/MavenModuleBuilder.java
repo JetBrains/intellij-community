@@ -142,6 +142,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     final File workingDir;
     try {
       workingDir = FileUtil.createTempDirectory("archetype", "tmp");
+      workingDir.deleteOnExit();
     }
     catch (IOException e) {
       MavenLog.LOG.warn("Cannot generate archetype", e);

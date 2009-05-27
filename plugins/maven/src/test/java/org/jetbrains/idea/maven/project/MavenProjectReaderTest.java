@@ -7,7 +7,6 @@ import org.apache.maven.model.Build;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.Resource;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.project.MavenId;
 
 import java.io.File;
 import java.util.Arrays;
@@ -651,14 +650,30 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals(pathFromBasedir(module.getParent(), "subDir/custom"), FileUtil.toSystemDependentName(p.getBuild().getDirectory()));
   }
 
-  public void testPropertiesFromProfilesXml() throws Exception {
+  public void testPropertiesFromProfilesXmlOldStyle() throws Exception {
     createProjectPom("<name>${prop}</name>");
-    createProfilesXml("<profile>" +
-                      "  <id>one</id>" +
-                      "  <properties>" +
-                      "    <prop>foo</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+    createProfilesXmlOldStyle("<profile>" +
+                              "  <id>one</id>" +
+                              "  <properties>" +
+                              "    <prop>foo</prop>" +
+                              "  </properties>" +
+                              "</profile>");
+
+    org.apache.maven.project.MavenProject mavenProject = readProject(myProjectPom);
+    assertEquals("${prop}", mavenProject.getName());
+
+    mavenProject = readProject(myProjectPom, "one");
+    assertEquals("foo", mavenProject.getName());
+  }
+
+  public void testPropertiesFromProfilesXmlNewStyle() throws Exception {
+    createProjectPom("<name>${prop}</name>");
+    createProfilesXmlNewStyle("<profile>" +
+                              "  <id>one</id>" +
+                              "  <properties>" +
+                              "    <prop>foo</prop>" +
+                              "  </properties>" +
+                              "</profile>");
 
     org.apache.maven.project.MavenProject mavenProject = readProject(myProjectPom);
     assertEquals("${prop}", mavenProject.getName());
