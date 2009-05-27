@@ -115,4 +115,10 @@ public abstract class IdeFocusManager {
     }
   }
 
+  @NotNull
+  public static IdeFocusManager findInstance() {
+    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    return owner != null ? findInstanceByComponent(owner) : findInstanceByContext(null);
+  }
+
 }

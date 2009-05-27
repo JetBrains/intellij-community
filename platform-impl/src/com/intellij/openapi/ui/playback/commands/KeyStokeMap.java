@@ -1,4 +1,4 @@
-package com.intellij.openapi.ui.playback;
+package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ReflectionUtil;
