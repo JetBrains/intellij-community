@@ -664,7 +664,8 @@ public class StringUtil {
     return testee.startsWith(firstPrefix) && testee.regionMatches(l1, secondPrefix, 0, l2);
   }
 
-  @NotNull public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {
+  @NotNull
+  public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {
     if (s.endsWith(suffix)) {
       return s.substring(0, s.lastIndexOf(suffix));
     }
