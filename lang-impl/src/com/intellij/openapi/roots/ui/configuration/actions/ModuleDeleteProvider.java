@@ -16,6 +16,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,10 +68,10 @@ public class ModuleDeleteProvider  implements DeleteProvider  {
     }, ProjectBundle.message("module.remove.command"), null);
   }
 
-  public static void removeModule(final Module moduleToRemove,
-                                   ModifiableRootModel modifiableRootModelToRemove,
-                                   Collection<ModifiableRootModel> otherModuleRootModels,
-                                   final ModifiableModuleModel moduleModel) {
+  public static void removeModule(@NotNull final Module moduleToRemove,
+                                   @Nullable ModifiableRootModel modifiableRootModelToRemove,
+                                   @NotNull Collection<ModifiableRootModel> otherModuleRootModels,
+                                   @NotNull final ModifiableModuleModel moduleModel) {
     // remove all dependencies on the module that is about to be removed
     for (final ModifiableRootModel modifiableRootModel : otherModuleRootModels) {
       final OrderEntry[] orderEntries = modifiableRootModel.getOrderEntries();
