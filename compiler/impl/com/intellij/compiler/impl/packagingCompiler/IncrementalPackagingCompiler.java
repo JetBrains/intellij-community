@@ -20,9 +20,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author nik
@@ -33,13 +33,13 @@ public class IncrementalPackagingCompiler extends PackagingCompilerBase<OldProce
   private static final Key<OldProcessingItemsBuilderContext> BUILDER_CONTEXT_KEY = Key.create("processing_items_builder");
   @NonNls private static final String INCREMENTAL_PACKAGING_CACHE_ID = "incremental_packaging";
 
-  public IncrementalPackagingCompiler(Project project) {
-    super(project, FILES_TO_DELETE_KEY, BUILDER_CONTEXT_KEY);
+  public IncrementalPackagingCompiler() {
+    super(FILES_TO_DELETE_KEY, BUILDER_CONTEXT_KEY);
   }
 
   @Override
-  protected PackagingProcessingItem[] collectItems(OldProcessingItemsBuilderContext builderContext) {
-    Module[] allModules = ModuleManager.getInstance(getProject()).getSortedModules();
+  protected PackagingProcessingItem[] collectItems(OldProcessingItemsBuilderContext builderContext, final Project project) {
+    Module[] allModules = ModuleManager.getInstance(project).getSortedModules();
     final BuildParticipantProvider<?>[] providers = DeploymentUtilImpl.getBuildParticipantProviders();
     for (BuildParticipantProvider<?> provider : providers) {
       addItemsForProvider(provider, allModules, builderContext);
@@ -73,7 +73,7 @@ public class IncrementalPackagingCompiler extends PackagingCompilerBase<OldProce
     return INCREMENTAL_PACKAGING_CACHE_ID;
   }
 
-  protected void onBuildFinished(OldProcessingItemsBuilderContext builderContext, JarsBuilder builder) throws Exception {
+  protected void onBuildFinished(OldProcessingItemsBuilderContext builderContext, JarsBuilder builder, final Project project) throws Exception {
     final Set<BuildParticipant> affectedParticipants = getAffectedParticipants(builderContext.getCompileContext());
 
     for (ExplodedDestinationInfo destination : builder.getJarsDestinations()) {

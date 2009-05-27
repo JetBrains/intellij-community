@@ -36,19 +36,16 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
   private final Key<List<String>> myFilesToDeleteKey;
   private final Key<C> myBuilderContextKey;
   @Nullable private PackagingCompilerCache myOutputItemsCache;
-  private final Project myProject;
 
-  protected PackagingCompilerBase(Project project, final Key<List<String>> filesToDeleteKey,
-                                  final Key<C> builderContextKey) {
-    myProject = project;
+  protected PackagingCompilerBase(final Key<List<String>> filesToDeleteKey, final Key<C> builderContextKey) {
     myFilesToDeleteKey = filesToDeleteKey;
     myBuilderContextKey = builderContextKey;
   }
 
   @NotNull
-  private PackagingCompilerCache getOutputItemsCache() {
+  private PackagingCompilerCache getOutputItemsCache(final Project project) {
     if (myOutputItemsCache == null) {
-      myOutputItemsCache = new PackagingCompilerCache(CompilerPaths.getCompilerSystemDirectory(getProject()).getPath() + File.separator +
+      myOutputItemsCache = new PackagingCompilerCache(CompilerPaths.getCompilerSystemDirectory(project).getPath() + File.separator +
                                                       getOutputCacheId() + "_timestamp.dat");
     }
     return myOutputItemsCache;
@@ -56,7 +53,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
 
   protected abstract String getOutputCacheId();
 
-  protected abstract PackagingProcessingItem[] collectItems(C builderContext);
+  protected abstract PackagingProcessingItem[] collectItems(C builderContext, final Project project);
 
   public void processOutdatedItem(final CompileContext context, final String url, @Nullable final ValidityState state) {
   }
@@ -71,7 +68,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
       }
     }
 
-    final Iterator<String> pathIterator = getOutputItemsCache().getUrlsIterator();
+    final Iterator<String> pathIterator = getOutputItemsCache(context.getProject()).getUrlsIterator();
     while (pathIterator.hasNext()) {
       String path = pathIterator.next();
       if (!outputPaths.contains(path)) {
@@ -133,7 +130,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
       }
     }.execute();
     removeInvalidItems(processedItems);
-    updateOutputCache(processedItems);
+    updateOutputCache(context.getProject(), processedItems);
     return processedItems.toArray(new ProcessingItem[processedItems.size()]);
   }
 
@@ -222,7 +219,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
         processedItems.add(item);
       }
 
-      onBuildFinished(builderContext, builder);
+      onBuildFinished(builderContext, builder, context.getProject());
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -235,7 +232,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     return true;
   }
 
-  protected void onBuildFinished(C context, JarsBuilder builder) throws Exception {
+  protected void onBuildFinished(C context, JarsBuilder builder, final Project project) throws Exception {
   }
 
   private static void createManifestFiles(final List<ManifestFileInfo> manifestFileInfos) throws IOException {
@@ -284,7 +281,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     final List<String> filesToDelete = context.getUserData(myFilesToDeleteKey);
     final Set<String> deletedJars;
     if (filesToDelete != null) {
-      deletedJars = deleteFiles(filesToDelete);
+      deletedJars = deleteFiles(context.getProject(), filesToDelete);
     }
     else {
       deletedJars = Collections.emptySet();
@@ -293,7 +290,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     return deletedJars;
   }
 
-  protected Set<String> deleteFiles(final List<String> paths) {
+  protected Set<String> deleteFiles(final Project project, final List<String> paths) {
     final THashSet<String> deletedJars = new THashSet<String>();
     LOG.debug("Deleting outdated files...");
     List<File> filesToRefresh = new ArrayList<File>();
@@ -311,7 +308,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
       }
 
       if (deleted) {
-        getOutputItemsCache().remove(fullPath);
+        getOutputItemsCache(project).remove(fullPath);
       }
     }
 
@@ -319,7 +316,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     return deletedJars;
   }
 
-  private void updateOutputCache(final List<PackagingProcessingItem> processedItems) {
+  private void updateOutputCache(final Project project, final List<PackagingProcessingItem> processedItems) {
     for (PackagingProcessingItem processedItem : processedItems) {
       for (DestinationInfo destinationInfo : processedItem.getDestinations()) {
         final VirtualFile virtualFile = destinationInfo.getOutputFile();
@@ -328,11 +325,11 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
           if (LOG.isDebugEnabled()) {
             LOG.debug("update output cache: file " + path);
           }
-          getOutputItemsCache().update(path, virtualFile.getTimeStamp());
+          getOutputItemsCache(project).update(path, virtualFile.getTimeStamp());
         }
       }
     }
-    saveCacheIfDirty();
+    saveCacheIfDirty(project);
   }
 
   private static void refreshOutputFiles(Set<String> writtenPaths) {
@@ -343,9 +340,9 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
     CompilerUtil.refreshIOFiles(filesToRefresh);
   }
 
-  private void saveCacheIfDirty() {
-    if (getOutputItemsCache().isDirty()) {
-      getOutputItemsCache().save();
+  private void saveCacheIfDirty(final Project project) {
+    if (getOutputItemsCache(project).isDirty()) {
+      getOutputItemsCache(project).save();
     }
   }
 
@@ -369,7 +366,7 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
 
         C builderContext = createContext(context);
         context.putUserData(myBuilderContextKey, builderContext);
-        PackagingProcessingItem[] allProcessingItems = collectItems(builderContext);
+        PackagingProcessingItem[] allProcessingItems = collectItems(builderContext, context.getProject());
 
         if (LOG.isDebugEnabled()) {
           int num = Math.min(100, allProcessingItems.length);
@@ -394,10 +391,6 @@ public abstract class PackagingCompilerBase<C extends ProcessingItemsBuilderCont
   protected abstract boolean doNotStartBuild(CompileContext context);
 
   protected abstract C createContext(CompileContext context);
-
-  protected Project getProject() {
-    return myProject;
-  }
 
   protected void onFileCopied(C builderContext, ExplodedDestinationInfo explodedDestination) {
   }

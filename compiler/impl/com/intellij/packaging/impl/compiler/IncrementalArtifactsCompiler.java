@@ -27,13 +27,13 @@ public class IncrementalArtifactsCompiler extends PackagingCompilerBase<Artifact
   private static final Key<Set<Artifact>> AFFECTED_ARTIFACTS = Key.create("affected_artifacts");
   private static final Key<ArtifactsProcessingItemsBuilderContext> BUILDER_CONTEXT_KEY = Key.create("artifacts_builder_context");
 
-  public IncrementalArtifactsCompiler(Project project) {
-    super(project, FILES_TO_DELETE_KEY, BUILDER_CONTEXT_KEY);
+  public IncrementalArtifactsCompiler() {
+    super(FILES_TO_DELETE_KEY, BUILDER_CONTEXT_KEY);
   }
 
-  protected PackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext) {
+  protected PackagingProcessingItem[] collectItems(ArtifactsProcessingItemsBuilderContext builderContext, final Project project) {
     final CompileContext context = builderContext.getCompileContext();
-    final Artifact[] artifacts = getArtifactsToBuild(context.getCompileScope());
+    final Artifact[] artifacts = getArtifactsToBuild(project, context.getCompileScope());
     for (Artifact artifact : artifacts) {
       final String outputPath = artifact.getOutputPath();
       if (outputPath == null || outputPath.length() == 0) {
@@ -42,19 +42,19 @@ public class IncrementalArtifactsCompiler extends PackagingCompilerBase<Artifact
         continue;
       }
 
-      collectItems(builderContext, artifact, outputPath);
+      collectItems(builderContext, artifact, outputPath, project);
     }
     context.putUserData(AFFECTED_ARTIFACTS, new HashSet<Artifact>(Arrays.asList(artifacts)));
     return builderContext.getProcessingItems();
   }
 
-  private Artifact[] getArtifactsToBuild(final CompileScope compileScope) {
+  private static Artifact[] getArtifactsToBuild(final Project project, final CompileScope compileScope) {
     final Artifact[] artifactsFromScope = ArtifactCompileScope.getArtifacts(compileScope);
     if (artifactsFromScope != null) {
       return artifactsFromScope;
     }
     List<Artifact> artifacts = new ArrayList<Artifact>();
-    for (Artifact artifact : ArtifactManager.getInstance(getProject()).getArtifacts()) {
+    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
       if (artifact.isBuildOnMake()) {
         artifacts.add(artifact);
       }
@@ -63,21 +63,22 @@ public class IncrementalArtifactsCompiler extends PackagingCompilerBase<Artifact
   }
 
   @Override
-  protected void onBuildFinished(ArtifactsProcessingItemsBuilderContext context, JarsBuilder builder) throws Exception {
+  protected void onBuildFinished(ArtifactsProcessingItemsBuilderContext context, JarsBuilder builder, final Project project) throws Exception {
     final Set<Artifact> artifacts = context.getCompileContext().getUserData(AFFECTED_ARTIFACTS);
     for (Artifact artifact : artifacts) {
       for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
-        artifact.getProperties(provider).onBuildFinished(getProject(), artifact);
+        artifact.getProperties(provider).onBuildFinished(project, artifact);
       }
     }
   }
 
-  private void collectItems(@NotNull ArtifactsProcessingItemsBuilderContext builderContext, @NotNull Artifact artifact, @NotNull String outputPath) {
+  private static void collectItems(@NotNull ArtifactsProcessingItemsBuilderContext builderContext, @NotNull Artifact artifact, @NotNull String outputPath,
+                            final Project project) {
     final ArtifactRootElement<?> rootElement = artifact.getRootElement();
     final VirtualFile outputFile = LocalFileSystem.getInstance().findFileByPath(outputPath);
     final CopyToDirectoryInstructionCreator instructionCreator =
         new CopyToDirectoryInstructionCreator(builderContext, outputPath, outputFile);
-    final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(getProject()).getResolvingContext();
+    final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
     rootElement.computeIncrementalCompilerInstructions(instructionCreator, resolvingContext, builderContext, artifact.getArtifactType());
   }
 

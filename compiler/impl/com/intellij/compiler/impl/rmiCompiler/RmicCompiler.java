@@ -46,7 +46,6 @@ import java.util.concurrent.Future;
 
 public class RmicCompiler implements ClassPostProcessingCompiler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.rmiCompiler.RmicCompiler");
-  private final Project myProject;
   //private static final FileFilter CLASSES_AND_DIRECTORIES_FILTER = new FileFilter() {
   //  public boolean accept(File pathname) {
   //    return pathname.isDirectory() || pathname.getName().endsWith(".class");
@@ -54,15 +53,12 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
   //};
   //private static final String REMOTE_INTERFACE_NAME = Remote.class.getName();
 
-  public RmicCompiler(Project project) {
-    myProject = project;
-  }
-
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
-    if (!RmicSettings.getInstance(myProject).IS_EANABLED) {
+    if (!RmicSettings.getInstance(context.getProject()).IS_EANABLED) {
       return ProcessingItem.EMPTY_ARRAY;
     }
+    final Project project = context.getProject();
     final List<ProcessingItem> items = new ArrayList<ProcessingItem>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -70,15 +66,14 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
         try {
           final Cache cache = dependencyCache.getCache();
           final int[] allClassNames = cache.getAllClassNames();
-          final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+          final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
           final LocalFileSystem lfs = LocalFileSystem.getInstance();
           for (final int className : allClassNames) {
-            final int classId = className;
-            final boolean isRemoteObject = cache.isRemote(classId) && !MakeUtil.isInterface(cache.getFlags(className));
+            final boolean isRemoteObject = cache.isRemote(className) && !MakeUtil.isInterface(cache.getFlags(className));
             if (!isRemoteObject && !dependencyCache.wasRemote(className)) {
               continue;
             }
-            final String outputPath = cache.getPath(classId);
+            final String outputPath = cache.getPath(className);
             if (outputPath == null) {
               continue;
             }
@@ -129,7 +124,8 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
   }
 
   public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
-    if (!RmicSettings.getInstance(myProject).IS_EANABLED) {
+    final Project project = context.getProject();
+    if (!RmicSettings.getInstance(project).IS_EANABLED) {
       return ProcessingItem.EMPTY_ARRAY;
     }
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
@@ -149,7 +145,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
       }
       final List<ProcessingItem> processed = new ArrayList<ProcessingItem>();
 
-      final JavacOutputParserPool parserPool = new JavacOutputParserPool(myProject, context);
+      final JavacOutputParserPool parserPool = new JavacOutputParserPool(project, context);
 
       for (final Pair<Module, File> pair : sortedByModuleAndOutputPath.keySet()) {
         if (progressIndicator.isCanceled()) {
@@ -194,7 +190,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     }
   }
 
-  private RmicProcessingItem[] invokeRmic(final CompileContext context,
+  private static RmicProcessingItem[] invokeRmic(final CompileContext context,
                                           final JavacOutputParserPool parserPool, final Module module,
                                           final List<RmicProcessingItem> dirItems,
                                           final File outputDir
@@ -261,7 +257,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
   }
 
   // todo: Module -> ModuleChunk
-  private String[] createStartupCommand(final Module module, final String outputPath, final RmicProcessingItem[] items) {
+  private static String[] createStartupCommand(final Module module, final String outputPath, final RmicProcessingItem[] items) {
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
 
     final VirtualFile homeDirectory = jdk.getHomeDirectory();
@@ -279,7 +275,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
     commandLine.add("-verbose");
 
-    commandLine.addAll(Arrays.asList(RmicSettings.getInstance(myProject).getOptions()));
+    commandLine.addAll(Arrays.asList(RmicSettings.getInstance(module.getProject()).getOptions()));
 
     commandLine.add("-classpath");
 

@@ -5,6 +5,7 @@ import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
 import com.intellij.compiler.impl.packagingCompiler.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.extensions.Extensions;
@@ -14,7 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -22,7 +23,6 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
@@ -50,10 +50,10 @@ public class CompilerManagerImpl extends CompilerManager {
     // predefined compilers
     addTranslatingCompiler(new JavaCompiler(myProject), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
     addCompiler(new ResourceCompiler(myProject, compilerConfiguration));
-    addCompiler(new RmicCompiler(myProject));
-    addCompiler(new IncrementalPackagingCompiler(myProject));
+    addCompiler(new RmicCompiler());
+    addCompiler(new IncrementalPackagingCompiler());
     if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      addCompiler(new IncrementalArtifactsCompiler(myProject));
+      addCompiler(new IncrementalArtifactsCompiler());
     }
 
     for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {
