@@ -23,6 +23,8 @@ import org.intellij.plugins.xpathView.ui.Mode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -35,7 +37,8 @@ public class FindByExpressionDialog extends InputExpressionDialog<FindFormPanel>
     }
 
     protected void init() {
-        final boolean available = ToolWindowManager.getInstance(myProject).getToolWindow("Find").isAvailable();
+        final ToolWindow findWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
+        final boolean available = findWindow != null && findWindow.isAvailable();
         final boolean enabled = mySettings.OPEN_NEW_TAB && available;
 
         myForm.getNewTabCheckbox().setEnabled(available);

@@ -21,6 +21,8 @@ import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -33,7 +35,8 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
     }
 
     protected void init() {
-        final boolean available = ToolWindowManager.getInstance(myProject).getToolWindow("Find").isAvailable();
+        final ToolWindow findWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
+        final boolean available = findWindow != null && findWindow.isAvailable();
         final boolean enabled = mySettings.OPEN_NEW_TAB && available;
 
         myForm.getNewTabCheckbox().setEnabled(available);
