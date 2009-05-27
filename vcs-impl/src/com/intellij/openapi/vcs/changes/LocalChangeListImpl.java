@@ -46,7 +46,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   private LocalChangeListImpl(LocalChangeListImpl origin) {
-    myId = origin.myId;
+    myId = origin.getId();
     myName = origin.myName;
     myProject = origin.myProject;
   }

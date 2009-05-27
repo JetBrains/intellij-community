@@ -35,6 +35,7 @@ import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
+  protected ComboBoxButton myButton;
 
   protected ComboBoxAction() {
   }
@@ -43,8 +44,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   public JComponent createCustomComponent(Presentation presentation) {
     JPanel panel=new JPanel(new GridBagLayout());
-    ComboBoxButton button = new ComboBoxButton(presentation);
-    panel.add(button,
+    myButton = new ComboBoxButton(presentation);
+    panel.add(myButton,
               new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,3,0,3),0,0)
     );
     return panel;
