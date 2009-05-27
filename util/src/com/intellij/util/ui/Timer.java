@@ -23,15 +23,15 @@ public abstract class Timer implements Disposable {
   private Thread myThread;
   private final int mySpan;
 
-  private boolean myRunning;
-  private boolean myDisposed;
-  private boolean myRestartRequest;
+  private volatile boolean myRunning;
+  private volatile boolean myDisposed;
+  private volatile boolean myRestartRequest;
 
   private final String myName;
 
-  private boolean myTakeInitialDelay = true;
-  private boolean myInitiallySlept = false;
-  private boolean myInterruptRequest;
+  private volatile boolean myTakeInitialDelay = true;
+  private volatile boolean myInitiallySlept = false;
+  private volatile boolean myInterruptRequest;
 
   public Timer(String name, int span) {
     myName = name;
@@ -102,7 +102,8 @@ public abstract class Timer implements Disposable {
   }
 
   public final void dispose() {
-    if (myThread != null && myThread.isAlive()) {
+    if (myThread != null) {
+      startIfNeeded();
       myInterruptRequest = true;
       myThread.interrupt();
       myDisposed = true;
@@ -113,10 +114,6 @@ public abstract class Timer implements Disposable {
   public void restart() {
     startIfNeeded();
     myRestartRequest = true;
-  }
-
-  public boolean isTimerThread() {
-    return Thread.currentThread() == myThread;
   }
 
   public String toString() {
