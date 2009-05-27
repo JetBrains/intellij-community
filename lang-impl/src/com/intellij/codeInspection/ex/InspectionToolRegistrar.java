@@ -96,6 +96,10 @@ public class InspectionToolRegistrar {
     return ServiceManager.getService(InspectionToolRegistrar.class);
   }
 
+  public Factory<InspectionTool> registerInspectionToolFactory(Factory<InspectionTool> factory) {
+    return registerInspectionToolFactory(factory, true);
+  }
+
   public Factory<InspectionTool> registerInspectionToolFactory(Factory<InspectionTool> factory, boolean store) {
     if (store) {
       myInspectionToolFactories.add(factory);
