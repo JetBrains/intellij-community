@@ -23,12 +23,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
 import java.util.EventObject;
 
 /**
@@ -160,7 +159,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myEditor.isDisposed() || myDisposed) return;
 
-    myLookup.updateList();
     if (!myInitialized) {
       myInitialized = true;
       if (myLookup.isCalculating()) {
@@ -170,16 +168,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
       myLookup.show();
     }
-    else if (myLookup.isVisible()) {
-      if (myEditor.getComponent().getRootPane() == null) {
-        LOG.assertTrue(false, "Null root pane");
-      }
-
-      Point point=myLookup.calculatePosition();
-      Dimension preferredSize = myLookup.getComponent().getPreferredSize();
-      myLookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
-    }
-    myLookup.adaptSize();
+    myLookup.refreshUi();
   }
 
   public int getCount() {

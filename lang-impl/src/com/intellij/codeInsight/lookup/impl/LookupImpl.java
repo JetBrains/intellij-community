@@ -270,7 +270,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     updateList();
   }
 
-  public final void updateList() {
+  private void updateList() {
     synchronized (myItems) {
       int minPrefixLength = myItems.isEmpty() ? 0 : Integer.MAX_VALUE;
       for (final LookupElement item : myItems) {
@@ -870,8 +870,18 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return item.getAllLookupStrings().contains(item.getPrefixMatcher().getPrefix() + myAdditionalPrefix);
   }
 
-  public void adaptSize() {
-    if (isVisible()) {
+  public void refreshUi() {
+    updateList();
+
+    if (isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (myEditor.getComponent().getRootPane() == null) {
+        LOG.assertTrue(false, "Null root pane");
+      }
+
+      Point point = calculatePosition();
+      Dimension preferredSize = getComponent().getPreferredSize();
+      setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
+
       HintManagerImpl.getInstanceImpl().adjustEditorHintPosition(this, myEditor, getComponent().getLocation());
     }
   }

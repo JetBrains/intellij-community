@@ -8,14 +8,12 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.extensions.Extensions;
 
-import java.awt.*;
 import java.util.Arrays;
 
 public class TypedHandler implements TypedActionHandler {
@@ -46,13 +44,7 @@ public class TypedHandler implements TypedActionHandler {
     }, "", editor.getDocument());
 
     if (result == CharFilter.Result.ADD_TO_PREFIX){
-      lookup.updateList();
-      if (!ApplicationManager.getApplication().isUnitTestMode() && lookup.isVisible()) {
-        Point point = lookup.calculatePosition();
-        Dimension preferredSize = lookup.getComponent().getPreferredSize();
-        lookup.setBounds(point.x, point.y, preferredSize.width, preferredSize.height);
-        lookup.getList().repaint();
-      }
+      lookup.refreshUi();
     }
     else{
       if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP){
