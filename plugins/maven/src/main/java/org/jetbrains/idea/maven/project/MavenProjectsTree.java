@@ -161,7 +161,7 @@ public class MavenProjectsTree {
   }
 
   public void resetManagedFilesPathsAndProfiles(List<String> paths, List<String> profiles) {
-    myManagedFilesPaths = paths;
+    myManagedFilesPaths = new ArrayList<String>(paths);
     setActiveProfiles(profiles);
   }
 

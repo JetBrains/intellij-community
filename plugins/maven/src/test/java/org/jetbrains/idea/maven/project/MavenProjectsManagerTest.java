@@ -172,6 +172,30 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertSame(m, children.get(0).getFile());
   }
 
+  public void testAddingAndRemovingManagedFiles() throws Exception {
+    VirtualFile m1 = createModulePom("m1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m1</artifactId>" +
+                                     "<version>1</version>");
+
+    VirtualFile m2 = createModulePom("m2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m2</artifactId>" +
+                                     "<version>1</version>");
+    importProject(m1);
+
+    assertUnorderedElementsAreEqual(myProjectsTree.getRootProjectsFiles(), m1);
+
+    myProjectsManager.addManagedFiles(Arrays.asList(m2));
+    waitForReadingCompletion();
+
+    assertUnorderedElementsAreEqual(myProjectsTree.getRootProjectsFiles(), m1, m2);
+
+    myProjectsManager.removeManagedFiles(Arrays.asList(m2));
+    waitForReadingCompletion();
+    assertUnorderedElementsAreEqual(myProjectsTree.getRootProjectsFiles(), m1);
+  }
+
   public void testAddingManagedFileAndChangingAggregation() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>parent</artifactId>" +
