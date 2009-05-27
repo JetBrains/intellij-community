@@ -41,7 +41,7 @@ public class PythonPyInspectionToolProvider implements ApplicationComponent {
     int len = pyList.__len__();
     for(int i=0; i<len; i++) {
       final String inspectionToolName = pyList.__getitem__(i).toString();
-      myRegistrar.registerInspectionToolFactory(new PyInspectionToolFactory(inspectionToolName), true);
+      myRegistrar.registerInspectionToolFactory(new PyInspectionToolFactory(inspectionToolName));
     }
     myRegistrar.registerInspectionToolProvider(new Function<String, InspectionTool>() {
       @Nullable
