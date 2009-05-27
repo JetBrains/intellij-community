@@ -114,7 +114,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
           protected List<VirtualFile> merge() {
             return null;
           }
-        }, new MyTreeConflictWorker());
+        }, new MyTreeConflictWorker(), new MyReplacedWorker());
       } else {
         myGroupWorkers = Collections.emptyList();
       }
@@ -137,6 +137,24 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
       for (Runnable groupWorker : myGroupWorkers) {
         groupWorker.run();
+      }
+    }
+
+    // not a conflict worker; to correctly show replaced items
+    private class MyReplacedWorker implements Runnable {
+      public void run() {
+        final FileGroup replacedGroup = myUpdatedFiles.getGroupById(REPLACED_ID);
+        final FileGroup deletedGroup = myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID);
+        if ((! deletedGroup.isEmpty()) && (! replacedGroup.isEmpty())) {
+          final Set<String> replacedFiles = new HashSet<String>(replacedGroup.getFiles());
+          final Collection<String> deletedFiles = new HashSet<String>(deletedGroup.getFiles());
+          
+          for (String deletedFile : deletedFiles) {
+            if (replacedFiles.contains(deletedFile)) {
+              deletedGroup.remove(deletedFile);
+            }
+          }
+        }
       }
     }
 
