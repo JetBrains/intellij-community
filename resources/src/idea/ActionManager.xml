@@ -40,9 +40,6 @@
 
     <group id="NewGroup1">
       <action id="NewClass" class="com.intellij.ide.actions.CreateClassAction"/>
-      <action id="NewInterface" class="com.intellij.ide.actions.CreateInterfaceAction"/>
-      <action id="NewEnum" class="com.intellij.ide.actions.CreateEnumAction"/>
-      <action id="NewAnnotationType" class="com.intellij.ide.actions.CreateAnnotationTypeAction"/>
       <action id="NewModuleInGroup" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleInGroupAction"
               icon="/nodes/ModuleClosed.png"/>
 
