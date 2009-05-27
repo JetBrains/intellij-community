@@ -12,6 +12,7 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -97,7 +98,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         descriptor.setDescription("Choose profile file");
         final VirtualFile[] files = FileChooser.chooseFiles(myWholePanel, descriptor);
         if (files.length == 0) return;
-        final InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileImpl.getDefaultProfile());
+        InspectionProfileImpl inspectionProfile =
+        new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), myProfileManager);
+        inspectionProfile.initInspectionTools();
+        final InspectionProfileImpl profile = (InspectionProfileImpl)inspectionProfile.getModifiableModel();
         try {
           profile.readExternal(JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(files[0])).getRootElement());
 
