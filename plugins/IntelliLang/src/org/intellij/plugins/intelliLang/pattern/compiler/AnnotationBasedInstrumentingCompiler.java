@@ -53,10 +53,7 @@ import java.util.Set;
 public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstrumentingCompiler {
   private static final Logger LOG = Logger.getInstance("org.intellij.lang.pattern.compiler.AnnotationBasedInstrumentingCompiler");
 
-  protected final Project myProject;
-
-  public AnnotationBasedInstrumentingCompiler(Project project) {
-    myProject = project;
+  public AnnotationBasedInstrumentingCompiler() {
   }
 
   @NotNull
@@ -65,15 +62,16 @@ public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstr
       return ProcessingItem.EMPTY_ARRAY;
     }
 
+    final Project project = context.getProject();
     final Set<InstrumentationItem> result = new HashSet<InstrumentationItem>();
-    final PsiSearchHelper searchHelper = PsiManager.getInstance(myProject).getSearchHelper();
+    final PsiSearchHelper searchHelper = PsiManager.getInstance(context.getProject()).getSearchHelper();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final String[] names = getAnnotationNames();
+        final String[] names = getAnnotationNames(project);
         for (String name : names) {
-          final GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
+          final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
 
-          final PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(name, GlobalSearchScope.allScope(myProject));
+          final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
           if (psiClass == null) {
             context.addMessage(CompilerMessageCategory.ERROR, "Cannot find class " + name, null, -1, -1);
             continue;
@@ -83,7 +81,7 @@ public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstr
           searchHelper.processAllFilesWithWord(StringUtil.getShortName(name), scope, new Processor<PsiFile>() {
             public boolean process(PsiFile psifile) {
               if (StdLanguages.JAVA == psifile.getLanguage() && psifile.getVirtualFile() != null && psifile instanceof PsiJavaFile) {
-                addClassFiles((PsiJavaFile)psifile, result);
+                addClassFiles((PsiJavaFile)psifile, result, project);
               }
               return true;
             }
@@ -94,12 +92,12 @@ public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstr
     return result.toArray(new ProcessingItem[result.size()]);
   }
 
-  private void addClassFiles(PsiJavaFile srcFile, Set<InstrumentationItem> result) {
+  private static void addClassFiles(PsiJavaFile srcFile, Set<InstrumentationItem> result, final Project project) {
 
     final VirtualFile sourceFile = srcFile.getVirtualFile();
     assert sourceFile != null;
 
-    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = index.getModuleForFile(sourceFile);
     if (module != null) {
       final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
@@ -140,10 +138,11 @@ public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstr
     }
   }
 
-  public ProcessingItem[] process(final CompileContext context, final ProcessingItem items[]) {
+  public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
     progressIndicator.setText(getProgressMessage());
 
+    final Project project = context.getProject();
     final ArrayList<ProcessingItem> result = new ArrayList<ProcessingItem>(items.length);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
 
@@ -165,7 +164,7 @@ public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstr
               continue;
             }
 
-            final ClassWriter classwriter = new PsiClassWriter(myProject, item.isJDK6());
+            final ClassWriter classwriter = new PsiClassWriter(project, item.isJDK6());
             final Instrumenter instrumenter = createInstrumenter(classwriter);
 
             classreader.accept(instrumenter, 0);
@@ -198,7 +197,7 @@ public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstr
 
   protected abstract boolean isEnabled();
 
-  protected abstract String[] getAnnotationNames();
+  protected abstract String[] getAnnotationNames(Project project);
 
   protected abstract Instrumenter createInstrumenter(ClassWriter classwriter);
 

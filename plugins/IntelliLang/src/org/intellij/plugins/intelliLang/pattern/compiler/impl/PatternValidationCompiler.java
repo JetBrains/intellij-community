@@ -42,24 +42,20 @@ public class PatternValidationCompiler extends AnnotationBasedInstrumentingCompi
 
   private final Map<String, String> myAnnotations = new HashMap<String, String>();
 
-  public PatternValidationCompiler(Project project) {
-    super(project);
-  }
-
-  protected String[] getAnnotationNames() {
+  protected String[] getAnnotationNames(Project project) {
     synchronized (myAnnotations) {
       myAnnotations.clear();
       final Pair<String, ? extends Set<String>> patternAnnotation = Configuration.getInstance().getPatternAnnotationPair();
 
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-      final PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(patternAnnotation.first, scope);
+      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+      final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(patternAnnotation.first, scope);
 
       if (psiClass == null) {
         // annotation is not present in project's classpath, nothing to instrument
         return ArrayUtil.EMPTY_STRING_ARRAY;
       }
 
-      final Query<PsiMember> query = AnnotatedMembersSearch.search(psiClass, GlobalSearchScope.allScope(myProject));
+      final Query<PsiMember> query = AnnotatedMembersSearch.search(psiClass, GlobalSearchScope.allScope(project));
 
       query.forEach(new Processor<PsiMember>() {
         public boolean process(PsiMember psiMember) {
