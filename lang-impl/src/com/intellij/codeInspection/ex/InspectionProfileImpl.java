@@ -22,7 +22,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -119,14 +118,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Override
   public void setProfileManager(@NotNull ProfileManager profileManager) {
     super.setProfileManager(profileManager);
-    final NamedScopesHolder scopesHolder = profileManager.getScopesManager();
+    /*final NamedScopesHolder scopesHolder = profileManager.getScopesManager();
     if (scopesHolder != null) {
-      scopesHolder.addScopeListener(new NamedScopesHolder.ScopeListener() {
-        public void scopesChanged() { //todo scopes change tracking
-
+      scopesHolder.addScopeListener(new NamedScopesHolder.ScopeListener() {//todo scopes change tracking
+        public void scopesChanged() {
         }
       });
-    }
+    }*/
   }
 
   public String getBaseProfileName() {

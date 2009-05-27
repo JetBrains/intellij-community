@@ -315,6 +315,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myBrowser.dispose();
     myTree = null;
     myOccurenceNavigator = null;
+    myInspectionProfile = null;
   }
 
 
