@@ -12,7 +12,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
-import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +74,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
       errorsConfigurable = new IDEInspectionToolsConfigurable(InspectionProjectProfileManager.getInstance(project), InspectionProfileManager.getInstance());
     }
     else {
-      errorsConfigurable = ProjectInspectionToolsConfigurable.getInstance(project);
+      errorsConfigurable = ErrorsConfigurable.SERVICE.getInstance(project);
     }
     return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
       public void run() {

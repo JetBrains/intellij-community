@@ -5,11 +5,9 @@ import com.intellij.codeInsight.daemon.impl.HectorComponent;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -60,12 +58,9 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
         if (file != null) {
           if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
           final Project project = file.getProject();
-          ErrorsConfigurable profileConfigurable = findErrorsConfigurable(project.getExtensions(Configurable.PROJECT_CONFIGURABLES));
-          if (profileConfigurable == null) {
-            profileConfigurable = findErrorsConfigurable(ApplicationManager.getApplication().getExtensions(Configurable.APPLICATION_CONFIGURABLES));
-          }
-          assert profileConfigurable != null;
-          ShowSettingsUtil.getInstance().editConfigurable(project, profileConfigurable);
+          final ErrorsConfigurable errorsConfigurable = ErrorsConfigurable.SERVICE.getInstance(project);
+          assert errorsConfigurable != null;
+          ShowSettingsUtil.getInstance().editConfigurable(project, errorsConfigurable);
         }
       }
     });
@@ -76,15 +71,7 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
     StatusBarTooltipper.install(this, myInspectionProfileLabel, statusBar);
   }
 
-  @Nullable
-  private static ErrorsConfigurable findErrorsConfigurable(final Configurable[] extensions) {
-    for (Configurable configurable : extensions) {
-      if (ErrorsConfigurable.class.isAssignableFrom(configurable.getClass())) {
-        return (ErrorsConfigurable)configurable;
-      }
-    }
-    return null;
-  }
+
 
   public JComponent getComponent() {
     return this;
