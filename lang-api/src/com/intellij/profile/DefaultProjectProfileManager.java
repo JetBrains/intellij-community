@@ -15,6 +15,7 @@
  */
 package com.intellij.profile;
 
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -99,6 +100,13 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       }
       if (toConvert) {
         convert(element);
+      } else { //copy root profile to project
+        final InspectionProfile rootProfile = (InspectionProfile)myApplicationProfileManager.getRootProfile();
+        final Profile copy = myApplicationProfileManager.createProfile();
+        copy.copyFrom(rootProfile);
+        copy.setProfileManager(this);
+        copy.setName("_" + rootProfile.getName());
+        myProfiles.put(copy.getName(), copy);
       }
     }
   }
