@@ -9,6 +9,12 @@
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.ui.debugger.extensions.PlaybackDebugger</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.ui.debugger.extensions.DisposerDebugger</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

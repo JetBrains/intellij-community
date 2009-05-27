@@ -42,13 +42,16 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.List;
 
-public class DisposerDebugger extends JComponent implements UiDebuggerExtension {
+public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.DisposerDebugger");
 
+  private JComponent myComponent;
   private JBTabsImpl myTreeTabs;
 
-  public DisposerDebugger() {
+  private void initUi() {
+    myComponent = new JPanel();
+
     myTreeTabs = new JBTabsImpl(null, null, this);
 
     final Splitter splitter = new Splitter(true);
@@ -61,8 +64,8 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
     splitter.setFirstComponent(myTreeTabs);
     splitter.setSecondComponent(bottom);
 
-    setLayout(new BorderLayout());
-    add(splitter, BorderLayout.CENTER);
+    myComponent.setLayout(new BorderLayout());
+    myComponent.add(splitter, BorderLayout.CENTER);
 
     addTree(new DisposerTree(this), "All", false);
     addTree(new DisposerTree(this), "Watch", true);
@@ -265,7 +268,11 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
   }
 
   public JComponent getComponent() {
-    return this;
+    if (myComponent == null) {
+      initUi();
+    }
+
+    return myComponent;
   }
 
   public String getName() {
@@ -366,4 +373,7 @@ public class DisposerDebugger extends JComponent implements UiDebuggerExtension 
     }
   }
 
+  public void disposeUiResources() {
+    myComponent = null;
+  }
 }

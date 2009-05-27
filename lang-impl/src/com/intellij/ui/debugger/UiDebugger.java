@@ -2,11 +2,10 @@ package com.intellij.ui.debugger;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.debugger.extensions.DisposerDebugger;
-import com.intellij.ui.debugger.extensions.PlaybackDebugger;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
@@ -21,6 +20,7 @@ public class UiDebugger extends JPanel implements Disposable {
 
   private DialogWrapper myDialog;
   private JBTabs myTabs;
+  private UiDebuggerExtension[] myExtensions;
 
   public UiDebugger() {
     Disposer.register(Disposer.get("ui"), this);
@@ -33,8 +33,8 @@ public class UiDebugger extends JPanel implements Disposable {
       }
     });
 
-    final UiDebuggerExtension[] extensions = {new DisposerDebugger(), new PlaybackDebugger()};
-    init(extensions);
+    myExtensions = ApplicationManager.getApplication().getComponents(UiDebuggerExtension.class);
+    addToUi(myExtensions);
 
     myDialog = new DialogWrapper((Project)null, true) {
       {
@@ -43,9 +43,6 @@ public class UiDebugger extends JPanel implements Disposable {
 
       protected JComponent createCenterPanel() {
         Disposer.register(getDisposable(), UiDebugger.this);
-        for (UiDebuggerExtension each : extensions) {
-          Disposer.register(getDisposable(), each);
-        }
         return myTabs.getComponent();
       }
 
@@ -80,13 +77,15 @@ public class UiDebugger extends JPanel implements Disposable {
     myDialog.getPeer().getWindow().toFront();
   }
 
-  private void init(UiDebuggerExtension[] extensions) {
+  private void addToUi(UiDebuggerExtension[] extensions) {
     for (UiDebuggerExtension each : extensions) {
-      Disposer.register(this, each);
       myTabs.addTab(new TabInfo(each.getComponent()).setText(each.getName()));
     }
   }
 
   public void dispose() {
+    for (UiDebuggerExtension each : myExtensions) {
+      each.disposeUiResources();
+    }
   }
 }

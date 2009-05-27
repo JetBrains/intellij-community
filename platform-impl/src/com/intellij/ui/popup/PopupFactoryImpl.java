@@ -59,6 +59,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return createConfirmation(title, yesText, noText, onYes, EmptyRunnable.getInstance(), defaultOptionIndex);
   }
 
+  public JBPopup createMessage(String text) {
+    return createListPopup(new BaseListPopupStep<String>(null, new String[]{text})); 
+  }
+
   public ListPopup createConfirmation(String title, final String yesText, String noText, final Runnable onYes, final Runnable onNo, int defaultOptionIndex) {
 
       final BaseListPopupStep<String> step = new BaseListPopupStep<String>(title, new String[]{yesText, noText}) {

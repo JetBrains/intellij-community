@@ -17,6 +17,7 @@ public class ShowUiDebuggerAction extends AnAction {
       myDebugger = new UiDebugger() {
         @Override
         public void dispose() {
+          super.dispose();
           myDebugger = null;
         }
       };

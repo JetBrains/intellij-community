@@ -231,4 +231,6 @@ public abstract class JBPopupFactory {
 
   public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, @Nullable Icon icon, final Color fillColor, @Nullable HyperlinkListener listener);
 
+  public abstract JBPopup createMessage(String text);
+
 }
