@@ -94,9 +94,6 @@ public class MavenIndicesManager implements ApplicationComponent {
 
     MavenGeneralSettings defaultSettings = new MavenGeneralSettings();
     myEmbedder = MavenEmbedderFactory.createEmbedder(defaultSettings, Collections.EMPTY_MAP).getEmbedder();
-    File dir = myTestIndicesDir == null
-               ? MavenUtil.getPluginSystemDir("Indices")
-               : myTestIndicesDir;
     myIndices = new MavenIndices(myEmbedder, getIndicesDir(), new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
         scheduleUpdate(Collections.singletonList(index), false);

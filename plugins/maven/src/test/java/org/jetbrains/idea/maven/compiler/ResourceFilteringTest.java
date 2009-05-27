@@ -249,7 +249,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     compileModules("project");
 
     assertResult("target/classes/file.txt", "value=c:\\projects\\foo/bar");
-    assertResult("target/classes/file.properties", "value=c\\:\\\\projects\\\\foo/bar");
+    assertResult("target/classes/file.properties", "value=c:\\\\projects\\\\foo/bar");
   }
 
   public void testFilterWithSeveralResourceFolders() throws Exception {
