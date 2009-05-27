@@ -15,14 +15,27 @@
 
 package org.jetbrains.plugins.groovy.actions;
 
-import com.intellij.psi.*;
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.ide.actions.CreateClassAction;
+import com.intellij.ide.actions.CreateInPackageFromTemplateActionBase;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-public class NewGroovyClassAction extends NewGroovyActionBase {
+public class NewGroovyClassAction extends CreateInPackageFromTemplateActionBase {
   public NewGroovyClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"),
         GroovyBundle.message("newclass.menu.action.description"),
@@ -41,22 +54,35 @@ public class NewGroovyClassAction extends NewGroovyActionBase {
     return GroovyBundle.message("newclass.dlg.title");
   }
 
+  @NotNull
+  protected final PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
+    MyInputValidator validator = new MyInputValidator(project, directory);
+    Messages.showInputDialog(project, getDialogPrompt(), getDialogTitle(), Messages.getQuestionIcon(), "", validator);
+
+    return validator.getCreatedElements();
+  }
+
+  protected String getErrorTitle() {
+    return CommonBundle.getErrorTitle();
+  }
+
   protected String getCommandName() {
     return GroovyBundle.message("newclass.command.name");
   }
 
-  @NotNull
-  protected PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception {
-    PsiFile file = createClassFromTemplate(directory, newName, "GroovyClass.groovy");
-    if (file instanceof GroovyFile) {
-      GroovyFile groovyFile = (GroovyFile) file;
-      PsiClass[] classes = groovyFile.getClasses();
-      if (classes.length == 1 && classes[0] instanceof GrTypeDefinition) {
-        GrTypeDefinition definition = (GrTypeDefinition) classes[0];
-        PsiElement lbrace = definition.getLBraceGroovy();
-        return lbrace != null ? new PsiElement[]{definition, lbrace} : new PsiElement[]{definition};
-      }
-    }
-    return new PsiElement[]{file};
+  protected PsiClass doCreateClass(PsiDirectory dir, String className) throws IncorrectOperationException {
+    return ((GroovyFile)GroovyTemplatesFactory.createFromTemplate(dir, className, className + NewGroovyActionBase.GROOVY_EXTENSION, "GroovyClass.groovy"))
+      .getClasses()[0];
+  }
+
+  protected Template buildTemplate(PsiClass templateClass) {
+    final Project project = templateClass.getProject();
+    TemplateBuilder builder = new TemplateBuilder(templateClass.getContainingFile());
+    final ASTNode classToken = ObjectUtils.assertNotNull(templateClass.getNode()).findChildByType(GroovyTokenTypes.kCLASS);
+    assert classToken != null;
+    builder.replaceElement(classToken.getPsi(), CreateClassAction.createTypeExpression(project), true);
+    builder.setEndVariableBefore(((GrTypeDefinition)templateClass).getLBraceGroovy());
+
+    return builder.buildTemplate();
   }
 }

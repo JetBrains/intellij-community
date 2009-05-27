@@ -36,7 +36,7 @@ import javax.swing.*;
 public abstract class NewGroovyActionBase extends CreateElementActionBase {
 
   @NonNls
-  private static final String GROOVY_EXTENSION = ".groovy";
+  static final String GROOVY_EXTENSION = ".groovy";
 
   public NewGroovyActionBase(String text, String description, Icon icon) {
     super(text, description, icon);
