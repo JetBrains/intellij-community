@@ -76,13 +76,35 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
                                                      @NotNull PsiElement psiElement,
                                                      @Nullable final String suggestedKey,
                                                      @Nullable final List<PropertiesFile> propertiesFiles) {
-    final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(
-      project,
-      file,
-      NAME,
-      createDefaultCustomization(suggestedKey, propertiesFiles)
-    );
-    return doAction(project, psiElement, dialog);
+    final I18nizeQuickFixModel model;
+    final I18nizeQuickFixDialog.DialogCustomization dialogCustomization = createDefaultCustomization(suggestedKey, propertiesFiles);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      model = new I18nizeQuickFixModel() {
+        public String getValue() {
+          return "";
+        }
+
+        public String getKey() {
+          return dialogCustomization.getSuggestedName();
+        }
+
+        public boolean hasValidData() {
+          return true;
+        }
+
+        public Collection<PropertiesFile> getAllPropertiesFiles() {
+          return propertiesFiles;
+        }
+      };
+    } else {
+      model = new I18nizeQuickFixDialog(
+        project,
+        file,
+        NAME, dialogCustomization
+      );
+    }
+    return doAction(project, psiElement, model);
   }
 
   protected static I18nizeQuickFixDialog.DialogCustomization createDefaultCustomization(String suggestedKey, List<PropertiesFile> propertiesFiles) {
@@ -90,15 +112,14 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   protected static Pair<String, String> doAction(Project project, PsiElement psiElement, 
-                                               I18nizeQuickFixDialog dialog) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      dialog.show();
-      if (!dialog.isOK()) return null;
+                                               I18nizeQuickFixModel model) {
+    if (!model.hasValidData()) {
+      return null;
     }
-    final String key = dialog.getKey();
-    final String value = dialog.getValue();
+    final String key = model.getKey();
+    final String value = model.getValue();
 
-    final Collection<PropertiesFile> selectedPropertiesFiles = dialog.getAllPropertiesFiles();
+    final Collection<PropertiesFile> selectedPropertiesFiles = model.getAllPropertiesFiles();
     createProperty(project, psiElement, selectedPropertiesFiles, key, value);
 
     return new Pair<String, String>(key, value);

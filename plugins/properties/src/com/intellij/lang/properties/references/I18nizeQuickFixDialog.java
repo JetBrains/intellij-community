@@ -44,7 +44,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-public class I18nizeQuickFixDialog extends DialogWrapper {
+public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuickFixModel {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog");
 
   private JTextField myValue;
@@ -80,6 +80,10 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
 
     public DialogCustomization() {
       this(null, true, false, null, null);
+    }
+
+    public String getSuggestedName() {
+      return suggestedName;
     }
   }
 
@@ -427,6 +431,13 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
 
   public String getKey() {
     return getKeyTextField().getText();
+  }
+
+  public boolean hasValidData() {
+    assert !ApplicationManager.getApplication().isUnitTestMode();
+    show();
+
+    return getExitCode() == OK_EXIT_CODE;
   }
 
   private boolean isUseResourceBundle() {
