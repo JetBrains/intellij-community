@@ -439,13 +439,10 @@
     <component>
       <implementation-class>org.jetbrains.plugins.grails.projectView.v2.GrailsProjectViewPane</implementation-class>
     </component>
-  </project-components>
-
-  <module-components>
     <component>
-      <implementation-class>org.jetbrains.plugins.grails.config.GrailsFacetListener</implementation-class>
+      <implementation-class>org.jetbrains.plugins.grails.config.GrailsModuleStructureSynchronizer</implementation-class>
     </component>
-  </module-components>
+  </project-components>
 
   <actions>
     <action id="Grails.GenerateViews" class="org.jetbrains.plugins.grails.actions.GenerateViewsAction"

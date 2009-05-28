@@ -26,7 +26,6 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -55,6 +54,8 @@ import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.groovy.compiler.rt.MessageCollector;
 import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
+import org.jetbrains.plugins.grails.config.GrailsModuleStructureUtil;
+import org.jetbrains.plugins.grails.util.GrailsUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -66,8 +67,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 16.04.2007
+ * @author Dmitry.Krasilschikov
  */
 
 public class GroovyCompiler implements TranslatingCompiler {
@@ -122,7 +122,6 @@ public class GroovyCompiler implements TranslatingCompiler {
     classPathBuilder.append(rtJarPath);
     classPathBuilder.append(File.pathSeparator);
 
-    ModuleType moduleType = module.getModuleType();
     String groovyPath = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
     String grailsPath = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
 
@@ -345,7 +344,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     //Grails injections  support
     printer.println(GroovycRunner.IS_GRAILS);
-    printer.println(GrailsConfigUtils.getInstance().isSDKConfigured(module));
+    printer.println(GrailsUtils.hasGrailsSupport(module) || GrailsModuleStructureUtil.isAuxiliaryPluginsModule(module));
 
     final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
     if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset)) {
