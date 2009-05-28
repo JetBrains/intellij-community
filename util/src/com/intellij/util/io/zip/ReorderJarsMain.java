@@ -50,7 +50,7 @@ public class ReorderJarsMain {
         });
 
 
-        final File tempJarFile = FileUtil.createTempFile("__reorder__", "");
+        final File tempJarFile = FileUtil.createTempFile("__reorder__", jarUrl);
         final JBZipFile file = new JBZipFile(tempJarFile);
         for (JBZipEntry entry : entries) {
           final JBZipEntry zipEntry = file.getOrCreateEntry(entry.getName());
