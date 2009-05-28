@@ -23,12 +23,13 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.Time;
@@ -394,6 +395,51 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public JTree getTree() {
     return myTree;
+  }
+
+  public PsiDirectory[] getSelectedDirectories() {
+    final PsiElement[] elements = getSelectedPSIElements();
+    if (elements.length == 1) {
+      final PsiElement element = elements[0];
+      if (element instanceof PsiDirectory) {
+        return new PsiDirectory[]{(PsiDirectory)element};
+      }
+      else if (element instanceof PsiDirectoryContainer) {
+        return ((PsiDirectoryContainer)element).getDirectories();
+      }
+      else {
+        final PsiFile containingFile = element.getContainingFile();
+        if (containingFile != null) {
+          final PsiDirectory psiDirectory = containingFile.getContainingDirectory();
+          return psiDirectory != null ? new PsiDirectory[]{psiDirectory} : PsiDirectory.EMPTY_ARRAY;
+        }
+      }
+    }
+    else {
+      final DefaultMutableTreeNode selectedNode = getSelectedNode();
+      if (selectedNode != null) {
+        return getSelectedDirectoriesInAmbiguousCase(selectedNode);
+      }
+    }
+    return PsiDirectory.EMPTY_ARRAY;
+  }
+
+  protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(@NotNull final DefaultMutableTreeNode node) {
+    final Object userObject = node.getUserObject();
+    if (userObject instanceof AbstractModuleNode) {
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(((AbstractModuleNode)userObject).getValue());
+      final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
+      List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(sourceRoots.length);
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
+      for (final VirtualFile sourceRoot : sourceRoots) {
+        final PsiDirectory directory = psiManager.findDirectory(sourceRoot);
+        if (directory != null) {
+          dirs.add(directory);
+        }
+      }
+      return dirs.toArray(new PsiDirectory[dirs.size()]);
+    }
+    return PsiDirectory.EMPTY_ARRAY;
   }
 
   // Drag'n'Drop stuff

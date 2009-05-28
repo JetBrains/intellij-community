@@ -1124,42 +1124,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     public PsiDirectory[] getDirectories() {
       final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
       if (viewPane != null) {
-        final PsiElement[] elements = viewPane.getSelectedPSIElements();
-        if (elements.length == 1) {
-          final PsiElement element = elements[0];
-          if (element instanceof PsiDirectory) {
-            return new PsiDirectory[]{(PsiDirectory)element};
-          }
-          else if (element instanceof PsiDirectoryContainer) {
-            return ((PsiDirectoryContainer)element).getDirectories();
-          }
-          else {
-            final PsiFile containingFile = element.getContainingFile();
-            if (containingFile != null) {
-              final PsiDirectory psiDirectory = containingFile.getContainingDirectory();
-              return psiDirectory != null ? new PsiDirectory[]{psiDirectory} : PsiDirectory.EMPTY_ARRAY;
-            }
-          }
-        }
-        else {
-          final DefaultMutableTreeNode node = viewPane.getSelectedNode();
-          if (node != null) {
-            final Object userObject = node.getUserObject();
-            if (userObject instanceof AbstractModuleNode) {
-              final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(((AbstractModuleNode)userObject).getValue());
-              final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
-              List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(sourceRoots.length);
-              final PsiManager psiManager = PsiManager.getInstance(myProject);
-              for (final VirtualFile sourceRoot : sourceRoots) {
-                final PsiDirectory directory = psiManager.findDirectory(sourceRoot);
-                if (directory != null) {
-                  dirs.add(directory);
-                }
-              }
-              return dirs.toArray(new PsiDirectory[dirs.size()]);
-            }
-          }
-        }
+        return viewPane.getSelectedDirectories();
       }
 
       return PsiDirectory.EMPTY_ARRAY;

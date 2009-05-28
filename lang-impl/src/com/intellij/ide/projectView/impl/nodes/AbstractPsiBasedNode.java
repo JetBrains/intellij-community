@@ -9,8 +9,8 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -111,10 +111,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     final PsiElement value = extractPsiFromValue();
     LOG.assertTrue(value.isValid());
 
-    int flags = Iconable.ICON_FLAG_VISIBILITY;
-    if (isMarkReadOnly()) {
-      flags |= Iconable.ICON_FLAG_READ_STATUS;
-    }
+    int flags = getIconableFlags();
 
     try {
       Icon icon = value.getIcon(flags);
@@ -137,6 +134,14 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     catch (IndexNotReadyException ignored) {
     }
     updateImpl(data);
+  }
+
+  protected int getIconableFlags() {
+    int flags = Iconable.ICON_FLAG_VISIBILITY;
+    if (isMarkReadOnly()) {
+      flags |= Iconable.ICON_FLAG_READ_STATUS;
+    }
+    return flags;
   }
 
   protected boolean isDeprecated() {
