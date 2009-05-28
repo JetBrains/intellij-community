@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -85,11 +86,15 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
   }
 
   public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final TextBlockTransferableData value) {
+    if (DumbService.getInstance().isDumb()) {
+      return;
+    }
+
     final Document document = editor.getDocument();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final ReferenceTransferableData.ReferenceData[] referenceData = ((ReferenceTransferableData) value).getData();
+    final ReferenceTransferableData.ReferenceData[] referenceData = ((ReferenceTransferableData)value).getData();
     final PsiJavaCodeReferenceElement[] refs = findReferencesToRestore(file, bounds, referenceData);
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK) {
       askReferencesToRestore(project, refs, referenceData);
