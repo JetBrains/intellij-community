@@ -1,9 +1,6 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.GlobalInspectionTool;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.*;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,6 +44,20 @@ public class InspectionToolRegistrar {
       providers.addAll(Arrays.asList(ApplicationManager.getApplication().getComponents(InspectionToolProvider.class)));
       providers.addAll(Arrays.asList(Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME)));
       registerTools(providers.toArray(new InspectionToolProvider[providers.size()]));
+      for (InspectionToolsFactory factory : Extensions.getExtensions(InspectionToolsFactory.EXTENSION_POINT_NAME)) {
+        for (final InspectionProfileEntry profileEntry : factory.createTools()) {
+          myInspectionToolFactories.add(new Factory<InspectionTool>() {
+            public InspectionTool create() {
+              if (profileEntry instanceof LocalInspectionTool) {
+                return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
+              } else if (profileEntry instanceof GlobalInspectionTool) {
+                return new GlobalInspectionToolWrapper((GlobalInspectionTool)profileEntry);
+              }
+              return (InspectionTool)profileEntry;
+            }
+          });
+        }
+      }
     }
   }
 
@@ -100,6 +111,9 @@ public class InspectionToolRegistrar {
     return registerInspectionToolFactory(factory, true);
   }
 
+  /**
+   * make sure that it is not too late
+   */
   public Factory<InspectionTool> registerInspectionToolFactory(Factory<InspectionTool> factory, boolean store) {
     if (store) {
       myInspectionToolFactories.add(factory);
