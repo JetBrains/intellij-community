@@ -66,7 +66,7 @@ public class SdkConfigurationUtil {
             }
           }
         }
-        String message = files[0].isDirectory()
+        String message = files.length > 0 && files[0].isDirectory()
                          ? ProjectBundle.message("sdk.configure.home.invalid.error", sdkTypes [0].getPresentableName())
                          : ProjectBundle.message("sdk.configure.home.file.invalid.error", sdkTypes [0].getPresentableName());
         throw new Exception(message);
