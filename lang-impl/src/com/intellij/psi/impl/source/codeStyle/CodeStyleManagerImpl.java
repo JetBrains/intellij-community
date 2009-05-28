@@ -217,10 +217,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   public int adjustLineIndentInner(PsiFile file, int offset) throws IncorrectOperationException {
-    final PsiFile jspFile = PsiUtilBase.getTemplateLanguageFile(file);
+    final PsiFile templateFile = PsiUtilBase.getTemplateLanguageFile(file);
 
-    if (jspFile != null) {
-      file = jspFile;
+    if (templateFile != null) {
+      file = templateFile;
     }
 
     final PsiElement element = findElementInTreeWithFormatterEnabled(file, offset);
@@ -327,6 +327,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   public void adjustLineIndent(@NotNull PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
+    final PsiFile templateFile = PsiUtilBase.getTemplateLanguageFile(file);
+
+    if (templateFile != null) {
+      file = templateFile;
+    }
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     if (builder != null) {
       final CodeStyleSettings settings = getSettings();
