@@ -31,7 +31,7 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
 
   @Override
   public boolean isModified() {
-    if (!Comparing.strEqual(((InspectionProfileImpl)myProfiles.getSelectedItem()).getName(), getActiveProfile().getName())) return true;
+    if (!Comparing.strEqual(getCurrentProfile().getName(), getActiveProfile().getName())) return true;
     return super.isModified();
   }
 }
