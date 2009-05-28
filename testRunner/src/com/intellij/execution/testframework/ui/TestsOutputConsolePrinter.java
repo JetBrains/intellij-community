@@ -11,16 +11,23 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   private final TestConsoleProperties myProperties;
   private ChangingPrintable myCurrentPrintable = ChangingPrintable.DEAF;
   private Printer myOutput;
+
+  // After pause action has been invoked -  all output will be redirected to special
+  // myDeferingPrinter which will dump all buffered data after user will continue process.
   private final DeferingPrinter myDeferingPrinter = new DeferingPrinter(false);
+
+  // It seems it is storage for uncaptured output by other printers (e.g. test proxies).
+  // To prevent duplicated output collectioning output on this printer must be paused
+  // (i.e. setCollectOutput(false)) after additional printer have been attached. You can
+  // continue to collect output after additional printers will be deattached(e.g. test runner stops
+  // sending events to test proxies).
+
+  // If output collection was enabled for this console printer - all output will be collected in
+  // myOutputStorage component. Otherwise no output will be stored.
+  // 'myCurrentOutputStorage' printer is used for displaying whole output for test's root
   private final Intermediate myOutputStorage = new DeferingPrinter(true);
-  /**
-   * It seems it is storage for uncaptured output by other printers (e.g. test proxies).
-   * To prevent duplicated output collectioning output on this printer must be paused
-   * (i.e. setCollectOutput(false)) after additional printer have been attached. You can
-   * continue to collect output after additional printers will be deattached(e.g. test runner stops
-   * sending events to test proxies).
-   */
   private Intermediate myCurrentOutputStorage = myOutputStorage;
+
   private int myMarkOffset = 0;
 
   private final TestFrameworkPropertyListener<Boolean> myPropertyListener = new TestFrameworkPropertyListener<Boolean>() {

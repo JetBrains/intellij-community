@@ -30,6 +30,10 @@ public class TestsUIUtil {
     if (testProxy == null) return null;
     if (AbstractTestProxy.DATA_CONSTANT.equals(dataId)) return testProxy;
     if (DataConstants.NAVIGATABLE.equals(dataId)) return getOpenFileDescriptor(testProxy, model);
+    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+      final Navigatable openFileDescriptor = getOpenFileDescriptor(testProxy, model);
+      return openFileDescriptor != null ? new Navigatable[]{openFileDescriptor} : null;
+    }
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       final Location location = testProxy.getLocation(project);
       if (location != null) {
