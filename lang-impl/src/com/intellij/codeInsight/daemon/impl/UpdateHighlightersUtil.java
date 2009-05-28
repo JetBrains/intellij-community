@@ -388,17 +388,14 @@ public class UpdateHighlightersUtil {
       LOG.assertTrue(textRange != null, element);
       TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
       if (startOffset <= elementRange.getStartOffset() && elementRange.getEndOffset() <= endOffset) {
-
         RangeHighlighter marker = toReuse.reuseHighlighterAt(info.startOffset, info.endOffset);
-
         if (marker == null) {
-          marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                   info.textAttributesKey != null
-                                                   ? colorsScheme.getAttributes(info.textAttributesKey)
-                                                   : null, HighlighterTargetArea.EXACT_RANGE);
+          TextAttributes attributes = info.textAttributesKey == null ? null : colorsScheme.getAttributes(info.textAttributesKey);
+          marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
         }
-        GutterIconRenderer renderer = info.createGutterRenderer();
-        if (!Comparing.equal(marker.getGutterIconRenderer() == null ? null : marker.getGutterIconRenderer().getIcon(), renderer == null ? null : renderer.getIcon())) {
+        LineMarkerInfo.LineMarkerGutterIconRenderer renderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
+        LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = marker.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)marker.getGutterIconRenderer() : null;
+        if (oldRenderer == null || renderer == null || !renderer.looksTheSameAs(oldRenderer)) {
           marker.setGutterIconRenderer(renderer);
         }
         if (!Comparing.equal(marker.getLineSeparatorColor(), info.separatorColor)) {

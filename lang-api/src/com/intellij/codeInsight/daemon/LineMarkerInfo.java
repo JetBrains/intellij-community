@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
@@ -115,7 +116,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public static class LineMarkerGutterIconRenderer<T extends PsiElement> extends GutterIconRenderer {
     private final LineMarkerInfo<T> myInfo;
 
-    public LineMarkerGutterIconRenderer(final LineMarkerInfo<T> info) {
+    public LineMarkerGutterIconRenderer(@NotNull LineMarkerInfo<T> info) {
       myInfo = info;
     }
 
@@ -143,6 +144,15 @@ public class LineMarkerInfo<T extends PsiElement> {
     public Alignment getAlignment() {
       return myInfo.myIconAlignment;
     }
+
+    public boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {
+      return
+        myInfo.getElement() != null &&
+        renderer.myInfo.getElement() != null &&
+        myInfo.getElement() == renderer.myInfo.getElement() &&
+        Comparing.equal(getTooltipText(), renderer.getTooltipText()) &&
+        Comparing.equal(myInfo.myIcon, renderer.myInfo.myIcon);
+    } 
   }
 
   @Override
