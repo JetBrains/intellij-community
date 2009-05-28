@@ -8,6 +8,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -21,6 +22,7 @@ import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
@@ -65,12 +67,29 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
     }
 
-    if (originalFileType == StdFileTypes.JAVA && c == '}') {
-      if (handleJavaArrayInitializerRBrace(editor)) return Result.STOP;
-    }
     if (c == ';') {
       if (handleSemicolon(editor, fileType)) return Result.STOP;
     }
+    if (originalFileType == StdFileTypes.JAVA && c == '{') {
+      int offset = editor.getCaretModel().getOffset();
+      HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
+      while (iterator.getTokenType() != null && iterator.getTokenType() == TokenType.WHITE_SPACE) {
+        iterator.retreat();
+      }
+      if (iterator.getTokenType() == JavaTokenType.RBRACKET || iterator.getTokenType() == JavaTokenType.EQ) {
+        return Result.CONTINUE;
+      }
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      final PsiElement leaf = file.findElementAt(offset);
+      if (PsiTreeUtil.getParentOfType(leaf, PsiArrayInitializerExpression.class, false, PsiCodeBlock.class, PsiMember.class) != null) {
+        return Result.CONTINUE;
+      }
+      if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
+        EditorModificationUtil.insertStringAtCaret(editor, "{", false, true);
+        return Result.STOP;
+      }
+    }
+
     return Result.CONTINUE;
   }
 
@@ -99,38 +118,6 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     editor.getCaretModel().moveToOffset(offset + 1);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    return true;
-  }
-
-  private static boolean handleJavaArrayInitializerRBrace(final Editor editor) {
-    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
-
-    int offset = editor.getCaretModel().getOffset();
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    if (iterator.getStart() == 0 || iterator.getTokenType() != JavaTokenType.RBRACE) return false;
-    iterator.retreat();
-    if (!checkArrayInitializerLBrace(iterator)) return false;
-    editor.getCaretModel().moveToOffset(offset + 1);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    return true;
-  }
-
-  private static boolean checkArrayInitializerLBrace(final HighlighterIterator iterator) {
-    int lbraceCount = 0;
-    while(iterator.getTokenType() == JavaTokenType.LBRACE) {
-      lbraceCount++;
-      iterator.retreat();
-      if (iterator.atEnd()) return false;
-    }
-    if (lbraceCount == 0) return false;
-    if (iterator.getTokenType() == TokenType.WHITE_SPACE) iterator.retreat();
-    for(int i=0; i<lbraceCount; i++) {
-      if (iterator.atEnd()) return false;
-      if (iterator.getTokenType() != JavaTokenType.RBRACKET) return false;
-      iterator.retreat();
-      if (iterator.getTokenType() != JavaTokenType.LBRACKET) return false;
-      iterator.retreat();
-    }
     return true;
   }
 
