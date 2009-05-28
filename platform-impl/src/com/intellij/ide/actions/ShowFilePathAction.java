@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.EmptyIcon;
@@ -75,6 +76,10 @@ public class ShowFilePathAction extends AnAction {
       final int index = files.size() == 0 ? 0 : files.size();
       files.add(index, eachParent);
       fileUrls.add(index, getPresentableUrl(eachParent));
+      if (eachParent.getParent() == null && eachParent.getFileSystem() instanceof JarFileSystem) {
+        eachParent = JarFileSystem.getInstance().getVirtualFileForJar(eachParent);
+        if (eachParent == null) break;
+      }
       eachParent = eachParent.getParent();
     }
 
