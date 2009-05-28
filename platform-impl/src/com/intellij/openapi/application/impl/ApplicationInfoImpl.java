@@ -50,6 +50,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myEAPFeedbackUrl;
   private String myReleaseFeedbackUrl;
   private String myPluginManagerUrl;
+  private String myPluginsListUrl;
+  private String myPluginsDownloadUrl;
   private boolean myEAP;
   @NonNls private String myHelpFileName = "ideahelp.jar";
   @NonNls private String myHelpRootName = "idea";
@@ -93,6 +95,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_RELEASE_URL = "release-url";
   @NonNls private static final String ATTRIBUTE_EAP_URL = "eap-url";
   @NonNls private static final String ELEMENT_PLUGINS = "plugins";
+  @NonNls private static final String ATTRIBUTE_LIST_URL = "list-url";
+  @NonNls private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
 
   public void initComponent() { }
 
@@ -208,6 +212,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Override
   public String getPluginManagerUrl() {
     return myPluginManagerUrl;
+  }
+
+  public String getPluginsListUrl() {
+    return myPluginsListUrl;
+  }
+
+  public String getPluginsDownloadUrl() {
+    return myPluginsDownloadUrl;
   }
 
   public UpdateUrls getEapUpdateUrls() {
@@ -366,9 +378,20 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myReleaseFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_RELEASE_URL);
     }
 
+    myPluginsListUrl = "http://plugins.intellij.net/plugins/list/";
+    myPluginsDownloadUrl = "http://plugins.intellij.net/pluginManager";
+
     Element pluginsElement = parentNode.getChild(ELEMENT_PLUGINS);
     if (pluginsElement != null) {
       myPluginManagerUrl = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
+      final String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
+      if (listUrl != null) {
+        myPluginsListUrl = listUrl;
+      }
+      final String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
+      if (downloadUrl != null) {
+        myPluginsDownloadUrl = downloadUrl;
+      }
     }
     else {
       myPluginManagerUrl = "http://plugins.intellij.net";

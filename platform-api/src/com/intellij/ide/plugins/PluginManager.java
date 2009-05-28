@@ -346,7 +346,7 @@ public class PluginManager {
     return false;
   }
 
-  private static boolean isModuleDependency(final PluginId dependentPluginId) {
+  public static boolean isModuleDependency(final PluginId dependentPluginId) {
     return dependentPluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX);
   }
 
@@ -677,13 +677,16 @@ public class PluginManager {
   }
 
   @Nullable
-  private static String getBuildNumber() {
+  static String getBuildNumber() {
     if (ourBuildNumber == null) {
-      try {
-        ourBuildNumber = new String(FileUtil.loadFileText(new File(PathManager.getHomePath() + "/build.txt"))).trim();
-      }
-      catch (IOException e) {
-        ourBuildNumber = null;
+      ourBuildNumber = System.getProperty("idea.plugins.compatible.build");
+      if (ourBuildNumber == null) {
+        try {
+          ourBuildNumber = new String(FileUtil.loadFileText(new File(PathManager.getHomePath() + "/build.txt"))).trim();
+        }
+        catch (IOException e) {
+          ourBuildNumber = null;
+        }
       }
     }
     return ourBuildNumber;

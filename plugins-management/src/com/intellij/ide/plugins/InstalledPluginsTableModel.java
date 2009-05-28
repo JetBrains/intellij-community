@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.util.Function;
@@ -303,7 +304,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           });
         }
         if (PluginManager.isIncompatible(ideaPluginDescriptor)) {
-          cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.incompatible.tooltip.warning"));
+          cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.incompatible.tooltip.warning", ApplicationNamesInfo.getInstance().getFullProductName()));
           cellRenderer.setForeground(Color.red);
         }
       }

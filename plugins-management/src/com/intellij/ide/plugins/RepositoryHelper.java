@@ -1,9 +1,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -32,10 +30,7 @@ import java.util.ArrayList;
  * To change this template use Options | File Templates.
  */
 public class RepositoryHelper {
-  //private static final Logger LOG = com.intellij.openapi.diagnostic.Logger.getInstance("#com.intellij.ide.plugins.RepositoryHelper");
-  //public static final String REPOSITORY_HOST = "http://unit-038:8080/plug";
-  @NonNls public static final String REPOSITORY_LIST_URL = getRepositoryHost() + "/plugins/list/";
-  @NonNls public static final String DOWNLOAD_URL = getRepositoryHost() + "/pluginManager?action=download&id=";
+  @NonNls public static final String DOWNLOAD_URL = getDownloadUrl() + "?action=download&id=";
 
   @NonNls private static final String FILENAME = "filename=";
   @NonNls public static final String extPluginsFile = "availables.xml";
@@ -44,7 +39,7 @@ public class RepositoryHelper {
     ArrayList<IdeaPluginDescriptor> plugins = null;
     try {
       String buildNumber = extractBuildNumber();
-      @NonNls String url = REPOSITORY_LIST_URL + "?build=" + buildNumber;
+      @NonNls String url = getListUrl() + "?build=" + buildNumber;
 
       setLabelText(label, IdeBundle.message("progress.connecting.to.plugin.manager", getRepositoryHost()));
       HttpConfigurable.getInstance().prepareURL(getRepositoryHost());
@@ -130,9 +125,8 @@ public class RepositoryHelper {
 
   public static String extractBuildNumber() {
     String build;
-    ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
     try {
-      build = Integer.valueOf(ideInfo.getBuildNumber()).toString();
+      build = Integer.valueOf(PluginManager.getBuildNumber()).toString();
     }
     catch (NumberFormatException e) {
       build = "3000";
@@ -142,5 +136,13 @@ public class RepositoryHelper {
 
   public static String getRepositoryHost() {
     return ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl();
+  }
+
+  public static String getListUrl() {
+    return ApplicationInfoImpl.getShadowInstance().getPluginsListUrl();
+  }
+
+  public static String getDownloadUrl() {
+    return ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl();
   }
 }
