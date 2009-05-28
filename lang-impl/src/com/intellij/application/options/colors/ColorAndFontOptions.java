@@ -967,7 +967,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return null;
   }
 
-  private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable {
+  private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll {
     private NewColorAndFontPanel mySubPanel;
     private boolean mySubInitInvoked = false;
     private final ColorAndFontPanelFactory myFactory;

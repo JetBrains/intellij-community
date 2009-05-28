@@ -67,4 +67,11 @@ public interface Configurable extends UnnamedConfigurable {
     Configurable[] getConfigurables();
   }
 
+  /**
+   * Forbids wrapping the content of the configurable in a scroll pane. Required when
+   * the configurable contains its own scrollable components.
+   */
+  interface NoScroll {
+  }
+
 }

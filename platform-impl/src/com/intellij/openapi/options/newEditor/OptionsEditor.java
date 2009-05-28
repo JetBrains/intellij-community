@@ -539,17 +539,22 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       });
     }
 
-    void setContent(JComponent c, ConfigurationException e) {
+    void setContent(JComponent c, ConfigurationException e, boolean scrollable) {
       if (c != null && mySimpleContent == c && myException == e) return;
 
       removeAll();
 
       if (c != null) {
-        JScrollPane scroll = new JScrollPane(c);
-        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scroll.setBorder(null);
-        add(scroll, BorderLayout.CENTER);
+        if (scrollable) {
+          JScrollPane scroll = new JScrollPane(c);
+          scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+          scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+          scroll.setBorder(null);
+          add(scroll, BorderLayout.CENTER);
+        }
+        else {
+          add(c, BorderLayout.CENTER);
+        }
       }
 
       if (e != null) {
@@ -1078,7 +1083,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     void set(final ContentWrapper wrapper) {
       myOwnDetails.setDetailsModeEnabled(true);
-      wrapper.setContent(myComponent, getContext().getErrors().get(myConfigurable));
+      wrapper.setContent(myComponent, getContext().getErrors().get(myConfigurable), !(myConfigurable instanceof Configurable.NoScroll));
     }
 
     boolean isShowing() {

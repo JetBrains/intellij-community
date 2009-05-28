@@ -4,7 +4,10 @@ import com.intellij.application.options.codeStyle.*;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -262,7 +265,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     //return getActivePanel().processOptions();
   }
 
-  private class CodeStyleConfigurableWrapper implements SearchableConfigurable {
+  private class CodeStyleConfigurableWrapper implements SearchableConfigurable, NoScroll {
     private boolean myInitialResetInvoked;
     private CodeStyleMainPanel myPanel;
     private final CodeStyleSettingsProvider myProvider;
