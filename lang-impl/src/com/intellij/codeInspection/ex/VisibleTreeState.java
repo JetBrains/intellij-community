@@ -10,7 +10,10 @@ import com.intellij.util.xmlb.annotations.Tag;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.TreeSet;
 
 /**
  * User: anna
@@ -20,28 +23,11 @@ import java.util.*;
 public class VisibleTreeState{
   @Tag("expanded-state")
   @AbstractCollection(surroundWithTag = false, elementTag = "expanded", elementValueAttribute = "path", elementTypes = {State.class})
-  public TreeSet<State> myExpandedNodes = new TreeSet<State>(createDescriptionComparator());
+  public TreeSet<State> myExpandedNodes = new TreeSet<State>();
 
   @Tag("selected-state")
   @AbstractCollection(surroundWithTag = false, elementTag = "selected", elementValueAttribute = "path", elementTypes = {State.class})
-  public TreeSet<State> mySelectedNodes = new TreeSet<State>(createDescriptionComparator());
-
-  private static Comparator<State> createDescriptionComparator() {
-     return new Comparator<State>() {
-       public int compare(State s1, State s2) {
-        if (s1.myKey.equals(s2.myKey)) {
-          if (s1.myDescriptor != null && s2.myDescriptor != null) {
-            final NamedScope scope1 = s1.myDescriptor.getScope();
-            final NamedScope scope2 = s2.myDescriptor.getScope();
-            if (scope1 != null && scope2 != null) {
-              return scope1.getName().compareTo(scope2.getName());
-            }
-          }
-        }
-        return s1.myKey.compareTo(s2.myKey);
-      }
-    };
-  }
+  public TreeSet<State> mySelectedNodes = new TreeSet<State>();
 
   public VisibleTreeState(VisibleTreeState src) {
     myExpandedNodes.addAll(src.myExpandedNodes);
@@ -139,7 +125,7 @@ public class VisibleTreeState{
   }
 
 
-  public static class State {
+  public static class State implements Comparable{
     @Tag("id")
     public String myKey;
     Descriptor myDescriptor;
@@ -174,6 +160,21 @@ public class VisibleTreeState{
       int result = myKey != null ? myKey.hashCode() : 0;
       result = 31 * result + (myDescriptor != null ? myDescriptor.hashCode() : 0);
       return result;
+    }
+
+    public int compareTo(Object o) {
+      if (!(o instanceof State)) return -1;
+      final State other = (State)o;
+      if (myKey.equals(other.myKey)) {
+        if (myDescriptor != null && other.myDescriptor != null) {
+          final NamedScope scope1 = myDescriptor.getScope();
+          final NamedScope scope2 = other.myDescriptor.getScope();
+          if (scope1 != null && scope2 != null) {
+            return scope1.getName().compareTo(scope2.getName());
+          }
+        }
+      }
+      return myKey.compareTo(other.myKey);
     }
   }
 }
