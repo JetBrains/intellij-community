@@ -7,6 +7,7 @@ import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
@@ -21,6 +22,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.HashMap;
@@ -34,6 +36,7 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
   private final Map<AdditionalTabComponent, ContentManagerListener> myContentListeners = new HashMap<AdditionalTabComponent, ContentManagerListener>();
   private final Project myProject;
   private final LogFilesManager myManager;
+  protected ExecutionEnvironment myEnvironment;
 
   public DebuggerLogConsoleManagerBase(Project project) {
     myProject = project;
@@ -56,6 +59,11 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
     }
   }
 
+  // TODO[oleg]: talk to nick
+  public void setEnvironment(@NotNull final ExecutionEnvironment env) {
+    myEnvironment = env;
+  }
+
   public void addLogConsole(final String name, final String path, final long skippedContent) {
     final Ref<Content> content = new Ref<Content>();
 
@@ -66,6 +74,11 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
       }
     };
     log.attachStopLogConsoleTrackingListener(getRunContentDescriptor().getProcessHandler());
+    // Attach custom log handlers
+    if (myEnvironment.getRunProfile() instanceof RunConfigurationBase) {
+      ((RunConfigurationBase) myEnvironment.getRunProfile()).customizeLogConsole(log);
+    }
+
     content.set(addLogComponent(log));
     final ContentManagerAdapter l = new ContentManagerAdapter() {
       public void selectionChanged(final ContentManagerEvent event) {

@@ -1,33 +1,33 @@
 package com.intellij.xdebugger.impl;
 
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.OpenFileHyperlinkInfo;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.filters.OpenFileHyperlinkInfo;
-import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.breakpoints.*;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
-import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.util.EventDispatcher;
+import com.intellij.xdebugger.impl.ui.XDebugSessionData;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,6 +159,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   private XDebugSessionTab initSessionTab(@NotNull XDebugSessionData sessionData) {
     final XDebugSessionTab sessionTab = new XDebugSessionTab(myProject, mySessionName);
+    sessionTab.setEnvironment(myEnvironment);
     Disposer.register(myProject, sessionTab);
     sessionTab.attachToSession(this, myRunner, myEnvironment, sessionData);
     return sessionTab;

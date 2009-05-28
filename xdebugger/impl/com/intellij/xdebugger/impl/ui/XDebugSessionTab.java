@@ -59,10 +59,10 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
 
     myUi.getOptions().setTopToolbar(createTopToolbar(), ActionPlaces.DEBUGGER_TOOLBAR);
   }
-  
+
   private Content createConsoleContent() {
     return myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
-                              XDebuggerBundle.message("debugger.session.tab.console.content.name"), XDebuggerUIConstants.CONSOLE_TAB_ICON, 
+                              XDebuggerBundle.message("debugger.session.tab.console.content.name"), XDebuggerUIConstants.CONSOLE_TAB_ICON,
                               myConsole.getPreferredFocusableComponent());
   }
 
