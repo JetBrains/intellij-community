@@ -415,9 +415,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     UsefulTestCase.assertSameElements(result, expectedItems);
   }
 
-  public List<String> getCompletionVariants(final String fileBefore) throws Throwable {
+  public List<String> getCompletionVariants(final String... filesBefore) throws Throwable {
     assertInitialized();
-    configureByFiles(fileBefore);
+    configureByFiles(filesBefore);
     final LookupElement[] items = complete(CompletionType.BASIC);
     Assert.assertNotNull("No lookup was shown, probably there was only one lookup element that was inserted automatically", items);
     return getLookupElementStrings();

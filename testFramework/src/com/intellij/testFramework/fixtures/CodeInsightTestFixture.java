@@ -299,7 +299,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   PsiFile addFileToProject(@NonNls String relativePath, @NonNls String fileText) throws IOException;
 
-  List<String> getCompletionVariants(String fileBefore) throws Throwable;
+  List<String> getCompletionVariants(String... filesBefore) throws Throwable;
 
   @Nullable
   LookupElement[] getLookupElements();
