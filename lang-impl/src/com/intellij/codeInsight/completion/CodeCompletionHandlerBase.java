@@ -126,7 +126,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                             final CompletionContext context,
                             final FileCopyPatcher patcher, final Editor editor, final int invocationCount) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && context.editor.getComponent().getRootPane() == null) {
-      LOG.assertTrue(false, "null root pane");
+      return;
     }
 
 
