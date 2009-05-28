@@ -11,7 +11,12 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
  */
 public class XmlIndentOptionsProvider implements FileTypeIndentOptionsProvider {
   public CodeStyleSettings.IndentOptions createIndentOptions() {
-    return new CodeStyleSettings.IndentOptions();
+    final CodeStyleSettings.IndentOptions options = new CodeStyleSettings.IndentOptions();
+    // HACK [yole]
+    if (System.getProperty("idea.platform.prefix").equals("Ruby")) {
+      options.INDENT_SIZE = 2;
+    }
+    return options;
   }
 
   public FileType getFileType() {
