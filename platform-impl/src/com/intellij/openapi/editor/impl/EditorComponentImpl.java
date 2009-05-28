@@ -5,17 +5,19 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.ui.TestableUi;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputMethodEvent;
 import java.awt.im.InputMethodRequests;
+import java.util.Map;
 
 /**
  *
  */
-public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider {
+public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider, TestableUi {
   private final EditorImpl myEditor;
 
   public EditorComponentImpl(EditorImpl editor) {
@@ -141,5 +143,9 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
 
   public boolean getScrollableTracksViewportHeight() {
     return getParent()instanceof JViewport && getParent().getHeight() > getPreferredSize().height;
+  }
+
+  public void putInfo(Map<String, String> info) {
+    myEditor.putInfo(info);
   }
 }

@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -22,8 +23,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.TimedDeadzone;
@@ -38,6 +39,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Anton Katilin
@@ -209,12 +211,26 @@ final class EditorTabbedContainer implements Disposable {
     final FileColorManager fileColorManager = FileColorManagerImpl.getInstance(myProject);
     final Color color = fileColorManager.isEnabledForTabs() ? fileColorManager.getFileColor(file) : null;
     tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file).setTabColor(color);
+    tab.setTestableUi(new MyTestableUi(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
     tabActions.add(new CloseTab(comp, tab));
 
     tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     myTabs.addTab(tab, indexToInsert);
+  }
+
+  private class MyTestableUi implements TestableUi {
+
+    private TabInfo myTab;
+
+    public MyTestableUi(TabInfo tab) {
+      myTab = tab;
+    }
+
+    public void putInfo(Map<String, String> info) {
+      info.put("editorTab", myTab.getText());
+    }
   }
 
   public static String calcTabTitle(final Project project, final VirtualFile file) {

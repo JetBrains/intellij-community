@@ -62,4 +62,12 @@ public class VisualPosition {
     result = 31 * result + column;
     return result;
   }
+
+  public int getLine() {
+    return line;
+  }
+
+  public int getColumn() {
+    return column;
+  }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
@@ -36,7 +37,7 @@ import java.util.*;
 import java.util.List;
 
 public class JBTabsImpl extends JComponent
-  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation {
+  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, TestableUi {
 
   static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
@@ -2641,5 +2642,12 @@ public class JBTabsImpl extends JComponent
 
   boolean isHorizontalTabs() {
     return getTabsPosition() == JBTabsPosition.top || getTabsPosition() == JBTabsPosition.bottom;
+  }
+
+  public void putInfo(Map<String, String> info) {
+    final TabInfo selected = getSelectedInfo();
+    if (selected != null) {
+      selected.putInfo(info);
+    }
   }
 }

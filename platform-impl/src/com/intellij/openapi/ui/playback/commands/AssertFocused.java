@@ -1,10 +1,12 @@
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
 
 import java.awt.*;
+import java.util.*;
 
 public class AssertFocused extends AbstractCommand {
 
@@ -15,57 +17,80 @@ public class AssertFocused extends AbstractCommand {
   }
 
   protected ActionCallback _execute(final PlaybackRunner.StatusCallback cb, Robot robot) {
-    final String text = getText();
-    final String componentName = text.substring(PREFIX.length()).trim();
-
-    if (componentName.length() == 0) {
-      dumpError(cb, "Component name expected after " + PREFIX);
-      return new ActionCallback.Rejected();
-    }
-
     final ActionCallback result = new ActionCallback();
+
+    String text = getText().substring(PREFIX.length()).trim();
+
+    final String[] keyValue = text.split(",");
+    final Map<String, String> expected = new LinkedHashMap<String, String>();
+    for (String each : keyValue) {
+      final String[] eachPair = each.split("=");
+      if (eachPair.length != 2) {
+        cb.error("Syntax error, must be comma-separated pairs key=value", getLine());
+        result.setRejected();
+        return result;
+      }
+
+      expected.put(eachPair[0], eachPair[1]);
+    }
 
     IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
       public void run() {
-        doAssert(componentName, cb, result);
+        try {
+          doAssert(expected, cb);
+          result.setDone();
+        }
+        catch (AssertionError error) {
+          cb.error("Assertion failed: " + error.getMessage(), getLine());
+          result.setRejected();
+        }
       }
     });
 
     return result;
   }
 
-  private void doAssert(String name, PlaybackRunner.StatusCallback status, ActionCallback actionCallback) {
-    try {
-      final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      assertTrue("No component focused", focusOwner != null);
+  private void doAssert(Map<String, String> expected, PlaybackRunner.StatusCallback cb) throws AssertionError {
+    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
-      Component eachParent = focusOwner;
-      String lastFocusedName= null;
-      while(eachParent != null) {
-        final String eachName = eachParent.getName();
+    if (owner == null) {
+      throw new AssertionError("No component focused");
+    }
 
-        if (eachName != null) {
-          lastFocusedName = eachName;
-        }
-
-        if (name.equals(eachName)) {
-          actionCallback.setDone();
-        }
-        eachParent = eachParent.getParent();
+    Component eachParent = owner;
+    final LinkedHashMap<String, String> actual = new LinkedHashMap<String, String>();
+    while (eachParent != null) {
+      if (eachParent instanceof TestableUi) {
+        ((TestableUi)eachParent).putInfo(actual);
       }
 
-      dumpError(status, "Assertion failed, expected focused=" + name + " but was=" + lastFocusedName);
-      actionCallback.setRejected();
+      eachParent = eachParent.getParent();
     }
-    catch (AssertionError e) {
-      dumpError(status, e.getMessage());
-      actionCallback.setRejected();
+
+    Set testedKeys = new LinkedHashSet<String>();
+    for (String eachKey : expected.keySet()) {
+      testedKeys.add(eachKey);
+
+      final String actualValue = actual.get(eachKey);
+      final String expectedValue = expected.get(eachKey);
+
+      if (!expectedValue.equals(actualValue)) {
+        throw new AssertionError(eachKey + " expected: " + expectedValue + " but was: " + actualValue);
+      }
     }
+
+    Map<String, String> untested = new HashMap<String, String>();
+    for (String eachKey : actual.keySet()) {
+      if (testedKeys.contains(eachKey)) continue;
+      untested.put(eachKey, actual.get(eachKey));
+    }
+
+    StringBuffer untestedText = new StringBuffer();
+    for (String each : untested.keySet()) {
+      untestedText.append(each).append("=").append(untested.get(each));
+    }
+
+    cb.message("Untested info: " + untestedText.toString(), getLine());
   }
 
-  private void assertTrue(String text, boolean condition) {
-    if (!condition) {
-      throw new AssertionError(text);
-    }
-  }
 }

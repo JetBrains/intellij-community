@@ -1,14 +1,17 @@
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.impl.FileTreeStructure;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -20,8 +23,8 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +53,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private PlaybackRunner myRunner;
 
-  private JLabel myMessage = new JLabel("", JLabel.LEFT);
+  private DefaultListModel myMessage = new DefaultListModel();
 
   private JTextField myScriptsPath = new JTextField();
 
@@ -63,6 +66,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private VirtualFileAdapter myVfsListener;
 
   private boolean myChanged;
+  private JList myList;
 
   private void initUi() {
     myComponent = new JPanel(new BorderLayout());
@@ -117,11 +121,15 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     if (text != null) {
       myText.setText(text);
     }
-    myComponent.add(new JScrollPane(myText), BorderLayout.CENTER);
 
-    final JPanel south = new JPanel(new BorderLayout());
-    south.add(myMessage, BorderLayout.CENTER);
-    myComponent.add(south, BorderLayout.SOUTH);
+    final Splitter script2Log = new Splitter(true);
+    script2Log.setFirstComponent(new JScrollPane(myText));
+
+    myList = new JList(myMessage);
+    myList.setCellRenderer(new MyListRenderer());
+    script2Log.setSecondComponent(new JScrollPane(myList));
+
+    myComponent.add(script2Log, BorderLayout.CENTER);
 
     myVfsListener = new VirtualFileAdapter() {
       @Override
@@ -353,6 +361,8 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private void activateAndRun() {
     assert myRunner == null;
 
+    myMessage.clear();
+
     final IdeFrameImpl frame = getFrame();
 
     final Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
@@ -390,7 +400,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private void startWhenFrameActive() {
-    myMessage.setText("Waiting for IDE frame activation");
+    myMessage.clear();
+
+    addInfo("Waiting for IDE frame activation", -1);
     myRunner = new PlaybackRunner(myText.getText() != null ? myText.getText() : "", this);
 
 
@@ -430,20 +442,18 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }.start();
   }
 
-  public void error(final String text, int currentLine) {
+  public void error(final String text, final int currentLine) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        myMessage.setForeground(Color.red);
-        myMessage.setText(text);
+        addError(text, currentLine);
       }
     });
   }
 
-  public void message(final String text, int currentLine) {
+  public void message(final String text, final int currentLine) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        myMessage.setForeground(UIManager.getColor("Label.foreground"));
-        myMessage.setText(text);
+        addInfo(text, currentLine);
       }
     });
   }
@@ -488,5 +498,60 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     LocalFileSystem.getInstance().removeVirtualFileListener(myVfsListener);
     System.setProperty("idea.playback.script", myText.getText());
     myCurrentScript.setText("");
+    myMessage.clear();
+  }
+
+  private void addInfo(String text, int line) {
+    myMessage.addElement(new ListElement(text, false, line));
+    scollToLast();
+  }
+
+  private void addError(String text, int line) {
+    myMessage.addElement(new ListElement(text, true, line));
+    scollToLast();
+  }
+
+  private void scollToLast() {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (myMessage.size() == 0) return;
+
+        final Rectangle rec = myList.getCellBounds(myMessage.getSize() - 1, myMessage.getSize() - 1);
+        myList.scrollRectToVisible(rec);
+      }
+    });
+  }
+
+  private class ListElement {
+    private String myText;
+    private boolean myError;
+
+    private int myLine;
+
+    public ListElement(String text, boolean isError, int line) {
+      myText = text;
+      myError = isError;
+      myLine = line;
+    }
+
+    public String getText() {
+      return myText;
+    }
+
+    public boolean isError() {
+      return myError;
+    }
+
+    public int getLine() {
+      return myLine;
+    }
+  }
+
+  private class MyListRenderer extends ColoredListCellRenderer  {
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      final ListElement listElement = (ListElement)value;
+      final String text = (listElement.getLine() >= 0 ? "Line " + listElement.getLine() + ":" : "") + listElement.getText();
+      append(text, listElement.isError() ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
   }
 }
