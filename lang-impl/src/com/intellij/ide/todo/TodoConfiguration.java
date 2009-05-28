@@ -41,6 +41,10 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
    */
   TodoConfiguration() {
     Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INDEX_PATTERN_PROVIDER).registerExtension(this);
+    resetToDefaultTodoPatterns();
+  }
+
+  public void resetToDefaultTodoPatterns() {
     myTodoPatterns = new TodoPattern[]{
       new TodoPattern("\\btodo\\b.*", TodoAttributes.createDefault(), false)
     };
