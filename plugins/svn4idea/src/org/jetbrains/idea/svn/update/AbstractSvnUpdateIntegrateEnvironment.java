@@ -145,7 +145,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       public void run() {
         final FileGroup replacedGroup = myUpdatedFiles.getGroupById(REPLACED_ID);
         final FileGroup deletedGroup = myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID);
-        if ((! deletedGroup.isEmpty()) && (! replacedGroup.isEmpty())) {
+        if ((deletedGroup != null) && (replacedGroup != null) && (! deletedGroup.isEmpty()) && (! replacedGroup.isEmpty())) {
           final Set<String> replacedFiles = new HashSet<String>(replacedGroup.getFiles());
           final Collection<String> deletedFiles = new HashSet<String>(deletedGroup.getFiles());
           
