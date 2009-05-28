@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -56,6 +57,8 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   private JPanel myPatchesPanel;
   private List<StatusBarCustomComponentFactory> myCustomComponentsFactoryList;
   private final Map<StatusBarCustomComponentFactory, JComponent> myFactory2Component = new HashMap<StatusBarCustomComponentFactory, JComponent>();
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.StatusBarImpl");
 
   public StatusBarImpl(UISettings uiSettings) {
     myUISettings = uiSettings;
@@ -202,7 +205,12 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     }
 
     for (StatusBarPatch patch : myPatches) {
-      patch.updateStatusBar(editor, null);
+      try {
+        patch.updateStatusBar(editor, null);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 
