@@ -23,10 +23,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -86,10 +83,6 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     final TypedAction typedAction = actionManager.getTypedAction();
     typedAction.setupHandler(new MyTypedHandler(typedAction.getHandler()));
   }
-
-  private static final Color BACKGROUND_COLOR = Color.white;
-  private static final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
-  private static final TextAttributes FOLLOWED_HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
 
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
   private ConsoleState myState = ConsoleState.NOT_STARTED;
@@ -517,9 +510,17 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     print(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT);
     flushDeferredText();
     final int textLength = myEditor.getDocument().getTextLength();
-    addHyperlink(textLength - hyperlinkText.length(), textLength, null, info);
+    addHyperlink(textLength - hyperlinkText.length(), textLength, null, info, getHyperlinkAttributes());
   }
 
+  private static TextAttributes getHyperlinkAttributes() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
+  }
+
+  private static TextAttributes getFollowedHyperlinkAttributes() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
+  }
+  
   private Editor createEditor() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Editor>() {
       public Editor compute() {
@@ -559,7 +560,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     editorSettings.setAdditionalLinesCount(0);
 
     final EditorColorsScheme scheme = editor.getColorsScheme();
-    editor.setBackgroundColor(BACKGROUND_COLOR);
+    editor.setBackgroundColor(scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
 
@@ -719,7 +720,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       if (entry.getValue() == info) {
         TextAttributes oldAttributes = range.getTextAttributes();
         range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, oldAttributes);
-        TextAttributes attributes = FOLLOWED_HYPERLINK_ATTRIBUTES.clone();
+        TextAttributes attributes = getFollowedHyperlinkAttributes().clone();
         assert oldAttributes != null;
         attributes.setFontType(oldAttributes.getFontType());
         attributes.setEffectType(oldAttributes.getEffectType());
@@ -729,7 +730,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       }
     }
     //refresh highlighter text attributes
-    RangeHighlighter dummy = markupModel.addRangeHighlighter(0, 0, HYPERLINK_LAYER, HYPERLINK_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter dummy = markupModel.addRangeHighlighter(0, 0, HYPERLINK_LAYER, getHyperlinkAttributes(), HighlighterTargetArea.EXACT_RANGE);
     markupModel.removeHighlighter(dummy);
   }
 
@@ -750,7 +751,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       final Document document = myEditor.getDocument();
       final CharSequence chars = document.getCharsSequence();
-      for(int line = line1; line <= line2; line++){
+      final TextAttributes hyperlinkAttributes = getHyperlinkAttributes();
+
+      for(int line = line1; line <= line2; line++) {
         if (line < 0) continue;
         final int startOffset = document.getLineStartOffset(line);
         int endOffset = document.getLineEndOffset(line);
@@ -763,7 +766,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
           final int highlightStartOffset = result.highlightStartOffset;
           final int highlightEndOffset = result.highlightEndOffset;
           final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
-          addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo);
+          addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
         }
       }
     }
@@ -772,8 +775,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   private void addHyperlink(final int highlightStartOffset,
                             final int highlightEndOffset,
                             final TextAttributes highlightAttributes,
-                            final HyperlinkInfo hyperlinkInfo) {
-    TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : HYPERLINK_ATTRIBUTES;
+                            final HyperlinkInfo hyperlinkInfo,
+                            final TextAttributes hyperlinkAttributes) {
+    TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : hyperlinkAttributes;
     final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
                                                                                        highlightEndOffset,
                                                                                        HYPERLINK_LAYER,

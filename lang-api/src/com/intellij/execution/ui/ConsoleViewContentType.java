@@ -18,6 +18,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
@@ -34,6 +35,8 @@ public class ConsoleViewContentType {
   private final TextAttributesKey myTextAttributesKey;
 
   private static final Map<Key, ConsoleViewContentType> ourRegisteredTypes = new HashMap<Key, ConsoleViewContentType>();
+
+  public static final ColorKey CONSOLE_BACKGROUND_KEY = ColorKey.createColorKey("CONSOLE_BACKGROUND_KEY");
 
   public static final TextAttributesKey NORMAL_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_NORMAL_OUTPUT");
   public static final TextAttributesKey ERROR_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_ERROR_OUTPUT");
