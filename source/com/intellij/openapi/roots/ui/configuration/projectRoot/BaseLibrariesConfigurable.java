@@ -23,14 +23,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 
 public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
   protected String myLevel;
@@ -87,8 +90,16 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     provider = new LibrariesModifiableModel(table, myProject);
     final Library[] libraries = provider.getLibraries();
     for (Library library : libraries) {
-      addNode(new MyNode(new LibraryConfigurable(modelProvider, library, myProject, TREE_UPDATER)), myRoot);
+      myRoot.add(new MyNode(new LibraryConfigurable(modelProvider, library, myProject, TREE_UPDATER)));
     }
+    TreeUtil.sort(myRoot, new Comparator() {
+      public int compare(final Object o1, final Object o2) {
+        MyNode node1 = (MyNode)o1;
+        MyNode node2 = (MyNode)o2;
+        return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
+      }
+    });
+    ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
   }
 
   public void apply() throws ConfigurationException {
