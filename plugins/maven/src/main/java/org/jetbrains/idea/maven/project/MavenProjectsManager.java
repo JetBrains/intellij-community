@@ -88,7 +88,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myState = state;
     if (isInitialized()) {
       applyStateToTree();
-      scheduleReadAllProjects();
+      scheduleUpdateAllProjects();
     }
   }
 
@@ -151,7 +151,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           fireActivated();
           listenForExternalChanges();
         }
-        scheduleReadAllProjects();
+        scheduleUpdateAllProjects();
       }
     });
   }
@@ -254,6 +254,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       @Override
       public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
+        System.out.println("updated: " + updated);
         myEmbeddersManager.clearCaches();
 
         unscheduleAllTasks(deleted);
@@ -275,6 +276,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       @Override
       public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
+        System.out.println("resolved: " + project);
         if (project.hasUnresolvedPlugins()) {
           schedulePluginsResolving(project, nativeMavenProject);
         }
@@ -283,6 +285,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       @Override
       public void foldersResolved(MavenProject project) {
+        System.out.println("folders: " + project);
         scheduleImport(project);
       }
     });
@@ -484,11 +487,37 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return myProjectsTree;
   }
 
-  private void scheduleReadAllProjects() {
+  private void scheduleUpdateAllProjects() {
+    doScheduleUpdateProjects(null, false);
+  }
+
+  public void forceUpdateProjects(List<MavenProject> projects) {
+    doScheduleUpdateProjects(projects, true);
+  }
+
+  public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
+    if (!isMavenizedProject()) {
+      addManagedFiles(collectAllAvailablePomFiles());
+    }
+    doScheduleUpdateProjects(null, true);
+  }
+
+  private void doScheduleUpdateProjects(final List<MavenProject> projects, final boolean force) {
     // read when postStartupActivitias start
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
-        myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(myProject, myProjectsTree, getGeneralSettings()));
+        MavenProjectsProcessorReadingTask task;
+        if (projects == null) {
+          task = new MavenProjectsProcessorReadingTask(force, myProjectsTree, getGeneralSettings());
+        }
+        else {
+          task = new MavenProjectsProcessorReadingTask(MavenUtil.collectFiles(projects),
+                                                       Collections.EMPTY_LIST,
+                                                       force,
+                                                       myProjectsTree,
+                                                       getGeneralSettings());
+        }
+        myReadingProcessor.scheduleTask(task);
       }
     });
   }
@@ -686,14 +715,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
         VirtualFileManager.getInstance().refresh(false);
       }
     });
-  }
-
-  public void forceImportOrFindAllAvailablePomFiles() {
-    if (!isMavenizedProject()) {
-      addManagedFiles(collectAllAvailablePomFiles());
-    }
-    waitForReadingCompletion();
-    importProjects();
   }
 
   public List<Module> importProjects() {

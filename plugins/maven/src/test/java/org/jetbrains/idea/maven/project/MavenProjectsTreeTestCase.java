@@ -18,11 +18,11 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
 
   protected void updateAll(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException, MavenException {
     myTree.resetManagedFilesAndProfiles(asList(files), profiles);
-    myTree.updateAll(getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 
   protected void update(VirtualFile file) throws MavenProcessCanceledException {
-    myTree.update(asList(file), getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.update(asList(file), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 
   protected void deleteProject(VirtualFile file) throws MavenProcessCanceledException {

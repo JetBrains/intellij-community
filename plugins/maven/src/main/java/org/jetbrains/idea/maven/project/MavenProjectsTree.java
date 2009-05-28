@@ -291,10 +291,10 @@ public class MavenProjectsTree {
     fireProfilesChanged(myActiveProfiles);
   }
 
-  public void updateAll(MavenGeneralSettings generalSettings, MavenProgressIndicator process) {
+  public void updateAll(boolean force, MavenGeneralSettings generalSettings, MavenProgressIndicator process) {
     List<VirtualFile> managedFiles = getExistingManagedFiles();
     MavenProjectReader projectReader = new MavenProjectReader();
-    update(managedFiles, true, projectReader, generalSettings, process);
+    update(managedFiles, true, force, projectReader, generalSettings, process);
 
     List<VirtualFile> obsoleteFiles = getRootProjectsFiles();
     obsoleteFiles.removeAll(managedFiles);
@@ -302,13 +302,15 @@ public class MavenProjectsTree {
   }
 
   public void update(Collection<VirtualFile> files,
+                     boolean force,
                      MavenGeneralSettings generalSettings,
                      MavenProgressIndicator process) {
-    update(files, false, new MavenProjectReader(), generalSettings, process);
+    update(files, false, force, new MavenProjectReader(), generalSettings, process);
   }
 
   private void update(Collection<VirtualFile> files,
                       boolean recursive,
+                      boolean force,
                       MavenProjectReader projectReader,
                       MavenGeneralSettings generalSettings,
                       MavenProgressIndicator process) {
@@ -327,6 +329,7 @@ public class MavenProjectsTree {
                  findAggregator(mavenProject),
                  false,
                  recursive,
+                 force,
                  updateContext,
                  updateStack,
                  projectReader,
@@ -359,6 +362,7 @@ public class MavenProjectsTree {
              intendedAggregator,
              true,
              recursuve,
+             false,
              updateContext,
              updateStack,
              reader,
@@ -370,6 +374,7 @@ public class MavenProjectsTree {
                         MavenProject aggregator,
                         boolean isNew,
                         boolean recursive,
+                        boolean force,
                         UpdateContext updateContext,
                         Stack<MavenProject> updateStack,
                         MavenProjectReader reader,
@@ -390,7 +395,7 @@ public class MavenProjectsTree {
                                        : findInheritors(mavenProject);
 
     MavenProjectTimestamp timestamp = calculateTimestamp(mavenProject, myActiveProfiles, generalSettings);
-    boolean isChanged = !timestamp.equals(myTimestamps.get(mavenProject));
+    boolean isChanged = force || !timestamp.equals(myTimestamps.get(mavenProject));
 
     if (isChanged) {
       writeLock();
@@ -477,6 +482,7 @@ public class MavenProjectsTree {
                  mavenProject,
                  isNewModule,
                  recursive,
+                 recursive ? force : false, // do not force update modules if only this project was requested to be updated 
                  updateContext,
                  updateStack,
                  reader,
@@ -497,6 +503,7 @@ public class MavenProjectsTree {
                findAggregator(each),
                false,
                false, // no need to go recursively in case of inheritance, only when updating modules
+               false,
                updateContext,
                updateStack,
                reader,
@@ -587,7 +594,7 @@ public class MavenProjectsTree {
     inheritorsToUpdate.removeAll(updateContext.deletedProjects);
 
     for (MavenProject each : inheritorsToUpdate) {
-      doUpdate(each, null, false, false, updateContext, updateStack, projectReader, generalSettings, process);
+      doUpdate(each, null, false, false, false, updateContext, updateStack, projectReader, generalSettings, process);
     }
 
     updateContext.fireUpdatedIfNecessary();
@@ -886,8 +893,6 @@ public class MavenProjectsTree {
                              MavenEmbeddersManager embeddersManager,
                              MavenConsole console,
                              MavenProgressIndicator process) throws MavenProcessCanceledException {
-    if (mavenProject.isAggregator()) return;
-
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_FOLDERS_RESOLVE);
     embedder.customizeForStrictResolve(this, console, process);
     embeddersManager.clearCachesFor(mavenProject);

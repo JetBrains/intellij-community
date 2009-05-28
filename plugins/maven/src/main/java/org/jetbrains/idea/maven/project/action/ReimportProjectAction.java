@@ -7,5 +7,6 @@ import java.util.List;
 
 public class ReimportProjectAction extends MavenProjectsAction {
   protected void perform(MavenProjectsManager manager, List<MavenProject> mavenProjects) {
+    manager.forceUpdateProjects(mavenProjects);
   }
 }

@@ -170,7 +170,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   private void readMavenProjectTree(MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenProjectsTree tree = new MavenProjectsTree();
     tree.addManagedFilesWithProfiles(getParameters().myFiles, getParameters().mySelectedProfiles);
-    tree.updateAll(getGeneralSettings(), process);
+    tree.updateAll(false, getGeneralSettings(), process);
     getParameters().myMavenProjectTree = tree;
   }
 

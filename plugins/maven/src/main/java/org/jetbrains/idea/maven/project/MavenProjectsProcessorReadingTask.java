@@ -3,30 +3,30 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.util.List;
 
 public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessorTask {
-  private final Project myProject;
+  private final boolean myForce;
   private final MavenProjectsTree myTree;
-  private volatile MavenGeneralSettings mySettings;
-  private volatile List<VirtualFile> myFilesToUpdate;
-  private volatile List<VirtualFile> myFilesToDelete;
+  private final MavenGeneralSettings mySettings;
+  private final List<VirtualFile> myFilesToUpdate;
+  private final List<VirtualFile> myFilesToDelete;
 
-  public MavenProjectsProcessorReadingTask(Project project, MavenProjectsTree tree, MavenGeneralSettings settings) {
-    myProject = project;
-    myTree = tree;
-    mySettings = settings;
+  public MavenProjectsProcessorReadingTask(boolean force, MavenProjectsTree tree, MavenGeneralSettings settings) {
+    this(null, null, force, tree, settings);
   }
 
-  public MavenProjectsProcessorReadingTask(Project project,
-                                                MavenProjectsTree tree,
-                                                MavenGeneralSettings settings,
-                                                List<VirtualFile> filesToUpdate,
-                                                List<VirtualFile> filesToDelete) {
-    this(project, tree, settings);
+  public MavenProjectsProcessorReadingTask(List<VirtualFile> filesToUpdate,
+                                           List<VirtualFile> filesToDelete,
+                                           boolean force,
+                                           MavenProjectsTree tree,
+                                           MavenGeneralSettings settings) {
+    myForce = force;
+    myTree = tree;
+    mySettings = settings;
     myFilesToUpdate = filesToUpdate;
     myFilesToDelete = filesToDelete;
   }
@@ -34,15 +34,11 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator process)
     throws MavenProcessCanceledException {
     if (myFilesToUpdate == null) {
-      myTree.updateAll(mySettings, process);
+      myTree.updateAll(myForce, mySettings, process);
     }
     else {
       myTree.delete(myFilesToDelete, mySettings, process);
-      myTree.update(myFilesToUpdate, mySettings, process);
+      myTree.update(myFilesToUpdate, myForce, mySettings, process);
     }
-  }
-
-  public boolean immediateInTestMode() {
-    return false;
   }
 }

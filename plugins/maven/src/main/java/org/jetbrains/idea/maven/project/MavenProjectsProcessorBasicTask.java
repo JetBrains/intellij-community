@@ -9,10 +9,6 @@ public abstract class MavenProjectsProcessorBasicTask implements MavenProjectsPr
     myTree = tree;
   }
 
-  public boolean immediateInTestMode() {
-    return false;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

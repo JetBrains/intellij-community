@@ -77,10 +77,6 @@ public class MavenProjectsProcessor {
         throws MavenProcessCanceledException {
         semaphore.up();
       }
-
-      public boolean immediateInTestMode() {
-        return false;
-      }
     });
 
     while (true) {

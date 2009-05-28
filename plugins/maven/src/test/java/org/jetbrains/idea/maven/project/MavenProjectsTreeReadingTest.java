@@ -35,7 +35,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
-"<modules>" +
+
+                     "<modules>" +
                      "  <module>m</module>" +
                      "</modules>");
 
@@ -317,6 +318,67 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("m1", childNode1.getMavenId().artifactId);
   }
 
+  public void testForceUpdatingWholeModel() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
+
+    MyLoggingListener l = new MyLoggingListener();
+    myTree.addListener(l);
+
+    updateAll(myProjectPom);
+    assertEquals("updated: project m deleted: <none> ", l.log);
+    l.log = "";
+
+    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    assertEquals("", l.log);
+    l.log = "";
+
+    myTree.updateAll(true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    assertEquals("updated: project m deleted: <none> ", l.log);
+  }
+
+  public void testForceUpdatingSingleProject() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
+
+    MyLoggingListener l = new MyLoggingListener();
+    myTree.addListener(l);
+
+    update(myProjectPom);
+    assertEquals("updated: project m deleted: <none> ", l.log);
+    l.log = "";
+
+    myTree.update(Collections.singletonList(myProjectPom), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    assertEquals("", l.log);
+    l.log = "";
+
+    myTree.update(Collections.singletonList(myProjectPom), true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    assertEquals("updated: project deleted: <none> ", l.log);
+    l.log = "";
+  }
+
   public void testUpdatingModelWithNewProfiles() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -535,7 +597,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     }
 
     assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
-    myTree.updateAll(getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
   }
 
@@ -1386,13 +1448,13 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addListener(l);
 
     myTree.addManagedFilesWithProfiles(Collections.singletonList(myProjectPom), Collections.<String>emptyList());
-    myTree.updateAll(getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     assertEquals("updated: parent m1 m2 deleted: <none> ", l.log);
     l.log = "";
 
     myTree.removeManagedFiles(Arrays.asList(myProjectPom));
-    myTree.updateAll(getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     assertEquals("updated: <none> deleted: m1 m2 parent ", l.log);
   }
@@ -1468,14 +1530,14 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "</build>");
 
     createProfilesXmlOldStyle("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value1</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              "  <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              "    <prop>value1</prop>" +
+                              "  </properties>" +
+                              "</profile>");
 
     updateAll(myProjectPom);
 
@@ -1485,14 +1547,14 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(project.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
 
     createProfilesXmlOldStyle("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value2</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              "  <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              "    <prop>value2</prop>" +
+                              "  </properties>" +
+                              "</profile>");
 
     updateAll(myProjectPom);
 
@@ -1507,15 +1569,15 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                          "<packaging>pom</packaging>");
 
     createProfilesXmlOldStyle("parent",
-                      "<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value1</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              "<profile>" +
+                              "  <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              "    <prop>value1</prop>" +
+                              "  </properties>" +
+                              "</profile>");
 
     VirtualFile child = createModulePom("m",
                                         "<groupId>test</groupId>" +
@@ -1540,15 +1602,15 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(childProject.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
 
     createProfilesXmlOldStyle("parent",
-                      "<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value2</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              "<profile>" +
+                              "  <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              "    <prop>value2</prop>" +
+                              "  </properties>" +
+                              "</profile>");
 
     update(parent);
     assertUnorderedElementsAreEqual(childProject.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
@@ -1565,14 +1627,14 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "</modules>");
 
     createProfilesXmlOldStyle("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value1</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              "  <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              "    <prop>value1</prop>" +
+                              "  </properties>" +
+                              "</profile>");
 
     createModulePom("m",
                     "<groupId>test</groupId>" +
@@ -1595,14 +1657,14 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
 
     createProfilesXmlOldStyle("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value2</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              "  <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              "    <prop>value2</prop>" +
+                              "  </properties>" +
+                              "</profile>");
 
     updateAll(myProjectPom);
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
@@ -1628,14 +1690,14 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                     "</build>");
 
     createProfilesXmlOldStyle("<profile>" +
-                      " <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value1</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              " <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              "    <prop>value1</prop>" +
+                              "  </properties>" +
+                              "</profile>");
 
     updateAll(myProjectPom);
 
@@ -1643,14 +1705,14 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addListener(l);
 
     createProfilesXmlOldStyle("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      " <prop>value2</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              "  <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              " <prop>value2</prop>" +
+                              "  </properties>" +
+                              "</profile>");
 
     updateAll(myProjectPom);
     assertEquals("updated: project deleted: <none> ", l.log);
