@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
@@ -24,7 +26,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Vladimir Kondratyev
@@ -68,9 +69,7 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
   }
 
   private static TextAttributes createDefaultTextAttributes() {
-    TextAttributes textAttributes = new TextAttributes(Color.blue, null,null,null,Font.BOLD | Font.ITALIC);
-    textAttributes.setErrorStripeColor(Color.blue);
-    return textAttributes;
+    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
   }
 
   public void readExternal(Element element) throws InvalidDataException {

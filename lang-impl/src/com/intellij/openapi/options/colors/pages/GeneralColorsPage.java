@@ -31,9 +31,11 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
+import com.intellij.application.options.colors.FontEditorPreview;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -46,9 +48,33 @@ import com.intellij.openapi.options.colors.ColorSettingsPage;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.Map;
 
 public class GeneralColorsPage implements ColorSettingsPage {
+  private static final String ADDITIONAL_DEMO_TEXT =
+    "\n" +
+    "<todo>//TODO: Visit JB Web resources:</todo>\n"+
+    "JetBrains Home Page: <hyperlink_f>http://www.jetbrains.com</hyperlink_f>\n" +
+    "JetBrains Developer Community: <hyperlink>http://www.jetbrains.net/devnet</hyperlink>\n" +
+    "\n" +
+    "Search:\n" +
+    "  <search_result_wr>result</search_result_wr> = \"<search_text>text</search_text>, <search_text>text</search_text>, <search_text>text</search_text>\";\n" +
+    "  <identifier_write>i</identifier_write> = <search_result>result</search_result>\n" +
+    "  return <identifier>i;</identifier>\n" +
+    "\n" +
+    "<folded_text>Folded text</folded_text>\n" +
+    "Template <template_var>VARIABLE</template_var>\n" +
+    "Injected language: <injected_lang>\\.(gif|jpg|png)$</injected_lang>\n" +
+    "\n" +
+    "Console:\n" +
+    "<stdsys>C:\\command.com</stdsys>\n" +
+    "-<stdout> C:></stdout>\n" +
+    "-<stdin> help</stdin>\n" +
+    "<stderr>Bad command or file name</stderr>\n" +
+    "<stdsys>Process finished with exit code 1</stdsys>\n" +
+    "\n";
+
   private static final AttributesDescriptor[] ATT_DESCRIPTORS = {
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.default.text"), HighlighterColors.TEXT),
 
@@ -61,10 +87,15 @@ public class GeneralColorsPage implements ColorSettingsPage {
 
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.template.variable"), TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.injected.language.fragment"), EditorColors.INJECTED_LANGUAGE_FRAGMENT),
-    new AttributesDescriptor("Console standard output", ConsoleViewContentType.NORMAL_OUTPUT_KEY),
-    new AttributesDescriptor("Console error output", ConsoleViewContentType.ERROR_OUTPUT_KEY),
-    new AttributesDescriptor("Console user input", ConsoleViewContentType.USER_INPUT_KEY),
-    new AttributesDescriptor("Console system output", ConsoleViewContentType.SYSTEM_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.stdout"), ConsoleViewContentType.NORMAL_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.stderr"), ConsoleViewContentType.ERROR_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.stdin"), ConsoleViewContentType.USER_INPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.system.output"), ConsoleViewContentType.SYSTEM_OUTPUT_KEY),
+
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.hyperlink.new"), CodeInsightColors.HYPERLINK_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.hyperlink.followed"), CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES),
+
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.todo.defaults"), CodeInsightColors.TODO_DEFAULT_ATTRIBUTES),
   };
 
   private static final ColorDescriptor[] COLOR_DESCRIPTORS = {
@@ -84,7 +115,32 @@ public class GeneralColorsPage implements ColorSettingsPage {
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selected.folding.outline"), EditorColors.SELECTED_FOLDING_TREE_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.added.lines"), EditorColors.ADDED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.modified.lines"), EditorColors.MODIFIED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND),
+
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.console.background"), ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, ColorDescriptor.Kind.BACKGROUND),
   };
+
+  private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<String, TextAttributesKey>();
+
+  static{
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("folded_text", EditorColors.FOLDED_TEXT_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("search_result", EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("search_result_wr", EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("search_text", EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("identifier", EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("identifier_write", EditorColors.WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES);
+
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("template_var", TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("injected_lang", EditorColors.INJECTED_LANGUAGE_FRAGMENT);
+
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stdsys", ConsoleViewContentType.SYSTEM_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stdout", ConsoleViewContentType.NORMAL_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stdin", ConsoleViewContentType.USER_INPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stderr", ConsoleViewContentType.ERROR_OUTPUT_KEY);
+
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("todo", CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("hyperlink", CodeInsightColors.HYPERLINK_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("hyperlink_f", CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
+  }
 
   @NotNull
   public String getDisplayName() {
@@ -112,13 +168,10 @@ public class GeneralColorsPage implements ColorSettingsPage {
 
   @NotNull
   public String getDemoText() {
-    return
-      "IntelliJ IDEA is a full-featured Java IDE\n" +
-      "with a high level of usability and outstanding\n" +
-      "advanced code editing and refactoring support.\n";
+    return FontEditorPreview.getIDEDemoText() + ADDITIONAL_DEMO_TEXT;
   }
 
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
-    return null;
+    return ADDITIONAL_HIGHLIGHT_DESCRIPTORS;
   }
 }

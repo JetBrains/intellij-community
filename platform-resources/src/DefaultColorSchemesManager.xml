@@ -25,6 +25,7 @@
       <option name="LINE_FULL_COVERAGE" value="ccffcc"/>
       <option name="LINE_PARTIAL_COVERAGE" value="ffffcc"/>
       <option name="LINE_NONE_COVERAGE" value="ffcccc"/>
+      <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
     </colors>
 
     <attributes>
@@ -1124,6 +1125,17 @@
           <option name="FOREGROUND" value="00007f"/>
         </value>
       </option>
+      <option name="TODO_DEFAULT_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND" value="ff" />
+          <option name="BACKGROUND" />
+          <option name="FONT_TYPE" value="3" />
+          <option name="EFFECT_COLOR" />
+          <option name="EFFECT_TYPE" value="0" />
+          <option name="ERROR_STRIPE_COLOR" value="ff" />
+        </value>
+      </option>
     </attributes>
+    
   </scheme>
 </component>

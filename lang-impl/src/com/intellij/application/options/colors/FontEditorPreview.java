@@ -1,6 +1,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -22,13 +23,20 @@ public class FontEditorPreview implements PreviewPanel{
   public FontEditorPreview(final ColorAndFontOptions options) {
     myOptions = options;
 
-    @Nls String text = "IntelliJ IDEA is a full-featured Java IDE\n" +
-                       "with a high level of usability and outstanding\n" +
-                       "advanced code editing and refactoring support.";
+    @Nls String text = getIDEDemoText();
 
     myEditor = (EditorEx)createPreviewEditor(text, 10, 3, -1, myOptions);
 
     installTrafficLights(myEditor);
+  }
+
+  public static String getIDEDemoText() {
+    String name = ApplicationNamesInfo.getInstance().getFullProductName();
+    String language = name.contains("RubyMine") ? "Ruby" : "Java";   // HACK
+    return
+      name + " is a full-featured " + language + " IDE\n" +
+      "with a high level of usability and outstanding\n" +
+      "advanced code editing and refactoring support.\n";
   }
 
   static void installTrafficLights(EditorEx editor) {
