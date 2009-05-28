@@ -84,6 +84,12 @@ public class PluginManager {
   public synchronized static IdeaPluginDescriptor[] getPlugins() {
     if (ourPlugins == null) {
       initializePlugins();
+      getLogger().info("Loaded plugins:" + StringUtil.join(ourPlugins, new Function<IdeaPluginDescriptorImpl, String>() {
+        public String fun(IdeaPluginDescriptorImpl descriptor) {
+          final String version = descriptor.getVersion();
+          return descriptor.getName() + (version != null ? " (" + version + ")" : "");
+        }
+      }, ", "));
       ClassloaderUtil.clearJarURLCache();
     }
     return ourPlugins;
