@@ -254,7 +254,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       @Override
       public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
-        System.out.println("updated: " + updated);
         myEmbeddersManager.clearCaches();
 
         unscheduleAllTasks(deleted);
@@ -276,7 +275,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       @Override
       public void projectResolved(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject) {
-        System.out.println("resolved: " + project);
         if (project.hasUnresolvedPlugins()) {
           schedulePluginsResolving(project, nativeMavenProject);
         }
@@ -285,7 +283,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
       @Override
       public void foldersResolved(MavenProject project) {
-        System.out.println("folders: " + project);
         scheduleImport(project);
       }
     });
