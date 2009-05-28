@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +142,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                 }
               }
             } else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && element instanceof PsiClass) {
-              importedClasses.add(((PsiClass)element).getQualifiedName());
+              ContainerUtil.addIfNotNull(((PsiClass)element).getQualifiedName(), importedClasses);
             }
           }
         }
