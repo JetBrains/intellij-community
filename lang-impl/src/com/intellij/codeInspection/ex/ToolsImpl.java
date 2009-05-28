@@ -242,7 +242,7 @@ public class ToolsImpl implements Tools {
   }
 
   public boolean isEnabled(NamedScope namedScope) {
-    if (myTools != null) {
+    if (namedScope != null && myTools != null) {
       for (ScopeToolState state : myTools) {
         if (Comparing.equal(namedScope, state.getScope())) return state.isEnabled();
       }
@@ -356,7 +356,7 @@ public class ToolsImpl implements Tools {
   }
 
   public HighlightDisplayLevel getLevel(final NamedScope scope) {
-    if (myTools != null){
+    if (myTools != null && scope != null){
       for (ScopeToolState state : myTools) {
         if (Comparing.equal(state.getScope(), scope)) {
           return state.getLevel();
