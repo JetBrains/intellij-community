@@ -100,7 +100,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     public void runEdt() {
       if (isFocusTransferReady() && !isIdleQueueEmpty()) {
         flushIdleRequests();
-      } else {
+      }
+      else {
         restartIdleAlarm();
       }
     }
@@ -274,15 +275,21 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
       JLabel label = new JLabel("Initializing toolwindow...");
       final ToolWindow toolWindow = registerToolWindow(bean.id, label, toolWindowAnchor, myProject);
+      final ToolWindowFactory factory = bean.getToolWindowFactory();
       if (bean.icon != null) {
-        toolWindow.setIcon(IconLoader.getIcon(bean.icon));
+        Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
+        if (icon == null) {
+          try {
+            icon = IconLoader.getIcon(bean.icon);
+          } catch (Exception ignored) {}
+        }
+        toolWindow.setIcon(icon);
       }
       toolWindow.setSplitMode(bean.secondary, null);
       UiNotifyConnector.doWhenFirstShown(label, new Runnable() {
         public void run() {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              ToolWindowFactory factory = bean.getToolWindowFactory();
               toolWindow.getContentManager().removeAllContents(false);
               factory.createToolWindowContent(myProject, toolWindow);
             }
@@ -786,8 +793,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
 
-  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
-                                       final Disposable parentDisposable, final boolean canWorkInDumbMode) {
+  public ToolWindow registerToolWindow(@NotNull final String id,
+                                       final boolean canCloseContent,
+                                       @NotNull final ToolWindowAnchor anchor,
+                                       final Disposable parentDisposable,
+                                       final boolean canWorkInDumbMode) {
     return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, false, canCloseContent, canWorkInDumbMode));
   }
 
@@ -795,7 +805,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                         @Nullable final JComponent component,
                                         @NotNull final ToolWindowAnchor anchor,
                                         boolean sideTool,
-                                        boolean canCloseContent, final boolean canWorkInDumbMode) {
+                                        boolean canCloseContent,
+                                        final boolean canWorkInDumbMode) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -1523,8 +1534,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (owner != null && SwingUtilities.getWindowAncestor(owner) != null) {
           myToDispatchOnDone.remove(each);
-          IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(), each.getKeyLocation()));
-        } else {
+          IdeEventQueue.getInstance().dispatchEvent(
+            new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(),
+                         each.getKeyLocation()));
+        }
+        else {
           break;
         }
       }
@@ -1582,7 +1596,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       restartIdleAlarm();
 
       return true;
-    } else {
+    }
+    else {
       return false;
     }
   }
@@ -1894,14 +1909,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (checkForRejectOrByPass(command, forced, result)) return;
 
         if (myRequestFocusCmd == command) {
-          final ActionCallback.TimedOut focusTimeout = new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"),
-                                                                                   "Focus command timed out, cmd=" + command,
-                                                                                   command.getAllocation(), true) {
-            @Override
-            protected void onTimeout() {
-              forceFinishFocusSettledown(command, result);
-            }
-          };
+          final ActionCallback.TimedOut focusTimeout =
+            new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"),
+                                        "Focus command timed out, cmd=" + command, command.getAllocation(), true) {
+              @Override
+              protected void onTimeout() {
+                forceFinishFocusSettledown(command, result);
+              }
+            };
 
           command.run().doWhenDone(new Runnable() {
             public void run() {
@@ -1948,7 +1963,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final Window wnd = mgr.getActiveWindow();
     if (wnd != null && !wnd.isShowing() && wnd.getParent() instanceof Window) {
       final Container parent = wnd.getParent();
-      final Method setActive = ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), "setGlobalActiveWindow", Window.class);
+      final Method setActive =
+        ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), "setGlobalActiveWindow", Window.class);
       if (setActive != null) {
         try {
           setActive.setAccessible(true);
@@ -2055,7 +2071,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final Component frame = UIUtil.findUltimateParent(c);
     if (frame instanceof IdeFrame) {
       return frame == myWindowManager.getFrame(myProject);
-    } else {
+    }
+    else {
       return false;
     }
   }
@@ -2082,7 +2099,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myCallbackOnActivation = null;
       if (cmd != null && !cmd.isExpired()) {
         requestFocus(cmd, true).notifyWhenDone(callback);
-      } else {
+      }
+      else {
         final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
         if (ideFrame == myWindowManager.getFrame(myProject)) {
