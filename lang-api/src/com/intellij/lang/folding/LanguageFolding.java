@@ -16,11 +16,11 @@
 
 package com.intellij.lang.folding;
 
-import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.psi.PsiElement;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Document;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.PsiElement;
 
 import java.util.List;
 
@@ -66,6 +66,11 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     if (builder instanceof FoldingBuilderEx) {
       return ((FoldingBuilderEx)builder).buildFoldRegions(root, document, quick);
     }
-    return builder.buildFoldRegions(ObjectUtils.assertNotNull(root.getNode()), document);
+    final ASTNode astNode = root.getNode();
+    if (astNode == null) {
+      return FoldingDescriptor.EMPTY;
+    }
+
+    return builder.buildFoldRegions(astNode, document);
   }
 }
