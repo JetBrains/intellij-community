@@ -1213,7 +1213,7 @@ patterns:
     }
 
     final String[] names = checkboxState ? myNames[1] : myNames[0];
-    final NameUtil.Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true);
+    final NameUtil.Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
 
     try {
       for (String name : names) {
