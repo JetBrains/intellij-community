@@ -6,7 +6,7 @@ import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.runner.ui.TestProxySelectionChangedListener;
+import com.intellij.execution.testframework.sm.runner.ui.PropagateSelectionHandler;
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -44,7 +44,7 @@ public class StatisticsPanel implements DataProvider {
   private JPanel myContentPane;
 
   private final StatisticsTableModel myTableModel;
-  private final List<TestProxySelectionChangedListener> myChangeSelectionListeners = new ArrayList<TestProxySelectionChangedListener>();
+  private final List<PropagateSelectionHandler> myPropagateSelectionHandlers = new ArrayList<PropagateSelectionHandler>();
   private final Project myProject;
   private final TestFrameworkRunningModel myFrameworkRunningModel;
 
@@ -85,8 +85,8 @@ public class StatisticsPanel implements DataProvider {
     myStatisticsTableView.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, this);
   }
 
-  public void addChangeSelectionListener(final TestProxySelectionChangedListener listener) {
-    myChangeSelectionListeners.add(listener);
+  public void addPropagateSelectionListener(final PropagateSelectionHandler handler) {
+    myPropagateSelectionHandlers.add(handler);
   }
 
   public JPanel getContentPane() {
@@ -153,13 +153,13 @@ public class StatisticsPanel implements DataProvider {
   }
 
   /**
-   * On event change selection and probably requests focus. Is used when we want
+   * On event - change selection and probably requests focus. Is used when we want
    * navigate from other component to this
    * @return Listener
    */
-  public TestProxySelectionChangedListener createSelectMeListener() {
-    return new TestProxySelectionChangedListener() {
-      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy,
+  public PropagateSelectionHandler createSelectMeListener() {
+    return new PropagateSelectionHandler() {
+      public void handlePropagateSelectionRequest(@Nullable final SMTestProxy selectedTestProxy,
                                     @NotNull final Object sender,
                                     final boolean requestFocus) {
         selectProxy(selectedTestProxy, sender, requestFocus);
@@ -198,7 +198,7 @@ public class StatisticsPanel implements DataProvider {
     }
     final SMTestProxy proxy = proxies.iterator().next();
     myStatisticsTableView.clearSelection();
-    fireOnSelectionChanged(proxy);
+    fireOnPropagateSelection(proxy);
   }
 
   protected Runnable createGotoSuiteOrParentAction() {
@@ -290,9 +290,9 @@ public class StatisticsPanel implements DataProvider {
     });
   }
 
-  private void fireOnSelectionChanged(final SMTestProxy selectedTestProxy) {
-    for (TestProxySelectionChangedListener listener : myChangeSelectionListeners) {
-      listener.onChangeSelection(selectedTestProxy, this, true);
+  private void fireOnPropagateSelection(final SMTestProxy selectedTestProxy) {
+    for (PropagateSelectionHandler handler : myPropagateSelectionHandlers) {
+      handler.handlePropagateSelectionRequest(selectedTestProxy, this, true);
     }
   }
 

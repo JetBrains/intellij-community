@@ -2,9 +2,9 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -21,12 +21,6 @@ public interface TestResultsViewer extends Disposable {
    * @param contentPane Tab content pane
    */
   void addTab(final String name, @Nullable String tooltip, @Nullable Icon icon, JComponent contentPane);
-
-  /**
-   * Subscribe on test proxy selection events
-   * @param listener Listener
-   */
-  void addTestsProxySelectionListener(TestProxyTreeSelectionListener listener);
 
   /**
    * On attach to process
@@ -60,14 +54,14 @@ public interface TestResultsViewer extends Disposable {
 
   JBTabs getTabs();
 
-  void setShowStatisticForProxyHandler(TestProxySelectionChangedListener handler);
+  void setShowStatisticForProxyHandler(PropagateSelectionHandler handler);
 
   /**
    * If handler for statistics was set this method will execute it
    */
   void showStatisticsForSelectedProxy();
 
-  interface EventsListener {
+  interface EventsListener extends TestProxyTreeSelectionListener {
     void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test);
     void onTestingFinished(TestResultsViewer sender);
   }

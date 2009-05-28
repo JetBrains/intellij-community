@@ -19,7 +19,7 @@ public interface GeneralTestEventsProcessor extends Disposable {
   void onTestFinished(final String testName, final int duration);
   void onTestFailure(final String testName, final String localizedMessage, final String stackTrace,
                      final boolean testError);
-  void onTestIgnored(final String testName, final String ignoreComment);
+  void onTestIgnored(final String testName, final String ignoreComment, @Nullable final String stackTrace);
   void onTestOutput(final String testName, final String text, final boolean stdOut);
 
   void onSuiteStarted(final String suiteName, @Nullable final String locationUrl);

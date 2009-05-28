@@ -24,8 +24,6 @@ public class MockTestResultsViewer implements TestResultsViewer {
 
   public void addTab(final String name, @Nullable final String tooltip, final Icon icon, final JComponent contentPane) {}
 
-  public void addTestsProxySelectionListener(final TestProxyTreeSelectionListener listener) {}
-
   public void attachToProcess(final ProcessHandler processHandler) {}
 
   @Nullable
@@ -50,7 +48,7 @@ public class MockTestResultsViewer implements TestResultsViewer {
     myProperties.dispose();
   }
 
-  public void setShowStatisticForProxyHandler(final TestProxySelectionChangedListener handler) {}
+  public void setShowStatisticForProxyHandler(final PropagateSelectionHandler handler) {}
 
   public void showStatisticsForSelectedProxy() {}
 }

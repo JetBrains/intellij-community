@@ -3,7 +3,15 @@ package com.intellij.execution.testframework.sm.runner.ui;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.ui.PrintableTestProxy;
+import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.SMRunnerUtil;
+import com.intellij.util.OpenSourceUtil;
+import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman Chernyatchik
@@ -28,8 +36,6 @@ public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListen
   //  }
   //}
 
-  //TODO: SCROLL_TO_SOURCE
-
   public void onTestNodeAdded(final TestResultsViewer sender, final SMTestProxy test) {
     if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myConsoleProperties)) {
       sender.selectAndNotify(test);
@@ -46,5 +52,18 @@ public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListen
         sender.selectAndNotify(firstDefect);
       }
     }
+  }
+
+  public void onSelected(@Nullable final PrintableTestProxy selectedTestProxy,
+                         @NotNull final TestResultsViewer viewer,
+                         @NotNull final TestFrameworkRunningModel model) {
+    //TODO: tests o "onSelected"
+    SMRunnerUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        if (ScrollToTestSourceAction.isScrollEnabled(model)) {
+          OpenSourceUtil.openSourcesFrom(model.getTreeView(), false);
+        }
+      }
+    }, ModalityState.NON_MODAL);
   }
 }

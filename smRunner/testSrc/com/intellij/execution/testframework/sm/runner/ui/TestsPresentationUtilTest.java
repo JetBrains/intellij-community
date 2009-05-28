@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.support.UITestUtil;
 
 import javax.swing.*;
-import java.text.NumberFormat;
 
 /**
  * @author Roman Chernyatchik
@@ -36,9 +35,9 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals("Running: 10 of 1  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 0));
     //here number format is platform-dependent
-    assertEquals("Done: 10 of 0  Failed: 1  (" + NumberFormat.getInstance().format((double)5/1000.0) + " s)  ",
+    assertEquals("Done: 10 of 0  Failed: 1  (5 ms)  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1));
-    assertEquals("Done: 10 of 1  (" + String.valueOf((float)0) + " s)  ",
+    assertEquals("Done: 10 of 1  (0 s)  ",
                  TestsPresentationUtil.getProgressStatus_Text(5, 5, 1, 10, 0));
   }
 
@@ -129,7 +128,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
   public void testFormatTestProxyTest_Ignored() {
     mySimpleTest.setStarted();
-    mySimpleTest.setTestIgnored("");
+    mySimpleTest.setTestIgnored("", null);
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.IGNORED_ICON, myRenderer.getIcon());
@@ -224,7 +223,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySuite.addChild(mySimpleTest);
     mySuite.setStarted();
     mySimpleTest.setStarted();
-    mySimpleTest.setTestIgnored("");
+    mySimpleTest.setTestIgnored("", null);
     mySimpleTest.setFinished();
     mySuite.setFinished();
 
@@ -390,7 +389,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
   public void testGetTestStatusPresentation_TestIgnored() {
     mySimpleTest.setStarted();
-    mySimpleTest.setTestIgnored("");
+    mySimpleTest.setTestIgnored("", null);
     assertEquals("Ignored", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
     mySimpleTest.setFinished();
     assertEquals("Ignored", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));

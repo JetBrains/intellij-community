@@ -172,12 +172,12 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
           currentProxy = mySuitesStack.isEmpty() ? myTestsRootNode : getCurrentSuite();
         }
 
-        if (ProcessOutputTypes.STDOUT.equals(outputType)) {
-          currentProxy.addStdOutput(text);
-        } else if (ProcessOutputTypes.STDERR.equals(outputType)) {
+        if (ProcessOutputTypes.STDERR.equals(outputType)) {
           currentProxy.addStdErr(text);
         } else if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
           currentProxy.addSystemOutput(text);
+        } else {
+          currentProxy.addStdOutput(text, outputType);
         }
       }
     });
@@ -215,7 +215,8 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
     });
   }
 
-  public void onTestIgnored(final String testName, final String ignoreComment) {
+  public void onTestIgnored(final String testName, final String ignoreComment,
+                            @Nullable final String stackTrace) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final String fullTestName = getFullTestName(testName);
@@ -228,7 +229,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
           return;
         }
 
-        testProxy.setTestIgnored(ignoreComment);
+        testProxy.setTestIgnored(ignoreComment, stackTrace);
 
         // fire event
         fireOnTestIgnored(testProxy);
@@ -251,7 +252,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         }
 
         if (stdOut) {
-          testProxy.addStdOutput(text);
+          testProxy.addStdOutput(text, ProcessOutputTypes.STDOUT);
         } else {
           testProxy.addStdErr(text);
         }

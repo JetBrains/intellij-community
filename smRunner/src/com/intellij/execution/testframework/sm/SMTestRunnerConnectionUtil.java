@@ -60,10 +60,9 @@ public class SMTestRunnerConnectionUtil {
     resultsViewer.addTab(ExecutionBundle.message("statistics.tab.title"), null,
                          StatisticsPanel.STATISTICS_TAB_ICON,
                          statisticsPane.getContentPane());
-    resultsViewer.addTestTreeSelectionRequestedListener(statisticsPane.createSelectMeListener());
-    // selection form statistics to results viewer
-    statisticsPane.addChangeSelectionListener(resultsViewer.createOnChangeSelectionListener());
-    // selection form results viewer to statistics
+    // handler to select in results viewer by statistics pane events
+    statisticsPane.addPropagateSelectionListener(resultsViewer.createSelectMeListener());
+    // handler to select test statistics pane by result viewer events
     resultsViewer.setShowStatisticForProxyHandler(statisticsPane.createSelectMeListener());
 
     // attach listeners

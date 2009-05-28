@@ -139,7 +139,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnTestIgnored() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestIgnored("some_test", "");
+    myEventsProcessor.onTestIgnored("some_test", "", null);
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
@@ -228,7 +228,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnFinishedTesting_WithIgnored() {
     onTestStarted("test");
-    myEventsProcessor.onTestIgnored("test", "");
+    myEventsProcessor.onTestIgnored("test", "", null);
     myEventsProcessor.onTestFinished("test", 10);
     myEventsProcessor.onFinishTesting();
 

@@ -56,6 +56,79 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("TERMINATED: " + String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
   }
 
+  public void testValueOf_TestIgnored() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestIgnored("todo", null);
+    mySimpleTest.setFinished();
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
+
+    mySimpleTest.setDuration(10000);
+    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
+  }
+
+  public void testValueOf_Duration_Zero() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", false);
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
+
+    mySimpleTest.setDuration(0);
+    assertEquals("0 s", myColumn.valueOf(mySimpleTest));
+  }
+
+  public void testValueOf_Duration_1() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", false);
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
+
+    mySimpleTest.setDuration(1);
+    assertEquals("1 ms", myColumn.valueOf(mySimpleTest));
+  }
+
+  public void testValueOf_Duration_99() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", false);
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
+
+    mySimpleTest.setDuration(99);
+    assertEquals("99 ms", myColumn.valueOf(mySimpleTest));
+  }
+
+  public void testValueOf_Duration_100() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", false);
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
+
+    mySimpleTest.setDuration(100);
+    assertEquals(String.valueOf((float)0.1) + " s", myColumn.valueOf(mySimpleTest));
+  }
+
+  public void testValueOf_Duration_999() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", false);
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
+
+    mySimpleTest.setDuration(999);
+    assertEquals(String.valueOf((float)0.999) + " s", myColumn.valueOf(mySimpleTest));
+  }
+
+  public void testValueOf_Duration_1000() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", false);
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
+
+    mySimpleTest.setDuration(1000);
+    assertEquals(String.valueOf((float)1) + " s", myColumn.valueOf(mySimpleTest));
+  }
+
+  public void testValueOf_Duration_1001() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", false);
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
+
+    mySimpleTest.setDuration(1001);
+    assertEquals(String.valueOf((float)1.001) + " s", myColumn.valueOf(mySimpleTest));
+  }
+
   public void testValueOf_SuiteEmpty() {
     final SMTestProxy suite = createSuiteProxy();
     suite.setStarted();

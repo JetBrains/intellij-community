@@ -3,19 +3,18 @@ package com.intellij.execution.testframework.sm.runner.ui;
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestsUIUtil;
+import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
-import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.NumberFormat;
 import java.util.List;
 
 /**
@@ -23,9 +22,9 @@ import java.util.List;
  */
 public class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
-  @NonNls private static final String WORLD_CREATION_TIME = "0.0";
-  @NonNls private static final String SECONDS_SUFFIX = " " + SMTestsRunnerBundle.message(
-      "sm.test.runner.ui.tests.tree.presentation.labels.seconds");
+  @NonNls private static final String SECONDS_SUFFIX = " " + SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.seconds");
+  @NonNls private static final String MILLISECONDS_SUFFIX = " " + SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.milliseconds");
+  @NonNls private static final String WORLD_CREATION_TIME = "0" + SECONDS_SUFFIX;
   @NonNls private static final String DURATION_UNKNOWN = SMTestsRunnerBundle.message(
       "sm.test.runner.ui.tabs.statistics.columns.duration.unknown");
   @NonNls private static final String DURATION_NO_TESTS = SMTestsRunnerBundle.message(
@@ -70,8 +69,7 @@ public class TestsPresentationUtil {
     if (endTime != 0) {
       final long time = endTime - startTime;
       sb.append(DOUBLE_SPACE);
-      sb.append('(').append(time == 0 ? WORLD_CREATION_TIME : NumberFormat.getInstance().format((double)time/1000.0));
-      sb.append(SECONDS_SUFFIX).append(')');
+      sb.append('(').append(convertToSecondsOrMs(time)).append(')');
     }
     sb.append(DOUBLE_SPACE);
 
@@ -270,10 +268,10 @@ public class TestsPresentationUtil {
       case PASSED_INDEX:
       case FAILED_INDEX:
       case ERROR_INDEX:
-        return getDurationTimePresentation(proxy);
-
       case IGNORED_INDEX:
       case SKIPPED_INDEX:
+        return getDurationTimePresentation(proxy);
+
       case NOT_RUN_INDEX:
         return DURATION_NOT_RUN;
 
@@ -307,16 +305,22 @@ public class TestsPresentationUtil {
              ? DURATION_NO_TESTS
              : DURATION_UNKNOWN;
     } else {
-      return String.valueOf(convertToSeconds(duration)) + SECONDS_SUFFIX;
+      return convertToSecondsOrMs(duration.longValue());
     }
   }
 
   /**
    * @param duration In milliseconds
-   * @return Value in seconds
+   * @return Value in seconds or millisecond depending on its value
    */
-  private static float convertToSeconds(@NotNull final Integer duration) {
-    return duration.floatValue() / 1000;
+  private static String convertToSecondsOrMs(@NotNull final Long duration) {
+    if (duration == 0) {
+      return WORLD_CREATION_TIME;
+    } else if (duration < 100) {
+      return String.valueOf(duration) + MILLISECONDS_SUFFIX;
+    } else {
+      return String.valueOf(duration.floatValue() / 1000) + SECONDS_SUFFIX;
+    }
   }
 
   public static void appendTestStatusColorPresentation(final SMTestProxy proxy,

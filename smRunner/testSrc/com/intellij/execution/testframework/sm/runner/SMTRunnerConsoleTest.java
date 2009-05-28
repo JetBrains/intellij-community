@@ -79,14 +79,14 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testAddStdOut() {
     mySimpleTest.setPrintLinstener(myMockResetablePrinter);
 
-    mySimpleTest.addStdOutput("one");
+    mySimpleTest.addStdOutput("one", ProcessOutputTypes.STDOUT);
     assertStdOutput(myMockResetablePrinter, "one");
 
     mySimpleTest.addStdErr("two");
     assertStdErr(myMockResetablePrinter, "two");
 
-    mySimpleTest.addStdOutput("one");
-    mySimpleTest.addStdOutput("one");
+    mySimpleTest.addStdOutput("one", ProcessOutputTypes.STDOUT);
+    mySimpleTest.addStdOutput("one", ProcessOutputTypes.STDOUT);
     mySimpleTest.addStdErr("two");
     mySimpleTest.addStdErr("two");
     assertAllOutputs(myMockResetablePrinter, "oneone", "twotwo", "");
@@ -130,7 +130,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     sendToTestProxyStdOut(mySuite, "{child added} ");
     sendToTestProxyStdOut(mySimpleTest, "[child new msg]");
     // printer for parent have been already set, thus new
-    // child should immeadiatly print himself on this printer
+    // child should immediately print himself on this printer
     assertStdOutput(myMockResetablePrinter, "root [child old msg] {child added} [child new msg]");
   }
 
@@ -203,6 +203,20 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
   }
 
+  public void testProcessor_OnFailure_EmptyStacktrace() {
+    final SMTestProxy myTest1 = startTestWithPrinter("my_test");
+
+    myEventsProcessor.onTestFailure("my_test", "error msg", "\n\n", false);
+    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
+    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+
+    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "\nerror msg\nstderr1 ", "");
+
+    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    mockPrinter1.onNewAvaliable(myTest1);
+    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 \nerror msg\n", "");
+  }
+
  public void testProcessor_OnError() {
     final SMTestProxy myTest1 = startTestWithPrinter("my_test");
 
@@ -231,26 +245,62 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_OnIgnored() {
     final SMTestProxy myTest1 = startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestIgnored("my_test", "ignored msg");
+    myEventsProcessor.onTestIgnored("my_test", "ignored msg", null);
     myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
     myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
 
-    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 ", "\nTest ignored: ignored msg");
+    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvaliable(myTest1);
-    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 ", "\nTest ignored: ignored msg");
+    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 ", "\nignored msg\n");
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
     myEventsProcessor.onTestOutput("my_test2", "stdout1 ", true);
     myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
-    myEventsProcessor.onTestIgnored("my_test2", "ignored msg");
+    myEventsProcessor.onTestIgnored("my_test2", "ignored msg", null);
 
-    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 ", "\nTest ignored: ignored msg");
+    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
     mockPrinter2.onNewAvaliable(myTest2);
-    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 ", "\nTest ignored: ignored msg");
+    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 ", "\nignored msg\n");
+  }
+
+  public void testProcessor_OnIgnored_WithStacktrace() {
+    final SMTestProxy myTest1 = startTestWithPrinter("my_test");
+
+    myEventsProcessor.onTestIgnored("my_test", "ignored2 msg", "method1:1\nmethod2:2");
+    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
+    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+
+    assertAllOutputs(myMockResetablePrinter, "stdout1 ",
+                     "\nmethod1:1\nmethod2:2\nstderr1 ",
+                     "\nignored2 msg");
+
+    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    mockPrinter1.onNewAvaliable(myTest1);
+    assertAllOutputs(mockPrinter1,
+                     "stdout1 ",
+                     "stderr1 \nmethod1:1\nmethod2:2\n",
+                     "\nignored2 msg");
+
+    //other output order
+    final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
+    myEventsProcessor.onTestOutput("my_test2", "stdout1 ", true);
+    myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
+    myEventsProcessor.onTestIgnored("my_test2", "ignored msg", "method1:1\nmethod2:2");
+
+    assertAllOutputs(myMockResetablePrinter,
+                     "stdout1 ",
+                     "stderr1 \nmethod1:1\nmethod2:2\n",
+                     "\nignored msg");
+    final MockPrinter mockPrinter2 = new MockPrinter(true);
+    mockPrinter2.onNewAvaliable(myTest2);
+    assertAllOutputs(mockPrinter2,
+                     "stdout1 ",
+                     "stderr1 \nmethod1:1\nmethod2:2\n",
+                     "\nignored msg");
   }
 
   public void testOnUncapturedOutput_BeforeProcessStarted() {

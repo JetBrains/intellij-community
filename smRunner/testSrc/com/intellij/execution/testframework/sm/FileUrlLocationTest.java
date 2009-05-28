@@ -17,8 +17,8 @@ public class FileUrlLocationTest extends RailsFixtureTestCase {
 
     final String path = myFixture.getFile().getVirtualFile().getPath();
     doTest(17, "describe", path, 4);
-    doTest(189, "it \"should fail\"", path, 16);
-    doTest(261, "it \"should pass\" do", path, 22);
+    doTest(189, "it", path, 16);
+    doTest(261, "it", path, 22);
   }
 
   private void doTest(final int expectedOffset, final String expectedStartsWith,

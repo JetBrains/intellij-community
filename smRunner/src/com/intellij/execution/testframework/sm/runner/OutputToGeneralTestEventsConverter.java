@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
 import org.jetbrains.annotations.NonNls;
@@ -27,11 +28,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private final List<GeneralTestEventsProcessor> myProcessors = new ArrayList<GeneralTestEventsProcessor>();
   private final MyServiceMessageVisitor myServiceMessageVisitor;
 
-  private final StringBuilder myStdoutBuffer;
+  private final List<Pair<String, Key>> myOutputPairs;
 
   public OutputToGeneralTestEventsConverter() {
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    myStdoutBuffer = new StringBuilder();
+    myOutputPairs = new ArrayList<Pair<String, Key>>();
   }
 
   public void addProcessor(final GeneralTestEventsProcessor processor) {
@@ -39,12 +40,12 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   public void process(final String text, final Key outputType) {
-    if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+    if (outputType != ProcessOutputTypes.STDERR || outputType != ProcessOutputTypes.SYSTEM) {
       // we check for consistensy only std output
       // because all events must be send to stdout
-      processStdOutConsistently(text);
+      processStdOutConsistently(text, outputType);
     } else {
-      processConsistentText(text, outputType);
+      processConsistentText(text, outputType, false);
     }
   }
 
@@ -60,17 +61,28 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   private void flushStdOutputBuffer() {
-    processConsistentText(myStdoutBuffer.toString(), ProcessOutputTypes.STDOUT);
-    myStdoutBuffer.setLength(0);
+    // if osColoredProcessHandler was attached it can split string with several colors
+    // in several  parts. Thus '\n' symbol may be send as one part with some color
+    // such situation should differ from single '\n' from process that is used by TC reporters
+    // to separate TC commands from other stuff + optimize flushing
+    // TODO: probably in IDEA mode such runners shouldn't add explicit \n because we can
+    // successfully process broken messages across several flushes
+    // size of parts may tell us either \n was single in original flushed data or it was
+    // separated by process handler
+    final boolean isTCLikeFakeOutput = myOutputPairs.size() == 1;
+    for (Pair<String, Key> textKeyPair : myOutputPairs) {
+      processConsistentText(textKeyPair.first, textKeyPair.second, isTCLikeFakeOutput);
+    }
+    myOutputPairs.clear();
   }
 
-  private void processStdOutConsistently(final String text) {
+  private void processStdOutConsistently(final String text, final Key outputType) {
     final int textLength = text.length();
     if (textLength == 0) {
       return;
     }
 
-    myStdoutBuffer.append(text);
+    myOutputPairs.add(new Pair<String, Key>(text, outputType));
 
     final char lastChar = text.charAt(textLength - 1);
     if (lastChar == '\n' || lastChar == '\r') {
@@ -79,14 +91,14 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void processConsistentText(final String text, final Key outputType) {
+  private void processConsistentText(final String text, final Key outputType, boolean tcLikeFakeOutput) {
     try {
       final ServiceMessage serviceMessage = ServiceMessage.parse(text);
       if (serviceMessage != null) {
         serviceMessage.visit(myServiceMessageVisitor);
       } else {
         // Filters \n
-        if (text.equals("\n")) {
+        if (text.equals("\n") && tcLikeFakeOutput) {
           // ServiceMessages protocol requires that every message
           // should start with new line, so such behaviour may led to generating
           // some number of useless \n.
@@ -118,10 +130,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnTestIgnored(final String testName, final String ignoreComment) {
+  private void fireOnTestIgnored(final String testName, final String ignoreComment,
+                                 @Nullable final String details) {
 
     for (GeneralTestEventsProcessor processor : myProcessors) {
-      processor.onTestIgnored(testName, ignoreComment);
+      processor.onTestIgnored(testName, ignoreComment, details);
     }
   }
 
@@ -167,6 +180,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_TEST_COUNT = "count";
     @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
     @NonNls private static final String ATTR_KEY_LOCATION_URL = "location";
+    @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
 
     public void visitTestSuiteStarted(@NotNull final TestSuiteStarted suiteStarted) {
       final String locationUrl = suiteStarted.getAttributes().get(ATTR_KEY_LOCATION_URL);
@@ -204,7 +218,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestIgnored(@NotNull final TestIgnored testIgnored) {
-      fireOnTestIgnored(testIgnored.getTestName(), testIgnored.getIgnoreComment());
+      final String details = testIgnored.getAttributes().get(ATTR_KEY_STACKTRACE_DETAILS);
+      fireOnTestIgnored(testIgnored.getTestName(), testIgnored.getIgnoreComment(), details);
     }
 
     public void visitTestStdOut(@NotNull final TestStdOut testStdOut) {

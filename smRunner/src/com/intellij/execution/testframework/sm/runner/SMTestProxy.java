@@ -11,6 +11,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
 import com.intellij.testIntegration.TestLocationProvider;
 import org.jetbrains.annotations.NotNull;
@@ -81,12 +82,22 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
       myChildren = new ArrayList<SMTestProxy>();
     }
     myChildren.add(child);
+
+    // add printable
+    //
+    // add link to child's future output in correct place
+    // actually if after this suite will obtain output
+    // it will place it after this child and before future child
+    addLast(child);
+
+    // add child
+    //
     //TODO reset children cache
     child.setParent(this);
-
+    // if parent is being printed then all childs output
+    // should be also send to the same printer
     if (myPrinter != Printer.DEAF) {
       child.setPrintLinstener(myPrinter);
-      child.fireOnNewPrintable(child);
     }
   }
 
@@ -161,7 +172,7 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
 
   /**
    * Calculates and caches duration of test or suite
-   * @return null if duration is unknown, otherwise duration value in millisec;
+   * @return null if duration is unknown, otherwise duration value in milliseconds;
    */
   @Nullable
   public Integer getDuration() {
@@ -171,9 +182,11 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
       return myDuration;
     }
 
-    //For suites couns and caches durations of its childs. Also it evaluates partial duration,
-    //i.e. if duration is unknown it will be ignored in sumary value.
-    //If duration for all children is unknown sumary duration will be also unknown
+    //For suites counts and caches durations of its children. Also it evaluates partial duration,
+    //i.e. if duration is unknown it will be ignored in summary value.
+    //If duration for all children is unknown summary duration will be also unknown
+    //if one of children is ignored - it's duration will be 0 and if child wasn't run,
+    //then it's duration will be unknown
     myDuration = calcSuiteDuration();
     myDurationIsCached = true;
 
@@ -182,7 +195,7 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
 
   /**
    * Sets duration of test
-   * @param duration In milleseconds
+   * @param duration In milliseconds
    */
   public void setDuration(final int duration) {
     invalidateCachedDurationForContainerSuites();
@@ -225,8 +238,9 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
     fireOnNewPrintable(myState);
   }
 
-  public void setTestIgnored(@NotNull final String ignoreComment) {
-    myState = new TestIgnoredState(ignoreComment);
+  public void setTestIgnored(@NotNull final String ignoreComment,
+                             @Nullable final String stackTrace) {
+    myState = new TestIgnoredState(ignoreComment, stackTrace);
     fireOnNewPrintable(myState);
   }
 
@@ -275,15 +289,13 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   }
 
   /**
-   * Prints this proxy and all it's chidren on ginven printer
+   * Prints this proxy and all its children on given printer
    * @param printer Printer
    */
   public void printOn(final Printer printer) {
     super.printOn(printer);
-    CompositePrintable.printAllOn(getChildren(), printer);
 
     //Tests State, that provide and formats additional output
-    // (contains stactrace info, ignored tests, etc)
     myState.printOn(printer);
   }
 
@@ -298,10 +310,10 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
     fireOnNewPrintable(printable);
   }
 
-  public void addStdOutput(final String output) {
+  public void addStdOutput(final String output, final Key outputType) {
     addLast(new Printable() {
       public void printOn(final Printer printer) {
-        printer.print(output, ConsoleViewContentType.NORMAL_OUTPUT);
+        printer.print(output, ConsoleViewContentType.getConsoleViewType(outputType));
       }
     });
   }
@@ -374,10 +386,10 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
     return false;
   }
 
-  private boolean containsIgnoredTests() {
+  private boolean containsFailedTests() {
     final List<? extends SMTestProxy> children = getChildren();
     for (SMTestProxy child : children) {
-      if (child.getMagnitudeInfo() == TestStateInfo.Magnitude.IGNORED_INDEX) {
+      if (child.getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX) {
         return true;
       }
     }
@@ -398,7 +410,9 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
         if (containsErrorTests()) {
           state = SuiteFinishedState.ERROR_SUITE;
         }else {
-          state = !containsIgnoredTests()
+          // if suite contains failed tests - all suite should be
+          // consider as failed
+          state = containsFailedTests()
                    ? SuiteFinishedState.FAILED_SUITE
                    : SuiteFinishedState.WITH_IGNORED_TESTS_SUITE;
         }
@@ -427,7 +441,7 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   }
 
   /**
-   * Recursicely invalidates cached duration for container(parent) suites
+   * Recursively invalidates cached duration for container(parent) suites
    */
   private void invalidateCachedDurationForContainerSuites() {
     // Invalidates duration of this suite

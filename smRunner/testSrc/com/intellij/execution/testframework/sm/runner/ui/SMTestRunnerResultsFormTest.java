@@ -142,8 +142,8 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     final Ref<SMTestProxy> proxyRef = new Ref<SMTestProxy>();
     final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
 
-    myResultsViewer.setShowStatisticForProxyHandler(new TestProxySelectionChangedListener() {
-      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
+    myResultsViewer.setShowStatisticForProxyHandler(new PropagateSelectionHandler() {
+      public void handlePropagateSelectionRequest(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
                                     final boolean requestFocus) {
         onSelectedHappend.set();
         proxyRef.set(selectedTestProxy);

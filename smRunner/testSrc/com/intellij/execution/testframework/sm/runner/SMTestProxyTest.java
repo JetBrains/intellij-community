@@ -189,7 +189,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
 
   public void testTestIgnored() {
     mySimpleTest.setStarted();
-    mySimpleTest.setTestIgnored("");
+    mySimpleTest.setTestIgnored("", null);
 
     assertFalse(mySimpleTest.isInProgress());
     assertTrue(mySimpleTest.wasLaunched());
@@ -210,7 +210,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     mySuite.addChild(mySimpleTest);
 
     mySimpleTest.setStarted();
-    mySimpleTest.setTestIgnored("");
+    mySimpleTest.setTestIgnored("", null);
 
     assertFalse(mySimpleTest.isInProgress());
     assertTrue(mySuite.isInProgress());
@@ -275,6 +275,77 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertTrue(mySuite.getMagnitudeInfo() == Magnitude.ERROR_INDEX);
   }
 
+  public void testSuiteFailed_WithPendingAndFailed() {
+    final SMTestProxy testPending = createTestProxy("pending");
+
+    mySuite.setStarted();
+
+    // failed test
+    mySuite.addChild(mySimpleTest);
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", false);
+    mySimpleTest.setFinished();
+
+    // pending test
+    mySuite.addChild(testPending);
+    testPending.setStarted();
+    testPending.setTestIgnored("todo", null);
+
+    assertFalse(testPending.isInProgress());
+    assertTrue(mySuite.isInProgress());
+    assertTrue(testPending.isDefect());
+    assertTrue(mySuite.isDefect());
+
+    testPending.setFinished();
+
+    // check that suite is failed
+    assertTrue(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+
+    mySuite.setFinished();
+
+    assertFalse(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+    assertTrue(testPending.getMagnitudeInfo() == Magnitude.IGNORED_INDEX);
+    assertTrue(mySuite.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+  }
+
+  public void testSuitePending_WithPendingAndPassed() {
+    final SMTestProxy testPending = createTestProxy("pending");
+
+    mySuite.setStarted();
+
+    // passed test
+    mySuite.addChild(mySimpleTest);
+    mySimpleTest.setStarted();
+    mySimpleTest.setFinished();
+
+    // pending test
+    mySuite.addChild(testPending);
+    testPending.setStarted();
+    testPending.setTestIgnored("todo", null);
+
+    assertTrue(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+
+    testPending.setFinished();
+
+    // check that suite is failed
+    assertTrue(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+
+    mySuite.setFinished();
+
+    assertFalse(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.PASSED_INDEX);
+    assertTrue(testPending.getMagnitudeInfo() == Magnitude.IGNORED_INDEX);
+    assertTrue(mySuite.getMagnitudeInfo() == Magnitude.IGNORED_INDEX);
+  }
+
   public void testSuiteTerminated() {
     mySuite.setStarted();
     mySuite.setTerminated();
@@ -299,7 +370,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertTrue(mySimpleTest.wasTerminated());
   }
 
-  public void testSuiteTerminated_WithChildInProgrss() {
+  public void testSuiteTerminated_WithChildInProgress() {
     mySuite.setStarted();
     mySuite.addChild(mySimpleTest);
     mySimpleTest.setStarted();
