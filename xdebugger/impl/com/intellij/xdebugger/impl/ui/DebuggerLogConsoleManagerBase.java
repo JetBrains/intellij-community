@@ -75,7 +75,7 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
     };
     log.attachStopLogConsoleTrackingListener(getRunContentDescriptor().getProcessHandler());
     // Attach custom log handlers
-    if (myEnvironment.getRunProfile() instanceof RunConfigurationBase) {
+    if (myEnvironment != null && myEnvironment.getRunProfile() instanceof RunConfigurationBase) {
       ((RunConfigurationBase) myEnvironment.getRunProfile()).customizeLogConsole(log);
     }
 
