@@ -1,55 +1,44 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.ui.InspectionConfigTreeNode;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Tag;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: anna
  * Date: Dec 18, 2004
  */
-public class VisibleTreeState implements JDOMExternalizable{
+@Tag("profile-state")
+public class VisibleTreeState{
+  @Tag("expanded-state")
+  @AbstractCollection(surroundWithTag = false, elementTag = "expanded", elementValueAttribute = "path", elementTypes = {State.class})
+  public TreeSet<State> myExpandedNodes = new TreeSet<State>(createDescriptionComparator());
 
-  @NonNls private static final String EXPANDED = "expanded_node";
-  @NonNls private static final String SELECTED = "selected_node";
-  @NonNls private static final String NAME = "name";
+  @Tag("selected-state")
+  @AbstractCollection(surroundWithTag = false, elementTag = "selected", elementValueAttribute = "path", elementTypes = {State.class})
+  public TreeSet<State> mySelectedNodes = new TreeSet<State>(createDescriptionComparator());
 
-  private final THashSet<Object> myExpandedNodes = new THashSet<Object>(areDescriptorsEqual());
-  private final THashSet<Object> mySelectedNodes = new THashSet<Object>(areDescriptorsEqual());
-
-  private static TObjectHashingStrategy<Object> areDescriptorsEqual() {
-    return new TObjectHashingStrategy<Object>() {
-      public int computeHashCode(Object object) {
-        return object.hashCode();
-      }
-
-      public boolean equals(Object o1, Object o2) {
-        if (o1 instanceof Descriptor && o2 instanceof Descriptor) {
-          if (o1.toString().equals(o2.toString())) {
-            final NamedScope scope1 = ((Descriptor)o1).getScope();
-            final NamedScope scope2 = ((Descriptor)o2).getScope();
+  private static Comparator<State> createDescriptionComparator() {
+     return new Comparator<State>() {
+       public int compare(State s1, State s2) {
+        if (s1.myKey.equals(s2.myKey)) {
+          if (s1.myDescriptor != null && s2.myDescriptor != null) {
+            final NamedScope scope1 = s1.myDescriptor.getScope();
+            final NamedScope scope2 = s2.myDescriptor.getScope();
             if (scope1 != null && scope2 != null) {
-              return scope1.getName().equals(scope2.getName());
+              return scope1.getName().compareTo(scope2.getName());
             }
           }
         }
-        if (o1 instanceof String && o2 instanceof String) return o1.equals(o2);
-        return false;
+        return s1.myKey.compareTo(s2.myKey);
       }
     };
   }
@@ -63,11 +52,11 @@ public class VisibleTreeState implements JDOMExternalizable{
   }
 
   public void expandNode(String nodeTitle) {
-    myExpandedNodes.add(nodeTitle);
+    myExpandedNodes.add(new State(nodeTitle));
   }
 
   public void collapseNode(String nodeTitle) {
-    myExpandedNodes.remove(nodeTitle);
+    myExpandedNodes.remove(new State(nodeTitle));
   }
 
   public void restoreVisibleState(Tree tree) {
@@ -90,19 +79,19 @@ public class VisibleTreeState implements JDOMExternalizable{
     final TreeNode[] rootPath = root.getPath();
     if (descriptor != null) {
       final String shortName = descriptor.getKey().toString();
-      if (mySelectedNodes.contains(descriptor) || mySelectedNodes.contains(shortName)) {
+      if (mySelectedNodes.contains(new State(descriptor)) || mySelectedNodes.contains(new State(shortName))) {
         toSelect.add(new TreePath(rootPath));
       }
-      if (myExpandedNodes.contains(descriptor) || myExpandedNodes.contains(shortName)) {
+      if (myExpandedNodes.contains(new State(descriptor)) || myExpandedNodes.contains(new State(shortName))) {
         pathsToExpand.add(new TreePath(rootPath));
       }
     }
     else {
       final String str = ((InspectionConfigTreeNode)root).getGroupName();
-      if (mySelectedNodes.contains(str)) {
+      if (mySelectedNodes.contains(new State(str))) {
         toSelect.add(new TreePath(rootPath));
       }
-      if (myExpandedNodes.contains(str)) {
+      if (myExpandedNodes.contains(new State(str))) {
         pathsToExpand.add(new TreePath(rootPath));
       }
     }
@@ -120,18 +109,22 @@ public class VisibleTreeState implements JDOMExternalizable{
         final TreePath treePath = expanded.nextElement();
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)treePath.getLastPathComponent();
         final Descriptor descriptor = node.getDesriptor();
-        Object expandedNode;
-        if (descriptor != null) {
-          expandedNode = descriptor;
-        }
-        else {
-          expandedNode = node.getGroupName();
-        }
-        myExpandedNodes.add(expandedNode);
+        myExpandedNodes.add(getState(node, descriptor));
       }
     }
 
     setSelectionPaths(tree.getSelectionPaths());
+  }
+
+  private static State getState(InspectionConfigTreeNode node, Descriptor descriptor) {
+    final State expandedNode;
+    if (descriptor != null) {
+      expandedNode = new State(descriptor);
+    }
+    else {
+      expandedNode = new State(node.getGroupName());
+    }
+    return expandedNode;
   }
 
   public void setSelectionPaths(final TreePath[] selectionPaths) {
@@ -140,63 +133,47 @@ public class VisibleTreeState implements JDOMExternalizable{
       for (TreePath selectionPath : selectionPaths) {
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
         final Descriptor descriptor = node.getDesriptor();
-        Object selectedNode;
-        if (descriptor != null) {
-          selectedNode = descriptor;
-        }
-        else {
-          selectedNode = node.getGroupName();
-        }
-        mySelectedNodes.add(selectedNode);
+        mySelectedNodes.add(getState(node, descriptor));
       }
     }
   }
 
 
-  public void readExternal(Element element) throws InvalidDataException {
-    myExpandedNodes.clear();
-    List list = element.getChildren(EXPANDED);
-    for (final Object element1 : list) {
-      myExpandedNodes.add(((Element)element1).getAttributeValue(NAME));
-    }
-    mySelectedNodes.clear();
-    list = element.getChildren(SELECTED);
-    for (Object child : list) {
-      mySelectedNodes.add(((Element)child).getAttributeValue(NAME));
-    }
-  }
+  public static class State {
+    @Tag("id")
+    public String myKey;
+    Descriptor myDescriptor;
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    for (final Object expandedNode : myExpandedNodes) {
-      Element exp = new Element(EXPANDED);
-      exp.setAttribute(NAME, expandedNode.toString());
-      element.addContent(exp);
+    public State(String key) {
+      myKey = key;
     }
-    for (final Object selectedNode : mySelectedNodes) {
-      Element exp = new Element(SELECTED);
-      exp.setAttribute(NAME, selectedNode.toString());
-      element.addContent(exp);
-    }
-  }
 
-  public boolean compare(Object object) {
-    if (!(object instanceof VisibleTreeState)) return false;
-    final VisibleTreeState that = (VisibleTreeState)object;
-    if (myExpandedNodes.size() != that.myExpandedNodes.size()) return false;
-    for (final Object myExpandedNode : myExpandedNodes) {
-      if (!that.myExpandedNodes.contains(myExpandedNode)) {
-        return false;
-      }
+    public State(Descriptor descriptor) {
+      myKey = descriptor.toString();
+      myDescriptor = descriptor;
     }
-    if (mySelectedNodes == null) {
-      return that.mySelectedNodes == null;
+
+    //readExternal
+    public State(){
     }
-    if (mySelectedNodes.size() != that.mySelectedNodes.size()) return false;
-    for (final Object mySelectedNode : mySelectedNodes) {
-      if (!that.mySelectedNodes.contains(mySelectedNode)) {
-        return false;
-      }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      State state = (State)o;
+
+      if (myKey != null ? !myKey.equals(state.myKey) : state.myKey != null) return false;
+
+      return true;
     }
-    return true;
+
+    @Override
+    public int hashCode() {
+      int result = myKey != null ? myKey.hashCode() : 0;
+      result = 31 * result + (myDescriptor != null ? myDescriptor.hashCode() : 0);
+      return result;
+    }
   }
 }

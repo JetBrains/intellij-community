@@ -335,7 +335,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void load(Element element) {
     try {
       readExternal(element);
-      myVisibleTreeState.readExternal(element);
     }
     catch (Exception e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {

@@ -1,17 +1,17 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.profile.Profile;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.Property;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class VisibleTreeStateComponent {
-  private final Map<String, VisibleTreeState> myProfileNameToState = new HashMap<String, VisibleTreeState>();
-  private static final String PROFILE_STATE = "profile-state";
-  private static final String PROFILE_NAME = "profile-name";
-  private static final String STATE = "state";
-
+  @Property(surroundWithTag = false)
+  @MapAnnotation(surroundWithTag=false, surroundKeyWithTag = false, surroundValueWithTag = false)
+  public Map<String, VisibleTreeState> myProfileNameToState = new HashMap<String, VisibleTreeState>();
 
   public VisibleTreeStateComponent() {
   }
