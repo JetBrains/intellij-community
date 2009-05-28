@@ -410,7 +410,7 @@ public class FindUsagesManager implements JDOMExternalizable {
       fUsage.selectInEditor();
     }
     else if (!usagesWereFound[0]) {
-      String message = getNoUsagesFoundMessage(descriptor.getPrimaryElements()[0]);
+      String message = getNoUsagesFoundMessage(descriptor.getPrimaryElements()[0]) + " in " + scopeFile.getName();
       showHintOrStatusBarMessage(message, fileEditor);
     }
     else {
