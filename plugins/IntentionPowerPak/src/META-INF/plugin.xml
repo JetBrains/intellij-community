@@ -265,6 +265,10 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+      <className>com.siyeh.ipp.expression.FlipSetterCallIntention</className>      
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.siyeh.ipp.commutative.FlipCommutativeMethodCallIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
