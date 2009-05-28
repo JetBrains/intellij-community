@@ -35,11 +35,11 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                          "<version>1</version>");
     myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(myProjectPom), Collections.EMPTY_LIST);
     waitForReadingCompletion();
-    assertTrue(getRootProjects().isEmpty());
+    assertTrue(getRootNodes().isEmpty());
 
     myProjectsManager.fireActivatedInTests();
-    assertEquals(1, getRootProjects().size());
-    assertEquals(1, getRootProjects().get(0).getModulesNode().getProjectNodes().size());
+    assertEquals(1, getRootNodes().size());
+    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodes().size());
   }
 
   public void testReconnectingModulesWhenModuleRead() throws Exception {
@@ -54,19 +54,19 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                      "</modules>");
     readFiles(myProjectPom);
 
-    assertEquals(1, getRootProjects().size());
-    assertEquals(myProjectPom, getRootProjects().get(0).getFile());
-    assertEquals(0, getRootProjects().get(0).getModulesNode().getProjectNodes().size());
+    assertEquals(1, getRootNodes().size());
+    assertEquals(myProjectPom, getRootNodes().get(0).getFile());
+    assertEquals(0, getRootNodes().get(0).getModulesNode().getProjectNodes().size());
 
     VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
                                          "<artifactId>m</artifactId>" +
                                          "<version>1</version>");
     readFiles(m);
 
-    assertEquals(1, getRootProjects().size());
-    assertEquals(myProjectPom, getRootProjects().get(0).getFile());
-    assertEquals(1, getRootProjects().get(0).getModulesNode().getProjectNodes().size());
-    assertEquals(m, getRootProjects().get(0).getModulesNode().getProjectNodes().get(0).getFile());
+    assertEquals(1, getRootNodes().size());
+    assertEquals(myProjectPom, getRootNodes().get(0).getFile());
+    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodes().size());
+    assertEquals(m, getRootNodes().get(0).getModulesNode().getProjectNodes().get(0).getFile());
   }
 
   public void testReconnectingModulesWhenParentRead() throws Exception {
@@ -77,8 +77,8 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                                          "<version>1</version>");
     readFiles(m);
 
-    assertEquals(1, getRootProjects().size());
-    assertEquals(m, getRootProjects().get(0).getFile());
+    assertEquals(1, getRootNodes().size());
+    assertEquals(m, getRootNodes().get(0).getFile());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -89,10 +89,10 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                      "</modules>");
     readFiles(myProjectPom);
 
-    assertEquals(1, getRootProjects().size());
-    assertEquals(myProjectPom, getRootProjects().get(0).getFile());
-    assertEquals(1, getRootProjects().get(0).getModulesNode().getProjectNodes().size());
-    assertEquals(m, getRootProjects().get(0).getModulesNode().getProjectNodes().get(0).getFile());
+    assertEquals(1, getRootNodes().size());
+    assertEquals(myProjectPom, getRootNodes().get(0).getFile());
+    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodes().size());
+    assertEquals(m, getRootNodes().get(0).getModulesNode().getProjectNodes().get(0).getFile());
   }
 
   public void testReconnectingModulesWhenProjectBacomesParent() throws Exception {
@@ -107,7 +107,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                                          "<version>1</version>");
     readFiles(myProjectPom, m);
 
-    assertEquals(2, getRootProjects().size());
+    assertEquals(2, getRootNodes().size());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -118,10 +118,24 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                      "</modules>");
     readFiles(myProjectPom);
 
-    assertEquals(1, getRootProjects().size());
-    assertEquals(myProjectPom, getRootProjects().get(0).getFile());
-    assertEquals(1, getRootProjects().get(0).getModulesNode().getProjectNodes().size());
-    assertEquals(m, getRootProjects().get(0).getModulesNode().getProjectNodes().get(0).getFile());
+    assertEquals(1, getRootNodes().size());
+    assertEquals(myProjectPom, getRootNodes().get(0).getFile());
+    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodes().size());
+    assertEquals(m, getRootNodes().get(0).getModulesNode().getProjectNodes().get(0).getFile());
+  }
+
+  public void testUpdatingWhenManagedFilesChange() throws Exception {
+    myProjectsManager.fireActivatedInTests();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+    readFiles(myProjectPom);
+    assertEquals(1, getRootNodes().size());
+
+    myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
+    waitForReadingCompletion();
+    assertEquals(0, getRootNodes().size());
   }
 
   public void testGroupModulesAndGroupNot() throws Exception {
@@ -149,17 +163,17 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                                              "<version>1</version>");
     readFiles(myProjectPom, m, mm);
 
-    assertEquals(1, getRootProjects().size());
-    assertEquals(1, getRootProjects().get(0).getModulesNode().getProjectNodes().size());
-    assertEquals(1, getRootProjects().get(0).getModulesNode().getProjectNodes().get(0).getModulesNode().getProjectNodes().size());
+    assertEquals(1, getRootNodes().size());
+    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodes().size());
+    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodes().get(0).getModulesNode().getProjectNodes().size());
 
     myNavigator.setGroupModules(false);
-    assertEquals(3, getRootProjects().size());
+    assertEquals(3, getRootNodes().size());
 
     myNavigator.setGroupModules(true);
-    assertEquals(1, getRootProjects().size());
-    assertEquals(1, getRootProjects().get(0).getModulesNode().getProjectNodes().size());
-    assertEquals(1, getRootProjects().get(0).getModulesNode().getProjectNodes().get(0).getModulesNode().getProjectNodes().size());
+    assertEquals(1, getRootNodes().size());
+    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodes().size());
+    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodes().get(0).getModulesNode().getProjectNodes().size());
   }
 
   public void testIgnoringProjects() throws Exception {
@@ -181,12 +195,12 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     myProjectsTree.setIgnoredFilesPaths(Arrays.asList(m.getPath()));
 
     myNavigator.setShowIgnored(true);
-    assertTrue(getRootProjects().get(0).getModulesNode().isVisible());
-    assertEquals(1, getRootProjects().get(0).getModulesNode().getChildren().length);
+    assertTrue(getRootNodes().get(0).getModulesNode().isVisible());
+    assertEquals(1, getRootNodes().get(0).getModulesNode().getChildren().length);
 
     myNavigator.setShowIgnored(false);
-    assertFalse(getRootProjects().get(0).getModulesNode().isVisible());
-    assertEquals(0, getRootProjects().get(0).getModulesNode().getChildren().length);
+    assertFalse(getRootNodes().get(0).getModulesNode().isVisible());
+    assertEquals(0, getRootNodes().get(0).getModulesNode().getChildren().length);
   }
 
   public void testIgnoringParentProjectWhenNeedNoReconnectModule() throws Exception {
@@ -208,14 +222,14 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     myProjectsTree.setIgnoredFilesPaths(Arrays.asList(myProjectPom.getPath()));
 
     myNavigator.setShowIgnored(true);
-    assertEquals(1, getRootProjects().size());
+    assertEquals(1, getRootNodes().size());
     assertEquals(1, myStructure.getRootElement().getChildren().length);
     MavenProjectsStructure.ProjectNode projectNode = (MavenProjectsStructure.ProjectNode)myStructure.getRootElement().getChildren()[0];
     assertEquals(myProjectPom, projectNode.getFile());
     assertEquals(1, projectNode.getModulesNode().getProjectNodes().size());
 
     myNavigator.setShowIgnored(false);
-    assertEquals(2, getRootProjects().size());
+    assertEquals(2, getRootNodes().size());
     assertEquals(1, myStructure.getRootElement().getChildren().length); // only one of them is visible
     projectNode = (MavenProjectsStructure.ProjectNode)myStructure.getRootElement().getChildren()[0];
     assertEquals(m, projectNode.getFile());
@@ -234,18 +248,18 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                                            "<version>1</version>");
     readFiles(m1, m2);
 
-    assertEquals(2, getRootProjects().size());
-    assertEquals(m1, getRootProjects().get(0).getFile());
-    assertEquals(m2, getRootProjects().get(1).getFile());
+    assertEquals(2, getRootNodes().size());
+    assertEquals(m1, getRootNodes().get(0).getFile());
+    assertEquals(m2, getRootNodes().get(1).getFile());
 
     createModulePom("m2", "<groupId>test</groupId>" +
                           "<artifactId>am2</artifactId>" +
                           "<version>1</version>");
     readFiles(m2);
 
-    assertEquals(2, getRootProjects().size());
-    assertEquals(m2, getRootProjects().get(0).getFile());
-    assertEquals(m1, getRootProjects().get(1).getFile());
+    assertEquals(2, getRootNodes().size());
+    assertEquals(m2, getRootNodes().get(0).getFile());
+    assertEquals(m1, getRootNodes().get(1).getFile());
   }
 
   public void testReloadingState() throws Exception {
@@ -264,14 +278,14 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                                          "<version>1</version>");
     readFiles(myProjectPom, m);
 
-    assertEquals(1, getRootProjects().size());
-    assertEquals(1, getRootProjects().get(0).getModulesNode().getProjectNodes().size());
+    assertEquals(1, getRootNodes().size());
+    assertEquals(1, getRootNodes().get(0).getModulesNode().getProjectNodes().size());
 
     MavenProjectsNavigatorState newState = new MavenProjectsNavigatorState();
     newState.groupStructurally = false;
     myNavigator.loadState(newState);
 
-    assertEquals(2, getRootProjects().size());
+    assertEquals(2, getRootNodes().size());
   }
 
   public void testNavigatableForProjectNode() throws Exception {
@@ -282,7 +296,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
                      "<version>1</version>");
 
     readFiles(myProjectPom);
-    assertTrue(getRootProjects().get(0).getNavigatable().canNavigateToSource());
+    assertTrue(getRootNodes().get(0).getNavigatable().canNavigateToSource());
   }
 
   private void readFiles(VirtualFile... files) {
@@ -290,7 +304,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     waitForReadingCompletion();
   }
 
-  private List<MavenProjectsStructure.ProjectNode> getRootProjects() {
+  private List<MavenProjectsStructure.ProjectNode> getRootNodes() {
     return myStructure.getRootElement().getProjectNodes();
   }
 }

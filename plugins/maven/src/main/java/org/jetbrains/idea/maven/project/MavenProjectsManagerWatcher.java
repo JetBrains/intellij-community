@@ -30,7 +30,6 @@ import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -149,7 +148,7 @@ public class MavenProjectsManagerWatcher {
 
   public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> profiles) {
     myProjectsTree.addManagedFilesWithProfiles(files, profiles);
-    scheduleUpdate(files, Collections.<VirtualFile>emptyList());
+    scheduleUpdateAll();
   }
 
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> profiles) {
@@ -159,7 +158,7 @@ public class MavenProjectsManagerWatcher {
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdate(Collections.<VirtualFile>emptyList(), files);
+    scheduleUpdateAll();
   }
 
   public synchronized void setActiveProfiles(List<String> profiles) {

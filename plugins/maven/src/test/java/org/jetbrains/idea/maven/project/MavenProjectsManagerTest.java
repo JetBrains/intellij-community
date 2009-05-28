@@ -414,14 +414,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                     "</build>");
 
     createProfilesXmlOldStyle("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value1</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              "  <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              "    <prop>value1</prop>" +
+                              "  </properties>" +
+                              "</profile>");
 
     importProject();
 
@@ -434,14 +434,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
 
     createProfilesXmlOldStyle("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value2</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              "  <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              "    <prop>value2</prop>" +
+                              "  </properties>" +
+                              "</profile>");
     waitForReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
@@ -454,14 +454,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}"));
 
     createProfilesXmlOldStyle("<profile>" +
-                      "  <id>one</id>" +
-                      "  <activation>" +
-                      "    <activeByDefault>true</activeByDefault>" +
-                      "  </activation>" +
-                      "  <properties>" +
-                      "    <prop>value2</prop>" +
-                      "  </properties>" +
-                      "</profile>");
+                              "  <id>one</id>" +
+                              "  <activation>" +
+                              "    <activeByDefault>true</activeByDefault>" +
+                              "  </activation>" +
+                              "  <properties>" +
+                              "    <prop>value2</prop>" +
+                              "  </properties>" +
+                              "</profile>");
     waitForReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
@@ -527,7 +527,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.setActiveProfiles(Arrays.asList("one", "two"));
     myProjectsManager.setIgnoredFilesPaths(Arrays.asList(p1.getPath()));
     myProjectsManager.setIgnoredFilesPatterns(Arrays.asList("*.xxx"));
-    
+
     state = myProjectsManager.getState();
     assertUnorderedElementsAreEqual(state.originalFiles, p1.getPath(), p2.getPath());
     assertUnorderedElementsAreEqual(state.activeProfiles, "one", "two");
@@ -553,7 +553,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(myProjectsManager.getProjectsTreeForTests().getRootProjectsFiles(),
                                     p1, p3);
   }
-  
+
   public void testSchedulingReimportWhenPomFileIsDeleted() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -624,8 +624,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                           "  </dependency>" +
                           "</dependencies>");
 
-    myProjectsManager.waitForReadingCompletion();
-    myProjectsManager.waitForResolvingCompletionAndImport();
+    waitForReadingCompletion();
+    resolveDependenciesAndImport();
 
     assertModuleModuleDeps("m1", "m2");
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
@@ -677,12 +677,50 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     configConfirmationForYesAnswer(); // should update deps even if module is not removed
 
-    myProjectsManager.waitForReadingCompletion();
-    myProjectsManager.waitForResolvingCompletionAndImport();
+    waitForReadingCompletion();
+    resolveDependenciesAndImport();
 
     assertModules("project", "m1");
 
     assertModuleModuleDeps("m1");
     assertModuleLibDeps("m1", "Maven: test:m2:1");
+  }
+
+  public void testUpdatingFoldersAfterFoldersResolving() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("src1", "src2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.mojo</groupId>" +
+                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <executions>" +
+                  "        <execution>" +
+                  "          <id>someId</id>" +
+                  "          <phase>generate-sources</phase>" +
+                  "          <goals>" +
+                  "            <goal>add-source</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <sources>" +
+                  "              <source>${basedir}/src1</source>" +
+                  "              <source>${basedir}/src2</source>" +
+                  "            </sources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    assertSources("project", "src/main/java", "src/main/resources");
+
+    resolveFoldersAndImport();
+
+    assertSources("project", "src/main/java", "src/main/resources", "src1", "src2");
   }
 }

@@ -159,7 +159,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       if (node != null) {
         ProjectsGroupNode parent = node.getStructuralParent();
         parent.remove(node);
-        updateFrom(myRoot.getProfilesNode());
+        updateFrom(parent);
       }
     }
 
@@ -822,13 +822,13 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Nullable
     @NonNls
     protected String getActionId() {
-      return "Maven.RunGoal";
+      return "Maven.RunBuild";
     }
 
     @Nullable
     @NonNls
     protected String getMenuId() {
-      return "Maven.GoalMenu";
+      return "Maven.BuildMenu";
     }
   }
 

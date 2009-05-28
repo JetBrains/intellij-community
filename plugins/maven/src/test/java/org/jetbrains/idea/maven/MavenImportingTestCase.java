@@ -327,12 +327,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveDependenciesAndImport() {
-    myProjectsManager.waitForResolvingCompletionAndImport();
+    myProjectsManager.waitForResolvingCompletion();
+    myProjectsManager.flushPendingImportRequestsInTests();
   }
 
   protected void resolveFoldersAndImport() {
-    myProjectsManager.scheduleFoldersResolving();
-    myProjectsManager.waitForFoldersResolvingCompletionAndImport();
+    myProjectsManager.scheduleFoldersResolvingForAllProjects();
+    myProjectsManager.waitForFoldersResolvingCompletion();
+    myProjectsManager.flushPendingImportRequestsInTests();
   }
 
   protected void resolvePlugins() {
@@ -340,7 +342,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void downloadArtifacts() {
-    myProjectsManager.scheduleArtifactsDownloading();
+    myProjectsManager.scheduleArtifactsDownloadingForAllProjects();
     myProjectsManager.waitForArtifactsDownloadingCompletion();
   }
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -97,10 +98,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   public MavenImportingSettings getImportingSettings() {
     return getWorkspaceSettings().importingSettings;
-  }
-
-  public MavenDownloadingSettings getDownloadingSettings() {
-    return getWorkspaceSettings().downloadingSettings;
   }
 
   private MavenWorkspaceSettings getWorkspaceSettings() {
@@ -251,6 +248,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private void listenForProjectsTreeChanges() {
     myProjectsTree.addListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
+      public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
+        scheduleImport();
+      }
+
+      @Override
       public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
         myEmbeddersManager.clearCaches();
 
@@ -280,8 +282,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }
 
       @Override
-      public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored) {
-        scheduleImport();
+      public void foldersResolved(MavenProject project) {
+        scheduleImport(project);
       }
     });
   }
@@ -383,6 +385,11 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myWatcher.setActiveProfiles(profiles);
   }
 
+  public boolean hasProjects() {
+    if (!isInitialized()) return false;
+    return myProjectsTree.hasProjects();
+  }
+
   public List<MavenProject> getProjects() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getProjects();
@@ -411,6 +418,10 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   public MavenProject findProject(Module module) {
     VirtualFile f = findPomFile(module);
     return f == null ? null : findProject(f);
+  }
+
+  public Module findModule(MavenProject project) {
+    return ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(project.getFile());
   }
 
   private VirtualFile findPomFile(Module module) {
@@ -499,16 +510,20 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     scheduleResolve(getProjects());
   }
 
-  public void scheduleFoldersResolving() {
+  public void scheduleFoldersResolving(final List<MavenProject> projects) {
     runWhenFullyOpen(new Runnable() {
       public void run() {
-        for (MavenProject each : getProjects()) {
+        for (MavenProject each : projects) {
           myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each,
                                                                                                   getImportingSettings(),
                                                                                                   myProjectsTree));
         }
       }
     });
+  }
+
+  public void scheduleFoldersResolvingForAllProjects() {
+    scheduleFoldersResolving(getProjects());
   }
 
   private void schedulePluginsResolving(final MavenProject project, final org.apache.maven.project.MavenProject nativeMavenProject) {
@@ -521,16 +536,20 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  public void scheduleArtifactsDownloading() {
+  public void scheduleArtifactsDownloading(final List<MavenProject> projects) {
     runWhenFullyOpen(new Runnable() {
       public void run() {
-        for (MavenProject each : getProjects()) {
+        for (MavenProject each : projects) {
           myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each,
-                                                                                                          myProjectsTree,
-                                                                                                          getDownloadingSettings()));
+                                                                                                          myProjectsTree
+          ));
         }
       }
     });
+  }
+
+  public void scheduleArtifactsDownloadingForAllProjects() {
+    scheduleArtifactsDownloading(getProjects());
   }
 
   private void scheduleImport(MavenProject project) {
@@ -616,62 +635,40 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public void waitForReadingCompletion() {
-    waitForTasksCompletionAndDo(Collections.<MavenProjectsProcessor>emptyList(), null);
+    waitForTasksCompletion(Collections.<MavenProjectsProcessor>emptyList());
   }
 
   public void waitForResolvingCompletion() {
-    waitForTasksCompletionAndDo(myResolvingProcessor, null);
+    waitForTasksCompletion(myResolvingProcessor);
   }
 
-  public void waitForResolvingCompletionAndImport() {
-    waitForTasksCompletionAndImport(myResolvingProcessor);
-  }
-
-  public void waitForFoldersResolvingCompletionAndImport() {
-    waitForTasksCompletionAndDo(myFoldersResolvingProcessor, new Runnable() {
-      public void run() {
-        updateProjectFolders(false);
-      }
-    });
+  public void waitForFoldersResolvingCompletion() {
+    waitForTasksCompletion(myFoldersResolvingProcessor);
   }
 
   public void waitForPluginsResolvingCompletion() {
-    waitForTasksCompletionAndDo(myPluginsResolvingProcessor, null);
+    waitForTasksCompletion(myPluginsResolvingProcessor);
   }
 
   public void waitForArtifactsDownloadingCompletion() {
-    waitForTasksCompletionAndDo(Arrays.asList(myResolvingProcessor, myArtifactsDownloadingProcessor), null);
+    waitForTasksCompletion(Arrays.asList(myResolvingProcessor, myArtifactsDownloadingProcessor));
   }
 
   public void waitForPostImportTasksCompletion() {
     myPostProcessor.waitForCompletion();
   }
 
-  private void waitForTasksCompletionAndImport(MavenProjectsProcessor processor) {
-    waitForTasksCompletionAndDo(processor, new Runnable() {
-      public void run() {
-        MavenUtil.invokeInDispatchThread(myProject, new Runnable() {
-          public void run() {
-            importProjects();
-          }
-        });
-      }
-    });
+  private void waitForTasksCompletion(MavenProjectsProcessor processor) {
+    waitForTasksCompletion(Collections.singletonList(processor));
   }
 
-  private void waitForTasksCompletionAndDo(MavenProjectsProcessor processor, Runnable runnable) {
-    waitForTasksCompletionAndDo(Collections.singletonList(processor), runnable);
-  }
-
-  private void waitForTasksCompletionAndDo(List<MavenProjectsProcessor> processors, Runnable runnable) {
+  private void waitForTasksCompletion(List<MavenProjectsProcessor> processors) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     myReadingProcessor.waitForCompletion();
     for (MavenProjectsProcessor each : processors) {
       each.waitForCompletion();
     }
-
-    if (runnable != null) runnable.run();
   }
 
   public void flushPendingImportRequestsInTests() {
@@ -691,7 +688,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  public void importProjectOrAllAvailablePomFiles() {
+  public void forceImportOrFindAllAvailablePomFiles() {
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());
     }
@@ -806,6 +803,10 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   public MavenProjectsProcessor.Handler getPluginDownloadingProcessorHandler() {
     return myPluginsResolvingProcessor.getHandler();
+  }
+
+  public MavenProjectsProcessor.Handler getArtifactsDownloadingProcessorHandler() {
+    return myArtifactsDownloadingProcessor.getHandler();
   }
 
   @TestOnly

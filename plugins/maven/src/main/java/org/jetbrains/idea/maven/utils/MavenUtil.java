@@ -199,7 +199,7 @@ public class MavenUtil {
         Class<?> type = each.getType();
         each.setAccessible(true);
         Object value = each.get(object);
-        if (value != null 
+        if (value != null
             && (value.getClass().isArray()
                 || value instanceof Collection
                 || value instanceof Map

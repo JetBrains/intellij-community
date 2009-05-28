@@ -668,6 +668,16 @@ public class MavenProjectsTree {
     return true;
   }
 
+  public boolean hasProjects() {
+    readLock();
+    try {
+      return !myRootProjects.isEmpty();
+    }
+    finally {
+      readUnlock();
+    }
+  }
+
   public List<MavenProject> getRootProjects() {
     readLock();
     try {
@@ -897,17 +907,14 @@ public class MavenProjectsTree {
   }
 
   public void downloadArtifacts(MavenProject mavenProject,
-                                MavenDownloadingSettings downloadingSettings,
                                 MavenEmbeddersManager embeddersManager,
                                 MavenConsole console,
                                 MavenProgressIndicator process) throws MavenProcessCanceledException {
-    if (mavenProject.isAggregator()) return;
-
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(EmbedderKind.EMBEDDER_FOR_DOWNLOAD);
     embedder.customizeForResolve(console, process);
 
     try {
-      MavenArtifactDownloader.download(this, Collections.singletonList(mavenProject), downloadingSettings, true, embedder, process);
+      MavenArtifactDownloader.download(this, Collections.singletonList(mavenProject), true, embedder, process);
       fireArtifactsDownloaded(mavenProject);
     }
     finally {

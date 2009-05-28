@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven.navigator.action;
 
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 
-public class GroupModulesAction extends MavenProjectsNavigatorAction {
+public class GroupProjectsAction extends MavenProjectsNavigatorAction {
   @Override
   public boolean isSelected(MavenProjectsNavigator navigator) {
     return navigator.getGroupModules();

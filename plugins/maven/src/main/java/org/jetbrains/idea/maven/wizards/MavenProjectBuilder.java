@@ -25,7 +25,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     private MavenGeneralSettings myGeneralSettingsCache;
     private MavenImportingSettings myImportingSettingsCache;
-    private MavenDownloadingSettings myDownloadingSettingsCache;
 
     private VirtualFile myImportRoot;
     private List<VirtualFile> myFiles;
@@ -69,7 +68,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     settings.generalSettings = getGeneralSettings();
     settings.importingSettings = getImportingSettings();
-    settings.downloadingSettings = getDownloadingSettings();
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     List<VirtualFile> files = getParameters().myMavenProjectTree.getRootProjectsFiles();
@@ -207,13 +205,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
       getParameters().myImportingSettingsCache = getDirectProjectsSettings().importingSettings.clone();
     }
     return getParameters().myImportingSettingsCache;
-  }
-
-  private MavenDownloadingSettings getDownloadingSettings() {
-    if (getParameters().myDownloadingSettingsCache == null) {
-      getParameters().myDownloadingSettingsCache = getDirectProjectsSettings().downloadingSettings.clone();
-    }
-    return getParameters().myDownloadingSettingsCache;
   }
 
   private MavenWorkspaceSettings getDirectProjectsSettings() {

@@ -26,7 +26,6 @@ public class MavenImportingSettings implements Cloneable {
   private boolean createModulesForAggregators = true;
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
-  private boolean updateFoldersOnImport = true;
   private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
 
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
@@ -74,14 +73,6 @@ public class MavenImportingSettings implements Cloneable {
     this.useMavenOutput = useMavenOutput;
   }
 
-  public boolean isUpdateFoldersOnImport() {
-    return updateFoldersOnImport;
-  }
-
-  public void setUpdateFoldersOnImport(boolean updateFoldersOnImport) {
-    this.updateFoldersOnImport = updateFoldersOnImport;
-  }
-
   public String getUpdateFoldersOnImportPhase() {
     return updateFoldersOnImportPhase;
   }
@@ -100,7 +91,6 @@ public class MavenImportingSettings implements Cloneable {
     if (createModuleGroups != that.createModuleGroups) return false;
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
     if (lookForNested != that.lookForNested) return false;
-    if (updateFoldersOnImport != that.updateFoldersOnImport) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
     if (updateFoldersOnImportPhase != null
@@ -119,7 +109,6 @@ public class MavenImportingSettings implements Cloneable {
     result = 31 * result + (createModulesForAggregators ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
-    result = 31 * result + (updateFoldersOnImport ? 1 : 0);
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);
     return result;
   }

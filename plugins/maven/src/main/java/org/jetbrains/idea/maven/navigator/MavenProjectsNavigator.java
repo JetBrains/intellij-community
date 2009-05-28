@@ -149,7 +149,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (myProjectsManager.isMavenizedProject()) return;
+        if (myProjectsManager.hasProjects()) return;
 
         myLabel.setFont(getFont());
         myLabel.setBackground(getBackground());

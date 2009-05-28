@@ -13,7 +13,6 @@ import java.io.File;
 import java.util.*;
 
 public class MavenArtifactDownloader {
-  private final MavenDownloadingSettings mySettings;
   private final MavenEmbedderWrapper myEmbedder;
   private final MavenProgressIndicator myProgress;
   private final MavenProjectsTree myProjectsTree;
@@ -21,21 +20,18 @@ public class MavenArtifactDownloader {
 
   public static void download(MavenProjectsTree projectsTree,
                               List<MavenProject> mavenProjects,
-                              MavenDownloadingSettings settings,
                               boolean demand,
                               MavenEmbedderWrapper embedder,
                               MavenProgressIndicator p) throws MavenProcessCanceledException {
-    new MavenArtifactDownloader(projectsTree, mavenProjects, settings, embedder, p).download(demand);
+    new MavenArtifactDownloader(projectsTree, mavenProjects, embedder, p).download(demand);
   }
 
   private MavenArtifactDownloader(MavenProjectsTree projectsTree,
                                   List<MavenProject> mavenProjects,
-                                  MavenDownloadingSettings settings,
                                   MavenEmbedderWrapper embedder,
                                   MavenProgressIndicator p) {
     myProjectsTree = projectsTree;
     myMavenProjects = mavenProjects;
-    mySettings = settings;
     myEmbedder = embedder;
     myProgress = p;
   }
@@ -45,21 +41,12 @@ public class MavenArtifactDownloader {
     try {
       Map<MavenArtifact, Set<MavenRemoteRepository>> artifacts = collectArtifactsToDownload();
 
-      if (shouldDownload(mySettings.getDownloadSources(), demand)) {
-        download(MavenConstants.SOURCES_CLASSIFIER, artifacts, downloadedFiles);
-      }
-
-      if (shouldDownload(mySettings.getDownloadJavadoc(), demand)) {
-        download(MavenConstants.JAVADOC_CLASSIFIER, artifacts, downloadedFiles);
-      }
+      download(MavenConstants.SOURCES_CLASSIFIER, artifacts, downloadedFiles);
+      download(MavenConstants.JAVADOC_CLASSIFIER, artifacts, downloadedFiles);
     }
     finally {
       scheduleFilesRefresh(downloadedFiles);
     }
-  }
-
-  private boolean shouldDownload(MavenDownloadingSettings.UPDATE_MODE level, boolean demand) {
-    return level == MavenDownloadingSettings.UPDATE_MODE.ALWAYS || (level == MavenDownloadingSettings.UPDATE_MODE.ON_DEMAND && demand);
   }
 
   private void scheduleFilesRefresh(final List<File> downloadedFiles) {

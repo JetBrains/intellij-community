@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.List;
 
-public class RunGoalAction extends MavenAction {
+public class RunBuildAction extends MavenAction {
   @Override
   protected boolean isAvailable(AnActionEvent e) {
     return super.isAvailable(e) && checkOrPerform(e, false);

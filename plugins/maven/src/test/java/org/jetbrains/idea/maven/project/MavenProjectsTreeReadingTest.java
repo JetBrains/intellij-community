@@ -75,7 +75,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m1, roots.get(0).getFile());
     assertEquals(m2, roots.get(1).getFile());
 
-    assertEquals("updated m1, m2 deleted <none> ", listener.log);
+    assertEquals("updated: m1 m2 deleted: <none> ", listener.log);
   }
 
   public void testRereadingChildIfParentWasReadAfterIt() throws Exception {
@@ -111,7 +111,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("m2", roots.get(0).getMavenId().artifactId);
     assertEquals("m1", roots.get(1).getMavenId().artifactId);
 
-    assertEquals("updated m2, m1 deleted <none> ", listener.log);
+    assertEquals("updated: m2 m1 deleted: <none> ", listener.log);
   }
 
   public void testSameProjectAsModuleOfSeveralProjects() throws Exception {
@@ -262,7 +262,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(2, roots.size());
     assertEquals(1, myTree.getModules(roots.get(0)).size());
 
-    assertEquals("updated project, m2 deleted <none> ", listener.log);
+    assertEquals("updated: project m2 deleted: <none> ", listener.log);
   }
 
   public void testUpdatingWholeModel() throws Exception {
@@ -487,7 +487,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "<version>1</version>");
     updateAll(myProjectPom);
 
-    assertEquals("updated m1 deleted <none> ", listener.log);
+    assertEquals("updated: m1 deleted: <none> ", listener.log);
   }
 
   public void testDoNotUpdateChildAfterParentWasResolved() throws Exception {
@@ -534,9 +534,9 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       embeddersManager.release();
     }
 
-    assertEquals("updated parent, child deleted <none> resolved: parent plugins: parent folders: parent ", listener.log);
+    assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
     myTree.updateAll(getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-    assertEquals("updated parent, child deleted <none> resolved: parent plugins: parent folders: parent ", listener.log);
+    assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
   }
 
   public void testAddingInheritanceParent() throws Exception {
@@ -1272,7 +1272,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     deleteProject(m1);
 
-    assertEquals("updated <none> deleted m2, m1 ", listener.log);
+    assertEquals("updated: <none> deleted: m2 m1 ", listener.log);
   }
 
   public void testReconnectModuleOfDeletedProjectIfModuleIsManaged() throws Exception {
@@ -1319,7 +1319,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m2, roots.get(1).getFile());
     assertEquals(0, myTree.getModules(roots.get(1)).size());
 
-    assertEquals("updated m2 deleted m1 ", listener.log);
+    assertEquals("updated: m2 deleted: m1 ", listener.log);
   }
 
   public void testAddingProjectsOnUpdateAllWhenManagedFilesChanged() throws Exception {
@@ -1360,6 +1360,41 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     updateAll(m1, m2);
     assertEquals(2, myTree.getRootProjects().size());
+  }
+
+  public void testSendingNotificationsWhenAddingOrDeletingManagedFiles() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    VirtualFile m1 = createModulePom("m1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m1</artifactId>" +
+                                     "<version>1</version>");
+
+    VirtualFile m2 = createModulePom("m2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m2</artifactId>" +
+                                     "<version>1</version>");
+
+    MyLoggingListener l = new MyLoggingListener();
+    myTree.addListener(l);
+
+    myTree.addManagedFilesWithProfiles(Collections.singletonList(myProjectPom), Collections.<String>emptyList());
+    myTree.updateAll(getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+
+    assertEquals("updated: parent m1 m2 deleted: <none> ", l.log);
+    l.log = "";
+
+    myTree.removeManagedFiles(Arrays.asList(myProjectPom));
+    myTree.updateAll(getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+
+    assertEquals("updated: <none> deleted: m1 m2 parent ", l.log);
   }
 
   public void testUpdatingModelWhenActiveProfilesChange() throws Exception {
@@ -1618,7 +1653,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                       "</profile>");
 
     updateAll(myProjectPom);
-    assertEquals("updated project deleted <none> ", l.log);
+    assertEquals("updated: project deleted: <none> ", l.log);
   }
 
   public void testSaveLoad() throws Exception {
@@ -1696,8 +1731,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     @Override
     public void projectsUpdated(List<MavenProject> updated, List<MavenProject> deleted) {
-      append(updated, "updated");
-      append(deleted, "deleted");
+      append(updated, "updated:");
+      append(deleted, "deleted:");
     }
 
     private void append(List<MavenProject> updated, String text) {
@@ -1710,7 +1745,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
         public String fun(MavenProject each) {
           return each.getMavenId().artifactId;
         }
-      }, ", ") + " ";
+      }, " ") + " ";
     }
 
     @Override

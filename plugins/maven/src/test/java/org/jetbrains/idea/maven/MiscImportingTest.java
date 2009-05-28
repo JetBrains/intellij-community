@@ -44,7 +44,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertSources("m2");
 
     assertFalse(myProjectsManager.isMavenizedProject());
-    myProjectsManager.importProjectOrAllAvailablePomFiles();
+    myProjectsManager.forceImportOrFindAllAvailablePomFiles();
 
     assertSources("m1", "src/main/java");
     assertSources("m2", "src/main/java");

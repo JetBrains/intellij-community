@@ -24,7 +24,6 @@ public class MavenImportingSettingsForm {
 
   private JCheckBox myCreateModulesForAggregators;
   private JCheckBox myCreateGroupsCheckBox;
-  private JCheckBox myUpdateFoldersOnImportCheckBox;
   private JComboBox myUpdateFoldersOnImportPhaseComboBox;
   private JCheckBox myUseMavenOutputCheckBox;
 
@@ -43,7 +42,6 @@ public class MavenImportingSettingsForm {
       }
     };
     mySeparateModulesDirCheckBox.addActionListener(listener);
-    myUpdateFoldersOnImportCheckBox.addActionListener(listener);
 
     mySeparateModulesDirChooser.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
                                                new FileChooserDescriptor(false, true, false, false, false, false));
@@ -62,8 +60,6 @@ public class MavenImportingSettingsForm {
     if (useSeparateDir && StringUtil.isEmptyOrSpaces(mySeparateModulesDirChooser.getText())) {
       mySeparateModulesDirChooser.setText(FileUtil.toSystemDependentName(getDefaultModuleDir()));
     }
-
-    myUpdateFoldersOnImportPhaseComboBox.setEnabled(myUpdateFoldersOnImportCheckBox.isSelected());
   }
 
   public String getDefaultModuleDir() {
@@ -81,7 +77,6 @@ public class MavenImportingSettingsForm {
     data.setCreateModulesForAggregators(myCreateModulesForAggregators.isSelected());
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
 
-    data.setUpdateFoldersOnImport(myUpdateFoldersOnImportCheckBox.isSelected());
     data.setUpdateFoldersOnImportPhase((String)myUpdateFoldersOnImportPhaseComboBox.getSelectedItem());
 
     data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
@@ -96,7 +91,6 @@ public class MavenImportingSettingsForm {
     myCreateModulesForAggregators.setSelected(data.isCreateModulesForAggregators());
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
 
-    myUpdateFoldersOnImportCheckBox.setSelected(data.isUpdateFoldersOnImport());
     myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
 
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());

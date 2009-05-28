@@ -240,6 +240,6 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     myBuilder.createModule(model);
     model.commit();
 
-    MavenProjectsManager.getInstance(myProject).waitForResolvingCompletionAndImport();
+    resolveDependenciesAndImport();
   }
 }
