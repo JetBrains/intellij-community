@@ -216,7 +216,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     tmp.configureByModule(module, isTests ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES);
     StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);
 
-    params.getProgramParametersList().add("\"" + buffer.toString() + "\"");
+    params.getProgramParametersList().add(buffer.toString());
     if (isDebugEnabled) {
       params.getProgramParametersList().add("--debug");
     }
