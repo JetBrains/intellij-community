@@ -866,7 +866,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     final JPanel northPanel = new JPanel(new BorderLayout());
     northPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
-    northPanel.add(createTreeToolbarPanel().getComponent(), BorderLayout.WEST);
+    northPanel.add(createTreeToolbarPanel().getComponent(), BorderLayout.CENTER);
     northPanel.add(myProfileFilter, BorderLayout.EAST);
     treePanel.add(northPanel, BorderLayout.NORTH);
 
