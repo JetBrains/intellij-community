@@ -25,4 +25,9 @@ public class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
     }
     return "";
   }
+
+  @Override
+  public boolean isPackage(PsiDirectory directory) {
+    return false;
+  }
 }

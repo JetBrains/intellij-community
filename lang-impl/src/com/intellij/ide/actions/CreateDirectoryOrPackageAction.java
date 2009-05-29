@@ -10,14 +10,13 @@ import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 
@@ -37,8 +36,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
 
     if (directory == null) return;
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    boolean isDirectory = fileIndex.getPackageNameByDirectory(directory.getVirtualFile()) == null;
+    boolean isDirectory = !PsiDirectoryFactory.getInstance(project).isPackage(directory);
 
     MyInputValidator validator = new MyInputValidator(project, directory, isDirectory);
     Messages.showInputDialog(project, isDirectory
@@ -81,9 +79,9 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     presentation.setEnabled(true);
 
     boolean isPackage = false;
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(project);
     for (PsiDirectory directory : directories) {
-      if (fileIndex.getPackageNameByDirectory(directory.getVirtualFile()) != null) {
+      if (factory.isPackage(directory)) {
         isPackage = true;
         break;
       }

@@ -19,4 +19,5 @@ public abstract class PsiDirectoryFactory {
   @NotNull
   public abstract String getQualifiedName(@NotNull PsiDirectory directory, final boolean presentable);
 
+  public abstract boolean isPackage(PsiDirectory directory);
 }

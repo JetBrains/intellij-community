@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.file;
 
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiBundle;
@@ -15,7 +16,6 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
   private final PsiManagerImpl myManager;
 
   public PsiJavaDirectoryFactory(final PsiManagerImpl manager) {
-
     myManager = manager;
   }
 
@@ -35,5 +35,10 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
       return "";
     }
     return presentable ? directory.getVirtualFile().getPresentableUrl() : "";
+  }
+
+  @Override
+  public boolean isPackage(PsiDirectory directory) {
+    return ProjectFileIndex.SERVICE.getInstance(myManager.getProject()).getPackageNameByDirectory(directory.getVirtualFile()) != null;
   }
 }
