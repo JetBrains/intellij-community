@@ -45,7 +45,7 @@ public class SpeedSearch {
     }
     else {
       final char ch = e.getKeyChar();
-      if (Character.isLetterOrDigit(ch) || ch == ' ' || ch == '*') {
+      if (Character.isLetterOrDigit(ch) || ch == ' ' || ch == '*' || ch == '_') {
         type(Character.toString(ch));
         e.consume();
       }
