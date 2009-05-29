@@ -88,4 +88,9 @@ public class GotoSymbolModel2 extends ContributorsBasedGotoByModel {
   public String[] getSeparators() {
     return new String[] {".", ":"};
   }
+
+  @Override
+  public String getHelpId() {
+    return "procedures.navigating.goto.class";
+  }
 }

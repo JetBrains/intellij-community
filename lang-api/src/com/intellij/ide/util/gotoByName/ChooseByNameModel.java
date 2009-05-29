@@ -56,4 +56,6 @@ public interface ChooseByNameModel {
 
   @Nullable
   String getFullName(Object element);
+
+  String getHelpId();
 }

@@ -383,6 +383,10 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       return getElementName(element);
     }
 
+    public String getHelpId() {
+      return null;
+    }
+
     @NotNull
     public String[] getSeparators() {
       return new String[] {"/", "\\"};

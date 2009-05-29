@@ -114,6 +114,10 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     return ((NavigationItem)element).getName();
   }
 
+  public String getHelpId() {
+    return null;
+  }
+
   protected ChooseByNameContributor[] getContributors() {
     return myContributors;
   }

@@ -159,6 +159,9 @@ public abstract class ChooseByNameBase{
     }
 
     public Object getData(String dataId) {
+      if (dataId.equals(DataConstants.HELP_ID)) {
+        return myModel.getHelpId();
+      }
       if (!myListIsUpToDate) {
         return null;
       }

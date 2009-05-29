@@ -196,6 +196,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     return getElementName(element);
   }
 
+  public String getHelpId() {
+    return "procedures.navigating.goto.action";
+  }
+
   @NotNull
   public String[] getSeparators() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
