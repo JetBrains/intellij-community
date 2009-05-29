@@ -30,4 +30,8 @@ public class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
   public boolean isPackage(PsiDirectory directory) {
     return false;
   }
+
+  public boolean isValidPackageName(String name) {
+    return true;
+  }
 }

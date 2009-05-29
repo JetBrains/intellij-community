@@ -39,7 +39,8 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -109,6 +110,7 @@ public abstract class DialogWrapper {
     }
   };
   private ErrorText myErrorText;
+  private int myMaxErrorTextLength;
 
   private Alarm myErrorTextAlarm = new Alarm();
 
@@ -1072,7 +1074,19 @@ public abstract class DialogWrapper {
     myErrorTextAlarm.addRequest(new Runnable() {
       public void run() {
         myErrorText.setError(text);
-        updateHeightForErrorText();
+        if (text != null && text.length() > myMaxErrorTextLength) {
+          // during the first update, resize only for growing. during a subsequent update,
+          // if error text becomes longer, the min size calculation may not calculate enough size,
+          // so we pack() even though it could cause the dialog to become smaller.
+          if (myMaxErrorTextLength == 0) {
+            updateHeightForErrorText();
+          }
+          else {
+            if (getRootPane() != null) myPeer.pack();
+          }
+          myMaxErrorTextLength = text.length();
+          updateHeightForErrorText();
+        }
         myErrorText.repaint();
       }
     }, 300);

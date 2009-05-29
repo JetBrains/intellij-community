@@ -625,7 +625,11 @@ public class Messages {
           actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
           myField.getDocument().addDocumentListener(new DocumentAdapter() {
             public void textChanged(DocumentEvent event) {
-              actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(myField.getText().trim()));
+              final String text = myField.getText().trim();
+              actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(text));
+              if (myValidator instanceof InputValidatorEx) {
+                setErrorText(((InputValidatorEx) myValidator).getErrorText(text));
+              }
             }
           });
         }

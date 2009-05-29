@@ -2,10 +2,7 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiBundle;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,5 +37,10 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
   @Override
   public boolean isPackage(PsiDirectory directory) {
     return ProjectFileIndex.SERVICE.getInstance(myManager.getProject()).getPackageNameByDirectory(directory.getVirtualFile()) != null;
+  }
+
+  @Override
+  public boolean isValidPackageName(String name) {
+    return JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(name);
   }
 }

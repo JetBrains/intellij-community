@@ -10,9 +10,10 @@ import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -97,7 +98,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     }
   }
 
-  protected class MyInputValidator implements InputValidator {
+  protected class MyInputValidator implements InputValidatorEx {
     private final Project myProject;
     private final PsiDirectory myDirectory;
     private final boolean myIsDirectory;
@@ -113,6 +114,16 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       return true;
     }
 
+    public String getErrorText(String inputString) {
+      if (FileTypeManager.getInstance().isFileIgnored(inputString)) {
+        return "Trying to create a " + (myIsDirectory ? "directory" : "package") + " with ignored name, result will not be visible";
+      }
+      if (!myIsDirectory && inputString.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(inputString)) {
+        return "Not a valid package name";
+      }
+      return null;
+    }
+
     public boolean canClose(String inputString) {
       final String subDirName = inputString;
 
@@ -121,15 +132,6 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
                                    Messages.getErrorIcon());
         return false;
       }
-
-      //[ven] valentin thinks this is too restrictive
-      /*if (!myIsDirectory) {
-        PsiNameHelper helper = PsiManager.getInstance(myProject).getNameHelper();
-        if (!helper.isQualifiedName(subDirName)) {
-          Messages.showMessageDialog(myProject, "A valid package name should be specified", "Error", Messages.getErrorIcon());
-          return false;
-        }
-      }*/
 
       final boolean multiCreation = myIsDirectory
                                     ? subDirName.indexOf('/') != -1 || subDirName.indexOf('\\') != -1
