@@ -15,6 +15,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.compiler.CompilerConfiguration;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -99,6 +100,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     GenerationItem item;
     for (VirtualFile file : getGroovyFilesToGenerate(context)) {
       if (CompilerManager.getInstance(myProject).isExcludedFromCompilation(file)) continue;
+      if (CompilerConfiguration.getInstance(myProject).isResourceFile(file.getName())) continue;
 
       final GroovyFileBase psiFile = findPsiFile(file);
       boolean isInTestSources = ModuleRootManager.getInstance(getModuleByFile(context, file)).getFileIndex().isInTestSourceContent(file);
@@ -809,7 +811,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   public boolean validateConfiguration(CompileScope scope) {
-//    scope.getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
     return true;
   }
 
