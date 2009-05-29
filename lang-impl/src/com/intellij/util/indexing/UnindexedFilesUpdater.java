@@ -16,10 +16,12 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -125,10 +127,12 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
 
     Set<VirtualFile> visitedRoots = new HashSet<VirtualFile>();
     for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
-      final Set<VirtualFile> rootsToIndex = provider.getRootsToIndex(myProject);
-      for (VirtualFile root : rootsToIndex) {
-        if (!visitedRoots.contains(root)) {
-          visitedRoots.add(root);
+      //important not to depend on project here, to support per-project background reindex
+      // each client gives a project to FileBasedIndex
+      final Set<String> rootsToIndex = provider.getRootsToIndex();
+      for (String url : rootsToIndex) {
+        final VirtualFile root = VfsUtil.findFileByURL(VfsUtil.convertToURL(url));
+        if (visitedRoots.add(root)) {
           iterateRecursively(root, processor, indicator);
         }
       }
@@ -141,8 +145,7 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
           final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
           for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
             for (VirtualFile root : roots) {
-              if (!visitedRoots.contains(root)) {
-                visitedRoots.add(root);
+              if (visitedRoots.add(root)) {
                 iterateRecursively(root, processor, indicator);
               }
             }
@@ -152,7 +155,7 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
     }
   }
 
-  private static void iterateRecursively(final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
+  private static void iterateRecursively(@Nullable final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
     if (root != null) {
       if (indicator != null) {
         indicator.setText("Scanning files to index");
