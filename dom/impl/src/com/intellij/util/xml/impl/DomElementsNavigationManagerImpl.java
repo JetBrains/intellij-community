@@ -10,10 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementNavigationProvider;
-import com.intellij.util.xml.DomElementsNavigationManager;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,7 +55,10 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
     }
 
     public void navigate(DomElement domElement, boolean requestFocus) {
-      VirtualFile file = DomUtil.getFile(domElement).getVirtualFile();
+      final DomFileElement<DomElement> fileElement = DomUtil.getFileElement(domElement);
+      if (fileElement == null) return;
+
+      VirtualFile file = fileElement.getFile().getVirtualFile();
       if (file == null) return;
 
       XmlElement xmlElement = domElement.getXmlElement();
