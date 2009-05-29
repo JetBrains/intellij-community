@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,26 +18,27 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PythonSdkTableListener implements ApplicationComponent {
-  private final ProjectJdkTable.Listener myJdkTableListener;
-
-  public PythonSdkTableListener() {
-    myJdkTableListener = new ProjectJdkTable.Listener() {
+  public PythonSdkTableListener(MessageBus messageBus) {
+    ProjectJdkTable.Listener jdkTableListener = new ProjectJdkTable.Listener() {
       public void jdkAdded(final Sdk sdk) {
         if (sdk.getSdkType() instanceof PythonSdkType) {
           addLibrary(sdk);
         }
       }
+
       public void jdkRemoved(final Sdk sdk) {
         if (sdk.getSdkType() instanceof PythonSdkType) {
           removeLibrary(sdk);
         }
       }
+
       public void jdkNameChanged(final Sdk sdk, final String previousName) {
         if (sdk.getSdkType() instanceof PythonSdkType) {
           renameLibrary(sdk, previousName);
         }
       }
     };
+    messageBus.connect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkTableListener);
   }
 
   static Library addLibrary(Sdk sdk) {
@@ -94,10 +96,8 @@ public class PythonSdkTableListener implements ApplicationComponent {
   }
 
   public void initComponent() {
-    ProjectJdkTable.getInstance().addListener(myJdkTableListener);
   }
 
   public void disposeComponent() {
-    ProjectJdkTable.getInstance().removeListener(myJdkTableListener);
   }
 }
