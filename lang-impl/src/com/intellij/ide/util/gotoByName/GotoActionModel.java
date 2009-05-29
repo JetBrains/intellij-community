@@ -152,7 +152,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     for (AnAction action : actions) {
       if (action instanceof ActionGroup) {
         collectActionIds(result, (ActionGroup)action);
-      } else {
+      }
+      else if (action != null) {
         result.add(myActionManager.getId(action));
       }
     }
