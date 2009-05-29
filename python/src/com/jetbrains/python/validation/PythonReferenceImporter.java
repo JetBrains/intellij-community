@@ -12,17 +12,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.actions.AddImportAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class PythonReferenceImporter implements ReferenceImporter {
-  public PythonReferenceImporter() {
-    // nothing
-  }
-
   public boolean autoImportReferenceAtCursor(@NotNull final Editor editor, @NotNull final PsiFile file) {
+    if (!(file instanceof PyFile)) return false;
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
     int lineNumber = document.getLineNumber(caretOffset);
