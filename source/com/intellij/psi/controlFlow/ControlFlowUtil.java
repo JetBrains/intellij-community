@@ -495,11 +495,6 @@ public class ControlFlowUtil {
       isNormalCompletion[myFlow.getSize()] = true;
     }
 
-    @Override public void visitConditionalGoToInstruction(ConditionalGoToInstruction instruction, int offset, int nextOffset) {
-      if (nextOffset > myFlow.getSize()) nextOffset = myFlow.getSize();
-      isNormalCompletion[offset] |= !instruction.isReturn && isNormalCompletion[nextOffset];
-    }
-
     @Override public void visitConditionalThrowToInstruction(ConditionalThrowToInstruction instruction, int offset, int nextOffset) {
       if (nextOffset > myFlow.getSize()) nextOffset = myFlow.getSize();
       boolean isNormal = instruction.offset == nextOffset && nextOffset != offset + 1 ?
@@ -545,13 +540,6 @@ public class ControlFlowUtil {
         for (i = endOffset; i <= length; i++) {
           isNormalCompletion[i] = true;
         }
-      }
-
-      @Override public void visitConditionalGoToInstruction(ConditionalGoToInstruction instruction, int offset, int nextOffset) {
-        if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
-        if (offset > endOffset) return;
-        boolean isNormal = !instruction.isReturn && isNormalCompletion[nextOffset];
-        isNormalCompletion[offset] |= isNormal;
       }
 
       @Override public void visitConditionalThrowToInstruction(ConditionalThrowToInstruction instruction, int offset, int nextOffset) {
@@ -638,7 +626,7 @@ public class ControlFlowUtil {
       final boolean[] canCompleteNormally = new boolean[flow.getSize() + 1];
 
       @Override public void visitConditionalGoToInstruction(ConditionalGoToInstruction instruction, int offset, int nextOffset) {
-        checkInstruction(offset, nextOffset, instruction.isReturn);
+        checkInstruction(offset, nextOffset, false);
       }
       @Override public void visitGoToInstruction(GoToInstruction instruction, int offset, int nextOffset) {
         checkInstruction(offset, nextOffset, instruction.isReturn);
@@ -1215,8 +1203,7 @@ public class ControlFlowUtil {
         boolean normal = nextOffset < endOffset && normalCompletion[nextOffset];
         final PsiElement element = flow.getElement(offset);
         boolean goToReturn = instruction instanceof GoToInstruction && ((GoToInstruction)instruction).isReturn;
-        boolean condGoToReturn = instruction instanceof ConditionalGoToInstruction && ((ConditionalGoToInstruction)instruction).isReturn;
-        if (goToReturn || condGoToReturn || isInsideReturnStatement(element)) {
+        if (goToReturn || isInsideReturnStatement(element)) {
           ret = true;
         }
         else if (instruction instanceof ConditionalThrowToInstruction) {

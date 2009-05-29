@@ -5,8 +5,6 @@ import org.jetbrains.annotations.NonNls;
 
 
 public class ConditionalGoToInstruction extends ConditionalBranchingInstruction {
-  public final boolean isReturn = false; //true if goto has been generated as a result of return statement
-
   public ConditionalGoToInstruction(int offset, final PsiExpression expression) {
     this(offset, Role.END, expression);
   }
