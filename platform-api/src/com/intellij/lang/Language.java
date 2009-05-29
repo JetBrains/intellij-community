@@ -156,4 +156,14 @@ public abstract class Language extends UserDataHolderBase {
     }
     return false;
   }
+
+  public static @Nullable Language findLanguageByID(String id) {
+    final Collection<Language> languages = Language.getRegisteredLanguages();
+    for (Language language : languages) {
+      if (language.getID().equals(id)) {
+        return language;
+      }
+    }
+    return null;
+  }
 }
