@@ -31,12 +31,11 @@
  */
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -44,17 +43,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements ApplicationComponent {
+public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
   private static final Map<String, LibraryTable> myLibraryTables = new HashMap<String, LibraryTable>();
 
   @NotNull
   public LibraryTable getLibraryTable() {
-    return ApplicationManager.getApplication().getComponent(LibraryTable.class);
+    return ApplicationLibraryTable.getApplicationTable();
   }
 
   @NotNull
   public LibraryTable getLibraryTable(@NotNull Project project) {
-    return project.getComponent(LibraryTable.class);
+    return ProjectLibraryTable.getInstance(project);
   }
 
   public LibraryTable getLibraryTableByLevel(String level, @NotNull Project project) {
@@ -107,14 +106,7 @@ public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implement
     return new SmartList<LibraryTable>(myLibraryTables.values());
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "LibraryTablesRegistrar";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
+  public void dispose() {
     myLibraryTables.clear();
   }
 }

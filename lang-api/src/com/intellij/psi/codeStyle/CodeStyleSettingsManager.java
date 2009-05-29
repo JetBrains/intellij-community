@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -25,7 +25,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class CodeStyleSettingsManager implements ApplicationComponent, ProjectComponent, PersistentStateComponent<Element> {
+public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
 
   private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettingsManager.class.getName());
 
@@ -34,11 +34,11 @@ public class CodeStyleSettingsManager implements ApplicationComponent, ProjectCo
   private CodeStyleSettings myTemporarySettings;
 
   public static CodeStyleSettingsManager getInstance(Project project) {
-    return project.getComponent(ProjectCodeStyleSettingsManager.class);
+    return ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
   }
 
   public static CodeStyleSettingsManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(AppCodeStyleSettingsManager.class);
+    return ServiceManager.getService(AppCodeStyleSettingsManager.class);
   }
 
   @SuppressWarnings({"UnusedDeclaration"})

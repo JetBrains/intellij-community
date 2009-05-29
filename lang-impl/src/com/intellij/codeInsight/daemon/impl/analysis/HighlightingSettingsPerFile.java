@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
@@ -14,17 +14,20 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.WeakHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectComponent {
+@State(name="HighlightingSettingsPerFile", storages = @Storage(id = "other", file ="$WORKSPACE_FILE$"))
+public class HighlightingSettingsPerFile implements PersistentStateComponent<Element> {
   @NonNls private static final String SETTING_TAG = "setting";
   @NonNls private static final String ROOT_ATT_PREFIX = "root";
   @NonNls private static final String FILE_ATT = "file";
 
   public static HighlightingSettingsPerFile getInstance(Project progect){
-    return progect.getComponent(HighlightingSettingsPerFile.class);
+    return ServiceManager.getService(progect, HighlightingSettingsPerFile.class);
   }
 
   private final Map<VirtualFile, FileHighlighingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlighingSetting[]>();
@@ -73,16 +76,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     }
   }
 
-  public void projectOpened() {}
-  public void projectClosed() {}
-  @NotNull public String getComponentName() {
-    return "HighlightingSettingsPerFile";
-  }
-
-  public void initComponent() {}
-  public void disposeComponent() {}
-
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(Element element) {
     List children = element.getChildren(SETTING_TAG);
     for (final Object aChildren : children) {
       final Element child = (Element)aChildren;
@@ -101,9 +95,8 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     }
   }
 
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    if (myHighlightSettings.isEmpty()) throw new WriteExternalException();
+  public Element getState() {
+    final Element element = new Element("state");
     for (Map.Entry<VirtualFile, FileHighlighingSetting[]> entry : myHighlightSettings.entrySet()) {
       final Element child = new Element(SETTING_TAG);
 
@@ -116,6 +109,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
       }
       element.addContent(child);
     }
+    return element;
   }
 
   public synchronized void cleanProfileSettings() {
@@ -124,10 +118,6 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
 
   public synchronized InspectionProfile getInspectionProfile(final PsiFile file) {
     return myProfileSettings.get(file);
-  }
-
-  public synchronized void addProfileSettingForFile(final PsiFile file, final InspectionProfile profile) {
-    myProfileSettings.put(file, profile);
   }
 
 }

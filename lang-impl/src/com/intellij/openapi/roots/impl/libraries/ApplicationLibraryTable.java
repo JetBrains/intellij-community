@@ -1,10 +1,7 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -22,7 +19,7 @@ import java.io.File;
     @Storage(id = "default", file = "$OPTIONS$/applicationLibraries.xml")
     }
 )
-public class ApplicationLibraryTable extends LibraryTableBase implements ExportableApplicationComponent {
+public class ApplicationLibraryTable extends LibraryTableBase implements ExportableComponent {
   private static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("global.library.display.name", plural ? 2 : 1);
@@ -37,6 +34,10 @@ public class ApplicationLibraryTable extends LibraryTableBase implements Exporta
     }
   };
 
+  public static ApplicationLibraryTable getApplicationTable() {
+    return ServiceManager.getService(ApplicationLibraryTable.class);
+  }
+
   public String getTableLevel() {
     return LibraryTablesRegistrar.APPLICATION_LEVEL;
   }
@@ -49,7 +50,7 @@ public class ApplicationLibraryTable extends LibraryTableBase implements Exporta
     return true;
   }
 
-  public static String getExternalFileName() {
+  private static String getExternalFileName() {
     return "applicationLibraries";
   }
 

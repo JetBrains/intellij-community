@@ -95,11 +95,20 @@
                       serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
   <exportable serviceInterface="com.intellij.codeInsight.CodeInsightSettings"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"
+                      serviceImplementation="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
+
+  <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
+                      serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
+
   <applicationService serviceInterface="com.intellij.usageView.UsageTreeColorsScheme"
                       serviceImplementation="com.intellij.usageView.UsageTreeColorsScheme"/>
 
   <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
-                        serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
+                      serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
+
+  <applicationService serviceInterface="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"
+                      serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
 
   <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
                       serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
@@ -108,6 +117,12 @@
                   serviceImplementation="com.intellij.dupLocator.DuplocateManager"/>
   <applicationService serviceInterface="com.intellij.dupLocator.DuplocatorSettings"
                         serviceImplementation="com.intellij.dupLocator.DuplocatorSettings"/>
+
+  <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
+                  serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
+
+  <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"
+                  serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"/>
 
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
@@ -124,6 +139,9 @@
   <projectService serviceInterface="com.intellij.psi.codeStyle.CodeStyleManager"
                   serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl"/>
   <projectService serviceInterface="com.intellij.pom.PomModel" serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
+
+  <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
+                  serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"/>
 
   <projectService serviceInterface="com.intellij.facet.ProjectWideFacetListenersRegistry"
                   serviceImplementation="com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl"/>

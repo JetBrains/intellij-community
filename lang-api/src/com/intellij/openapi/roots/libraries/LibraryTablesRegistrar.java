@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.libraries;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ public abstract class LibraryTablesRegistrar {
   @NonNls public static final String APPLICATION_LEVEL = "application";
 
   public static LibraryTablesRegistrar getInstance() {
-    return ApplicationManager.getApplication().getComponent(LibraryTablesRegistrar.class);
+    return ServiceManager.getService(LibraryTablesRegistrar.class);
   }
 
   @NotNull

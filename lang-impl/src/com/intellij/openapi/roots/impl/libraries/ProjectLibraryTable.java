@@ -25,7 +25,7 @@ import java.util.List;
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/libraries/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectLibraryTable.LibraryStateSplitter.class)
     }
 )
-public class ProjectLibraryTable extends LibraryTableBase implements ProjectComponent {
+public class ProjectLibraryTable extends LibraryTableBase {
   private static final LibraryTablePresentation PROJECT_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("project.library.display.name", plural ? 2 : 1);
@@ -44,7 +44,7 @@ public class ProjectLibraryTable extends LibraryTableBase implements ProjectComp
 
   }
   public static LibraryTable getInstance(Project project) {
-    return project.getComponent(LibraryTable.class);
+    return ServiceManager.getService(project, ProjectLibraryTable.class);
   }
 
   public void projectOpened() {
