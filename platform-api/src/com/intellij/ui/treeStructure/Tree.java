@@ -17,6 +17,7 @@ package com.intellij.ui.treeStructure;
 
 import com.intellij.Patches;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
@@ -35,8 +36,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Map;
 
-public class Tree extends JTree implements Autoscroll {
+public class Tree extends JTree implements Autoscroll, TestableUi {
 
   public Tree() {
     patchTree();
@@ -385,4 +387,27 @@ public class Tree extends JTree implements Autoscroll {
     boolean accept(T node);
   }
 
+  public void putInfo(Map<String, String> info) {
+    final TreePath[] selection = getSelectionPaths();
+    if (selection == null) return;
+
+    StringBuffer nodesText = new StringBuffer();
+
+    for (TreePath eachPath : selection) {
+      final Object eachNode = eachPath.getLastPathComponent();
+      final Component c =
+        getCellRenderer().getTreeCellRendererComponent(this, eachNode, false, false, false, getRowForPath(eachPath), false);
+
+      if (c != null) {
+        if (nodesText.length() > 0) {
+          nodesText.append(";");
+        }
+        nodesText.append(c.toString());
+      }
+    }
+
+    if (nodesText.length() > 0) {
+      info.put("selectedNodes", nodesText.toString());
+    }
+  }
 }

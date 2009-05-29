@@ -20,18 +20,20 @@ public class AssertFocused extends AbstractCommand {
     final ActionCallback result = new ActionCallback();
 
     String text = getText().substring(PREFIX.length()).trim();
-
-    final String[] keyValue = text.split(",");
     final Map<String, String> expected = new LinkedHashMap<String, String>();
-    for (String each : keyValue) {
-      final String[] eachPair = each.split("=");
-      if (eachPair.length != 2) {
-        cb.error("Syntax error, must be comma-separated pairs key=value", getLine());
-        result.setRejected();
-        return result;
-      }
 
-      expected.put(eachPair[0], eachPair[1]);
+    if (text.length() > 0) {
+      final String[] keyValue = text.split(",");
+      for (String each : keyValue) {
+        final String[] eachPair = each.split("=");
+        if (eachPair.length != 2) {
+          cb.error("Syntax error, must be comma-separated pairs key=value", getLine());
+          result.setRejected();
+          return result;
+        }
+
+        expected.put(eachPair[0], eachPair[1]);
+      }
     }
 
     IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
@@ -87,6 +89,9 @@ public class AssertFocused extends AbstractCommand {
 
     StringBuffer untestedText = new StringBuffer();
     for (String each : untested.keySet()) {
+      if (untestedText.length() > 0) {
+        untestedText.append(",");
+      }
       untestedText.append(each).append("=").append(untested.get(each));
     }
 

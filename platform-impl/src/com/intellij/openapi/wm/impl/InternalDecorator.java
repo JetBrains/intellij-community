@@ -10,6 +10,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -19,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.EmptyIcon;
@@ -32,12 +34,13 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Map;
 
 /**
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class InternalDecorator extends JPanel {
+public final class InternalDecorator extends JPanel implements TestableUi {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.InternalDecorator");
 
   private static final int DIVIDER_WIDTH = 5;
@@ -897,5 +900,14 @@ public final class InternalDecorator extends JPanel {
 
   public TitlePanel getTitlePanel() {
     return myTitlePanel;
+  }
+
+  public void putInfo(Map<String, String> info) {
+    info.put("toolWindowTitle", myToolWindow.getTitle());
+
+    final Content selection = myToolWindow.getContentManager().getSelectedContent();
+    if (selection != null) {
+      info.put("toolWindowTab", selection.getTabName());
+    }
   }
 }

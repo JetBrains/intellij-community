@@ -479,4 +479,13 @@ public class SimpleColoredComponent extends JComponent {
     }
   }
 
+  @Override
+  public String toString() {
+    StringBuffer result = new StringBuffer();
+    for (String each : myFragments) {
+      result.append(each);
+    }
+
+    return result.toString();
+  }
 }

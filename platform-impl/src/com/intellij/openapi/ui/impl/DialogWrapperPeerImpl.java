@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -46,6 +47,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTrackbackProvider {
   public static Object HAVE_INITIAL_SELECTION = new Object();
@@ -425,7 +427,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
 
-  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, FocusTrackback.Provider {
+  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, FocusTrackback.Provider, TestableUi {
     private final WeakReference<DialogWrapper> myDialogWrapper;
     /**
      * Initial size of the dialog. When the dialog is being closed and
@@ -467,6 +469,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       addWindowListener(myWindowListener);
       myComponentListener = new MyComponentListener();
       addComponentListener(myComponentListener);
+    }
+
+    public void putInfo(Map<String, String> info) {
+      info.put("dialog", getTitle());
     }
 
     public FocusTrackback getFocusTrackback() {

@@ -23,6 +23,10 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.debugger.UiDebuggerExtension;
@@ -49,7 +53,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
 
   private JPanel myComponent;
-  private JTextArea myText;
 
   private PlaybackRunner myRunner;
 
@@ -67,6 +70,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private boolean myChanged;
   private JList myList;
+
+  private Document myDocument;
+  private Editor myEditor;
 
   private void initUi() {
     myComponent = new JPanel(new BorderLayout());
@@ -114,16 +120,26 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     myComponent.add(north, BorderLayout.NORTH);
 
-    myText = new JTextArea();
-    myText.getDocument().addDocumentListener(docListener);
+    myDocument = EditorFactory.getInstance().createDocument("");
+    myEditor = EditorFactory.getInstance().createEditor(myDocument);
+    myDocument.addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        myChanged = true;
+      }
+    });
 
     final String text = System.getProperty("idea.playback.script");
     if (text != null) {
-      myText.setText(text);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          myDocument.setText(text);
+        }
+      });
     }
 
     final Splitter script2Log = new Splitter(true);
-    script2Log.setFirstComponent(new JScrollPane(myText));
+    script2Log.setFirstComponent(new JScrollPane(myEditor.getComponent()));
 
     myList = new JList(myMessage);
     myList.setCellRenderer(new MyListRenderer());
@@ -272,7 +288,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
       final OutputStream os = getCurrentScriptFile().getOutputStream(this);
       writer = new BufferedWriter(new OutputStreamWriter(os));
-      final String toWrite = myText.getText();
+      final String toWrite = myDocument.getText();
       writer.write(toWrite != null ? toWrite : "");
     }
     catch (IOException e) {
@@ -292,7 +308,11 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private void loadFrom(VirtualFile file) {
     try {
       final String text = CharsetToolkit.bytesToString(file.contentsToByteArray());
-      myText.setText(text);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          myDocument.setText(text);
+        }
+      });
       myCurrentScript.setText(file.getPresentableUrl());
       myChanged = false;
     }
@@ -403,7 +423,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myMessage.clear();
 
     addInfo("Waiting for IDE frame activation", -1);
-    myRunner = new PlaybackRunner(myText.getText() != null ? myText.getText() : "", this);
+    myRunner = new PlaybackRunner(myDocument.getText(), this);
 
 
     new Thread() {
@@ -496,9 +516,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   public void disposeUiResources() {
     myComponent = null;
     LocalFileSystem.getInstance().removeVirtualFileListener(myVfsListener);
-    System.setProperty("idea.playback.script", myText.getText());
+    System.setProperty("idea.playback.script", myDocument.getText());
     myCurrentScript.setText("");
     myMessage.clear();
+    EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
   private void addInfo(String text, int line) {
