@@ -520,9 +520,6 @@
     </component>
     <!-- Groovy-based framework specific extension points -->
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.VariableNameSuggesterRegistry</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry</implementation-class>
     </component>
     <component>

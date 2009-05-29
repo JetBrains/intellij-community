@@ -36,7 +36,6 @@ import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.grails.GrailsLoader;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
@@ -54,9 +53,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
  * @author ilyas
  */
 public class GroovyLoader implements ApplicationComponent {
-
-  public GroovyLoader(GrailsLoader loader) {
-  }
 
   public void initComponent() {
     GroovyEditorActionsManager.registerGroovyEditorActions();

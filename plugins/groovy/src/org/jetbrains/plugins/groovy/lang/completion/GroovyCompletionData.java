@@ -33,7 +33,6 @@ import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.extensions.completion.VariableNameSuggesterRegistry;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
@@ -105,12 +104,6 @@ public class GroovyCompletionData extends CompletionData {
     variant.includeScopeClass(LeafPsiElement.class);
     variant.addCompletionFilter(TrueFilter.INSTANCE);
     variant.addCompletion(new SuggestedVariableNamesGetter(), TailType.NONE);
-
-    // register custom variable name suggesters
-    VariableNameSuggesterRegistry registry = VariableNameSuggesterRegistry.getInstance();
-    for (ContextGetter getter : registry.getNameSuggesters()) {
-      variant.addCompletion(getter, TailType.NONE);
-    }
     registerVariant(variant);
   }
 
