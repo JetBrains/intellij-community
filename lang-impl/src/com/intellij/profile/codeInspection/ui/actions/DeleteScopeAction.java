@@ -45,11 +45,12 @@ public abstract class DeleteScopeAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    InspectionConfigTreeNode parent = null;
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
     for (InspectionConfigTreeNode node : nodes) {
       final Descriptor descriptor = node.getDesriptor();
       LOG.assertTrue(descriptor != null);
-      final InspectionConfigTreeNode parent = (InspectionConfigTreeNode)node.getParent();
+      parent = (InspectionConfigTreeNode)node.getParent();
       final HighlightDisplayKey key = descriptor.getKey();
       if (parent.getChildCount() <= 2) { //remove default with last non-default
         getSelectedProfile().removeAllScopes(key.toString());
@@ -61,9 +62,11 @@ public abstract class DeleteScopeAction extends AnAction {
         node.removeFromParent();
       }
       ((DefaultTreeModel)myTree.getModel()).reload(parent);
-      myTree.setSelectionPath(new TreePath(parent.getPath()));
-      myTree.revalidate();
     }
+    if (parent != null) {
+      myTree.setSelectionPath(new TreePath(parent.getPath()));
+    }
+    myTree.revalidate();
   }
 
   protected abstract InspectionProfileImpl getSelectedProfile();
