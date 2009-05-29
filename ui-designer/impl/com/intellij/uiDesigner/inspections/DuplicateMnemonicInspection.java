@@ -56,6 +56,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
 
   @Nullable
   public static SupportCode.TextWithMnemonic getTextWithMnemonic(final Module module, final IComponent component) {
+    if (module.isDisposed()) return null;
     IProperty prop = FormInspectionUtil.findProperty(component, SwingProperties.TEXT);
     if (prop != null) {
       Object propValue = prop.getPropertyValue(component);
