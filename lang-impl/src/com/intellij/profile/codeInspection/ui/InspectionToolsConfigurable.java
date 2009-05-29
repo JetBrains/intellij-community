@@ -156,9 +156,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myActivateButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myActiveProfile = (InspectionProfileImpl)myProfiles.getSelectedItem();
+        myActivateButton.setEnabled(false);
       }
     });
-    myActivateButton.setEnabled(false);
 
     myProjectProfileManager = projectProfileManager;
     myProfileManager = profileManager;
@@ -270,6 +270,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myLayout.show(myPanel, inspectionProfile.getName());
     myDeleteButton.setEnabled(getProfiles().size() > 1);
     myActiveProfile = inspectionProfile;
+    myActivateButton.setEnabled(false);
   }
 
   protected Collection<Profile> getProfiles() {
