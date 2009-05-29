@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class JavaReferenceImporter implements ReferenceImporter {
   }
 
   public static boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file, final boolean allowCaretNearRef) {
+    if (!file.getViewProvider().getLanguages().contains(StdLanguages.JAVA)) return false;
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
     int lineNumber = document.getLineNumber(caretOffset);
