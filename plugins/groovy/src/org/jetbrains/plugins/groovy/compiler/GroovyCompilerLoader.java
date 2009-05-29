@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -24,7 +25,13 @@ public class GroovyCompilerLoader implements ProjectComponent{
   public void projectOpened() {
     HashSet<FileType> inputSet = new HashSet<FileType>(Arrays.asList(GroovyFileType.GROOVY_FILE_TYPE, StdFileTypes.JAVA));
     HashSet<FileType> outputSet = new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS));
-    CompilerManager.getInstance(myProject).addTranslatingCompiler(new GroovyCompiler(myProject), inputSet, outputSet);
+    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+    compilerManager.addTranslatingCompiler(new GroovyCompiler(myProject), inputSet, outputSet);
+
+    GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject);
+    compilerManager.addCompiler(generator);
+    compilerManager.addCompilationStatusListener(generator);
+    compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
   }
 
   public void projectClosed() {

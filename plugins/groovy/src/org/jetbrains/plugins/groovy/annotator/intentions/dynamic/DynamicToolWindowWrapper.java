@@ -16,7 +16,8 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -26,13 +27,16 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.ui.*;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,12 +44,7 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -74,7 +73,7 @@ import java.util.Set;
  * User: Dmitry.Krasilschikov
  * Date: 09.01.2008
  */
-public class DynamicToolWindowWrapper implements ProjectComponent {
+public class DynamicToolWindowWrapper {
   private final Project myProject;
   private ToolWindow myToolWindow = null;
 
@@ -83,7 +82,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   }
 
   public static DynamicToolWindowWrapper getInstance(Project project) {
-    return project.getComponent(DynamicToolWindowWrapper.class);
+    return ServiceManager.getService(project, DynamicToolWindowWrapper.class);
   }
 
   public static final String DYNAMIC_TOOLWINDOW_ID = GroovyBundle.message("dynamic.tool.window.id");
@@ -491,24 +490,6 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     int idx = myTreeTableModel.getIndexOfChild(parent, child);
     child.removeFromParent();
     myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{child});
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "DynamicToolWindowWrapper";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {

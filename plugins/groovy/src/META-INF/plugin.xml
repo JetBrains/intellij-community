@@ -21,7 +21,7 @@
   <version>8.0</version>
   <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
   </vendor>
-  <depends optional="true">JavaScript</depends>
+  <depends optional="true" config-file="groovy-js-integration.xml">JavaScript</depends>
   <depends optional="true" config-file="groovy-spring-integration.xml">com.intellij.spring</depends>
   <depends optional="true" config-file="groovy-javaee-integration.xml">com.intellij.javaee</depends>
   <depends optional="true">com.intellij.css</depends>
@@ -45,15 +45,6 @@
     <libraryManager implementation="org.jetbrains.plugins.grails.config.GrailsLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager" order="last"/>
   </extensions>
-
-  <!--<extensions defaultExtensionNs="org.jetbrains.plugins.grails">-->
-    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.ControllersFolderProvider"/>-->
-    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.DomainClassesFolderProvider"/>-->
-    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.UnitTestsFolderProvider"/>-->
-    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.UserFolderProvider"/>-->
-    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.ViewsFolderProvider"/>-->
-    <!--<grailsProjectViewStructureProvider implementation="org.jetbrains.plugins.grails.projectView.v2.providers.ServicesFolderProvider"/>-->
-  <!--</extensions>-->
 
   <extensions defaultExtensionNs="com.intellij">
     <refactoring.introduceParameterMethodUsagesProcessor implementation="org.jetbrains.plugins.groovy.refactoring.introduceParameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor"/>
@@ -235,7 +226,8 @@
                         serviceImplementation="org.jetbrains.plugins.gant.settings.GantApplicationSettings"/>
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.gant.reference.GantReferenceContributor"/>
-    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceContributer"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.grails.references.util.GrailsReferenceContributor"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.gant.reference.AntTasksProvider"
                     serviceImplementation="org.jetbrains.plugins.gant.reference.AntTasksProvider"/>
@@ -249,6 +241,8 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"/>
 
     <inspectionToolProvider implementation="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider"/>
+
+    <concatenationAwareInjector implementation="org.jetbrains.plugins.grails.fileType.GroovyInjector"/>
 
     <!-- control flow -->
     <intentionAction>
@@ -395,54 +389,17 @@
       <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.style.parameterToEntry.ConvertParameterToMapEntryIntention</className>
     </intentionAction>
+
+    <projectService serviceInterface="org.jetbrains.plugins.grails.references.manager.GrailsImplicitVariableManager"
+                    serviceImplementation="org.jetbrains.plugins.grails.references.manager.GrailsImplicitVariableManagerImpl"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
+                    serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
     <codeFragmentFactory implementation="org.jetbrains.plugins.groovy.debugger.GroovyCodeFragmentFactory"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.fileType.GroovyInjector</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.editor.EditorDecorator</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory
-      </implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.references.manager.GrailsImplicitVariableManagerImpl
-      </implementation-class>
-      <interface-class>org.jetbrains.plugins.grails.references.manager.GrailsImplicitVariableManager</interface-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.GrailsProjectLoader</implementation-class>
-    </component>
-    <component>
-      <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
-      <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl
-      </implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper
-      </implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory
-      </implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.projectView.v2.GrailsProjectViewPane</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.config.GrailsModuleStructureSynchronizer</implementation-class>
-    </component>
-  </project-components>
 
   <actions>
     <action id="Grails.GenerateViews" class="org.jetbrains.plugins.grails.actions.GenerateViewsAction"
@@ -563,8 +520,7 @@
     </component>
     <!-- Groovy-based framework specific extension points -->
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.VariableNameSuggesterRegistry
-      </implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.VariableNameSuggesterRegistry</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry</implementation-class>
@@ -579,5 +535,33 @@
       <implementation-class>org.jetbrains.plugins.groovy.extensions.resolve.ScriptMembersProviderRegistry</implementation-class>
     </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.editor.EditorDecorator</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.GrailsProjectLoader</implementation-class>
+    </component>
+    <component>
+      <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
+      <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.projectView.v2.GrailsProjectViewPane</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.config.GrailsModuleStructureSynchronizer</implementation-class>
+    </component>
+  </project-components>
 
 </idea-plugin>

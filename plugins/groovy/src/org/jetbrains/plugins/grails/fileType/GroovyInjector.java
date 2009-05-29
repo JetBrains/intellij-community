@@ -17,76 +17,45 @@ package org.jetbrains.plugins.grails.fileType;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
-import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-public class GroovyInjector implements ProjectComponent {
-  private final Project myProject;
-
-  public GroovyInjector(Project project) {
-    myProject = project;
-  }
-
-  public void initComponent() {
-    JavaConcatenationInjectorManager.getInstance(myProject).registerConcatenationInjector(new MyLanguageInjector());
-  }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "GroovyInjector";
-  }
-
-  public void projectOpened() {
-    // called when myProject is opened
-  }
-
-  public void projectClosed() {
-    // called when myProject is being closed
-  }
-
-  public static final String EVAL_NAME = "evaluate";
-  public static final String PARSE_NAME = "parse";
+public class GroovyInjector implements ConcatenationAwareInjector {
+  private static final String EVAL_NAME = "evaluate";
+  private static final String PARSE_NAME = "parse";
   private static final String GROOVY_SHELL_QNAME = "groovy.lang.GroovyShell";
 
-  private static class MyLanguageInjector implements ConcatenationAwareInjector {
-    public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
-      for (PsiElement operand : operands) {
-        if (!(operand instanceof PsiLanguageInjectionHost)) return;
-      }
+  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
+    for (PsiElement operand : operands) {
+      if (!(operand instanceof PsiLanguageInjectionHost)) return;
+    }
 
-      final PsiExpressionList argList = PsiTreeUtil.getParentOfType(operands[0], PsiExpressionList.class);
-      if (argList != null) {
-        final PsiExpression firstArg = argList.getExpressions()[0];
-        if (contains(firstArg, operands)) {
-          final PsiElement parent = argList.getParent();
-          if (parent instanceof PsiMethodCallExpression) {
-            final PsiMethodCallExpression call = (PsiMethodCallExpression) parent;
-            final String refName = call.getMethodExpression().getReferenceName();
-            if (PARSE_NAME.equals(refName) || EVAL_NAME.equals(refName)) {
-              final PsiMethod method = call.resolveMethod();
-              if (method != null) {
-                final PsiClass clazz = method.getContainingClass();
-                if (clazz != null) {
-                  if (GROOVY_SHELL_QNAME.equals(clazz.getQualifiedName())) {
-                    final Language groovyLanguage = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
-                    registrar.startInjecting(groovyLanguage);
-                    for (PsiElement operand : operands) {
-                      registrar.addPlace("", "", (PsiLanguageInjectionHost) operand, operand.getTextLength() > 1 ?
-                              new TextRange(1, operand.getTextLength() - 1) :
-                              new TextRange(1, 1));
-                    }
-                    registrar.doneInjecting();
+    final PsiExpressionList argList = PsiTreeUtil.getParentOfType(operands[0], PsiExpressionList.class);
+    if (argList != null) {
+      final PsiExpression firstArg = argList.getExpressions()[0];
+      if (contains(firstArg, operands)) {
+        final PsiElement parent = argList.getParent();
+        if (parent instanceof PsiMethodCallExpression) {
+          final PsiMethodCallExpression call = (PsiMethodCallExpression) parent;
+          final String refName = call.getMethodExpression().getReferenceName();
+          if (PARSE_NAME.equals(refName) || EVAL_NAME.equals(refName)) {
+            final PsiMethod method = call.resolveMethod();
+            if (method != null) {
+              final PsiClass clazz = method.getContainingClass();
+              if (clazz != null) {
+                if (GROOVY_SHELL_QNAME.equals(clazz.getQualifiedName())) {
+                  final Language groovyLanguage = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
+                  registrar.startInjecting(groovyLanguage);
+                  for (PsiElement operand : operands) {
+                    registrar.addPlace("", "", (PsiLanguageInjectionHost) operand, operand.getTextLength() > 1 ?
+                                                                                   new TextRange(1, operand.getTextLength() - 1) :
+                                                                                   new TextRange(1, 1));
                   }
+                  registrar.doneInjecting();
                 }
               }
             }
@@ -94,17 +63,17 @@ public class GroovyInjector implements ProjectComponent {
         }
       }
     }
+  }
 
-    private boolean contains(PsiExpression arg, PsiElement[] operands) {
-      if (operands.length == 1) return arg.equals(operands[0]);
-      if (arg instanceof PsiBinaryExpression) {
-        final PsiExpression lop = ((PsiBinaryExpression) arg).getLOperand();
-        for (PsiElement operand : operands) {
-          if (operand.equals(lop)) return true;
-        }
+  private boolean contains(PsiExpression arg, PsiElement[] operands) {
+    if (operands.length == 1) return arg.equals(operands[0]);
+    if (arg instanceof PsiBinaryExpression) {
+      final PsiExpression lop = ((PsiBinaryExpression) arg).getLOperand();
+      for (PsiElement operand : operands) {
+        if (operand.equals(lop)) return true;
       }
-
-      return false;
     }
+
+    return false;
   }
 }

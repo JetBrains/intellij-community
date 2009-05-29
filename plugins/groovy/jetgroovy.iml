@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="J2EE" />
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="execution-impl" />
+    <orderEntry type="module" module-name="spring-web" />
   </component>
 </module>
 

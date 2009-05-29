@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.*;
@@ -33,9 +32,6 @@ import java.util.List;
  * Date: 23.11.2007
  */
 public abstract class DynamicManager implements ProjectComponent, PersistentStateComponent<DRootElement> {
-  public static final String DYNAMIC_PROPERTIES_DIR = "dynamicProperties";
-  public static final String DYNAMIC_PROPERTIES_MODULE = "module";
-  public static final String DYNAMIC_PROPERTIES_PROJECT = "project";
 
   @NotNull
   public static DynamicManager getInstance(@NotNull Project project) {

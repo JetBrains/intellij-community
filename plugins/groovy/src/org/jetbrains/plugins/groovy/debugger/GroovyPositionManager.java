@@ -45,7 +45,6 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLoader;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelperRegistry;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -55,16 +54,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GroovyPositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
 
   private final DebugProcess myDebugProcess;
   private final ScriptPositionManagerHelperRegistry myRegistry;
+  @NotNull
+  public static final Set<String> GROOVY_EXTENSIONS = new java.util.HashSet<String>(Arrays.asList("groovy", "gvy", "gy", "gsh"));
 
   public GroovyPositionManager(DebugProcess debugProcess) {
     myDebugProcess = debugProcess;
@@ -213,7 +211,7 @@ public class GroovyPositionManager implements PositionManager {
     Query<VirtualFile> query = directoryIndex.getDirectoriesByPackageName(packageName, true);
     String fileNameWithoutExtension = dotIndex > 0 ? qName.substring(dotIndex + 1) : qName;
     final Set<String> fileNames = new HashSet<String>();
-    for (final String extention : GroovyLoader.GROOVY_EXTENSIONS) {
+    for (final String extention : GROOVY_EXTENSIONS) {
       fileNames.add(fileNameWithoutExtension + "." + extention);
     }
     final Ref<PsiFile> result = new Ref<PsiFile>();
