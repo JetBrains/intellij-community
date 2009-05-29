@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -30,7 +29,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       Arrays.asList(PsiMethodCallExpression.class,PsiNewExpression.class, PsiAnonymousClass.class,PsiEnumConstant.class));
 
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    final List<? extends PsiElement> allElements = JavaCompletionUtil.getAllPsiElements((LookupItem)item);
+    final List<? extends PsiElement> allElements = JavaCompletionUtil.getAllPsiElements(item);
 
     if (allElements != null &&
         allElements.size() > 0 &&
