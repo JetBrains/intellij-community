@@ -286,20 +286,10 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       return;
     }
 
-    if (myNotificationsModel.getCount() == 1) {
-      final NotificationImpl notification = myNotificationsModel.getFirst();
-      if (notification != null) {
-        performNotificationAction(notification);
-        return;
-      }
-    }
-
-    assert myPopupRef == null;
-
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(this, getPreferredFocusedComponent());
     final JBPopup popup =
         builder.setResizable(true)
-            .setMinSize(NotificationsListPanel.getMinSize())
+            .setMinSize(getMinSize())
             .setDimensionServiceKey(null, "NotificationsPopup", true)
             .setCancelOnClickOutside(false)
             .setBelongsToGlobalPopupStack(false)
