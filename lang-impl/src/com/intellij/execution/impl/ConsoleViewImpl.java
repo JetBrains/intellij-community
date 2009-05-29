@@ -88,6 +88,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   private ConsoleState myState = ConsoleState.NOT_STARTED;
   private final int CYCLIC_BUFFER_SIZE = getCycleBufferSize();
   private final boolean isViewer;
+  private Computable<ModalityState> myStateForUpdate;
 
   private static int getCycleBufferSize() {
     final String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
@@ -342,6 +343,12 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     return this;
   }
 
+  public void setModalityStateForUpdate(Computable<ModalityState> stateComputable) {
+    myStateForUpdate = stateComputable;
+  }
+
+
+
   public void dispose(){
     myState = myState.dispose();
     if (myEditor != null){
@@ -386,14 +393,18 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
         }
       }
       if (myFlushAlarm.getActiveRequestCount() == 0 && myEditor != null) {
-        myFlushAlarm.addRequest(myFlushDeferredRunnable, FLUSH_DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
+        myFlushAlarm.addRequest(myFlushDeferredRunnable, FLUSH_DELAY, getStateForUpdate());
       }
     }
   }
 
+  private ModalityState getStateForUpdate() {
+    return myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(myEditor.getComponent());
+  }
+
   private void requestFlushImmediately() {
     if (myEditor != null) {
-      myFlushAlarm.addRequest(myFlushDeferredRunnable, 0, ModalityState.stateForComponent(myEditor.getComponent()));
+      myFlushAlarm.addRequest(myFlushDeferredRunnable, 0, getStateForUpdate());
     }
   }
 
