@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 
@@ -351,10 +352,10 @@ public class ToolEditorDialog extends DialogWrapper {
           myTextField.getDocument().insertString(position, "$" + macro + "$", null);
           myTextField.setCaretPosition(position + macro.length() + 2);
         }
-        catch(BadLocationException ex){
+        catch(BadLocationException ignored){
         }
-        myTextField.requestFocus();
       }
+      IdeFocusManager.findInstance().requestFocus(myTextField, true);
     }
   }
 
