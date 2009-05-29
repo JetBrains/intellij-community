@@ -38,7 +38,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   private File myCurHangLogDir;
   private List<StackTraceElement> myStacktraceCommonPart;
 
-  private static final int UNRESPONSIVE_THRESHOLD = 5;
+  private int UNRESPONSIVE_THRESHOLD = 5;
 
   @NotNull
   public String getComponentName() {
@@ -47,6 +47,19 @@ public class PerformanceWatcher implements ApplicationComponent {
 
   public void initComponent() {
     if (shallNotWatch()) return;
+
+    final String threshold = System.getProperty("performance.watcher.threshold");
+    if (threshold != null) {
+      try {
+        UNRESPONSIVE_THRESHOLD = Integer.parseInt(threshold);
+      }
+      catch (NumberFormatException e) {
+        // ignore
+      }
+    }
+    if (UNRESPONSIVE_THRESHOLD == 0) {
+      return;
+    }
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
