@@ -6,7 +6,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
 
 public class CopyElementAction extends AnAction {
@@ -26,11 +29,11 @@ public class CopyElementAction extends AnAction {
     if (editor != null) {
       PsiElement aElement = getTargetElement(editor, project);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file == null) return;
       elements = new PsiElement[]{aElement};
       if (aElement == null || !CopyHandler.canCopy(elements)) {
         elements = new PsiElement[]{file};
       }
-      assert file != null;
       defaultTargetDirectory = file.getContainingDirectory();
     } else {
       Object element = dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);
