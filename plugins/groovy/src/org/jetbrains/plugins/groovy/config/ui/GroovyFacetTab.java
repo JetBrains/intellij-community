@@ -179,8 +179,7 @@ public class GroovyFacetTab extends FacetEditorTab {
       }
     }
 
-    for (int i = myManagers.length - 1; i >= 0; i--) {
-      LibraryManager manager = myManagers[i];
+    for (LibraryManager manager : myManagers) {
       if (mainOnly && !isGroovyOrGrails(manager)) {
         continue;
       }

@@ -57,9 +57,7 @@ import java.io.File;
  * @author ilyas
  */
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
-
-  @NonNls public static final String GROOVY_LIB_PATTERN = "groovy-.*";
-  @NonNls public static final String GROOVY_ALL_JAR_PATTERN = "groovy-all-.*\\.jar";
+  @NonNls private static final String GROOVY_ALL_JAR_PATTERN = "groovy-all-(.*)\\.jar";
 
   @NonNls private static final String DGM_CLASS_PATH = "org/codehaus/groovy/runtime/DefaultGroovyMethods.class";
   @NonNls private static final String CLOSURE_CLASS_PATH = "groovy/lang/Closure.class";
@@ -86,19 +84,26 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   @NotNull
   public String getSDKVersion(@NotNull final String path) {
     String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH);
-    return groovyJarVersion != null ? groovyJarVersion : UNDEFINED_VERSION;
+    if (groovyJarVersion != null) {
+      return groovyJarVersion;
+    }
+
+    groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
+    if (groovyJarVersion != null) {
+      return groovyJarVersion;
+    }
+    
+    return UNDEFINED_VERSION;
   }
 
   public boolean isSDKLibrary(Library library) {
     if (library == null) return false;
-    VirtualFile[] classFiles = library.getFiles(OrderRootType.CLASSES);
-    return containsGroovyJar(classFiles) && !GrailsConfigUtils.containsGrailsJar(classFiles);
+    return isGroovyLibrary(library.getFiles(OrderRootType.CLASSES));
   }
 
-  public static boolean containsGroovyJar(VirtualFile[] classFiles) {
+  public static boolean isGroovyLibrary(VirtualFile[] classFiles) {
     for (VirtualFile file : classFiles) {
-      String name = file.getName();
-      if (isGroovyAllJar(name) || name.matches(GROOVY_LIB_PATTERN)) {
+      if (isGroovyAllJar(file.getName())) {
         return true;
       }
     }
@@ -245,9 +250,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
         return true;
       }
       if (GroovyUtils.getFilesInDirectoryByPattern(path + "/embeddable", GROOVY_ALL_JAR_PATTERN).length > 0) {
-        return true;
-      }
-      if (file.findFileByRelativePath("bin/" + STARTER_SCRIPT_FILE_NAME) != null) {
         return true;
       }
     }
