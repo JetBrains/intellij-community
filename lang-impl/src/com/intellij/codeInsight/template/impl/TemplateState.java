@@ -698,6 +698,9 @@ public class TemplateState implements Disposable {
 
   private void finishTemplateEditing() {
     if (myTemplate == null) return;
+
+    LookupManager.getInstance(myProject).hideActiveLookup();
+
     int endSegmentNumber = myTemplate.getEndSegmentNumber();
     int offset = -1;
     if (endSegmentNumber >= 0) {

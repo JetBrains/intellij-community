@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -59,12 +60,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final Map<LookupElement, Collection<LookupElementAction>> myItemActions = new THashMap<LookupElement, Collection<LookupElementAction>>();
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
-  private int myInitialOffset;
+  private RangeMarker myInitialOffset;
+  private RangeMarker myInitialSelection;
   private long myShownStamp = -1;
   private String myInitialPrefix;
   @Nullable private final LookupItemPreferencePolicy myItemPreferencePolicy;
 
   private RangeMarker myLookupStartMarker;
+  private int myOldLookupStartOffset;
   private final JList myList;
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
@@ -93,7 +96,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myProject = project;
     myEditor = editor;
     myItemPreferencePolicy = itemPreferencePolicy;
-    myInitialOffset = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
+    setInitialOffset(myEditor.getCaretModel().getOffset(), myEditor.getSelectionModel().getSelectionStart(), myEditor.getSelectionModel().getSelectionEnd());
 
     final Document document = myEditor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -278,6 +281,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
       if (myMinPrefixLength != minPrefixLength) {
         myLookupStartMarker = null;
+        myOldLookupStartOffset = -1;
       }
       myMinPrefixLength = minPrefixLength;
 
@@ -490,6 +494,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     assert !myDisposed;
 
     int lookupStart = calcLookupStart();
+    myOldLookupStartOffset = lookupStart;
     myLookupStartMarker = myEditor.getDocument().createRangeMarker(lookupStart, lookupStart);
     myLookupStartMarker.setGreedyToLeft(true);
 
@@ -503,18 +508,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myEditorCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e){
-        int curOffset = myEditor.getCaretModel().getOffset();
-        if (curOffset != myInitialOffset + myAdditionalPrefix.length()) {
-          hide();
-        }
+        caretOrSelectionChanged();
       }
     };
-
     myEditorSelectionListener = new SelectionListener() {
       public void selectionChanged(final SelectionEvent e) {
-        if (!e.getNewRange().isEmpty()) {
-          hide();
-        }
+        caretOrSelectionChanged();
       }
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
@@ -574,6 +573,37 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     hintManager.showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
 
     myShownStamp = System.currentTimeMillis();
+  }
+
+  private void caretOrSelectionChanged() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myEditor.isDisposed() || myProject.isDisposed()) return;
+
+        if (!myInitialOffset.isValid() || !myInitialSelection.isValid()) {
+          hide();
+          return;
+        }
+
+        final SelectionModel selectionModel = myEditor.getSelectionModel();
+        if (selectionModel.hasSelection()) {
+          if (myInitialSelection.getStartOffset() != selectionModel.getSelectionStart() ||
+              myInitialSelection.getEndOffset() != selectionModel.getSelectionEnd()) {
+            hide();
+            return;
+          }
+        } else {
+          if (myEditor.getCaretModel().getOffset() != myInitialOffset.getStartOffset() + myAdditionalPrefix.length()) {
+            hide();
+            return;
+          }
+        }
+
+        if (myOldLookupStartOffset != getLookupStart()) {
+          refreshUi();
+        }
+      }
+    });
   }
 
   private int calcLookupStart() {
@@ -738,7 +768,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     int offset = myEditor.getCaretModel().getOffset();
     if (beforeCaret != null) { // correct case, expand camel-humps
       final int start = offset - presentPrefix.length();
-      myInitialOffset = start + beforeCaret.length();
+      setInitialOffset(offset, offset, offset);
+      myAdditionalPrefix = "";
       myEditor.getDocument().replaceString(start, offset, beforeCaret);
       presentPrefix = beforeCaret;
     }
@@ -759,9 +790,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     offset += afterCaret.length();
-    myInitialOffset = offset;
+    setInitialOffset(offset, offset, offset);
     myEditor.getCaretModel().moveToOffset(offset);
     return true;
+  }
+
+  private void setInitialOffset(int offset, int selStart, int selEnd) {
+    myInitialOffset = myEditor.getDocument().createRangeMarker(TextRange.from(offset, 0));
+    myInitialSelection = myEditor.getDocument().createRangeMarker(new TextRange(selStart, selEnd));
   }
 
   public PsiFile getPsiFile() {
