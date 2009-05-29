@@ -13,9 +13,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.io.ZipUtil;
 
 import java.awt.*;
@@ -84,12 +84,20 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
       StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(tempFile);
       StartupActionScriptManager.addActionCommand(deleteTemp);
 
-      final int ret = Messages.showOkCancelDialog(IdeBundle.message("message.settings.imported.successfully",
+      String key = ApplicationManager.getApplication().isRestartCapable()
+                   ? "message.settings.imported.successfully.restart"
+                   : "message.settings.imported.successfully";
+      final int ret = Messages.showOkCancelDialog(IdeBundle.message(key,
                                                                     ApplicationNamesInfo.getInstance().getProductName(),
                                                                     ApplicationNamesInfo.getInstance().getFullProductName()),
                                                   IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon());
       if (ret == 0) {
-        ApplicationManager.getApplication().exit();
+        if (ApplicationManager.getApplication().isRestartCapable()) {
+          ApplicationManager.getApplication().restart();
+        }
+        else {
+          ApplicationManager.getApplication().exit();
+        }
       }
     }
     catch (ZipException e1) {
