@@ -14,11 +14,11 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,7 +154,7 @@ public class ActionsTree {
   }
 
   public void reset(Keymap keymap, final QuickList[] allQuickLists) {
-    reset(keymap, allQuickLists, null, null);
+    reset(keymap, allQuickLists, myFilter, null);
   }
 
   public Group getMainGroup() {
@@ -198,7 +198,7 @@ public class ActionsTree {
   }
 
   public void filterTree(final KeyboardShortcut keyboardShortcut, final QuickList [] currentQuickListIds) {
-    reset(myKeymap, currentQuickListIds, null, keyboardShortcut);
+    reset(myKeymap, currentQuickListIds, myFilter, keyboardShortcut);
   }
 
   private class MyModel extends DefaultTreeModel implements TreeTableModel {
