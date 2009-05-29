@@ -2,9 +2,9 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.ide.SelectInContext;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -52,12 +52,12 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     return false;
   }
 
-  public boolean isSubIdSelectable(String subId, VirtualFile file) {
-    if (file == null) return false;
+  public boolean isSubIdSelectable(String subId, SelectInContext context) {
+    if (context == null) return false;
     final NamedScope scope = NamedScopesHolder.getScope(myProject, subId);
     if (scope == null) return false;
     PackageSet packageSet = scope.getValue();
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(context.getVirtualFile());
     return psiFile != null && packageSet != null && packageSet.contains(psiFile, NamedScopesHolder.getHolder(myProject, subId, DependencyValidationManager.getInstance(myProject)));
   }
 }

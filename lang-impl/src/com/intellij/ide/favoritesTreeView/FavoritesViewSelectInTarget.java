@@ -2,6 +2,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.ide.SelectInContext;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,8 +47,8 @@ public class FavoritesViewSelectInTarget extends ProjectViewSelectInTarget {
     return false;
   }
 
-  public boolean isSubIdSelectable(String subId, VirtualFile file) {
+  public boolean isSubIdSelectable(String subId, SelectInContext context) {
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(myProject);
-    return favoritesManager.contains(subId, file);
+    return favoritesManager.contains(subId, context.getVirtualFile());
   }
 }

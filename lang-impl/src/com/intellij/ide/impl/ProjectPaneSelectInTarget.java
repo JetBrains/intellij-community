@@ -2,6 +2,7 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.ide.SelectInContext;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -24,8 +25,8 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget impleme
     return canSelect(vFile);
   }
 
-  public boolean isSubIdSelectable(String subId, VirtualFile file) {
-    return canSelect(file);
+  public boolean isSubIdSelectable(String subId, SelectInContext context) {
+    return canSelect(context);
   }
 
   private boolean canSelect(final VirtualFile vFile) {

@@ -4,6 +4,8 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.CompositeSelectInTarget;
+import com.intellij.ide.SelectInContext;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,7 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper {
+public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper implements CompositeSelectInTarget {
   private String mySubId;
 
   protected ProjectViewSelectInTarget(Project project) {
@@ -46,7 +48,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getProjectViewPaneById(getMinorViewId());
     return pane.getSubIds();
   }
-  public boolean isSubIdSelectable(String subId, VirtualFile file) {
+  public boolean isSubIdSelectable(String subId, SelectInContext context) {
     return false;
   }
   public String getSubIdPresentableName(String subId) {

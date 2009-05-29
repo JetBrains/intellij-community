@@ -5,15 +5,14 @@ import com.intellij.ide.*;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -55,7 +54,7 @@ public class SelectInAction extends AnAction implements DumbAware {
                                                                   JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
     }
     else {
-      popup = JBPopupFactory.getInstance().createWizardStep(new TopLevelActionsStep(targetVector, context, context.getVirtualFile()));
+      popup = JBPopupFactory.getInstance().createListPopup(new TopLevelActionsStep(targetVector, context));
     }
 
     popup.showInBestPositionFor(dataContext);
@@ -63,7 +62,6 @@ public class SelectInAction extends AnAction implements DumbAware {
 
   private static class TopLevelActionsStep extends BaseListPopupStep<SelectInTarget> {
     private final SelectInContext mySelectInContext;
-    private final VirtualFile myVirtualFile;
     private final List<SelectInTarget> myProjectViewTargets;
     private final List<SelectInTarget> myVisibleTargets;
 
@@ -123,9 +121,8 @@ public class SelectInAction extends AnAction implements DumbAware {
       }
     }
 
-    public TopLevelActionsStep(@NotNull final List<SelectInTarget> targetVector, SelectInContext selectInContext, VirtualFile virtualFile) {
+    public TopLevelActionsStep(@NotNull final List<SelectInTarget> targetVector, SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
-      myVirtualFile = virtualFile;
       myProjectViewTargets = new ArrayList<SelectInTarget>();
       myVisibleTargets = new ArrayList<SelectInTarget>();
       for (SelectInTarget target : targetVector) {
@@ -155,20 +152,22 @@ public class SelectInAction extends AnAction implements DumbAware {
         return FINAL_CHOICE;
       }
       if (target == PROJECT_VIEW_FAKE_TARGET) {
-        return createProjectViewsStep(myVirtualFile);
+        return createProjectViewsStep();
+      }
+      if (target instanceof CompositeSelectInTarget) {
+        return createSubIdsStep((CompositeSelectInTarget)target, mySelectInContext);
       }
       return FINAL_CHOICE;
     }
 
-    private PopupStep createProjectViewsStep(final VirtualFile virtualFile) {
-      return new SelectActionStep(myProjectViewTargets, mySelectInContext, virtualFile);
+    private PopupStep createProjectViewsStep() {
+      return new SelectActionStep(myProjectViewTargets, mySelectInContext);
     }
 
     public boolean hasSubstep(final SelectInTarget selectedValue) {
       if (selectedValue == PROJECT_VIEW_FAKE_TARGET) return true;
-      if (!(selectedValue instanceof ProjectViewSelectInTarget)) return false;
-      final ProjectViewSelectInTarget target = (ProjectViewSelectInTarget)selectedValue;
-      return target.getSubIds().length != 0;
+      return selectedValue instanceof CompositeSelectInTarget &&
+             ((CompositeSelectInTarget)selectedValue).getSubIds().length != 0;
     }
 
     public boolean isSelectable(final SelectInTarget target) {
@@ -198,12 +197,9 @@ public class SelectInAction extends AnAction implements DumbAware {
 
     private final SelectInContext mySelectInContext;
 
-    private final VirtualFile myVirtualFile;
-
-    public SelectActionStep(@NotNull final List<SelectInTarget> targetVector, SelectInContext selectInContext, VirtualFile virtualFile) {
+    public SelectActionStep(@NotNull final List<SelectInTarget> targetVector, SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
       myTargets = targetVector;
-      myVirtualFile = virtualFile;
       init(IdeBundle.message("select.in.title.project.view"), myTargets, null);
     }
 
@@ -220,46 +216,13 @@ public class SelectInAction extends AnAction implements DumbAware {
         return FINAL_CHOICE;
       }
       if (hasSubstep(target)) {
-        return createSubIdsStep((ProjectViewSelectInTarget)target, myVirtualFile);
+        return createSubIdsStep((CompositeSelectInTarget)target, mySelectInContext);
       }
       return FINAL_CHOICE;
     }
 
-    private PopupStep createSubIdsStep(final ProjectViewSelectInTarget target, final VirtualFile virtualFile) {
-      class SelectSubIdAction extends AnAction {
-        private final String mySubId;
-
-        public SelectSubIdAction(String subId, String presentableName) {
-          super(presentableName);
-          mySubId = subId;
-        }
-
-        public void update(AnActionEvent e) {
-          e.getPresentation().setEnabled(target.isSubIdSelectable(mySubId, virtualFile));
-        }
-
-        public void actionPerformed(AnActionEvent e) {
-          target.setSubId(mySubId);
-          target.selectIn(mySelectInContext, true);
-        }
-      }
-      DefaultActionGroup group = new DefaultActionGroup();
-      for (String subId : target.getSubIds()) {
-        SelectSubIdAction action = new SelectSubIdAction(subId, target.getSubIdPresentableName(subId));
-        group.add(action);
-      }
-      DataContext dataContext = DataManager.getInstance().getDataContext();
-      final Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
-
-      String subTitle = IdeBundle.message("title.popup.select.subtarget", target.toString());
-      return JBPopupFactory.getInstance().createActionsStep(group, dataContext, false, true, subTitle, component, true);
-    }
-
     public boolean hasSubstep(final SelectInTarget selectedValue) {
-      if (!(selectedValue instanceof ProjectViewSelectInTarget)) return false;
-      final ProjectViewSelectInTarget target = (ProjectViewSelectInTarget)selectedValue;
-      String[] subIds = target.getSubIds();
-      return subIds.length != 0;
+      return selectedValue instanceof CompositeSelectInTarget && ((CompositeSelectInTarget)selectedValue).getSubIds().length != 0;
     }
 
     public boolean isSelectable(final SelectInTarget target) {
@@ -280,6 +243,37 @@ public class SelectInAction extends AnAction implements DumbAware {
 
   private static SelectInManager getSelectInManager(Project project) {
     return SelectInManager.getInstance(project);
+  }
+
+  private static PopupStep createSubIdsStep(final CompositeSelectInTarget target, final SelectInContext context) {
+    class SelectSubIdAction extends AnAction {
+      private final String mySubId;
+
+      public SelectSubIdAction(String subId, String presentableName) {
+        super(presentableName);
+        mySubId = subId;
+      }
+
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(target.isSubIdSelectable(mySubId, context));
+      }
+
+      public void actionPerformed(AnActionEvent e) {
+        target.setSubId(mySubId);
+        target.selectIn(context, true);
+      }
+    }
+    DefaultActionGroup group = new DefaultActionGroup();
+    int i=0;
+    for (String subId : target.getSubIds()) {
+      SelectSubIdAction action = new SelectSubIdAction(subId, numberingText(i++, target.getSubIdPresentableName(subId)));
+      group.add(action);
+    }
+    DataContext dataContext = DataManager.getInstance().getDataContext();
+    final Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
+
+    String subTitle = IdeBundle.message("title.popup.select.subtarget", target.toString());
+    return JBPopupFactory.getInstance().createActionsStep(group, dataContext, false, true, subTitle, component, true);
   }
 
   private static class NoTargetsAction extends AnAction {

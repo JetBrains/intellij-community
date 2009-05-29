@@ -415,8 +415,26 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null) {
-      VirtualFile virtualFile = PsiUtilBase.getVirtualFile(selectedPsiElement);
-      if (virtualFile != null && ((ProjectViewSelectInTarget)newPane.createSelectInTarget()).isSubIdSelectable(newSubId, virtualFile)) {
+      final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(selectedPsiElement);
+      if (virtualFile != null && ((ProjectViewSelectInTarget)newPane.createSelectInTarget()).isSubIdSelectable(newSubId, new SelectInContext() {
+        @NotNull
+        public Project getProject() {
+          return myProject;
+        }
+
+        @NotNull
+        public VirtualFile getVirtualFile() {
+          return virtualFile;
+        }
+
+        public Object getSelectorInFile() {
+          return null;
+        }
+
+        public FileEditorProvider getFileEditorProvider() {
+          return null;
+        }
+      })) {
         newPane.select(selectedPsiElement, virtualFile, true);
       }
     }
