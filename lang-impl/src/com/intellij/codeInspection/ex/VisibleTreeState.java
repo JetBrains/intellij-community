@@ -65,10 +65,10 @@ public class VisibleTreeState{
     final TreeNode[] rootPath = root.getPath();
     if (descriptor != null) {
       final String shortName = descriptor.getKey().toString();
-      if (mySelectedNodes.contains(new State(descriptor)) || mySelectedNodes.contains(new State(shortName))) {
+      if (mySelectedNodes.contains(new State(descriptor))) {
         toSelect.add(new TreePath(rootPath));
       }
-      if (myExpandedNodes.contains(new State(descriptor)) || myExpandedNodes.contains(new State(shortName))) {
+      if (myExpandedNodes.contains(new State(descriptor))) {
         pathsToExpand.add(new TreePath(rootPath));
       }
     }
