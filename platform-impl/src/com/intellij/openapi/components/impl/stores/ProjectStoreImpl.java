@@ -593,7 +593,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
             if (virtualFile != null) {
               virtualFile.refresh(false, false);
-              if (!virtualFile.isWritable()) readonlyFiles.add(virtualFile);
+              if (virtualFile.isValid() && !virtualFile.isWritable()) readonlyFiles.add(virtualFile);
             }
           }
 
