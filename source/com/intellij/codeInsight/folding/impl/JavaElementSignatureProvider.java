@@ -1,23 +1,16 @@
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.util.ReflectionCache;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.xml.util.HtmlUtil;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.StringTokenizer;
 import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class JavaElementSignatureProvider implements ElementSignatureProvider {
+public class JavaElementSignatureProvider extends ElementSignatureProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaElementSignatureProvider");
 
   @Nullable
@@ -140,67 +133,10 @@ public class JavaElementSignatureProvider implements ElementSignatureProvider {
 
       return buffer.toString();
     }
-    if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
-      PsiElement parent = tag.getParent();
-
-      StringBuilder buffer = new StringBuilder();
-      buffer.append("tag#");
-      String name = tag.getName();
-      buffer.append(name.length() == 0 ? "<unnamed>" : name);
-
-      buffer.append("#");
-      buffer.append(getChildIndex(tag, parent, name, XmlTag.class));
-
-      if (parent instanceof XmlTag) {
-        String parentSignature = getSignature(parent);
-        buffer.append(";");
-        buffer.append(parentSignature);
-      }
-
-      return buffer.toString();
-    }
     return null;
   }
 
-  private static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<T> hisClass) {
-    PsiElement[] children = parent.getChildren();
-    int index = 0;
-
-    for (PsiElement child : children) {
-      if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
-        T namedChild = (T)child;
-        final String childName = namedChild.getName();
-
-        if (Comparing.equal(name, childName)) {
-          if (namedChild.equals(element)) {
-            return index;
-          }
-          index++;
-        }
-      }
-    }
-
-    return index;
-  }
-
-  public PsiElement restoreBySignature(final PsiFile file, String signature) {
-    int semicolonIndex = signature.indexOf(';');
-    PsiElement parent;
-
-    if (semicolonIndex >= 0) {
-      String parentSignature = signature.substring(semicolonIndex + 1);
-      parent = restoreBySignature(file, parentSignature);
-      if (parent == null) return null;
-      signature = signature.substring(0, semicolonIndex);
-    }
-    else {
-      parent = file;
-    }
-
-    StringTokenizer tokenizer = new StringTokenizer(signature, "#");
-    String type = tokenizer.nextToken();
-
+  protected PsiElement restoreBySignatureTokens(PsiFile file, PsiElement parent, String type, StringTokenizer tokenizer) {
     if (type.equals("imports")) {
       if (!(file instanceof PsiJavaFile)) return null;
       return ((PsiJavaFile)file).getImportList();
@@ -302,60 +238,8 @@ public class JavaElementSignatureProvider implements ElementSignatureProvider {
         return null;
       }
     }
-    else if (type.equals("tag")) {
-      String name = tokenizer.nextToken();
-
-      if (parent instanceof XmlFile) {
-        parent = ((XmlFile)parent).getDocument();
-      }
-
-      try {
-        int index = Integer.parseInt(tokenizer.nextToken());
-        PsiElement result = restoreElementInternal(parent, name, index, XmlTag.class);
-
-        if (result == null &&
-            file.getFileType() == StdFileTypes.JSP) {
-          //TODO: FoldingBuilder API, psi roots, etc?
-          if (parent instanceof XmlDocument) {
-            // html tag, not found in jsp tree
-            result = restoreElementInternal(HtmlUtil.getRealXmlDocument((XmlDocument)parent), name, index, XmlTag.class);
-          }
-          else if (name.equals("<unnamed>")) {
-            // scriplet/declaration missed because null name
-            result = restoreElementInternal(parent, "", index, XmlTag.class);
-          }
-        }
-
-        return result;
-      }
-      catch (NumberFormatException e) {
-        LOG.error(e);
-        return null;
-      }
-    }
     else {
       return null;
     }
-  }
-
-  @Nullable
-  private static <T extends PsiNamedElement> T restoreElementInternal(PsiElement parent, String name, int index, Class<T> hisClass) {
-    PsiElement[] children = parent.getChildren();
-
-    for (PsiElement child : children) {
-      if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
-        T namedChild = (T)child;
-        final String childName = namedChild.getName();
-
-        if (Comparing.equal(name, childName)) {
-          if (index == 0) {
-            return namedChild;
-          }
-          index--;
-        }
-      }
-    }
-
-    return null;
   }
 }

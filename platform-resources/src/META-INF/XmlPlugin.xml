@@ -275,6 +275,8 @@
     <todoIndexer filetype="DTD" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlTodoIndexer"/>
     <todoIndexer filetype="HTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.HtmlTodoIndexer"/>
     <todoIndexer filetype="XHTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XHtmlTodoIndexer"/>
+
+    <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>
   </extensions>
 
   <actions>
