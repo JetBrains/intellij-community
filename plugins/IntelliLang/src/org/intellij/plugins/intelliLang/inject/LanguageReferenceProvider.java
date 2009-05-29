@@ -16,10 +16,10 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.patterns.PsiJavaPatterns;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotationParameterFilter;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
@@ -64,7 +64,9 @@ final class LanguageReferenceProvider extends PsiReferenceContributor {
               final PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(owner, myConfig.getPatternAnnotationPair(), true);
               if (annotations.length > 0) {
                 final String pattern = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
-                return new PsiReference[]{new RegExpEnumReference(expression, pattern)};
+                if (pattern != null) {
+                  return new PsiReference[]{new RegExpEnumReference(expression, pattern)};
+                }
               }
             }
           }

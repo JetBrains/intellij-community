@@ -25,6 +25,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.util.RegExpUtil;
 import org.intellij.plugins.intelliLang.util.StringLiteralReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -36,7 +37,7 @@ import java.util.Set;
 final class RegExpEnumReference extends StringLiteralReference {
   private final String myPattern;
 
-  public RegExpEnumReference(PsiLiteralExpression expression, String pattern) {
+  public RegExpEnumReference(PsiLiteralExpression expression, @NotNull String pattern) {
     super(expression);
     myPattern = pattern;
   }

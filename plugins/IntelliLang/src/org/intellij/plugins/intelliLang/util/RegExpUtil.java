@@ -23,14 +23,18 @@ import org.intellij.lang.regexp.psi.RegExpAtom;
 import org.intellij.lang.regexp.psi.RegExpBranch;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpPattern;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class RegExpUtil {
+  private RegExpUtil() {
+  }
+
   @Nullable
-  public static Set<String> getEnumValues(Project project, String regExp) {
+  public static Set<String> getEnumValues(Project project, @NotNull String regExp) {
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     final PsiFile file = factory.createFileFromText("dummy.regexp", RegExpFileType.INSTANCE, regExp);
     final RegExpPattern pattern = (RegExpPattern)file.getFirstChild();
