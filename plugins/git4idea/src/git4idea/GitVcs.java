@@ -51,6 +51,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.update.GitUpdateEnvironment;
+import git4idea.vfs.GitRootTracker;
 import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +142,7 @@ public class GitVcs extends AbstractVcs {
    * The changelist provider
    */
   private GitCommittedChangeListProvider myCommittedChangeListProvider;
-
+  private GitRootTracker myRootTracker;
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
@@ -171,6 +172,9 @@ public class GitVcs extends AbstractVcs {
     myUpdateEnvironment = new GitUpdateEnvironment(myProject);
     myMergeProvider = new GitMergeProvider(myProject);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
+    if (!myProject.isDefault()) {
+      myRootTracker = new GitRootTracker(this, myProject);
+    }
   }
 
   /**
@@ -344,6 +348,10 @@ public class GitVcs extends AbstractVcs {
     if (myVFSListener != null) {
       myVFSListener.dispose();
       myVFSListener = null;
+    }
+    if (myRootTracker != null) {
+      myRootTracker.dispose();
+      myRootTracker = null;
     }
     super.deactivate();
   }
