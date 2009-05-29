@@ -11,9 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -53,7 +55,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
             if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
             assert file.getTreeElement() == null;
             StubTree stubTree = file.getStubTree();
-            file.loadTreeElement();
+            final FileElement fileElement = file.loadTreeElement();
             node = myNode;
             if (node == null) {
 
@@ -62,8 +64,11 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
                 append(getClass()).
                 append(" in ").
                 append(file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath()).
-                append("\nFile stub tree:").
-                append(stubTree != null ? ((PsiFileStubImpl)stubTree.getRoot()).printTree() : " is null").toString();
+                append("\nFile stub tree:\n").
+                append(stubTree != null ? ((PsiFileStubImpl)stubTree.getRoot()).printTree() : " is null").
+                append("\nLoaded file AST:\n").
+                append(DebugUtil.treeToString(fileElement, true)).
+                toString();
               throw new IllegalArgumentException(message);
             }
           }
