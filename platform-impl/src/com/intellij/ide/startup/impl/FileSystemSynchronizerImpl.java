@@ -5,14 +5,14 @@
 package com.intellij.ide.startup.impl;
 
 import com.intellij.ide.startup.BackgroundableCacheUpdater;
+import com.intellij.ide.startup.CacheUpdateSets;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
-import com.intellij.ide.startup.CacheUpdateSets;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 
 import java.util.List;
 
@@ -25,10 +25,11 @@ public class FileSystemSynchronizerImpl extends FileSystemSynchronizer {
   protected void updateFiles() {
     final CacheUpdateSets indexingSets = myIndexingSets;
     final CacheUpdateSets contentSets = myContentSets;
+    final CacheUpdater[] updaters = myUpdaters.toArray(myUpdaters.toArray(new CacheUpdater[myUpdaters.size()]));
     boolean showBackgroundButton = false;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      for (int i = 0, myUpdatersSize = myUpdaters.size(); i < myUpdatersSize; i++) {
-        CacheUpdater updater = myUpdaters.get(i);
+      for (int i = 0, myUpdatersSize = updaters.length; i < myUpdatersSize; i++) {
+        CacheUpdater updater = updaters[i];
         if (updater instanceof BackgroundableCacheUpdater) {
           if (((BackgroundableCacheUpdater)updater).initiallyBackgrounded()) {
             List<VirtualFile> remaining = indexingSets.backgrounded(i);
@@ -49,7 +50,7 @@ public class FileSystemSynchronizerImpl extends FileSystemSynchronizer {
       final ProgressWindow progressWindow = (ProgressWindow)indicator;
       progressWindow.setBackgroundHandler(new Runnable() {
         public void run() {
-          handleBackgroundAction(progressWindow, indexingSets, contentSets);
+          handleBackgroundAction(progressWindow, indexingSets, contentSets, updaters);
         }
       });
     }
@@ -64,11 +65,11 @@ public class FileSystemSynchronizerImpl extends FileSystemSynchronizer {
     }
   }
 
-  private void handleBackgroundAction(final ProgressWindow progressWindow, final CacheUpdateSets indexingSets,
-                                      final CacheUpdateSets contentSets) {
+  private static void handleBackgroundAction(final ProgressWindow progressWindow, final CacheUpdateSets indexingSets,
+                                      final CacheUpdateSets contentSets, CacheUpdater[] updaters) {
     boolean allBackgrounded = true;
-    for (int i = 0, size = myUpdaters.size(); i < size; i++) {
-      CacheUpdater updater = myUpdaters.get(i);
+    for (int i = 0; i < updaters.length; i++) {
+      CacheUpdater updater = updaters[i];
       if (updater instanceof BackgroundableCacheUpdater) {
         List<VirtualFile> remaining = indexingSets.getRemainingFiles(i);
         if (remaining == null || remaining.isEmpty()) {
