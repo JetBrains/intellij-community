@@ -16,7 +16,10 @@
 
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -34,7 +37,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 /**
  * @author Konstantin Bulenkov
  */
-public class DescriptionNotFoundInspection extends BaseJavaLocalInspectionTool{
+public class DescriptionNotFoundInspection extends DevKitInspectionBase{
   @NonNls private static final String INSPECTION_PROFILE_ENTRY = "com.intellij.codeInspection.InspectionProfileEntry";
 
   @Override
@@ -113,12 +116,6 @@ public class DescriptionNotFoundInspection extends BaseJavaLocalInspectionTool{
       }
     }
     return findNearestMethod(name, cls.getSuperClass());
-  }
-
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return "DevKit";
   }
 
   @Nls

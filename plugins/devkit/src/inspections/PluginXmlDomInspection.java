@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
@@ -22,7 +23,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return "DevKit";
+    return DevKitBundle.message("inspections.group.name");
   }
 
   @Nls
