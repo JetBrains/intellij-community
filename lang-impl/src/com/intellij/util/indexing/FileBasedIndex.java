@@ -13,8 +13,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.FileTypeEvent;
-import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.*;
@@ -34,7 +33,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -129,16 +127,52 @@ public class FileBasedIndex implements ApplicationComponent {
     });
 
     connection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
+      private Map<FileType, Set<String>> myTypeToExtensionMap;
       public void beforeFileTypesChanged(final FileTypeEvent event) {
         cleanupProcessedFlag();
-        // TODO: temporary solution for tests to avoid 'twin stubs' problem
-        // Correct index update will require more information from FileType events
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          requestRebuild(StubUpdatingIndex.INDEX_ID);
+        myTypeToExtensionMap = new HashMap<FileType, Set<String>>();
+        final FileTypeManager manager = event.getManager();
+        for (FileType type : manager.getRegisteredFileTypes()) {
+          myTypeToExtensionMap.put(type, getExtensions(manager, type));
         }
       }
 
       public void fileTypesChanged(final FileTypeEvent event) {
+        final Map<FileType, Set<String>> oldExtensions = myTypeToExtensionMap;
+        myTypeToExtensionMap = null;
+        if (oldExtensions != null) {
+          final FileTypeManager manager = event.getManager();
+          final Map<FileType, Set<String>> newExtensions = new HashMap<FileType, Set<String>>();
+          for (FileType type : manager.getRegisteredFileTypes()) {
+            newExtensions.put(type, getExtensions(manager, type));
+          }
+          // we are interested only in extension changes or removals.
+          // addition of an extension is handled separately by RootsChanged event
+          if (!newExtensions.keySet().containsAll(oldExtensions.keySet())) {
+            rebuildAllndices();
+            return;
+          }
+          for (FileType type : oldExtensions.keySet()) {
+            if (!newExtensions.get(type).containsAll(oldExtensions.get(type))) {
+              rebuildAllndices();
+              return;
+            }
+          }
+        }
+      }
+
+      private Set<String> getExtensions(FileTypeManager manager, FileType type) {
+        final Set<String> set = new HashSet<String>();
+        for (FileNameMatcher matcher : manager.getAssociations(type)) {
+          set.add(matcher.getPresentableString());
+        }
+        return set;
+      }
+
+      private void rebuildAllndices() {
+        for (ID<?, ?> indexId : myIndices.keySet()) {
+          requestRebuild(indexId);
+        }
       }
     });
 
@@ -322,6 +356,7 @@ public class FileBasedIndex implements ApplicationComponent {
     for (ID<?, ?> indexId : myIndices.keySet()) {
       final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
       assert index != null;
+      checkRebuild(indexId, true); // if the index was scheduled for rebuild, only clean it
       //LOG.info("DISPOSING " + indexId);
       index.dispose();
     }
@@ -433,7 +468,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
       if (isUpToDateCheckEnabled()) {
         try {
-          checkRebuild(indexId);
+          checkRebuild(indexId, false);
           indexUnsavedDocuments(indexId);
         }
         catch (StorageException e) {
@@ -637,25 +672,25 @@ public class FileBasedIndex implements ApplicationComponent {
   private <K> void scheduleRebuild(final ID<K, ?> indexId, final Throwable e) {
     requestRebuild(indexId);
     LOG.info(e);
-    checkRebuild(indexId);
+    checkRebuild(indexId, false);
   }
 
-  private void checkRebuild(final ID<?, ?> indexId) {
+  private void checkRebuild(final ID<?, ?> indexId, final boolean cleanupOnly) {
     if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
       cleanupProcessedFlag();
 
       final Runnable rebuildRunnable = new Runnable() {
         public void run() {
-
-          final FileSystemSynchronizerImpl synchronizer = new FileSystemSynchronizerImpl();
-          synchronizer.setCancelable(false);
-          for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-            synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), FileBasedIndex.this));
-          }
-
           try {
             clearIndex(indexId);
-            synchronizer.executeFileUpdate();
+            if (!cleanupOnly) {
+              final FileSystemSynchronizerImpl synchronizer = new FileSystemSynchronizerImpl();
+              synchronizer.setCancelable(false);
+              for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+                synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), FileBasedIndex.this));
+              }
+              synchronizer.executeFileUpdate();
+            }
           }
           catch (StorageException e) {
             requestRebuild(indexId);
@@ -668,7 +703,7 @@ public class FileBasedIndex implements ApplicationComponent {
       };
 
       final Application application = ApplicationManager.getApplication();
-      if (application.isUnitTestMode()) {
+      if (cleanupOnly || application.isUnitTestMode()) {
         rebuildRunnable.run();
       }
       else {
@@ -949,6 +984,9 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
     throws StorageException {
+    if (myRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
+      return; // the index is scheduled for rebuild, no need to update
+    }
 
     final StorageGuard.Holder lock = setDataBufferingEnabled(false);
 
@@ -958,6 +996,9 @@ public class FileBasedIndex implements ApplicationComponent {
       final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
       assert index != null;
 
+      //if (indexId.toString().equals("js.index")) {
+      //  System.out.println(inputId + "; FILE:" + file.getPath());
+      //}
       index.update(inputId, currentFC, oldFC);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {

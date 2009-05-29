@@ -209,22 +209,22 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
           writeLock.lock();
           if (oldData.containsKey(key)) {
             final Value oldValue = oldData.get(key);
-            //if (getClass().getName().contains("StubUpdatingIndex")) {
+            //if (myIndexId != null && "js.index".equals(myIndexId.toString())) {
             //  System.out.println(key + ": BEFORE REMOVE: " + myStorage.read(key).toValueList());
             //}
             myStorage.removeValue(key, inputId, oldValue);
-            //if (getClass().getName().contains("StubUpdatingIndex")) {
+            //if (myIndexId != null && "js.index".equals(myIndexId.toString())) {
             //  System.out.println(key + ": AFTER REMOVE: " + myStorage.read(key).toValueList());
             //}
           }
           // add new values
           if (newData.containsKey(key)) {
             final Value newValue = newData.get(key);
-            //if (getClass().getName().contains("StubUpdatingIndex")) {
+            //if (myIndexId != null && "js.index".equals(myIndexId.toString())) {
             //  System.out.println(key + ": BEFORE ADD: " + myStorage.read(key).toValueList());
             //}
             myStorage.addValue(key, inputId, newValue);
-            //if (getClass().getName().contains("StubUpdatingIndex")) {
+            //if (myIndexId != null && "js.index".equals(myIndexId.toString())) {
             //  System.out.println(key + ": AFTER ADD: " + myStorage.read(key).toValueList());
             //}
           }
