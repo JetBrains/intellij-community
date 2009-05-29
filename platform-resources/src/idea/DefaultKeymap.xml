@@ -1324,6 +1324,7 @@
     </action>
     <action id="$Undo">
       <keyboard-shortcut first-keystroke="shift control MINUS"/>
+      <keyboard-shortcut first-keystroke="control SLASH"/>
     </action>
     <action id="EditorPageUp">
       <keyboard-shortcut first-keystroke="PAGE_UP"/>
