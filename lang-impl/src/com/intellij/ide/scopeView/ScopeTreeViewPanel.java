@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
@@ -345,11 +346,15 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
                                       boolean hasFocus) {
       if (value instanceof PackageDependenciesNode) {
         PackageDependenciesNode node = (PackageDependenciesNode)value;
-        if (expanded) {
-          setIcon(node.getOpenIcon());
+        try {
+          if (expanded) {
+            setIcon(node.getOpenIcon());
+          }
+          else {
+            setIcon(node.getClosedIcon());
+          }
         }
-        else {
-          setIcon(node.getClosedIcon());
+        catch (IndexNotReadyException e) {
         }
         final SimpleTextAttributes regularAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         TextAttributes textAttributes = regularAttributes.toTextAttributes();
