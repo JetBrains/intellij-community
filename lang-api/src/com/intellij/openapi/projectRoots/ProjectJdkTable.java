@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
@@ -50,11 +51,19 @@ public abstract class ProjectJdkTable {
     void jdkNameChanged(Sdk jdk, String previousName);
   }
 
+  /**
+   * @deprecated use #JDK_TABLE_TOPIC instead
+   */
   public abstract void addListener(Listener listener);
 
+  /**
+   * @deprecated use #JDK_TABLE_TOPIC instead
+   */
   public abstract void removeListener(Listener listener);
 
   public abstract SdkType getDefaultSdkType();
 
   public abstract Sdk createSdk(final String name, final SdkType sdkType);
+
+  public static Topic<Listener> JDK_TABLE_TOPIC = Topic.create("Project JDK table", Listener.class);
 }

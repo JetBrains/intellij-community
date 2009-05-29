@@ -11,7 +11,8 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.EventDispatcher;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.impl.MessageListenerList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,11 +38,17 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
 
   private final ArrayList<Sdk> myJdks = new ArrayList<Sdk>();
 
-  private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
+  private final MessageListenerList<Listener> myListenerList;
 
   @NonNls private static final String ELEMENT_JDK = "jdk";
 
   private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<String, ProjectJdkImpl>();
+  private MessageBus myMessageBus;
+
+  public ProjectJdkTableImpl() {
+    myMessageBus = ApplicationManager.getApplication().getMessageBus();
+    myListenerList = new MessageListenerList<Listener>(myMessageBus, JDK_TABLE_TOPIC);
+  }
 
   @NotNull
   public File[] getExportFiles() {
@@ -98,10 +105,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     return type;
   }
 
-  public int getJdkCount() {
-    return myJdks.size();
-  }
-
   public Sdk[] getAllJdks() {
     return myJdks.toArray(new Sdk[myJdks.size()]);
   }
@@ -120,12 +123,12 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   public void addJdk(Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myJdks.add(jdk);
-    myEventDispatcher.getMulticaster().jdkAdded(jdk);
+    myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkAdded(jdk);
   }
 
   public void removeJdk(Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    myEventDispatcher.getMulticaster().jdkRemoved(jdk);
+    myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(jdk);
     myJdks.remove(jdk);
   }
 
@@ -137,16 +140,16 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
 
     if (previousName != null ? !previousName.equals(newName) : newName != null) {
       // fire changes because after renaming JDK its name may match the associated jdk name of modules/project
-      myEventDispatcher.getMulticaster().jdkNameChanged(originalJdk, previousName);
+      myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkNameChanged(originalJdk, previousName);
     }
   }
 
-  public void addListener(ProjectJdkTable.Listener listener) {
-    myEventDispatcher.addListener(listener);
+  public void addListener(Listener listener) {
+    myListenerList.add(listener);
   }
 
-  public void removeListener(ProjectJdkTable.Listener listener) {
-    myEventDispatcher.removeListener(listener);
+  public void removeListener(Listener listener) {
+    myListenerList.remove(listener);
   }
 
   public SdkType getDefaultSdkType() {
