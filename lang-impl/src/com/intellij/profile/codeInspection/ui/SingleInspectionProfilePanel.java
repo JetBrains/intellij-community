@@ -124,11 +124,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     final JPanel sharePanel = new JPanel(new BorderLayout());
     sharePanel.add(myShareProfile, BorderLayout.EAST);
     add(sharePanel, BorderLayout.NORTH);
-    myShareProfile.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        mySelectedProfile.setProfileManager(myShareProfile.isSelected() ? myProjectProfileManager : InspectionProfileManager.getInstance());
-      }
-    });
   }
 
   private void updateSelectedProfileState() {
@@ -890,6 +885,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   public boolean isModified() {
     if (myModified) return true;
     if (mySelectedProfile.isChanged()) return true;
+    if (myShareProfile.isSelected() != (mySelectedProfile.getProfileManager() == myProjectProfileManager)) return true;
     if (!Comparing.strEqual(myInitialProfile, mySelectedProfile.getName())) return true;
     if (descriptorsAreChanged()) {
       return setSelectedProfileModified(true);
@@ -905,11 +901,23 @@ public class SingleInspectionProfilePanel extends JPanel {
     myProfileFilter.reset();
     myProfileFilter.setSelectedItem(filter);
     myShareProfile.setVisible(myProjectProfileManager != null);
-    myShareProfile.setSelected(mySelectedProfile.getProfileManager() instanceof InspectionProjectProfileManager);
+    myShareProfile.setSelected(mySelectedProfile.getProfileManager() == myProjectProfileManager);
+  }
+
+  public void setSharedEnabled(boolean enabled) {
+    myShareProfile.setEnabled(enabled);
   }
 
   public void apply() throws ConfigurationException {
     final ModifiableModel selectedProfile = getSelectedProfile();
+    final ProfileManager profileManager =
+      myShareProfile.isSelected() ? myProjectProfileManager : InspectionProfileManager.getInstance();
+    if (selectedProfile.getProfileManager() != profileManager) {
+      if (selectedProfile.getProfileManager().getProfile(selectedProfile.getName(), false) != null) {
+        selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());
+      }
+      selectedProfile.setProfileManager(profileManager);
+    }
     final InspectionProfile parentProfile = selectedProfile.getParentProfile();
 
     if (InspectionProfileManager.getInstance().getSchemesManager().isShared(selectedProfile)) {

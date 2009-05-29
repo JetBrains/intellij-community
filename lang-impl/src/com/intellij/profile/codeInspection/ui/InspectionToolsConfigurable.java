@@ -157,6 +157,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void actionPerformed(ActionEvent e) {
         myActiveProfile = (InspectionProfileImpl)myProfiles.getSelectedItem();
         myActivateButton.setEnabled(false);
+        final SingleInspectionProfilePanel panel = getSelectedPanel();
+        if (panel != null) {
+          panel.setSharedEnabled(false);
+        }
       }
     });
 
@@ -210,6 +214,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
         myActivateButton.setEnabled(profile.getProfileManager() != myProfileManager && profile != myActiveProfile);
+        final SingleInspectionProfilePanel panel = getSelectedPanel();
+        if (panel != null) {
+          panel.setSharedEnabled(profile != myActiveProfile);
+        }
         myLayout.show(myPanel, profile.getName());
       }
     });
@@ -224,6 +232,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     for (SingleInspectionProfilePanel panel : myPanels.values()) {
       if (panel.isModified()) return true;
     }
+    if (getProfiles().size() != myPanels.size()) return true;
     return !myDeletedProfiles.isEmpty();
   }
 
@@ -271,6 +280,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myDeleteButton.setEnabled(getProfiles().size() > 1);
     myActiveProfile = inspectionProfile;
     myActivateButton.setEnabled(false);
+    getSelectedPanel().setSharedEnabled(inspectionProfile.getProfileManager() == myProfileManager);
   }
 
   protected Collection<Profile> getProfiles() {
@@ -298,7 +308,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   public void selectInspectionTool(String selectedToolShortName) {
-    myPanels.get(((Profile)myProfiles.getSelectedItem()).getName()).selectInspectionTool(selectedToolShortName);
+    getSelectedPanel().selectInspectionTool(selectedToolShortName);
+  }
+
+  private SingleInspectionProfilePanel getSelectedPanel() {
+    return myPanels.get(((Profile)myProfiles.getSelectedItem()).getName());
   }
 
   public InspectionProfileImpl getSelectedObject() {

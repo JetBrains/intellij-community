@@ -570,6 +570,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myVisibleTreeState = inspectionProfile.myVisibleTreeState;
     myBaseProfile = inspectionProfile.myBaseProfile;
     myTools = inspectionProfile.myTools;
+    myProfileMananger = inspectionProfile.myProfileMananger;
 
     myExternalInfo.copy(inspectionProfile.getExternalInfo());
 
