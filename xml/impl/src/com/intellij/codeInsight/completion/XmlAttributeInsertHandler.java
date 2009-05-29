@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 
@@ -24,18 +26,26 @@ public class XmlAttributeInsertHandler implements InsertHandler<MutableLookupEle
 
     final Document document = editor.getDocument();
     final int caretOffset = editor.getCaretModel().getOffset();
-    if (PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document).getLanguage() == HTMLLanguage.INSTANCE &&
+    PsiFile file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document);
+    if (file.getLanguage() == HTMLLanguage.INSTANCE &&
         HtmlUtil.isSingleHtmlAttribute((String)item.getObject())) {
       return;
     }
 
     final CharSequence chars = document.getCharsSequence();
     if (!CharArrayUtil.regionMatches(chars, caretOffset, "=\"") && !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {
+      PsiElement fileContext = file.getContext();
+      String toInsert= "=\"\"";
+
+      if(fileContext != null) {
+        if (fileContext.getText().startsWith("\"")) toInsert = "=''";
+      }
+      
       if (caretOffset >= document.getTextLength() || "/> \n\t\r".indexOf(document.getCharsSequence().charAt(caretOffset)) < 0) {
-        document.insertString(caretOffset, "=\"\" ");
+        document.insertString(caretOffset, toInsert + " ");
       }
       else {
-        document.insertString(caretOffset, "=\"\"");
+        document.insertString(caretOffset, toInsert);
       }
 
       if ('=' == context.getCompletionChar()) {
