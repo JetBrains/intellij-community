@@ -7,9 +7,15 @@ package com.intellij.psi.controlFlow;
 
 public abstract class BranchingInstruction extends InstructionBase {
   public int offset;
+  public final Role role;
 
-  public BranchingInstruction(int offset) {
+  public enum Role {
+    THEN, ELSE, END
+  }
+
+  public BranchingInstruction(int offset, Role role) {
     this.offset = offset;
+    this.role = role;
   }
 
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {

@@ -11,7 +11,6 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.IntArrayList;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +38,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   // E.g. we should jump to "else" branch if condition expression evaluated to false inside if statement
   private final StatementStack myEndStatementStack = new StatementStack();
 
-  private final IntArrayList myStartJumpRoles = new IntArrayList();
-  private final IntArrayList myEndJumpRoles = new IntArrayList();
+  private final List<BranchingInstruction.Role> myStartJumpRoles = new ArrayList<BranchingInstruction.Role>();
+  private final List<BranchingInstruction.Role> myEndJumpRoles = new ArrayList<BranchingInstruction.Role>();
 
   // true if generate direct jumps for short-circuited operations,
   // e.g. jump to else branch of if statement after each calculation of '&&' operand in condition
@@ -84,8 +83,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @NotNull
   ControlFlow buildControlFlow() throws AnalysisCanceledException {
     // push guard outer statement offsets in case when nested expression is incorrect
-    myStartJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
-    myEndJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
+    myStartJumpRoles.add(BranchingInstruction.Role.END);
+    myEndJumpRoles.add(BranchingInstruction.Role.END);
 
     myCurrentFlow = new ControlFlowImpl();
 
@@ -685,8 +684,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       myEndStatementStack.pushStatement(elseBranch, true);
     }
 
-    myEndJumpRoles.add(elseBranch == null ? ControlFlow.JUMP_ROLE_GOTO_END : ControlFlow.JUMP_ROLE_GOTO_ELSE);
-    myStartJumpRoles.add(thenBranch == null ? ControlFlow.JUMP_ROLE_GOTO_END : ControlFlow.JUMP_ROLE_GOTO_THEN);
+    myEndJumpRoles.add(elseBranch == null ? BranchingInstruction.Role.END : BranchingInstruction.Role.ELSE);
+    myStartJumpRoles.add(thenBranch == null ? BranchingInstruction.Role.END : BranchingInstruction.Role.THEN);
 
     if (conditionExpression != null) {
       conditionExpression.accept(this);
@@ -717,10 +716,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     if (generateConditionalJump) {
-      Instruction instruction = new ConditionalGoToInstruction(0,
-                                                               elseBranch == null
-                                                               ? ControlFlow.JUMP_ROLE_GOTO_END
-                                                               : ControlFlow.JUMP_ROLE_GOTO_ELSE, conditionExpression);
+      BranchingInstruction.Role role = elseBranch == null ? BranchingInstruction.Role.END : BranchingInstruction.Role.ELSE;
+      Instruction instruction = new ConditionalGoToInstruction(0, role, conditionExpression);
       myCurrentFlow.addInstruction(instruction);
       if (elseBranch != null) {
         addElementOffsetLater(elseBranch, true);
@@ -782,12 +779,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (finallyBlock != null && finallyStartOffset != -1) {
       // go out of finally, go to 2nd return after finally block
       // second return is for return statement called completion
-      instruction = new GoToInstruction(1, ControlFlow.JUMP_ROLE_GOTO_END, true);
+      instruction = new GoToInstruction(1, BranchingInstruction.Role.END, true);
       myCurrentFlow.addInstruction(instruction);
       addElementOffsetLater(finallyBlock, false);
     }
     else {
-      instruction = new GoToInstruction(0, ControlFlow.JUMP_ROLE_GOTO_END, true);
+      instruction = new GoToInstruction(0, BranchingInstruction.Role.END, true);
       myCurrentFlow.addInstruction(instruction);
       if (myFinallyBlocks.isEmpty()) {
         addElementOffsetLater(myCodeFragment, false);
@@ -948,8 +945,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       myStartStatementStack.pushStatement(statement, false);
       myEndStatementStack.pushStatement(statement, false);
 
-      myEndJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
-      myStartJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
+      myEndJumpRoles.add(BranchingInstruction.Role.END);
+      myStartJumpRoles.add(BranchingInstruction.Role.END);
 
       condition.accept(this);
 

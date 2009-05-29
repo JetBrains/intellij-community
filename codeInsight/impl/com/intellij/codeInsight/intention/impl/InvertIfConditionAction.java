@@ -337,14 +337,14 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
       if (instruction instanceof GoToInstruction) {
         GoToInstruction goToInstruction = (GoToInstruction)instruction;
-        if (goToInstruction.role != ControlFlow.JUMP_ROLE_GOTO_END) continue;
+        if (goToInstruction.role != BranchingInstruction.Role.END) continue;
 
         endOffset = goToInstruction.offset;
         break;
       }
       else if (instruction instanceof ConditionalGoToInstruction) {
         ConditionalGoToInstruction goToInstruction = (ConditionalGoToInstruction)instruction;
-        if (goToInstruction.role != ControlFlow.JUMP_ROLE_GOTO_END) continue;
+        if (goToInstruction.role != BranchingInstruction.Role.END) continue;
 
         endOffset = goToInstruction.offset;
         break;

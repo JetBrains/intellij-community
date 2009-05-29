@@ -5,7 +5,7 @@ import com.intellij.psi.PsiExpression;
 public class ConditionalThrowToInstruction extends ConditionalBranchingInstruction {
 
   public ConditionalThrowToInstruction(int offset, PsiExpression expression) {
-    super(offset, expression);
+    super(offset, expression, Role.END);
   }
 
   public ConditionalThrowToInstruction(final int offset) {

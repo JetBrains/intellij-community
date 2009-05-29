@@ -5,33 +5,18 @@ import org.jetbrains.annotations.NonNls;
 
 
 public class ConditionalGoToInstruction extends ConditionalBranchingInstruction {
-
-  public final int role;
-  public final boolean isReturn; //true if goto has been generated as a result of return statement
+  public final boolean isReturn = false; //true if goto has been generated as a result of return statement
 
   public ConditionalGoToInstruction(int offset, final PsiExpression expression) {
-    this(offset,ControlFlow.JUMP_ROLE_GOTO_END, expression);
+    this(offset, Role.END, expression);
   }
-  public ConditionalGoToInstruction(int offset, int role, final PsiExpression expression) {
-    this(offset,role, false, expression);
-  }
-  public ConditionalGoToInstruction(int offset, int role, boolean isReturn, final PsiExpression expression) {
-    super(offset, expression);
-    this.role = role;
-    this.isReturn = isReturn;
+  public ConditionalGoToInstruction(int offset, Role role, final PsiExpression expression) {
+    super(offset, expression, role);
   }
 
   public String toString() {
-    final @NonNls String sRole;
-    if (role == ControlFlow.JUMP_ROLE_GOTO_ELSE) sRole = "[ELSE]";
-    else if (role == ControlFlow.JUMP_ROLE_GOTO_THEN) sRole = "[THEN]";
-    else if (role == ControlFlow.JUMP_ROLE_GOTO_END) sRole = "[END]";
-    else {
-      LOG.assertTrue(false,"Unknown Role: "+role);
-      sRole = "???";
-    }
-
-    return "COND_GOTO " + sRole + " " + offset + (isReturn ? " RETURN" : "");
+    final @NonNls String sRole = "["+role.toString()+"]";
+    return "COND_GOTO " + sRole + " " + offset;
   }
 
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {

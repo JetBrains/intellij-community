@@ -10,8 +10,8 @@ public abstract class ConditionalBranchingInstruction extends BranchingInstructi
   protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ConditionalGoToInstruction");
   public final PsiExpression expression;
 
-  public ConditionalBranchingInstruction(int offset, final PsiExpression expression) {
-    super(offset);
+  public ConditionalBranchingInstruction(int offset, final PsiExpression expression, Role role) {
+    super(offset, role);
     this.expression = expression;
   }
 

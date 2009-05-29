@@ -8,7 +8,7 @@ public class ThrowToInstruction extends BranchingInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ThrowToInstruction");
 
   public ThrowToInstruction(int offset) {
-    super(offset);
+    super(offset, Role.END);
   }
 
   public String toString() {

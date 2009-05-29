@@ -10,10 +10,6 @@ import java.util.List;
 public interface ControlFlow {
   ControlFlow EMPTY = new ControlFlowImpl();
 
-  int JUMP_ROLE_GOTO_END = 0;
-  int JUMP_ROLE_GOTO_THEN = 1;
-  int JUMP_ROLE_GOTO_ELSE = 2;
-
   List<Instruction> getInstructions();
 
   int getSize();

@@ -12,7 +12,7 @@ public class ReturnInstruction extends GoToInstruction {
   private boolean myRethrowFromFinally = false;
 
   public ReturnInstruction(int offset, @NotNull ControlFlowStack stack, CallInstruction callInstruction) {
-    super(offset, ControlFlow.JUMP_ROLE_GOTO_END, false);
+    super(offset, Role.END, false);
     myStack = stack;
     myCallInstruction = callInstruction;
   }
