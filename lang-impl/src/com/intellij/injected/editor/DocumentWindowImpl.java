@@ -50,13 +50,59 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public int getLineStartOffset(int line) {
+    //int oldso = oldso(line);
+    int newso = newso(line);
+    //if (newso != oldso) {
+    //  int i = 0;
+    //}
+
+    return newso;
+  }
+
+  private int newso(int line) {
+    LOG.assertTrue(line >= 0, line);
+    String hostText = myDelegate.getText();
+
+    int curLine = 0;
+    int startOffset = 0;
+    for (PsiLanguageInjectionHost.Shred shred : myShreds) {
+      RangeMarker hostRange = shred.getHostRangeMarker();
+      if (!hostRange.isValid()) continue;
+
+      startOffset += shred.prefix.length();
+      curLine += StringUtil.getLineBreakCount(shred.prefix);
+      if (curLine >= line) return startOffset;
+      String text = hostText.substring(hostRange.getStartOffset(), hostRange.getEndOffset());
+
+      for (int i=text.indexOf('\n'), offsetInside = 0; i!=-1;i=text.substring(offsetInside).indexOf('\n')) {
+        curLine++;
+        offsetInside += i + 1;
+        if (curLine >= line) return startOffset + offsetInside;
+      }
+
+      startOffset += text.length();
+
+      text = shred.suffix;
+      for (int i=text.indexOf('\n'), offsetInside = 0; i!=-1;i=text.substring(offsetInside).indexOf('\n')) {
+        curLine++;
+        offsetInside += i + 1;
+        if (curLine >= line) return startOffset + offsetInside;
+      }
+      startOffset += text.length();
+    }
+
+    return startOffset;
+  }
+
+  private int oldso(int line) {
     assert line >= 0 : line;
     return new DocumentImpl(getText()).getLineStartOffset(line);
   }
 
   public int getLineEndOffset(int line) {
-    if (line==0 && myShreds.get(0).prefix.length()==0) return getTextLength();
-    return new DocumentImpl(getText()).getLineEndOffset(line);
+    LOG.assertTrue(line >= 0, line);
+    int startOffsetOfNextLine = getLineStartOffset(line + 1);
+    return startOffsetOfNextLine == 0 || getText().charAt(startOffsetOfNextLine - 1) != '\n' ? startOffsetOfNextLine : startOffsetOfNextLine - 1;
   }
 
   public String getText() {
