@@ -419,20 +419,22 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       updateNameAndDescription();
     }
 
-    protected void setNameAndDescription(String name, String description) {
-      setNameAndDescription(name, description, (String)null);
+    protected void setNameAndTooltip(String name, String tooltip) {
+      setNameAndTooltip(name, tooltip, (String)null);
     }
 
-    protected void setNameAndDescription(String name, String description, @Nullable String hint) {
-      setNameAndDescription(name, description, getPlainAttributes());
+    protected void setNameAndTooltip(String name, String tooltip, @Nullable String hint) {
+      setNameAndTooltip(name, tooltip, getPlainAttributes());
       if (showDescriptions() && !StringUtil.isEmptyOrSpaces(hint)) {
-        addColoredFragment(" (" + hint + ")", description, SimpleTextAttributes.GRAY_ATTRIBUTES);
+        addColoredFragment(" (" + hint + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
+      getPresentation().setTooltip(tooltip);
     }
 
-    protected void setNameAndDescription(String name, String description, SimpleTextAttributes attribs) {
+    protected void setNameAndTooltip(String name, String tooltip, SimpleTextAttributes attribs) {
       clearColoredText();
-      addColoredFragment(name, description, prepareAttribs(attribs));
+      addColoredFragment(name, prepareAttribs(attribs));
+      getPresentation().setTooltip(tooltip);
     }
 
     private SimpleTextAttributes prepareAttribs(SimpleTextAttributes from) {
@@ -528,7 +530,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     protected void updateNameAndDescription() {
-      setNameAndDescription(NavigatorBundle.message("node.root"), null);
+      setNameAndTooltip(NavigatorBundle.message("node.root"), null);
     }
 
     @Override
@@ -649,7 +651,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setNameAndDescription(getProjectName(), makeDescription());
+      setNameAndTooltip(getProjectName(), makeDescription());
     }
 
     private String makeDescription() {
@@ -759,7 +761,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setNameAndDescription(NavigatorBundle.message("node.modules"), null);
+      setNameAndTooltip(NavigatorBundle.message("node.modules"), null);
     }
   }
 
@@ -804,7 +806,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       String hint = StringUtil.join(Arrays.asList(myShortcutsManager.getDescription(myMavenProject, myGoal),
                                                   myTasksManager.getDescription(myMavenProject, myGoal)),
                                     ", ");
-      setNameAndDescription(myDisplayName, null, hint);
+      setNameAndTooltip(myDisplayName, null, hint);
     }
 
     @Override
@@ -845,7 +847,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setNameAndDescription(NavigatorBundle.message("node.lifecycle"), null);
+      setNameAndTooltip(NavigatorBundle.message("node.lifecycle"), null);
     }
   }
 
@@ -870,7 +872,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setNameAndDescription(NavigatorBundle.message("node.profiles"), null);
+      setNameAndTooltip(NavigatorBundle.message("node.profiles"), null);
     }
 
     protected List<? extends CustomNode> getStructuralChildren() {
@@ -916,7 +918,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setNameAndDescription(myProfileName, null);
+      setNameAndTooltip(myProfileName, null);
     }
 
     public String getProfileName() {
@@ -949,7 +951,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setNameAndDescription(NavigatorBundle.message("node.plugins"), null);
+      setNameAndTooltip(NavigatorBundle.message("node.plugins"), null);
     }
 
     protected List<? extends CustomNode> getStructuralChildren() {
@@ -1002,10 +1004,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       myPluginInfo = MavenArtifactUtil.readPluginInfo(myProjectsManager.getLocalRepository(), myPlugin.getMavenId());
       if (myPluginInfo == null) {
-        setNameAndDescription(myPlugin.getDisplayString(), null);
+        setNameAndTooltip(myPlugin.getDisplayString(), null);
       }
       else {
-        setNameAndDescription(myPluginInfo.getGoalPrefix(), null, myPlugin.getDisplayString());
+        setNameAndTooltip(myPluginInfo.getGoalPrefix(), null, myPlugin.getDisplayString());
       }
       setNodeErrorLevel(myPluginInfo == null ? ErrorLevel.WARNING : ErrorLevel.NONE);
 

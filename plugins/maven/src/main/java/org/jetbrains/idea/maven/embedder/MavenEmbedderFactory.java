@@ -33,7 +33,7 @@ public class MavenEmbedderFactory {
 
   @NonNls private static final String LOCAL_REPOSITORY_TAG = "localRepository";
 
-  @NonNls private static final String[] basicPhases = {"clean", "compile", "test", "package", "install", "deploy", "site"};
+  @NonNls private static final String[] basicPhases = {"clean", "validate", "compile", "test", "package", "install", "deploy", "site"};
   @NonNls private static final String[] phases = {"clean", "validate", "generate-sources", "process-sources", "generate-resources",
     "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
     "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",

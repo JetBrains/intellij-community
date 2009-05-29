@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Alarm;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.idea.maven.project.MavenId;
@@ -44,7 +44,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     myListener = listener;
 
     initComponents(initialText);
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD,parent);
+    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, parent);
   }
 
   public JTextField getSearchField() {
@@ -224,12 +224,12 @@ public class MavenArtifactSearchPanel extends JPanel {
       myRightComponent.clear();
 
       if (UIUtil.isUnderQuaquaLookAndFeel()) {
-          setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+        setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
       }
       else {
         if (selected) {
-            setBackground(UIUtil.getTreeSelectionBackground());
-            setForeground(UIUtil.getTreeSelectionForeground());
+          setBackground(UIUtil.getTreeSelectionBackground());
+          setForeground(UIUtil.getTreeSelectionForeground());
         }
         else {
           setBackground(null);
@@ -249,7 +249,6 @@ public class MavenArtifactSearchPanel extends JPanel {
         ArtifactInfo info = (ArtifactInfo)value;
         myLeftComponent.append(info.groupId + ":" + info.artifactId + ":" + info.version,
                                SimpleTextAttributes.GRAY_ATTRIBUTES);
-        //myRightComponent.append(info.repository, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
 
       removeAll();
@@ -262,17 +261,9 @@ public class MavenArtifactSearchPanel extends JPanel {
       return this;
     }
 
-    //@Override
-    //public Dimension getPreferredSize() {
-    //  Dimension size = super.getPreferredSize();
-    //  size.width = myTree.getVisibleRect().width - 30;
-    //  return size;
-    //}
-
     protected void formatSearchResult(JTree tree, MavenArtifactSearchResult searchResult) {
       ArtifactInfo first = searchResult.versions.get(0);
       ArtifactInfo last = searchResult.versions.get(searchResult.versions.size() - 1);
-      myLeftComponent.append("" + first.packaging + "-", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       myLeftComponent.append(first.groupId + ":" + first.artifactId, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       myLeftComponent.append(":" + last.version + "-" + first.version, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
@@ -294,6 +285,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
   public interface Listener {
     void doubleClicked();
+
     void canSelectStateChanged(MavenArtifactSearchPanel from, boolean canSelect);
   }
 }
