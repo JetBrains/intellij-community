@@ -214,6 +214,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
         myActivateButton.setEnabled(profile.getProfileManager() != myProfileManager && profile != myActiveProfile);
+        myDeleteButton.setEnabled(profile != myActiveProfile);
         final SingleInspectionProfilePanel panel = getSelectedPanel();
         if (panel != null) {
           panel.setSharedEnabled(profile != myActiveProfile);
@@ -277,7 +278,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     final InspectionProfileImpl inspectionProfile = getCurrentProfile();
     myProfiles.setSelectedItem(inspectionProfile);
     myLayout.show(myPanel, inspectionProfile.getName());
-    myDeleteButton.setEnabled(getProfiles().size() > 1);
+    myDeleteButton.setEnabled(getProfiles().size() > 1 && inspectionProfile.getProfileManager() == myProfileManager);
     myActiveProfile = inspectionProfile;
     myActivateButton.setEnabled(false);
     getSelectedPanel().setSharedEnabled(inspectionProfile.getProfileManager() == myProfileManager);
