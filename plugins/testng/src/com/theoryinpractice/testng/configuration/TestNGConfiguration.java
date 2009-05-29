@@ -208,11 +208,11 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
         throw new RuntimeConfigurationException("Invalid scope specified");
       }
       PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(data.getMainClassName(), scope.getGlobalSearchScope());
-      if (psiClass == null) throw new RuntimeConfigurationException("Invalid class '" + data.getMainClassName() + "'specified");
+      if (psiClass == null) throw new RuntimeConfigurationException("Class '" + data.getMainClassName() + "' not found");
       if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
         PsiMethod[] methods = psiClass.findMethodsByName(data.getMethodName(), true);
         if (methods.length == 0) {
-          throw new RuntimeConfigurationException("Invalid method '" + data.getMethodName() + "'specified");
+          throw new RuntimeConfigurationException("Method '" + data.getMethodName() + "' not found");
         }
         for (PsiMethod method : methods) {
           if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -223,7 +223,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     }
     else if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
       PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(data.getPackageName());
-      if (psiPackage == null) throw new RuntimeConfigurationException("Invalid package '" + data.getMainClassName() + "'specified");
+      if (psiPackage == null) throw new RuntimeConfigurationException("Package '" + data.getMainClassName() + "' not found");
     }
     else if (data.TEST_OBJECT.equals(TestType.SUITE.getType())) {
       try {
