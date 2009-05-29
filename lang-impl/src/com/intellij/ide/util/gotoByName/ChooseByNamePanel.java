@@ -1,5 +1,6 @@
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -7,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import javax.swing.*;
 import java.awt.*;
 
-public class ChooseByNamePanel extends ChooseByNameBase {
+public class ChooseByNamePanel extends ChooseByNameBase implements Disposable {
   private JPanel myPanel;
   private boolean myCheckBoxVisible = false;
 
@@ -57,4 +58,8 @@ public class ChooseByNamePanel extends ChooseByNameBase {
     return myPanel;
   }
 
+  public void dispose() {
+    myDisposedFlag = true;
+    cancelListUpdater();
+  }
 }

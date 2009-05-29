@@ -28,8 +28,8 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.ArrayUtil;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -228,6 +228,8 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
         handleSelectionChanged();
       }
     };
+
+    Disposer.register(myDisposable, myGotoByNamePanel);
 
     myTabbedPane.addTab(IdeBundle.message("tab.chooser.search.by.name"), dummyPanel);
     myTabbedPane.addTab(IdeBundle.message("tab.chooser.project"), scrollPane);

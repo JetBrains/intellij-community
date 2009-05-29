@@ -478,10 +478,14 @@ public abstract class ChooseByNameBase{
 
     if (posponeCloseWhenListReady(ok)) return;
 
-    myListUpdater.cancelAll();
+    cancelListUpdater();
     close(ok);
 
     clearPosponedOkAction(ok);
+  }
+
+  protected void cancelListUpdater() {
+    myListUpdater.cancelAll();
   }
 
   private boolean posponeCloseWhenListReady(boolean ok) {
