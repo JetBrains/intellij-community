@@ -16,36 +16,33 @@
 
 package com.jetbrains.python.validation;
 
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiElement;
 import static com.jetbrains.python.PyBundle.message;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBreakStatement;
+import com.jetbrains.python.psi.PyContinueStatement;
+import com.jetbrains.python.psi.patterns.SyntaxMatchers;
+
+import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 13.06.2005
- * Time: 15:01:05
+ * Annotates misplaced 'break' and 'continue'.
  */
 public class BreakContinueAnnotator extends PyAnnotator {
-  @Override public void visitPyBreakStatement(final PyBreakStatement node) {
-    if (node.getContainingElement(PyElementTypes.LOOPS) == null) {
+  @Override
+  public void visitPyBreakStatement(final PyBreakStatement node) {
+    if (SyntaxMatchers.LOOP_CONTROL.search(node) == null) {
       getHolder().createErrorAnnotation(node, message("ANN.break.outside.loop"));
     }
   }
 
-  @Override public void visitPyContinueStatement(final PyContinueStatement node) {
-    final PyElement loopStmt = node.getContainingElement(PyElementTypes.LOOPS); // closest loop to contain the 'continue'
-    if (loopStmt == null) {
+  @Override
+  public void visitPyContinueStatement(final PyContinueStatement node) {
+    List<? extends PsiElement> match = SyntaxMatchers.LOOP_CONTROL.search(node);
+    if (match == null) {
       getHolder().createErrorAnnotation(node, message("ANN.continue.outside.loop"));
-      return;
     }
-    PyTryExceptStatement tryStmt = node.getContainingElement(PyTryExceptStatement.class);
-    if (tryStmt != null) {
-      final PyFinallyPart finallyPart = tryStmt.getFinallyPart();
-      if (finallyPart != null && PsiTreeUtil.isAncestor(loopStmt, finallyPart, true)) {
-          getHolder().createErrorAnnotation(node, message("ANN.cant.continue.in.finally"));
-      }
+    else if (SyntaxMatchers.IN_FINALLY_NO_LOOP.search(node) != null) {
+      getHolder().createErrorAnnotation(node, message("ANN.cant.continue.in.finally"));
     }
   }
 }

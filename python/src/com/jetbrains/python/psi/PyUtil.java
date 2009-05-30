@@ -203,7 +203,7 @@ public class PyUtil {
   }
 
   /**
-   * @see com.jetbrains.python.psi.PyUtil#flattenedParens(T[]) 
+   * @see PyUtil#flattenedParens 
    */
   protected static <T extends PyElement> List<T> _unfoldParenExprs(T[] targets, List<T> receiver) {
     // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.

@@ -26,6 +26,8 @@
     <completion.contributor implementation="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
     <inspectionToolsFactory implementation="com.jetbrains.python.inspections.PythonPyInspectionToolProvider"/>
 
+    <typedHandler implementation="com.jetbrains.python.codeInsight.KeywordTypedHandler" id="kwd"/>
+
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PySuperClassIndex"/>
