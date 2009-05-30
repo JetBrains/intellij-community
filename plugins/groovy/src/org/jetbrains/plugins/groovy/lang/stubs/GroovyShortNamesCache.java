@@ -114,16 +114,16 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @NotNull
   public String[] getAllClassNames() {
-    final Collection<String> classNames = StubIndex.getInstance().getAllKeys(GrShortClassNameIndex.KEY);
-    Collection<String> scriptNames = StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY);
+    final Collection<String> classNames = StubIndex.getInstance().getAllKeys(GrShortClassNameIndex.KEY, myProject);
+    Collection<String> scriptNames = StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY, myProject);
     classNames.addAll(scriptNames);
     return classNames.toArray(new String[classNames.size()]);
   }
 
 
   public void getAllClassNames(@NotNull HashSet<String> dest) {
-    final Collection<String> classNames = StubIndex.getInstance().getAllKeys(GrShortClassNameIndex.KEY);
-    Collection<String> scriptNames = StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY);
+    final Collection<String> classNames = StubIndex.getInstance().getAllKeys(GrShortClassNameIndex.KEY, myProject);
+    Collection<String> scriptNames = StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY, myProject);
     classNames.addAll(scriptNames);
     dest.addAll(classNames);
   }
@@ -144,13 +144,13 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @NotNull
   public String[] getAllMethodNames() {
-    Collection<String> keys = StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY);
-    keys.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY));
+    Collection<String> keys = StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, myProject);
+    keys.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY, myProject));
     return keys.toArray(new String[keys.size()]);
   }
 
   public void getAllMethodNames(@NotNull HashSet<String> set) {
-    set.addAll(StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY));
+    set.addAll(StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, myProject));
   }
 
   @NotNull
@@ -162,12 +162,12 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @NotNull
   public String[] getAllFieldNames() {
-    Collection<String> fields = StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY);
+    Collection<String> fields = StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, myProject);
     return fields.toArray(new String[fields.size()]);
   }
 
   public void getAllFieldNames(@NotNull HashSet<String> set) {
-    set.addAll(StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY));
+    set.addAll(StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, myProject));
   }
 
 }

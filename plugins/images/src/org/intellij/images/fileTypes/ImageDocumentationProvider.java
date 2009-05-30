@@ -54,7 +54,7 @@ public class ImageDocumentationProvider extends QuickDocumentationProvider {
             }
             return true;
           }
-        });
+        }, element.getProject());
       }
     }
 

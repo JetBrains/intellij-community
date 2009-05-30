@@ -21,10 +21,10 @@ import java.util.Set;
 public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     Set<String> symbols = new HashSet<String>();
-    symbols.addAll(StubIndex.getInstance().getAllKeys(GrShortClassNameIndex.KEY));
-    symbols.addAll(StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY));
-    symbols.addAll(StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY));
-    symbols.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY));
+    symbols.addAll(StubIndex.getInstance().getAllKeys(GrShortClassNameIndex.KEY, project));
+    symbols.addAll(StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, project));
+    symbols.addAll(StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, project));
+    symbols.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY, project));
     return symbols.toArray(new String[symbols.size()]);
   }
 

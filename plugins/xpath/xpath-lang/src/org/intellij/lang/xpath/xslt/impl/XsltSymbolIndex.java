@@ -20,7 +20,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
@@ -159,13 +158,12 @@ public class XsltSymbolIndex implements FileBasedIndexExtension<String, XsltSymb
 
     @SuppressWarnings({ "UnusedDeclaration" })
     public static Collection<String> getSymbolNames(Project project, boolean includeNonProjectItems) {
-        // TODO project?
-        return FileBasedIndex.getInstance().getAllKeys(NAME);
+        return FileBasedIndex.getInstance().getAllKeys(NAME, project);
     }
 
     public static NavigationItem[] getSymbolsByName(final String name, Project project, boolean includeNonProjectItems) {
         final SymbolCollector collector = new SymbolCollector(name, project, includeNonProjectItems);
-        FileBasedIndex.getInstance().processValues(NAME, name, null, collector, VirtualFileFilter.ALL);
+        FileBasedIndex.getInstance().processValues(NAME, name, null, collector, GlobalSearchScope.allScope(project));
         return collector.getResult();
     }
 
