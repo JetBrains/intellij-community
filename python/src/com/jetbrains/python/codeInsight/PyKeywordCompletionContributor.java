@@ -431,7 +431,6 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     final PsiElement original = parameters.getPosition();
-    //boolean ret = true;
     try {
       original.putUserData(ORG_ELT, parameters.getOriginalPosition());
       original.putUserData(ORG_OFFSET, parameters.getOffset());
@@ -443,7 +442,6 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       original.putUserData(ORG_ELT, null);
       original.putUserData(ORG_OFFSET, null);
     }
-    //return ret;
   }
 
   // ======
