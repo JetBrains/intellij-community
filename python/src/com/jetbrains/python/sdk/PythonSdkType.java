@@ -405,9 +405,11 @@ public class PythonSdkType extends SdkType {
                 new String[] {bin_path, gen3_file.getPath(), "-d", stubsRoot, modname}, RUN_TIMEOUT
               );
               if (gen_result.getExitValue() != 0) {
-                StringBuffer sb = new StringBuffer();
+                StringBuffer sb = new StringBuffer("Skeleton for ");
+                sb.append(modname).append(" failed. stderr: --");
                 for (String err_line : gen_result.getStderr()) sb.append(err_line).append("\n");
-                LOG.error(sb.toString());
+                sb.append("--");
+                LOG.warn(sb.toString());
               }
             }
           }

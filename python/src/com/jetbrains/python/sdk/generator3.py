@@ -262,7 +262,7 @@ class ModuleRedeclarator(object):
     ("list", "__init__"): "(self, seq=())",
     ("tuple", "__init__"): "(self, seq=())", # overrides a fake
     ("set", "__init__"): "(self, seq=())",
-    ("dict", "__init__"): "(self, *args, **kwargs)",
+    ("dict", "__init__"): "(self, seq=None, **kwargs)",
     (None, "min"): "(*args)",
     (None, "max"): "(*args)",
   }
