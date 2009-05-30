@@ -429,21 +429,21 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   };
 
   @Override
-  public boolean fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     final PsiElement original = parameters.getPosition();
-    boolean ret = true;
+    //boolean ret = true;
     try {
       original.putUserData(ORG_ELT, parameters.getOriginalPosition());
       original.putUserData(ORG_OFFSET, parameters.getOffset());
       // we'll be safe accessing original file in patterns, because pattern checks run in a ReadAction.
-      ret = super.fillCompletionVariants(parameters, result);
+      super.fillCompletionVariants(parameters, result);
     }
     finally {
       // help gc a bit
       original.putUserData(ORG_ELT, null);
       original.putUserData(ORG_OFFSET, null);
     }
-    return ret;
+    //return ret;
   }
 
   // ======
