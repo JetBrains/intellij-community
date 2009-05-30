@@ -164,7 +164,7 @@ public class PyStubsTest extends CodeInsightTestCase {
     StubElement fileStub = fileImpl.getStub();
     assertNull("There should be no stub if file holds tree element", fileStub);
     
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, getProject());
     fileImpl.unloadContent();
     assertNull(fileImpl.getTreeElement()); // Test unload successed.
 

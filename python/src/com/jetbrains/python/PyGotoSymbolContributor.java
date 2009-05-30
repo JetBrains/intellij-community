@@ -19,8 +19,8 @@ import java.util.Set;
 public class PyGotoSymbolContributor implements ChooseByNameContributor {
   public String[] getNames(final Project project, final boolean includeNonProjectItems) {
     Set<String> symbols = new HashSet<String>();
-    symbols.addAll(StubIndex.getInstance().getAllKeys(PyClassNameIndex.KEY));
-    symbols.addAll(StubIndex.getInstance().getAllKeys(PyFunctionNameIndex.KEY));
+    symbols.addAll(StubIndex.getInstance().getAllKeys(PyClassNameIndex.KEY, project));
+    symbols.addAll(StubIndex.getInstance().getAllKeys(PyFunctionNameIndex.KEY, project));
     return symbols.toArray(new String[symbols.size()]);
   }
 

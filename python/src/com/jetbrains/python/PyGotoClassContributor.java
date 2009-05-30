@@ -16,7 +16,7 @@ import java.util.Collection;
  */
 public class PyGotoClassContributor implements ChooseByNameContributor {
   public String[] getNames(final Project project, final boolean includeNonProjectItems) {
-    final Collection<String> classNames = StubIndex.getInstance().getAllKeys(PyClassNameIndex.KEY);
+    final Collection<String> classNames = StubIndex.getInstance().getAllKeys(PyClassNameIndex.KEY, project);
     return ArrayUtil.toStringArray(classNames);
   }
 
