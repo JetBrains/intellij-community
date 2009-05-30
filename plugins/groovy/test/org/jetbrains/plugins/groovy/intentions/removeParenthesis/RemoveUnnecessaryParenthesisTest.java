@@ -28,7 +28,7 @@ import java.util.Calendar;
  * User: Dmitry.Krasilschikov
  * Date: 30.01.2009
  */
-@Bombed(month = Calendar.MAY, day = 30)
+@Bombed(month = Calendar.JUNE, day = 30)
 public class RemoveUnnecessaryParenthesisTest extends SimpleGroovyFileSetTestCase {
   protected static final String DATA_PATH = PathUtil.getDataPath(RemoveUnnecessaryParenthesisTest.class);
 
