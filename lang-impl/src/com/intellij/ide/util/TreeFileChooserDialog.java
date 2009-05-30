@@ -348,7 +348,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     public String[] getNames(final boolean checkBoxState) {
-      final String[] fileNames = FilenameIndex.getAllFilenames();
+      final String[] fileNames = FilenameIndex.getAllFilenames(myProject);
 
       final Set<String> array = new THashSet<String>();
       FileTypeManager fileTypeManager = FileTypeManager.getInstance();

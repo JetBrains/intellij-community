@@ -4,7 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
@@ -33,7 +33,7 @@ public class IndexedRelevantResource<K, V> implements Comparable<IndexedRelevant
         }
         return true;
       }
-    }, VirtualFileFilter.ALL);
+    }, GlobalSearchScope.allScope(module.getProject()));
     Collections.sort(resources);
     return resources;
   }
@@ -42,7 +42,7 @@ public class IndexedRelevantResource<K, V> implements Comparable<IndexedRelevant
                                                                            @NotNull final Module module,
                                                                            @Nullable NullableFunction<List<IndexedRelevantResource<K, V>>, IndexedRelevantResource<K, V>> chooser) {
     ArrayList<IndexedRelevantResource<K, V>> all = new ArrayList<IndexedRelevantResource<K, V>>();
-    Collection<K> allKeys = FileBasedIndex.getInstance().getAllKeys(indexId);
+    Collection<K> allKeys = FileBasedIndex.getInstance().getAllKeys(indexId, module.getProject());
     for (K key : allKeys) {
       List<IndexedRelevantResource<K, V>> resources = getSortedResources(indexId, key, module);
       if (!resources.isEmpty()) {

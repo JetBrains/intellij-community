@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ArrayUtil;
@@ -387,15 +388,15 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @NotNull
-  public <K> Collection<K> getAllKeys(final ID<K, ?> indexId) {
+  public <K> Collection<K> getAllKeys(final ID<K, ?> indexId, @NotNull Project project) {
     Set<K> allKeys = new HashSet<K>();
-    processAllKeys(indexId, new CommonProcessors.CollectProcessor<K>(allKeys));
+    processAllKeys(indexId, new CommonProcessors.CollectProcessor<K>(allKeys), project);
     return allKeys;
   }
 
-  public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor) {
+  public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor, @NotNull Project project) {
     try {
-      ensureUpToDate(indexId);
+      ensureUpToDate(indexId, project);
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
       if (index == null) return true;
       return index.processAllKeys(processor);
@@ -452,9 +453,9 @@ public class FileBasedIndex implements ApplicationComponent {
    * DO NOT CALL DIRECTLY IN CLIENT CODE
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
-  public <K> void ensureUpToDate(final ID<K, ?> indexId) {
-    if (isDumb()) {
-      handleDumbMode(indexId);
+  public <K> void ensureUpToDate(final ID<K, ?> indexId, @NotNull Project project) {
+    if (isDumb(project)) {
+      handleDumbMode(indexId, project);
     }
 
     if (myReentrancyGuard.get().booleanValue()) {
@@ -490,7 +491,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void handleDumbMode(final ID<?, ?> indexId) {
+  private void handleDumbMode(final ID<?, ?> indexId, Project project) {
     if (myNotRequiringContentIndices.contains(indexId)) {
       return; //indexed eagerly in foreground while building unindexed file list
     }
@@ -511,12 +512,12 @@ public class FileBasedIndex implements ApplicationComponent {
     throw new IndexNotReadyException();
   }
 
-  private static boolean isDumb() {
+  private static boolean isDumb(Project project) {
     return DumbServiceImpl.getInstance().isDumb();
   }
 
   @NotNull
-  public <K, V> List<V> getValues(final ID<K, V> indexId, @NotNull K dataKey, final VirtualFileFilter filter) {
+  public <K, V> List<V> getValues(final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
     final List<V> values = new ArrayList<V>();
     processValuesImpl(indexId, dataKey, true, null, new ValueProcessor<V>() {
       public boolean process(final VirtualFile file, final V value) {
@@ -528,7 +529,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @NotNull
-  public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, @NotNull K dataKey, final VirtualFileFilter filter) {
+  public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
     processValuesImpl(indexId, dataKey, false, null, new ValueProcessor<V>() {
       public boolean process(final VirtualFile file, final V value) {
@@ -553,15 +554,17 @@ public class FileBasedIndex implements ApplicationComponent {
    * @return false if ValueProcessor.process() returned false; true otherwise or if ValueProcessor was not called at all 
    */
   public <K, V> boolean processValues(final ID<K, V> indexId, final @NotNull K dataKey, @Nullable final VirtualFile inFile,
-                                   ValueProcessor<V> processor, final VirtualFileFilter filter) {
+                                   ValueProcessor<V> processor, @NotNull final GlobalSearchScope filter) {
     return processValuesImpl(indexId, dataKey, false, inFile, processor, filter);
   }
 
   private <K, V> boolean processValuesImpl(final ID<K, V> indexId, final K dataKey, boolean ensureValueProcessedOnce,
                                         @Nullable final VirtualFile restrictToFile, ValueProcessor<V> processor,
-                                        final VirtualFileFilter filter) {
+                                        final GlobalSearchScope filter) {
     try {
-      ensureUpToDate(indexId);
+      final Project project = filter.getProject();
+      assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
+      ensureUpToDate(indexId, project);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return true;
@@ -632,9 +635,9 @@ public class FileBasedIndex implements ApplicationComponent {
     void process(final int inputId, V value);
   }
 
-  public <K, V> void processAllValues(final ID<K, V> indexId, AllValuesProcessor<V> processor) {
+  public <K, V> void processAllValues(final ID<K, V> indexId, AllValuesProcessor<V> processor, @NotNull Project project) {
     try {
-      ensureUpToDate(indexId);
+      ensureUpToDate(indexId, project);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return;
@@ -1452,14 +1455,14 @@ public class FileBasedIndex implements ApplicationComponent {
 
   @Nullable
   private static PsiFile findLatestKnownPsiForUncomittedDocument(Document doc) {
-    if (isDumb()) {
-      return null;
-    }
-
     PsiFile target = null;
     long modStamp = -1L;
 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (isDumb(project)) {
+        continue;
+      }
+
       final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
       final PsiFile file = pdm.getCachedPsiFile(doc);
       if (file != null && file.getModificationStamp() > modStamp) {

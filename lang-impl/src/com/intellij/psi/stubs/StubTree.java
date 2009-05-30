@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import gnu.trove.TIntArrayList;
@@ -99,7 +99,7 @@ public class StubTree {
 
     final int id = Math.abs(FileBasedIndex.getFileId(vFile));
     if (id > 0) {
-      final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, VirtualFileFilter.ALL);
+      final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, GlobalSearchScope.allScope(project));
       final int size = datas.size();
 
       if (size == 1) {

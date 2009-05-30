@@ -15,10 +15,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -97,7 +94,7 @@ public class PropertiesReferenceManager {
       System.out.println("PropertiesReferenceManager.processPropertiesFiles");
       System.out.println("PropertiesFileType.FILE_TYPE = " + PropertiesFileType.FILE_TYPE);
     }
-    for(VirtualFile file: PropertiesFilesManager.getAllPropertiesFiles(myProject)) {
+    for(VirtualFile file: PropertiesFilesManager.getInstance(myProject).getAllPropertiesFiles()) {
       if (PropertyFileIndex.DEBUG) {
         System.out.println("file = " + file.getPath());
       }

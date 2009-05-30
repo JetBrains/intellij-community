@@ -5,13 +5,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -22,8 +21,8 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, tagName, createFilter(project));
   }
 
-  public static Collection<String> getAllTagNames() {
-    return FileBasedIndex.getInstance().getAllKeys(NAME);
+  public static Collection<String> getAllTagNames(Project project) {
+    return FileBasedIndex.getInstance().getAllKeys(NAME, project);
   }
 
   static void requestRebuild() {

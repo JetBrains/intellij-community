@@ -62,7 +62,7 @@ public class FileInfoManager implements Disposable {
     if (provider != null) {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
-        final Pair<String, String> info = provider.getLookupInfo(virtualFile);
+        final Pair<String, String> info = provider.getLookupInfo(virtualFile, psiElement.getProject());
         return info == null ? null : info.second;
       }
     }

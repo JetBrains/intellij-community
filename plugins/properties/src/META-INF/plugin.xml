@@ -51,9 +51,11 @@
     <fileEditorProvider implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider"/>
   </extensions>
 
-  <application-components>
+  <project-components>
     <component>
       <implementation-class>com.intellij.lang.properties.PropertiesFilesManager</implementation-class>
+      <skipForDefaultProject/>
+      <skipForDummyProject/>
     </component>
-  </application-components>
+  </project-components>
 </idea-plugin>

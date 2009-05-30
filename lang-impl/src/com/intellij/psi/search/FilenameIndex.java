@@ -1,11 +1,10 @@
 package com.intellij.psi.search;
 
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
@@ -50,13 +49,13 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return 0;
   }
 
-  public static String[] getAllFilenames() {
-    final Collection<String> allKeys = FileBasedIndex.getInstance().getAllKeys(NAME);
+  public static String[] getAllFilenames(Project project) {
+    final Collection<String> allKeys = FileBasedIndex.getInstance().getAllKeys(NAME, project);
     return ArrayUtil.toStringArray(allKeys);
   }
 
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
-    final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, VirtualFileFilter.ALL);
+    final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, GlobalSearchScope.allScope(project));
     if (files.isEmpty()) return PsiFile.EMPTY_ARRAY;
     List<PsiFile> result = new ArrayList<PsiFile>();
     for(VirtualFile file: files) {

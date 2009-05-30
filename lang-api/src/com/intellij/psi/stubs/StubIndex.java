@@ -26,5 +26,5 @@ public abstract class StubIndex {
       @NotNull StubIndexKey<Key, Psi> indexKey, @NotNull Key key, final Project project, final GlobalSearchScope scope
   );
 
-  public abstract <Key> Collection<Key> getAllKeys(StubIndexKey<Key, ?> indexKey);
+  public abstract <Key> Collection<Key> getAllKeys(StubIndexKey<Key, ?> indexKey, @NotNull Project project);
 }

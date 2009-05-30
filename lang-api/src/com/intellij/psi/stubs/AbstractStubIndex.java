@@ -10,8 +10,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import java.util.Collection;
 
 public abstract class AbstractStubIndex<Key, Psi extends PsiElement> implements StubIndexExtension<Key, Psi> {
-  public Collection<Key> getAllKeys() {
-    return StubIndex.getInstance().getAllKeys(getKey());
+  public Collection<Key> getAllKeys(Project project) {
+    return StubIndex.getInstance().getAllKeys(getKey(), project);
   }
 
   public Collection<Psi> get(Key key, final Project project, final GlobalSearchScope scope) {

@@ -21,10 +21,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -191,7 +188,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     if (propertiesFileList == null) {
       PsiManager psiManager = myElement.getManager();
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiManager.getProject()).getFileIndex();
-      for (VirtualFile file : PropertiesFilesManager.getAllPropertiesFiles(myElement.getProject())) {
+      for (VirtualFile file : PropertiesFilesManager.getInstance(myElement.getProject()).getAllPropertiesFiles()) {
         if (!file.isValid()) continue;
         if (!fileIndex.isInContent(file)) continue; //multiple opened projects
         PsiFile psiFile = psiManager.findFile(file);

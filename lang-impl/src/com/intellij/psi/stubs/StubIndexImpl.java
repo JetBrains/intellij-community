@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -25,7 +24,6 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -144,13 +142,11 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  private static final Key<SoftReference<StubTree>> ourCachedStubTreeRefKey = Key.create("our.cached.decompiler.stub");
-
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey, @NotNull final Key key, final Project project,
                                                            final GlobalSearchScope scope) {
-    checkRebuild();
+    checkRebuild(project);
 
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project);
 
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -244,12 +240,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
     }
     catch (StorageException e) {
-      forceRebuild(e);
+      forceRebuild(e, project);
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof IOException || cause instanceof StorageException) {
-        forceRebuild(e);
+        forceRebuild(e, project);
       }
       else {
         throw e;
@@ -267,40 +263,40 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return stub.getStubType();
   }
 
-  private void forceRebuild(Throwable e) {
+  private void forceRebuild(Throwable e, Project project) {
     LOG.info(e);
     myRebuildStatus.set(NEED_REBUILD);
-    checkRebuild();
+    checkRebuild(project);
   }
 
-  private void checkRebuild() {
+  private void checkRebuild(@NotNull Project project) {
     if (myRebuildStatus.compareAndSet(NEED_REBUILD, REBUILD_IN_PROGRESS)) {
       StubUpdatingIndex.scheduleStubIndicesRebuild(new Runnable() {
         public void run() {
           myRebuildStatus.compareAndSet(REBUILD_IN_PROGRESS, OK);
         }
-      });
+      }, project);
     }
     if (myRebuildStatus.get() == REBUILD_IN_PROGRESS) {
       throw new ProcessCanceledException();
     }
   }
 
-  public <K> Collection<K> getAllKeys(final StubIndexKey<K, ?> indexKey) {
-    checkRebuild();
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
+  public <K> Collection<K> getAllKeys(final StubIndexKey<K, ?> indexKey, @NotNull Project project) {
+    checkRebuild(project);
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project);
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
     try {
       return index.getAllKeys();
     }
     catch (StorageException e) {
-      forceRebuild(e);
+      forceRebuild(e, project);
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof IOException || cause instanceof StorageException) {
-        forceRebuild(e);
+        forceRebuild(e, project);
       }
       throw e;
     }
@@ -347,16 +343,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  public void clearIndex(StubIndexKey<?, ?> indexKey) {
-    try {
-      myIndices.get(indexKey).clear();
-    }
-    catch (StorageException e) {
-      LOG.error(e);
-      throw new RuntimeException(e);
-    }
-  }
-
   private void dropUnregisteredIndices() {
     final Set<String> indicesToDrop = new HashSet<String>(myPreviouslyRegistered != null? myPreviouslyRegistered.registeredIndices : Collections.<String>emptyList());
     for (ID<?, ?> key : myIndices.keySet()) {
@@ -374,10 +360,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   public void loadState(final StubIndexState state) {
     myPreviouslyRegistered = state;
-  }
-
-  public Lock getReadLock(StubIndexKey indexKey) {
-    return myIndices.get(indexKey).getReadLock();
   }
 
   public Lock getWriteLock(StubIndexKey indexKey) {

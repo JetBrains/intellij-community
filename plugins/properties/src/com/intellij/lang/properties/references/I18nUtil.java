@@ -61,7 +61,7 @@ public class I18nUtil {
   }
 
   public static List<String> defaultGetPropertyFiles(Project project) {
-    Collection<VirtualFile> allPropertiesFiles = PropertiesFilesManager.getAllPropertiesFiles(project);
+    Collection<VirtualFile> allPropertiesFiles = PropertiesFilesManager.getInstance(project).getAllPropertiesFiles();
     List<String> paths = new ArrayList<String>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (VirtualFile virtualFile : allPropertiesFiles) {

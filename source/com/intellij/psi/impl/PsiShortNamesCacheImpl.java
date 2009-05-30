@@ -36,7 +36,7 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @NotNull
   public String[] getAllFileNames() {
-    return FilenameIndex.getAllFilenames();
+    return FilenameIndex.getAllFilenames(myManager.getProject());
   }
 
   @NotNull
@@ -77,12 +77,12 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @NotNull
   public String[] getAllClassNames() {
-    final Collection<String> names = JavaShortClassNameIndex.getInstance().getAllKeys();
+    final Collection<String> names = JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject());
     return ArrayUtil.toStringArray(names);
   }
 
   public void getAllClassNames(@NotNull HashSet<String> set) {
-    set.addAll(JavaShortClassNameIndex.getInstance().getAllKeys());
+    set.addAll(JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
   @NotNull
@@ -103,12 +103,12 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @NotNull
   public String[] getAllMethodNames() {
-    final Collection<String> names = JavaMethodNameIndex.getInstance().getAllKeys();
+    final Collection<String> names = JavaMethodNameIndex.getInstance().getAllKeys(myManager.getProject());
     return ArrayUtil.toStringArray(names);
   }
 
   public void getAllMethodNames(@NotNull HashSet<String> set) {
-    set.addAll(JavaMethodNameIndex.getInstance().getAllKeys());
+    set.addAll(JavaMethodNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
   @NotNull
@@ -123,12 +123,12 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @NotNull
   public String[] getAllFieldNames() {
-    final Collection<String> names = JavaFieldNameIndex.getInstance().getAllKeys();
+    final Collection<String> names = JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject());
     return ArrayUtil.toStringArray(names);
   }
 
   public void getAllFieldNames(@NotNull HashSet<String> set) {
-    set.addAll(JavaFieldNameIndex.getInstance().getAllKeys());
+    set.addAll(JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
   private <T extends PsiMember> List<T> filterMembers(Collection<T> members, final GlobalSearchScope scope) {

@@ -40,7 +40,7 @@ import com.intellij.psi.search.ProjectScope;
 public class DefaultFileNavigationContributor implements ChooseByNameContributor {
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    return FilenameIndex.getAllFilenames();
+    return FilenameIndex.getAllFilenames(project);
   }
 
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {

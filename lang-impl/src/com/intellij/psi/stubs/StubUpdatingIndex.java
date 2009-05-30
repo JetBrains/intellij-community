@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
@@ -205,7 +206,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
    * Schedules asynchronous rebuild
    * @param finishCallback
    */
-  public static void scheduleStubIndicesRebuild(@Nullable final Runnable finishCallback) {
+  public static void scheduleStubIndicesRebuild(@Nullable final Runnable finishCallback, @NotNull final Project project) {
     final Runnable rebuildRunnable = new Runnable() {
       public void run() {
         final StubIndexImpl stubIndex = (StubIndexImpl)StubIndexImpl.getInstance();
@@ -221,7 +222,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
               final Map<StubIndexKey, Map<Object, TIntArrayList>> stubTree = new StubTree((PsiFileStub)value.getStub()).indexStubTree();
               updateStubIndices(getAffectedIndices(empty, stubTree), inputId, empty, stubTree);
             }
-          });
+          }, project);
         }
         finally {
           for (StubIndexKey key : allIndexKeys) {

@@ -4,6 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,5 +18,5 @@ public abstract class FileLookupInfoProvider {
   public abstract FileType[] getFileTypes();
 
   @Nullable
-  public abstract Pair<String, String> getLookupInfo(@NotNull final VirtualFile file);
+  public abstract Pair<String, String> getLookupInfo(@NotNull final VirtualFile file, Project project);
 }
