@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 import java.util.Arrays;
@@ -54,6 +55,7 @@ public class KeywordTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public Result beforeCharTyped(char character, Project project, Editor editor, PsiFile file, FileType fileType) {
+    if (!(fileType instanceof PythonFileType)) return Result.CONTINUE;
     if (isInteresting(character)) {
       final Document document = editor.getDocument();
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
