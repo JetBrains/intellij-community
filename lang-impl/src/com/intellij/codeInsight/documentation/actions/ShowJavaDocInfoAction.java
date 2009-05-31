@@ -103,7 +103,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE);
       final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).getActiveLookup();
       if (lookup != null) {
-        dumpLookupElementWeights(lookup);
+        //dumpLookupElementWeights(lookup);
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE);
       }
       actionPerformedImpl(project, editor);
