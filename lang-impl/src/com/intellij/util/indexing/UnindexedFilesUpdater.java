@@ -16,8 +16,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -131,7 +131,7 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
       // each client gives a project to FileBasedIndex
       final Set<String> rootsToIndex = provider.getRootsToIndex();
       for (String url : rootsToIndex) {
-        final VirtualFile root = VfsUtil.findFileByURL(VfsUtil.convertToURL(url));
+        final VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
         if (visitedRoots.add(root)) {
           iterateRecursively(root, processor, indicator);
         }
