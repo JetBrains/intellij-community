@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
-    
+
     @Override
     @Nls @NotNull
     public String getDisplayName() {
@@ -78,7 +78,8 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
                 return;
             }
             PsiElement parent = expression.getParent();
-            while (parent instanceof PsiParenthesizedExpression) {
+            while (parent instanceof PsiParenthesizedExpression ||
+                    parent instanceof PsiConditionalExpression) {
                 parent = parent.getParent();
             }
             if (parent instanceof PsiThrowStatement) {
