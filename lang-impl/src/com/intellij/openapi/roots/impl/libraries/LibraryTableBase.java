@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class LibraryTableBase implements PersistentStateComponent<Element>, LibraryTable, BaseComponent {
+public abstract class LibraryTableBase implements PersistentStateComponent<Element>, LibraryTable, BaseComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.libraries.LibraryTableBase");
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   private LibraryModel myModel = new LibraryModel();
@@ -107,6 +107,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   public void disposeComponent() {
+  }
+
+  public void dispose() {
     for (Library library : getLibraries()) {
       Disposer.dispose(library);
     }

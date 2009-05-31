@@ -47,12 +47,6 @@ public class ProjectLibraryTable extends LibraryTableBase {
     return ServiceManager.getService(project, ProjectLibraryTable.class);
   }
 
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
   public String getTableLevel() {
     return LibraryTablesRegistrar.PROJECT_LEVEL;
   }
