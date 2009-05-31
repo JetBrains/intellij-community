@@ -276,7 +276,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public String getPresentableName() {
-    if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS) {
+    if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS && !isDirectory()) {
       final String nameWithoutExtension = getNameWithoutExtension();
       return nameWithoutExtension.length() == 0 ? getName() : nameWithoutExtension;
     }
