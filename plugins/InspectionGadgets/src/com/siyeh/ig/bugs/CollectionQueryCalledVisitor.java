@@ -81,7 +81,8 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor{
         }
     }
 
-    @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement){
+    @Override public void visitForeachStatement(
+            @NotNull PsiForeachStatement statement){
         if(queried){
             return;
         }
@@ -90,7 +91,8 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor{
         if(!(qualifier instanceof PsiReferenceExpression)){
             return;
         }
-        final PsiElement referent = ((PsiReference) qualifier).resolve();
+        final PsiReference referenceExpression = (PsiReference) qualifier;
+        final PsiElement referent = referenceExpression.resolve();
         if(referent == null){
             return;
         }
@@ -108,30 +110,48 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor{
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        final PsiExpression qualifier =
-                methodExpression.getQualifierExpression();
-        if(!(qualifier instanceof PsiReferenceExpression)){
-            return;
-        }
-        final PsiReferenceExpression referenceExpression =
-                (PsiReferenceExpression)qualifier;
-        final PsiElement referent = referenceExpression.resolve();
-        if(referent == null){
-            return;
-        }
-        if(!referent.equals(variable)){
-            return;
-        }
         final boolean isStatement =
                 call.getParent() instanceof PsiExpressionStatement;
-        if(!isStatement){
-            // this gets the cases where the return values of updates
-            // are used as an implicit query
-            queried = true;
+        if(isStatement){
+            final String methodName = methodExpression.getReferenceName();
+            if(!queryNames.contains(methodName)){
+                return;
+            }
         }
-        final String methodName = methodExpression.getReferenceName();
-        if(queryNames.contains(methodName)){
-            queried = true;
+        // !isStatement when the return values of updates
+        // are used as an implicit query
+        final PsiExpression qualifier =
+                methodExpression.getQualifierExpression();
+        checkQualifier(qualifier);
+    }
+
+    private void checkQualifier(PsiExpression expression) {
+        if (queried) {
+            return;
+        }
+        if (expression instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) expression;
+            final PsiElement referent = referenceExpression.resolve();
+            if(referent == null){
+                return;
+            }
+            if(referent.equals(variable)){
+                queried = true;
+            }
+        } else if (expression instanceof PsiParenthesizedExpression) {
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression) expression;
+            checkQualifier(parenthesizedExpression.getExpression());
+        } else if (expression instanceof PsiConditionalExpression) {
+            final PsiConditionalExpression conditionalExpression =
+                    (PsiConditionalExpression) expression;
+            final PsiExpression thenExpression =
+                    conditionalExpression.getThenExpression();
+            checkQualifier(thenExpression);
+            final PsiExpression elseExpression =
+                    conditionalExpression.getElseExpression();
+            checkQualifier(elseExpression);
         }
     }
 

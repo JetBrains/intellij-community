@@ -102,16 +102,37 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor{
                 updated = true;
             }
         } else{
-            if(!(qualifier instanceof PsiReferenceExpression)){
-                return;
-            }
-            final PsiElement referent = ((PsiReference)qualifier).resolve();
+            checkQualifier(qualifier);
+        }
+    }
+
+    private void checkQualifier(PsiExpression expression) {
+        if (updated) {
+            return;
+        }
+        if (expression instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) expression;
+            final PsiElement referent = referenceExpression.resolve();
             if(referent == null){
                 return;
             }
             if(referent.equals(variable)){
                 updated = true;
             }
+        } else if (expression instanceof PsiParenthesizedExpression) {
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression) expression;
+            checkQualifier(parenthesizedExpression.getExpression());
+        } else if (expression instanceof PsiConditionalExpression) {
+            final PsiConditionalExpression conditionalExpression =
+                    (PsiConditionalExpression) expression;
+            final PsiExpression thenExpression =
+                    conditionalExpression.getThenExpression();
+            checkQualifier(thenExpression);
+            final PsiExpression elseExpression =
+                    conditionalExpression.getElseExpression();
+            checkQualifier(elseExpression);
         }
     }
 

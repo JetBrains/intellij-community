@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,17 +28,20 @@ import org.jetbrains.annotations.NotNull;
 public class MismatchedCollectionQueryUpdateInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "MismatchedQueryAndUpdateOfCollection";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "mismatched.update.collection.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final boolean updated = ((Boolean)infos[0]).booleanValue();
@@ -51,10 +54,17 @@ public class MismatchedCollectionQueryUpdateInspection
         }
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
+    public boolean runForWholeFile() {
+        return true;
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new MismatchedCollectionQueryUpdateVisitor();
     }
@@ -117,7 +127,7 @@ public class MismatchedCollectionQueryUpdateInspection
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(variable,
-		                    PsiCodeBlock.class);
+                            PsiCodeBlock.class);
             if(codeBlock == null){
                 return;
             }
@@ -263,8 +273,4 @@ public class MismatchedCollectionQueryUpdateInspection
             return mayBeQueried;
         }
     }
-
-  public boolean runForWholeFile() {
-    return true;
-  }
 }
