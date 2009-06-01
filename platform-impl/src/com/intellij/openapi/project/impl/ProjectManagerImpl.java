@@ -215,11 +215,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     }
     catch (IOException e) {
-      Disposer.dispose(project);
+      scheduleDispose(project);
       throw e;
     }
     catch (final StateStorage.StateStorageException e) {
-      Disposer.dispose(project);
+      scheduleDispose(project);
       throw e;
     }
 
@@ -230,6 +230,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     return project;
+  }
+
+  private static void scheduleDispose(final ProjectImpl project) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        Disposer.dispose(project);
+      }
+    });
   }
 
   @Nullable
@@ -251,7 +259,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
     catch (ProcessCanceledException e) {
       if (project != null) {
-        Disposer.dispose(project);
+        scheduleDispose(project);
       }
       throw e;
     }
