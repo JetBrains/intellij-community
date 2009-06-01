@@ -38,10 +38,11 @@ public abstract class DomAnchorImpl<T extends DomElement> {
     if (name != null) {
       return new NamedAnchor<T>(parentAnchor, description, name);
     }
-    
-    final int index = description.getValues(parent).indexOf(t);
+
+    final List<? extends DomElement> values = description.getValues(parent);
+    final int index = values.indexOf(t);
     if (index < 0) {
-      LOG.assertTrue(false, "Index<0: description=" + description + "\nparent=" + parent + "\nt=" + t);
+      LOG.assertTrue(false, "Index<0: description=" + description + "\nparent=" + parent + "\nt=" + t + "\nvalues=" + values);
     }
     return new IndexedAnchor<T>(parentAnchor, description, index);
   }
