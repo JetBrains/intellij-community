@@ -74,6 +74,10 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
     return new LocalSearchScope(myClosure);
   }
 
+  public GrClosableBlock getClosure() {
+    return myClosure;
+  }
+
   @NotNull
   @Override
   public PsiType getType() {

@@ -98,6 +98,9 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
         PsiElement resolved = referenceExpression.resolve();
         if (resolved instanceof GrVariableBase && !(resolved instanceof GrField) && !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
           final String name = ((GrVariableBase)resolved).getName();
+          if (resolved instanceof ClosureSyntheticParameter && PsiTreeUtil.isAncestor(toEval, ((ClosureSyntheticParameter) resolved).getClosure(), false)) {
+            return;
+          }
           namesList.add(name);
           if (closure != null &&
               PsiTreeUtil.findCommonParent(resolved, closure) != closure &&
