@@ -242,7 +242,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    return (PsiAnnotation)addAfter(JavaPsiFacade.getInstance(getProject()).getElementFactory().createAnnotationFromText(qualifiedName, this), null);
+    return (PsiAnnotation)addAfter(JavaPsiFacade.getInstance(getProject()).getElementFactory().createAnnotationFromText("@" + qualifiedName, this), null);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
