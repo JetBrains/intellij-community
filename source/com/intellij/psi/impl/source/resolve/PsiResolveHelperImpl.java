@@ -685,7 +685,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       int i = ArrayUtil.find(expressionList.getExpressions(), innerMethodCall);
       assert i >= 0;
       final JavaResolveResult[] results = processor.getResult();
-      final PsiType innerReturnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
+      PsiMethod owner = (PsiMethod)typeParameter.getOwner();
+      if (owner == null) return null;
+
+      final PsiType innerReturnType = owner.getReturnType();
       for (JavaResolveResult result : results) {
         final PsiElement element = result.getElement();
         if (element instanceof PsiMethod) {

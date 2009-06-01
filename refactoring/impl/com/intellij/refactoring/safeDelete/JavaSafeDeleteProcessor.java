@@ -265,19 +265,21 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
 
   private static void findTypeParameterExternalUsages(final PsiTypeParameter typeParameter, final Collection<UsageInfo> usages) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
-    final int index = owner.getTypeParameterList().getTypeParameterIndex(typeParameter);
+    if (owner != null) {
+      final int index = owner.getTypeParameterList().getTypeParameterIndex(typeParameter);
 
-    ReferencesSearch.search(owner).forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference reference) {
-        if (reference instanceof PsiJavaCodeReferenceElement) {
-          PsiTypeElement[] typeArgs = ((PsiJavaCodeReferenceElement)reference).getParameterList().getTypeParameterElements();
-          if (typeArgs.length > index) {
-            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true));
+      ReferencesSearch.search(owner).forEach(new Processor<PsiReference>() {
+        public boolean process(final PsiReference reference) {
+          if (reference instanceof PsiJavaCodeReferenceElement) {
+            PsiTypeElement[] typeArgs = ((PsiJavaCodeReferenceElement)reference).getParameterList().getTypeParameterElements();
+            if (typeArgs.length > index) {
+              usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true));
+            }
           }
+          return true;
         }
-        return true;
-      }
-    });
+      });
+    }
   }
 
   @Nullable

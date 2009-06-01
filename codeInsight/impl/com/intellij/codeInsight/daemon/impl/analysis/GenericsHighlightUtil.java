@@ -29,6 +29,7 @@ import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -683,6 +684,7 @@ public class GenericsHighlightUtil {
     return highlightInfo;
   }
 
+  @Nullable
   private static PsiType getCollectionItemType(PsiExpression expression) {
     final PsiType type = expression.getType();
     if (type == null) return null;
@@ -712,7 +714,9 @@ public class GenericsHighlightUtil {
       }
       PsiTypeParameter typeParameter = getIterableTypeParameter(facade, aClass);
       if (typeParameter == null) return null;
-      PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor((PsiClass)typeParameter.getOwner(), aClass, PsiSubstitutor.EMPTY);
+      PsiClass owner = (PsiClass)typeParameter.getOwner();
+      if (owner == null) return null;
+      PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor(owner, aClass, PsiSubstitutor.EMPTY);
       if (superClassSubstitutor == null) return null;
       PsiType itemType = superClassSubstitutor.substitute(typeParameter);
       itemType = substitutor.substitute(itemType);
@@ -721,6 +725,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
+  @Nullable
   private static PsiTypeParameter getIterableTypeParameter(final JavaPsiFacade facade, final PsiClass context) {
     PsiClass iterable = facade.findClass("java.lang.Iterable", context.getResolveScope());
     if (iterable == null) return null;
@@ -729,6 +734,7 @@ public class GenericsHighlightUtil {
     return typeParameters[0];
   }
 
+  @Nullable
   public static HighlightInfo checkAccessStaticFieldFromEnumConstructor(PsiReferenceExpression expr, JavaResolveResult result) {
     final PsiElement resolved = result.getElement();
 
@@ -757,6 +763,7 @@ public class GenericsHighlightUtil {
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expr, description);
   }
 
+  @Nullable
   public static HighlightInfo checkEnumInstantiation(PsiNewExpression expression) {
     final PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
@@ -769,6 +776,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
+  @Nullable
   public static HighlightInfo checkGenericArrayCreation(PsiElement element, PsiType type) {
     if (type instanceof PsiArrayType) {
       PsiType componentType = type.getDeepComponentType();

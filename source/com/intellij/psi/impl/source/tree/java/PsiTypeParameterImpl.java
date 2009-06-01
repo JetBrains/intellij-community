@@ -4,7 +4,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.InheritanceImplUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
@@ -123,16 +126,13 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
-  @NotNull
   public PsiTypeParameterListOwner getOwner() {
     final PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
     final PsiElement parentParent = parent.getParent();
     if (!(parentParent instanceof PsiTypeParameterListOwner)) {
       // Might be an error element;
-      final PsiTypeParameterListOwner result = PsiTreeUtil.getParentOfType(this, PsiTypeParameterListOwner.class);
-      LOG.assertTrue(result != null, DebugUtil.psiTreeToString(getContainingFile(), true));
-      return result;
+      return PsiTreeUtil.getParentOfType(this, PsiTypeParameterListOwner.class);
     }
 
     return (PsiTypeParameterListOwner) parentParent;

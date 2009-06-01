@@ -25,6 +25,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -365,12 +366,14 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     return ConvertToInstanceMethodHandler.REFACTORING_NAME;
   }
 
+  @Nullable
   public Map<PsiTypeParameter, PsiTypeParameter> buildTypeParameterReplacements() {
     final PsiClassType type = (PsiClassType)myTargetParameter.getType();
     final PsiSubstitutor substitutor = type.resolveGenerics().getSubstitutor();
     return calculateReplacementMap(substitutor, myTargetClass, myMethod);
   }
 
+  @Nullable
   private static Map<PsiTypeParameter, PsiTypeParameter> calculateReplacementMap(final PsiSubstitutor substitutor,
                                                                           final PsiClass targetClass,
                                                                           final PsiElement containingElement) {

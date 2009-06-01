@@ -547,7 +547,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         final PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiTypeParameter) {
           final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolved).getOwner();
-          if (!PsiTreeUtil.isAncestor(myAnonClass, owner, false)) {
+          if (owner != null && !PsiTreeUtil.isAncestor(myAnonClass, owner, false)) {
             myTypeParametersToCreate.add((PsiTypeParameter)resolved);
           }
         }

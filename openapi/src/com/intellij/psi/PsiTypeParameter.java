@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents the type parameter of a generic class, interface, method or constructor.
@@ -48,7 +49,7 @@ public interface PsiTypeParameter extends PsiClass {
    *
    * @return the type parameter owner instance.
    */
-  @NotNull
+  @Nullable
   PsiTypeParameterListOwner getOwner();
 
   /**

@@ -276,7 +276,6 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
     return PsiElement.EMPTY_ARRAY;
   }
 
-  @NotNull
   public PsiTypeParameterListOwner getOwner() {
     return (PsiTypeParameterListOwner)getParent().getParent();
   }
