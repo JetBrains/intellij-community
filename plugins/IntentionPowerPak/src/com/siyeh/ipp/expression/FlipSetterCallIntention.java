@@ -16,12 +16,18 @@
 
 package com.siyeh.ipp.expression;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.PsiSelectionSearcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -30,8 +36,18 @@ public class FlipSetterCallIntention extends Intention {
   private static final PsiElementPredicate PREDICATE = new SetterCallPredicate();
 
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
-    if (element instanceof PsiMethodCallExpression) {
-      flipCalls((PsiMethodCallExpression)element);
+    final Editor editor = getEditorByElementIfItHasSelection(element);
+    if (editor == null) {
+      if (element instanceof PsiMethodCallExpression) {
+        flipCall((PsiMethodCallExpression)element);
+      }
+    } else { // editor not null
+      final List<PsiMethodCallExpression> methodCalls =
+        PsiSelectionSearcher.searchElementsInSelection(editor, element.getProject(), PsiMethodCallExpression.class, false);
+      for (PsiMethodCallExpression call : methodCalls) {
+        flipCall(call);
+      }
+      editor.getSelectionModel().removeSelection();
     }
   }
 
@@ -40,7 +56,7 @@ public class FlipSetterCallIntention extends Intention {
     return PREDICATE;
   }
 
-  private static void flipCalls(PsiMethodCallExpression call) {
+  private static void flipCall(PsiMethodCallExpression call) {
     PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
     if (qualifierExpression == null) return;
     final String qualifier1 = qualifierExpression.getText();
@@ -68,18 +84,6 @@ public class FlipSetterCallIntention extends Intention {
       JavaPsiFacade.getElementFactory(call.getProject()).createExpressionFromText(text.toString(), call.getContext());
       call.replace(newExpression);    
   }
-
-  //@Nullable
-  //static PsiMethodCallExpression getSetGetMethodCallAtCaret(Editor editor, PsiFile file) {
-  //  int offset = editor.getCaretModel().getOffset();
-  //  PsiElement element = file.findElementAt(offset);
-  //  if (element == null) return null;
-  //  PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-  //  if (expression != null && atSameLine(expression, editor) && isSetGetMethodCall(expression)) {
-  //    return expression;
-  //  }
-  //  return null;
-  //}
 
   private static boolean isSetGetMethodCall(PsiMethodCallExpression call) {
     final PsiExpression[] params = call.getArgumentList().getExpressions();
@@ -112,11 +116,26 @@ public class FlipSetterCallIntention extends Intention {
     return true;
   }
 
+  @Nullable
+  static Editor getEditorByElementIfItHasSelection(@NotNull PsiElement element) {
+    final Editor editor = FileEditorManager.getInstance(element.getProject()).getSelectedTextEditor();
+    return editor != null && editor.getSelectionModel().hasSelection() ? editor : null; 
+  }
+
   static class SetterCallPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
-      return (element instanceof PsiMethodCallExpression
-          && isSetGetMethodCall((PsiMethodCallExpression)element));
+      boolean underCorrectElement = element instanceof PsiMethodCallExpression && isSetGetMethodCall((PsiMethodCallExpression)element);
+      final Editor editor = FileEditorManager.getInstance(element.getProject()).getSelectedTextEditor();
+      if (editor == null || !editor.getSelectionModel().hasSelection()) {
+        return underCorrectElement;
+      }
 
+      final List<PsiMethodCallExpression> list = PsiSelectionSearcher.searchElementsInSelection(editor, element.getProject(), PsiMethodCallExpression.class, false);
+      for (PsiMethodCallExpression methodCallExpression : list) {
+        if (isSetGetMethodCall(methodCallExpression)) return true;
+      }
+
+      return underCorrectElement;
     }
   }
 }
