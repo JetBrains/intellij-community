@@ -254,7 +254,7 @@
     
     <xml.xmlSuppressionProvider implementation="com.intellij.codeInspection.DefaultXmlSuppressionProvider" order="last"/>
 
-    <!--<multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>-->
+    <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
 
     <intentionAction>
       <category>XML</category>

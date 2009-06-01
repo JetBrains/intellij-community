@@ -1,24 +1,26 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.XmlElementVisitor;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.XmlCommentLiteralEscaper;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlComment;
-import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Mike
  */
-public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlElementType, PsiMetaOwner {
+public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlElementType, PsiMetaOwner, PsiLanguageInjectionHost {
   public XmlCommentImpl() {
     super(XML_COMMENT);
   }
@@ -59,5 +61,33 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   @Nullable
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
+  }
+
+  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
+    return InjectedLanguageUtil.getInjectedPsiFiles(this);
+  }
+
+  public void processInjectedPsi(@NotNull final InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(this, visitor);
+  }
+
+  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
+    final PsiFile psiFile = getContainingFile();
+
+    final XmlDocument document =
+      ((XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("dummy", psiFile.getFileType(), text)).getDocument();
+    assert document != null;
+
+    final XmlComment comment = PsiTreeUtil.getChildOfType(document, XmlComment.class);
+    
+    assert comment != null;
+    replaceAllChildrenToChildrenOf(comment.getNode());
+
+    return this;
+  }
+
+  @NotNull
+  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+    return new XmlCommentLiteralEscaper(this);
   }
 }
