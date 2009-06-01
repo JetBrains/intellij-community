@@ -67,10 +67,6 @@
       <implementation-class>com.intellij.openapi.vcs.changes.VcsEventWatcher</implementation-class>
       <skipForDummyProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.problems.DefaultWolfFilter</implementation-class>
-      <skipForDummyProject/>
-    </component>
 
     <!-- execution -->
     <component>

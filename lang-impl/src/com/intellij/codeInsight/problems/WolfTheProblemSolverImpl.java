@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -50,6 +51,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final Project myProject;
   private final List<ProblemListener> myProblemListeners = ContainerUtil.createEmptyCOWList();
   private final List<Condition<VirtualFile>> myFilters = ContainerUtil.createEmptyCOWList();
+  private boolean myFiltersLoaded = false;
   private final ProblemListener fireProblemListeners = new ProblemListener() {
     public void problemsAppeared(VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
@@ -414,6 +416,12 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private boolean isToBeHighlighted(VirtualFile virtualFile) {
     if (virtualFile == null) return false;
 
+    synchronized (myFilters) {
+      if (!myFiltersLoaded) {
+        myFiltersLoaded = true;
+        Collections.addAll(myFilters, Extensions.getExtensions(FILTER_EP_NAME, myProject));
+      }
+    }
     for (final Condition<VirtualFile> filter : myFilters) {
       ProgressManager.getInstance().checkCanceled();
       if (filter.value(virtualFile)) {

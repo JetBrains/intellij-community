@@ -19,6 +19,7 @@ package com.intellij.problems;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -34,6 +35,8 @@ import java.util.List;
  * @author cdr
  */
 public abstract class WolfTheProblemSolver implements ProjectComponent {
+  public static final ExtensionPointName<Condition<VirtualFile>> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.problemFileHighlightFilter");
+
   public static WolfTheProblemSolver getInstance(Project project) {
     return project.getComponent(WolfTheProblemSolver.class);
   }
@@ -67,6 +70,9 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   public abstract void addProblemListener(ProblemListener listener, Disposable parentDisposable);
   public abstract void removeProblemListener(ProblemListener listener);
 
+  /**
+   * @deprecated register extensions to {@link #FILTER_EP_NAME} instead
+   */
   public abstract void registerFileHighlightFilter(Condition<VirtualFile> filter, Disposable parentDisposable);
   public abstract void queue(VirtualFile suspiciousFile);
 }
