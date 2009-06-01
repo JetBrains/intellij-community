@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
@@ -118,76 +119,94 @@ public class XmlTagBlock extends AbstractXmlBlock{
   protected
   @Nullable
   ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
-    if (child.getElementType() == XmlElementType.XML_TEXT) {
+    IElementType type = child.getElementType();
+    if (type == XmlElementType.XML_TEXT) {
       final PsiElement parent = child.getPsi().getParent();
 
       if (parent instanceof XmlTag && ((XmlTag)parent).getSubTags().length == 0) {
-        final PsiFile[] injectedFile = new PsiFile[1];
-        final Ref<Integer> offset = new Ref<Integer>();
-        final Ref<Integer> offset2 = new Ref<Integer>();
-        final Ref<Integer> prefixLength = new Ref<Integer>();
-        final Ref<Integer> suffixLength = new Ref<Integer>();
+        if (buildInjectedPsiBlocks(result, child, wrap, alignment, indent)) return child;
+      }
+      return createXmlTextBlocks(result, child, wrap, alignment);
+    } else if (type == XmlElementType.XML_COMMENT) {
+      if (buildInjectedPsiBlocks(result, child, wrap, alignment, indent)) return child;
+      return super.processChild(result, child, wrap, alignment, indent);
+    }
+    else {
+      return super.processChild(result, child, wrap, alignment, indent);
+    }
+  }
 
-        ((PsiLanguageInjectionHost)child.getPsi()).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-          public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-            if (places.size() == 1) {
-              final PsiLanguageInjectionHost.Shred shred = places.get(0);
-              final TextRange textRange = shred.getRangeInsideHost();
-              String childText;
+  private boolean buildInjectedPsiBlocks(List<Block> result, final ASTNode child, Wrap wrap, Alignment alignment, Indent indent) {
+    final PsiFile[] injectedFile = new PsiFile[1];
+    final Ref<Integer> offset = new Ref<Integer>();
+    final Ref<Integer> offset2 = new Ref<Integer>();
+    final Ref<Integer> prefixLength = new Ref<Integer>();
+    final Ref<Integer> suffixLength = new Ref<Integer>();
 
-              if (( child.getTextLength() == textRange.getEndOffset() &&
-                    textRange.getStartOffset() == 0
-                  ) ||
-                  ( isEmpty((childText = child.getText()).substring(0, textRange.getStartOffset())) &&
-                    isEmpty(childText.substring(textRange.getEndOffset()))
-                  )
-                 ) {
-                injectedFile[0] = injectedPsi;
-                offset.set(textRange.getStartOffset());
-                offset2.set(textRange.getEndOffset());
-                prefixLength.set(shred.prefix != null ? shred.prefix.length():0);
-                suffixLength.set(shred.suffix != null ? shred.suffix.length():0);
-              }
-            }
-          }
+    ((PsiLanguageInjectionHost)child.getPsi()).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+        if (places.size() == 1) {
+          final PsiLanguageInjectionHost.Shred shred = places.get(0);
+          final TextRange textRange = shred.getRangeInsideHost();
+          String childText;
 
-          private boolean isEmpty(String s) {
-            s = s.trim();
-            s = s.replace("<![CDATA[","");
-            s = s.replace("]]>","");
-            return s.length() == 0;
-          }
-        });
-
-        if  (injectedFile[0] != null) {
-          final Language childLanguage = injectedFile[0].getLanguage();
-          final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, child.getPsi());
-
-          if (builder != null) {
-            final int startOffset = offset.get().intValue();
-            final int endOffset = offset2.get().intValue();
-
-            if (startOffset != 0) {
-              final ASTNode leaf = child.findLeafElementAt(startOffset - 1);
-
-              processChild(result, leaf, wrap, alignment, indent);
-            }
-
-            createAnotherLanguageBlockWrapper(childLanguage, injectedFile[0].getNode(), result, indent,
-                                              child.getTextRange().getStartOffset() + startOffset,
-                                              new TextRange(prefixLength.get(), injectedFile[0].getTextLength() - suffixLength.get()));
-
-            if (endOffset != child.getTextLength()) {
-              processChild(result, child.findLeafElementAt(endOffset), wrap, alignment, indent);
-            }
-            return child;
+          if (( child.getTextLength() == textRange.getEndOffset() &&
+                textRange.getStartOffset() == 0
+              ) ||
+              ( canProcessFragments((childText = child.getText()).substring(0, textRange.getStartOffset())) &&
+                canProcessFragments(childText.substring(textRange.getEndOffset()))
+              )
+             ) {
+            injectedFile[0] = injectedPsi;
+            offset.set(textRange.getStartOffset());
+            offset2.set(textRange.getEndOffset());
+            prefixLength.set(shred.prefix != null ? shred.prefix.length():0);
+            suffixLength.set(shred.suffix != null ? shred.suffix.length():0);
           }
         }
       }
-      return createXmlTextBlocks(result, child, wrap, alignment);
-    } else {
-      return super.processChild(result, child, wrap, alignment, indent);
+
+      private boolean canProcessFragments(String s) {
+        IElementType type = child.getElementType();
+        if (type == XmlElementType.XML_TEXT) {
+          s = s.trim();
+          s = s.replace("<![CDATA[","");
+          s = s.replace("]]>","");
+        } else if (type == XmlElementType.XML_COMMENT) {   // <!--[if IE]>, <![endif]--> of conditional comments injection
+          s = "";
+        }
+
+        return s.length() == 0;
+      }
+    });
+
+    if  (injectedFile[0] != null) {
+      final Language childLanguage = injectedFile[0].getLanguage();
+      final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, child.getPsi());
+
+      if (builder != null) {
+        final int startOffset = offset.get().intValue();
+        final int endOffset = offset2.get().intValue();
+        TextRange range = child.getTextRange();
+
+        int childOffset = range.getStartOffset();
+        if (startOffset != 0) {
+          final ASTNode leaf = child.findLeafElementAt(startOffset - 1);
+          result.add(new XmlBlock(leaf, wrap, alignment, myXmlFormattingPolicy, indent, new TextRange(childOffset, childOffset + startOffset)));
+        }
+
+        createAnotherLanguageBlockWrapper(childLanguage, injectedFile[0].getNode(), result, indent,
+                                          childOffset + startOffset,
+                                          new TextRange(prefixLength.get(), injectedFile[0].getTextLength() - suffixLength.get()));
+
+        if (endOffset != child.getTextLength()) {
+          final ASTNode leaf = child.findLeafElementAt(endOffset);
+          result.add(new XmlBlock(leaf, wrap, alignment, myXmlFormattingPolicy, indent, new TextRange(childOffset + endOffset, range.getEndOffset())));
+        }
+        return true;
+      }
     }
+    return false;
   }
 
   private Indent getChildrenIndent() {
