@@ -71,7 +71,7 @@ public class FilePatternPackageSet implements PackageSet {
                                       final VirtualFile file,
                                       final ProjectFileIndex fileIndex) {
     final Module module = fileIndex.getModuleForFile(file);
-    LOG.assertTrue(module != null);
+    LOG.assertTrue(module != null, "url: " + file.getUrl());
     if (modulePattern != null && modulePattern.matcher(module.getName()).matches()) return true;
     final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
     if (groupPath != null) {
