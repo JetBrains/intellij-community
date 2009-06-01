@@ -26,9 +26,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
@@ -223,7 +223,6 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
     return Collections.emptyList(); //todo
   }
 
-  @NotNull
   public PsiTypeParameterListOwner getOwner() {
     final PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
