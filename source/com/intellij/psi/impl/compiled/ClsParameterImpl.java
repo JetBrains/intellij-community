@@ -42,7 +42,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
 
   public String getName() {
     if (myName == null) {
-      if (DumbService.getInstance().isDumb()) {
+      if (DumbService.getInstance(getProject()).isDumb()) {
         return null;
       }
       
@@ -115,7 +115,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     synchronized (LAZY_BUILT_LOCK) {
       if (myMirrorName == null) {
         PsiParameter[] parms = ((PsiParameterList) getParent()).getParameters();
-        if (DumbService.getInstance().isDumb()) {
+        if (DumbService.getInstance(getProject()).isDumb()) {
           return "p" + Arrays.asList(parms).indexOf(this);
         }
 

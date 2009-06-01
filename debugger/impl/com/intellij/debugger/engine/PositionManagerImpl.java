@@ -166,7 +166,7 @@ public class PositionManagerImpl implements PositionManager {
       return null;
     }
 
-    if (DumbService.getInstance().isDumb()) {
+    if (DumbService.getInstance(project).isDumb()) {
       return null;
     }
 

@@ -151,7 +151,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   public FileViewProvider createFileViewProvider(final VirtualFile file, boolean physical) {
-    if (DumbService.getInstance().isDumb()) {
+    if (DumbService.getInstance(myManager.getProject()).isDumb()) {
       return new SingleRootFileViewProvider(myManager, file, true, PlainTextLanguage.INSTANCE) {};
     }
 

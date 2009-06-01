@@ -104,12 +104,12 @@ public abstract class CreateElementActionBase extends AnAction {
   }
 
   protected boolean isAvailable(final DataContext dataContext) {
-    if (DumbService.getInstance().isDumb() && !isDumbAware()) {
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
       return false;
     }
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
+    if (DumbService.getInstance(project).isDumb() && !isDumbAware()) {
       return false;
     }
 

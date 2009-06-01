@@ -71,7 +71,8 @@ public class ActionUtil {
   public static boolean performDumbAwareUpdate(AnAction action, AnActionEvent e, boolean beforeActionPerformed) {
     final Presentation presentation = e.getPresentation();
     final Boolean wasEnabledBefore = (Boolean)presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
-    final boolean dumbMode = DumbService.getInstance().isDumb();
+    final Project project = (Project)e.getDataContext().getData(DataConstantsEx.PROJECT);
+    final boolean dumbMode = project != null && DumbService.getInstance(project).isDumb();
     if (wasEnabledBefore != null && !dumbMode) {
       presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null);
       presentation.setEnabled(wasEnabledBefore.booleanValue());
@@ -111,7 +112,8 @@ public class ActionUtil {
   public static boolean lastUpdateAndCheckDumb(AnAction action, AnActionEvent e, boolean visibilityMatters) {
     performDumbAwareUpdate(action, e, true);
 
-    if (DumbService.getInstance().isDumb() && !(action instanceof DumbAware)) {
+    final Project project = (Project)e.getDataContext().getData(DataConstantsEx.PROJECT);
+    if (project != null && DumbService.getInstance(project).isDumb() && !(action instanceof DumbAware)) {
       if (Boolean.FALSE.equals(e.getPresentation().getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
         return false;
       }

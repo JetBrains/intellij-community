@@ -86,7 +86,7 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
   }
 
   public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final TextBlockTransferableData value) {
-    if (DumbService.getInstance().isDumb()) {
+    if (DumbService.getInstance(project).isDumb()) {
       return;
     }
 

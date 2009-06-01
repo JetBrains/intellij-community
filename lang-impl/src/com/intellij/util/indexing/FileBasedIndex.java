@@ -504,7 +504,7 @@ public class FileBasedIndex implements ApplicationComponent {
       final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
       if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {
         assert !ApplicationManager.getApplication().isDispatchThread();
-        DumbService.getInstance().waitForSmartMode();
+        DumbService.getInstance(project).waitForSmartMode();
         return;
       }
     }

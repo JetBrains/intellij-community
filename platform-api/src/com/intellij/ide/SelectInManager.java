@@ -66,7 +66,7 @@ public class SelectInManager  {
       }
     });
 
-    if (DumbService.getInstance().isDumb()) {
+    if (DumbService.getInstance(myProject).isDumb()) {
       final List<SelectInTarget> awareList = (List)ContainerUtil.findAll(targets, DumbAware.class);
       return awareList.toArray(new SelectInTarget[awareList.size()]);
     }

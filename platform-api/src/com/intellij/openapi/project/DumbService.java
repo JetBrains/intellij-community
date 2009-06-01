@@ -73,7 +73,7 @@ public abstract class DumbService {
     }, modalityState);
   }
 
-  public static DumbService getInstance() {
+  public static DumbService getInstance(@NotNull Project project) {
     return ServiceManager.getService(DumbService.class);
   }
 

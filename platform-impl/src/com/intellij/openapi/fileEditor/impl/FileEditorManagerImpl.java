@@ -485,7 +485,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       // and select the created EditorComposite.
       final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
       providers = editorProviderManager.getProviders(myProject, file);
-      if (DumbService.getInstance().isDumb()) {
+      if (DumbService.getInstance(myProject).isDumb()) {
         final List<FileEditorProvider> dumbAware = ContainerUtil.findAll(providers, new Condition<FileEditorProvider>() {
           public boolean value(FileEditorProvider fileEditorProvider) {
             return fileEditorProvider instanceof DumbAware;

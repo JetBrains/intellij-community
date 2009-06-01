@@ -561,7 +561,7 @@ public class CompileDriver {
       }
       RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
 
-      DumbService.getInstance().waitForSmartMode();
+      DumbService.getInstance(myProject).waitForSmartMode();
 
       if (needRecalcOutputDirs) {
         context.recalculateOutputDirs();

@@ -26,7 +26,7 @@ public class PropertiesFilesManager implements ProjectComponent {
       if (EncodingManager.PROP_NATIVE2ASCII_SWITCH.equals(evt.getPropertyName()) ||
           EncodingManager.PROP_PROPERTIES_FILES_ENCODING.equals(evt.getPropertyName())
         ) {
-        DumbService.getInstance().smartInvokeLater(new Runnable(){
+        DumbService.getInstance(myProject).smartInvokeLater(new Runnable(){
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable(){
               public void run() {

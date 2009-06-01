@@ -82,7 +82,7 @@ public class StubTree {
 
   @Nullable
   public static StubTree readFromVFile(Project project, final VirtualFile vFile) {
-    if (DumbService.getInstance().isDumb()) {
+    if (DumbService.getInstance(project).isDumb()) {
       try {
         final FileContent fc = new FileContent(vFile, vFile.contentsToByteArray());
         fc.putUserData(FileBasedIndex.PROJECT, project);

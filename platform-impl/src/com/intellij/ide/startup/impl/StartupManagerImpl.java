@@ -86,6 +86,9 @@ public class StartupManagerImpl extends StartupManagerEx {
               try {
                 myFileSystemSynchronizer.executeFileUpdate();
               }
+              catch (ProcessCanceledException e) {
+                throw e;
+              }
               catch (Throwable e) {
                 LOG.error(e);
               }
@@ -108,7 +111,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   public synchronized void runPostStartupActivities() {
     final Application app = ApplicationManager.getApplication();
     app.assertIsDispatchThread();
-    if (myBackgroundIndexing || DumbService.getInstance().isDumb()) {
+    if (myBackgroundIndexing || DumbService.getInstance(myProject).isDumb()) {
       final List<Runnable> dumbAware = CollectionFactory.arrayList();
       for (Iterator<Runnable> iterator = myPostStartupActivities.iterator(); iterator.hasNext();) {
         Runnable runnable = iterator.next();
@@ -118,7 +121,7 @@ public class StartupManagerImpl extends StartupManagerEx {
         }
       }
       runActivities(dumbAware);
-      DumbService.getInstance().runWhenSmart(new Runnable() {
+      DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
 

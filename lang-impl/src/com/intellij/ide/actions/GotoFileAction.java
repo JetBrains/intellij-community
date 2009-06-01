@@ -196,7 +196,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
       final int count = chooser.getElementCount();
       for (int i = 0; i < count; i++) {
         FileType type = chooser.getElementAt(i);
-        if (!DumbService.getInstance().isDumb() && !config.isFileTypeVisible(type)) {
+        if (!DumbService.getInstance(myProject).isDumb() && !config.isFileTypeVisible(type)) {
           chooser.setElementMarked(type, false);
         }
       }

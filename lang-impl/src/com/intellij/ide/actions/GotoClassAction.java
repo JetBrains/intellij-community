@@ -20,7 +20,8 @@ import com.intellij.psi.PsiDocumentManager;
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   public void gotoActionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (DumbService.getInstance().isDumb()) {
+    assert project != null;
+    if (DumbService.getInstance(project).isDumb()) {
       project.getMessageBus().syncPublisher(Notifications.TOPIC).notify("dumb", "Goto Class action is not available until indices are built, using Goto File instead", "", NotificationType.INFORMATION, NotificationListener.REMOVE);
 
 

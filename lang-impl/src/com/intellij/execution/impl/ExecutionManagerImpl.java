@@ -102,7 +102,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                     return;
                   }
                 }
-                DumbService.getInstance().smartInvokeLater(startRunnable);
+                DumbService.getInstance(myProject).smartInvokeLater(startRunnable);
               }
             });
           }

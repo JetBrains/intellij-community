@@ -87,7 +87,7 @@ public class DeleteHandler {
       safeDeleteApplicable = SafeDeleteProcessor.validElement(element);
     }
 
-    final boolean dumb = DumbService.getInstance().isDumb();
+    final boolean dumb = DumbService.getInstance(project).isDumb();
     if (safeDeleteApplicable && !dumb) {
       DeleteDialog dialog = new DeleteDialog(project, elements, new DeleteDialog.Callback() {
         public void run(final DeleteDialog dialog) {

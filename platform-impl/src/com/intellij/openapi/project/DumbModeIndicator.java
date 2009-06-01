@@ -73,7 +73,7 @@ class DumbModeIndicator extends IdeRootPaneNorthExtension {
   public void installComponent(Project project, JPanel northPanel) {
     northPanel.add(myComponent, new GridBagConstraints(0, 2, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
-    myComponent.setVisible(DumbService.getInstance().isDumb());
+    myComponent.setVisible(DumbService.getInstance(project).isDumb());
   }
 
 }

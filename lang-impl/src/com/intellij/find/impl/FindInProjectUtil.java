@@ -447,7 +447,7 @@ public class FindInProjectUtil {
   private static Collection<PsiFile> getFilesForFastWordSearch(final FindModel findModel, final Project project,
                                                                final PsiDirectory psiDirectory, final Pattern fileMaskRegExp,
                                                                final Module module) {
-    if (DumbService.getInstance().isDumb()) {
+    if (DumbService.getInstance(project).isDumb()) {
       return null;
     }
 

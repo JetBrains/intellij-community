@@ -158,7 +158,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     }
   };
 
-  private final CompositeFilter myMessageFilter = new CompositeFilter();
+  private final CompositeFilter myMessageFilter;
 
   private ArrayList<String> myHistory = new ArrayList<String>();
   private int myHistorySize = 20;
@@ -216,6 +216,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     myProject = project;
     myFileType = fileType;
 
+    myMessageFilter = new CompositeFilter(project);
     final ConsoleFilterProvider[] filterProviders = Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS);
     for (ConsoleFilterProvider filterProvider : filterProviders) {
       final Filter[] defaultFilters = filterProvider.getDefaultFilters(project);

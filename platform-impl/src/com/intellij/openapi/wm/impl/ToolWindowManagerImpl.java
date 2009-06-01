@@ -251,7 +251,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         registerToolWindowsFromBeans();
-        if (DumbService.getInstance().isDumb()) {
+        if (DumbService.getInstance(myProject).isDumb()) {
           dumbModeListener.beforeEnteringDumbMode();
         }
       }
@@ -465,7 +465,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
-    if (DumbService.getInstance().isDumb() && !myDumbAwareIds.contains(id)) {
+    if (DumbService.getInstance(myProject).isDumb() && !myDumbAwareIds.contains(id)) {
       return;
     }
 

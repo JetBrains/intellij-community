@@ -17,15 +17,21 @@ package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CompositeFilter implements Filter {
   private final List<Filter> myFilters = new ArrayList<Filter>();
+  private final Project myProject;
+
+  public CompositeFilter(Project project) {
+    myProject = project;
+  }
 
   public Result applyFilter(final String line, final int entireLength) {
-    final boolean dumb = DumbService.getInstance().isDumb();
+    final boolean dumb = DumbService.getInstance(myProject).isDumb();
     for (final Filter filter : myFilters) {
       if (!dumb || filter instanceof DumbAware) {
         final Result info = filter.applyFilter(line, entireLength);
