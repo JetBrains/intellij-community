@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmptyClassInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("empty.class.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
       final Object element = infos[0];
@@ -45,6 +47,7 @@ public class EmptyClassInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new EmptyClassVisitor();
     }
@@ -89,6 +92,10 @@ public class EmptyClassInspection extends BaseInspection {
             }
             final PsiField[] fields = aClass.getFields();
             if (fields.length > 0) {
+                return;
+            }
+            final PsiClassInitializer[] initializers = aClass.getInitializers();
+            if (initializers.length > 0) {
                 return;
             }
             registerClassError(aClass, aClass);
