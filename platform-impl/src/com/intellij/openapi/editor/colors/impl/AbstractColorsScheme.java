@@ -144,7 +144,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
     Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
     if (plainFont.getFamily().equals("Dialog") && !editorFontName.equals("Dialog")) {
-      editorFontName = myParentScheme.getEditorFontName();
+      editorFontName = myParentScheme != null ? myParentScheme.getEditorFontName() : DEFAULT_FONT_NAME;
       myFallbackFontName = editorFontName;
       plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
     }
