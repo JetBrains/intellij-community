@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class VirtualFilePointerContainerImpl implements VirtualFilePointerContainer, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
-  private final List<VirtualFilePointer> myList = new ArrayList<VirtualFilePointer>();
+  @NotNull private final List<VirtualFilePointer> myList = new ArrayList<VirtualFilePointer>();
   private final List<VirtualFilePointer> myReadOnlyList = Collections.unmodifiableList(myList);
   private final VirtualFilePointerManagerImpl myVirtualFilePointerManager;
   private final Disposable myParent;
@@ -107,12 +107,13 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     LOG.assertTrue(result);
   }
 
+  @NotNull
   public List<VirtualFilePointer> getList() {
     assert !myDisposed;
     return myReadOnlyList;
   }
 
-  public void addAll(VirtualFilePointerContainer that) {
+  public void addAll(@NotNull VirtualFilePointerContainer that) {
     assert !myDisposed;
     dropCaches();
 
@@ -129,6 +130,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   private String[] myCachedUrls;
+  @NotNull
   public String[] getUrls() {
     assert !myDisposed;
     if (myCachedUrls == null) {
@@ -147,6 +149,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   private VirtualFile[] myCachedFiles;
+  @NotNull
   public VirtualFile[] getFiles() {
     assert !myDisposed;
     if (myCachedFiles == null) {
@@ -167,6 +170,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return result.toArray(new VirtualFile[result.size()]);
   }
 
+  @NotNull
   public VirtualFile[] getDirectories() {
     assert !myDisposed;
     if (myCachedDirectories == null) {
@@ -216,11 +220,11 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
 
     final VirtualFilePointerContainerImpl virtualFilePointerContainer = (VirtualFilePointerContainerImpl)o;
 
-    return !(myList != null ? !myList.equals(virtualFilePointerContainer.myList) : virtualFilePointerContainer.myList != null);
+    return myList.equals(virtualFilePointerContainer.myList);
   }
 
   public int hashCode() {
-    return myList != null ? myList.hashCode() : 0;
+    return myList.hashCode();
   }
 
   protected VirtualFilePointer create(VirtualFile file) {
@@ -240,10 +244,12 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return "VFPContainer: "+myList/*+"; parent:"+myParent*/;
   }
 
+  @NotNull
   public VirtualFilePointerContainer clone(@NotNull Disposable parent) {
     return clone(parent, null);
   }
 
+  @NotNull
   public VirtualFilePointerContainer clone(@NotNull Disposable parent, VirtualFilePointerListener listener) {
     assert !myDisposed;
     VirtualFilePointerContainer clone = myVirtualFilePointerManager.createContainer(parent, listener);

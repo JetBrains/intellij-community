@@ -19,7 +19,6 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerImpl");
   private String myUrl; // is null when myFile is not null
   private VirtualFile myFile;
-  private boolean myWasRecentlyValid = false;
   private final VirtualFileManager myVirtualFileManager;
   private final VirtualFilePointerListener myListener;
   private boolean disposed = false;
@@ -149,22 +148,6 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     else if (!myFile.exists()) {
       myUrl = myFile.getUrl();
       myFile = null;
-    }
-
-    myWasRecentlyValid = isFileRetrieved();
-  }
-
-  boolean willValidityChange() {
-    update();
-
-    if (myWasRecentlyValid) {
-      LOG.assertTrue(myFile != null);
-      return !myFile.isValid();
-    }
-    else {
-      LOG.assertTrue(myUrl != null);
-      final VirtualFile fileByUrl = myVirtualFileManager.findFileByUrl(myUrl);
-      return fileByUrl != null;
     }
   }
 

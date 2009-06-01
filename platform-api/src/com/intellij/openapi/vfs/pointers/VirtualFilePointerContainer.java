@@ -36,15 +36,15 @@ public interface VirtualFilePointerContainer {
 
   void remove(VirtualFilePointer pointer);
 
-  List<VirtualFilePointer> getList();
+  @NotNull List<VirtualFilePointer> getList();
 
-  void addAll(VirtualFilePointerContainer that);
+  void addAll(@NotNull VirtualFilePointerContainer that);
 
-  String[] getUrls();
+  @NotNull String[] getUrls();
 
-  VirtualFile[] getFiles();
+  @NotNull VirtualFile[] getFiles();
 
-  VirtualFile[] getDirectories();
+  @NotNull VirtualFile[] getDirectories();
 
   @Nullable
   VirtualFilePointer findByUrl(String url);
@@ -63,7 +63,7 @@ public interface VirtualFilePointerContainer {
 
   void moveDown(String url);
 
-  VirtualFilePointerContainer clone(@NotNull Disposable parent);
+  @NotNull VirtualFilePointerContainer clone(@NotNull Disposable parent);
 
-  VirtualFilePointerContainer clone(@NotNull Disposable parent, VirtualFilePointerListener listener);
+  @NotNull VirtualFilePointerContainer clone(@NotNull Disposable parent, VirtualFilePointerListener listener);
 }
