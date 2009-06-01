@@ -611,9 +611,11 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     cleanup(managerEx);
     AnalysisUIOptions.getInstance(myProject).save(myUIOptions);
-    final ContentManager contentManager = getContentManager();
-    if (contentManager != null && myContent != null) {  //null for tests
-      contentManager.removeContent(myContent, true);
+    if (myContent != null) {
+      final ContentManager contentManager = getContentManager();
+      if (contentManager != null) {  //null for tests
+        contentManager.removeContent(myContent, true);
+      }
     }
     myView = null;
   }
