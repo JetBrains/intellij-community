@@ -103,7 +103,9 @@ public class Disposer {
   }
 
   public static void assertIsEmpty() {
-    ourTree.assertIsEmpty();
+    if (ourDebugMode) {
+      ourTree.assertIsEmpty();
+    }
   }
 
   public static void setDebugMode(final boolean b) {
