@@ -126,6 +126,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     add(sharePanel, BorderLayout.NORTH);
   }
 
+  public void addSharedProfileListener(ActionListener sharedProfileListener) {
+    myShareProfile.addActionListener(sharedProfileListener);
+  }
+
   private void updateSelectedProfileState() {
     if (mySelectedProfile == null) return;
     restoreTreeState();
@@ -815,7 +819,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return modified;
   }
 
-  private ModifiableModel getSelectedProfile() {
+  ModifiableModel getSelectedProfile() {
     return mySelectedProfile;
   }
 
@@ -974,6 +978,10 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public Tree getTree() {
     return myTree;
+  }
+
+  public boolean isProfileShared() {
+    return myShareProfile.isSelected();
   }
 
   private class LevelSelection implements ActionListener {

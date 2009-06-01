@@ -171,6 +171,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   private void addProfile(InspectionProfileImpl model) {
     final String modelName = model.getName();
     final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(myProjectProfileManager, modelName, model);
+    addSharedProfileListener(panel);
     myPanel.add(modelName, panel);
     if (!myPanels.containsKey(modelName)) {
       ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
@@ -213,10 +214,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myProfiles.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
-        myActivateButton.setEnabled(profile.getProfileManager() != myProfileManager && profile != myActiveProfile);
-        myDeleteButton.setEnabled(profile != myActiveProfile);
         final SingleInspectionProfilePanel panel = getSelectedPanel();
+        myDeleteButton.setEnabled(profile != myActiveProfile);
         if (panel != null) {
+          myActivateButton.setEnabled(panel.isProfileShared() && profile != myActiveProfile);
           panel.setSharedEnabled(profile != myActiveProfile);
         }
         myLayout.show(myPanel, profile.getName());
@@ -271,6 +272,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       model.addElement(profile);
       final String profileName = profile.getName();
       final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(myProjectProfileManager, profileName, ((InspectionProfileImpl)profile).getModifiableModel());
+      addSharedProfileListener(panel);
       myPanels.put(profileName, panel);
       panel.reset();
       myPanel.add(profileName, panel);
@@ -282,6 +284,14 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myActiveProfile = inspectionProfile;
     myActivateButton.setEnabled(false);
     getSelectedPanel().setSharedEnabled(inspectionProfile.getProfileManager() == myProfileManager);
+  }
+
+  private void addSharedProfileListener(final SingleInspectionProfilePanel panel) {
+    panel.addSharedProfileListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myActivateButton.setEnabled(myActiveProfile != panel.getSelectedProfile() && panel.isProfileShared());
+      }
+    });
   }
 
   protected Collection<Profile> getProfiles() {
