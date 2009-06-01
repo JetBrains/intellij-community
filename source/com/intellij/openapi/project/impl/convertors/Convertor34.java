@@ -132,11 +132,7 @@ public class Convertor34 {
       LOG.error(e);
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(moduleFilePath));
-      }
-    });
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(moduleFilePath));
 
     rootComponent.setAttribute("name", "ProjectRootManager");
     rootComponent.setAttribute("version", "4");
