@@ -4,6 +4,7 @@ import com.intellij.ide.startup.BackgroundableCacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -19,16 +20,15 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
@@ -61,6 +61,7 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
   }
 
   public boolean initiallyBackgrounded() {
+    if (ApplicationManager.getApplication().isCommandLine() || ApplicationManager.getApplication().isUnitTestMode()) return false;
     return Registry.get(DumbServiceImpl.FILE_INDEX_BACKGROUND).asBoolean();
   }
 
