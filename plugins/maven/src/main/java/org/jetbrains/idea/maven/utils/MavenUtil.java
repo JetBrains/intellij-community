@@ -67,7 +67,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      DumbService.getInstance().runWhenSmart(new Runnable() {
+      DumbService.getInstance(project).runWhenSmart(new Runnable() {
         public void run() {
           if (project.isDisposed()) return;
           r.run();
