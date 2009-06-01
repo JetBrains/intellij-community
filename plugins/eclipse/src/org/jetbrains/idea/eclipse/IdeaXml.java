@@ -11,6 +11,7 @@ public interface IdeaXml {
   @NonNls String EXPORTED_ATTR = "exported";
   @NonNls String SOURCE_FOLDER_TYPE = "sourceFolder";
   @NonNls String SOURCE_FOLDER_TAG = "sourceFolder";
+  @NonNls String CONTENT_ENTRY_TAG = "contentEntry";
   @NonNls String TEST_FOLDER_TAG = "testFolder";
   @NonNls String EXCLUDE_FOLDER_TAG = "excludeFolder";
   @NonNls String FOR_TESTS_ATTR = "forTests";

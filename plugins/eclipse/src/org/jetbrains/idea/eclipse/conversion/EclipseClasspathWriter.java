@@ -22,8 +22,9 @@ package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
@@ -35,7 +36,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -312,10 +312,13 @@ public class EclipseClasspathWriter {
     }
 
     for (ContentEntry entry : myModel.getContentEntries()) {
+      final Element contentEntryElement = new Element(IdeaXml.CONTENT_ENTRY_TAG);
+      contentEntryElement.setAttribute(IdeaXml.URL_ATTR, entry.getUrl());
+      root.addContent(contentEntryElement);
       for (SourceFolder sourceFolder : entry.getSourceFolders()) {
         if (sourceFolder.isTestSource()) {
           Element element = new Element(IdeaXml.TEST_FOLDER_TAG);
-          root.addContent(element);
+          contentEntryElement.addContent(element);
           element.setAttribute(IdeaXml.URL_ATTR, sourceFolder.getUrl());
           isModified = true;
         }
@@ -326,7 +329,7 @@ public class EclipseClasspathWriter {
         final String exludeFolderUrl = excludeFolder.getUrl();
         if (!Comparing.strEqual(exludeFolderUrl, compilerOutputUrl)) {
           Element element = new Element(IdeaXml.EXCLUDE_FOLDER_TAG);
-          root.addContent(element);
+          contentEntryElement.addContent(element);
           element.setAttribute(IdeaXml.URL_ATTR, exludeFolderUrl);
           isModified = true;
         }

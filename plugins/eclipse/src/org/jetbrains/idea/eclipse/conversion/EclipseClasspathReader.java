@@ -425,25 +425,17 @@ public class EclipseClasspathReader {
 
     compilerModuleExtension.setExcludeOutput(root.getChild(IdeaXml.EXCLUDE_OUTPUT_TAG) != null);
 
-    final ContentEntry[] entries = model.getContentEntries();
-    if (entries.length > 0) {
-      for (Object o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
-        final String url = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
-        SourceFolder folderToBeTest = null;
-        for (SourceFolder folder : entries[0].getSourceFolders()) {
-          if (Comparing.strEqual(folder.getUrl(), url)) {
-            folderToBeTest = folder;
-            break;
-          }
-        }
-        if (folderToBeTest != null) {
-          entries[0].removeSourceFolder(folderToBeTest);
-        }
-        entries[0].addSourceFolder(url, true);
+    final List entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
+    if (!entriesElements.isEmpty()) {
+      for (Object o : entriesElements) {
+        final Element contentEntryElement = (Element)o;
+        final ContentEntry contentEntry = model.addContentEntry(contentEntryElement.getAttributeValue(IdeaXml.URL_ATTR));
+        readContentFolders(contentEntryElement, contentEntry);
       }
-
-      for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
-        entries[0].addExcludeFolder(((Element)o).getAttributeValue(IdeaXml.URL_ATTR));
+    } else {
+      final ContentEntry[] entries = model.getContentEntries();
+      if (entries.length > 0) {
+        readContentFolders(root, entries[0]);
       }
     }
 
@@ -458,6 +450,27 @@ public class EclipseClasspathReader {
         }
         modifiableModel.commit();
       }
+    }
+  }
+
+  private static void readContentFolders(Element root, ContentEntry entry) {
+    for (Object o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
+      final String url = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
+      SourceFolder folderToBeTest = null;
+      for (SourceFolder folder : entry.getSourceFolders()) {
+        if (Comparing.strEqual(folder.getUrl(), url)) {
+          folderToBeTest = folder;
+          break;
+        }
+      }
+      if (folderToBeTest != null) {
+        entry.removeSourceFolder(folderToBeTest);
+      }
+      entry.addSourceFolder(url, true);
+    }
+
+    for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
+      entry.addExcludeFolder(((Element)o).getAttributeValue(IdeaXml.URL_ATTR));
     }
   }
 }
