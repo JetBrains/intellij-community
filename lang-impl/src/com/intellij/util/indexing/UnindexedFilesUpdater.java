@@ -14,10 +14,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -26,12 +28,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
 *         Date: Jan 29, 2008
 */
 public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
+  private static final Key<Boolean> DONT_INDEX_AGAIN_KEY = Key.create("DONT_INDEX_AGAIN_KEY");
   private final FileBasedIndex myIndex;
   private final Project myProject;
   private final ProjectRootManager myRootManager;
@@ -46,6 +51,12 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
     CollectingContentIterator finder = myIndex.createContentIterator();
     iterateIndexableFiles(finder);
     final List<VirtualFile> files = finder.getFiles();
+    for (Iterator<VirtualFile> virtualFileIterator = files.iterator(); virtualFileIterator.hasNext();) {
+      VirtualFile file = virtualFileIterator.next();
+      if (file.getUserData(DONT_INDEX_AGAIN_KEY) != null) {
+        virtualFileIterator.remove();
+      }
+    }
     return files.toArray(new VirtualFile[files.size()]);
   }
 
@@ -99,6 +110,10 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
                   processFile(new FileContent(file));
                 }
                 catch (NoProjectForFileException ignored) {
+                }
+                catch (Throwable e) {
+                  LOG.error("Error while indexing " + file.getPresentableUrl(), e);
+                  file.putUserData(DONT_INDEX_AGAIN_KEY, Boolean.TRUE);
                 }
               }
             });
