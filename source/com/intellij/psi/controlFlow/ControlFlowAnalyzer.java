@@ -11,6 +11,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -25,11 +26,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private ControlFlowImpl myCurrentFlow;
   private final ControlFlowStack myStack = new ControlFlowStack();
-  private final List<PsiParameter> myCatchParameters = new ArrayList<PsiParameter>();  // stack of PsiParameter for catch
-  private final List<PsiElement> myCatchBlocks = new ArrayList<PsiElement>();
+  private final Stack<PsiParameter> myCatchParameters = new Stack<PsiParameter>();// stack of PsiParameter for catch
+  private final Stack<PsiElement> myCatchBlocks = new Stack<PsiElement>();
 
-  private final List<PsiElement> myFinallyBlocks = new ArrayList<PsiElement>();
-  private final List<PsiElement> myUnhandledExceptionCatchBlocks = new ArrayList<PsiElement>();
+  private final Stack<PsiElement> myFinallyBlocks = new Stack<PsiElement>();
+  private final Stack<PsiElement> myUnhandledExceptionCatchBlocks = new Stack<PsiElement>();
 
   // element to jump to from inner (sub)expression in "jump to begin" situation.
   // E.g. we should jump to "then" branch if condition expression evaluated to true inside if statement
@@ -38,8 +39,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   // E.g. we should jump to "else" branch if condition expression evaluated to false inside if statement
   private final StatementStack myEndStatementStack = new StatementStack();
 
-  private final List<BranchingInstruction.Role> myStartJumpRoles = new ArrayList<BranchingInstruction.Role>();
-  private final List<BranchingInstruction.Role> myEndJumpRoles = new ArrayList<BranchingInstruction.Role>();
+  private final Stack<BranchingInstruction.Role> myStartJumpRoles = new Stack<BranchingInstruction.Role>();
+  private final Stack<BranchingInstruction.Role> myEndJumpRoles = new Stack<BranchingInstruction.Role>();
 
   // true if generate direct jumps for short-circuited operations,
   // e.g. jump to else branch of if statement after each calculation of '&&' operand in condition
@@ -49,7 +50,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private final boolean myEvaluateConstantIfConfition;
   private final boolean myAssignmentTargetsAreElements;
 
-  private final List<TIntArrayList> intArrayPool = new ArrayList<TIntArrayList>();
+  private final Stack<TIntArrayList> intArrayPool = new Stack<TIntArrayList>();
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getStartoffset(element)
   private final Map<PsiElement,TIntArrayList> offsetsAddElementStart = new THashMap<PsiElement, TIntArrayList>();
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getEndOffset(element)
@@ -83,8 +84,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @NotNull
   ControlFlow buildControlFlow() throws AnalysisCanceledException {
     // push guard outer statement offsets in case when nested expression is incorrect
-    myStartJumpRoles.add(BranchingInstruction.Role.END);
-    myEndJumpRoles.add(BranchingInstruction.Role.END);
+    myStartJumpRoles.push(BranchingInstruction.Role.END);
+    myEndJumpRoles.push(BranchingInstruction.Role.END);
 
     myCurrentFlow = new ControlFlowImpl();
 
@@ -104,35 +105,33 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private static class StatementStack {
-    private final List<PsiElement> myStatements = new ArrayList<PsiElement>();
+    private final Stack<PsiElement> myStatements = new Stack<PsiElement>();
     private final TIntArrayList myAtStart = new TIntArrayList();
 
-    void popStatement() {
+    private void popStatement() {
       myAtStart.remove(myAtStart.size() - 1);
-      myStatements.remove(myStatements.size() - 1);
+      myStatements.pop();
     }
 
-    PsiElement peekElement() {
-      return myStatements.get(myStatements.size() - 1);
+    private PsiElement peekElement() {
+      return myStatements.peek();
     }
 
-    boolean peekAtStart() {
+    private boolean peekAtStart() {
       return myAtStart.get(myAtStart.size() - 1) == 1;
     }
 
-    void pushStatement(PsiElement statement, boolean atStart) {
-      myStatements.add(statement);
+    private void pushStatement(PsiElement statement, boolean atStart) {
+      myStatements.push(statement);
       myAtStart.add(atStart ? 1 : 0);
     }
   }
 
   private TIntArrayList getEmptyIntArray() {
-    final int size = intArrayPool.size();
-    if (size == 0) {
+    if (intArrayPool.isEmpty()) {
       return new TIntArrayList(1);
     }
-    TIntArrayList list = intArrayPool.get(size - 1);
-    intArrayPool.remove(size - 1);
+    TIntArrayList list = intArrayPool.pop();
     list.clear();
     return list;
   }
@@ -252,7 +251,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     // generate jump to the top finally block
     if (!myFinallyBlocks.isEmpty()) {
-      final PsiElement finallyBlock = myFinallyBlocks.get(myFinallyBlocks.size() - 1);
+      final PsiElement finallyBlock = myFinallyBlocks.peek();
       ConditionalThrowToInstruction throwToInstruction = new ConditionalThrowToInstruction(-2);
       myCurrentFlow.addInstruction(throwToInstruction);
       if (!patchUncheckedThrowInstructionIfInsideFinally(throwToInstruction, element, finallyBlock)) {
@@ -684,8 +683,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       myEndStatementStack.pushStatement(elseBranch, true);
     }
 
-    myEndJumpRoles.add(elseBranch == null ? BranchingInstruction.Role.END : BranchingInstruction.Role.ELSE);
-    myStartJumpRoles.add(thenBranch == null ? BranchingInstruction.Role.END : BranchingInstruction.Role.THEN);
+    myEndJumpRoles.push(elseBranch == null ? BranchingInstruction.Role.END : BranchingInstruction.Role.ELSE);
+    myStartJumpRoles.push(thenBranch == null ? BranchingInstruction.Role.END : BranchingInstruction.Role.THEN);
 
     if (conditionExpression != null) {
       conditionExpression.accept(this);
@@ -719,11 +718,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       BranchingInstruction.Role role = elseBranch == null ? BranchingInstruction.Role.END : BranchingInstruction.Role.ELSE;
       Instruction instruction = new ConditionalGoToInstruction(0, role, conditionExpression);
       myCurrentFlow.addInstruction(instruction);
-      if (elseBranch != null) {
-        addElementOffsetLater(elseBranch, true);
+      if (elseBranch == null) {
+        addElementOffsetLater(statement, false);
       }
       else {
-        addElementOffsetLater(statement, false);
+        addElementOffsetLater(elseBranch, true);
       }
     }
     if (thenBranch != null && generateThenFlow) {
@@ -739,8 +738,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       elseBranch.accept(this);
     }
 
-    myStartJumpRoles.remove(myStartJumpRoles.size() - 1);
-    myEndJumpRoles.remove(myEndJumpRoles.size() - 1);
+    myStartJumpRoles.pop();
+    myEndJumpRoles.pop();
 
     myStartStatementStack.popStatement();
     myEndStatementStack.popStatement();
@@ -791,7 +790,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       else {
         instruction.offset = -4; // -4 for return
-        addElementOffsetLater(myFinallyBlocks.get(myFinallyBlocks.size() - 1), true);
+        addElementOffsetLater(myFinallyBlocks.peek(), true);
       }
     }
   }
@@ -879,7 +878,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       else {
         instruction.offset = -2; // -2 to rethrow exception
-        element = myFinallyBlocks.get(myFinallyBlocks.size() - 1);
+        element = myFinallyBlocks.peek();
         addElementOffsetLater(element, true);
       }
     }
@@ -945,13 +944,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       myStartStatementStack.pushStatement(statement, false);
       myEndStatementStack.pushStatement(statement, false);
 
-      myEndJumpRoles.add(BranchingInstruction.Role.END);
-      myStartJumpRoles.add(BranchingInstruction.Role.END);
+      myEndJumpRoles.push(BranchingInstruction.Role.END);
+      myStartJumpRoles.push(BranchingInstruction.Role.END);
 
       condition.accept(this);
 
-      myStartJumpRoles.remove(myStartJumpRoles.size() - 1);
-      myEndJumpRoles.remove(myEndJumpRoles.size() - 1);
+      myStartJumpRoles.pop();
+      myEndJumpRoles.pop();
 
       myStartStatementStack.popStatement();
       myEndStatementStack.popStatement();
@@ -974,22 +973,22 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiCodeBlock[] catchBlocks = statement.getCatchBlocks();
     PsiParameter[] catchBlockParameters = statement.getCatchBlockParameters();
     int catchNum = Math.min(catchBlocks.length, catchBlockParameters.length);
-    myUnhandledExceptionCatchBlocks.add(null);
+    myUnhandledExceptionCatchBlocks.push(null);
     for (int i = catchNum - 1; i >= 0; i--) {
-      myCatchParameters.add(catchBlockParameters[i]);
-      myCatchBlocks.add(catchBlocks[i]);
+      myCatchParameters.push(catchBlockParameters[i]);
+      myCatchBlocks.push(catchBlocks[i]);
 
       final PsiType type = catchBlockParameters[i].getType();
       // todo cast param
       if (type instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type)) {
-        myUnhandledExceptionCatchBlocks.add(catchBlocks[i]);
+        myUnhandledExceptionCatchBlocks.push(catchBlocks[i]);
       }
     }
 
     PsiCodeBlock finallyBlock = statement.getFinallyBlock();
 
     if (finallyBlock != null) {
-      myFinallyBlocks.add(finallyBlock);
+      myFinallyBlocks.push(finallyBlock);
     }
 
     PsiCodeBlock tryBlock = statement.getTryBlock();
@@ -999,7 +998,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       tryBlock.accept(this);
     }
 
-    while (myUnhandledExceptionCatchBlocks.remove(myUnhandledExceptionCatchBlocks.size() - 1) != null) ;
+    while (myUnhandledExceptionCatchBlocks.pop() != null) ;
 
     myCurrentFlow.addInstruction(new GoToInstruction(finallyBlock == null ? 0 : -6));
     if (finallyBlock == null) {
@@ -1010,8 +1009,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     for (int i = 0; i < catchNum; i++) {
-      myCatchParameters.remove(myCatchParameters.size() - 1);
-      myCatchBlocks.remove(myCatchBlocks.size() - 1);
+      myCatchParameters.pop();
+      myCatchBlocks.pop();
     }
 
     for (int i = catchNum - 1; i >= 0; i--) {
@@ -1032,7 +1031,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (finallyBlock != null) {
-      myFinallyBlocks.remove(myFinallyBlocks.size() - 1);
+      myFinallyBlocks.pop();
     }
 
     if (finallyBlock != null) {
@@ -1242,62 +1241,85 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
 
     final PsiExpression lOperand = expression.getLOperand();
-    lOperand.accept(this);
-
-    IElementType signTokenType = expression.getOperationSign().getTokenType();
-    if (signTokenType == JavaTokenType.ANDAND) {
-      if (myEnabledShortCircuit) {
-        final Object exprValue = myConstantEvaluationHelper.computeConstantExpression(lOperand);
-        if (exprValue instanceof Boolean) {
-          myCurrentFlow.setConstantConditionOccurred(true);
-        }
-        if (calculateConstantExpression(expression) && exprValue instanceof Boolean) {
-          if (!((Boolean)exprValue).booleanValue()) {
-            myCurrentFlow.addInstruction(new GoToInstruction(0, myEndJumpRoles.get(myEndJumpRoles.size() - 1)));
-            addElementOffsetLater(myEndStatementStack.peekElement(), myEndStatementStack.peekAtStart());
-          }
-        }
-        else {
-          myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, myEndJumpRoles.get(myEndJumpRoles.size() - 1), lOperand));
-          addElementOffsetLater(myEndStatementStack.peekElement(), myEndStatementStack.peekAtStart());
-        }
-      }
-      else {
-        Instruction instruction = new ConditionalGoToInstruction(0, lOperand);
-        myCurrentFlow.addInstruction(instruction);
-        addElementOffsetLater(expression, false);
-      }
-    }
-    else if (signTokenType == JavaTokenType.OROR) {
-      if (myEnabledShortCircuit) {
-        final Object exprValue = myConstantEvaluationHelper.computeConstantExpression(lOperand);
-        if (exprValue instanceof Boolean) {
-          myCurrentFlow.setConstantConditionOccurred(true);
-        }
-        if (calculateConstantExpression(expression) && exprValue instanceof Boolean) {
-          if (((Boolean)exprValue).booleanValue()) {
-            myCurrentFlow.addInstruction(new GoToInstruction(0, myStartJumpRoles.get(myStartJumpRoles.size() - 1)));
-            addElementOffsetLater(myStartStatementStack.peekElement(), myStartStatementStack.peekAtStart());
-          }
-        }
-        else {
-          myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, myStartJumpRoles.get(myStartJumpRoles.size() - 1), lOperand));
-          addElementOffsetLater(myStartStatementStack.peekElement(), myStartStatementStack.peekAtStart());
-        }
-      }
-      else {
-        Instruction instruction = new ConditionalGoToInstruction(0, lOperand);
-        myCurrentFlow.addInstruction(instruction);
-        addElementOffsetLater(expression, false);
-      }
-    }
-
     final PsiExpression rOperand = expression.getROperand();
+    IElementType signTokenType = expression.getOperationSign().getTokenType();
+
+    if (signTokenType == JavaTokenType.ANDAND || signTokenType == JavaTokenType.OROR) {
+      if (myEnabledShortCircuit) {
+        Object exprValue = myConstantEvaluationHelper.computeConstantExpression(lOperand);
+        Boolean lvalue = null;
+        if (exprValue instanceof Boolean) {
+          myCurrentFlow.setConstantConditionOccurred(true);
+          lvalue = shouldCalculateConstantExpression(expression) ? (Boolean)exprValue : null;
+        }
+        exprValue = myConstantEvaluationHelper.computeConstantExpression(rOperand);
+        Boolean rvalue = null;
+        if (exprValue instanceof Boolean) {
+          myCurrentFlow.setConstantConditionOccurred(true);
+          rvalue = shouldCalculateConstantExpression(expression) ? (Boolean)exprValue : null;
+        }
+        Boolean doShortcut;
+        boolean shouldGenLOperand = true;
+        if (lvalue != null) {
+          doShortcut = lvalue.booleanValue() != (signTokenType == JavaTokenType.ANDAND);
+        }
+        else if (rvalue != null && rvalue.booleanValue() != (signTokenType == JavaTokenType.ANDAND)) {
+          doShortcut = Boolean.TRUE;
+          shouldGenLOperand = false; // case of 'if (x && false)...'
+        }
+        else {
+          doShortcut = null;
+        }
+        
+        if (shouldGenLOperand) {
+          generateLOperand(lOperand, rOperand, signTokenType);
+        }
+        BranchingInstruction.Role role = signTokenType == JavaTokenType.ANDAND ? myEndJumpRoles.peek() : myStartJumpRoles.peek();
+        PsiElement gotoElement = signTokenType == JavaTokenType.ANDAND ? myEndStatementStack.peekElement() : myStartStatementStack.peekElement();
+        boolean gotoIsAtStart = signTokenType == JavaTokenType.ANDAND ? myEndStatementStack.peekAtStart() : myStartStatementStack.peekAtStart();
+        if (doShortcut == null) {
+          myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, role, lOperand));
+          addElementOffsetLater(gotoElement, gotoIsAtStart);
+        }
+        else if (doShortcut.booleanValue()) {
+          myCurrentFlow.addInstruction(new GoToInstruction(0, role));
+          addElementOffsetLater(gotoElement, gotoIsAtStart);
+        }
+      }
+      else {
+        generateLOperand(lOperand, rOperand, signTokenType);
+
+        myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, lOperand));
+        addElementOffsetLater(expression, false);
+      }
+    }
+    else {
+      generateLOperand(lOperand, rOperand, signTokenType);
+    }
+
     if (rOperand != null) {
       rOperand.accept(this);
     }
 
     finishElement(expression);
+  }
+
+  private void generateLOperand(PsiExpression lOperand, PsiExpression rOperand, IElementType signTokenType) {
+    if (rOperand != null) {
+      myStartJumpRoles.push(BranchingInstruction.Role.END);
+      myEndJumpRoles.push(BranchingInstruction.Role.END);
+      PsiElement then = signTokenType == JavaTokenType.OROR ? myStartStatementStack.peekElement() : rOperand;
+      myStartStatementStack.pushStatement(then, true);
+      PsiElement elseS = signTokenType == JavaTokenType.ANDAND ? myEndStatementStack.peekElement() : rOperand;
+      myEndStatementStack.pushStatement(elseS, true);
+    }
+    lOperand.accept(this);
+    if (rOperand != null) {
+      myStartStatementStack.popStatement();
+      myEndStatementStack.popStatement();
+      myStartJumpRoles.pop();
+      myEndJumpRoles.pop();
+    }
   }
 
   private static boolean isInsideIfCondition(PsiExpression expression) {
@@ -1310,10 +1332,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     return false;
   }
 
-  private boolean calculateConstantExpression(PsiExpression expression) {
+  private boolean shouldCalculateConstantExpression(PsiExpression expression) {
     return myEvaluateConstantIfConfition || !isInsideIfCondition(expression);
   }
-
 
   @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
     visitChildren(expression);

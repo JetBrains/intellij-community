@@ -83,9 +83,7 @@ public class ControlFlowFactory {
       // optimization: when no constant condition were computed, both control flows are the same
       if (!controlFlow.isConstantConditionOccurred()) return true;
 
-      if (evaluateConstantIfCondition != this.evaluateConstantIfCondition) return false;
-
-      return true;
+      return evaluateConstantIfCondition == this.evaluateConstantIfCondition;
     }
 
     private boolean isFor(final ControlFlowContext that) {
