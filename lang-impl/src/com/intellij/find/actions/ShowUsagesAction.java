@@ -37,6 +37,7 @@ import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,7 +78,7 @@ public class ShowUsagesAction extends AnAction {
 
   private static void showElementUsages(@NotNull Project project, final PsiElement element, Editor editor, final RelativePoint popupPosition) {
     ArrayList<Usage> usages = new ArrayList<Usage>();
-    CommonProcessors.CollectProcessor<Usage> collect = new CommonProcessors.CollectProcessor<Usage>(usages);
+    Processor<Usage> collect = CommonProcessors.notNullProcessor(new CommonProcessors.CollectProcessor<Usage>(usages));
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
     UsageViewPresentation presentation = findUsagesManager.processUsages(element, collect, handler);
@@ -113,7 +114,7 @@ public class ShowUsagesAction extends AnAction {
     Usage[] arr = usages.toArray(new Usage[usages.size()]);
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setDetachedMode(true);
-    final UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(project).createUsageView(new UsageTarget[0], arr, presentation, null);
+    final UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(project).createUsageView(UsageTarget.EMPTY_ARRAY, arr, presentation, null);
 
     GroupNode root = usageView.getRoot();
     List<UsageNode> nodes = new ArrayList<UsageNode>();

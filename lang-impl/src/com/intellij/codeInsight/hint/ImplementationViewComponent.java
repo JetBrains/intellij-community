@@ -469,7 +469,7 @@ public class ImplementationViewComponent extends JPanel {
       for (int i = 0; i < elements.length; i++) {
         usages[i] = new UsageInfo(elements[i]);
       }
-      UsageViewManager.getInstance(myEditor.getProject()).showUsages(new UsageTarget[0], UsageInfoToUsageConverter.convert(
+      UsageViewManager.getInstance(myEditor.getProject()).showUsages(UsageTarget.EMPTY_ARRAY, UsageInfoToUsageConverter.convert(
         new UsageInfoToUsageConverter.TargetElementsDescriptor(elements), usages), presentation);
       if (myHint.isVisible()) {
         myHint.cancel();

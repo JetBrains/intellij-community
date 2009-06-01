@@ -55,7 +55,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
       Usage[] usages = UsageInfoToUsageConverter.convert(descriptor, usageInfos);
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsagesString(getCodeUsagesString());
-      myCurrentUsageView = UsageViewManager.getInstance(myProject).createUsageView(new UsageTarget[0], usages, presentation, null);
+      myCurrentUsageView = UsageViewManager.getInstance(myProject).createUsageView(UsageTarget.EMPTY_ARRAY, usages, presentation, null);
       setToComponent(myCurrentUsageView.getComponent());
     }
     catch (ProcessCanceledException e) {

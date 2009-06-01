@@ -192,7 +192,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
   }
 
-  private static void appendUsages(final Usage[] foundUsages, final UsageViewImpl usageView) {
+  private static void appendUsages(@NotNull final Usage[] foundUsages, final UsageViewImpl usageView) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         for (Usage foundUsage : foundUsages) {

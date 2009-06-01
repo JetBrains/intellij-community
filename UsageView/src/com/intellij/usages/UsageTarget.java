@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public interface UsageTarget extends NavigationItem {
+  UsageTarget[] EMPTY_ARRAY = new UsageTarget[0];
   /**
    * Should display a usage dialog, open usage view and look for usages of itself
    */

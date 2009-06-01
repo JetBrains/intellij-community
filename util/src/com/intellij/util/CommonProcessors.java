@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,6 +52,16 @@ public class CommonProcessors {
       return myCollection;
     }
   }
+
+  @NotNull
+  public static <T> Processor<T> notNullProcessor(@NotNull final Processor<T> processor) {
+    return new Processor<T>() {
+      public boolean process(@NotNull T t) {
+        return processor.process(t);
+      }
+    };
+  }
+
 
   public static class CollectUniquesProcessor<T> implements Processor<T> {
     private final Set<T> myCollection;

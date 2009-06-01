@@ -114,9 +114,10 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
   @NotNull
   public Collection<? extends PsiMethod> getVariants(final ConvertContext context) {
     LinkedHashSet<PsiMethod> methodList = new LinkedHashSet<PsiMethod>();
-    processMethods(context, new CommonProcessors.CollectProcessor<PsiMethod>(methodList), new Function<PsiClass, PsiMethod[]>() {
+    Processor<PsiMethod> processor = CommonProcessors.notNullProcessor(new CommonProcessors.CollectProcessor<PsiMethod>(methodList));
+    processMethods(context, processor, new Function<PsiClass, PsiMethod[]>() {
       public PsiMethod[] fun(final PsiClass s) {
-        final List<PsiMethod> list = ContainerUtil.findAll(AbstractMethodResolveConverter.this.getVariants(s), new Condition<PsiMethod>() {
+        final List<PsiMethod> list = ContainerUtil.findAll(getVariants(s), new Condition<PsiMethod>() {
           public boolean value(final PsiMethod object) {
             return acceptMethod(object, context);
           }
