@@ -151,7 +151,7 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         precompile.run();
       } else {
-        DumbService.getInstance().smartInvokeLater(precompile, ModalityState.NON_MODAL);
+        DumbService.getInstance(project).smartInvokeLater(precompile, ModalityState.NON_MODAL);
       }
     }
   }
