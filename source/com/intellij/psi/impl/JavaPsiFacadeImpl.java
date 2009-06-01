@@ -459,7 +459,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     private void processChange(final PsiElement parent, final PsiElement child1, final PsiElement child2) {
       try {
         if (!isInsideCodeBlock(parent)) {
-          if (parent != null && parent.getContainingFile() instanceof PsiClassOwner && !(parent.getContainingFile() instanceof XmlFile)) {
+          if (parent != null && isClassOwner(parent.getContainingFile()) || isClassOwner(child1) || isClassOwner(child2)) {
             myModificationTracker.incCounter();
           }
           else {
@@ -475,6 +475,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       catch (PsiInvalidElementAccessException e) {
         myModificationTracker.incCounter(); // Shall not happen actually, just a pre-release paranoia
       }
+    }
+
+    private static boolean isClassOwner(final PsiElement element) {
+      return element instanceof PsiClassOwner && !(element instanceof XmlFile);
     }
 
     private static boolean containsClassesInside(final PsiElement element) {
