@@ -75,6 +75,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
 
   public void readExternal(Element element) throws InvalidDataException {
+    myProfiles.clear();
     DefaultJDOMExternalizer.readExternal(this, element);
     final Element profilesElement = element.getChild(PROFILES);
     if (profilesElement != null) {
