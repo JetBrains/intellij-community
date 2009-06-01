@@ -37,6 +37,11 @@ public class InspectionToolRegistrar {
   private final AtomicBoolean myInspectionComponentsLoaded = new AtomicBoolean(false);
 
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
+  public final SearchableOptionsRegistrar myOptionsRegistrar;
+
+  public InspectionToolRegistrar(SearchableOptionsRegistrar registrar) {
+    myOptionsRegistrar = registrar;
+  }
 
   public void ensureInitialized() {
     if (!myInspectionComponentsLoaded.getAndSet(true)) {
@@ -198,13 +203,12 @@ public class InspectionToolRegistrar {
     }
   }
 
-  private static void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
+  private void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
     if (ApplicationManager.getApplication().isDisposed()) return;
-    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    LOG.assertTrue(optionsRegistrar != null);
-    final Set<String> words = optionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
+    LOG.assertTrue(myOptionsRegistrar != null);
+    final Set<String> words = myOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
     for (String word : words) {
-      optionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), InspectionToolsConfigurable.ID, InspectionToolsConfigurable.DISPLAY_NAME);
+      myOptionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), InspectionToolsConfigurable.ID, InspectionToolsConfigurable.DISPLAY_NAME);
     }
   }
 }
