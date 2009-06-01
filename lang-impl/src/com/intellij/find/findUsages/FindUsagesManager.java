@@ -149,7 +149,9 @@ public class FindUsagesManager implements JDOMExternalizable {
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile == null) return false;
 
-    findUsagesInEditor(descriptor, getFindUsagesHandler(elements[0], false), psiFile, direction, myLastSearchInFileData.myOptions, textEditor);
+    final FindUsagesHandler handler = getFindUsagesHandler(elements[0], false);
+    if (handler == null) return false;
+    findUsagesInEditor(descriptor, handler, psiFile, direction, myLastSearchInFileData.myOptions, textEditor);
     return true;
   }
 
@@ -599,7 +601,9 @@ public class FindUsagesManager implements JDOMExternalizable {
     PsiElement[] elements = restorePsiElements(searchData, true);
     if (elements == null || elements.length == 0) return;
     UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(elements);
-    findUsages(descriptor, getFindUsagesHandler(elements[0], false), false, false, searchData.myOptions);
+    final FindUsagesHandler handler = getFindUsagesHandler(elements[0], false);
+    if (handler == null) return;
+    findUsages(descriptor, handler, false, false, searchData.myOptions);
   }
 
   // most recent entry is at the end of the list

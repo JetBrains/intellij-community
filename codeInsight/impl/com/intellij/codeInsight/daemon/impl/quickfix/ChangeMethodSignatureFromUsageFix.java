@@ -125,7 +125,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
 
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
-    assert handler != null;
+    if (handler == null) return; //on failure or cancel (e.g. cancel of super methods dialog)
 
     final FindUsagesOptions options = new FindUsagesOptions(project);
     options.isImplementingMethods = true;
