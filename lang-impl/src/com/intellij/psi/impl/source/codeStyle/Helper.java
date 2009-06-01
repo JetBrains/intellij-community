@@ -29,7 +29,7 @@ public class Helper {
     return getIndentInner(element, includeNonSpace, 0);
   }
   
-  protected static final int TOO_BIG_WALK_THRESHOULD = 450;
+  public static final int TOO_BIG_WALK_THRESHOULD = 450;
 
   protected int getIndentInner(final ASTNode element, boolean includeNonSpace, int recursionLevel) {
     if (recursionLevel > TOO_BIG_WALK_THRESHOULD) return 0;

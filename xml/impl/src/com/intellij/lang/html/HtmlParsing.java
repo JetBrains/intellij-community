@@ -6,6 +6,7 @@ package com.intellij.lang.html;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
@@ -126,7 +127,8 @@ public class HtmlParsing {
 
     String tagName = originalTagName.toLowerCase();
     if ((ddordt(tagName) && ddordt(parentName)) ||
-        (tagName.equals(parentName) && HtmlUtil.isOptionalEndForHtmlTagL(tagName))
+        (tagName.equals(parentName) && HtmlUtil.isOptionalEndForHtmlTagL(tagName)) ||
+        myTagMarkersStack.size() > MAGIC_FRAME_COUNT // no chance for evil guys wanting us to have stack overflow
        ) {
       tag.rollbackTo();
       myTagMarkersStack.pop();
@@ -584,4 +586,6 @@ public class HtmlParsing {
   private void error(final String message) {
     myBuilder.error(message);
   }
+
+  private static final int MAGIC_FRAME_COUNT = Helper.TOO_BIG_WALK_THRESHOULD + (int)(Math.pow(Math.E, Math.PI) * Math.sin(Math.random()));
 }
