@@ -68,12 +68,6 @@
       <skipForDummyProject/>
     </component>
 
-    <!-- execution -->
-    <component>
-      <implementation-class>com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider</implementation-class>
-      <skipForDummyProject/>
-    </component>
-
     <component>
       <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
       <skipForDummyProject/>
