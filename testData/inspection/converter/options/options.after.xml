@@ -1,12 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+ <?xml version="1.0" encoding="UTF-8"?>
 <config>
   <option name="PROJECT_PROFILE" value="p1" />
   <version value="1.0" />
   <profiles>
-    <profile version="1.0" is_locked="false">
-      <option name="myName" value="Configurable" />
-      <option name="myLocal" value="true" />
-    </profile>
     <profile version="1.0" is_locked="false">
       <option name="myName" value="Project Default" />
       <option name="myLocal" value="false" />
