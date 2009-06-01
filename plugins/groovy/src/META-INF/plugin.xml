@@ -244,6 +244,8 @@
 
     <concatenationAwareInjector implementation="org.jetbrains.plugins.grails.fileType.GroovyInjector"/>
 
+    <problemFileHighlightFilter implementation="org.jetbrains.plugins.groovy.GroovyProblemFileHighlightFilter"/>
+
     <!-- control flow -->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

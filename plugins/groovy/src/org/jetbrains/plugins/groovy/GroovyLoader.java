@@ -22,14 +22,10 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameInputValidator;
 import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
@@ -67,12 +63,6 @@ public class GroovyLoader implements ApplicationComponent {
         registrar.registerTextEditorHighlightingPass(unusedImportsPassFactory, new int[]{Pass.UPDATE_ALL}, null, true, -1);
         GroovyAddImportsPassFactory addImportsPassFactory = project.getComponent(GroovyAddImportsPassFactory.class);
         registrar.registerTextEditorHighlightingPass(addImportsPassFactory, new int[]{Pass.POPUP_HINTS}, null, true, -1);
-
-        WolfTheProblemSolver.getInstance(project).registerFileHighlightFilter(new Condition<VirtualFile>() {
-          public boolean value(VirtualFile virtualFile) {
-            return FileTypeManager.getInstance().getFileTypeByFile(virtualFile) == GroovyFileType.GROOVY_FILE_TYPE;
-          }
-        }, project);
 
         DebuggerManager.getInstance(project).registerPositionManagerFactory(new Function<DebugProcess, PositionManager>() {
           public PositionManager fun(DebugProcess debugProcess) {
