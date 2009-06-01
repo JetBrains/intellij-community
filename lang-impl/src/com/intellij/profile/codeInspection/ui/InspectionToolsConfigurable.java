@@ -197,8 +197,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        setText(((Profile)value).getName());
-        if (((InspectionProfileImpl)value).getProfileManager() == myProjectProfileManager) {
+        final String profileName = ((Profile)value).getName();
+        setText(profileName);
+        final SingleInspectionProfilePanel panel = myPanels.get(profileName);
+        if (panel != null && panel.isProfileShared()) {
           if (value == myActiveProfile) {
             setIcon(DEFAULT_PROJECT_PROFILE);
           }
