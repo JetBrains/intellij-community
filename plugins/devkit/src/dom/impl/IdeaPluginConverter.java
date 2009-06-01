@@ -91,23 +91,26 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
       final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
       if (jdk != null && jdk.getSdkType() instanceof IdeaJdk) {
-        final VirtualFile pluginsHome = jdk.getHomeDirectory().findChild("plugins");
-        final VirtualFile[] plugins = pluginsHome != null ? pluginsHome.getChildren() : VirtualFile.EMPTY_ARRAY;
-        for (VirtualFile plugin : plugins) {
-          if (plugin.isDirectory()) {
-            final VirtualFile lib = plugin.findChild("lib");
-            final VirtualFile[] children = lib != null ? lib.getChildren() : VirtualFile.EMPTY_ARRAY;
-            for (VirtualFile child : children) {
-              final IdeaPlugin ideaPlugin = findPluginInFile(child, project, psiManager);
+        final VirtualFile jdkHome = jdk.getHomeDirectory();
+        if (jdkHome != null) {
+          final VirtualFile pluginsHome = jdkHome.findChild("plugins");
+          final VirtualFile[] plugins = pluginsHome != null ? pluginsHome.getChildren() : VirtualFile.EMPTY_ARRAY;
+          for (VirtualFile plugin : plugins) {
+            if (plugin.isDirectory()) {
+              final VirtualFile lib = plugin.findChild("lib");
+              final VirtualFile[] children = lib != null ? lib.getChildren() : VirtualFile.EMPTY_ARRAY;
+              for (VirtualFile child : children) {
+                final IdeaPlugin ideaPlugin = findPluginInFile(child, project, psiManager);
+                if (ideaPlugin != null) {
+                  ideaPlugins.add(ideaPlugin);
+                }
+              }
+            }
+            else {
+              final IdeaPlugin ideaPlugin = findPluginInFile(plugin, project, psiManager);
               if (ideaPlugin != null) {
                 ideaPlugins.add(ideaPlugin);
               }
-            }
-          }
-          else {
-            final IdeaPlugin ideaPlugin = findPluginInFile(plugin, project, psiManager);
-            if (ideaPlugin != null) {
-              ideaPlugins.add(ideaPlugin);
             }
           }
         }
