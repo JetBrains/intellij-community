@@ -379,15 +379,17 @@ public abstract class AbstractLayoutCodeProcessor {
 
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           writeRunnable.run();
-        } else {
-          ApplicationManager.getApplication().invokeLater(writeRunnable, modalityState);
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(writeRunnable, modalityState, myProject.getDisposed());
         }
       }
     };
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
   }
