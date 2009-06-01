@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.*;
@@ -312,7 +313,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     }
   }
 
-  public class ToggleShowFlattenAction extends ToggleAction {
+  public class ToggleShowFlattenAction extends ToggleAction implements DumbAware {
     public ToggleShowFlattenAction() {
       super(VcsBundle.message("changes.action.show.directories.text"),
             VcsBundle.message("changes.action.show.directories.description"),
@@ -330,7 +331,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     }
   }
 
-  public class ToggleShowIgnoredAction extends ToggleAction {
+  public class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
     public ToggleShowIgnoredAction() {
       super(VcsBundle.message("changes.action.show.ignored.text"),
             VcsBundle.message("changes.action.show.ignored.description"),
