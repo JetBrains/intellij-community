@@ -40,6 +40,7 @@ public interface Sdk {
 
   SdkModificator getSdkModificator();
 
+  @Nullable
   VirtualFile getHomeDirectory();
 
   Object clone() throws CloneNotSupportedException;
