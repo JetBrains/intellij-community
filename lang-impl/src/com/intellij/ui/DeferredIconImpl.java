@@ -5,19 +5,20 @@ package com.intellij.ui;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.openapi.project.IndexNotReadyException;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 
 public class DeferredIconImpl<T> implements DeferredIcon {
   private volatile Icon myDelegateIcon;
   private final Function<T, Icon> myEvaluator;
   private volatile boolean myIsScheduled = false;
   private final T myParam;
-  private Component myLastTarget = null;
+  private WeakReference<Component> myLastTarget = null;
   private static final EmptyIcon EMPTY_ICON = new EmptyIcon(16, 16);
 
   public DeferredIconImpl(Icon baseIcon, T param, Function<T, Icon> evaluator) {
@@ -52,7 +53,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
         }
       }
 
-      myLastTarget = target;
+      myLastTarget = new WeakReference<Component>(target);
 
       final Job<Object> job = JobScheduler.getInstance().createJob("Evaluating deferred icon", Job.DEFAULT_PRIORITY);
       job.addTask(new Runnable() {
@@ -127,8 +128,9 @@ public class DeferredIconImpl<T> implements DeferredIcon {
 
   public void invalidate() {
     myIsScheduled = false;
-    if (myLastTarget != null) {
-      myLastTarget.repaint();
+    Component lastTarget = myLastTarget != null ? myLastTarget.get() : null;
+    if (lastTarget != null) {
+      lastTarget.repaint();
     }
   }
 }
