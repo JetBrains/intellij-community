@@ -513,7 +513,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private static boolean isDumb(Project project) {
-    return DumbServiceImpl.getInstance().isDumb();
+    return DumbServiceImpl.getInstance(project).isDumb();
   }
 
   @NotNull

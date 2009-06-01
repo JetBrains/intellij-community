@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 
 /**
@@ -20,7 +21,8 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
       myDumb = false;
     } else {
       myDumb = true;
-      DumbServiceImpl.getInstance().queueIndexUpdate(DataKeys.PROJECT.getData(e.getDataContext()), new Consumer<ProgressIndicator>() {
+      final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+      DumbServiceImpl.getInstance(project).queueIndexUpdate(project, new Consumer<ProgressIndicator>() {
         public void consume(ProgressIndicator progressIndicator) {
           while (myDumb) {
             try {
@@ -37,7 +39,8 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(myDumb == DumbServiceImpl.getInstance().isDumb());
+    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    presentation.setEnabled(myDumb == DumbServiceImpl.getInstance(project).isDumb());
     if (myDumb) {
       presentation.setText("Exit dumb mode");
     } else {

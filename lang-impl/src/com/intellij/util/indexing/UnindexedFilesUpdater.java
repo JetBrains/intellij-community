@@ -92,7 +92,7 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).setBackgroundIndexing(true);
 
     final VirtualFile[] files = remaining.toArray(new VirtualFile[remaining.size()]);
-    DumbServiceImpl.getInstance().queueIndexUpdate(myProject, new Consumer<ProgressIndicator>() {
+    DumbServiceImpl.getInstance(myProject).queueIndexUpdate(myProject, new Consumer<ProgressIndicator>() {
       public void consume(final ProgressIndicator indicator) {
         try {
           for (int i = 0; i < files.length ; i++) {
@@ -113,7 +113,8 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
                 catch (NoProjectForFileException ignored) {
                 }
                 catch (Throwable e) {
-                  LOG.error("Error while indexing " + file.getPresentableUrl(), e);
+                  LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" +
+                            "To reindex this file IDEA has to be restarted", e);
                   file.putUserData(DONT_INDEX_AGAIN_KEY, Boolean.TRUE);
                 }
               }

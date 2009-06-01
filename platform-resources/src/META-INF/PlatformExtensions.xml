@@ -112,7 +112,7 @@
   <projectService serviceInterface="com.intellij.ui.tabs.FileColorSharedConfigurationManager"
                   serviceImplementation="com.intellij.ui.tabs.FileColorSharedConfigurationManager"/>
 
-  <applicationService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
+  <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
 
   <!-- General -->
   <applicationConfigurable implementation="com.intellij.ide.GeneralSettingsConfigurable"/>

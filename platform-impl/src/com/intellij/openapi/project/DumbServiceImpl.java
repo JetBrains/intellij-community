@@ -6,7 +6,6 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -14,9 +13,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -39,8 +38,8 @@ public class DumbServiceImpl extends DumbService {
   }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
-  public static DumbServiceImpl getInstance() {
-    return (DumbServiceImpl)ServiceManager.getService(DumbService.class);
+  public static DumbServiceImpl getInstance(@NotNull Project project) {
+    return (DumbServiceImpl)DumbService.getInstance(project);
   }
 
   @Override

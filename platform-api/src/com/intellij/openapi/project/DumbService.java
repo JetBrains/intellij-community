@@ -74,7 +74,7 @@ public abstract class DumbService {
   }
 
   public static DumbService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(DumbService.class);
+    return ServiceManager.getService(project, DumbService.class);
   }
 
 

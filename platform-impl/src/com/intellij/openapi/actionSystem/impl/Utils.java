@@ -6,9 +6,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbServiceImpl;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -142,7 +143,8 @@ public class Utils{
       if (anAction instanceof Separator) {
         continue;
       }
-      if (DumbServiceImpl.getInstance().isDumb() && !(anAction instanceof DumbAware) && !(anAction instanceof ActionGroup)) {
+      final Project project = (Project)context.getData(DataConstants.PROJECT);
+      if (project != null && DumbService.getInstance(project).isDumb() && !(anAction instanceof DumbAware) && !(anAction instanceof ActionGroup)) {
         continue;
       }
 
