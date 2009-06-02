@@ -47,7 +47,7 @@ public interface PsiSubstitutor {
    * @return the mapping for the type parameter, or <code>null</code> for a raw type.
    */
   @Nullable
-  PsiType substitute(PsiTypeParameter typeParameter);
+  PsiType substitute(@NotNull PsiTypeParameter typeParameter);
 
   /**
    * Substitutes type parameters occuring in <code>type</code> with their values.

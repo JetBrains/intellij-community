@@ -284,7 +284,8 @@ public class GenericsHighlightUtil {
 
   private static HighlightInfo checkSameErasureNotSubsignatureInner(final HierarchicalMethodSignature signature,
                                                                     final PsiManager manager,
-                                                                    final PsiClass aClass, final Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
+                                                                    final PsiClass aClass,
+                                                                    final Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
     PsiMethod method = signature.getMethod();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (!facade.getResolveHelper().isAccessible(method, aClass, null)) return null;

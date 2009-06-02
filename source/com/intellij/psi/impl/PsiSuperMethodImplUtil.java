@@ -8,7 +8,6 @@ import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -92,8 +91,8 @@ public class PsiSuperMethodImplUtil {
     final Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods = new THashMap<MethodSignature, List<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
 
     Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new THashMap<MethodSignature, HierarchicalMethodSignatureImpl>(new TObjectHashingStrategy<MethodSignature>() {
-      public int computeHashCode(MethodSignature object) {
-        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode(object);
+      public int computeHashCode(MethodSignature signature) {
+        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode(signature);
       }
 
       public boolean equals(MethodSignature o1, MethodSignature o2) {
@@ -236,7 +235,7 @@ public class PsiSuperMethodImplUtil {
       PsiType type = superSubstitutor.substitute(typeParameter);
       final PsiType t = derivedSubstitutor.substitute(type);
       if (map == null) {
-        map = new HashMap<PsiTypeParameter, PsiType>();
+        map = new THashMap<PsiTypeParameter, PsiType>();
       }
       map.put(typeParameter, t);
     }

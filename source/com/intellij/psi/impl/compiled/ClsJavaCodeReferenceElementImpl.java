@@ -35,9 +35,10 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
     myCanonicalText = canonicalText;
     final String[] classParametersText = PsiNameHelper.getClassParametersText(canonicalText);
-    myTypeParameters = classParametersText.length == 0 ? ClsTypeElementImpl.EMPTY_ARRAY : new ClsTypeElementImpl[classParametersText.length];
-    for (int i = 0; i < classParametersText.length; i++) {
-      String s = classParametersText[classParametersText.length - i - 1];
+    int length = classParametersText.length;
+    myTypeParameters = length == 0 ? ClsTypeElementImpl.EMPTY_ARRAY : new ClsTypeElementImpl[length];
+    for (int i = 0; i < length; i++) {
+      String s = classParametersText[length - i - 1];
       char variance = ClsTypeElementImpl.VARIANCE_NONE;
       if (s.startsWith(EXTENDS_PREFIX)) {
         variance = ClsTypeElementImpl.VARIANCE_EXTENDS;
