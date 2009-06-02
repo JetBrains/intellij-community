@@ -16,8 +16,9 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 
@@ -27,7 +28,7 @@ import javax.swing.*;
  * @author Eugene Zhuravlev
  *         Date: Jan 19, 2005
  */
-public abstract class RuleAction extends ToggleAction {
+public abstract class RuleAction extends ToggleAction implements DumbAware {
   private final UsageViewImpl myView;
   private boolean myState;
 

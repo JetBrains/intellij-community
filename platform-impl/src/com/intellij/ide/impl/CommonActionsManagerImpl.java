@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AutoScrollToSourceHandler;
 
@@ -65,7 +66,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return new ExportToTextFileToolbarAction(exporter);
   }
 
-  private static final class HelpAction extends AnAction {
+  private static final class HelpAction extends AnAction implements DumbAware {
     private final String myHelpId;
 
     private HelpAction(String helpId) {

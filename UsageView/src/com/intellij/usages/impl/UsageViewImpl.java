@@ -574,7 +574,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private class ReRunAction extends AnAction {
+  private class ReRunAction extends AnAction implements DumbAware {
     private ReRunAction() {
       super(UsageViewBundle.message("action.rerun"), UsageViewBundle.message("action.description.rerun"), IconLoader.getIcon("/actions/refreshUsages.png"));
       registerCustomShortcutSet(CommonShortcuts.getRerun(), myRootPanel);

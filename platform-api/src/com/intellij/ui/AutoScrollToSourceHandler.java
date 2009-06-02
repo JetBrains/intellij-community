@@ -17,10 +17,14 @@
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -155,16 +159,21 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   public ToggleAction createToggleAction() {
-    return new ToggleAction(UIBundle.message("autoscroll.to.source.action.name"),
-                            UIBundle.message("autoscroll.to.source.action.description"), IconLoader.getIcon("/general/autoscrollToSource.png")) {
-      public boolean isSelected(AnActionEvent event) {
-        return isAutoScrollMode();
-      }
+    return new AutoscrollToSourceAction();
+  }
 
-      public void setSelected(AnActionEvent event, boolean flag) {
-        setAutoScrollMode(flag);
-      }
-    };
+  private class AutoscrollToSourceAction extends ToggleAction implements DumbAware {
+    public AutoscrollToSourceAction() {
+      super(UIBundle.message("autoscroll.to.source.action.name"), UIBundle.message("autoscroll.to.source.action.description"), IconLoader.getIcon("/general/autoscrollToSource.png"));
+    }
+
+    public boolean isSelected(AnActionEvent event) {
+      return isAutoScrollMode();
+    }
+
+    public void setSelected(AnActionEvent event, boolean flag) {
+      setAutoScrollMode(flag);
+    }
   }
 }
 

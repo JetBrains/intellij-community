@@ -18,6 +18,7 @@ package com.intellij.usages.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
@@ -103,7 +104,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
   }
 
-  private class ShowReadAccessUsagesAction extends ToggleAction {
+  private class ShowReadAccessUsagesAction extends ToggleAction implements DumbAware {
     public ShowReadAccessUsagesAction() {
       super(UsageViewBundle.message("action.show.read.access"), null, IconLoader.getIcon("/actions/showReadAccess.png"));
     }
@@ -120,7 +121,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
   }
 
-  private class ShowWriteAccessUsagesAction extends ToggleAction {
+  private class ShowWriteAccessUsagesAction extends ToggleAction implements DumbAware {
     public ShowWriteAccessUsagesAction() {
       super(UsageViewBundle.message("action.show.write.access"), null, IconLoader.getIcon("/actions/showWriteAccess.png"));
     }
