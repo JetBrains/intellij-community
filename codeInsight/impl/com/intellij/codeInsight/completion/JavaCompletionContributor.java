@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -46,12 +47,9 @@ import java.util.Set;
  * @author peter
  */
 public class JavaCompletionContributor extends CompletionContributor {
-  public static final Key<PrefixMatcher> PREFIX_MATCHER = Key.create("PREFIX_MATCHER");
+  public static final Key<Condition<String>> NAME_FILTER = Key.create("NAME_FILTER");
   private static final ElementPattern<PsiElement> INSIDE_METHOD_TYPE_ELEMENT = psiElement().inside(
       psiElement(PsiTypeElement.class).withParent(or(psiMethod(), psiElement(PsiVariable.class))));
-  private static final ElementPattern<PsiElement> METHOD_START = or(
-      psiElement(TokenType.WHITE_SPACE).afterLeaf(INSIDE_METHOD_TYPE_ELEMENT),
-      INSIDE_METHOD_TYPE_ELEMENT);
   private static final Java15CompletionData ourJava15CompletionData = new Java15CompletionData();
   private static final JavaCompletionData ourJavaCompletionData = new JavaCompletionData();
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR = psiNameValuePair().withSuperParent(
@@ -89,7 +87,12 @@ public class JavaCompletionContributor extends CompletionContributor {
 
       LegacyCompletionContributor.processReferences(parameters, _result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {
         public void consume(final PsiReference ref, final CompletionResultSet completionResultSet) {
-          insertedElement.putUserData(PREFIX_MATCHER, completionResultSet.getPrefixMatcher());
+          final PrefixMatcher matcher = completionResultSet.getPrefixMatcher();
+          insertedElement.putUserData(NAME_FILTER, new Condition<String>() {
+            public boolean value(String s) {
+              return matcher.prefixMatches(s);
+            }
+          });
           final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {

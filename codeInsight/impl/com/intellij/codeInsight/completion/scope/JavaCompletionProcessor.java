@@ -2,7 +2,7 @@ package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
-import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -28,8 +28,9 @@ import java.util.Set;
  * Time: 16:13:27
  * To change this template use Options | File Templates.
  */
-public class JavaCompletionProcessor extends BaseScopeProcessor
- implements ElementClassHint{
+public class JavaCompletionProcessor extends BaseScopeProcessor implements ElementClassHint {
+  public static final Key<Condition<String>> NAME_FILTER = Key.create("NAME_FILTER");
+
   private boolean myStatic = false;
   private final Set<Object> myResultNames = new THashSet<Object>();
   private final List<CompletionElement> myResults;
@@ -40,15 +41,15 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
   private boolean myMembersFlag = false;
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
-  private final PrefixMatcher myMatcher;
+  private final Condition<String> myMatcher;
   private final boolean myCheckAccess;
 
-  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess){
+  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess) {
     myCheckAccess = checkAccess;
     mySettings = CodeInsightSettings.getInstance();
     myResults = new ArrayList<CompletionElement>();
     myElement = element;
-    myMatcher = element.getUserData(JavaCompletionContributor.PREFIX_MATCHER);
+    myMatcher = element.getUserData(JavaCompletionContributor.NAME_FILTER);
     myFilter = filter;
     PsiElement scope = element;
     if (JavaResolveUtil.isInJavaDoc(myElement)) myMembersFlag = true;
@@ -119,7 +120,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
     if (myFilter.isClassAcceptable(element.getClass())
         && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement)) {
       final String name = PsiUtil.getName(element);
-      if (StringUtil.isNotEmpty(name) && (myMatcher == null || myMatcher.prefixMatches(name))) {
+      if (StringUtil.isNotEmpty(name) && (myMatcher == null || myMatcher.value(name))) {
         if(isAccessible(element)){
           add(new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY), myQualifierClass));
         }
@@ -159,6 +160,9 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
   public <T> T getHint(Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
       return (T)this;
+    }
+    if (hintKey == NAME_FILTER) {
+      return (T)myMatcher;
     }
 
     return super.getHint(hintKey);

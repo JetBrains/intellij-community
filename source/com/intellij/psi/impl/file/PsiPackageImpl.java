@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.file;
 
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -16,6 +17,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -445,11 +447,19 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     final JavaPsiFacadeImpl facade = getFacade();
     final PsiMigrationImpl migration = facade.getCurrentMigration();
 
+    final Condition<String> prefixMatcher = processor.getHint(JavaCompletionProcessor.NAME_FILTER);
+
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
-        final PsiClass[] classes = findClassesByName(nameHint.getName(state), scope, migration);
-        if (!processClasses(processor, state, place, classes)) return false;
+        if (processClassesByName(processor, state, place, scope, migration, nameHint.getName(state))) return false;
+      }
+      else if (prefixMatcher != null && migration == null) {
+        for (String className : getClassNamesCache()) {
+          if (prefixMatcher.value(className)) {
+            if (processClassesByName(processor, state, place, scope, migration, className)) return false;
+          }
+        }
       }
       else {
         PsiClass[] classes = getClasses(scope);
@@ -494,6 +504,13 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       }
     }
     return true;
+  }
+
+  private boolean processClassesByName(PsiScopeProcessor processor, ResolveState state, PsiElement place, GlobalSearchScope scope,
+                                       PsiMigrationImpl migration, String className) {
+    final PsiClass[] classes = findClassesByName(className, scope, migration);
+    if (!processClasses(processor, state, place, classes)) return true;
+    return false;
   }
 
   private boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiElement place, PsiClass[] classes) {

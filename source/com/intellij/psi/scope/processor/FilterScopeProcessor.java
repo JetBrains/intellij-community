@@ -7,6 +7,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.SmartList;
+import com.intellij.openapi.util.Key;
 
 /**
  * Created by IntelliJ IDEA.
@@ -60,6 +61,14 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor{
 
   protected void add(PsiElement element, PsiSubstitutor substitutor){
     myResults.add((T)element);
+  }
+
+  @Override
+  public <T> T getHint(Key<T> hintKey) {
+    if (myProcessor != null) {
+      return myProcessor.getHint(hintKey);
+    }
+    return null;
   }
 
   public SmartList<T> getResults(){
