@@ -204,6 +204,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
   private class ChangeListChooser extends JPanel {
     private final JComboBox myChooser;
+    private final static int MAX_LEN = 35;
 
     public ChangeListChooser(List<? extends ChangeList> lists) {
       super(new BorderLayout());
@@ -216,8 +217,11 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final LocalChangeList l = ((LocalChangeList)value);
           if (l != null) {
-            append(l.getName(),
-                   l.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            String name = l.getName().trim();
+            if (name.length() > MAX_LEN) {
+              name = name.substring(0, MAX_LEN - 3) + "...";
+            }
+            append(name, l.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
         }
       });
@@ -225,7 +229,9 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       myChooser.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
           if (e.getStateChange() == ItemEvent.SELECTED) {
-            setSelectedList((LocalChangeList)myChooser.getSelectedItem());
+            final LocalChangeList changeList = (LocalChangeList)myChooser.getSelectedItem();
+            setSelectedList(changeList);
+            myChooser.setToolTipText(changeList == null ? "" : (changeList.getName()));
           }
         }
       });
