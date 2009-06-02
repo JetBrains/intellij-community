@@ -3,8 +3,8 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.*;
 import com.intellij.util.KeyedLazyInstance;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -140,7 +140,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
     synchronized (lock) {
       if (!myExplicitExtensions.isEmpty()) return true;
       final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
-      return point != null && point.getExtensions().length > 0;
+      return point != null && point.hasAnyExtensions();
     }
   }
 }

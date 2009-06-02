@@ -178,6 +178,16 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return result;
   }
 
+  public boolean hasAnyExtensions() {
+    final T[] cache = myExtensionsCache;
+    if (cache != null) {
+      return cache.length > 0;
+    }
+    synchronized (this) {
+      return myExtensionAdapters.size() + myLoadedAdapters.size() > 0;
+    }
+  }
+
   private boolean isExtensionClassSuitable(final T t) {
     return getExtensionClass().isAssignableFrom(t.getClass());
   }

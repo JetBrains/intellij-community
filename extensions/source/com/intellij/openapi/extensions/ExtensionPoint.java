@@ -32,6 +32,7 @@ public interface ExtensionPoint<T> {
 
   @NotNull
   T[] getExtensions();
+  boolean hasAnyExtensions();
 
   @Nullable
   T getExtension();
