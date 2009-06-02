@@ -254,6 +254,8 @@
       <separator/>
       <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction" text="Start Focus Debugger"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb mode"/>
+      <separator/>
+      <action id="DumpLookupElementWeights" internal="true" class="com.intellij.internal.DumpLookupElementWeights" text="Dump lookup element weights"/>
       <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction" text="Check VFS sanity"/>
 
       <separator/>
