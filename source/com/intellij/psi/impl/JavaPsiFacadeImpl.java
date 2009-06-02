@@ -104,7 +104,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     bus.connect().subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
       private long lastTimeSeen = -1L;
       public void modificationCountChanged() {
-        final long now = modificationTracker.getOutOfCodeBlockModificationCount();
+        final long now = modificationTracker.getJavaStructureModificationCount();
         if (lastTimeSeen != now) {
           lastTimeSeen = now;
           myPackageCache.clear();
