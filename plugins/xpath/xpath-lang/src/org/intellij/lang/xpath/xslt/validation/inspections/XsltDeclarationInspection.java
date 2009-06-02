@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -51,16 +52,18 @@ public class XsltDeclarationInspection extends XsltInspection {
             @Override
             public void visitXmlTag(final XmlTag tag) {
                 final XmlAttribute nameAttr = tag.getAttribute("name", null);
-                if (nameAttr != null && XsltSupport.isVariableOrParam(tag)) {
+                if (nameAttr == null || PsiTreeUtil.hasErrorElements(nameAttr)) return;
+
+                if (XsltSupport.isVariableOrParam(tag)) {
                     final XsltNamedElement instance = myXsltElementFactory.wrapElement(tag, XsltNamedElement.class);
-                    checkDeclaration(instance, nameAttr.getValue(), true, holder, isOnTheFly);
-                } else if (nameAttr != null && XsltSupport.isTemplate(tag)) {
+                    checkDeclaration(instance, nameAttr.getValue(), true, holder);
+                } else if (XsltSupport.isTemplate(tag)) {
                     final XsltTemplate tmpl = myXsltElementFactory.wrapElement(tag, XsltTemplate.class);
-                    checkDeclaration(tmpl, nameAttr.getValue(), false, holder, isOnTheFly);
+                    checkDeclaration(tmpl, nameAttr.getValue(), false, holder);
                 }
             }
 
-            private void checkDeclaration(final XsltNamedElement element, final String value, final boolean isVar, ProblemsHolder holder, boolean onTheFly) {
+            private void checkDeclaration(final XsltNamedElement element, final String value, final boolean isVar, ProblemsHolder holder) {
                 final XmlTag tag = element.getTag();
 
                 final PsiElement token = element.getNameIdentifier();
