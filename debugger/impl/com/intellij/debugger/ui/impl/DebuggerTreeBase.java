@@ -16,6 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +43,18 @@ public class DebuggerTreeBase extends DnDAwareTree {
     myProject = project;
 
     myTipManager = new TipManager(this, new TipManager.TipFactory() {
-          public JComponent createToolTip(MouseEvent e) {
-            return DebuggerTreeBase.this.createToolTip(e);
-          }
-        });
+      public JComponent createToolTip(MouseEvent e) {
+        return DebuggerTreeBase.this.createToolTip(e);
+      }
+
+      public MouseEvent createTooltipEvent(MouseEvent candiateEvent) {
+        return DebuggerTreeBase.this.createTooltipEvent(candiateEvent);
+      }
+
+      public boolean isFocusOwner() {
+        return DebuggerTreeBase.this.isFocusOwner();
+      }
+    });
 
     UIUtil.setLineStyleAngled(this);
     setRootVisible(false);
@@ -59,10 +68,10 @@ public class DebuggerTreeBase extends DnDAwareTree {
     int minChar = 0;
     int maxChar = s.length();
     int chars;
-    while(minChar < maxChar) {
+    while (minChar < maxChar) {
       chars = (minChar + maxChar + 1) / 2;
-      final int width = metrics.stringWidth(s.substring(0,  chars));
-      if(width <= maxWidth) {
+      final int width = metrics.stringWidth(s.substring(0, chars));
+      if (width <= maxWidth) {
         minChar = chars;
       }
       else {
@@ -75,7 +84,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
   private JComponent createTipContent(String tipText) {
     final JToolTip tooltip = new JToolTip();
 
-    if(tipText == null) {
+    if (tipText == null) {
       tooltip.setTipText(tipText);
     }
     else {
@@ -106,6 +115,33 @@ public class DebuggerTreeBase extends DnDAwareTree {
     return tooltip;
   }
 
+  public MouseEvent createTooltipEvent(MouseEvent candidate) {
+    TreePath path = null;
+
+    if (candidate != null) {
+      final Point treePoint = SwingUtilities.convertPoint(candidate.getComponent(), candidate.getPoint(), this);
+      if (GeometryUtil.isWithin(new Rectangle(0, 0, getWidth(), getHeight()), treePoint)) {
+        path = getPathForLocation(treePoint.x, treePoint.y);
+      }
+    }
+
+    if (path == null) {
+      if (isFocusOwner()) {
+        path = getSelectionPath();
+      }
+    }
+
+    if (path == null) return null;
+
+    final int row = getRowForPath(path);
+    if (row == -1) return null;
+
+    final Rectangle bounds = getRowBounds(row);
+
+    return new MouseEvent(this, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, bounds.x,
+                          bounds.y + bounds.height - (bounds.height / 4), 0, false);
+  }
+
   @Nullable
   public JComponent createToolTip(MouseEvent e) {
     final DebuggerTreeNodeImpl node = getNodeToShowTip(e);
@@ -113,14 +149,14 @@ public class DebuggerTreeBase extends DnDAwareTree {
       return null;
     }
 
-    if(myCurrentTooltip != null && myCurrentTooltip.isShowing() && myCurrentTooltipNode == node) {
+    if (myCurrentTooltip != null && myCurrentTooltip.isShowing() && myCurrentTooltipNode == node) {
       return myCurrentTooltip;
     }
 
     myCurrentTooltipNode = node;
 
     final String toolTipText = getTipText(node);
-    if(toolTipText == null) {
+    if (toolTipText == null) {
       return null;
     }
 
@@ -153,7 +189,8 @@ public class DebuggerTreeBase extends DnDAwareTree {
     final Border tooltipBorder = toolTip.getBorder();
     if (tooltipBorder != null) {
       final Insets borderInsets = tooltipBorder.getBorderInsets(this);
-      tipRectangle.setSize(tipRectangle.width  + borderInsets.left + borderInsets.right, tipRectangle.height + borderInsets.top  + borderInsets.bottom);
+      tipRectangle
+        .setSize(tipRectangle.width + borderInsets.left + borderInsets.right, tipRectangle.height + borderInsets.top + borderInsets.bottom);
     }
 
     boolean addScrollers = true;
@@ -162,11 +199,10 @@ public class DebuggerTreeBase extends DnDAwareTree {
     toolTip.add(scrollPane, BorderLayout.CENTER);
 
 
-    if(addScrollers) {
+    if (addScrollers) {
       tipRectangle.height += scrollPane.getHorizontalScrollBar().getPreferredSize().height;
       tipRectangle.width += scrollPane.getVerticalScrollBar().getPreferredSize().width;
     }
-
 
 
     final int maxWidth = (int)(screen.width - screen.width * .25);
@@ -182,9 +218,10 @@ public class DebuggerTreeBase extends DnDAwareTree {
       final int delta = prefSize.width - tipRectangle.width;
       tipRectangle.x -= delta;
       if (tipRectangle.x < screen.x) {
-        tipRectangle.x = screen.x + maxWidth /2;
+        tipRectangle.x = screen.x + maxWidth / 2;
         tipRectangle.width = screen.width - maxWidth / 2;
-      } else {
+      }
+      else {
         tipRectangle.width += delta;
       }
     }
@@ -203,19 +240,20 @@ public class DebuggerTreeBase extends DnDAwareTree {
     if (descriptor instanceof ValueDescriptorImpl) {
       String text = ((ValueDescriptorImpl)descriptor).getValueLabel();
       if (text != null) {
-        if(StringUtil.startsWithChar(text, '{') && text.indexOf('}') > 0) {
+        if (StringUtil.startsWithChar(text, '{') && text.indexOf('}') > 0) {
           int idx = text.indexOf('}');
-          if(idx != text.length() - 1) {
+          if (idx != text.length() - 1) {
             text = text.substring(idx + 1);
           }
         }
 
-        if(StringUtil.startsWithChar(text, '\"') && StringUtil.endsWithChar(text, '\"')) {
+        if (StringUtil.startsWithChar(text, '\"') && StringUtil.endsWithChar(text, '\"')) {
           text = text.substring(1, text.length() - 1);
         }
 
         final String tipText = prepareToolTipText(text);
-        if (tipText.length() > 0 && (tipText.indexOf('\n') >= 0 || !getVisibleRect().contains(getRowBounds(getRowForPath(new TreePath(node.getPath())))))) {
+        if (tipText.length() > 0 &&
+            (tipText.indexOf('\n') >= 0 || !getVisibleRect().contains(getRowBounds(getRowForPath(new TreePath(node.getPath())))))) {
           return tipText;
         }
       }
@@ -239,7 +277,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
   private Rectangle getTipBounds(final Point point, Dimension tipContentSize) {
     Rectangle nodeBounds = new Rectangle(point);
     TreePath pathForLocation = getPathForLocation(point.x, point.y);
-    if(pathForLocation != null) {
+    if (pathForLocation != null) {
       nodeBounds = getPathBounds(pathForLocation);
     }
 
@@ -250,7 +288,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
     int width = Math.min(tipContentSize.width, contentRect.width);
     int height;
     int y;
-    if(point.y > contentRect.y + contentRect.height / 2) {
+    if (point.y > contentRect.y + contentRect.height / 2) {
       y = Math.max(contentRect.y, nodeBounds.y - tipContentSize.height - vgap);
       height = Math.min(tipContentSize.height, nodeBounds.y - contentRect.y - vgap);
     }
@@ -262,10 +300,10 @@ public class DebuggerTreeBase extends DnDAwareTree {
     final Dimension tipSize = new Dimension(width, height);
 
     int x = point.x - width / 2;
-    if(x < contentRect.x) {
+    if (x < contentRect.x) {
       x = contentRect.x;
     }
-    if(x + width > contentRect.x + contentRect.width) {
+    if (x + width > contentRect.x + contentRect.width) {
       x = contentRect.x + contentRect.width - width;
     }
 
@@ -280,9 +318,9 @@ public class DebuggerTreeBase extends DnDAwareTree {
     final StringBuffer buf = new StringBuffer();
     try {
       boolean special = false;
-      for(int idx = 0; idx < text.length(); idx++) {
+      for (int idx = 0; idx < text.length(); idx++) {
         char c = text.charAt(idx);
-        if(special) {
+        if (special) {
           if (c == 't') { // convert tabs to spaces
             for (int i = 0; i < tabSize; i++) {
               buf.append(' ');
@@ -300,7 +338,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
           special = false;
         }
         else {
-          if(c == '\\') {
+          if (c == '\\') {
             special = true;
           }
           else {

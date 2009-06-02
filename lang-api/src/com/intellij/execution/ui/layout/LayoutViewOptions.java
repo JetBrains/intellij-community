@@ -30,6 +30,7 @@ public interface LayoutViewOptions {
   LayoutViewOptions setToFocus(@Nullable Content content, final String condition);
 
   AnAction getLayoutActions();
+  AnAction[] getLayoutActionsList();
 
   LayoutViewOptions setAdditionalFocusActions(ActionGroup group);
 

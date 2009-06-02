@@ -453,6 +453,8 @@ public class SetValueAction extends DebuggerAction {
       }
     });
 
+    node.getTree().hideTooltip();
+
     editor.show();
   }
 

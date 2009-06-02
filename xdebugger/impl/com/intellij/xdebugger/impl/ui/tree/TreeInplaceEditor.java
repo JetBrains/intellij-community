@@ -49,7 +49,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     remove();
   }
 
-  private void remove() {
+  protected void remove() {
     if (!isShown()) {
       return;
     }

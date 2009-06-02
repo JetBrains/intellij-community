@@ -29,4 +29,15 @@ public abstract class DebuggerTreeInplaceEditor extends TreeInplaceEditor {
     return myNode.getTree();
   }
 
+  @Override
+  public void show() {
+    myNode.getTree().onEditorShown(myNode);
+    super.show();
+  }
+
+  @Override
+  protected void remove() {
+    myNode.getTree().onEditorHidden(myNode);
+    super.remove();
+  }
 }

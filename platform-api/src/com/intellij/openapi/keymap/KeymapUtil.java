@@ -19,9 +19,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -30,6 +34,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 public class KeymapUtil {
@@ -49,6 +55,10 @@ public class KeymapUtil {
   @NonNls private static final String BUTTON2 = "button2";
   @NonNls private static final String BUTTON3 = "button3";
   @NonNls private static final String DOUBLE_CLICK = "doubleClick";
+
+  private static final Set<Integer> ourTooltipKeys = new HashSet<Integer>();
+  private static final Set<Integer> ourOtherTooltipKeys = new HashSet<Integer>();
+  private static RegistryValue ourTooltipKeysProperty;
 
   public static String getShortcutText(Shortcut shortcut) {
     String s = "";
@@ -278,5 +288,54 @@ public class KeymapUtil {
           buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
       }
       return buf.toString();
+  }
+
+  public static boolean isTooltipRequest(KeyEvent keyEvent) {
+    if (ourTooltipKeysProperty == null) {
+      ourTooltipKeysProperty = Registry.get("ide.forcedShowTooltip");
+      ourTooltipKeysProperty.addListener(new RegistryValueListener.Adapter() {
+        @Override
+        public void afterValueChanged(RegistryValue value) {
+          updateTooltipRequestKey(value);
+        }
+      }, Disposer.get("ui"));
+
+      updateTooltipRequestKey(ourTooltipKeysProperty);
+    }
+
+    if (keyEvent.getID() != KeyEvent.KEY_PRESSED) return false;
+
+    for (Integer each : ourTooltipKeys) {
+      if ((keyEvent.getModifiers() & each.intValue()) == 0) return false;
+    }
+
+    for (Integer each : ourOtherTooltipKeys) {
+      if ((keyEvent.getModifiers() & each.intValue()) > 0) return false;
+    }
+
+    final int code = keyEvent.getKeyCode();
+
+    return code == KeyEvent.VK_META || code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_SHIFT | code == KeyEvent.VK_ALT;
+  }
+
+  private static void updateTooltipRequestKey(RegistryValue value) {
+    final String text = value.asString().toString();
+
+    ourTooltipKeys.clear();
+    ourOtherTooltipKeys.clear();
+
+    processKey(text.contains("meta"), KeyEvent.META_MASK);
+    processKey(text.contains("control") | text.contains("ctrl"), KeyEvent.CTRL_MASK);
+    processKey(text.contains("shift"), KeyEvent.SHIFT_MASK);
+    processKey(text.contains("alt"), KeyEvent.ALT_MASK);
+
+  }
+
+  private static void processKey(boolean condition, int value) {
+    if (condition) {
+      ourTooltipKeys.add(value);
+    } else {
+      ourOtherTooltipKeys.add(value);
+    }
   }
 }

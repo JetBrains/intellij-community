@@ -621,6 +621,7 @@
       <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="/actions/delete.png"/>
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="/debugger/muteBreakpoints.png"/>
+      <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
     </group>
 
     <group id="XDebugger.Evaluation.Dialog.Tree.Popup">

@@ -102,6 +102,10 @@ public class RegistryValue {
     return null;
   }
 
+  public void setValue(boolean value) {
+    setValue(Boolean.valueOf(value).toString());
+  }
+
   public void setValue(String value) {
     resetCache();
 

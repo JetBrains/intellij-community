@@ -5,10 +5,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 
@@ -29,10 +33,15 @@ public class TipManager implements Disposable, PopupMenuListener {
 
   private volatile boolean myIsDisposed = false;
   private boolean myPopupShown;
-  private HideCanceller myHideCanceller;
+  private MyAwtPreprocessor myHideCanceller;
+  private RegistryValue myTooltipProperty;
+
+  private MouseEvent myLastMouseEvent;
 
   public static interface TipFactory {
     JComponent createToolTip (MouseEvent e);
+    MouseEvent createTooltipEvent(MouseEvent candiateEvent);
+    boolean isFocusOwner();
   }
 
 
@@ -106,17 +115,19 @@ public class TipManager implements Disposable, PopupMenuListener {
   private class MyMouseMotionListener extends MouseMotionAdapter {
     @Override
     public void mouseMoved(final MouseEvent e) {
+      myLastMouseEvent = e;
+
       if (!myComponent.isShowing()) return;
 
       myInsideComponent = true;
 
       if (myCurrentTooltip == null) {
         if (isInsideComponent(e)) {
-          tryTooltip(e);
+          tryTooltip(e, true);
         }
       } else {
         if (!isOverTip(e)) {
-          tryTooltip(e);
+          tryTooltip(e, true);
         }
       }
     }
@@ -131,38 +142,56 @@ public class TipManager implements Disposable, PopupMenuListener {
   }
 
 
-  private void tryTooltip(final MouseEvent e) {
+  private void tryTooltip(final InputEvent e, final boolean auto) {
     myShowAlarm.cancelAllRequests();
     myHideAlarm.cancelAllRequests();
     myShowAlarm.addRequest(new Runnable() {
       public void run() {
         if (!myIsDisposed && !myPopupShown) {
-          showTooltip(e);
+          showTooltip(e, auto);
         }
       }
-    }, DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY);
+    }, auto ? DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY : 10);
   }
 
-  private void showTooltip(MouseEvent e) {
-    final MouseEvent me = SwingUtilities.convertMouseEvent(e.getComponent(), e, myComponent);
+  private void showTooltip(InputEvent e, boolean auto) {
+    if (auto && !Registry.is("debugger.valueTooltipAutoShow")) return;
 
-    final JComponent newTip = myTipFactory.createToolTip(me);
+    MouseEvent sourceEvent = null;
+    JComponent newTip = null;
 
-    if (newTip == null) {
+    if (e instanceof MouseEvent) {
+      sourceEvent = (MouseEvent)e;
+    } else if (e instanceof KeyEvent) {
+      sourceEvent = myTipFactory.createTooltipEvent(myLastMouseEvent);
+    }
+
+
+    MouseEvent convertedEvent = null;
+    if (sourceEvent != null) {
+      convertedEvent = SwingUtilities.convertMouseEvent(sourceEvent.getComponent(), sourceEvent, myComponent);
+      newTip = myTipFactory.createToolTip(convertedEvent);
+    }
+
+    if (newTip == null || (auto && !myTipFactory.isFocusOwner())) {
       hideTooltip(false);
       return;
     }
 
     if(newTip == myCurrentTooltip) {
+      if (!auto) {
+        hideTooltip(true);
+        return;
+      }
       return;
     }
 
     hideTooltip(true);
 
-    if(newTip != null && myComponent.isShowing()) {
+    if(myComponent.isShowing()) {
       PopupFactory popupFactory = PopupFactory.getSharedInstance();
-      final Point location = me.getPoint();
-      final Component sourceComponent = me.getComponent();
+      final Point location = convertedEvent.getPoint();
+      final Component sourceComponent = convertedEvent.getComponent();
       if (sourceComponent != null) {
         SwingUtilities.convertPointToScreen(location, sourceComponent);
       }
@@ -232,6 +261,7 @@ public class TipManager implements Disposable, PopupMenuListener {
     });
   }
 
+
   private class HideTooltipAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
       hideTooltip(true);
@@ -252,8 +282,8 @@ public class TipManager implements Disposable, PopupMenuListener {
     myGP.addMousePreprocessor(myMouseListener, this);
     myGP.addMouseMotionPreprocessor(myMouseMotionListener, this);
 
-    myHideCanceller = new HideCanceller();
-    Toolkit.getDefaultToolkit().addAWTEventListener(myHideCanceller, MouseEvent.MOUSE_MOTION_EVENT_MASK);
+    myHideCanceller = new MyAwtPreprocessor();
+    Toolkit.getDefaultToolkit().addAWTEventListener(myHideCanceller, MouseEvent.MOUSE_MOTION_EVENT_MASK | KeyEvent.KEY_EVENT_MASK | MouseEvent.MOUSE_EVENT_MASK);
   }
 
   public void dispose() {
@@ -269,17 +299,45 @@ public class TipManager implements Disposable, PopupMenuListener {
     myMouseMotionListener = null;
   }
 
-  private class HideCanceller implements AWTEventListener {
+  private class MyAwtPreprocessor implements AWTEventListener {
 
     public void eventDispatched(AWTEvent event) {
+      if (event.getID() == MouseEvent.MOUSE_MOVED) {
+        preventFromHideIfInsideTooltip(event);
+      } else if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED) {
+        hideTooltipIfCloseClick((MouseEvent)event);
+      } else if (event instanceof KeyEvent) {
+        tryToShowTooltipIfRequested((KeyEvent)event);
+      }
+    }
+
+    private void hideTooltipIfCloseClick(MouseEvent me) {
+      if (myCurrentTooltip == null) return;
+
+      if (isInsideTooltip(me) && UIUtil.isCloseClick(me)) {
+        hideTooltip(true);
+      }
+    }
+
+    private void tryToShowTooltipIfRequested(KeyEvent event) {
+      if (KeymapUtil.isTooltipRequest(event)) {
+        tryTooltip(event, false);
+      }
+    }
+
+    private void preventFromHideIfInsideTooltip(AWTEvent event) {
       if (myCurrentTooltip == null) return;
 
       if (event.getID() == MouseEvent.MOUSE_MOVED) {
         final MouseEvent me = (MouseEvent)event;
-        if (myCurrentTooltip == me.getComponent() || SwingUtilities.isDescendingFrom(me.getComponent(), myCurrentTooltip)) {
+        if (isInsideTooltip(me)) {
           myHideAlarm.cancelAllRequests();
         }
       }
+    }
+
+    private boolean isInsideTooltip(MouseEvent me) {
+      return myCurrentTooltip == me.getComponent() || SwingUtilities.isDescendingFrom(me.getComponent(), myCurrentTooltip);
     }
   }
 }

@@ -42,7 +42,9 @@ import com.sun.jdi.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -56,10 +58,13 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   private NodeRendererSettingsListener mySettingsListener;
   private DebuggerContextImpl myDebuggerContext = DebuggerContextImpl.EMPTY_CONTEXT;
 
+  private DebuggerTreeNodeImpl myEditedNode;
+
   public DebuggerTree(Project project) {
     super(null, project);
     setScrollsOnExpand(false);
     myNodeManager = createNodeManager(project);
+
     final TreeBuilder model = new TreeBuilder(this) {
       public void buildChildren(TreeBuilderNode node) {
         final DebuggerTreeNodeImpl debuggerTreeNode = (DebuggerTreeNodeImpl)node;
@@ -75,10 +80,21 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     };
     model.setRoot(getNodeFactory().getDefaultNode());
     model.addTreeModelListener(new TreeModelListener() {
-      public void treeNodesChanged     (TreeModelEvent event) { myTipManager.hideTooltip(); }
-      public void treeNodesInserted    (TreeModelEvent event) { myTipManager.hideTooltip(); }
-      public void treeNodesRemoved     (TreeModelEvent event) { myTipManager.hideTooltip(); }
-      public void treeStructureChanged (TreeModelEvent event) { myTipManager.hideTooltip(); }
+      public void treeNodesChanged(TreeModelEvent event) {
+        hideTooltip();
+      }
+
+      public void treeNodesInserted(TreeModelEvent event) {
+        hideTooltip();
+      }
+
+      public void treeNodesRemoved(TreeModelEvent event) {
+        hideTooltip();
+      }
+
+      public void treeStructureChanged(TreeModelEvent event) {
+        hideTooltip();
+      }
     });
 
     setModel(model);
@@ -199,7 +215,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       node.getDescriptor().myIsExpanded = isExpanded(path);
       node.getDescriptor().myIsSelected = getSelectionModel().isPathSelected(path);
       Rectangle rowBounds = getRowBounds(getRowForPath(path));
-      if(rowBounds != null && getVisibleRect().contains(rowBounds)) {
+      if (rowBounds != null && getVisibleRect().contains(rowBounds)) {
         node.getDescriptor().putUserData(VISIBLE_RECT, getVisibleRect());
         node.getDescriptor().myIsVisible = true;
       }
@@ -223,7 +239,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   protected final void scrollToVisible(DebuggerTreeNodeImpl scopeNode) {
     final TreePath rootPath = new TreePath(scopeNode.getPath());
     final int rowCount = getRowCount();
-    for (int idx = rowCount - 1; idx >=0; idx--) {
+    for (int idx = rowCount - 1; idx >= 0; idx--) {
       final TreePath treePath = getPathForRow(idx);
       if (treePath != null) {
         if (!rootPath.isDescendant(treePath)) {
@@ -234,7 +250,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
         if (descriptor != null && descriptor.myIsVisible) {
           final Rectangle visibleRect = descriptor.getUserData(VISIBLE_RECT);
-          if(visibleRect != null) {
+          if (visibleRect != null) {
             // prefer visible rect
             scrollRectToVisible(visibleRect);
           }
@@ -323,14 +339,16 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
   }
 
-  public Project getProject() { return myProject; }
+  public Project getProject() {
+    return myProject;
+  }
 
   protected abstract void build(DebuggerContextImpl context);
 
   protected final void buildWhenPaused(DebuggerContextImpl context, RefreshDebuggerTreeCommand command) {
     DebuggerSession debuggerSession = context.getDebuggerSession();
 
-    if(ApplicationManager.getApplication().isUnitTestMode() || debuggerSession.getState() == DebuggerSession.STATE_PAUSED) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || debuggerSession.getState() == DebuggerSession.STATE_PAUSED) {
       showMessage(MessageDescriptor.EVALUATING);
       context.getDebugProcess().getManagerThread().invokeLater(command, InvokeThread.Priority.NORMAL);
     }
@@ -347,7 +365,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
     myDebuggerContext = context;
     saveState();
-    process.getManagerThread().invokeLater(new DebuggerContextCommandImpl(context){
+    process.getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
       public void threadAction() {
         getNodeFactory().setHistoryByContext(context);
       }
@@ -360,8 +378,26 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     saveState((DebuggerTreeNodeImpl)getModel().getRoot());
   }
 
+  public void onEditorShown(DebuggerTreeNodeImpl node) {
+    myEditedNode = node;
+    hideTooltip();
+  }
+
+  public void onEditorHidden(DebuggerTreeNodeImpl node) {
+    if (myEditedNode != null) {
+      assert myEditedNode == node;
+      myEditedNode = null;
+    }
+  }
+
+  @Override
+  public JComponent createToolTip(MouseEvent e) {
+    return myEditedNode != null ? null : super.createToolTip(e);
+  }
+
   protected abstract static class RefreshDebuggerTreeCommand extends SuspendContextCommandImpl {
     private final DebuggerContextImpl myDebuggerContext;
+
     public RefreshDebuggerTreeCommand(DebuggerContextImpl context) {
       super(context.getSuspendContext());
       myDebuggerContext = context;
@@ -445,7 +481,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
           myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
         }
         // add last method return value if any
-        final Pair<Method,Value> methodValuePair = debuggerContext.getDebugProcess().getLastExecutedMethod();
+        final Pair<Method, Value> methodValuePair = debuggerContext.getDebugProcess().getLastExecutedMethod();
         if (methodValuePair != null) {
           final ValueDescriptorImpl returnValueDescriptor =
             myNodeManager.getMethodReturnValueDescriptor(stackDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
@@ -459,7 +495,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       }
       catch (InternalException e) {
         if (e.errorCode() == 35) {
-          myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()))));
+          myChildren.add(
+            myNodeManager.createMessageNode(new MessageDescriptor(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()))));
         }
         else {
           throw e;
@@ -469,7 +506,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       updateUI(true);
     }
 
-    protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
+    protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext)
+      throws EvaluateException {
       final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
       for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
         final LocalVariableDescriptorImpl localVariableDescriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, local);
@@ -492,15 +530,14 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       }
       catch (ObjectCollectedException e) {
         getNode().removeAllChildren();
-        getNode().add(getNodeFactory().createMessageNode(new MessageDescriptor(
-          DebuggerBundle.message("error.cannot.build.node.children.object.collected", e.getMessage())))
-        );
+        getNode().add(getNodeFactory().createMessageNode(
+          new MessageDescriptor(DebuggerBundle.message("error.cannot.build.node.children.object.collected", e.getMessage()))));
         getNode().childrenChanged(false);
       }
     }
 
     public NodeManagerImpl getNodeManager() {
-      
+
       return myNodeManager;
     }
 
@@ -557,7 +594,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
             for (StackFrameProxyImpl stackFrame : threadProxy.frames()) {
               //Method method = stackFrame.location().method();
               //ToDo :check whether is synthetic if (shouldDisplay(method)) {
-              myChildren.add(myNodeManager.createNode(myNodeManager.getStackFrameDescriptor(threadDescriptor, stackFrame), getDebuggerContext().createEvaluationContext()));
+              myChildren.add(myNodeManager.createNode(myNodeManager.getStackFrameDescriptor(threadDescriptor, stackFrame),
+                                                      getDebuggerContext().createEvaluationContext()));
             }
           }
           catch (EvaluateException e) {
@@ -598,7 +636,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
       for (final ThreadGroupReferenceProxyImpl group : threadGroup.threadGroups()) {
         if (group != null) {
-          DebuggerTreeNodeImpl threadNode = myNodeManager.createNode(myNodeManager.getThreadGroupDescriptor(groupDescriptor, group), evaluationContext);
+          DebuggerTreeNodeImpl threadNode =
+            myNodeManager.createNode(myNodeManager.getThreadGroupDescriptor(groupDescriptor, group), evaluationContext);
 
           if (showCurrent && ((ThreadGroupDescriptorImpl)threadNode.getDescriptor()).isCurrent()) {
             myChildren.add(0, threadNode);
@@ -613,7 +652,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
       for (ThreadReferenceProxyImpl thread : threads) {
         if (thread != null) {
-          DebuggerTreeNodeImpl threadNode = myNodeManager.createNode(myNodeManager.getThreadDescriptor(groupDescriptor, thread), evaluationContext);
+          DebuggerTreeNodeImpl threadNode =
+            myNodeManager.createNode(myNodeManager.getThreadDescriptor(groupDescriptor, thread), evaluationContext);
           if (showCurrent && ((ThreadDescriptorImpl)threadNode.getDescriptor()).isCurrent()) {
             threadNodes.add(0, threadNode);
           }
@@ -627,5 +667,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
       updateUI(true);
     }
+  }
+
+  public void hideTooltip() {
+    myTipManager.hideTooltip();
   }
 }

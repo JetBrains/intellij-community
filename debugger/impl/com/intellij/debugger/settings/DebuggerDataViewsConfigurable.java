@@ -6,6 +6,8 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.ui.RegistryCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 
@@ -39,6 +41,7 @@ public class DebuggerDataViewsConfigurable implements Configurable {
   private JTextField myValueTooltipDelayField;
   
   private final Project myProject;
+  private RegistryCheckBox myAutoTooltip;
 
   public DebuggerDataViewsConfigurable(Project project) {
     myProject = project;
@@ -99,6 +102,13 @@ public class DebuggerDataViewsConfigurable implements Configurable {
 
     panel.add(myCbSort, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
     panel.add(myCbAutoscroll, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
+
+
+    myAutoTooltip = new RegistryCheckBox(Registry.get("debugger.valueTooltipAutoShow"),
+                                         DebuggerBundle.message("label.base.renderer.configurable.autoTooltip"),
+                                         DebuggerBundle.message("label.base.renderer.configurable.autoTooltip.description",
+                                                                Registry.stringValue("ide.forcedShowTooltip")));
+    panel.add(myAutoTooltip, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
 
     final JLabel tooltipLabel = new JLabel(DebuggerBundle.message("label.debugger.general.configurable.tooltips.delay"));
     panel.add(tooltipLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
@@ -166,6 +176,8 @@ public class DebuggerDataViewsConfigurable implements Configurable {
     toStringRenderer.setUseClassFilters(myRbFromList.isSelected());
     toStringRenderer.setClassFilters(myToStringFilterEditor.getFilters());
 
+    myAutoTooltip.save();
+
     myArrayRendererConfigurable.apply();
   }
 
@@ -221,7 +233,7 @@ public class DebuggerDataViewsConfigurable implements Configurable {
     ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     return
     (generalSettings.AUTOSCROLL_TO_NEW_LOCALS  != myCbAutoscroll.isSelected()) ||
-    (generalSettings.HIDE_NULL_ARRAY_ELEMENTS  != myCbHideNullArrayElements.isSelected());
+    (generalSettings.HIDE_NULL_ARRAY_ELEMENTS  != myCbHideNullArrayElements.isSelected()) || myAutoTooltip.isChanged();
   }
 
   private boolean areDefaultRenderersModified() {

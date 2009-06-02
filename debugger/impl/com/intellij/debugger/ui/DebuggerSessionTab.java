@@ -47,6 +47,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerLogConsoleManagerBase;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.idea.ActionsBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -293,7 +294,25 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     addAction(group, DebuggerActions.DUMP_THREADS);
     group.addSeparator();
 
-    group.add(myUi.getOptions().getLayoutActions());
+    final AnAction[] layout = myUi.getOptions().getLayoutActionsList();
+    final AnAction layoutGroup = myUi.getOptions().getLayoutActions();
+
+    final DefaultActionGroup settings = new DefaultActionGroup("DebuggerSettings", true) {
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setText(ActionsBundle.message("group.XDebugger.settings.text"));
+        e.getPresentation().setIcon(layoutGroup.getTemplatePresentation().getIcon());
+      }
+    };
+    for (AnAction each : layout) {
+      settings.add(each);
+    }
+    if (layout.length > 0) {
+      settings.addSeparator();
+    }
+    addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
+
+    group.add(settings);
 
     group.addSeparator();
 
