@@ -11,6 +11,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
@@ -39,8 +40,10 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract RunManagerConfig getConfig();
 
+  @NotNull
   public abstract RunnerAndConfigurationSettingsImpl createConfiguration(String name, ConfigurationFactory type);
 
+  @NotNull
   public abstract RunnerAndConfigurationSettingsImpl createConfiguration(RunConfiguration runConfiguration, ConfigurationFactory factory);
 
   public abstract RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(ConfigurationType type);

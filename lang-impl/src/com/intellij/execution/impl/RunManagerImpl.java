@@ -92,6 +92,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public void projectOpened() {
   }
 
+  @NotNull
   public RunnerAndConfigurationSettingsImpl createConfiguration(final String name, final ConfigurationFactory factory) {
     return createConfiguration(doCreateConfiguration(name, factory), factory);
   }
@@ -100,6 +101,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return factory.createConfiguration(name, getConfigurationTemplate(factory).getConfiguration());
   }
 
+  @NotNull
   public RunnerAndConfigurationSettingsImpl createConfiguration(final RunConfiguration runConfiguration,
                                                                 final ConfigurationFactory factory) {
     RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(factory);
