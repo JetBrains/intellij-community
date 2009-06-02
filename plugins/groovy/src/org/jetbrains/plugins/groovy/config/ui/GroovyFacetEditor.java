@@ -189,7 +189,7 @@ public class GroovyFacetEditor {
       public void actionPerformed(final ActionEvent e) {
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
           public boolean isFileSelectable(VirtualFile file) {
-            return super.isFileSelectable(file) && GroovyConfigUtils.getInstance().isSDKHome(file);
+            return super.isFileSelectable(file) && (GroovyConfigUtils.getInstance().isSDKHome(file) || GrailsConfigUtils.getInstance().isSDKHome(file));
           }
         };
         final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
