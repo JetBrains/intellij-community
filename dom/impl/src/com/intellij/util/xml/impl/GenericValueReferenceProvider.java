@@ -6,10 +6,8 @@ package com.intellij.util.xml.impl;
 import com.intellij.javaee.web.PsiReferenceConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -159,12 +157,6 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     }
 
     return PsiReference.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  private static GlobalSearchScope getScope(final GenericDomValue domValue) {
-    final Module module = domValue.getModule();
-    return module == null ? null : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
   }
 
 }
