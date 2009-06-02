@@ -66,6 +66,10 @@ public class GitRootTracker implements VcsListener {
    */
   private final AtomicBoolean myRootsInvalidated = new AtomicBoolean(true);
   /**
+   * If true, there are some configured git roots, or listener has never been run yet
+   */
+  private final AtomicBoolean myHasGitRoots = new AtomicBoolean(true);
+  /**
    * If true, the notification is currently active and has not been dismissed yet.
    */
   private final AtomicBoolean myNotificationPosted = new AtomicBoolean(false);
@@ -110,7 +114,7 @@ public class GitRootTracker implements VcsListener {
         if (!myRootsInvalidated.compareAndSet(true, false)) {
           return;
         }
-        directoryMappingChanged();
+        checkRoots(false);
       }
     };
     CommandProcessor.getInstance().addCommandListener(myCommandListener);
@@ -123,11 +127,11 @@ public class GitRootTracker implements VcsListener {
         if (!myRootsInvalidated.compareAndSet(true, false)) {
           return;
         }
-        directoryMappingChanged();
+        checkRoots(false);
       }
     };
     fileManager.addVirtualFileManagerListener(myVirtualFileManagerListener);
-    directoryMappingChanged();
+    checkRoots(true);
   }
 
   /**
@@ -146,6 +150,18 @@ public class GitRootTracker implements VcsListener {
    */
   public void directoryMappingChanged() {
     if (myProject.isDisposed()) {
+      return;
+    }
+    checkRoots(true);
+  }
+
+  /**
+   * Check roots for changes.
+   *
+   * @param rootsChanged
+   */
+  private void checkRoots(boolean rootsChanged) {
+    if (!rootsChanged && !myHasGitRoots.get()) {
       return;
     }
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -172,7 +188,11 @@ public class GitRootTracker implements VcsListener {
           }
         }
         if (!hasInvalidRoots && rootSet.isEmpty()) {
+          myHasGitRoots.set(false);
           return;
+        }
+        else {
+          myHasGitRoots.set(true);
         }
         if (!hasInvalidRoots) {
           // check if roots have a problem
@@ -417,6 +437,9 @@ public class GitRootTracker implements VcsListener {
      */
     @Override
     public void fileCreated(VirtualFileEvent event) {
+      if (!myHasGitRoots.get()) {
+        return;
+      }
       if (hasGitRepositories(event.getFile())) {
         invalidate();
       }
@@ -428,6 +451,9 @@ public class GitRootTracker implements VcsListener {
      */
     @Override
     public void beforeFileDeletion(VirtualFileEvent event) {
+      if (!myHasGitRoots.get()) {
+        return;
+      }
       if (hasGitRepositories(event.getFile())) {
         invalidate();
       }
@@ -438,6 +464,9 @@ public class GitRootTracker implements VcsListener {
      */
     @Override
     public void fileMoved(VirtualFileMoveEvent event) {
+      if (!myHasGitRoots.get()) {
+        return;
+      }
       if (hasGitRepositories(event.getFile())) {
         invalidate();
       }
@@ -448,6 +477,9 @@ public class GitRootTracker implements VcsListener {
      */
     @Override
     public void fileCopied(VirtualFileCopyEvent event) {
+      if (!myHasGitRoots.get()) {
+        return;
+      }
       if (hasGitRepositories(event.getFile())) {
         invalidate();
       }
