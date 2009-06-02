@@ -103,7 +103,7 @@
       <include name="lib/JNIWrap.jar"/>
       <include name="lib/jsf-api.jar"/>
       <include name="lib/jsp-api.jar"/>
-      <include name="lib/junit-4.5.jar"/>
+      <include name="lib/junit-4.6.jar"/>
       <include name="lib/junit.jar"/>
       <include name="lib/log4j.jar"/>
       <include name="lib/microba.jar"/>
