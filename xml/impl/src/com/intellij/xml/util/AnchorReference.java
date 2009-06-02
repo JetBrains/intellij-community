@@ -11,10 +11,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -114,7 +111,8 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
         value = file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, XmlTag>>() {
           public Result<Map<String, XmlTag>> compute() {
             final Map<String,XmlTag> resultMap = new HashMap<String, XmlTag>();
-            final XmlTag rootTag = HtmlUtil.getRealXmlDocument(file.getDocument()).getRootTag();
+            XmlDocument document = HtmlUtil.getRealXmlDocument(file.getDocument());
+            final XmlTag rootTag = document != null ? document.getRootTag():null;
             
             if (rootTag != null) {
               processXmlElements(rootTag,
