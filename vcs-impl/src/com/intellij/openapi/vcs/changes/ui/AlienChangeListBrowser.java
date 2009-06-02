@@ -20,7 +20,7 @@ public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBro
   public AlienChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                 final ChangeList initialListSelection, final boolean capableOfExcludingChanges,
                                 final boolean highlightProblems, final AbstractVcs vcs) {
-    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems);
+    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, null);
     myChanges = changes;
     myVcs = vcs;
     rebuildList();

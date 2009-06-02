@@ -67,7 +67,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     myProject = project;
     myRefreshSynchronously = refreshSynchronously;
     myAfterVcsRefreshInAwt = afterVcsRefreshInAwt;
-    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, null);
+    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, null, null);
     myBrowser.setToggleActionTitle("Include in rollback");
 
     setOKButtonText(VcsBundle.message("changes.action.rollback.text"));

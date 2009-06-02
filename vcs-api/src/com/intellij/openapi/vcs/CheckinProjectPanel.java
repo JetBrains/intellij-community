@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -69,6 +70,8 @@ public interface CheckinProjectPanel extends Refreshable {
    * @return the files selected for checkin.
    */
   Collection<VirtualFile> getVirtualFiles();
+
+  Collection<Change> getSelectedChanges();
 
   /**
    * Returns the list of files selected for checkin, as {@link java.io.File} objects. The returned list

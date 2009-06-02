@@ -22,7 +22,7 @@ public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
   public SelectFilePathsDialog(final Project project, List<FilePath> originalFiles, final String prompt,
                            final VcsShowConfirmationOption confirmationOption) {
     super(project, false, confirmationOption, prompt);
-    myFileList = new ChangesTreeList<FilePath>(project, originalFiles, true, true) {
+    myFileList = new ChangesTreeList<FilePath>(project, originalFiles, true, true, null) {
       protected DefaultTreeModel buildTreeModel(final List<FilePath> changes) {
         return new TreeModelBuilder(project, false).buildModelFromFilePaths(changes);
       }

@@ -109,4 +109,10 @@ public abstract class CheckinHandler {
   public void checkinFailed(List<VcsException> exception) {
 
   }
+
+  /**
+   * Called to notify handler that user has included/excluded some changes to/from commit
+   */
+  public void includedChangesChanged() {
+  }
 }

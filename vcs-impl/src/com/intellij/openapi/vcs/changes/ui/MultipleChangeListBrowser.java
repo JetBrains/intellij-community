@@ -26,6 +26,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,8 +49,8 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   public MultipleChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                    final ChangeList initialListSelection,
                                    final boolean capableOfExcludingChanges,
-                                   final boolean highlightProblems, final Runnable rebuildListListener) {
-    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems);
+                                   final boolean highlightProblems, final Runnable rebuildListListener, @Nullable final Runnable inclusionListener) {
+    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener);
     myRebuildListListener = rebuildListListener;
 
     myChangeListChooser = new ChangeListChooser(changeLists);

@@ -175,7 +175,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                                           public void run() {
                                                                             updateWarning();
                                                                           }
-                                                                        });
+                                                                        },
+        new Runnable() {
+          public void run() {
+            for (CheckinHandler handler : myHandlers) {
+              handler.includedChangesChanged();
+            }
+          }
+        });
       myBrowser = browser;
       myBrowserExtender = browser.getExtender();
     }
@@ -757,6 +764,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     return result;
+  }
+
+  public Collection<Change> getSelectedChanges() {
+    return new ArrayList<Change>(getIncludedChanges());
   }
 
   public Collection<File> getFiles() {

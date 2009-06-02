@@ -55,11 +55,14 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
+  private final Runnable myInclusionListener;
+
   public ChangesTreeList(final Project project, Collection<T> initiallyIncluded, final boolean showCheckboxes,
-                         final boolean highlightProblems) {
+                         final boolean highlightProblems, @Nullable final Runnable inclusionListener) {
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;
+    myInclusionListener = inclusionListener;
     myIncludedChanges = new HashSet<T>(initiallyIncluded);
 
     myCards = new CardLayout();
@@ -297,6 +300,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     for (T change : getSelectedChanges()) {
       myIncludedChanges.add(change);
     }
+    notifyInclusionListener();
     repaint();
   }
 
@@ -305,6 +309,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     for (T change : getSelectedChanges()) {
       myIncludedChanges.remove(change);
     }
+    notifyInclusionListener();
     repaint();
   }
 
@@ -371,14 +376,22 @@ public abstract class ChangesTreeList<T> extends JPanel {
     }
   }
 
+  private void notifyInclusionListener() {
+    if (myInclusionListener != null) {
+      myInclusionListener.run();
+    }
+  }
+
   public void includeChange(final T change) {
     myIncludedChanges.add(change);
+    notifyInclusionListener();
     myTree.repaint();
     myList.repaint();
   }
 
   public void excludeChange(final T change) {
     myIncludedChanges.remove(change);
+    notifyInclusionListener();
     myTree.repaint();
     myList.repaint();
   }

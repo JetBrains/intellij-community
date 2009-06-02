@@ -48,13 +48,13 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,
                         ChangeList initialListSelection,
-                        final boolean capableOfExcludingChanges, final boolean highlightProblems) {
+                        final boolean capableOfExcludingChanges, final boolean highlightProblems, @Nullable final Runnable inclusionListener) {
     super(new BorderLayout());
 
     myProject = project;
     myCapableOfExcludingChanges = capableOfExcludingChanges;
 
-    myViewer = new ChangesTreeList<Change>(myProject, changes, capableOfExcludingChanges, highlightProblems) {
+    myViewer = new ChangesTreeList<Change>(myProject, changes, capableOfExcludingChanges, highlightProblems, inclusionListener) {
       protected DefaultTreeModel buildTreeModel(final List<Change> changes) {
         TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
         return builder.buildModel(changes);

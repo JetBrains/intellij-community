@@ -21,7 +21,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
   public SelectFilesDialog(final Project project, List<VirtualFile> originalFiles, final String prompt,
                            final VcsShowConfirmationOption confirmationOption) {
     super(project, false, confirmationOption, prompt);
-    myFileList = new ChangesTreeList<VirtualFile>(project, originalFiles, true, true) {
+    myFileList = new ChangesTreeList<VirtualFile>(project, originalFiles, true, true, null) {
       protected DefaultTreeModel buildTreeModel(final List<VirtualFile> changes) {
         return new TreeModelBuilder(project, false).buildModelFromFiles(changes);
       }

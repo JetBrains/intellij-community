@@ -70,7 +70,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private ChangesTreeList<Change> createChangesTree() {
-    return new ChangesTreeList<Change>(getProject(), Collections.<Change>emptyList(), false, false) {
+    return new ChangesTreeList<Change>(getProject(), Collections.<Change>emptyList(), false, false, null) {
       @Override
       protected DefaultTreeModel buildTreeModel(List<Change> cc) {
         return new TreeModelBuilder(getProject(), false).buildModel(cc);
