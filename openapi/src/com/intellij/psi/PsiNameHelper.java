@@ -72,41 +72,37 @@ public abstract class PsiNameHelper {
     return getShortClassName(referenceText, true);
   }
 
-  private static String getShortClassName(String referenceText, boolean flag) {
+  private static String getShortClassName(String referenceText, boolean removeWhitespace) {
     final char[] chars = referenceText.toCharArray();
     int lessPos = chars.length;
-    int count = 0;
+    int bracesBalance = 0;
     for (int i = chars.length - 1; i >= 0; i--) {
       final char aChar = chars[i];
       switch (aChar) {
         case ')':
         case '>':
-          count++;
+          bracesBalance++;
           break;
 
         case '(':
         case '<':
-          count--;
+          bracesBalance--;
           lessPos = i;
           break;
 
         case '@':
         case '.':
-          if (count == 0) return new String(chars, i + 1, lessPos - (i + 1)).trim();
+          if (bracesBalance == 0) return new String(chars, i + 1, lessPos - (i + 1)).trim();
           break;
 
         default:
-          if (count == 0) {
-            if (Character.isWhitespace(aChar)) {
-              break;
-            }
-            else if (flag && !Character.isJavaIdentifierPart(aChar)) {
-              return getShortClassName(removeWhitespace(referenceText), false);
-            }
+          if (bracesBalance == 0 && removeWhitespace && !Character.isWhitespace(aChar) && !Character.isJavaIdentifierPart(aChar)) {
+            return getShortClassName(removeWhitespace(referenceText), false);
           }
       }
     }
-    return new String(chars, 0, lessPos).trim();
+    String substring = lessPos == chars.length ? referenceText : new String(chars, 0, lessPos);
+    return substring.trim();
   }
 
   public static String getPresentableText(PsiJavaCodeReferenceElement ref) {
@@ -178,7 +174,7 @@ public abstract class PsiNameHelper {
     final char[] chars = referenceText.toCharArray();
     int count = 0;
     int dim = 0;
-    for(final char aChar : chars) {
+    for (final char aChar : chars) {
       switch (aChar) {
         case '<':
           count++;
