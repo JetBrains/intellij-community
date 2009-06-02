@@ -23,7 +23,10 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -40,6 +43,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -669,18 +673,23 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
       assert document != null;
       Editor editor = EditorFactory.getInstance().createEditor(document, myProject, myFileType, false);
-      RangeHighlighter[] allHighlighters = myEditor.getMarkupModel().getAllHighlighters();
-      for (RangeHighlighter highlighter : allHighlighters) {
-        if (highlighter.getStartOffset() >= token.startOffset) {
-          myEditor.getMarkupModel().removeHighlighter(highlighter);
+      try {
+        RangeHighlighter[] allHighlighters = myEditor.getMarkupModel().getAllHighlighters();
+        for (RangeHighlighter highlighter : allHighlighters) {
+          if (highlighter.getStartOffset() >= token.startOffset) {
+            myEditor.getMarkupModel().removeHighlighter(highlighter);
+          }
+        }
+        HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(0);
+        while (!iterator.atEnd()) {
+          myEditor.getMarkupModel().addRangeHighlighter(iterator.getStart() + token.startOffset, iterator.getEnd() + token.startOffset, HighlighterLayer.SYNTAX,
+                                                        iterator.getTextAttributes(),
+                                                        HighlighterTargetArea.EXACT_RANGE);
+          iterator.advance();
         }
       }
-      HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(0);
-      while (!iterator.atEnd()) {
-        myEditor.getMarkupModel().addRangeHighlighter(iterator.getStart() + token.startOffset, iterator.getEnd() + token.startOffset, HighlighterLayer.SYNTAX,
-                                                      iterator.getTextAttributes(),
-                                                      HighlighterTargetArea.EXACT_RANGE);
-        iterator.advance();
+      finally {
+        EditorFactory.getInstance().releaseEditor(editor);
       }
     }
   }
@@ -942,7 +951,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
 
   private static final DataAccessor<ConsoleViewImpl> RUNNINT_CONSOLE =DataAccessor.createConditionalAccessor(CONSOLE, CONSOLE_IS_RUNNING);
 
-  private abstract static class ConsoleAction extends AnAction {
+  private abstract static class ConsoleAction extends AnAction implements DumbAware {
     public void actionPerformed(final AnActionEvent e) {
       final DataContext context = e.getDataContext();
       final ConsoleViewImpl console = RUNNINT_CONSOLE.from(context);
