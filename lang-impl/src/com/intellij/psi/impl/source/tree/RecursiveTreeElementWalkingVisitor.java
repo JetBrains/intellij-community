@@ -48,7 +48,7 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
     while (element != root) {
       TreeElement next = element.getTreeNext();
       if (next != null) {
-        assert next.getTreePrev() == element;
+        assert next.getTreePrev() == element : "Element: "+element+"; next.prev: "+next.getTreePrev()+"; File: "+ SharedImplUtil.getContainingFile(element);
         return next;
       }
       element = element.getTreeParent();

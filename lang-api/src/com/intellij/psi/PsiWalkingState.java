@@ -45,7 +45,7 @@ public abstract class PsiWalkingState {
 
       elementFinished(element);
       if (next != null) {
-        assert next.getPrevSibling() == element;
+        assert next.getPrevSibling() == element : "Element: "+element+"; next.prev: "+next.getPrevSibling()+"; File: "+element.getContainingFile();
         return next;
       }
       element = element.getParent();
