@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WrappingVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,17 +28,31 @@ import java.util.List;
 public class ProjectSettingsSelectInTarget implements SelectInTarget, DumbAware {
   public boolean canSelect(final SelectInContext context) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
-    VirtualFile file = context.getVirtualFile();
+    final VirtualFile file = context.getVirtualFile();
+    if (file instanceof WrappingVirtualFile) {
+      final Object o = ((WrappingVirtualFile)file).getWrappedObject(context.getProject());
+      return o instanceof Facet;
+    }
     return fileIndex.isInContent(file) || fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file);
   }
 
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     final Project project = context.getProject();
-    VirtualFile file = context.getVirtualFile();
+    final VirtualFile file = context.getVirtualFile();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final Module module = fileIndex.getModuleForFile(file);
-    if (module != null) {
-      final Facet facet = findFacet(project, file, fileIndex);
+
+    final Module module;
+    final Facet facet;
+    if (file instanceof WrappingVirtualFile) {
+      final Object o = ((WrappingVirtualFile)file).getWrappedObject(project);
+      facet = o instanceof Facet? (Facet)o : null;
+      module = facet == null? null : facet.getModule();
+    }
+    else {
+      module = fileIndex.getModuleForFile(file);
+      facet = findFacet(project, file, fileIndex);
+    }
+    if (module != null || facet != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           if (facet != null) {
