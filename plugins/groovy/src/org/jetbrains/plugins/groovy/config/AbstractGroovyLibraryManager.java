@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,8 @@ import java.util.Set;
  * @author peter
  */
 public abstract class AbstractGroovyLibraryManager extends LibraryManager {
+  public static final ExtensionPointName<LibraryManager> EP_NAME = ExtensionPointName.create("org.intellij.groovy.libraryManager");
+
   protected static String generatePointerName(ProjectSettingsContext context, String version, AbstractConfigUtils configUtils) {
     final Set<String> usedLibraryNames = CollectionFactory.newTroveSet();
     for (Library library : getAllDefinedLibraries(((ProjectConfigurableContext)context).getContainer())) {

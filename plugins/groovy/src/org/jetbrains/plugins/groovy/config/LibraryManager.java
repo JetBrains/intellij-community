@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.facet.ui.ProjectSettingsContext;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import org.jetbrains.annotations.Nls;
@@ -29,7 +28,6 @@ import javax.swing.*;
  * @author peter
  */
 public abstract class LibraryManager {
-  public static final ExtensionPointName<LibraryManager> EP_NAME = ExtensionPointName.create("org.intellij.groovy.libraryManager");
 
   public abstract boolean managesLibrary(@NotNull Library library, LibrariesContainer container);
 
