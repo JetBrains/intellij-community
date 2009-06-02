@@ -268,7 +268,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
       return getElement().getContainingFile().getVirtualFile();
     }
     else {
-      return myUsageInfo.getFile().getVirtualFile();
+      return myUsageInfo.getVirtualFile();
     }
   }
 

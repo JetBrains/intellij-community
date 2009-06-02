@@ -30,6 +30,7 @@ public class UsageInfo {
   public static final UsageInfo[] EMPTY_ARRAY = new UsageInfo[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.usageView.UsageInfo");
   private final SmartPsiElementPointer mySmartPointer;
+  private final VirtualFile myVirtualFile;
   public final int startOffset; // in navigation element
   public final int endOffset; // in navigation element
 
@@ -39,6 +40,7 @@ public class UsageInfo {
     LOG.assertTrue(element.isValid());
     LOG.assertTrue(element == element.getNavigationElement());
     mySmartPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+    myVirtualFile = element.getContainingFile().getVirtualFile();
     this.startOffset = startOffset;
     this.endOffset = endOffset;
     this.isNonCodeUsage = isNonCodeUsage;
@@ -48,6 +50,7 @@ public class UsageInfo {
     LOG.assertTrue(element.isValid());
     element = element.getNavigationElement();
     mySmartPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+    myVirtualFile = element.getContainingFile().getVirtualFile();
 
     TextRange range = element.getTextRange();
     if (range == null) {
@@ -140,5 +143,9 @@ public class UsageInfo {
   @Nullable
   public PsiFile getFile() {
     return mySmartPointer.getContainingFile();
+  }
+
+  public VirtualFile getVirtualFile() {
+    return myVirtualFile;
   }
 }

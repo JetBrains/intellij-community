@@ -1051,7 +1051,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       mySupport = new OccurenceNavigatorSupport(tree) {
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
-          if (node instanceof Node && !((Node)node).isValid()) return null;
           return getNavigatableForNode(node);
         }
 

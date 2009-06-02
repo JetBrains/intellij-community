@@ -25,7 +25,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   public UsageViewManagerImpl(final Project project, final ToolWindowManager toolWindowManager) {
     myToolWindowManager = toolWindowManager;
 
-    ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.FIND, true, ToolWindowAnchor.BOTTOM, project);
+    ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.FIND, true, ToolWindowAnchor.BOTTOM, project, true);
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFind.png"));
     myFindContentManager = toolWindow.getContentManager();
