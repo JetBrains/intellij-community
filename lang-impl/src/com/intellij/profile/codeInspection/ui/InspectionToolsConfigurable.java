@@ -292,6 +292,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     panel.addSharedProfileListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myActivateButton.setEnabled(myActiveProfile != panel.getSelectedProfile() && panel.isProfileShared());
+        myProfiles.repaint();
       }
     });
   }
