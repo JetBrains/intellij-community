@@ -5,10 +5,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.messages.MessageBus;
@@ -18,13 +15,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author spleaner
  */
-@State(name = "NotificationConfiguration", storages = {@Storage(id = "other", file = "$APP_CONFIG$/notifications.xml")})
+@State(name = "NotificationConfiguration",
+       storages = {
+         @Storage(id = "other", file = "$APP_CONFIG$/notifications.xml")
+       })
 public class NotificationsConfiguration implements ApplicationComponent, Notifications, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
 
@@ -43,9 +42,34 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     return getNotificationsConfiguration()._getAllSettings();
   }
 
+  public static void remove(NotificationSettings[] toRemove) {
+    getNotificationsConfiguration()._remove(toRemove);
+  }
+
+  public static void removeAll() {
+    getNotificationsConfiguration()._removeAll();
+  }
+
+  private void _removeAll() {
+    myIdToSettingsMap.clear();
+  }
+
+  private void _remove(NotificationSettings[] toRemove) {
+    for (final NotificationSettings settings : toRemove) {
+      myIdToSettingsMap.remove(settings.getComponentName());
+    }
+  }
+
   private NotificationSettings[] _getAllSettings() {
-    final Collection<NotificationSettings> collection = myIdToSettingsMap.values();
-    return collection.toArray(new NotificationSettings[collection.size()]);
+    final List<NotificationSettings> result = new ArrayList<NotificationSettings>(myIdToSettingsMap.values());
+
+    Collections.sort(result, new Comparator<NotificationSettings>() {
+      public int compare(NotificationSettings o1, NotificationSettings o2) {
+        return o1.getComponentName().compareToIgnoreCase(o2.getComponentName());
+      }
+    });
+
+    return result.toArray(new NotificationSettings[result.size()]);
   }
 
   @Nullable
@@ -77,11 +101,20 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
     return myIdToSettingsMap.containsKey(id);
   }
 
-  public void notify(@NotNull final String id, @NotNull final String name, @NotNull final String description, @NotNull final NotificationType type, @NotNull final NotificationListener handler) {
+  public void notify(@NotNull final String id,
+                     @NotNull final String name,
+                     @NotNull final String description,
+                     @NotNull final NotificationType type,
+                     @NotNull final NotificationListener handler) {
     // do nothing
   }
 
-  public void notify(@NotNull final String id, @NotNull final String name, @NotNull final String description, @NotNull final NotificationType type, @NotNull final NotificationListener handler, @Nullable final Icon icon) {
+  public void notify(@NotNull final String id,
+                     @NotNull final String name,
+                     @NotNull final String description,
+                     @NotNull final NotificationType type,
+                     @NotNull final NotificationListener handler,
+                     @Nullable final Icon icon) {
     // do nothing
   }
 

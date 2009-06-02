@@ -275,7 +275,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     return myContentPane.getTargetComponent() == myActiveContentComponent ? myList : myInactiveContentComponent;
   }
 
-  public void showOrHide() {
+  public boolean showOrHide() {
     if (myPopupRef != null) {
       final JBPopup popup = myPopupRef.get();
       if (popup != null) {
@@ -283,7 +283,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       }
 
       myPopupRef = null;
-      return;
+      return false;
     }
 
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(this, getPreferredFocusedComponent());
@@ -301,6 +301,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
     myPopupRef = new WeakReference<JBPopup>(popup);
     popup.showInCenterOf(SwingUtilities.getRootPane(myNotificationComponent));
+    return true;
   }
 
   private static class NotificationsListRenderer extends JPanel implements ListCellRenderer {

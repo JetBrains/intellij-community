@@ -5,31 +5,44 @@ import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.tabs.BetterJTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
 
 /**
  * @author spleaner
  */
 public class NotificationsConfigurablePanel extends JPanel implements Disposable {
   private NotificationsTable myTable;
+  private static final String REMOVE_KEY = "REMOVE";
 
   public NotificationsConfigurablePanel() {
     setLayout(new BorderLayout());
+    myTable = new NotificationsTable();
 
-    final NotificationSettings[] settings = NotificationsConfiguration.getAllSettings();
+    add(BetterJTable.createStripedJScrollPane(myTable), BorderLayout.CENTER);
 
-    myTable = new NotificationsTable(settings);
+    myTable.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), REMOVE_KEY);
+    myTable.getActionMap().put(REMOVE_KEY, new AbstractAction() {
+      public void actionPerformed(final ActionEvent e) {
+        removeSelected();
+      }
+    });
+  }
 
-    final JScrollPane pane = new JScrollPane(myTable);
-    add(pane);
-
-//    myTable.getColumnModel().getColumn(NotificationsTable.ENABLED_COLUMN).setWidth(20);
+  private void removeSelected() {
+    myTable.removeSelected();
   }
 
   public void dispose() {
@@ -37,7 +50,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   }
 
   public boolean isModified() {
-    final List<SettingsWrapper> list = myTable.getSettings();
+    final List<SettingsWrapper> list = myTable.getAllSettings();
     for (SettingsWrapper settingsWrapper : list) {
       if (settingsWrapper.hasChanged()) {
         return true;
@@ -48,14 +61,14 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   }
 
   public void apply() {
-    final List<SettingsWrapper> list = myTable.getSettings();
+    final List<SettingsWrapper> list = myTable.getAllSettings();
     for (SettingsWrapper settingsWrapper : list) {
       settingsWrapper.apply();
     }
   }
 
   public void reset() {
-    final List<SettingsWrapper> list = myTable.getSettings();
+    final List<SettingsWrapper> list = myTable.getAllSettings();
     for (SettingsWrapper settingsWrapper : list) {
       settingsWrapper.reset();
     }
@@ -64,12 +77,13 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     myTable.repaint();
   }
 
-  private static class NotificationsTable extends JTable {
+  private static class NotificationsTable extends BetterJTable {
     private static final int ENABLED_COLUMN = 0;
+    private static final int ID_COLUMN = 1;
     private static final int DISPLAY_TYPE_COLUMN = 2;
 
-    public NotificationsTable(final NotificationSettings[] settings) {
-      super(new NotificationsTableModel(settings));
+    public NotificationsTable() {
+      super(new NotificationsTableModel());
 
       final List<String> displayTypes = new ArrayList<String>();
       final NotificationDisplayType[] notificationDisplayTypes = NotificationDisplayType.values();
@@ -77,17 +91,77 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         displayTypes.add(StringUtil.capitalize(displayType.toString().toLowerCase()));
       }
 
+      final int minOnWidth = new JCheckBox().getPreferredSize().width;
+      getColumnModel().getColumn(ENABLED_COLUMN).setPreferredWidth(minOnWidth);
+      getColumnModel().getColumn(ENABLED_COLUMN).setMinWidth(minOnWidth);
+      getColumnModel().getColumn(ENABLED_COLUMN).setMaxWidth(minOnWidth);
+
+      getColumnModel().getColumn(ID_COLUMN).setPreferredWidth(200);
+
+      getColumnModel().getColumn(ENABLED_COLUMN).setCellRenderer(new CheckBoxCellRenderer());
+      getColumnModel().getColumn(ENABLED_COLUMN).setCellEditor(new CheckBoxCellRenderer());
+
+      getColumnModel().getColumn(DISPLAY_TYPE_COLUMN).setMaxWidth(300);
+      getColumnModel().getColumn(DISPLAY_TYPE_COLUMN).setPreferredWidth(150);
+
       getColumnModel().getColumn(DISPLAY_TYPE_COLUMN).setCellEditor(
           new DefaultCellEditor(new JComboBox(displayTypes.toArray(new String[displayTypes.size()]))));
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return calcSize(super.getMinimumSize());
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return calcSize(super.getPreferredSize());
+    }
+
+    private Dimension calcSize(@NotNull final Dimension s) {
+      final Container container = getParent();
+      if (container != null) {
+        final Dimension size = container.getSize();
+        return new Dimension(size.width, s.height);
+      }
+
+      return s;
     }
 
     public List<SettingsWrapper> getSettings() {
       return ((NotificationsTableModel) getModel()).getSettings();
     }
+
+    public void removeSelected() {
+      final ListSelectionModel selectionModel = getSelectionModel();
+      if (!selectionModel.isSelectionEmpty()) {
+        final int min = selectionModel.getMinSelectionIndex();
+        final int max = selectionModel.getMaxSelectionIndex();
+
+        final List<SettingsWrapper> settings = getSettings();
+        final List<SettingsWrapper> toRemove = new ArrayList<SettingsWrapper>();
+
+        for (int i = min; i <= max; i++) {
+          toRemove.add(settings.get(i));
+        }
+
+        if (toRemove.size() > 0) {
+          ((NotificationsTableModel) getModel()).remove(toRemove);
+
+          revalidate();
+          repaint();
+        }
+      }
+    }
+
+    public List<SettingsWrapper> getAllSettings() {
+      return ((NotificationsTableModel) getModel()).getAllSettings();
+    }
   }
 
   private static class SettingsWrapper extends NotificationSettings {
     private NotificationSettings myOriginal;
+    private boolean myRemoved = false;
 
     private SettingsWrapper(@NotNull final NotificationSettings original) {
       super(original.getComponentName(), original.getDisplayType(), original.isEnabled(), original.isCanDisable());
@@ -95,13 +169,25 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     }
 
     public boolean hasChanged() {
-      return isEnabled() != myOriginal.isEnabled() || !getDisplayType().equals(myOriginal.getDisplayType());
+      return isEnabled() != myOriginal.isEnabled() || !getDisplayType().equals(myOriginal.getDisplayType()) || myRemoved;
+    }
+
+    public void remove() {
+      myRemoved = true;
+    }
+
+    public boolean isRemoved() {
+      return myRemoved;
     }
 
     public void apply() {
-      if (hasChanged()) {
-        myOriginal.setEnabled(isEnabled());
-        myOriginal.setDisplayType(getDisplayType());
+      if (myRemoved) {
+        NotificationsConfiguration.remove(new NotificationSettings[] { myOriginal });
+      } else {
+        if (hasChanged()) {
+          myOriginal.setEnabled(isEnabled());
+          myOriginal.setDisplayType(getDisplayType());
+        }
       }
     }
 
@@ -109,6 +195,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       if (hasChanged()) {
         setEnabled(myOriginal.isEnabled());
         setDisplayType(myOriginal.getDisplayType());
+        myRemoved = false;
       }
     }
   }
@@ -116,7 +203,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   private static class NotificationsTableModel extends AbstractTableModel {
     private List<SettingsWrapper> mySettings;
 
-    public NotificationsTableModel(final NotificationSettings[] settings) {
+    public NotificationsTableModel() {
+      final NotificationSettings[] settings = NotificationsConfiguration.getAllSettings();
       final List<SettingsWrapper> list = new ArrayList<SettingsWrapper>();
       for (NotificationSettings setting : settings) {
         list.add(new SettingsWrapper(setting));
@@ -127,7 +215,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     }
 
     public List<SettingsWrapper> getSettings() {
-      return mySettings;
+      return getActiveSettings();
     }
 
     @Override
@@ -135,9 +223,6 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       final NotificationSettings settings = getSettings(rowIndex);
 
       switch (columnIndex) {
-        case NotificationsTable.ENABLED_COLUMN:
-          settings.setEnabled(((Boolean)aValue).booleanValue());
-          break;
         case NotificationsTable.DISPLAY_TYPE_COLUMN:
           settings.setDisplayType(NotificationDisplayType.valueOf(((String)aValue).toUpperCase()));
           break;
@@ -145,11 +230,11 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     }
 
     public int getRowCount() {
-      return mySettings.size();
+      return getSettings().size();
     }
 
     public NotificationSettings getSettings(int row) {
-      return mySettings.get(row);
+      return getSettings().get(row);
     }
 
     public int getColumnCount() {
@@ -159,7 +244,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     @Override
     public Class<?> getColumnClass(final int columnIndex) {
       if (NotificationsTable.ENABLED_COLUMN == columnIndex) {
-        return Boolean.class;
+        return NotificationSettings.class;
       }
 
       return String.class;
@@ -169,8 +254,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     public String getColumnName(final int column) {
       switch (column) {
         case NotificationsTable.ENABLED_COLUMN:
-          return "Enabled";
-        case 1:
+          return "On";
+        case NotificationsTable.ID_COLUMN:
           return "ID";
         default:
           return "Display type";
@@ -187,18 +272,95 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     }
 
     public Object getValueAt(final int rowIndex, final int columnIndex) {
-      final NotificationSettings settings = mySettings.get(rowIndex);
-
       switch (columnIndex) {
         case NotificationsTable.ENABLED_COLUMN:
-          return settings.isEnabled();
-        case 1:
-          return settings.getComponentName();
-        case NotificationsTable.DISPLAY_TYPE_COLUMN:
-          return StringUtil.capitalize(settings.getDisplayType().toString().toLowerCase());
+          return getSettings().get(rowIndex);
+        case NotificationsTable.ID_COLUMN:
+          return getSettings().get(rowIndex).getComponentName();
       }
 
-      return null;
+      return StringUtil.capitalize(getSettings().get(rowIndex).getDisplayType().toString().toLowerCase());
+    }
+
+    public static void remove(List<SettingsWrapper> toRemove) {
+      for (SettingsWrapper settingsWrapper : toRemove) {
+        settingsWrapper.remove();
+      }
+    }
+
+    public List<SettingsWrapper> getAllSettings() {
+      return mySettings;
+    }
+
+    private List<SettingsWrapper> getActiveSettings() {
+      final List<SettingsWrapper> result = new ArrayList<SettingsWrapper>(mySettings);
+      final Iterator<SettingsWrapper> iterator = result.iterator();
+      while (iterator.hasNext()) {
+        final SettingsWrapper wrapper = iterator.next();
+        if (wrapper.isRemoved()) {
+          iterator.remove();
+        }
+      }
+
+      return result;
+    }
+  }
+
+  private static class CheckBoxCellRenderer extends AbstractCellEditor implements TableCellRenderer, TableCellEditor, ActionListener {
+    private JComponent myComponent;
+    private JCheckBox myCheckBox;
+    private Object myValue;
+
+    private CheckBoxCellRenderer() {
+      myComponent = new JPanel();
+      myComponent.setLayout(new BoxLayout(myComponent, BoxLayout.X_AXIS));
+      myComponent.setBorder(BorderFactory.createEmptyBorder());
+      myCheckBox = new JCheckBox();
+      myCheckBox.setBorder(BorderFactory.createEmptyBorder());
+      myComponent.add(myCheckBox);
+
+    }
+
+    public Object getCellEditorValue() {
+      return myValue;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      stopCellEditing();
+    }
+
+    @Override
+    public boolean stopCellEditing() {
+      if (myValue instanceof NotificationSettings) {
+        ((NotificationSettings)myValue).setEnabled(myCheckBox.isSelected());
+      }
+
+      return super.stopCellEditing();
+    }
+
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+      myCheckBox.removeActionListener(this);
+      myCheckBox.addActionListener(this);
+
+      return getTableCellRendererComponent(table, value, isSelected, true, row, column);
+    }
+
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      myValue = value;
+
+      myCheckBox.setEnabled(true);
+      myCheckBox.setSelected(false);
+
+      if (value instanceof NotificationSettings) {
+        final NotificationSettings settings = (NotificationSettings)value;
+
+        myCheckBox.setSelected(settings.isEnabled());
+        myCheckBox.setEnabled(settings.isCanDisable());
+      }
+
+      myComponent.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+
+      return myComponent;
     }
   }
 }

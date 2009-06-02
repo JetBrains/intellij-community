@@ -9,6 +9,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.concurrency.JobScheduler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author spleaner
@@ -27,6 +29,9 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   private NotificationModel myModel;
 
   private NotificationsListPanel myPopup;
+
+  private BlinkIconWrapper myCurrentIcon;
+  private boolean myBlinkIcon = false;
 
   public NotificationComponent(@NotNull final IdeNotificationArea area) {
     myModel = area.getModel();
@@ -46,7 +51,11 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     });
 
     setText("");
-    setIcon(EMPTY_ICON);
+
+    myCurrentIcon = new BlinkIconWrapper(EMPTY_ICON, false);
+    setIcon(myCurrentIcon);
+
+    JobScheduler.getScheduler().scheduleAtFixedRate(new IconBlinker(), (long)1, (long)1, TimeUnit.SECONDS);
   }
 
   @Override
@@ -64,19 +73,24 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   }
 
   private void showList() {
-    myPopup.showOrHide();
+    if (myPopup.showOrHide()) {
+      myBlinkIcon = false;
+    }
   }
 
   public void update(@Nullable final NotificationImpl notification, final int size, final boolean add) {
     if (notification != null) {
       final NotificationSettings settings = NotificationsConfiguration.getSettings(notification);
-      setIcon(notification.getIcon());
+      myCurrentIcon = new BlinkIconWrapper(notification.getIcon(), true);
+      setIcon(myCurrentIcon);
 
       if (add) {
+        myBlinkIcon = !myPopup.isShowing();
         notifyByBaloon(notification, settings);
       }
     } else {
-      setIcon(EMPTY_ICON);
+      myCurrentIcon = new BlinkIconWrapper(EMPTY_ICON, false);
+      setIcon(myCurrentIcon);
     }
 
     if (size == 0) {
@@ -148,6 +162,56 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     final NotificationListener.Continue onClose = notification.getListener().perform();
     if (onClose == NotificationListener.Continue.REMOVE) {
       myModel.remove(notification);
+    }
+  }
+
+  private void blinkIcon(boolean visible) {
+    myCurrentIcon.setPaint(visible);
+  }
+
+  private class IconBlinker implements Runnable {
+    private boolean myVisible;
+
+    public void run() {
+      myVisible = !myVisible;
+      blinkIcon(myVisible);
+    }
+  }
+
+  private class BlinkIconWrapper implements Icon {
+    private Icon myOriginal;
+    private boolean myPaint;
+    private boolean myBlink;
+
+    private BlinkIconWrapper(@NotNull final Icon original, final boolean blink) {
+      myOriginal = original;
+      myBlink = blink;
+    }
+
+    public void setPaint(final boolean paint) {
+      if (paint != myPaint) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            repaint();
+          }
+        });
+      }
+
+      myPaint = paint;
+    }
+
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      if (!myBlink || !myBlinkIcon || myPaint) {
+        myOriginal.paintIcon(c, g, x, y);
+      }
+    }
+
+    public int getIconWidth() {
+      return myOriginal.getIconWidth();
+    }
+
+    public int getIconHeight() {
+      return myOriginal.getIconHeight();
     }
   }
 }
