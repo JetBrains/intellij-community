@@ -12,7 +12,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
 public class PutLabelDialog extends DialogWrapper {
-  private final IdeaGateway myGateway;
+  private IdeaGateway myGateway;
   private final VirtualFile myFile;
 
   private JTextField myNameField;
@@ -32,6 +32,7 @@ public class PutLabelDialog extends DialogWrapper {
 
   @Override
   public void dispose() {
+    myGateway = null;
     super.dispose();
   }
 
