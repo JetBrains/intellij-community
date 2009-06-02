@@ -162,8 +162,9 @@ public class XsltSymbolIndex implements FileBasedIndexExtension<String, XsltSymb
     }
 
     public static NavigationItem[] getSymbolsByName(final String name, Project project, boolean includeNonProjectItems) {
-        final SymbolCollector collector = new SymbolCollector(name, project, includeNonProjectItems);
-        FileBasedIndex.getInstance().processValues(NAME, name, null, collector, GlobalSearchScope.allScope(project));
+        final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+        final SymbolCollector collector = new SymbolCollector(name, project, scope);
+        FileBasedIndex.getInstance().processValues(NAME, name, null, collector, scope);
         return collector.getResult();
     }
 
@@ -193,9 +194,9 @@ public class XsltSymbolIndex implements FileBasedIndexExtension<String, XsltSymb
 
         private final Collection<NavigationItem> myResult = new ArrayList<NavigationItem>();
 
-        public SymbolCollector(String name, Project project, boolean includeNonProjectItems) {
+        public SymbolCollector(String name, Project project, GlobalSearchScope scope) {
             myMgr = PsiManager.getInstance(project);
-            myScope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+            myScope = scope;
             myName = name;
         }
 
