@@ -19,7 +19,6 @@ package git4idea.vfs;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
@@ -49,7 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * The component tracks Git roots for the project. If roots are mapped incorrectly it
  * shows balloon that notifies user about the problem and offers to correct root mapping.
  */
-public class GitRootTracker implements Disposable, VcsListener {
+public class GitRootTracker implements VcsListener {
   /**
    * The context project
    */
@@ -132,7 +131,7 @@ public class GitRootTracker implements Disposable, VcsListener {
   }
 
   /**
-   * {@inheritDoc}
+   * Dispose the component removing all related listeners
    */
   public void dispose() {
     myVcsManager.removeVcsListener(this);

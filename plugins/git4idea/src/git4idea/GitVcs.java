@@ -51,6 +51,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.update.GitUpdateEnvironment;
+import git4idea.vfs.GitIgnoreTracker;
 import git4idea.vfs.GitRootTracker;
 import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NonNls;
@@ -142,7 +143,14 @@ public class GitVcs extends AbstractVcs {
    * The changelist provider
    */
   private GitCommittedChangeListProvider myCommittedChangeListProvider;
+  /**
+   * The tracker that checks validity of git roots
+   */
   private GitRootTracker myRootTracker;
+  /**
+   * Tracker for ignored files
+   */
+  private GitIgnoreTracker myGitIgnoreTracker;
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
@@ -158,7 +166,6 @@ public class GitVcs extends AbstractVcs {
                 @NotNull final GitRollbackEnvironment gitRollbackEnvironment,
                 @NotNull final GitVcsSettings gitSettings) {
     super(project);
-
     myVcsManager = gitVcsManager;
     mySettings = gitSettings;
     myChangeProvider = gitChangeProvider;
@@ -172,9 +179,6 @@ public class GitVcs extends AbstractVcs {
     myUpdateEnvironment = new GitUpdateEnvironment(myProject);
     myMergeProvider = new GitMergeProvider(myProject);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
-    if (!myProject.isDefault()) {
-      myRootTracker = new GitRootTracker(this, myProject);
-    }
   }
 
   /**
@@ -333,10 +337,36 @@ public class GitVcs extends AbstractVcs {
    * {@inheritDoc}
    */
   @Override
+  public void start() throws VcsException {
+    super.start();
+    if (!myProject.isDefault() && myRootTracker == null) {
+      myRootTracker = new GitRootTracker(this, myProject);
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void shutdown() throws VcsException {
+    if (myRootTracker != null) {
+      myRootTracker.dispose();
+      myRootTracker = null;
+    }
+    super.shutdown();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public void activate() {
     super.activate();
     if (myVFSListener == null) {
       myVFSListener = new GitVFSListener(myProject, this);
+    }
+    if (myGitIgnoreTracker == null) {
+      myGitIgnoreTracker = new GitIgnoreTracker(myProject, this);
     }
   }
 
@@ -349,9 +379,9 @@ public class GitVcs extends AbstractVcs {
       myVFSListener.dispose();
       myVFSListener = null;
     }
-    if (myRootTracker != null) {
-      myRootTracker.dispose();
-      myRootTracker = null;
+    if (myGitIgnoreTracker != null) {
+      myGitIgnoreTracker.dispose();
+      myGitIgnoreTracker = null;
     }
     super.deactivate();
   }
