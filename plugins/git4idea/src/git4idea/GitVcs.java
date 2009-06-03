@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EventDispatcher;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.changes.GitChangeProvider;
 import git4idea.changes.GitCommittedChangeListProvider;
@@ -51,9 +52,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.update.GitUpdateEnvironment;
-import git4idea.vfs.GitIgnoreTracker;
-import git4idea.vfs.GitRootTracker;
-import git4idea.vfs.GitVFSListener;
+import git4idea.vfs.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,9 +147,21 @@ public class GitVcs extends AbstractVcs {
    */
   private GitRootTracker myRootTracker;
   /**
+   * The dispatcher object for root events
+   */
+  private EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
+  /**
+   * The dispatcher object for git configuration events
+   */
+  private EventDispatcher<GitConfigListener> myConfigListeners = EventDispatcher.create(GitConfigListener.class);
+  /**
    * Tracker for ignored files
    */
   private GitIgnoreTracker myGitIgnoreTracker;
+  /**
+   * Configuration file tracker
+   */
+  private GitConfigTracker myConfigTracker;
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
@@ -179,6 +190,43 @@ public class GitVcs extends AbstractVcs {
     myUpdateEnvironment = new GitUpdateEnvironment(myProject);
     myMergeProvider = new GitMergeProvider(myProject);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
+  }
+
+  /**
+   * Add listener for git roots
+   *
+   * @param listener the listener to add
+   */
+  public void addGitConfigListener(GitConfigListener listener) {
+    myConfigListeners.addListener(listener);
+  }
+
+  /**
+   * Remove listener for git roots
+   *
+   * @param listener the listener to remove
+   */
+  public void removeGitConfigListener(GitConfigListener listener) {
+    myConfigListeners.removeListener(listener);
+  }
+
+
+  /**
+   * Add listener for git roots
+   *
+   * @param listener the listener to add
+   */
+  public void addGitRootsListener(GitRootsListener listener) {
+    myRootListeners.addListener(listener);
+  }
+
+  /**
+   * Remove listener for git roots
+   *
+   * @param listener the listener to remove
+   */
+  public void removeGitRootsListener(GitRootsListener listener) {
+    myRootListeners.removeListener(listener);
   }
 
   /**
@@ -340,7 +388,7 @@ public class GitVcs extends AbstractVcs {
   public void start() throws VcsException {
     super.start();
     if (!myProject.isDefault() && myRootTracker == null) {
-      myRootTracker = new GitRootTracker(this, myProject);
+      myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
     }
   }
 
@@ -365,6 +413,9 @@ public class GitVcs extends AbstractVcs {
     if (myVFSListener == null) {
       myVFSListener = new GitVFSListener(myProject, this);
     }
+    if (myConfigTracker == null) {
+      myConfigTracker = new GitConfigTracker(myProject, this, myConfigListeners.getMulticaster());
+    }
     if (myGitIgnoreTracker == null) {
       myGitIgnoreTracker = new GitIgnoreTracker(myProject, this);
     }
@@ -382,6 +433,10 @@ public class GitVcs extends AbstractVcs {
     if (myGitIgnoreTracker != null) {
       myGitIgnoreTracker.dispose();
       myGitIgnoreTracker = null;
+    }
+    if (myConfigTracker != null) {
+      myConfigTracker.dispose();
+      myConfigTracker = null;
     }
     super.deactivate();
   }

@@ -93,13 +93,19 @@ public class GitRootTracker implements VcsListener {
    * Local file system service
    */
   private LocalFileSystem myLocalFileSystem;
+  /**
+   * The multicaster for root events
+   */
+  private GitRootsListener myMulticaster;
 
   /**
    * The constructor
    *
-   * @param project the project instance
+   * @param project     the project instance
+   * @param multicaster
    */
-  public GitRootTracker(GitVcs vcs, @NotNull Project project) {
+  public GitRootTracker(GitVcs vcs, @NotNull Project project, @NotNull GitRootsListener multicaster) {
+    myMulticaster = multicaster;
     if (project.isDefault()) {
       throw new IllegalArgumentException("The project must not be default");
     }
@@ -253,6 +259,7 @@ public class GitRootTracker implements VcsListener {
         }
       }
     });
+    myMulticaster.gitRootsChanged();
   }
 
   /**

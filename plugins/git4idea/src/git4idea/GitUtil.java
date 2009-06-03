@@ -580,4 +580,44 @@ public class GitUtil {
   public static String formatLongRev(long rev) {
     return String.format("%015x%x", (rev >>> 4), rev & 0xF);
   }
+
+  /**
+   * The get the possible base for the path. It tries to find the parent for the provided path, if it fails, it looks for the path without last member.
+   *
+   * @param file the file to get base for
+   * @param path the path to to check
+   * @return the file base
+   */
+  @Nullable
+  public static VirtualFile getPossibleBase(VirtualFile file, String... path) {
+    return getPossibleBase(file, path.length, path);
+  }
+
+  /**
+   * The get the possible base for the path. It tries to find the parent for the provided path, if it fails, it looks for the path without last member.
+   *
+   * @param file the file to get base for
+   * @param n    the length of the path to check
+   * @param path the path to to check
+   * @return the file base
+   */
+  @Nullable
+  private static VirtualFile getPossibleBase(VirtualFile file, int n, String... path) {
+    if (file == null || n <= 0 || n > path.length) {
+      return null;
+    }
+    int i = 1;
+    VirtualFile c = file;
+    for (; c != null && i < n; i++, c = c.getParent()) {
+      if (!path[n - i].equals(c.getName())) {
+        break;
+      }
+    }
+    if (i == n && c != null) {
+      // all components matched
+      return c.getParent();
+    }
+    // try shorter paths paths
+    return getPossibleBase(file, n - 1, path);
+  }
 }
