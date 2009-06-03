@@ -16,10 +16,11 @@
 package com.siyeh.ipp.forloop;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -65,7 +66,17 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
                     (PsiMethodCallExpression)iteratedValue;
             final PsiReferenceExpression methodExpression =
                     methodCallExpression.getMethodExpression();
-            iteratedValueText = methodExpression.getText();
+            final String name = methodExpression.getReferenceName();
+            if (name == null) {
+                return;
+            }
+            if (name.startsWith("to") && name.length() > 2) {
+                iteratedValueText = StringUtil.decapitalize(name.substring(2));
+            } else if (name.startsWith("get") && name.length() > 3) {
+                iteratedValueText = StringUtil.decapitalize(name.substring(3));
+            } else {
+                iteratedValueText = name;
+            }
         } else {
             iteratedValueText = iteratedValue.getText();
         }
@@ -77,13 +88,13 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             lengthText = codeStyleManager.suggestUniqueVariableName(
                     iteratedValueText + "Size", statement, true);
         }
+        final CodeStyleSettings codeStyleSettings =
+                CodeStyleSettingsManager.getSettings(project);
         if (iteratedValue instanceof PsiMethodCallExpression) {
             final String variableName =
                     codeStyleManager.suggestUniqueVariableName(
                             iteratedValueText, statement, true);
             final StringBuilder declaration = new StringBuilder();
-            final CodeStyleSettings codeStyleSettings =
-                    CodeStyleSettingsManager.getSettings(project);
             if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
                 declaration.append("final ");
             }
@@ -120,6 +131,9 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         newStatement.append(indexText);
         newStatement.append("++)");
         newStatement.append("{ ");
+        if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+            newStatement.append("final ");
+        }
         newStatement.append(type.getCanonicalText());
         newStatement.append(' ');
         newStatement.append(iterationParameter.getName());
