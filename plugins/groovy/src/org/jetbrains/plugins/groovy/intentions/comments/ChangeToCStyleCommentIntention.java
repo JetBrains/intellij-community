@@ -4,7 +4,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +52,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     }
     final PsiComment newComment =
         factory.createCommentFromText("/*" + text + " */", selectedComment.getParent());
-    final PsiElement insertedElement = firstComment.replace(newComment);
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(element.getManager());
+    firstComment.replace(newComment);
     for (PsiElement commentToDelete : commentsToDelete) {
       commentToDelete.delete();
     }
