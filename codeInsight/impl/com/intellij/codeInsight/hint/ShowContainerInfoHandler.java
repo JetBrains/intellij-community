@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
@@ -96,7 +97,8 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  private PsiElement findContainer(PsiElement element) {
+  @Nullable
+  private static PsiElement findContainer(PsiElement element) {
     PsiElement container = element.getParent();
     while(true){
       if (container instanceof PsiFile) return null;
@@ -107,9 +109,13 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
     return container;
   }
 
-  private boolean isDeclarationVisible(PsiElement container, Editor editor) {
+  private static boolean isDeclarationVisible(PsiElement container, Editor editor) {
     Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
-    TextRange range = DeclarationRangeUtil.getDeclarationRange(container);
+    final TextRange range = DeclarationRangeUtil.getPossibleDeclarationAtRange(container);
+    if (range == null) {
+      return false;
+    }
+
     LogicalPosition pos = editor.offsetToLogicalPosition(range.getStartOffset());
     Point loc = editor.logicalPositionToXY(pos);
     return loc.y >= viewRect.y;
