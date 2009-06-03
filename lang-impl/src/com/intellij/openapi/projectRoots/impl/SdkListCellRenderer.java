@@ -1,9 +1,8 @@
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.ColoredListCellRenderer;
 
 import javax.swing.*;
 
@@ -12,12 +11,18 @@ import javax.swing.*;
 */
 public class SdkListCellRenderer extends ColoredListCellRenderer {
   private String myNullText = "";
+  private boolean myShowHomePath;
 
   public SdkListCellRenderer() {
   }
 
   public SdkListCellRenderer(final String nullText) {
     myNullText = nullText;
+  }
+
+  public SdkListCellRenderer(String nullText, boolean showHomePath) {
+    myNullText = nullText;
+    myShowHomePath = showHomePath;
   }
 
   protected void customizeCellRenderer(final JList list,
@@ -30,10 +35,13 @@ public class SdkListCellRenderer extends ColoredListCellRenderer {
       // icon
       setIcon(sdk.getSdkType().getIcon());
       // text
-      append(sdk.getName() + " (" + FileUtil.toSystemDependentName(sdk.getHomePath()) + ")", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      append(sdk.getName());
+      if (myShowHomePath) {
+        append(" (" + FileUtil.toSystemDependentName(sdk.getHomePath()) + ")");
+      }
     }
     else {
-      append(myNullText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      append(myNullText);
     }
   }
 }
