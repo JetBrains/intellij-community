@@ -656,6 +656,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
         }
         boolean prependSeparator = !myListModel.isEmpty() && myPrependWithSeparator;
+        assert text != null : action + " has no presentation";
         myListModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependSeparator, mySeparatorText));
         myPrependWithSeparator = false;
         mySeparatorText = null;
