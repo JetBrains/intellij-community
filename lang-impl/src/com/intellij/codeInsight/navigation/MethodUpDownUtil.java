@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -45,19 +46,19 @@ public class MethodUpDownUtil {
     if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
       TreeBasedStructureViewBuilder builder = (TreeBasedStructureViewBuilder) structureViewBuilder;
       StructureViewModel model = builder.createStructureViewModel();
-      addStructureViewElements(model.getRoot(), array);
+      addStructureViewElements(model.getRoot(), array, element);
     }
   }
 
-  private static void addStructureViewElements(final TreeElement parent, final Collection<PsiElement> array) {
+  private static void addStructureViewElements(final TreeElement parent, final Collection<PsiElement> array, @NotNull PsiFile file) {
     for(TreeElement treeElement: parent.getChildren()) {
       Object value = ((StructureViewTreeElement)treeElement).getValue();
       if (value instanceof PsiElement) {
         PsiElement element = (PsiElement)value;
-        if (array.contains(element)) return;
+        if (array.contains(element) || !file.equals(element.getContainingFile())) return;
         array.add(element);
       }
-      addStructureViewElements(treeElement, array);
+      addStructureViewElements(treeElement, array, file);
     }
   }
 }
