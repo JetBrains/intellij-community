@@ -181,7 +181,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
                                 ? containingFile
                                 : XmlUtil.findNamespace(containingFile, namespace);
         if (xmlFile != null) {
-          return (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
+          final XmlDocument document = xmlFile.getDocument();
+          if (document != null) {
+            return (XmlNSDescriptor)document.getMetaData();
+          }
         }
       } else {
         dtdUriFromDocTypeIsNamespace = true;
