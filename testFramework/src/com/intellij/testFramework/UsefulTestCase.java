@@ -381,8 +381,4 @@ public abstract class UsefulTestCase extends TestCase {
       // Way to go...
     }
   }
-
-  public static void markProjectCreationPlace(Project project, String place) {
-    project.putUserData(CREATION_PLACE, place);
-  }
 }

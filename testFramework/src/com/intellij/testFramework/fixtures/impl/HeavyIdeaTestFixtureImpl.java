@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import gnu.trove.THashSet;
@@ -113,17 +114,13 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
 
   private void setUpProject() throws Exception {
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-
     File projectFile = File.createTempFile(PROJECT_FILE_PREFIX, PROJECT_FILE_SUFFIX);
     myFilesToDelete.add(projectFile);
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
-    myProject = projectManager.newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
-
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
-    markProjectCreationPlace(myProject, buffer.toString());
+    myProject = PlatformTestCase.createProject(projectFile, buffer.toString());
 
     for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().setUp();

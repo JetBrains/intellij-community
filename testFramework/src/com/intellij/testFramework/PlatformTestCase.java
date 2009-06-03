@@ -29,6 +29,7 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -53,6 +54,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.PatchedWeakReference;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -125,7 +127,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     initApplication();
 
     setUpProject();
-    markProjectCreationPlace();
     storeSettings();
     ourTestCase = this;
   }
@@ -150,7 +151,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myFilesToDelete.add(projectFile);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
-    myProject = myProjectManager.newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+    myProject = createProject(projectFile, getClass().getName() + "." + getName());
 
     setUpModule();
 
@@ -161,8 +162,28 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     runStartupActivities();
   }
 
-  private void markProjectCreationPlace() {
-    markProjectCreationPlace(myProject, getClass().getName() + "." + getName());
+  @Nullable
+  public static Project createProject(File projectFile, String creationPlace) {
+    try {
+      Project project =
+        ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+      assert project != null;
+
+      project.putUserData(CREATION_PLACE, creationPlace);
+      return project;
+    }
+    catch (TooManyProjectLeakedException e) {
+      StringBuilder leakers = new StringBuilder();
+      leakers.append("Too many projects leaked: \n");
+      for (Project project : e.getLeakedProjects()) {
+        String place = project.getUserData(CREATION_PLACE);
+        leakers.append(place != null ? place : project.getBaseDir());
+        leakers.append("\n");
+      }
+
+      fail(leakers.toString());
+      return null;
+    }
   }
 
   protected void runStartupActivities() {
@@ -170,7 +191,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File getIprFile() throws IOException {
-    return File.createTempFile("temp", ProjectFileType.DOT_DEFAULT_EXTENSION);
+    return File.createTempFile("temp_" + getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
   }
 
   protected void setUpModule() {

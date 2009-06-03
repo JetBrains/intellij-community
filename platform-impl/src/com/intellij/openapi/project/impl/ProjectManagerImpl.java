@@ -79,6 +79,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private final Alarm myChangedFilesAlarm = new Alarm();
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
   private volatile int myReloadBlockCount = 0;
+  private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
+  private static final int MAX_LEAKY_PROJECTS = 42;
 
   private static ProjectManagerListener[] getListeners(Project project) {
     ArrayList<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
@@ -167,9 +169,33 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project newProject(final String projectName, String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = canonicalize(filePath);
 
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      for (int i = 0; i < 42; i++) {
+        if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
+        System.gc();
+        try {
+          Thread.sleep(100);
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+
+        System.gc();
+      }
+
+      if (myProjects.size() >= MAX_LEAKY_PROJECTS) {
+        List<Project> copy = new ArrayList<Project>(myProjects.keySet());
+        myProjects.clear();
+        throw new TooManyProjectLeakedException(copy);
+      }
+    }
+
     try {
-      return createAndInitProject(projectName, filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(),
-                              useDefaultProjectSettings ? getDefaultProject() : null, null);
+      ProjectImpl project =
+        createAndInitProject(projectName, filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(),
+                             useDefaultProjectSettings ? getDefaultProject() : null, null);
+      myProjects.put(project, null);
+      return project;
     }
     catch (final Exception e) {
       LOG.info(e);
