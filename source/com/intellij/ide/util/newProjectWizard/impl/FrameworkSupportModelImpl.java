@@ -1,6 +1,7 @@
 package com.intellij.ide.util.newProjectWizard.impl;
 
 import com.intellij.ide.util.newProjectWizard.*;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
@@ -19,11 +20,13 @@ import java.util.Map;
  */
 public class FrameworkSupportModelImpl extends UserDataHolderBase implements FrameworkSupportModel {
   private final Project myProject;
+  private final ModuleBuilder myModuleBuilder;
   private final EventDispatcher<FrameworkSupportModelListener> myDispatcher = EventDispatcher.create(FrameworkSupportModelListener.class);
   private final Map<String, AddSupportForFrameworksPanel.FrameworkSupportSettings> mySettingsMap = new HashMap<String, AddSupportForFrameworksPanel.FrameworkSupportSettings>();
 
-  public FrameworkSupportModelImpl(final @Nullable Project project) {
+  public FrameworkSupportModelImpl(final @Nullable Project project, @Nullable ModuleBuilder builder) {
     myProject = project;
+    myModuleBuilder = builder;
   }
 
   public void registerComponent(@NotNull final FrameworkSupportProvider provider, @NotNull final AddSupportForFrameworksPanel.FrameworkSupportSettings settings) {
@@ -43,6 +46,10 @@ public class FrameworkSupportModelImpl extends UserDataHolderBase implements Fra
 
   public Project getProject() {
     return myProject;
+  }
+
+  public ModuleBuilder getModuleBuilder() {
+    return myModuleBuilder;
   }
 
   public boolean isFrameworkSelected(@NotNull @NonNls final String providerId) {

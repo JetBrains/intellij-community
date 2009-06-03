@@ -11,6 +11,8 @@ import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.facet.ui.libraries.RemoteRepositoryInfo;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -18,14 +20,13 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,11 +59,11 @@ public class AddSupportForFrameworksPanel {
   private final FrameworkSupportModelImpl myModel;
 
   public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, final @NotNull LibrariesContainer librariesContainer,
-                                      Computable<String> baseDirForLibrariesGetter) {
+                                      @Nullable ModuleBuilder builder, Computable<String> baseDirForLibrariesGetter) {
     myLibrariesContainer = librariesContainer;
     myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;
     myProviders = providers;
-    myModel = new FrameworkSupportModelImpl(myLibrariesContainer.getProject());
+    myModel = new FrameworkSupportModelImpl(myLibrariesContainer.getProject(), builder);
     createNodes();
     myMirrorsMap = creatMirrorsMap();
 

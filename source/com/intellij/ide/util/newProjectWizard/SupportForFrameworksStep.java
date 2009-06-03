@@ -4,19 +4,19 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
 
   public SupportForFrameworksStep(final ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
     List<FrameworkSupportProvider> providers = FrameworkSupportUtil.getProviders(builder.getModuleType());
-    mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, librariesContainer, new Computable<String>() {
+    mySupportForFrameworksPanel = new AddSupportForFrameworksPanel(providers, librariesContainer, builder, new Computable<String>() {
       public String compute() {
         return getBaseDirectory(builder);
       }
