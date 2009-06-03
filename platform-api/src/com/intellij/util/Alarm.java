@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +31,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.lang.reflect.InvocationTargetException;
+import java.awt.*;
 
 public class Alarm implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
@@ -212,7 +213,7 @@ public class Alarm implements Disposable {
                 myRequests.remove(Request.this);
               }
 
-              if (myThreadToUse == ThreadToUse.SWING_THREAD && !ApplicationManager.getApplication().isDispatchThread()) {
+              if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
                 try {
                   SwingUtilities.invokeAndWait(task);
                 } catch (Exception e) {
@@ -225,7 +226,12 @@ public class Alarm implements Disposable {
           };
 
           if (myModalityState != null) {
-            ApplicationManager.getApplication().invokeLater(scheduledTask, myModalityState);
+            final Application app = ApplicationManager.getApplication();
+            if (app != null) {
+              app.invokeLater(scheduledTask, myModalityState);
+            } else {
+              SwingUtilities.invokeLater(scheduledTask);
+            }
           }
           else {
             myFuture = myExecutorService.submit(scheduledTask);
@@ -235,6 +241,11 @@ public class Alarm implements Disposable {
       catch (Throwable e) {
         LOG.error(e);
       }
+    }
+
+    private boolean isEdt() {
+      final Application app = ApplicationManager.getApplication();
+      return (app != null && app.isDispatchThread()) || EventQueue.isDispatchThread();
     }
 
     private Runnable getTask() {
