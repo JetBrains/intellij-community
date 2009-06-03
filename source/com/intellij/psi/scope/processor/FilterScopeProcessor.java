@@ -1,5 +1,6 @@
 package com.intellij.psi.scope.processor;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.ResolveState;
@@ -7,7 +8,8 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.SmartList;
-import com.intellij.openapi.util.Key;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,18 +19,18 @@ import com.intellij.openapi.util.Key;
  * To change this template use Options | File Templates.
  */
 public class FilterScopeProcessor<T> extends BaseScopeProcessor{
-  protected final SmartList<T> myResults;
+  protected final List<T> myResults;
   private PsiElement myCurrentDeclarationHolder;
   private final ElementFilter myFilter;
   private final PsiScopeProcessor myProcessor;
 
-  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor processor, SmartList<T> container){
+  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor processor, List<T> container){
     myFilter = filter;
     myProcessor = processor;
     myResults = container;
   }
 
-  public FilterScopeProcessor(ElementFilter filter, SmartList<T> container){
+  public FilterScopeProcessor(ElementFilter filter, List<T> container){
     this(filter, null, container);
   }
 
@@ -71,7 +73,7 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor{
     return null;
   }
 
-  public SmartList<T> getResults(){
+  public List<T> getResults(){
     return myResults;
   }
 }

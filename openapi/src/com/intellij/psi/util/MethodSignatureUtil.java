@@ -281,12 +281,13 @@ public class MethodSignatureUtil {
     public int computeHashCode(final MethodSignature signature) {
       int result = signature.getName().hashCode();
 
-      result += 37 * signature.getParameterTypes().length;
-      /*PsiType firstParamType = parameterTypes.length != 0 ? parameterTypes[0] : null;
-        if (firstParamType != null) {
-          firstParamType = TypeConversionUtil.erasure(firstParamType);
-          result += firstParamType.hashCode();
-        }*/
+      PsiType[] parameterTypes = signature.getParameterTypes();
+      result += 37 * parameterTypes.length;
+      PsiType firstParamType = parameterTypes.length == 0 ? null : parameterTypes[0];
+      if (firstParamType != null) {
+        firstParamType = TypeConversionUtil.erasure(firstParamType);
+        result = 31*result + firstParamType.hashCode();
+      }
       return result;
     }
 

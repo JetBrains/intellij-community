@@ -51,6 +51,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (conflicts.size() == 1) return conflicts.get(0);
 
     final int applicabilityLevel = checkApplicability(conflicts);
+    if (conflicts.size() == 1) return conflicts.get(0);
     checkSpecifics(conflicts, applicabilityLevel);
 
     if (conflicts.size() == 1) return conflicts.get(0);

@@ -152,6 +152,5 @@ public class CandidateInfo implements JavaResolveResult {
     return result;
   }
 
-  public static final JavaResolveResult[] RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE =
-          new JavaResolveResult[]{createCandidateInfoForPackagePrefixPart()};
+  public static final JavaResolveResult[] RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE = {createCandidateInfoForPackagePrefixPart()};
 }

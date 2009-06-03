@@ -108,7 +108,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return processor.getCandidates();
   }
 
-  private Pair<PsiType, ConstraintType> inferTypeForMethodTypeParameterInner(
+  private static Pair<PsiType, ConstraintType> inferTypeForMethodTypeParameterInner(
                                                  final PsiTypeParameter typeParameter,
                                                  final PsiParameter[] parameters,
                                                  PsiExpression[] arguments,
@@ -369,7 +369,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return null;
   }
 
-  private Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(final PsiTypeParameter typeParameter,
+  private static Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(final PsiTypeParameter typeParameter,
                                                      PsiSubstitutor substitutor,
                                                      PsiElement parent,
                                                      final boolean forCompletion) {
@@ -581,7 +581,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return null;
   }
 
-  private Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(PsiElement parent,
+  private static Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(PsiElement parent,
                                                      PsiMethodCallExpression methodCall,
                                                      final PsiTypeParameter typeParameter,
                                                      PsiSubstitutor substitutor,
@@ -674,7 +674,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
   };
 
-  private Pair<PsiType, ConstraintType> inferTypeForCompletionFromCallContext(final PsiMethodCallExpression innerMethodCall,
+  private static Pair<PsiType, ConstraintType> inferTypeForCompletionFromCallContext(final PsiMethodCallExpression innerMethodCall,
                                                                                      final PsiExpressionList expressionList,
                                                                                      final PsiCallExpression contextCall,
                                                                                      final PsiTypeParameter typeParameter) {

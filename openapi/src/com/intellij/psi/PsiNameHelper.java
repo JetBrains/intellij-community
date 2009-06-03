@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +28,6 @@ import java.util.regex.Pattern;
  * @see com.intellij.psi.JavaPsiFacade#getNameHelper()
  */
 public abstract class PsiNameHelper {
-  @NonNls private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
-
   /**
    * Checks if the specified text is a Java identifier, using the language level of the project
    * with which the name helper is associated to filter out keywords.
@@ -73,11 +70,12 @@ public abstract class PsiNameHelper {
   }
 
   private static String getShortClassName(String referenceText, boolean removeWhitespace) {
-    final char[] chars = referenceText.toCharArray();
-    int lessPos = chars.length;
+    int lessPos = referenceText.length();
     int bracesBalance = 0;
-    for (int i = chars.length - 1; i >= 0; i--) {
-      final char aChar = chars[i];
+    int i;
+    loop:
+    for (i = referenceText.length() - 1; i >= 0; i--) {
+      final char aChar = referenceText.charAt(i);
       switch (aChar) {
         case ')':
         case '>':
@@ -92,7 +90,7 @@ public abstract class PsiNameHelper {
 
         case '@':
         case '.':
-          if (bracesBalance == 0) return new String(chars, i + 1, lessPos - (i + 1)).trim();
+          if (bracesBalance == 0) break loop;
           break;
 
         default:
@@ -101,8 +99,8 @@ public abstract class PsiNameHelper {
           }
       }
     }
-    String substring = lessPos == chars.length ? referenceText : new String(chars, 0, lessPos);
-    return substring.trim();
+    String sub = referenceText.substring(i + 1, lessPos).trim();
+    return sub.length() == referenceText.length() ? sub : new String(sub);
   }
 
   public static String getPresentableText(PsiJavaCodeReferenceElement ref) {
@@ -156,6 +154,7 @@ public abstract class PsiNameHelper {
     return buffer.toString();
   }
 
+  private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
   private static String removeWhitespace(String referenceText) {
     return WHITESPACE_PATTERN.matcher(referenceText).replaceAll("");
   }

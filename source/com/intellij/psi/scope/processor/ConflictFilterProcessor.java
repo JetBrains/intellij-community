@@ -11,7 +11,8 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.SmartList;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,7 +27,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   protected String myName;
   protected final PsiElement myPlace;
 
-  public ConflictFilterProcessor(String name, ElementFilter filter, PsiConflictResolver[] resolvers, SmartList<CandidateInfo> container,
+  public ConflictFilterProcessor(String name, ElementFilter filter, PsiConflictResolver[] resolvers, List<CandidateInfo> container,
                                  final PsiElement place){
     super(filter, container);
     myResolvers = resolvers;
@@ -62,7 +63,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
 
   public JavaResolveResult[] getResult(){
     if(myCachedResult == null){
-      final SmartList<CandidateInfo> conflicts = getResults();
+      final List<CandidateInfo> conflicts = getResults();
       for (PsiConflictResolver resolver : myResolvers) {
         CandidateInfo candidate = resolver.resolveConflict(conflicts);
         if (candidate != null) {
