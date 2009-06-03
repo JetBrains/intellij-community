@@ -49,12 +49,12 @@ public class PropertiesUtil {
   public static String getBaseName(@NotNull VirtualFile virtualFile) {
     String name = virtualFile.getNameWithoutExtension();
 
-    String[] parts = name.split("_");
-    if (parts.length == 1) return parts[0];
+    List<String> parts = StringUtil.split(name, "_");
+    if (parts.size() == 1) return parts.get(0);
 
-    String baseName = parts[0];
-    for (int i = 1; i<parts.length; i++) {
-      String part = parts[i];
+    String baseName = parts.get(0);
+    for (int i = 1; i< parts.size(); i++) {
+      String part = parts.get(i);
       if (part.length() == 2) {
         break;
       }
