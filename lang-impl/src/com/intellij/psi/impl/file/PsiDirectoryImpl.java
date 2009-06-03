@@ -7,7 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -17,7 +19,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -448,7 +449,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       String name = ((PsiFile)element).getName();
       PsiFile[] files = getFiles();
       for (PsiFile file : files) {
-        if (Comparing.strEqual(file.getName(),name)) {
+        if (Comparing.strEqual(file.getName(),name, SystemInfo.isFileSystemCaseSensitive)) {
           throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", file.getVirtualFile().getPresentableUrl()));
         }
       }
