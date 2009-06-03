@@ -31,8 +31,10 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
   @Override
   public PsiElement findInsertionAnchor(@NotNull PsiClass aClass, @NotNull PsiElement leaf) {
     PsiElement element = leaf;
-    while (element.getParent().getParent() != aClass) {
-      element = element.getParent();
+    if (element.getParent() != aClass) {
+      while (element.getParent().getParent() != aClass) {
+        element = element.getParent();
+      }
     }
 
     final GrTypeDefinition typeDefinition = (GrTypeDefinition)aClass;
