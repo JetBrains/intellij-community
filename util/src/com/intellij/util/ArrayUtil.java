@@ -99,6 +99,13 @@ public class ArrayUtil {
   }
 
   @NotNull
+  public static<T> T[] toObjectArray(@NotNull Class<T> aClass, Object... source) {
+    T[] array = (T[]) Array.newInstance(aClass, source.length);
+    System.arraycopy(source, 0, array, 0, array.length);
+    return array;
+  }
+
+  @NotNull
   public static Object[] toObjectArray(@NotNull Collection<?> collection) {
     if (collection.isEmpty()) return EMPTY_OBJECT_ARRAY;
     return collection.toArray(new Object[collection.size()]);
