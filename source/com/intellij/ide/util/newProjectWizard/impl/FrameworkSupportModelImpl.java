@@ -1,9 +1,6 @@
 package com.intellij.ide.util.newProjectWizard.impl;
 
-import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportProvider;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportModel;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportModelListener;
+import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
@@ -69,5 +66,13 @@ public class FrameworkSupportModelImpl extends UserDataHolderBase implements Fra
     if (enable != settings.getCheckBox().isEnabled()) {
       settings.setEnabled(enable);
     }
+  }
+
+  public FrameworkSupportConfigurable getFrameworkConfigurable(@NotNull @NonNls String providerId) {
+    final AddSupportForFrameworksPanel.FrameworkSupportSettings settings = mySettingsMap.get(providerId);
+    if (settings == null) {
+      throw new IllegalArgumentException("provider '" + providerId + " not found");
+    }
+    return settings.getConfigurable();
   }
 }
