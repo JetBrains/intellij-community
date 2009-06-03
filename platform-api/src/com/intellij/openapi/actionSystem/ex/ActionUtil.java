@@ -100,7 +100,9 @@ public class ActionUtil {
     }
     finally {
       if (notAllowed) {
-        presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate);
+        if (wasEnabledBefore == null) {
+          presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate);
+        }
         presentation.setEnabled(false);
         presentation.setVisible(false);
       }
