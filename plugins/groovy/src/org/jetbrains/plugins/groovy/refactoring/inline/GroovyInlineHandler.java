@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +41,7 @@ public class GroovyInlineHandler implements InlineHandler {
 
   @Nullable
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
-
-    if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) { 
+    if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) {
       return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable) element, editor, invokedOnReference);
     } else if (element instanceof GrMethod) {
       return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod) element, editor, invokedOnReference);
@@ -51,6 +51,15 @@ public class GroovyInlineHandler implements InlineHandler {
         String message = GroovyRefactoringBundle.message("wrong.element.to.inline");
         CommonRefactoringUtil.showErrorHint(element.getProject(), editor, message, INLINE_REFACTORING, HelpID.INLINE_VARIABLE);
       }
+    }
+
+    if (element instanceof PsiMember) {
+      //dummy, todo implement
+      return new Settings() {
+        public boolean isOnlyOneReferenceToInline() {
+          return false;
+        }
+      };
     }
     return null;
   }
