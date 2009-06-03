@@ -152,24 +152,25 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
           List<T> problemExtensions = new ArrayList<T>();
 
+          final Class<T> extensionClass = getExtensionClass();
           for (Iterator<T> iterator = extensions.iterator(); iterator.hasNext();) {
             T t = iterator.next();
-            if (!isExtensionClassSuitable(t)) {
+            if (!extensionClass.isAssignableFrom(t.getClass())) {
               problemExtensions.add(t);
               iterator.remove();
             }
           }
 
           for (T problemExtension : problemExtensions) {
-            LOG.error("Extension '" + problemExtension.getClass() + "' should be instance of '" + getExtensionClass() + "'", new ExtensionException(problemExtension.getClass()));            
+            LOG.error("Extension '" + problemExtension.getClass() + "' should be instance of '" + extensionClass + "'", new ExtensionException(problemExtension.getClass()));
           }
 
           //noinspection unchecked
-          myExtensionsCache = result = extensions.toArray((T[])Array.newInstance(getExtensionClass(), extensions.size()));
+          myExtensionsCache = result = extensions.toArray((T[])Array.newInstance(extensionClass, extensions.size()));
           for (int i = 1; i < result.length; i++) {
             assert result[i] != result[i - 1] : "Result:      "+ Arrays.asList(result)+";\n" +
                                                 " extensions: "+ extensions+";\n" +
-                                                " getExtensionClass(): "+getExtensionClass()+";\n" +
+                                                " getExtensionClass(): "+ extensionClass +";\n" +
                                                 " size:"+extensions.size()+";"+result.length;
           }
         }
@@ -186,10 +187,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     synchronized (this) {
       return myExtensionAdapters.size() + myLoadedAdapters.size() > 0;
     }
-  }
-
-  private boolean isExtensionClassSuitable(final T t) {
-    return getExtensionClass().isAssignableFrom(t.getClass());
   }
 
   private void processAdapters() {
