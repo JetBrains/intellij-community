@@ -72,10 +72,5 @@
     <component>
       <implementation-class>com.intellij.jar.BuildJarSettings</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.javaee.model.annotations.JamModuleManager</interface-class>
-      <implementation-class>com.intellij.javaee.model.annotations.JamModuleManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
   </module-components>
 </components>
