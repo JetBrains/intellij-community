@@ -6,13 +6,15 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
-import com.intellij.facet.ui.FacetEditor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurableGroup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +37,10 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
   private final FacetEditorContext myContext;
   private final Set<FacetEditorTab> myVisitedTabs = new HashSet<FacetEditorTab>();
   private int mySelectedTabIndex = 0;
+  private Disposable myDisposable = new Disposable() {
+    public void dispose() {
+    }
+  };
 
   public FacetEditorImpl(final FacetEditorContext context, final FacetConfiguration configuration) {
     myContext = context;
@@ -60,7 +66,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
   public JComponent createComponent() {
     final JComponent editorComponent;
     if (myEditorTabs.length > 1) {
-      final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
+      final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(myDisposable);
       for (FacetEditorTab editorTab : myEditorTabs) {
         tabbedPane.addTab(editorTab.getDisplayName(), editorTab.getIcon(), editorTab.createComponent(), null);
       }
@@ -104,6 +110,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
   }
 
   public void disposeUIResources() {
+    Disposer.dispose(myDisposable);
     myErrorPanel.disposeUIResources();
     super.disposeUIResources();
   }
