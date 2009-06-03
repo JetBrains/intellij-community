@@ -344,7 +344,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     //Grails injections  support
     printer.println(GroovycRunner.IS_GRAILS);
-    printer.println(GrailsUtils.hasGrailsSupport(module) || GrailsModuleStructureUtil.isAuxiliaryPluginsModule(module));
+    printer.println(GrailsUtils.hasGrailsSupport(module) || GrailsModuleStructureUtil.isCommonPluginsModule(module) || GrailsModuleStructureUtil.isCustomPluginModule(module));
 
     final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
     if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset)) {
