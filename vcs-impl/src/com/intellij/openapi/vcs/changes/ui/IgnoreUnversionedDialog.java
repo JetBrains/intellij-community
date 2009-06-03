@@ -190,7 +190,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   public IgnoredFileBean[] getSelectedIgnoredFiles() {
     if (myIgnoreSpecifiedFileRadioButton.isSelected()) {
       if (myFilesToIgnore == null) {
-        return new IgnoredFileBean[] { IgnoredBeanFactory.ignoreFile(myPresentation.alwaysRelative(myIgnoreFileTextField.getText())) };
+        return new IgnoredFileBean[] { IgnoredBeanFactory.ignoreFile(myPresentation.alwaysRelative(myIgnoreFileTextField.getText()), myProject) };
       }
       return getBeansFromFilesToIgnore(false);
     }
@@ -199,7 +199,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
         return getBeansFromFilesToIgnore(true);
       }
       final String path = myIgnoreDirectoryTextField.getText();
-      return new IgnoredFileBean[] { IgnoredBeanFactory.ignoreUnderDirectory(myPresentation.alwaysRelative(path)) };
+      return new IgnoredFileBean[] { IgnoredBeanFactory.ignoreUnderDirectory(myPresentation.alwaysRelative(path), myProject) };
     }
     if (myIgnoreAllFilesMatchingRadioButton.isSelected()) {
       return new IgnoredFileBean[] { IgnoredBeanFactory.withMask(myIgnoreMaskTextField.getText()) };
@@ -214,10 +214,10 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       if (path != null) {
         path = FileUtil.toSystemIndependentName(path);
         if (fileToIgnore.isDirectory()) {
-          result.add(IgnoredBeanFactory.ignoreUnderDirectory(path));
+          result.add(IgnoredBeanFactory.ignoreUnderDirectory(path, myProject));
         }
         else if (!onlyDirs) {
-          result.add(IgnoredBeanFactory.ignoreFile(path));
+          result.add(IgnoredBeanFactory.ignoreFile(path, myProject));
         }
       }
     }

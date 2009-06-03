@@ -1,18 +1,22 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
 public class IgnoredBeanFactory {
-  public static IgnoredFileBean ignoreUnderDirectory(final @NonNls String path) {
-    final String correctedPath = (path.endsWith("/") || path.endsWith(File.separator)) ? path : path + "/";
-    return new IgnoredFileBean(correctedPath, IgnoreSettingsType.UNDER_DIR);
+  private IgnoredBeanFactory() {
   }
 
-  public static IgnoredFileBean ignoreFile(final @NonNls String path) {
+  public static IgnoredFileBean ignoreUnderDirectory(final @NonNls String path, Project p) {
+    final String correctedPath = (path.endsWith("/") || path.endsWith(File.separator)) ? path : path + "/";
+    return new IgnoredFileBean(correctedPath, IgnoreSettingsType.UNDER_DIR, p);
+  }
+
+  public static IgnoredFileBean ignoreFile(final @NonNls String path, Project p) {
     // todo check??
-    return new IgnoredFileBean(path, IgnoreSettingsType.FILE);
+    return new IgnoredFileBean(path, IgnoreSettingsType.FILE, p);
   }
 
   public static IgnoredFileBean withMask(final String mask) {

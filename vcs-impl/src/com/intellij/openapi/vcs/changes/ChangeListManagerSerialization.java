@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -74,8 +75,10 @@ class ChangeListManagerSerialization {
   private void readFileToIgnore(final Element ignoredNode) {
     String path = ignoredNode.getAttributeValue(ATT_PATH);
     if (path != null) {
-      final IgnoredFileBean bean = path.endsWith("/") || path.endsWith(File.separator) ? IgnoredBeanFactory.ignoreUnderDirectory(path) :
-             IgnoredBeanFactory.ignoreFile(path);
+      Project project = myWorker.getProject();
+      final IgnoredFileBean bean = path.endsWith("/") || path.endsWith(File.separator)
+                                   ? IgnoredBeanFactory.ignoreUnderDirectory(path, project)
+                                   : IgnoredBeanFactory.ignoreFile(path, project);
       myIgnoredIdeaLevel.add(bean);
     }
     String mask = ignoredNode.getAttributeValue(ATT_MASK);

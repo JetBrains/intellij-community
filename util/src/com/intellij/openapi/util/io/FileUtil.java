@@ -47,42 +47,6 @@ public class FileUtil {
   //private static final byte[] BUFFER = new byte[1024 * 20];
 
   @Nullable
-  public static File createFileByRelativePath(@NotNull final File absoluteBase, @NotNull final String relativeTail) {
-    // assert absoluteBase.isAbsolute() && absoluteBase.isDirectory(); : assertion seem to be too costly
-
-    String basePath = absoluteBase.getPath();
-    StringBuilder resultPath = new StringBuilder(basePath);
-    if (basePath.length() > 1 && (basePath.endsWith("/") || basePath.endsWith("\\"))) {
-      resultPath.setLength(resultPath.length() - 1);
-    }
-
-    StringTokenizer tokenizer = new StringTokenizer(relativeTail, "/\\", false);
-    while (tokenizer.hasMoreTokens()) {
-      String token = tokenizer.nextToken().trim();
-      if (token.length() == 0) continue;
-      if (".".equals(token)) continue;
-      if ("..".equals(token)) {
-        int parentDelim = resultPath.lastIndexOf("/");
-        if (parentDelim > 0) {
-          resultPath.setLength(parentDelim);
-        }
-        else {
-          parentDelim = resultPath.lastIndexOf("\\");
-          if (parentDelim > 0) {
-            resultPath.setLength(parentDelim);
-          }
-          return null;
-        }
-        continue;
-      }
-      resultPath.append('/');
-      resultPath.append(token);
-    }
-
-    return new File(resultPath.toString());
-  }
-
-  @Nullable
   public static String getRelativePath(File base, File file) {
     if (base == null || file == null) return null;
 

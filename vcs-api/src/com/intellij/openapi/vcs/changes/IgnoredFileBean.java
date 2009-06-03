@@ -22,39 +22,43 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class IgnoredFileBean {
   private final String myPath;
   private final String myMask;
-  private final Pattern myPattern;
+  private final Matcher myMatcher;
   private final IgnoreSettingsType myType;
-  private String myAbsolutePath;
-  private boolean myPathIsAbsolute;
+  private final Project myProject;
+  private VirtualFile myCachedResolved;
 
-  IgnoredFileBean(String path, IgnoreSettingsType type) {
+  IgnoredFileBean(String path, IgnoreSettingsType type, Project project) {
     myPath = path;
     myType = type;
-    myMask = null; 
-    myPattern = null;
+    myProject = project;
+    myMask = null;
+    myMatcher = null;
   }
 
   IgnoredFileBean(String mask) {
     myType = IgnoreSettingsType.MASK;
     myMask = mask;
     if (mask == null) {
-      myPattern = null;
+      myMatcher = null;
     }
     else {
-      myPattern = PatternUtil.fromMask(mask);
+      myMatcher = PatternUtil.fromMask(mask).matcher("");
     }
     myPath = null;
+    myProject = null;
   }
 
   @Nullable
@@ -65,10 +69,6 @@ public class IgnoredFileBean {
   @Nullable
   public String getMask() {
     return myMask;
-  }
-
-  public Pattern getPattern() {
-    return myPattern;
   }
 
   public IgnoreSettingsType getType() {
@@ -97,30 +97,48 @@ public class IgnoredFileBean {
     return result;
   }
 
-  public void initAbsolute() {
-    if (myAbsolutePath == null && (myPath != null)) {
-      final File file = new File(myPath);
-      myAbsolutePath = file.getAbsolutePath();
-      if (IgnoreSettingsType.UNDER_DIR.equals(myType)) {
-        myAbsolutePath += File.separatorChar;
+  public boolean matchesFile(VirtualFile file) {
+    if (myType == IgnoreSettingsType.MASK) {
+      myMatcher.reset(file.getName());
+      return myMatcher.matches();
+    }
+    else {
+      VirtualFile selector = resolve();
+      if (selector == null) return false;
+
+      if (myType == IgnoreSettingsType.FILE) {
+        return selector == file;
       }
-      myPathIsAbsolute = file.isAbsolute();
+      else {
+        if ("./".equals(myPath)) {
+          // special case for ignoring the project base dir (IDEADEV-16056)
+          return !file.isDirectory() && file.getParent() == selector;
+        }
+        return VfsUtil.isAncestor(selector, file, false);
+      }
     }
   }
 
-  public boolean fileIsUnderMe(final String ioFileAbsPath, final File baseDir) {
-    if (! IgnoreSettingsType.MASK.equals(myType)) {
-      initAbsolute();
-      if (myPathIsAbsolute) {
-        return StringUtil.startsWithIgnoreCase(ioFileAbsPath, myAbsolutePath);
-      }
-      if (baseDir == null) return false;
-      final File file = FileUtil.createFileByRelativePath(baseDir, myPath);
-      if (file == null) return false;
-      String absPath = file.getAbsolutePath();
-      absPath = IgnoreSettingsType.UNDER_DIR.equals(myType) ? absPath + File.separatorChar : absPath;
-      return StringUtil.startsWithIgnoreCase(ioFileAbsPath, absPath);
+  @Nullable
+  private VirtualFile resolve() {
+    if (myCachedResolved == null || !myCachedResolved.isValid()) {
+      myCachedResolved = doResolve();
     }
-    return false;
+    return myCachedResolved;
+  }
+
+  @Nullable
+  private VirtualFile doResolve() {
+    VirtualFile baseDir = myProject.getBaseDir();
+
+    String path = FileUtil.toSystemIndependentName(myPath);
+    if (baseDir == null) {
+      return LocalFileSystem.getInstance().findFileByPath(path);
+    }
+
+    VirtualFile resolvedRelative = baseDir.findFileByRelativePath(path);
+    if (resolvedRelative != null) return resolvedRelative;
+
+    return LocalFileSystem.getInstance().findFileByPath(path);
   }
 }
