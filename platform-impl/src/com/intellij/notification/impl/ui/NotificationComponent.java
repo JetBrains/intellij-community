@@ -1,17 +1,17 @@
 package com.intellij.notification.impl.ui;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.concurrency.JobScheduler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,19 +24,18 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author spleaner
  */
-public class NotificationComponent extends JLabel implements NotificationModelListener {
+public class NotificationComponent extends JLabel implements NotificationModelListener<Notification> {
   private static final Icon EMPTY_ICON = IconLoader.getIcon("/ide/notifications.png");
-  private NotificationModel myModel;
 
   private NotificationsListPanel myPopup;
 
   private BlinkIconWrapper myCurrentIcon;
   private boolean myBlinkIcon = false;
+  private IdeNotificationArea myArea;
+  private Notification myLatest;
 
   public NotificationComponent(@NotNull final IdeNotificationArea area) {
-    myModel = area.getModel();
-
-    myPopup = new NotificationsListPanel(this);
+    myArea = area;
 
     setFont(UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10));
     setIconTextGap(3);
@@ -58,10 +57,20 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     JobScheduler.getScheduler().scheduleAtFixedRate(new IconBlinker(), (long)1, (long)1, TimeUnit.SECONDS);
   }
 
+  private static NotificationsManager getManager() {
+    return NotificationsManager.getNotificationsManager();
+  }
+
   @Override
   public void removeNotify() {
-    myModel.removeListener(this); // clean up
-    myPopup.clear();
+    getManager().removeListener(this); // clean up
+
+    if (myPopup != null) {
+      myPopup.clear();
+      myPopup = null;
+    }
+
+    myLatest = null;
 
     super.removeNotify();
   }
@@ -69,60 +78,77 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   public void addNotify() {
     super.addNotify();
 
-    myModel.addListener(this);
+    getManager().addListener(this);
   }
 
   private void showList() {
+    if (myPopup == null) {
+      myPopup = new NotificationsListPanel(this);
+    }
+
     if (myPopup.showOrHide()) {
       myBlinkIcon = false;
+    } else {
+      myPopup.clear();
+      myPopup = null;
     }
   }
 
-  public void update(@Nullable final NotificationImpl notification, final int size, final boolean add) {
-    if (notification != null) {
-      final NotificationSettings settings = NotificationsConfiguration.getSettings(notification);
-      myCurrentIcon = new BlinkIconWrapper(notification.getIcon(), true);
-      setIcon(myCurrentIcon);
+  public void updateStatus(final boolean add) {
+    final NotificationsManager manager = getManager();
+    final int count = manager.count(getProject());
+    if (count > 0) {
+      final Notification latest = manager.getLatestNotification(getProject());
+      assert latest != null;
 
-      if (add) {
-        myBlinkIcon = !myPopup.isShowing();
-        notifyByBaloon(notification, settings);
+      if (latest != myLatest) {
+        final NotificationSettings settings = NotificationsConfiguration.getSettings(latest);
+        myCurrentIcon = new BlinkIconWrapper(latest.getIcon(), true);
+        setIcon(myCurrentIcon);
+
+        if (add) {
+          myBlinkIcon = myPopup != null && !myPopup.isShowing();
+          notifyByBaloon(latest, settings);
+        }
+
+        myLatest = latest;
       }
+
+      setForeground(Color.BLACK);
+      setText(String.format("%d", count));
     } else {
       myCurrentIcon = new BlinkIconWrapper(EMPTY_ICON, false);
       setIcon(myCurrentIcon);
-    }
-
-    if (size == 0) {
       setForeground(getBackground());
       setText("");
-    } else {
-      setForeground(Color.BLACK);
-      setText(String.format("%d", size));
     }
 
     repaint();
   }
 
+  public Project getProject() {
+    return myArea.getProject();
+  }
+
   @SuppressWarnings({"SSBasedInspection"})
-  public void notificationsAdded(@NotNull final NotificationImpl... notifications) {
+  public void notificationsAdded(@NotNull final Notification... notifications) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        update(notifications[notifications.length - 1], myModel.getCount(), true);
+        updateStatus(true);
       }
     });
   }
 
   @SuppressWarnings({"SSBasedInspection"})
-  public void notificationsRemoved(@NotNull final NotificationImpl... notifications) {
+  public void notificationsRemoved(@NotNull final Notification... notifications) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        update(myModel.getFirst(), myModel.getCount(), false);
+        updateStatus(false);
       }
     });
   }
 
-  private void notifyByBaloon(final NotificationImpl notification, final NotificationSettings settings) {
+  private void notifyByBaloon(final Notification notification, final NotificationSettings settings) {
     if (NotificationDisplayType.BALOON.equals(settings.getDisplayType())) {
       final String html = String.format("%s", notification.getName());
 
@@ -154,14 +180,10 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     }
   }
 
-  public NotificationModel getModel() {
-    return myModel;
-  }
-
-  private void performNotificationAction(final NotificationImpl notification) {
+  private static void performNotificationAction(final Notification notification) {
     final NotificationListener.Continue onClose = notification.getListener().perform();
     if (onClose == NotificationListener.Continue.REMOVE) {
-      myModel.remove(notification);
+      getManager().remove(notification);
     }
   }
 

@@ -2,17 +2,15 @@ package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.impl.NotificationImpl;
-import com.intellij.notification.impl.NotificationModel;
-import com.intellij.notification.impl.NotificationModelListener;
+import com.intellij.notification.impl.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -26,14 +24,13 @@ import java.util.List;
 /**
  * @author spleaner
  */
-public class NotificationsListPanel extends JPanel implements NotificationModelListener {
+public class NotificationsListPanel extends JPanel implements NotificationModelListener<Notification> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.ui.NotificationsListPanel");
   private static final String REMOVE_KEY = "REMOVE";
 
   private WeakReference<JBPopup> myPopupRef;
 
   private JList myList;
-  private NotificationModel myNotificationsModel;
   private NotificationsListModel myDataModel;
 
   private JComponent myActiveContentComponent;
@@ -41,16 +38,15 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
   private Wrapper myContentPane = new Wrapper();
   private NotificationComponent myNotificationComponent;
+  private Project myProject;
 
   public NotificationsListPanel(@NotNull final NotificationComponent component) {
     setLayout(new BorderLayout());
 
     myNotificationComponent = component;
+    myProject = component.getProject();
 
-    myNotificationsModel = component.getModel();
-    myDataModel = new NotificationsListModel(myNotificationsModel);
-
-    myNotificationsModel.addListener(this);
+    myDataModel = new NotificationsListModel(myProject);
 
     myList = new JList(myDataModel) {
       @Override
@@ -58,8 +54,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
         final int i = locationToIndex(event.getPoint());
         if (i >= 0) {
           final Object o = getModel().getElementAt(i);
-          if (o instanceof NotificationImpl) {
-            return ((NotificationImpl) o).getDescription();
+          if (o instanceof Notification) {
+            return ((Notification) o).getDescription();
           }
         }
 
@@ -75,7 +71,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       public void mouseClicked(final MouseEvent e) {
         if (e.getClickCount() % 2 == 0) {
           final int index = myList.locationToIndex(e.getPoint());
-          final NotificationImpl notification = myNotificationsModel.get(index);
+          final Notification notification = getManager().getAt(index, myProject);
           if (notification != null) {
             performNotificationAction(notification);
           }
@@ -116,6 +112,10 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     switchLayout();
 
     add(myContentPane, BorderLayout.CENTER);
+  }
+
+  private static NotificationsManager getManager() {
+    return NotificationsManager.getNotificationsManager();
   }
 
   private JComponent buildFilterBar(@NotNull final NotificationsListModel listModel) {
@@ -171,18 +171,18 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     b.setSelected(active);
   }
 
-  public void notificationsAdded(@NotNull final NotificationImpl... notification) {
+  public void notificationsAdded(@NotNull final Notification... notification) {
     myDataModel.rebuildList();
     switchLayout();
   }
 
-  public void notificationsRemoved(@NotNull final NotificationImpl... notification) {
+  public void notificationsRemoved(@NotNull final Notification... notification) {
     myDataModel.rebuildList();
     switchLayout();
   }
 
   private void switchLayout() {
-    final int count = myNotificationsModel.getCount();
+    final int count = getManager().count(myProject);
 
     if (count > 0) {
       if (myActiveContentComponent.getParent() == null) {
@@ -199,10 +199,10 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     revalidateAll();
   }
 
-  private void performNotificationAction(final NotificationImpl notification) {
+  private void performNotificationAction(final Notification notification) {
     final NotificationListener.Continue onClose = notification.getListener().perform();
     if (onClose == NotificationListener.Continue.REMOVE) {
-      myNotificationsModel.remove(notification);
+      getManager().remove(notification);
       revalidateAll();
     }
   }
@@ -243,10 +243,10 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       final int min = model.getMinSelectionIndex();
       final int max = model.getMaxSelectionIndex();
 
-      final List<NotificationImpl> tbr = new ArrayList<NotificationImpl>();
+      final List<Notification> tbr = new ArrayList<Notification>();
       for (int i = min; i <= max; i++) {
         if (model.isSelectedIndex(i)) {
-          final NotificationImpl notification = (NotificationImpl) myDataModel.getElementAt(i);
+          final Notification notification = (Notification) myDataModel.getElementAt(i);
           if (notification != null) {
             final NotificationListener.Continue onRemove = notification.getListener().onRemove();
             if (onRemove == NotificationListener.Continue.REMOVE) {
@@ -257,7 +257,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       }
 
       if (tbr.size() > 0) {
-        myNotificationsModel.remove(tbr.toArray(new NotificationImpl[tbr.size()]));
+        getManager().remove(tbr.toArray(new Notification[tbr.size()]));
 
         final int toSelect = Math.min(min, myDataModel.getSize() - 1);
         model.clearSelection();
@@ -299,6 +299,14 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
             .setTitle("Notifications")
             .createPopup();
 
+    popup.addListener(new JBPopupListener.Adapter() {
+          @Override
+          public void onClosed(LightweightWindowEvent event) {
+            getManager().removeListener(NotificationsListPanel.this);
+          }
+        });
+
+    getManager().addListener(this);
     myPopupRef = new WeakReference<JBPopup>(popup);
     popup.showInCenterOf(SwingUtilities.getRootPane(myNotificationComponent));
     return true;
@@ -327,8 +335,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     }
 
     public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
-      LOG.assertTrue(value instanceof NotificationImpl);
-      final NotificationImpl notification = (NotificationImpl) value;
+      LOG.assertTrue(value instanceof Notification);
+      final Notification notification = (Notification) value;
 
       setIcon(notification.getIcon());
       final Color color = list.getSelectionBackground();
@@ -361,13 +369,12 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   }
 
   private static class NotificationsListModel extends AbstractListModel {
-    private NotificationModel myNotificationsModel;
-    private List<NotificationImpl> myNotifications = new ArrayList<NotificationImpl>();
+    private List<Notification> myNotifications = new ArrayList<Notification>();
     private NotificationType myType;
+    private Project myProject;
 
-    private NotificationsListModel(@NotNull final NotificationModel notificationsModel) {
-      myNotificationsModel = notificationsModel;
-
+    private NotificationsListModel(@Nullable Project project) {
+      myProject = project;
       rebuildList();
     }
 
@@ -381,7 +388,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
     private void rebuildList() {
       myNotifications.clear();
-      myNotifications.addAll(myNotificationsModel.getByType(myType));
+      myNotifications.addAll(getManager().getByType(myType, myProject));
 
       fireContentsChanged(this, 0, myNotifications.size() - 1);
     }

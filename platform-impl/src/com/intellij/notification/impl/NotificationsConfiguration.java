@@ -73,7 +73,7 @@ public class NotificationsConfiguration implements ApplicationComponent, Notific
   }
 
   @Nullable
-  public static NotificationSettings getSettings(@NotNull final NotificationImpl notification) {
+  public static NotificationSettings getSettings(@NotNull final Notification notification) {
     final NotificationsConfiguration configuration = getNotificationsConfiguration();
     return configuration.myIdToSettingsMap.get(notification.getId());
   }

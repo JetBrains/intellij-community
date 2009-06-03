@@ -1,46 +1,46 @@
 package com.intellij.notification.impl;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.notification.NotificationType;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.lang.reflect.Array;
+import java.util.*;
 
 /**
  * @author spleaner
  */
-public class NotificationModel {
+public class NotificationModel<T extends Notification> {
 
-  private final LinkedList<NotificationImpl> myNotifications = new LinkedList<NotificationImpl>();
-  private final List<NotificationModelListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final LinkedList<T> myNotifications = new LinkedList<T>();
+  private final List<NotificationModelListener<T>> myListeners = ContainerUtil.createEmptyCOWList();
 
-  public void addListener(@NotNull final NotificationModelListener listener) {
+  public void addListener(@NotNull final NotificationModelListener<T> listener) {
     myListeners.add(listener);
   }
 
-  public void removeListener(@NotNull final NotificationModelListener listener) {
+  public void removeListener(@NotNull final NotificationModelListener<T> listener) {
     myListeners.remove(listener);
   }
 
-  public void add(@NotNull final NotificationImpl notification) {
+  public void add(@NotNull final T notification) {
     myNotifications.addFirst(notification);
-    for (NotificationModelListener listener : myListeners) {
+    for (NotificationModelListener<T> listener : myListeners) {
       listener.notificationsAdded(notification);
     }
   }
 
   @Nullable
-  public NotificationImpl remove(final int index) {
-    if (getCount() > 0 && index >= 0 && index < getCount()) {
-      final NotificationImpl notification = myNotifications.get(index);
+  public T remove(final int index, @NotNull NotNullFunction<T, Boolean> filter) {
+    final LinkedList<T> filtered = filterNotifications(filter);
+    if (filtered.size() > 0 && index >= 0 && index < filtered.size()) {
+      final T notification = filtered.get(index);
       if (notification != null) {
-        myNotifications.remove(index);
+        myNotifications.remove(notification);
 
-        for (NotificationModelListener listener : myListeners) {
+        for (NotificationModelListener<T> listener : myListeners) {
           listener.notificationsRemoved(notification);
         }
 
@@ -52,11 +52,11 @@ public class NotificationModel {
   }
 
   @Nullable
-  public NotificationImpl remove(@NotNull final NotificationImpl notification) {
+  public T remove(@NotNull final T notification) {
     if (myNotifications.contains(notification)) {
       myNotifications.remove(notification);
 
-      for (NotificationModelListener listener : myListeners) {
+      for (NotificationModelListener<T> listener : myListeners) {
         listener.notificationsRemoved(notification);
       }
     }
@@ -64,9 +64,9 @@ public class NotificationModel {
     return notification;
   }
 
-  public void remove(@NotNull final NotificationImpl... notifications) {
-    final List<NotificationImpl> tbr = new ArrayList<NotificationImpl>();
-    for (NotificationImpl notification : notifications) {
+  public void remove(@NotNull final T... notifications) {
+    final List<T> tbr = new ArrayList<T>();
+    for (T notification : notifications) {
       if (myNotifications.contains(notification)) {
         tbr.add(notification);
         myNotifications.remove(notification);
@@ -74,56 +74,73 @@ public class NotificationModel {
     }
 
     if (tbr.size() > 0) {
-      for (NotificationModelListener listener : myListeners) {
-        listener.notificationsRemoved(tbr.toArray(new NotificationImpl[tbr.size()]));
+      for (NotificationModelListener<T> listener : myListeners) {
+        listener.notificationsRemoved(tbr.toArray((T[]) Array.newInstance(tbr.get(0).getClass(), tbr.size())));
       }
     }
   }
 
   @Nullable
-  public NotificationImpl get(final int index) {
-    if (index >= 0 && myNotifications.size() > index) {
-      return myNotifications.get(index);
+  public T get(final int index, @NotNull NotNullFunction<T, Boolean> filter) {
+    final LinkedList<T> filtered = filterNotifications(filter);
+    if (index >= 0 && filtered.size() > index) {
+      return filtered.get(index);
     }
 
     return null;
   }
 
-  public int getCount() {
-    return myNotifications.size();
+  private LinkedList<T> filterNotifications(@NotNull NotNullFunction<T, Boolean> filter) {
+    final LinkedList<T> result = new LinkedList<T>();
+    for (final T notification : myNotifications) {
+      if (filter.fun(notification)) {
+        result.add(notification);
+      }
+    }
+
+    return result;
   }
 
-  public boolean isEmpty() {
-    return getCount() == 0;
+
+  public int getCount(@NotNull NotNullFunction<T, Boolean> filter) {
+    return filterNotifications(filter).size();
+  }
+
+  public boolean isEmpty(@NotNull NotNullFunction<T, Boolean> filter) {
+    return getCount(filter) == 0;
   }
 
   @Nullable
-  public NotificationImpl getFirst() {
-    if (myNotifications.size() > 0) {
-      return myNotifications.getFirst();
+  public T getFirst(@NotNull NotNullFunction<T, Boolean> filter) {
+    final LinkedList<T> result = filterNotifications(filter);
+    if (result.size() > 0) {
+      return result.getFirst();
     }
 
     return null;
   }
 
-  public void clear() {
-    if (getCount() > 0) {
-      final NotificationImpl[] removed = myNotifications.toArray(new NotificationImpl[myNotifications.size()]);
-      myNotifications.clear();
+  public void clear(@NotNull NotNullFunction<T, Boolean> filter) {
+    final LinkedList<T> result = filterNotifications(filter);
+    if (!result.isEmpty()) {
+      for (final T notification : result) {
+        myNotifications.remove(notification);
+      }
 
-      for (NotificationModelListener listener : myListeners) {
+      final T[] removed = result.toArray((T[]) Array.newInstance(result.get(0).getClass(), result.size()));
+      for (NotificationModelListener<T> listener : myListeners) {
         listener.notificationsRemoved(removed);
       }
     }
   }
 
-  public List<NotificationImpl> getAll(@Nullable final String id) {
+  public List<T> getAll(@Nullable final String id, @NotNull NotNullFunction<T, Boolean> filter) {
     if (id == null) {
-      return Collections.unmodifiableList(myNotifications);
+      return Collections.unmodifiableList(filterNotifications(filter));
     } else {
-      final List<NotificationImpl> result = new ArrayList<NotificationImpl>();
-
-      for (NotificationImpl notification : myNotifications) {
+      final List<T> result = new ArrayList<T>();
+      final LinkedList<T> filtered = filterNotifications(filter);
+      for (T notification : filtered) {
         if (id.equals(notification.getId())) {
           result.add(notification);
         }
@@ -134,13 +151,13 @@ public class NotificationModel {
   }
 
 
-  public List<NotificationImpl> getByType(@Nullable final NotificationType type) {
+  public List<T> getByType(@Nullable final NotificationType type, @NotNull NotNullFunction<T, Boolean> filter) {
     if (type == null) {
-      return Collections.unmodifiableList(myNotifications);
+      return Collections.unmodifiableList(filterNotifications(filter));
     } else {
-      final List<NotificationImpl> result = new ArrayList<NotificationImpl>();
-
-      for (NotificationImpl notification : myNotifications) {
+      final List<T> result = new ArrayList<T>();
+      final LinkedList<T> filtered = filterNotifications(filter);
+      for (T notification : filtered) {
         if (type == notification.getType()) {
           result.add(notification);
         }
@@ -150,14 +167,12 @@ public class NotificationModel {
     }
   }
 
-  public void invalidateAll(final String id) {
+  public void invalidateAll(final String id, @NotNull NotNullFunction<T, Boolean> filter) {
     if (id != null) {
-      final List<NotificationImpl> all = getAll(id);
-      remove(all.toArray(new NotificationImpl[all.size()]));
+      final List<T> all = getAll(id, filter);
+      if (all.size() > 0) {
+        remove((T[]) Array.newInstance(all.get(0).getClass(), all.size()));
+      }
     }
-  }
-
-  public void clearProjectNotifications() {
-    clear();
   }
 }

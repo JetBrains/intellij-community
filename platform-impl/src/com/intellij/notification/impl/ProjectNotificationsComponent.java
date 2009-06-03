@@ -25,7 +25,7 @@ public class ProjectNotificationsComponent implements ProjectComponent {
     }
 
     myStatusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(myProject);
-    myStatusBar.getNotificationArea().connect(myProject);
+    myStatusBar.getNotificationArea().setProject(myProject);
   }
 
   public void projectClosed() {
@@ -33,7 +33,7 @@ public class ProjectNotificationsComponent implements ProjectComponent {
       return;
     }
 
-    myStatusBar.getNotificationArea().getModel().clearProjectNotifications();
+    NotificationsManager.getNotificationsManager().clear(myProject);
     myProject = null;
   }
 
