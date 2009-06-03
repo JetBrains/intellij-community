@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 /**
  * @author Yura Cangea
  */
-public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent{
+public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
   private static final int VERSION = 5;
 
@@ -89,7 +89,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
 
       public void consume(@NotNull final FileType fileType, final FileNameMatcher... matchers) {
-        register(fileType, Arrays.asList(matchers));
+        register(fileType, new ArrayList<FileNameMatcher>(Arrays.asList(matchers)));
       }
 
       public FileType getStandardFileTypeByName(@NotNull final String name) {
@@ -201,7 +201,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
 
       public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-        
+
       }
     }, RoamingType.PER_USER);
     for (final StandardFileType pair : ourStandardFileTypes.values()) {
@@ -429,6 +429,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
+
   public void addFileTypeListener(@NotNull FileTypeListener listener) {
     final MessageBusConnection connection = myMessageBus.connect();
     connection.subscribe(AppTopics.FILE_TYPES, listener);
@@ -446,7 +447,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @SuppressWarnings({"SimplifiableIfStatement"})
   private static boolean isDefaultModified(FileType fileType) {
     if (fileType instanceof ExternalizableFileType) {
-      return ((ExternalizableFileType) fileType).isModified();
+      return ((ExternalizableFileType)fileType).isModified();
     }
     return true; //TODO?
   }
@@ -585,7 +586,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     parentNode.addContent(map);
 
     final List<FileType> fileTypes = Arrays.asList(getRegisteredFileTypes());
-    Collections.sort(fileTypes, new Comparator<FileType>(){
+    Collections.sort(fileTypes, new Comparator<FileType>() {
       public int compare(FileType o1, FileType o2) {
         return o1.getName().compareTo(o2.getName());
       }
@@ -702,7 +703,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private FileType loadFileType(final ReadFileType readFileType) {
-    return loadFileType(readFileType.getElement(), false, mySchemesManager.isShared(readFileType) ? readFileType.getExternalInfo() : null, true);
+    return loadFileType(readFileType.getElement(), false, mySchemesManager.isShared(readFileType) ? readFileType.getExternalInfo() : null,
+                        true);
   }
 
 
@@ -730,7 +732,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
       if (type instanceof JDOMExternalizable) {
         try {
-          ((JDOMExternalizable) type).readExternal(typeElement);
+          ((JDOMExternalizable)type).readExternal(typeElement);
         }
         catch (InvalidDataException e) {
           throw new RuntimeException(e);
@@ -753,7 +755,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (isDefaults) {
       myDefaultTypes.add(type);
       if (type instanceof ExternalizableFileType) {
-        ((ExternalizableFileType) type).markDefaultSettings();
+        ((ExternalizableFileType)type).markDefaultSettings();
       }
     }
     else {
@@ -796,7 +798,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         return type;
       }
     }
-    for(CustomFileTypeFactory factory: Extensions.getExtensions(CustomFileTypeFactory.EP_NAME)) {
+    for (CustomFileTypeFactory factory : Extensions.getExtensions(CustomFileTypeFactory.EP_NAME)) {
       type = factory.createFileType(typeElement);
       if (type != null) {
         break;
@@ -808,7 +810,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return type;
   }
 
-  private static void setFileTypeAttributes(final String fileTypeName, final String fileTypeDescr, final String iconPath, final UserFileType ft) {
+  private static void setFileTypeAttributes(final String fileTypeName,
+                                            final String fileTypeDescr,
+                                            final String iconPath,
+                                            final UserFileType ft) {
     if (iconPath != null && !"".equals(iconPath.trim())) {
       Icon icon = IconLoader.getIcon(iconPath);
       ft.setIcon(icon);
@@ -880,13 +885,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-  public void removeAssociation(FileType fileType, FileNameMatcher matcher, boolean fireChange){
+  public void removeAssociation(FileType fileType, FileNameMatcher matcher, boolean fireChange) {
     if (myPatternsTable.isAssociatedWith(fileType, matcher)) {
       if (fireChange) {
         fireBeforeFileTypesChanged();
       }
       myPatternsTable.removeAssociation(matcher, fileType);
-      if (fireChange){
+      if (fireChange) {
         fireFileTypesChanged();
       }
     }
