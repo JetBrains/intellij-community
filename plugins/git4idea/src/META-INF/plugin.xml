@@ -103,6 +103,7 @@
         serviceInterface="git4idea.rebase.GitRebaseEditorService"
         serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
+    <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
   </extensions>
 
 </idea-plugin>
