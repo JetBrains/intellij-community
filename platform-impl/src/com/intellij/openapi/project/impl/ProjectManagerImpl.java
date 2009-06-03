@@ -169,6 +169,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project newProject(final String projectName, String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = canonicalize(filePath);
 
+    /*
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (int i = 0; i < 42; i++) {
         if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
@@ -189,6 +190,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         throw new TooManyProjectLeakedException(copy);
       }
     }
+    */
 
     try {
       ProjectImpl project =
