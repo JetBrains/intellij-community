@@ -64,9 +64,6 @@ public abstract class BaseSMTRunnerTestCase extends LightPlatformTestCase {
 
   protected RuntimeConfiguration createRunConfiguration() {
     return new MockRuntimeConfiguration(getProject());
-    //final RubyRunConfigurationFactory factory = new RubyRunConfigurationFactory(
-    //    TestUnitRunConfigurationType.getInstance());
-    //return new RTestUnitRunConfiguration(getProject(), factory, "name");
   }
 
   protected TestConsoleProperties createConsoleProperties() {
