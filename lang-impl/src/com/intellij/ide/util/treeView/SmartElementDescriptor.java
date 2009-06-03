@@ -3,6 +3,7 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -45,7 +46,12 @@ public class SmartElementDescriptor extends NodeDescriptor{
     if (isMarkReadOnly()){
       flags |= Iconable.ICON_FLAG_READ_STATUS;
     }
-    Icon icon = myElement.getIcon(flags);
+    Icon icon = null;
+    try {
+      icon = myElement.getIcon(flags);
+    }
+    catch (IndexNotReadyException e) {
+    }
     Color color = null;
 
     if (isMarkModified() ){
