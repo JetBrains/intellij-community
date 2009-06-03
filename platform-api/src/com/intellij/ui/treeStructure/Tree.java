@@ -146,27 +146,9 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
 
           final Rectangle parentRect = getPathBounds(nodePath);
           if (isExpanded(nodePath)) {
-            Object[] kids = structure.getChildElements(node);
-            if (kids.length > 0) {
-              Object lastChild = kids[kids.length - 1];
-              int[] max = getMax(kids, (int)parentRect.getMaxY(), (int)parentRect.getMaxX());
-              if (lastChild instanceof PresentableNodeDescriptor) {
-                while (isExpanded(getPath((PresentableNodeDescriptor) lastChild))) {
-                  kids = structure.getChildElements(lastChild);
-                  if (kids.length == 0) {
-                    break;
-                  }
-
-                  lastChild = kids[kids.length - 1];
-                  max = getMax(kids, max[0], max[1]);
-                }
-              }
-
-              rect = new Rectangle(parentRect.x, parentRect.y, max[1] - parentRect.x + 1, max[0] - parentRect.y - 1);
-            }
-            else {
-              rect = parentRect;
-            }
+            final int[] max = getMax(node, structure);
+            rect = new Rectangle(parentRect.x, parentRect.y, Math.max((int) parentRect.getMaxX(), max[1]) - parentRect.x - 1,
+                                 Math.max((int) parentRect.getMaxY(), max[0]) - parentRect.y - 1);
           }
           else {
             rect = parentRect;
@@ -266,23 +248,30 @@ public class Tree extends JTree implements Autoscroll, TestableUi {
     config.restore();
   }
 
-  private int[] getMax(final Object[] kids, final int y, final int x) {
-    int maxY = 0;
-    int maxX = 0;
-    for (Object kid : kids) {
-      if (kid instanceof PresentableNodeDescriptor) {
-        final TreePath path = getPath((PresentableNodeDescriptor)kid);
-        if (path != null) {
-          final Rectangle r = getPathBounds(path);
+  private int[] getMax(final PresentableNodeDescriptor node, final AbstractTreeStructure structure) {
+    int x = 0;
+    int y = 0;
+    final Object[] children = structure.getChildElements(node);
+    for (final Object child : children) {
+      if (child instanceof PresentableNodeDescriptor) {
+        final TreePath childPath = getPath((PresentableNodeDescriptor)child);
+        if (childPath != null) {
+          if (isExpanded(childPath)) {
+            final int[] tmp = getMax((PresentableNodeDescriptor)child, structure);
+            y = Math.max(y, tmp[0]);
+            x = Math.max(x, tmp[1]);
+          }
+
+          final Rectangle r = getPathBounds(childPath);
           if (r != null) {
-            maxY = Math.max(maxY, (int)r.getMaxY());
-            maxX = Math.max(maxX, (int)r.getMaxX());
+            y = Math.max(y, (int)r.getMaxY());
+            x = Math.max(x, (int)r.getMaxX());
           }
         }
       }
     }
 
-    return new int[]{Math.max(maxY, y), Math.max(maxX, x)};
+    return new int[]{y, x};
   }
 
   @Nullable
