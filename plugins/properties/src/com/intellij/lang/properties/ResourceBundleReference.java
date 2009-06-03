@@ -1,8 +1,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +11,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implements PsiPolyVariantReference {
+public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implements PsiPolyVariantReference, BundleNameEvaluator {
   private String myBundleName;
 
   public ResourceBundleReference(final PsiElement element) {
@@ -32,11 +30,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
 
   @NotNull public ResolveResult[] multiResolve(final boolean incompleteCode) {
     PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(myElement.getProject());
-    final Module module = ModuleUtil.findModuleForPsiElement(myElement);
-    if (module == null) {
-      return ResolveResult.EMPTY_ARRAY;
-    }
-    List<PropertiesFile> propertiesFiles = referenceManager.findPropertiesFiles(module, myBundleName);
+    List<PropertiesFile> propertiesFiles = referenceManager.findPropertiesFiles(myElement.getResolveScope(), myBundleName, this);
     final ResolveResult[] result = new ResolveResult[propertiesFiles.size()];
     for(int i=0; i<propertiesFiles.size(); i++) {
       PropertiesFile file = propertiesFiles.get(i);
@@ -83,7 +77,10 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
 
   public Object[] getVariants() {
     PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(getElement().getProject());
-    final Module module = ModuleUtil.findModuleForPsiElement(myElement);
-    return referenceManager.getPropertyFileBaseNames(module);
+    return referenceManager.getPropertyFileBaseNames(myElement.getResolveScope(), this);
+  }
+
+  public String evaluateBundleName(final PsiFile psiFile) {
+    return BundleNameEvaluator.DEFAULT.evaluateBundleName(psiFile);
   }
 }

@@ -3,19 +3,21 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PropertyFileIndex;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * @author max
@@ -35,19 +37,28 @@ public class PropertiesReferenceManager {
 
   @NotNull
   public List<PropertiesFile> findPropertiesFiles(@NotNull final Module module, final String bundleName) {
+    return findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName, BundleNameEvaluator.DEFAULT);
+  }
+
+  @NotNull
+  public List<PropertiesFile> findPropertiesFiles(@NotNull final GlobalSearchScope searchScope,
+                                                  final String bundleName,
+                                                  BundleNameEvaluator bundleNameEvaluator) {
     final ArrayList<PropertiesFile> result = new ArrayList<PropertiesFile>();
-    processPropertiesFiles(module, new PropertiesFileProcessor() {
+    processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
       public void process(String baseName, PropertiesFile propertiesFile) {
         if (baseName.equals(bundleName)) {
           result.add(propertiesFile);
         }
       }
-    });
+    }, bundleNameEvaluator);
     return result;
   }
 
   @Nullable
-  public PropertiesFile findPropertiesFile(final Module module, final String bundleName, final Locale locale) {
+  public PropertiesFile findPropertiesFile(final Module module,
+                                           final String bundleName,
+                                           final Locale locale) {
     List<PropertiesFile> propFiles = findPropertiesFiles(module, bundleName);
     if (locale != null) {
       for(PropertiesFile propFile: propFiles) {
@@ -72,13 +83,13 @@ public class PropertiesReferenceManager {
     return null;
   }
 
-  public String[] getPropertyFileBaseNames(final Module module) {
+  public String[] getPropertyFileBaseNames(final @NotNull GlobalSearchScope searchScope, final BundleNameEvaluator bundleNameEvaluator) {
     final ArrayList<String> result = new ArrayList<String>();
-    processPropertiesFiles(module, new PropertiesFileProcessor() {
+    processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
       public void process(String baseName, PropertiesFile propertiesFile) {
         result.add(baseName);
       }
-    });
+    }, bundleNameEvaluator);
     return ArrayUtil.toStringArray(result);
   }
 
@@ -86,36 +97,30 @@ public class PropertiesReferenceManager {
     void process(String baseName, PropertiesFile propertiesFile);
   }
 
-  private void processPropertiesFiles(@NotNull final Module module, PropertiesFileProcessor processor) {
-    final Set<Module> dependentModules = new THashSet<Module>();
-    ModuleUtil.getDependencies(module, dependentModules);
+  private void processPropertiesFiles(@NotNull final GlobalSearchScope searchScope,
+                                      final PropertiesFileProcessor processor,
+                                      final BundleNameEvaluator evaluator) {
 
     if (PropertyFileIndex.DEBUG) {
       System.out.println("PropertiesReferenceManager.processPropertiesFiles");
       System.out.println("PropertiesFileType.FILE_TYPE = " + PropertiesFileType.FILE_TYPE);
     }
-    for(VirtualFile file: PropertiesFilesManager.getInstance(myProject).getAllPropertiesFiles()) {
+
+    final Collection<VirtualFile> propertiesFiles = FileBasedIndex.getInstance()
+      .getContainingFiles(PropertyFileIndex.NAME, PropertiesFileType.FILE_TYPE.getName(),
+                          searchScope);
+
+    for(VirtualFile file: propertiesFiles) {
       if (PropertyFileIndex.DEBUG) {
         System.out.println("file = " + file.getPath());
       }
 
-      if (!dependentModules.contains(ModuleUtil.findModuleForFile(file, myProject))) {
-        continue;
-      }
-
-      PsiFile psiFile = myPsiManager.findFile(file);
-      if (!(psiFile instanceof PropertiesFile)) continue;
-
-      PsiDirectory directory = psiFile.getParent();
-      String packageQualifiedName = PropertiesUtil.getPackageQualifiedName(directory);
-
-      if (packageQualifiedName != null) {
-        StringBuilder qName = new StringBuilder(packageQualifiedName);
-        if (qName.length() > 0) {
-          qName.append(".");
+      final PsiFile psiFile = myPsiManager.findFile(file);
+      if (psiFile instanceof PropertiesFile){
+        final String qName = evaluator.evaluateBundleName(psiFile);
+        if (qName != null) {
+          processor.process(qName, (PropertiesFile) psiFile);
         }
-        qName.append(PropertiesUtil.getBaseName(file));
-        processor.process(qName.toString(), (PropertiesFile) psiFile);
       }
     }
   }

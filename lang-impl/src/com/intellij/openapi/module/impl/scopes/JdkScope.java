@@ -49,7 +49,7 @@ public class JdkScope extends GlobalSearchScope {
   }
 
   private VirtualFile getFileRoot(VirtualFile file) {
-    if (myIndex.isLibraryClassFile(file)) {
+    if (myIndex.isInLibraryClasses(file)) {
       return myIndex.getClassRootForFile(file);
     }
     if (myIndex.isInContent(file)) {
