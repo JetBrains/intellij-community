@@ -59,6 +59,10 @@ public class Topic<L> {
     return new Topic<L>(displayName, listenerClass);
   }
 
+  public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
+    return new Topic<L>(displayName, listenerClass, direction);
+  }
+
   public BroadcastDirection getBroadcastDirection() {
     return myBroadcastDirection;
   }
