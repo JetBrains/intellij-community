@@ -580,7 +580,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx {
 
     if (!hasEmptyConstructor) return false;
 
-    for (final PsiMethod method : baseClass.getAllMethods()) {
+    for (final PsiMethod method : baseClass.getMethods()) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return true;
       }
