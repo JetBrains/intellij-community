@@ -51,10 +51,12 @@ public class GenerateAntTest extends IdeaTestCase {
     final PrintWriter dataOutput = new PrintWriter(targetText);
     new BuildJarTarget(chunk, BuildTargetsFactory.getInstance().getDefaultOptions(getProject()), new PluginBuildConfiguration(getModule())).generate(dataOutput);
     dataOutput.flush();
-    final String expected = "<target name=\"plugin.build.jar."+ myModule.getName() +"\" description=\"Build plugin archive for module \'" + myModule.getName() + "\'\">\n" +
-                            "  <jar destfile=\"${"+ myModule.getName() + ".path.jar}\" duplicate=\"preserve\">\n" +
-                            "    <zipfileset dir=\"${module." + myModule.getName() + ".basedir}/classes\"/>\n" +
-                            "    <zipfileset file=\"${module." + myModule.getName() + ".basedir}/META-INF/plugin.xml\" prefix=\"META-INF\"/>\n" +
+    final String lowercased = StringUtil.toLowerCase(myModule.getName());
+    final String expected = "<target name=\"plugin.build.jar."+
+                            lowercased +"\" description=\"Build plugin archive for module &apos;" + myModule.getName() + "&apos;\">\n" +
+                            "  <jar destfile=\"${"+ lowercased + ".path.jar}\" duplicate=\"preserve\">\n" +
+                            "    <zipfileset dir=\"${module." + lowercased + ".basedir}/classes\"/>\n" +
+                            "    <zipfileset file=\"${module." + lowercased + ".basedir}/META-INF/plugin.xml\" prefix=\"META-INF\"/>\n" +
                             "    <manifest>\n" +
                             "      <attribute name=\"Created-By\" value=\"IntelliJ IDEA\"/>\n" +
                             "      <attribute name=\"Manifest-Version\" value=\"1.0\"/>\n" +
