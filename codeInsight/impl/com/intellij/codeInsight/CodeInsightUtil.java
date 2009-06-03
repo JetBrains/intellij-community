@@ -212,29 +212,6 @@ public class CodeInsightUtil {
     return result;
   }
 
-  private static void getSubtypes(final PsiElement context, final PsiClassType baseType, final int arrayDim,
-                                  final boolean getRawSubtypes, final Set<PsiType> result){
-    final PsiClassType.ClassResolveResult baseResult =
-      ApplicationManager.getApplication().runReadAction(new Computable<PsiClassType.ClassResolveResult>() {
-        public PsiClassType.ClassResolveResult compute() {
-          return JavaCompletionUtil.originalize(baseType).resolveGenerics();
-        }
-      });
-    final PsiClass baseClass = baseResult.getElement();
-    final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
-    if(baseClass == null) return;
-
-    final GlobalSearchScope scope = context.getResolveScope();
-    final Query<PsiClass> query = new FilteredQuery<PsiClass>(
-      ClassInheritorsSearch.search(baseClass, scope, true, false, false), new Condition<PsiClass>() {
-      public boolean value(final PsiClass psiClass) {
-        return !(psiClass instanceof PsiTypeParameter);
-      }
-    });
-
-    query.forEach(createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, result, baseClass, baseSubstitutor));
-  }
-
   public static Processor<PsiClass> createInheritorsProcessor(final PsiElement context, final PsiClassType baseType,
                                                                final int arrayDim,
                                                                final boolean getRawSubtypes,

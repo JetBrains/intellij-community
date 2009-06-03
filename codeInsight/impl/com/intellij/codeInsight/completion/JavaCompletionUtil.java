@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
@@ -41,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class JavaCompletionUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionUtil");
+
   static final Key<SmartPsiElementPointer> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
   @NonNls
   public static final String GET_PREFIX = "get";
@@ -513,6 +516,10 @@ public class JavaCompletionUtil {
   @SuppressWarnings({"unchecked"})
   @NotNull
   public static <T extends PsiType> T originalize(@NotNull T type) {
+    if (!type.isValid()) {
+      return type;
+    }
+
     return (T)type.accept(new PsiTypeVisitor<PsiType>() {
 
       public PsiType visitArrayType(final PsiArrayType arrayType) {
@@ -528,6 +535,8 @@ public class JavaCompletionUtil {
         final PsiClass psiClass = classResolveResult.getElement();
         final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
         if (psiClass == null) return classType;
+
+        LOG.assertTrue(psiClass.isValid());
 
         return new PsiImmediateClassType(getOriginalElement(psiClass), originalize(substitutor));
       }
