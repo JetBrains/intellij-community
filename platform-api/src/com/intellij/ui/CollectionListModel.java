@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -27,6 +28,10 @@ public class CollectionListModel extends AbstractListModel {
 
   public CollectionListModel(final List items) {
     myItems = items;
+  }
+
+  public CollectionListModel(final Object... items) {
+    myItems = Arrays.asList(items);
   }
 
   public int getSize() {
