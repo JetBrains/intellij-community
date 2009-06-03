@@ -359,7 +359,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(
         RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject), new TreeClassChooser.ClassFilter() {
         public boolean isAccepted(PsiClass aClass) {
-          return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
+          return aClass.getParent() instanceof PsiFile || aClass.hasModifierProperty(PsiModifier.STATIC);
         }
       }, null);
       final String targetClassName = getTargetClassName();
