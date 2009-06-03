@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -35,12 +37,14 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
     @Override
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
+        final PsiForeachStatement statement =
+                (PsiForeachStatement)element.getParent();
         if (statement == null) {
             return;
         }
         final Project project = statement.getProject();
-        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+        final JavaCodeStyleManager codeStyleManager =
+                JavaCodeStyleManager.getInstance(project);
         final PsiExpression iteratedValue = statement.getIteratedValue();
         if (iteratedValue == null) {
             return;
@@ -59,9 +63,12 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
             iteratedValueParameterType = null;
         }
         @NonNls final StringBuilder newStatement = new StringBuilder();
-        final PsiParameter iterationParameter = statement.getIterationParameter();
+        final PsiParameter iterationParameter =
+                statement.getIterationParameter();
         final PsiType parameterType = iterationParameter.getType();
-        final String iterator = codeStyleManager.suggestUniqueVariableName("it", statement, true);
+        final String iterator =
+                codeStyleManager.suggestUniqueVariableName("iterator",
+                        statement, true);
         final String typeText = parameterType.getCanonicalText();
         newStatement.append("for(java.util.Iterator");
         if (iteratedValueParameterType == null) {
@@ -83,11 +90,17 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
         newStatement.append(".iterator();");
         newStatement.append(iterator);
         newStatement.append(".hasNext();) {");
+        final CodeStyleSettings codeStyleSettings =
+                CodeStyleSettingsManager.getSettings(project);
+        if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+            newStatement.append("final ");
+        }
         newStatement.append(typeText);
         newStatement.append(' ');
         newStatement.append(iterationParameter.getName());
         newStatement.append(" = ");
-        if (iteratedValueParameterType == null && !"java.lang.Object".equals(typeText)) {
+        if (iteratedValueParameterType == null && !
+                "java.lang.Object".equals(typeText)) {
             newStatement.append('(');
             newStatement.append(typeText);
             newStatement.append(')');
