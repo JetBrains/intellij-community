@@ -163,6 +163,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
         final PsiType thenType = thenValue.getType();
         final PsiType elseType = elseValue.getType();
         if (thenType instanceof PsiPrimitiveType &&
+                !PsiType.NULL.equals(thenType) &&
                 !(elseType instanceof PsiPrimitiveType) &&
                 !(requiredType instanceof PsiPrimitiveType)) {
             // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
@@ -173,8 +174,9 @@ public class ReplaceIfWithConditionalIntention extends Intention {
             conditional.append("):");
             conditional.append(getExpressionText(elseValue));
         } else if (elseType instanceof PsiPrimitiveType &&
-                !(thenType instanceof PsiPrimitiveType &&
-                        !(requiredType instanceof PsiPrimitiveType))) {
+                !PsiType.NULL.equals(elseType) &&
+                !(thenType instanceof PsiPrimitiveType) &&
+                !(requiredType instanceof PsiPrimitiveType)) {
             // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
             conditional.append(getExpressionText(thenValue));
             conditional.append(':');
