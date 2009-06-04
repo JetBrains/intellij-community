@@ -146,6 +146,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     for (VirtualFile file : files) {
       try {
         if (FileUtil.isAncestor(new File(file.getPath()), directory, false)) {
+          // todo: should be done like auto detection
           plVcsManager.fireDirectoryMappingsChanged();
           return;
         }

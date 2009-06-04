@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -42,12 +41,6 @@ public class CleanupProjectAction extends AnAction {
 
   private static boolean isEnabled(final Project project) {
     if (project == null) return false;
-    final AbstractVcs[] activeVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-    for(AbstractVcs vcs: activeVcss) {
-      if (vcs.getName().equals(SvnVcs.VCS_NAME)) {
-        return true;
-      }
-    }
-    return false;
+    return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(SvnVcs.VCS_NAME);
   }
 }

@@ -35,9 +35,9 @@ package org.jetbrains.idea.svn;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,7 +60,6 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
@@ -93,11 +92,11 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
@@ -141,13 +140,13 @@ public class SvnVcs extends AbstractVcs {
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
   public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
   private final SvnChangelistListener myChangeListListener;
-  private MessageBusConnection myMessageBusConnection;
 
   private SvnCopiesRefreshManager myCopiesRefreshManager;
   private SvnFileUrlMappingImpl myMapping;
   private final MyFrameStateListener myFrameStateListener;
 
   public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
+  private VcsListener myVcsListener;
 
   static {
     SvnHttpAuthMethodsDefaultChecker.check();
@@ -205,14 +204,12 @@ public class SvnVcs extends AbstractVcs {
       upgradeIfNeeded(bus);
 
       myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
-      changeListManager.addChangeListListener(myChangeListListener);
 
-      myMessageBusConnection = bus.connect();
-      myMessageBusConnection.subscribe(ProjectLevelVcsManagerImpl.VCS_MAPPING_CHANGED, new Runnable() {
-        public void run() {
+      myVcsListener = new VcsListener() {
+        public void directoryMappingChanged() {
           invokeRefreshSvnRoots(true);
         }
-      });
+      };
     }
 
     // do one time after project loaded
@@ -239,8 +236,6 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public void postStartup() {
-//    myMapping = SvnFileUrlMappingImpl.getInstance(myProject);
-    // only mapping for default
     if (myProject.isDefault()) return;
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
 
@@ -367,7 +362,11 @@ public class SvnVcs extends AbstractVcs {
 
   @Override
   public void activate() {
-    super.activate();
+    if (! myProject.isDefault()) {
+      ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+      ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+    }
+    
     SvnApplicationSettings.getInstance().svnActivated();
     VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
     // this will initialize its inner listener for committed changes upload
@@ -378,9 +377,11 @@ public class SvnVcs extends AbstractVcs {
   @Override
   public void deactivate() {
     FrameStateManager.getInstance().removeListener(myFrameStateListener);
-    if (myMessageBusConnection != null) {
-      myMessageBusConnection.disconnect();
+
+    if (myVcsListener != null) {
+      ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
     }
+    
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     SvnApplicationSettings.getInstance().svnDeactivated();
     new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
@@ -390,7 +391,6 @@ public class SvnVcs extends AbstractVcs {
     if (myChangeListListener != null && (! myProject.isDefault())) {
       ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
     }
-    super.deactivate();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {

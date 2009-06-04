@@ -385,8 +385,7 @@ public class GitVcs extends AbstractVcs {
    * {@inheritDoc}
    */
   @Override
-  public void start() throws VcsException {
-    super.start();
+  protected void start() throws VcsException {
     if (!myProject.isDefault() && myRootTracker == null) {
       myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
     }
@@ -396,20 +395,18 @@ public class GitVcs extends AbstractVcs {
    * {@inheritDoc}
    */
   @Override
-  public void shutdown() throws VcsException {
+  protected void shutdown() throws VcsException {
     if (myRootTracker != null) {
       myRootTracker.dispose();
       myRootTracker = null;
     }
-    super.shutdown();
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public void activate() {
-    super.activate();
+  protected void activate() {
     if (myVFSListener == null) {
       myVFSListener = new GitVFSListener(myProject, this);
     }
@@ -425,7 +422,7 @@ public class GitVcs extends AbstractVcs {
    * {@inheritDoc}
    */
   @Override
-  public void deactivate() {
+  protected void deactivate() {
     if (myVFSListener != null) {
       myVFSListener.dispose();
       myVFSListener = null;
@@ -438,7 +435,6 @@ public class GitVcs extends AbstractVcs {
       myConfigTracker.dispose();
       myConfigTracker = null;
     }
-    super.deactivate();
   }
 
   /**

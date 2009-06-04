@@ -36,7 +36,6 @@ import java.util.List;
 class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileUrlMappingImpl");
 
-  private SvnVcs myVcs;
   private final SvnCompatibilityChecker myChecker;
 
   private final Object myMonitor = new Object();
@@ -48,15 +47,17 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
 
   private final MyRootsHelper myHelper;
 
+  private final Project myProject;
+
   private class MyRootsHelper extends ThreadLocalDefendedInvoker<VirtualFile[]> {
     private final ProjectLevelVcsManager myPlVcsManager;
 
-    private MyRootsHelper(final Project project) {
-      myPlVcsManager = ProjectLevelVcsManager.getInstance(project);
+    private MyRootsHelper(final ProjectLevelVcsManager vcsManager) {
+      myPlVcsManager = vcsManager;
     }
 
     protected VirtualFile[] execute() {
-      return myPlVcsManager.getRootsUnderVcs(myVcs);
+      return myPlVcsManager.getRootsUnderVcs(SvnVcs.getInstance(myProject));
     }
   }
 
@@ -65,10 +66,10 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
   }
 
   private SvnFileUrlMappingImpl(final Project project, final ProjectLevelVcsManager vcsManager) {
-    myVcs = (SvnVcs) vcsManager.findVcsByName(SvnVcs.VCS_NAME);
+    myProject = project;
     myMapping = new SvnMapping();
     myMoreRealMapping = new SvnMapping();
-    myHelper = new MyRootsHelper(project);
+    myHelper = new MyRootsHelper(vcsManager);
     myChecker = new SvnCompatibilityChecker(project);
   }
 
@@ -182,7 +183,8 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
   }
 
   public void realRefresh(final AtomicSectionsAware atomicSectionsAware) {
-    final boolean goIntoNested = SvnConfiguration.getInstance(myVcs.getProject()).DETECT_NESTED_COPIES;
+    final boolean goIntoNested = SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES;
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
 
     final VirtualFile[] roots = myHelper.executeDefended();
 
@@ -190,7 +192,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
 
     final List<Real> allRoots = new ArrayList<Real>();
     for (final VirtualFile root : roots) {
-      final List<Real> foundRoots = ForNestedRootChecker.getAllNestedWorkingCopies(root, myVcs, goIntoNested, new Getter<Boolean>() {
+      final List<Real> foundRoots = ForNestedRootChecker.getAllNestedWorkingCopies(root, vcs, goIntoNested, new Getter<Boolean>() {
         public Boolean get() {
           return atomicSectionsAware.shouldExitAsap();
         }
@@ -207,7 +209,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
 
     final SvnMapping groupedMapping = new SvnMapping();
     final List<Real> filtered = new ArrayList<Real>();
-    ForNestedRootChecker.filterOutSuperfluousChildren(myVcs, allRoots, filtered);
+    ForNestedRootChecker.filterOutSuperfluousChildren(vcs, allRoots, filtered);
 
     for (Real copy : filtered) {
       addRoot(groupedMapping, copy);
@@ -333,7 +335,8 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
 
       if (copyRoot == null || vcsRoot == null) continue;
 
-      final SVNInfo svnInfo = myVcs.getInfo(copyRoot);
+      final SvnVcs vcs = SvnVcs.getInstance(myProject);
+      final SVNInfo svnInfo = vcs.getInfo(copyRoot);
       if (svnInfo == null) continue;
 
       addRootImpl(mapping, copyRoot, vcsRoot, svnInfo);
