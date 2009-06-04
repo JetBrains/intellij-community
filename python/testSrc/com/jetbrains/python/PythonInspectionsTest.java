@@ -13,6 +13,8 @@ import com.jetbrains.python.inspections.PythonPyInspectionToolProvider;
  */
 public class PythonInspectionsTest extends InspectionTestCase {
   public void testReturnValueFromInit() throws Exception {
+    final JythonManager manager = JythonManager.getInstance();
+    manager.execScriptFromResource("inspections/inspections.py"); // could be moved to setUp() if more jython-based inspections existed
     doTest(getTestName(true), PythonPyInspectionToolProvider.getInstance().createLocalInspectionTool("ReturnValueFromInitInspection"));
   }
 
