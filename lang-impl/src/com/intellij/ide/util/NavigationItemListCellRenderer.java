@@ -40,11 +40,14 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.FileColorManager;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -68,16 +71,18 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
     removeAll();
     final Component leftCellRendererComponent =
       new LeftRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    final Color listBg = leftCellRendererComponent.getBackground();
     add(leftCellRendererComponent, BorderLayout.WEST);
     if  (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION){
       final DefaultListCellRenderer moduleRenderer = ModuleRendererFactory.getInstance().getModuleRenderer();
       final Component rightCellRendererComponent =
         moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      rightCellRendererComponent.setBackground(listBg);
       add(rightCellRendererComponent, BorderLayout.EAST);
       final JPanel spacer = new JPanel();
       final Dimension size = rightCellRendererComponent.getSize();
       spacer.setSize(new Dimension((int)(size.width * 0.015 + leftCellRendererComponent.getSize().width * 0.015), size.height));
-      spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+      spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground() : listBg);
       add(spacer, BorderLayout.CENTER);
     }
     setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
@@ -92,6 +97,8 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       boolean selected,
       boolean hasFocus
       ) {
+      Color bgColor = UIUtil.getListBackground();
+
       if (value instanceof NavigationItem) {
         NavigationItem element = (NavigationItem)value;
         ItemPresentation presentation = element.getPresentation();
@@ -102,6 +109,23 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         boolean isProblemFile = element instanceof PsiElement
                                 && WolfTheProblemSolver.getInstance(((PsiElement)element).getProject())
                                    .isProblemFile(PsiUtilBase.getVirtualFile((PsiElement)element));
+
+        if (element instanceof PsiElement) {
+          final PsiElement psiElement = (PsiElement)element;
+          final Project project = psiElement.getProject();
+
+          final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(psiElement);
+          isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
+
+          final FileColorManager fileColorManager = FileColorManager.getInstance(project);
+          if (virtualFile != null && fileColorManager.isEnabled()) {
+            final Color fileColor = fileColorManager.getFileColor(virtualFile);
+            if (fileColor != null) {
+              bgColor = fileColor;
+            }
+          }
+        }
+
         FileStatus status = element.getFileStatus();
         if (status != FileStatus.NOT_CHANGED) {
           color = status.getColor();
@@ -128,7 +152,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
-      setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+      setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
     }
   }
 }

@@ -14,6 +14,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.FileColorManager;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
@@ -43,6 +44,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       boolean selected,
       boolean hasFocus
       ) {
+      Color bgColor = UIUtil.getListBackground();
       if (value instanceof PsiElement) {
         T element = (T)value;
         String name = getElementText((T)element);
@@ -58,6 +60,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
             }
             FileStatus status = FileStatusManager.getInstance(psiFile.getProject()).getStatus(vFile);
             color = status.getColor();
+
+            final FileColorManager colorManager = FileColorManager.getInstance(psiFile.getProject());
+            if (colorManager.isEnabled()) {
+              final Color fileBgColor = colorManager.getFileColor(vFile);
+              bgColor = fileBgColor == null ? bgColor : fileBgColor;
+            }
           }
         }
 
@@ -96,7 +104,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
-      setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+      setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
     }
   }
 
@@ -108,20 +116,21 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     removeAll();
     String moduleName = null;
     DefaultListCellRenderer rightRenderer = getRightCellRenderer();
+    final Component leftCellRendererComponent =
+      new LeftRenderer(moduleName).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (rightRenderer != null) {
       final Component rightCellRendererComponent =
         rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      rightCellRendererComponent.setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
       add(rightCellRendererComponent, BorderLayout.EAST);
       moduleName = rightRenderer.getText();
       final JPanel spacer = new JPanel();
       spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
-      spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+      spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
       add(spacer, BorderLayout.CENTER);
     }
-    final Component leftCellRendererComponent =
-      new LeftRenderer(moduleName).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     add(leftCellRendererComponent, BorderLayout.WEST);
-    setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+    setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
     return this;
   }
 
