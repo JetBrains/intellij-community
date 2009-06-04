@@ -352,6 +352,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         final String localizedMessage = XmlErrorMessages.message("empty.attribute.is.not.allowed", name);
         reportAttributeProblem(tag, name, attribute, localizedMessage);
       }
+
+      doCheckRefs(attribute, attribute.getReferences(), 1);
     }
   }
 
@@ -467,8 +469,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   private void doCheckRefs(final PsiElement value, final PsiReference[] references) {
+    doCheckRefs(value, references, 0);
+  }
+
+  private void doCheckRefs(final PsiElement value, final PsiReference[] references, int start) {
     ProgressManager progressManager = ProgressManager.getInstance();
-    for (final PsiReference reference : references) {
+    for (int i = start; i < references.length; ++i) {
+      PsiReference reference = references[i];
       progressManager.checkCanceled();
       if (reference == null) {
         continue;

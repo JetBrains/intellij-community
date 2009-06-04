@@ -19,6 +19,7 @@ import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -289,7 +290,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   public PsiReference[] getReferences() {
     final PsiElement parentElement = getParent();
     if (!(parentElement instanceof XmlTag)) return PsiReference.EMPTY_ARRAY;
-    return new PsiReference[]{new MyPsiReference()};
+    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlAttribute.class);
+    if (referencesFromProviders == null) return new PsiReference[]{new MyPsiReference()};
+    PsiReference[] refs = new PsiReference[referencesFromProviders.length + 1];
+    refs[0] = new MyPsiReference();
+    System.arraycopy(referencesFromProviders, 0, refs, 1, referencesFromProviders.length);
+    return refs;
   }
 
   @Nullable
