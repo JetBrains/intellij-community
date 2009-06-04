@@ -27,6 +27,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.JTableHeader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -44,7 +45,10 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public void setModel(final ListTableModel<Item> model) {
     super.setModel(model);
-    getTableHeader().setDefaultRenderer(new TableHeaderRenderer(model));
+    final JTableHeader header = getTableHeader();
+    if (header != null) {
+      header.setDefaultRenderer(new TableHeaderRenderer(model));
+    }
     setSizes();
   }
 
