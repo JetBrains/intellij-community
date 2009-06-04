@@ -46,6 +46,7 @@ public abstract class GitRepositoryAction extends AnAction {
    * {@inheritDoc}
    */
   public void actionPerformed(final AnActionEvent e) {
+    myDelayedTasks.clear();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         FileDocumentManager.getInstance().saveAllDocuments();
