@@ -740,7 +740,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    if (! myProject.isDefault()) {
+    if (! myProject.isDefault() && !ApplicationManager.getApplication().isUnitTestMode()) {
       final IgnoredFilesComponent ignoredFilesComponent;
       final ChangeListWorker worker;
       synchronized (myDataLock) {
