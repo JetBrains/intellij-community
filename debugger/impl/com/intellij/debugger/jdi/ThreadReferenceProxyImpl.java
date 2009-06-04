@@ -55,6 +55,9 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       catch (ObjectCollectedException e) {
         myName = "";
       }
+      catch (IllegalThreadStateException e) {
+        myName = "zombie";
+      }                    
     }
     return myName;
   }
