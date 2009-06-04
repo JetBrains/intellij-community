@@ -696,7 +696,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private static final ThreadLocal<Boolean> exceptionalThreadWithReadAccessFlag = new ThreadLocal<Boolean>();
   private static boolean isExceptionalThreadWithReadAccess() {
     Boolean flag = exceptionalThreadWithReadAccessFlag.get();
-    return flag != null && flag.booleanValue();
+    return flag == Boolean.TRUE;
   }
 
   public static boolean setExceptionalThreadWithReadAccessFlag(boolean flag) {

@@ -132,6 +132,7 @@ public class MessageBusImpl implements MessageBus {
 
   public void dispose() {
     myMessageQueue.get().clear();
+    myMessageQueue.remove();
     if (myParentBus != null) {
       myParentBus.notifyChildBusDisposed(this);
     }

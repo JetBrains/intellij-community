@@ -98,6 +98,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     myChild2 = myChild1 = null;
     myParent = null;
     myImportHelper = null;
+    myRole1 = myRole2 = -1;
+    myType1 = myType2 = null;
   }
 
   private static boolean shouldKeepSpace(final PsiElement parent) {
@@ -203,7 +205,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else processClassBody();
   }
 
-  private boolean isTheOnlyClassMember(final ASTNode node) {
+  private static boolean isTheOnlyClassMember(final ASTNode node) {
     ASTNode next = node.getTreeNext();
     if (next == null || !(next.getElementType() == JavaTokenType.RBRACE)) return false;
 
@@ -380,7 +382,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  private boolean isClass(final PsiElement parent) {
+  private static boolean isClass(final PsiElement parent) {
     if (parent instanceof PsiClass) {
       return !((PsiClass)parent).isInterface();
     }
@@ -1329,7 +1331,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
 
   @Override public void visitParameter(PsiParameter parameter) {
-    if (myRole1 == ChildRole.TYPE || (myRole1 == ChildRole.MODIFIER_LIST)) {
+    if (myRole1 == ChildRole.TYPE || myRole1 == ChildRole.MODIFIER_LIST) {
       createSpaceInCode(true);
     }
   }
