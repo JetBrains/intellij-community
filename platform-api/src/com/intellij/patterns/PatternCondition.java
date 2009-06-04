@@ -5,10 +5,11 @@
 package com.intellij.patterns;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.SmartList;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -21,10 +22,10 @@ import java.util.List;
 public abstract class PatternCondition<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.patterns.PatternCondition");
   @NonNls private static final String PARAMETER_FIELD_PREFIX = "val$";
-  private final String myMethodName;
+  private final String myDebugMethodName;
 
-  public PatternCondition(@NonNls String methodName) {
-    myMethodName = methodName;
+  public PatternCondition(@Nullable @NonNls String debugMethodName) {
+    myDebugMethodName = debugMethodName;
   }
 
   private void appendFieldValue(final StringBuilder builder, final Field field, String indent) {
@@ -73,7 +74,7 @@ public abstract class PatternCondition<T> {
   }
 
   public void append(StringBuilder builder, String indent) {
-    builder.append(myMethodName);
+    builder.append(myDebugMethodName);
     builder.append("(");
     appendParams(builder, indent);
     builder.append(")");
