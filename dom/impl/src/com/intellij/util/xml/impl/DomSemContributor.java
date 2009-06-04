@@ -4,9 +4,9 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.XmlPatterns.*;
 import com.intellij.psi.PsiElement;
@@ -26,9 +26,11 @@ import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author peter
@@ -132,12 +134,30 @@ public class DomSemContributor extends SemContributor {
     });
 
     registrar.registerSemElementProvider(DomManagerImpl.DOM_CUSTOM_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, CollectionElementInvocationHandler>() {
+      private ThreadLocal<Set<XmlTag>> myCalculating = new ThreadLocal<Set<XmlTag>>() {
+        @Override
+        protected Set<XmlTag> initialValue() {
+          return new THashSet<XmlTag>();
+        }
+      };
+
       public CollectionElementInvocationHandler fun(XmlTag tag) {
         if (StringUtil.isEmpty(tag.getName())) return null;
 
         final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
         assert parentTag != null;
-        DomInvocationHandler parent = mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, parentTag);
+
+        if (!myCalculating.get().add(tag)) {
+          return null;
+        }
+        DomInvocationHandler parent;
+        try {
+          parent = mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, parentTag);
+        }
+        finally {
+          myCalculating.get().remove(tag);
+        }
+
         if (parent == null) return null;
 
         final CustomDomChildrenDescription customDescription = parent.getGenericInfo().getCustomNameChildrenDescription();
