@@ -71,7 +71,7 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
 
     StatusBarTooltipper.install(this, myProgressIcon, statusBar);
 
-    myUpdateQueue = new MergingUpdateQueue("Progress indicator", 250, true, MergingUpdateQueue.ANY_COMPONENT);
+    myUpdateQueue = new MergingUpdateQueue("Progress indicator", 40, true, MergingUpdateQueue.ANY_COMPONENT);
     myPopup = new ProcessPopup(this);
 
     restoreEmptyStatus();
