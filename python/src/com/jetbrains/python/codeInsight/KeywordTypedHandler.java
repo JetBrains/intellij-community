@@ -15,7 +15,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import java.util.Arrays;
 
 /**
- * Handles overtyping ':' in definitions, pairing braces and brackets.
+ * Handles overtyping ':' in definitions.
  * User: dcheryasov
  * Date: May 29, 2009 4:42:03 AM
  */
@@ -23,7 +23,7 @@ public class KeywordTypedHandler extends TypedHandlerDelegate {
 
   private static char[] ourInterestingChars;
   static {
-    ourInterestingChars = new char[]{':', '{', '}', '[', ']'};
+    ourInterestingChars = new char[]{':',};
     Arrays.sort(ourInterestingChars);
   }
 
@@ -37,25 +37,10 @@ public class KeywordTypedHandler extends TypedHandlerDelegate {
       editor.getCaretModel().moveToOffset(offset);
   }
 
-  /**
-   * @param c one of paired bracket, brace, or paren chars
-   * @return reciprocal (closing or opening) char of the same kind, or 0.
-   */
-  static char getReciprocalBracket(char c) {
-    switch (c) {
-      case '{': return '}';
-      case '}': return '{';
-      case '[': return ']';
-      case ']': return '[';
-      case '(': return ')';
-      case ')': return '(';
-    }
-    return 0; // failed
-  }
 
   @Override
   public Result beforeCharTyped(char character, Project project, Editor editor, PsiFile file, FileType fileType) {
-    if (!(fileType instanceof PythonFileType)) return Result.CONTINUE;
+    if (!(fileType instanceof PythonFileType)) return Result.CONTINUE; // else we'd mess up with other file types!
     if (isInteresting(character)) {
       final Document document = editor.getDocument();
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -76,22 +61,6 @@ public class KeywordTypedHandler extends TypedHandlerDelegate {
           editor.getCaretModel().moveToOffset(offset + 1); // overtype, that is, jump over
           return Result.STOP;
         }
-      }
-      else if (character == '}' || character == ']') {
-        // overtype closing
-        String here_text = here_elt.getText();
-        if (here_text.length() == 1 &&  here_text.charAt(0) == character) { // we're on our char
-          documentManager.commitDocument(document);
-          editor.getCaretModel().moveToOffset(offset + 1); // overtype, that is, jump over
-          return Result.STOP;
-        }
-      }
-      else if (character == '{' || character == '[') {
-        // add the reciprocal pair
-        char closing = getReciprocalBracket(character);
-        documentManager.commitDocument(document);
-        typeInStringAndMoveCaret(editor, offset+1, new StringBuffer().append(character).append(closing).toString());
-        return Result.STOP;
       }
     }
 
