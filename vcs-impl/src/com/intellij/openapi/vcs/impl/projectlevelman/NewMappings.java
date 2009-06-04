@@ -98,7 +98,10 @@ public class NewMappings {
       final List<AbstractVcs> list = new ArrayList<AbstractVcs>(set.size());
       for (String s : set) {
         if (s.trim().length() == 0) continue;
-        list.add(myAllVcsesI.getByName(s));
+        final AbstractVcs vcs = myAllVcsesI.getByName(s);
+        if (vcs != null) {
+          list.add(vcs);
+        }
       }
       myActiveVcses = list.toArray(new AbstractVcs[list.size()]);
     }
