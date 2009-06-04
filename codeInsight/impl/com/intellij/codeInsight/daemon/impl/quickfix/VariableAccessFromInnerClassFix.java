@@ -16,15 +16,12 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassFix");
@@ -34,7 +31,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static final int MAKE_FINAL = 0;
   private static final int MAKE_ARRAY = 1;
   private static final int COPY_TO_FINAL = 2;
-  private static final Key<List<PsiVariable>>[] VARS = new Key[] {Key.create("VARS_TO_MAKE_FINAL"), Key.create("VARS_TO_TRANSFORM"), Key.create("???")};
+  private static final Key<Map<PsiVariable,Boolean>>[] VARS = new Key[] {Key.create("VARS_TO_MAKE_FINAL"), Key.create("VARS_TO_TRANSFORM"), Key.create("???")};
 
   public VariableAccessFromInnerClassFix(PsiVariable variable, PsiClass aClass) {
     myVariable = variable;
@@ -61,7 +58,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         LOG.error("invalid type "+myFixType);
         return "";
     }
-    List<PsiVariable> vars = getVariablesToFix();
+    Collection<PsiVariable> vars = getVariablesToFix();
     String varNames = vars.size() == 1 ? "'"+myVariable.getName()+"'" : "variables";
     return QuickFixBundle.message(message, varNames);
   }
@@ -116,10 +113,26 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   @NotNull
-  private List<PsiVariable> getVariablesToFix() {
-    List<PsiVariable> vars = myClass.getUserData(VARS[myFixType]);
-    if (vars == null) myClass.putUserData(VARS[myFixType], vars = new SmartList<PsiVariable>());
-    return vars;
+  private Collection<PsiVariable> getVariablesToFix() {
+    Map<PsiVariable, Boolean> vars = myClass.getUserData(VARS[myFixType]);
+    if (vars == null) myClass.putUserData(VARS[myFixType], vars = new WeakHashMap<PsiVariable, Boolean>(1));
+    final Map<PsiVariable, Boolean> finalVars = vars;
+    return new AbstractCollection<PsiVariable>() {
+      @Override
+      public boolean add(PsiVariable psiVariable) {
+        return finalVars.put(psiVariable, Boolean.TRUE) == null;
+      }
+
+      @Override
+      public Iterator<PsiVariable> iterator() {
+        return finalVars.keySet().iterator();
+      }
+
+      @Override
+      public int size() {
+        return finalVars.size();
+      }
+    };
   }
 
   private void makeFinal() {

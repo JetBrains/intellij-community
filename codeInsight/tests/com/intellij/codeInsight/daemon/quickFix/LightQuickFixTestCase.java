@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
@@ -232,15 +233,15 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       }
 
       public void configureFromFileText(String name, String contents) throws IOException {
-        LightQuickFixTestCase.configureFromFileText(name, contents);
+        LightCodeInsightTestCase.configureFromFileText(name, contents);
       }
 
       public PsiFile getFile() {
-        return LightQuickFixTestCase.getFile();
+        return LightCodeInsightTestCase.getFile();
       }
 
       public void bringRealEditorBack() {
-        LightQuickFixTestCase.bringRealEditorBack();
+        LightCodeInsightTestCase.bringRealEditorBack();
       }
     });
   }

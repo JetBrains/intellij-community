@@ -440,6 +440,11 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
     actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
   }
+  protected static void delete() {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE);
+    actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+  }
 
   protected static DataContext getCurrentEditorDataContext() {
     final DataContext defaultContext = DataManager.getInstance().getDataContext();
