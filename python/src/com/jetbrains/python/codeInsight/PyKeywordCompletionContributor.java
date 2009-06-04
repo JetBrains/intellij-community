@@ -21,7 +21,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.Matcher;
-import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -91,22 +90,6 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   }
 
 
-  /**
-   * Matches if element is somewhere inside a loop, but not within a class or function inside that loop.
-   */
-  private static class InLoopFilter implements ElementFilter {
-    Matcher myMatcher;
-
-    public boolean isAcceptable(Object element, PsiElement context) {
-      return ((element instanceof PsiElement) && SyntaxMatchers.LOOP_CONTROL.search((PsiElement)element) != null);
-    }
-
-    public boolean isClassAcceptable(Class hintClass) {
-      return true;
-    }
-  }
-
-
   private abstract static class MatcherBasedFilter implements ElementFilter {
 
     abstract Matcher getMatcher();
@@ -123,14 +106,20 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   /**
    * Matches if element is somewhere inside a loop, but not within a class or function inside that loop.
    */
+  private static class InLoopFilter extends MatcherBasedFilter {
+    Matcher getMatcher() { return SyntaxMatchers.LOOP_CONTROL; }
+  }
+
+
+  /**
+   * Matches if element is somewhere inside a loop, but not within a class or function inside that loop.
+   */
   private static class InFunctionBodyFilter extends MatcherBasedFilter {
     Matcher getMatcher() { return SyntaxMatchers.IN_FUNCTION; }
   }
 
   private static class InDefinitionFilter extends MatcherBasedFilter {
-    static final Matcher ourMatcher = new ParentMatcher(PyClass.class, PyFunction.class).limitBy(PyStatementList.class);
-
-    Matcher getMatcher() { return ourMatcher; }
+    Matcher getMatcher() { return SyntaxMatchers.IN_DEFINITION; }
   }
 
   private static class InFinallyNoLoopFilter extends MatcherBasedFilter {
@@ -317,13 +306,6 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
 
   private static final FilterPattern FIRST_ON_LINE = new FilterPattern(new StartOfLineFilter());
 
-  // within 'class' or 'def' descriptive part, before statements
-  private static final FilterPattern IN_FUNC_OR_CLASS_DESCRIPTION = new FilterPattern(new PrecededByFilter(
-    psiElement()
-      .andOr(psiElement(PyClass.class), psiElement(PyFunction.class))
-      .withChild(psiElement(PyStatementList.class))
-  ));
-
   private static final PsiElementPattern.Capture<PsiElement> IN_IMPORT_AFTER_REF =
     psiElement().afterLeaf(psiElement().withElementType(PyTokenTypes.IDENTIFIER).inside(PyReferenceExpression.class).inside(PyImportElement.class))
   ;
@@ -466,7 +448,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         .andNot(IN_IMPORT_STMT)
         .andNot(IN_PARAM_LIST)
         .andNot(IN_ARG_LIST)
-        .andNot(IN_FUNC_OR_CLASS_DESCRIPTION)
+        .andNot(IN_DEFINITION)
         .andNot(BEFORE_COND)
         .andNot(AFTER_QUALIFIER)
       ,
@@ -492,7 +474,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         .andNot(IN_IMPORT_STMT)
         .andNot(IN_PARAM_LIST)
         .andNot(IN_ARG_LIST)
-        .andNot(IN_FUNC_OR_CLASS_DESCRIPTION)
+        .andNot(IN_DEFINITION)
         .andNot(BEFORE_COND)
         .andNot(AFTER_QUALIFIER)
       ,

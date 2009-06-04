@@ -17,11 +17,7 @@
 package com.jetbrains.python.psi;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 12:14:53
- * To change this template use File | Settings | File Templates.
+ * Everything that may be an element of a statement list.
  */
 public interface PyStatement extends PyElement {
     PyStatement[] EMPTY_ARRAY = new PyStatement[0];

@@ -24,13 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
+ * Function declaration in source (the <code>def</code> and everything within).
  * User: yole
  * Date: 29.05.2005
  * Time: 23:01:03
  * To change this template use File | Settings | File Templates.
  */
-public interface PyFunction extends PsiNamedElement, PyElement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyFunctionStub> {
+public interface PyFunction extends PsiNamedElement, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyFunctionStub> {
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   
   /**

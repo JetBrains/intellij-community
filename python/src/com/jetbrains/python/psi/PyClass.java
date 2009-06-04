@@ -26,10 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a class declaration in source.
- * User: yole
- * Date: 03.06.2005
  */
-public interface PyClass extends PsiNamedElement, PyElement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub> {
+public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub> {
   @NotNull
   PyStatementList getStatementList();
 
@@ -37,7 +35,7 @@ public interface PyClass extends PsiNamedElement, PyElement, NameDefiner, PyDocS
   PyExpression[] getSuperClassExpressions();
 
   @Nullable
-  PsiElement[] getSuperClassElements();
+  PsiElement[] getSuperClassElements();       
 
   @NotNull
   PyClass[] getSuperClasses();
