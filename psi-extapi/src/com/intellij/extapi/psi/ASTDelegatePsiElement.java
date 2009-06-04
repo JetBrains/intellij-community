@@ -9,9 +9,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
@@ -254,6 +256,10 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     if (getParent() instanceof ASTDelegatePsiElement) {
       CheckUtil.checkWritable(this);
       ((ASTDelegatePsiElement) getParent()).deleteChildInternal(getNode());
+    }
+    else if (getParent() instanceof PsiFile) {
+      CheckUtil.checkWritable(this);
+      getParent().deleteChildRange(this, this);
     }
     else {
       super.delete();
