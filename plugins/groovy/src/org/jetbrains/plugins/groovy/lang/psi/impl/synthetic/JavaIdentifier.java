@@ -26,6 +26,7 @@ import com.intellij.psi.impl.light.LightIdentifier;
 public class JavaIdentifier extends LightIdentifier {
   private final PsiFile myFile;
   private final TextRange myRange;
+  private final int myStartOffsetInParent;
 
   public JavaIdentifier(PsiManager manager, PsiFile file, PsiElement element) {
     super(manager, element.getText());
@@ -39,6 +40,7 @@ public class JavaIdentifier extends LightIdentifier {
       }
     }
     myRange = TextRange.from(startOffset, len);
+    myStartOffsetInParent = element.getStartOffsetInParent();
   }
 
   public TextRange getTextRange() {
@@ -51,6 +53,6 @@ public class JavaIdentifier extends LightIdentifier {
 
   @Override
   public int getStartOffsetInParent() {
-    return myRange.getStartOffset();
+    return myStartOffsetInParent;
   }
 }
