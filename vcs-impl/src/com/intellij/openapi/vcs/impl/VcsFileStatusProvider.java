@@ -1,16 +1,21 @@
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -21,10 +26,11 @@ public class VcsFileStatusProvider implements FileStatusProvider {
   private final ProjectLevelVcsManager myVcsManager;
   private final ChangeListManager myChangeListManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
+  private boolean myHaveEmptyContentRevisions;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
 
-  public VcsFileStatusProvider(final Project project,
+  private VcsFileStatusProvider(final Project project,
                                final FileStatusManagerImpl fileStatusManager,
                                final ProjectLevelVcsManager vcsManager,
                                ChangeListManager changeListManager,
@@ -34,6 +40,7 @@ public class VcsFileStatusProvider implements FileStatusProvider {
     myVcsManager = vcsManager;
     myChangeListManager = changeListManager;
     myDirtyScopeManager = dirtyScopeManager;
+    myHaveEmptyContentRevisions = true;
     myFileStatusManager.setFileStatusProvider(this);
 
     changeListManager.addChangeListListener(new ChangeListAdapter() {
@@ -50,9 +57,8 @@ public class VcsFileStatusProvider implements FileStatusProvider {
       }
 
       public void changeListUpdateDone() {
-        ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) myVcsManager;
-        if (vcsManager.hasEmptyContentRevisions()) {
-          vcsManager.resetHaveEmptyContentRevisions();
+        if (myHaveEmptyContentRevisions) {
+          myHaveEmptyContentRevisions = false;
           fileStatusesChanged();
         }
       }
@@ -110,5 +116,39 @@ public class VcsFileStatusProvider implements FileStatusProvider {
         myDirtyScopeManager.fileDirty(file);
       }
     }
+  }
+
+  @Nullable
+  String getBaseVersionContent(final VirtualFile file) {
+    final Change change = ChangeListManager.getInstance(myProject).getChange(file);
+    if (change != null) {
+      final ContentRevision beforeRevision = change.getBeforeRevision();
+      if (beforeRevision instanceof BinaryContentRevision) {
+        return null;
+      }
+      if (beforeRevision != null) {
+        String content;
+        try {
+          content = beforeRevision.getContent();
+        }
+        catch(VcsException ex) {
+          content = null;
+        }
+        if (content == null) myHaveEmptyContentRevisions = true;
+        return content;
+      }
+      return null;
+    }
+
+    final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document != null && document.getModificationStamp() != file.getModificationStamp()) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          return LoadTextUtil.loadText(file).toString();
+        }
+      });
+    }
+
+    return null;
   }
 }

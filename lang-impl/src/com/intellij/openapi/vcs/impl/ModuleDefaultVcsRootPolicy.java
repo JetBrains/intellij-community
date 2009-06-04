@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -35,7 +36,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     myModuleManager = ModuleManager.getInstance(myProject);
   }
 
-  public void addDefaultVcsRoots(final VcsDirectoryMappingList mappingList, final AbstractVcs vcs, final List<VirtualFile> result) {
+  public void addDefaultVcsRoots(final NewMappings mappingList, final AbstractVcs vcs, final List<VirtualFile> result) {
     if (myBaseDir != null && vcs.getName().equals(mappingList.getVcsFor(myBaseDir)) && vcs.fileIsUnderVcs(new FilePathImpl(myBaseDir))) {
       result.add(myBaseDir);
     }
@@ -119,15 +120,15 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     }
 
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    final boolean haveDefaultMapping = ((ProjectLevelVcsManagerEx)plVcsManager).haveDefaultMapping();
+    final String defaultMapping = ((ProjectLevelVcsManagerEx)plVcsManager).haveDefaultMapping();
+    final boolean haveDefaultMapping = (defaultMapping != null) && (defaultMapping.length() > 0);
+    if (haveDefaultMapping) {
+      builder.addDirtyFile(new VcsRoot(plVcsManager.findVcsByName(defaultMapping), baseDir));
+    }
 
     final VcsRoot[] vcsRoots = plVcsManager.getAllVcsRoots();
-
     for (VcsRoot root : vcsRoots) {
-      if (haveDefaultMapping && root.path.equals(baseDir)) {
-        builder.addDirtyFile(root);
-      }
-      else {
+      if (! root.path.equals(baseDir)) {
         builder.addDirtyDirRecursively(root);
       }
     }

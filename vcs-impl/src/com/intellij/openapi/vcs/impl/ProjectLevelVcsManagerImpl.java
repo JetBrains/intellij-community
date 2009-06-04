@@ -32,15 +32,15 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.DisposableEditorPanel;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -48,10 +48,11 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.impl.projectlevelman.*;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -68,8 +69,7 @@ import com.intellij.util.ContentsUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.Processor;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.Topic;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -79,21 +79,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, JDOMExternalizable {
-  private List<AbstractVcs> myVcss = new ArrayList<AbstractVcs>();
-  private AbstractVcs[] myCachedVCSs = null;
-  private final Project myProject;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
+  
+  private final ProjectLevelVcsManagerSerialization mySerialization;
+  private final OptionsAndConfirmations myOptionsAndConfirmations;
 
-  private boolean myIsInitialized = false;
+  private AllVcsesI myAllVcsesI;
+  private NewMappings myMappings;
+  private final Project myProject;
+  private MappingsToRoots myMappingsToRoots;
+
   private volatile boolean myIsDisposed = false;
   private final Object myDisposeLock = new Object();
 
   private ContentManager myContentManager;
   private EditorAdapter myEditorAdapter;
-
-  @NonNls private static final String OPTIONS_SETTING = "OptionsSetting";
-  @NonNls private static final String CONFIRMATIONS_SETTING = "ConfirmationsSetting";
-  @NonNls private static final String VALUE_ATTTIBUTE = "value";
-  @NonNls private static final String ID_ATTRIBUTE = "id";
 
   @NonNls private static final String ELEMENT_MAPPING = "mapping";
   @NonNls private static final String ATTRIBUTE_DIRECTORY = "directory";
@@ -103,138 +103,61 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
-  private boolean myHaveEmptyContentRevisions = true;
   private final EventDispatcher<VcsListener> myEventDispatcher = EventDispatcher.create(VcsListener.class);
-  private final VcsDirectoryMappingList myDirectoryMappingList;
-  private final Set<AbstractVcs> myActiveVcss = new HashSet<AbstractVcs>();
   private boolean myMappingsLoaded = false;
   private boolean myHaveLegacyVcsConfiguration = false;
   private boolean myCheckinHandlerFactoriesLoaded = false;
   private DefaultVcsRootPolicy myDefaultVcsRootPolicy;
 
   private volatile int myBackgroundOperationCounter = 0;
-  private final ExcludedFileIndex myExcludedIdx;
 
-  public ProjectLevelVcsManagerImpl(Project project, final MessageBus bus) {
-    this(project, new AbstractVcs[0], bus);
-  }
-
-  public ProjectLevelVcsManagerImpl(Project project, AbstractVcs[] vcses, MessageBus bus) {
+  public ProjectLevelVcsManagerImpl(Project project) {
     myProject = project;
-    myDirectoryMappingList = new VcsDirectoryMappingList(project);
-    myVcss = new ArrayList<AbstractVcs>(Arrays.asList(vcses));
-    myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
-    myExcludedIdx = ExcludedFileIndex.getInstance(myProject);
-  }
+    mySerialization = new ProjectLevelVcsManagerSerialization();
+    myOptionsAndConfirmations = new OptionsAndConfirmations();
 
-  private final Map<String, VcsShowOptionsSettingImpl> myOptions = new LinkedHashMap<String, VcsShowOptionsSettingImpl>();
-  private final Map<String, VcsShowConfirmationOptionImpl> myConfirmations = new LinkedHashMap<String, VcsShowConfirmationOptionImpl>();
+    myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
+
+    myAllVcsesI = new AllVcsesCorrectlyInitProxy(myProject);
+    myMappings = new NewMappings(myProject, myAllVcsesI, myEventDispatcher);
+    myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
+  }
 
   public void initComponent() {
-    createSettingFor(VcsConfiguration.StandardOption.ADD);
-    createSettingFor(VcsConfiguration.StandardOption.REMOVE);
-    createSettingFor(VcsConfiguration.StandardOption.CHECKOUT);
-    createSettingFor(VcsConfiguration.StandardOption.UPDATE);
-    createSettingFor(VcsConfiguration.StandardOption.STATUS);
-    createSettingFor(VcsConfiguration.StandardOption.EDIT);
-
-    myConfirmations.put(VcsConfiguration.StandardConfirmation.ADD.getId(), new VcsShowConfirmationOptionImpl(
-      VcsConfiguration.StandardConfirmation.ADD.getId(),
-      VcsBundle.message("label.text.when.files.created.with.idea", ApplicationNamesInfo.getInstance().getProductName()),
-      VcsBundle.message("radio.after.creation.do.not.add"), VcsBundle.message("radio.after.creation.show.options"),
-      VcsBundle.message("radio.after.creation.add.silently")));
-
-    myConfirmations.put(VcsConfiguration.StandardConfirmation.REMOVE.getId(), new VcsShowConfirmationOptionImpl(
-      VcsConfiguration.StandardConfirmation.REMOVE.getId(),
-      VcsBundle.message("label.text.when.files.are.deleted.with.idea", ApplicationNamesInfo.getInstance().getProductName()),
-      VcsBundle.message("radio.after.deletion.do.not.remove"), VcsBundle.message("radio.after.deletion.show.options"),
-      VcsBundle.message("radio.after.deletion.remove.silently")));
-
-    restoreReadConfirm(VcsConfiguration.StandardConfirmation.ADD);
-    restoreReadConfirm(VcsConfiguration.StandardConfirmation.REMOVE);
-  }
-
-  private void restoreReadConfirm(final VcsConfiguration.StandardConfirmation confirm) {
-    if (myReadValue.containsKey(confirm.getId())) {
-      getConfirmation(confirm).setValue(myReadValue.get(confirm.getId()));
-    }
-  }
-
-  private void createSettingFor(final VcsConfiguration.StandardOption option) {
-    if (!myOptions.containsKey(option.getId())) {
-      myOptions.put(option.getId(), new VcsShowOptionsSettingImpl(option));
-    }
+    myOptionsAndConfirmations.init(new Convertor<String, VcsShowConfirmationOption.Value>() {
+      public VcsShowConfirmationOption.Value convert(String o) {
+        return mySerialization.getInitOptionValue(o);
+      }
+    });
   }
 
   public void registerVcs(AbstractVcs vcs) {
-    try {
-      vcs.loadSettings();
-      vcs.start();
-    }
-    catch (VcsException e) {
-      LOG.debug(e);
-    }
-    if (!myVcss.contains(vcs)) {
-      myVcss.add(vcs);
-    }
-    vcs.getProvidedStatuses();
-    myCachedVCSs = null;
+    myAllVcsesI.registerManually(vcs);
   }
 
   @Nullable
   public AbstractVcs findVcsByName(String name) {
     if (name == null) return null;
-
-    for (AbstractVcs vcs : myVcss) {
-      if (vcs.getName().equals(name)) {
-        return vcs;
-      }
-    }
     if (myProject.isDisposed()) return null;
-    for(VcsEP ep: Extensions.getExtensions(VcsEP.EP_NAME, myProject)) {
-      if (ep.name.equals(name)) {
-        AbstractVcs vcs = ep.getVcs(myProject);
-        if (!myVcss.contains(vcs)) {
-          registerVcs(vcs);
-        }
-        return vcs;
-      }
-    }
-
-    return null;
+    return myAllVcsesI.getByName(name);
   }
 
   public AbstractVcs[] getAllVcss() {
-    for(VcsEP ep: Extensions.getExtensions(VcsEP.EP_NAME, myProject)) {
-      AbstractVcs vcs = ep.getVcs(myProject);
-      if (!myVcss.contains(vcs)) {
-        registerVcs(vcs);
-      }
-    }
-    if (myCachedVCSs == null) {
-      Collections.sort(myVcss, new Comparator<AbstractVcs>() {
-        public int compare(final AbstractVcs o1, final AbstractVcs o2) {
-          return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
-        }
-      });
-      myCachedVCSs = myVcss.toArray(new AbstractVcs[myVcss.size()]);
-    }
-    return myCachedVCSs;
+    return myAllVcsesI.getAll();
   }
 
+  public boolean haveVcses() {
+    return ! myAllVcsesI.isEmpty();
+  }
 
   public void disposeComponent() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      dispose();
+    }
   }
 
   public void projectOpened() {
-    initialize();
-
     final StartupManager manager = StartupManager.getInstance(myProject);
-    manager.registerStartupActivity(new Runnable() {
-      public void run() {
-        updateActiveVcss();
-      }
-    });
     manager.registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
@@ -249,14 +172,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         }
       }
     });
-  }
-
-  public void initialize() {
-    myIsInitialized = true;
-    final AbstractVcs[] abstractVcses = myVcss.toArray(new AbstractVcs[myVcss.size()]);
-    for (AbstractVcs abstractVcs : abstractVcses) {
-      registerVcs(abstractVcs);
-    }
   }
 
   public void projectClosed() {
@@ -280,11 +195,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   public AbstractVcs getVcsFor(@NotNull VirtualFile file) {
-    String vcsName = myDirectoryMappingList.getVcsFor(file);
+    final String vcsName = myMappings.getVcsFor(file);
     if (vcsName == null || vcsName.length() == 0) {
       return null;
     }
-    return findVcsByName(vcsName);
+    return myAllVcsesI.getByName(vcsName);
   }
 
   @Nullable
@@ -305,7 +220,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   public VirtualFile getVcsRootFor(final VirtualFile file) {
-    VcsDirectoryMapping mapping = myDirectoryMappingList.getMappingFor(file);
+    final VcsDirectoryMapping mapping = myMappings.getMappingFor(file);
     if (mapping == null) {
       return null;
     }
@@ -330,19 +245,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     });
   }
 
-  // todo
   private void dispose() {
+    // todo dispose lock is bad here..
     synchronized (myDisposeLock) {
       if (myIsDisposed) return;
 
-      for(AbstractVcs vcs: myActiveVcss) {
-        vcs.deactivate();
-      }
-      myActiveVcss.clear();
-      AbstractVcs[] allVcss = myVcss.toArray(new AbstractVcs[myVcss.size()]);
-      for (AbstractVcs allVcs : allVcss) {
-        unregisterVcs(allVcs);
-      }
+      myMappings.disposeMe();
+      myAllVcsesI.disposeMe();
+
       try {
         myContentManager = null;
 
@@ -358,56 +268,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void unregisterVcs(AbstractVcs vcs) {
-    if (myActiveVcss.contains(vcs)) {
-      vcs.deactivate();
-      myActiveVcss.remove(vcs);
+    if ((! ApplicationManager.getApplication().isUnitTestMode()) && (myMappings.haveActiveVcs(vcs.getName()))) {
+      // unlikely
+      LOG.warn("Active vcs '" + vcs.getName() + "' is being unregistered. Remove from mappings first.");
     }
-    try {
-      vcs.shutdown();
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-    }
-    myVcss.remove(vcs);
-    myCachedVCSs = null;
+    myMappings.beingUnregistered(vcs.getName());
+    myAllVcsesI.unregisterManually(vcs);
   }
 
   public ContentManager getContentManager() {
     return myContentManager;
-  }
-
-  @Nullable
-  String getBaseVersionContent(final VirtualFile file) {
-    final Change change = ChangeListManager.getInstance(myProject).getChange(file);
-    if (change != null) {
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      if (beforeRevision instanceof BinaryContentRevision) {
-        return null;
-      }
-      if (beforeRevision != null) {
-        String content;
-        try {
-          content = beforeRevision.getContent();
-        }
-        catch(VcsException ex) {
-          content = null;
-        }
-        if (content == null) myHaveEmptyContentRevisions = true;
-        return content;
-      }
-      return null;
-    }
-
-    final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document != null && document.getModificationStamp() != file.getModificationStamp()) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        public String compute() {
-          return LoadTextUtil.loadText(file).toString();
-        }
-      });
-    }
-
-    return null;
   }
 
   public boolean checkVcsIsActive(AbstractVcs vcs) {
@@ -415,17 +285,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public boolean checkVcsIsActive(final String vcsName) {
-    for(VcsDirectoryMapping mapping: getDirectoryMappings()) {
-      if (mapping.getVcs().equals(vcsName)) {
-        return true;
-      }
-    }
-    return false;
+    return myMappings.haveActiveVcs(vcsName);
   }
 
   public AbstractVcs[] getAllActiveVcss() {
-    return myActiveVcss.toArray(new AbstractVcs[myActiveVcss.size()]);
-
+    return myMappings.getActiveVcses();
   }
 
   public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
@@ -459,27 +323,23 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @NotNull
   public VcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
-    return myOptions.get(option.getId());
+    return myOptionsAndConfirmations.getOptions(option);
   }
 
   public List<VcsShowOptionsSettingImpl> getAllOptions() {
-    return new ArrayList<VcsShowOptionsSettingImpl>(myOptions.values());
+    return myOptionsAndConfirmations.getAllOptions();
   }
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
 
   @NotNull
   public VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option, @NotNull AbstractVcs vcs) {
-    final VcsShowOptionsSettingImpl options = myOptions.get(option.getId());
+    final VcsShowOptionsSettingImpl options = (VcsShowOptionsSettingImpl) getOptions(option);
     options.addApplicableVcs(vcs);
     return options;
   }
 
   @NotNull
   public VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName, @NotNull AbstractVcs vcs) {
-    final VcsShowOptionsSettingImpl option = getOrCreateOption(vcsActionName);
-    option.addApplicableVcs(vcs);
-    return option;
+    return myOptionsAndConfirmations.getOrCreateCustomOption(vcsActionName, vcs);
   }
 
   public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
@@ -505,16 +365,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void cleanupMappings() {
-    myDirectoryMappingList.cleanupMappings();
-    fireDirectoryMappingsChanged();
+    myMappings.cleanupMappings();
   }
 
   public List<VcsDirectoryMapping> getDirectoryMappings() {
-    return myDirectoryMappingList.getDirectoryMappings();
+    return myMappings.getDirectoryMappings();
   }
 
   public List<VcsDirectoryMapping> getDirectoryMappings(final AbstractVcs vcs) {
-    return myDirectoryMappingList.getDirectoryMappings(vcs.getName());
+    return myMappings.getDirectoryMappings(vcs.getName());
   }
 
   @Nullable
@@ -524,7 +383,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       public VcsDirectoryMapping compute() {
         VirtualFile vFile = ChangesUtil.findValidParent(path);
         if (vFile != null) {
-          return myDirectoryMappingList.getMappingFor(vFile);
+          return myMappings.getMappingFor(vFile);
         }
         return null;
       }
@@ -538,121 +397,55 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public boolean hasExplicitMapping(final VirtualFile vFile) {
-    final VcsDirectoryMapping mapping = myDirectoryMappingList.getMappingFor(vFile);
-    return mapping != null && mapping.getDirectory().length() > 0;
+    final VcsDirectoryMapping mapping = myMappings.getMappingFor(vFile);
+    return mapping != null && (! mapping.isDefaultMapping());
   }
 
   public void setDirectoryMapping(final String path, final String activeVcsName) {
     if (myMappingsLoaded) return;            // ignore per-module VCS settings if the mapping table was loaded from .ipr
     myHaveLegacyVcsConfiguration = true;
-    myDirectoryMappingList.setDirectoryMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
-    fireDirectoryMappingsChanged();
+    myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
   public void setAutoDirectoryMapping(String path, String activeVcsName) {
-    myDirectoryMappingList.setDirectoryMapping(path, activeVcsName);
-    updateActiveVcss();
-    fireDirectoryMappingsChanged();
+    myMappings.setMapping(path, activeVcsName);
   }
 
   public void removeDirectoryMapping(VcsDirectoryMapping mapping) {
-    myDirectoryMappingList.removeDirectoryMapping(mapping);
-    updateActiveVcss();
-    fireDirectoryMappingsChanged();
+    myMappings.removeDirectoryMapping(mapping);
   }
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
-    myDirectoryMappingList.setDirectoryMappings(items);
-    if (!myProject.isDefault()) {
-      updateActiveVcss();
-    }
-    fireDirectoryMappingsChanged();
+    myMappings.setDirectoryMappings(items);
   }
 
   public void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator) {
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator);
   }
 
-  private VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {
-    if (!myOptions.containsKey(actionName)) {
-      myOptions.put(actionName, new VcsShowOptionsSettingImpl(actionName));
-    }
-    return myOptions.get(actionName);
-  }
-
-  private final Map<String, VcsShowConfirmationOption.Value> myReadValue =
-    new com.intellij.util.containers.HashMap<String, VcsShowConfirmationOption.Value>();
-
   public void readExternal(Element element) throws InvalidDataException {
-    List subElements = element.getChildren(OPTIONS_SETTING);
-    for (Object o : subElements) {
-      if (o instanceof Element) {
-        final Element subElement = ((Element)o);
-        final String id = subElement.getAttributeValue(ID_ATTRIBUTE);
-        final String value = subElement.getAttributeValue(VALUE_ATTTIBUTE);
-        if (id != null && value != null) {
-          try {
-            final boolean booleanValue = Boolean.valueOf(value).booleanValue();
-            getOrCreateOption(id).setValue(booleanValue);
-          }
-          catch (Exception e) {
-            //ignore
-          }
-        }
-      }
-    }
-    myReadValue.clear();
-    subElements = element.getChildren(CONFIRMATIONS_SETTING);
-    for (Object o : subElements) {
-      if (o instanceof Element) {
-        final Element subElement = ((Element)o);
-        final String id = subElement.getAttributeValue(ID_ATTRIBUTE);
-        final String value = subElement.getAttributeValue(VALUE_ATTTIBUTE);
-        if (id != null && value != null) {
-          try {
-            myReadValue.put(id, VcsShowConfirmationOption.Value.fromString(value));
-          }
-          catch (Exception e) {
-            //ignore
-          }
-        }
-      }
-    }
-
+    mySerialization.readExternalUtil(element, myOptionsAndConfirmations);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (VcsShowOptionsSettingImpl setting : myOptions.values()) {
-      final Element settingElement = new Element(OPTIONS_SETTING);
-      element.addContent(settingElement);
-      settingElement.setAttribute(VALUE_ATTTIBUTE, Boolean.toString(setting.getValue()));
-      settingElement.setAttribute(ID_ATTRIBUTE, setting.getDisplayName());
-    }
-
-    for (VcsShowConfirmationOptionImpl setting : myConfirmations.values()) {
-      final Element settingElement = new Element(CONFIRMATIONS_SETTING);
-      element.addContent(settingElement);
-      settingElement.setAttribute(VALUE_ATTTIBUTE, setting.getValue().toString());
-      settingElement.setAttribute(ID_ATTRIBUTE, setting.getDisplayName());
-    }
-
+    mySerialization.writeExternalUtil(element, myOptionsAndConfirmations);
   }
 
   @NotNull
   public VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
                                                            @NotNull AbstractVcs vcs) {
-    final VcsShowConfirmationOptionImpl result = myConfirmations.get(option.getId());
+    final VcsShowConfirmationOptionImpl result = getConfirmation(option);
     result.addApplicableVcs(vcs);
     return result;
   }
 
   public List<VcsShowConfirmationOptionImpl> getAllConfirmations() {
-    return new ArrayList<VcsShowConfirmationOptionImpl>(myConfirmations.values());
+    return myOptionsAndConfirmations.getAllConfirmations();
   }
 
   @NotNull
   public VcsShowConfirmationOptionImpl getConfirmation(VcsConfiguration.StandardConfirmation option) {
-    return myConfirmations.get(option.getId());
+    return myOptionsAndConfirmations.getConfirmation(option);
   }
 
   public List<CheckinHandlerFactory> getRegisteredCheckinHandlerFactories() {
@@ -695,12 +488,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
-    return myDirectoryMappingList.getRootsUnderVcs(vcs);
+    return myMappingsToRoots.getRootsUnderVcs(vcs);
   }
 
   public VirtualFile[] getAllVersionedRoots() {
     List<VirtualFile> vFiles = new ArrayList<VirtualFile>();
-    for(AbstractVcs vcs: myActiveVcss) {
+    final AbstractVcs[] vcses = myMappings.getActiveVcses();
+    for (AbstractVcs vcs : vcses) {
       Collections.addAll(vFiles, getRootsUnderVcs(vcs));
     }
     return vFiles.toArray(new VirtualFile[vFiles.size()]);
@@ -709,7 +503,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NotNull
   public VcsRoot[] getAllVcsRoots() {
     List<VcsRoot> vcsRoots = new ArrayList<VcsRoot>();
-    for(AbstractVcs vcs: myActiveVcss) {
+    final AbstractVcs[] vcses = myMappings.getActiveVcses();
+    for (AbstractVcs vcs : vcses) {
       final VirtualFile[] roots = getRootsUnderVcs(vcs);
       for(VirtualFile root: roots) {
         vcsRoots.add(new VcsRoot(vcs, root));
@@ -719,51 +514,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void updateActiveVcss() {
-    if (!myIsInitialized) {
-      initialize();
-    }
-    HashSet<AbstractVcs> oldActiveVcss = new HashSet<AbstractVcs>(myActiveVcss);
-    myActiveVcss.clear();
-    // some VCSes may want to reconfigure mappings on activation, so we need to iterate a copy of the list
-    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>(myDirectoryMappingList.getDirectoryMappings());
-    for(VcsDirectoryMapping mapping: mappings) {
-      if (mapping.getVcs().length() > 0) {
-        AbstractVcs vcs = findVcsByName(mapping.getVcs());
-        if (vcs != null && !myActiveVcss.contains(vcs)) {
-          myActiveVcss.add(vcs);
-          if (!oldActiveVcss.contains(vcs)) {
-            vcs.activate();
-          }
-        }
-      }
-    }
-
-    for(AbstractVcs vcs: oldActiveVcss) {
-      if (!myActiveVcss.contains(vcs)) {
-        vcs.deactivate();
-      }
-      else {
-        vcs.directoryMappingChanged();
-      }
-    }
-
-    notifyDirectoryMappingChanged();
+    // not needed
   }
 
   public void notifyDirectoryMappingChanged() {
     myEventDispatcher.getMulticaster().directoryMappingChanged();
   }
 
-  boolean hasEmptyContentRevisions() {
-    return myHaveEmptyContentRevisions;
-  }
-
-  void resetHaveEmptyContentRevisions() {
-    myHaveEmptyContentRevisions = false;
-  }
-
   public void readDirectoryMappings(final Element element) {
-    myDirectoryMappingList.clear();
+    myMappings.clear();
+
+    final List<VcsDirectoryMapping> mappingsList = new ArrayList<VcsDirectoryMapping>();
     final List list = element.getChildren(ELEMENT_MAPPING);
     boolean haveNonEmptyMappings = false;
     for(Object childObj: list) {
@@ -773,7 +534,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         haveNonEmptyMappings = true;
       }
       VcsDirectoryMapping mapping = new VcsDirectoryMapping(child.getAttributeValue(ATTRIBUTE_DIRECTORY), vcs);
-      myDirectoryMappingList.add(mapping);
+      mappingsList.add(mapping);
 
       Element rootSettingsElement = child.getChild(ELEMENT_ROOT_SETTINGS);
       if (rootSettingsElement != null) {
@@ -797,6 +558,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (haveNonEmptyMappings || !defaultProject) {
       myMappingsLoaded = true;
     }
+    myMappings.setDirectoryMappings(mappingsList);
   }
 
   public void writeDirectoryMappings(final Element element) {
@@ -841,15 +603,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return new CompositeCheckoutListener(myProject);
   }
 
-  public static final Topic<Runnable> VCS_MAPPING_CHANGED = new Topic<Runnable>("VCS_MAPPING_CHANGED", Runnable.class);
-
   public void fireDirectoryMappingsChanged() {
-    if (myIsInitialized && (! myIsDisposed)) {
-      myProject.getMessageBus().syncPublisher(VCS_MAPPING_CHANGED).run();
+    if (! myIsDisposed) {
+      myMappings.mappingsChanged();
     }
   }
 
-  public boolean haveDefaultMapping() {
-    return myDirectoryMappingList.haveDefaultMapping();
+  public String haveDefaultMapping() {
+    return myMappings.haveDefaultMapping();
   }
 }

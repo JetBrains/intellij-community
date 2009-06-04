@@ -1,9 +1,9 @@
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 public class StartUseVcsDialog extends DialogWrapper {
   private final VcsDataWrapper myData;
@@ -96,6 +97,7 @@ public class StartUseVcsDialog extends DialogWrapper {
     final java.util.List<String> keys = new ArrayList<String>(displayNames.size() + 1);
     keys.add("");
     keys.addAll(displayNames);
+    Collections.sort(keys);
     return keys.toArray(new Object[keys.size()]);
   }
 

@@ -7,23 +7,21 @@ import com.intellij.openapi.vfs.VfsUtil;
 import java.util.Collections;
 import java.util.List;
 
-public class FilterDescendantVirtualFiles {
+public class FilterDescendantVirtualFiles extends AbstractFilterChildren<VirtualFile> {
+  private final static FilterDescendantVirtualFiles ourInstance = new FilterDescendantVirtualFiles();
+
   private FilterDescendantVirtualFiles() {
   }
 
-  public static void filter(final List<VirtualFile> in) {
-    Collections.sort(in, FilePathComparator.getInstance());
+  protected void sortAscending(final List<VirtualFile> virtualFiles) {
+    Collections.sort(virtualFiles, FilePathComparator.getInstance());
+  }
 
-    for (int i = 1; i < in.size(); i++) {
-      final VirtualFile child = in.get(i);
-      for (int j = i - 1; j >= 0; --j) {
-        final VirtualFile parent = in.get(j);
-        if (VfsUtil.isAncestor(parent, child, false)) {
-          in.remove(i);
-          -- i;
-          break;
-        }
-      }
-    }
+  protected boolean isAncestor(final VirtualFile parent, final VirtualFile child) {
+    return VfsUtil.isAncestor(parent, child, false);
+  }
+
+  public static void filter(final List<VirtualFile> in) {
+    ourInstance.doFilter(in);
   }
 }

@@ -45,5 +45,5 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
 
   public abstract void fireDirectoryMappingsChanged();
 
-  public abstract boolean haveDefaultMapping();
+  public abstract String haveDefaultMapping();
 }

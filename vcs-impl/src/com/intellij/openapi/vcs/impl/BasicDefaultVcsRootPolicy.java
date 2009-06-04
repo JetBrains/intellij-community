@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +24,7 @@ public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     myBaseDir = project.getBaseDir();
   }
 
-  public void addDefaultVcsRoots(final VcsDirectoryMappingList mappingList, final AbstractVcs vcs, final List<VirtualFile> result) {
+  public void addDefaultVcsRoots(final NewMappings mappingList, final AbstractVcs vcs, final List<VirtualFile> result) {
     final VirtualFile baseDir = ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir);
     if (baseDir != null && vcs.getName().equals(mappingList.getVcsFor(baseDir))) {
       result.add(baseDir);

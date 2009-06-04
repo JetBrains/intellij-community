@@ -224,14 +224,12 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     return myChangeProvider;
   }
 
-  public void activate() {
-    super.activate();
+  protected void activate() {
     myStorageComponent.init(getProject(), false);
     CvsEntriesManager.getInstance().addCvsEntriesListener(this);
   }
 
-  public void deactivate() {
-    super.deactivate();
+  protected void deactivate() {
     myStorageComponent.dispose();
     CvsEntriesManager.getInstance().removeCvsEntriesListener(this);
   }

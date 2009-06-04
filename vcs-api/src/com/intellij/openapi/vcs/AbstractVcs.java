@@ -42,19 +42,33 @@ import java.util.List;
  *
  * @see ProjectLevelVcsManager
  */
-public abstract class AbstractVcs {
+public abstract class AbstractVcs extends StartedActivated {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.AbstractVcs");
 
   @NonNls protected static final String ourIntegerPattern = "\\d+";
 
   protected final Project myProject;
-  private boolean myIsStarted = false;
   private VcsShowSettingOption myUpdateOption;
   private VcsShowSettingOption myStatusOption;
 
   public AbstractVcs(Project project) {
+    super(project);
+
     myProject = project;
+  }
+
+  // acts as adapter
+  protected void start() throws VcsException {
+  }
+
+  protected void shutdown() throws VcsException {
+  }
+
+  protected void activate() {
+  }
+
+  protected void deactivate() {
   }
 
   @NonNls
@@ -89,26 +103,11 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  public void activate() {
-  }
-
-  public void deactivate() {
-  }
-
   public void directoryMappingChanged() {
   }
 
   public boolean markExternalChangesAsUpToDate() {
     return false;
-  }
-
-  public void start() throws VcsException {
-    myIsStarted = true;
-  }
-
-  public void shutdown() throws VcsException {
-    LOG.assertTrue(myIsStarted, "Attempt to shut down VCS " + getClass().getName() + " which was not started");
-    myIsStarted = false;
   }
 
   /**

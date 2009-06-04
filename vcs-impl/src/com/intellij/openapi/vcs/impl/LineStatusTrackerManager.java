@@ -63,6 +63,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
   private boolean myIsDisposed = false;
   @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
   private final ProjectLevelVcsManagerImpl myVcsManager;
+  private final VcsFileStatusProvider myStatusProvider;
   private final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
   private final EditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
   private final MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
@@ -72,9 +73,10 @@ public class LineStatusTrackerManager implements ProjectComponent {
     }
   };
 
-  public LineStatusTrackerManager(final Project project, final ProjectLevelVcsManagerImpl vcsManager) {
+  public LineStatusTrackerManager(final Project project, final ProjectLevelVcsManagerImpl vcsManager, final VcsFileStatusProvider statusProvider) {
     myProject = project;
     myVcsManager = vcsManager;
+    myStatusProvider = statusProvider;
 
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       public void updateStarted(final Document doc) {
@@ -279,7 +281,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
               }
               return;
             }
-            final String lastUpToDateContent = myVcsManager.getBaseVersionContent(virtualFile);
+            final String lastUpToDateContent = myStatusProvider.getBaseVersionContent(virtualFile);
             if (lastUpToDateContent == null) {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("installTracker() for file " + virtualFile.getPath() + " failed: no up to date content");

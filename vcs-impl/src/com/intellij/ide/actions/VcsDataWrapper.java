@@ -1,18 +1,17 @@
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.impl.VcsEP;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 
-import java.util.Map;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 class VcsDataWrapper {
   private final Project myProject;
@@ -37,7 +36,7 @@ class VcsDataWrapper {
     if (checkMappings()) {
       return false;
     }
-    if (Extensions.getExtensions(VcsEP.EP_NAME, myProject).length == 0) {
+    if (! ((ProjectLevelVcsManagerImpl) myManager).haveVcses()) {
       return false;
     }
     return true;
