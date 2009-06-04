@@ -238,7 +238,6 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     profileName = Messages.showInputDialog(parent, profileName, "Create new inspection profile", Messages.getQuestionIcon());
     if (profileName == null) return null;
-    final boolean isLocal = selectedProfile.isLocal();
     final ProfileManager profileManager = selectedProfile.getProfileManager();
     if (ArrayUtil.find(profileManager.getAvailableProfileNames(), profileName) != -1) {
       Messages.showErrorDialog(InspectionsBundle.message("inspection.unable.to.create.profile.message", profileName),
@@ -259,7 +258,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         profileModifiableModel.resetToBase();
       }
       profileModifiableModel.setName(profileName);
-      profileModifiableModel.setLocal(isLocal);
+      profileModifiableModel.setLocal(true);
       return profileModifiableModel;
   }
 
