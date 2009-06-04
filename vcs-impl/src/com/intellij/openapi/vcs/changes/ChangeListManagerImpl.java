@@ -237,11 +237,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (updateUnversionedFiles && wasEverythingDirty) {
           composite.cleanAll();         
         }
-        if (wasEverythingDirty) {
-          changeListWorker.notifyStartProcessingChanges(null);
-        }
-        myChangesViewManager.scheduleRefresh();
       }
+      if (wasEverythingDirty) {
+        changeListWorker.notifyStartProcessingChanges(null);
+      }
+      myChangesViewManager.scheduleRefresh();
 
       final ChangeListManagerGate gate = changeListWorker.createSelfGate();
 
@@ -728,18 +728,27 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @SuppressWarnings({"unchecked"})
   public void readExternal(Element element) throws InvalidDataException {
-    synchronized (myDataLock) {
-      myIgnoredIdeaLevel.clear();
-      new ChangeListManagerSerialization(myIgnoredIdeaLevel, myWorker).readExternal(element);
-      if ((! myWorker.isEmpty()) && getDefaultChangeList() == null) {
-        setDefaultChangeList(myWorker.getListsCopy().get(0));
+    if (! myProject.isDefault()) {
+      synchronized (myDataLock) {
+        myIgnoredIdeaLevel.clear();
+        new ChangeListManagerSerialization(myIgnoredIdeaLevel, myWorker).readExternal(element);
+        if ((! myWorker.isEmpty()) && getDefaultChangeList() == null) {
+          setDefaultChangeList(myWorker.getListsCopy().get(0));
+        }
       }
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    synchronized (myDataLock) {
-      new ChangeListManagerSerialization(myIgnoredIdeaLevel, myWorker).writeExternal(element);
+    if (! myProject.isDefault()) {
+      final IgnoredFilesComponent ignoredFilesComponent;
+      final ChangeListWorker worker;
+      synchronized (myDataLock) {
+        ignoredFilesComponent = new IgnoredFilesComponent(myProject);
+        ignoredFilesComponent.add(myIgnoredIdeaLevel.getFilesToIgnore());
+        worker = myWorker.copy();
+      }
+      new ChangeListManagerSerialization(ignoredFilesComponent, worker).writeExternal(element);
     }
   }
 
