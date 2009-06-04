@@ -84,6 +84,28 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
         ProgressManager.getInstance().checkCanceled();
         if (!consumer.process(candidate)) return false;
       }
+
+      if (aClass.isEnum()) {
+        // abstract enum can be subclassed in the body
+        PsiField[] fields = ApplicationManager.getApplication().runReadAction(new Computable<PsiField[]>() {
+          public PsiField[] compute() {
+            return aClass.getFields();
+          }
+        });
+        for (final PsiField field : fields) {
+          if (field instanceof PsiEnumConstant) {
+            PsiEnumConstantInitializer initializingClass =
+              ApplicationManager.getApplication().runReadAction(new Computable<PsiEnumConstantInitializer>() {
+                public PsiEnumConstantInitializer compute() {
+                  return ((PsiEnumConstant)field).getInitializingClass();
+                }
+              });
+            if (initializingClass != null) {
+              if (!consumer.process(initializingClass)) return false;
+            }
+          }
+        }
+      }
     }
 
     return true;
