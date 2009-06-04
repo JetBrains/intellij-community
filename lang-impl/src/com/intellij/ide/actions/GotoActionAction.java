@@ -5,10 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -39,7 +36,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               final AnActionEvent event = new AnActionEvent(e.getInputEvent(), DataManager.getInstance().getDataContext(component),
-                                                            e.getPlace(), e.getPresentation(), ActionManager.getInstance(),
+                                                            e.getPlace(), (Presentation)action.getTemplatePresentation().clone(), ActionManager.getInstance(),
                                                             e.getModifiers());
 
               if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
