@@ -30,7 +30,7 @@ public class StubTree {
   private final PsiFileStub myRoot;
   private final List<StubElement<?>> myPlainList = new ArrayList<StubElement<?>>();
 
-  public StubTree(final PsiFileStub root) {
+  public StubTree(@NotNull final PsiFileStub root) {
     myRoot = root;
     enumerateStubs(root, myPlainList);
   }
@@ -43,6 +43,7 @@ public class StubTree {
     }
   }
 
+  @NotNull
   public PsiFileStub getRoot() {
     return myRoot;
   }
@@ -81,19 +82,34 @@ public class StubTree {
   }
 
   @Nullable
+  public static StubTree readOrBuild(Project project, final VirtualFile vFile) {
+    final StubTree fromIndices = readFromVFile(project, vFile);
+    if (fromIndices != null) {
+      return fromIndices;
+    }
+
+    if (!StubUpdatingIndex.canHaveStub(vFile)) {
+      return null;
+    }
+
+    try {
+      final FileContent fc = new FileContent(vFile, vFile.contentsToByteArray());
+      fc.putUserData(FileBasedIndex.PROJECT, project);
+      final StubElement element = StubUpdatingIndex.buildStubTree(fc);
+      if (element instanceof PsiFileStub) {
+        return new StubTree((PsiFileStub)element);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    return null;
+  }
+
+  @Nullable
   public static StubTree readFromVFile(Project project, final VirtualFile vFile) {
     if (DumbService.getInstance(project).isDumb()) {
-      try {
-        final FileContent fc = new FileContent(vFile, vFile.contentsToByteArray());
-        fc.putUserData(FileBasedIndex.PROJECT, project);
-        final StubElement element = StubUpdatingIndex.buildStubTree(fc);
-        if (element instanceof PsiFileStub) {
-          return new StubTree((PsiFileStub)element);
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
       return null;
     }
 

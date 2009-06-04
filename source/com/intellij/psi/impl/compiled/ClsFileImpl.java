@@ -31,7 +31,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.List;
@@ -345,15 +344,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return FileContextUtil.getFileContext(this);
   }
 
-  @Nullable
+  @NotNull
   public PsiClassHolderFileStub getStub() {
-    StubTree stubHolder = getStubTree();
-    return stubHolder != null ? (PsiClassHolderFileStub)stubHolder.getRoot() : null;
+    return (PsiClassHolderFileStub)getStubTree().getRoot();
   }
 
   private final Object lock = new Object();
 
-  @Nullable
+  @NotNull
   public StubTree getStubTree() {
     SoftReference<StubTree> stub = myStub;
     StubTree stubHolder = stub == null ? null : stub.get();
@@ -361,12 +359,16 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       synchronized (lock) {
         stub = myStub;
         stubHolder = stub == null ? null : stub.get();
-        if (stubHolder != null) return stubHolder;
-        stubHolder = StubTree.readFromVFile(getProject(), getVirtualFile());
         if (stubHolder != null) {
-          myStub = new SoftReference<StubTree>(stubHolder);
-          ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
+          return stubHolder;
         }
+        stubHolder = StubTree.readOrBuild(getProject(), getVirtualFile());
+        if (stubHolder == null) {
+          StubTree.readOrBuild(getProject(), getVirtualFile());
+          throw new AssertionError("No stub for class file " + getVirtualFile().getPresentableUrl());
+        }
+        myStub = new SoftReference<StubTree>(stubHolder);
+        ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
       }
     }
     return stubHolder;

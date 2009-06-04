@@ -2,7 +2,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.startup.BackgroundableCacheUpdater;
 import com.intellij.ide.startup.FileContent;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -13,7 +12,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -89,10 +87,8 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
   }
 
   public void backgrounded(Collection<VirtualFile> remaining) {
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).setBackgroundIndexing(true);
-
     final VirtualFile[] files = remaining.toArray(new VirtualFile[remaining.size()]);
-    DumbServiceImpl.getInstance(myProject).queueIndexUpdate(myProject, new Consumer<ProgressIndicator>() {
+    DumbServiceImpl.getInstance(myProject).queueIndexUpdate(new Consumer<ProgressIndicator>() {
       public void consume(final ProgressIndicator indicator) {
         try {
           for (int i = 0; i < files.length ; i++) {

@@ -67,6 +67,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected final PsiManagerEx myManager;
   private volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
   public static final Key<Boolean> BUILDING_STUB = new Key<Boolean>("Don't use stubs mark!");
+  public ArrayList<String> myLog;
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
     this(provider);
@@ -178,7 +179,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     synchronized (myStubLock) {
       treeElement = (FileElement)_getTreeElement();
-      if (treeElement != null) return treeElement;
+      if (treeElement != null) {
+        if (myLog != null) {
+          myLog.add("had treeElement before:" + treeElement);
+        }
+        return treeElement;
+      }
 
       final FileViewProvider viewProvider = getViewProvider();
       if (viewProvider.isPhysical() && myManager.isAssertOnFileLoading(viewProvider.getVirtualFile())) {
@@ -193,6 +199,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       treeElement.setPsi(this);
 
       StubTree stub = derefStub();
+      if (myLog != null) {
+        myLog.add("do we have a stub?: " + stub);
+      }
+
       if (stub != null) {
         final Iterator<StubElement<?>> stubs = stub.getPlainList().iterator();
         stubs.next(); // Skip file stub;
@@ -242,19 +252,40 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
 
   private void switchFromStubToAST(ASTNode root, final Iterator<StubElement<?>> stubs) {
+    if (myLog != null) {
+      myLog.add("switching...");
+    }
+
     ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
       protected boolean visitNode(TreeElement tree) {
         final IElementType type = tree.getElementType();
 
-        if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
+        if (myLog != null) {
+          myLog.add("visit node: " + tree);
+        }
+
+        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(tree)) {
+          if (myLog != null) {
+            myLog.add("it's a stub node!");
+          }
           final StubElement stub = stubs.next();
           if (stub.getStubType() != tree.getElementType()) {
             rebuildStub();
-            assert false: "Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " + tree.getElementType() + "; "+tree;
+            assert false : "Stub and PSI element type mismatch in " +
+                           getName() +
+                           ": stub " +
+                           stub +
+                           ", AST " +
+                           tree.getElementType() +
+                           "; " +
+                           tree;
           }
           final PsiElement psi = stub.getPsi();
           ((CompositeElement)tree).setPsi(psi);
+          if (myLog != null) {
+            myLog.add("psi is " + psi.getClass().getName());
+          }
           final StubBasedPsiElementBase<?> base = (StubBasedPsiElementBase)psi;
           base.setNode(tree);
           base.setStub(null);
@@ -547,7 +578,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final VirtualFile vFile = getVirtualFile();
     if (!(vFile instanceof VirtualFileWithId)) return null;
 
-    StubTree stubHolder = StubTree.readFromVFile(getProject(), vFile);
+    StubTree stubHolder = StubTree.readOrBuild(getProject(), vFile);
     if (stubHolder == null) return null;
 
     synchronized (myStubLock) {

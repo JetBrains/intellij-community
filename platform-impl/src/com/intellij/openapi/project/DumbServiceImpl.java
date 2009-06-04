@@ -4,18 +4,20 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -28,8 +30,12 @@ public class DumbServiceImpl extends DumbService {
   private final Queue<Runnable> myUpdateQueue = new Queue<Runnable>(5);
   private final Queue<Runnable> myAfterUpdateQueue = new Queue<Runnable>(5);
   @NonNls public static final String FILE_INDEX_BACKGROUND = "fileIndex.background";
+  private final StartupManagerImpl myStartupManager;
+  private final Project myProject;
 
-  public DumbServiceImpl(MessageBus bus) {
+  public DumbServiceImpl(MessageBus bus, StartupManager startupManager, Project project) {
+    myProject = project;
+    myStartupManager = (StartupManagerImpl)startupManager;
     myPublisher = bus.syncPublisher(DUMB_MODE);
   }
 
@@ -53,15 +59,15 @@ public class DumbServiceImpl extends DumbService {
     }
   }
 
-  public void queueIndexUpdate(@Nullable final Project project, @NotNull final Consumer<ProgressIndicator> action) {
+  public void queueIndexUpdate(@NotNull final Consumer<ProgressIndicator> action) {
     final Runnable update = new Runnable() {
       public void run() {
-        if (project != null && project.isDisposed()) {
-          updateFinished(project);
+        if (myProject.isDisposed()) {
+          updateFinished();
           return;
         }
 
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating indices", false) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Updating indices", false) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             indicator.setIndeterminate(false);
@@ -72,7 +78,7 @@ public class DumbServiceImpl extends DumbService {
             finally {
               ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
                 public void run() {
-                  updateFinished(project);
+                  updateFinished();
                 }
               });
             }
@@ -81,8 +87,10 @@ public class DumbServiceImpl extends DumbService {
       }
     };
 
-    invokeOnEDT(new Runnable() {
+    invokeOnEDT(new DumbAwareRunnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
+
         myPublisher.beforeEnteringDumbMode();
 
         final boolean wasDumb = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
@@ -104,15 +112,25 @@ public class DumbServiceImpl extends DumbService {
     });
   }
 
-  private static void invokeOnEDT(Runnable runnable) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+  private void invokeOnEDT(DumbAwareRunnable runnable) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
       runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
+      return;
     }
+
+    if (!myStartupManager.startupActivityPassed()) {
+      myStartupManager.setBackgroundIndexing(true);
+      myStartupManager.registerPostStartupActivity(runnable);
+      return;
+    }
+
+    application.invokeLater(runnable, ModalityState.NON_MODAL);
   }
 
-  private void updateFinished(Project project) {
+  private void updateFinished() {
+    if (myProject.isDisposed()) return;
+
     if (!myUpdateQueue.isEmpty()) {
       //run next dumb action
       myUpdateQueue.pullFirst().run();
@@ -126,8 +144,6 @@ public class DumbServiceImpl extends DumbService {
         myPublisher.exitDumbMode();
       }
     });
-
-    if (project == null || project.isDisposed()) return;
 
     while (true) {
       final Runnable runnable;

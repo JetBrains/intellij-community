@@ -56,25 +56,29 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
 
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
-      final FileType fileType = file.getFileType();
-      if (fileType instanceof LanguageFileType) {
-        Language l = ((LanguageFileType)fileType).getLanguage();
-        ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
-        if (parserDefinition == null) return false;
-
-        final IFileElementType filetype = parserDefinition.getFileNodeType();
-        return filetype instanceof IStubFileElementType &&
-               (((IStubFileElementType)filetype).shouldBuildStubFor(file) ||
-                IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)));
-      }
-      else if (fileType.isBinary()) {
-        final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-        return builder != null && builder.acceptsFile(file);
-      }
-
-      return false;
+      return canHaveStub(file);
     }
   };
+
+  public static boolean canHaveStub(VirtualFile file) {
+    final FileType fileType = file.getFileType();
+    if (fileType instanceof LanguageFileType) {
+      Language l = ((LanguageFileType)fileType).getLanguage();
+      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+      if (parserDefinition == null) return false;
+
+      final IFileElementType filetype = parserDefinition.getFileNodeType();
+      return filetype instanceof IStubFileElementType &&
+             (((IStubFileElementType)filetype).shouldBuildStubFor(file) ||
+              IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)));
+    }
+    else if (fileType.isBinary()) {
+      final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+      return builder != null && builder.acceptsFile(file);
+    }
+
+    return false;
+  }
 
   private static final KeyDescriptor<Integer> DATA_DESCRIPTOR = new KeyDescriptor<Integer>() {
     public int getHashCode(final Integer value) {
