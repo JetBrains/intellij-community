@@ -11,7 +11,8 @@ package com.intellij.openapi.project;
  * <li> post-startup activities ({@link com.intellij.openapi.startup.StartupManager#registerPostStartupActivity(Runnable)})
  * <li> Stacktrace {@link com.intellij.execution.filters.Filter}s
  * <li> {@link com.intellij.ide.SelectInTarget}s
- * 
+ * <li> {@link com.intellij.ide.IconProvider}s
+ *
  * @see com.intellij.openapi.project.DumbService
  * @see com.intellij.openapi.project.DumbAwareRunnable
  * @author peter

@@ -5,6 +5,8 @@ package com.intellij.util;
 
 import com.intellij.ide.IconProvider;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +16,12 @@ public class PsiIconUtil {
 
   @Nullable
   public static Icon getProvidersIcon(PsiElement element, int flags) {
+    final boolean dumb = DumbService.getInstance(element.getProject()).isDumb();
     for (final IconProvider iconProvider : getIconProviders()) {
+      if (dumb && !(iconProvider instanceof DumbAware)) {
+        continue;
+      }
+
       final Icon icon = iconProvider.getIcon(element, flags);
       if (icon != null) return icon;
     }

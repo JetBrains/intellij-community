@@ -2,6 +2,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
 import com.intellij.openapi.util.Iconable;
@@ -18,7 +19,7 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public class JavaDirectoryIconProvider extends IconProvider {
+public class JavaDirectoryIconProvider extends IconProvider implements DumbAware {
   @Nullable
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
     if (element instanceof PsiDirectory) {
