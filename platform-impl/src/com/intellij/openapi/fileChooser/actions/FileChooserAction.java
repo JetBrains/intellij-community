@@ -9,10 +9,12 @@ import javax.swing.*;
 
 public abstract class FileChooserAction extends AnAction implements DumbAware {
   protected FileChooserAction() {
+    setEnabledInModalContext(true);
   }
 
   protected FileChooserAction(final String text, final String description, final Icon icon) {
     super(text, description, icon);
+    setEnabledInModalContext(true);
   }
 
   final public void actionPerformed(AnActionEvent e) {
