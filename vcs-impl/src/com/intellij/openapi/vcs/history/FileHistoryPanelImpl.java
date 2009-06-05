@@ -108,7 +108,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private final String myRepositoryPath;
 
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
-
+  @NonNls private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
+  
   private static final DualViewColumnInfo REVISION =
     new VcsColumnInfo<VcsRevisionNumber>(VcsBundle.message("column.name.revision.version")) {
       protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
@@ -153,6 +154,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       return "author_author";
     }
   };
+
 
   private static class MessageRenderer extends ColoredTableCellRenderer {
     private final IssueLinkRenderer myIssueLinkRenderer;
@@ -670,6 +672,10 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     else {
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
     }
+
+    final AnAction diffGroup = ActionManager.getInstance().getAction(VCS_HISTORY_ACTIONS_GROUP);
+    if (diffGroup != null) result.add(diffGroup);    
+
     result.add(new CreatePatchFromChangesAction() {
       public void update(final AnActionEvent e) {
         e.getPresentation().setVisible(true);
