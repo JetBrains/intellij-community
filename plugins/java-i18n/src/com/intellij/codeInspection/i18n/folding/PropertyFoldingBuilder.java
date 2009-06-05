@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.jsp.JspFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,45 +32,54 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     final PsiJavaFile file = (PsiJavaFile) element;
     final List<FoldingDescriptor> result = new ArrayList<FoldingDescriptor>();
 
-    file.accept(new JavaRecursiveElementVisitor() {
+    //hack here because JspFile PSI elements are not threaded correctly via nextSibling/prevSibling
+    file.accept(file instanceof JspFile ? new JavaRecursiveElementVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
-        if (isI18nProperty(expression)) {
-          final String msg = getI18nMessage(expression);
-
-          final PsiElement parent = expression.getParent();
-          if (!msg.equals(expression.getText()) &&
-              parent instanceof PsiExpressionList &&
-              ((PsiExpressionList)parent).getExpressions()[0] == expression) {
-            final PsiExpressionList expressions = (PsiExpressionList)parent;
-            final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(expression);
-            final PsiExpression[] args = expressions.getExpressions();
-            if (args.length == 1 + count && parent.getParent() instanceof PsiMethodCallExpression) {
-              boolean ok = true;
-              for (int i = 1; i < count + 1; i++) {
-                Object value = ConstantExpressionEvaluator.computeConstantExpression(args[i], false);
-                if (value == null) {
-                  if (!(args[i] instanceof PsiReferenceExpression)) {
-                    ok = false;
-                    break;
-                  }
-                }
-              }
-              if (ok) {
-                result.add(new FoldingDescriptor(parent.getParent(), parent.getParent().getTextRange()));
-                return;
-              }
-            }
-          }
-
-          result.add(new FoldingDescriptor(expression, expression.getTextRange()));
-        }
+        checkLiteral(expression, result);
+      }
+    } : new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitLiteralExpression(PsiLiteralExpression expression) {
+        checkLiteral(expression, result);
       }
     });
 
     return result.toArray(new FoldingDescriptor[result.size()]);
   }
 
+  private static void checkLiteral(PsiLiteralExpression expression, List<FoldingDescriptor> result) {
+    if (isI18nProperty(expression)) {
+      final String msg = getI18nMessage(expression);
+
+      final PsiElement parent = expression.getParent();
+      if (!msg.equals(expression.getText()) &&
+          parent instanceof PsiExpressionList &&
+          ((PsiExpressionList)parent).getExpressions()[0] == expression) {
+        final PsiExpressionList expressions = (PsiExpressionList)parent;
+        final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(expression);
+        final PsiExpression[] args = expressions.getExpressions();
+        if (args.length == 1 + count && parent.getParent() instanceof PsiMethodCallExpression) {
+          boolean ok = true;
+          for (int i = 1; i < count + 1; i++) {
+            Object value = ConstantExpressionEvaluator.computeConstantExpression(args[i], false);
+            if (value == null) {
+              if (!(args[i] instanceof PsiReferenceExpression)) {
+                ok = false;
+                break;
+              }
+            }
+          }
+          if (ok) {
+            result.add(new FoldingDescriptor(parent.getParent(), parent.getParent().getTextRange()));
+            return;
+          }
+        }
+      }
+
+      result.add(new FoldingDescriptor(expression, expression.getTextRange()));
+    }
+  }
 
 
   public String getPlaceholderText(@NotNull ASTNode node) {
