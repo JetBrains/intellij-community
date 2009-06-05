@@ -37,7 +37,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
   private PsiElement[] getValidSelectedElements() {
     PsiElement[] selectedElements = getSelectedElements();
     for (PsiElement element : selectedElements) {
-      if (!element.isValid()) {
+      if (element == null || !element.isValid()) {
         return PsiElement.EMPTY_ARRAY;
       }
     }
