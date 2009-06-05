@@ -17,10 +17,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.ui.*;
@@ -878,8 +878,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     public void valueCommitted(final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError){
       if(isEditing()){
         final Object value;
+        final TableCellEditor tableCellEditor = cellEditor;
         try {
-          value = cellEditor.getCellEditorValue();
+          value = tableCellEditor.getCellEditorValue();
         }
         catch (final Exception exc) {
           showInvalidInput(exc);
@@ -887,10 +888,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
         boolean valueAccepted = myModel.setValueAtRow(editingRow, value);
         if (valueAccepted) {
-          if (!continueEditing) cellEditor.stopCellEditing();
+          if (!continueEditing) tableCellEditor.stopCellEditing();
         }
         else {
-          if (closeEditorOnError) cellEditor.cancelCellEditing();
+          if (closeEditorOnError) tableCellEditor.cancelCellEditing();
         }
       }
     }
