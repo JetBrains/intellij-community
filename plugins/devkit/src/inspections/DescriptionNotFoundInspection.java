@@ -34,6 +34,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -57,8 +61,7 @@ public class DescriptionNotFoundInspection extends DevKitInspectionBase{
     final String filename = PsiUtil.getReturnedLiteral(method, aClass);
     if (filename == null) return null;
 
-    final VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
-    for (VirtualFile root : roots) {
+    for (VirtualFile root : getPotentialRoots(module)) {
       for (VirtualFile top : root.getChildren()) {
         if (top.isDirectory() && top.getName().equals("inspectionDescriptions")) {
           for (VirtualFile description : top.getChildren()) {
@@ -105,6 +108,15 @@ public class DescriptionNotFoundInspection extends DevKitInspectionBase{
       }
     }
     return isLastMethodDefinitionIn(methodName, classFQN, cls.getSuperClass());
+  }
+
+  public static List<VirtualFile> getPotentialRoots(Module module) {
+    final List<VirtualFile> roots = new ArrayList<VirtualFile>(Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots()));
+    //TODO: traverse all roots
+    for (Module m : ModuleRootManager.getInstance(module).getDependencies()) {
+      roots.addAll(Arrays.asList(ModuleRootManager.getInstance(m).getSourceRoots()));
+    }
+    return roots;
   }
 
   @Nullable

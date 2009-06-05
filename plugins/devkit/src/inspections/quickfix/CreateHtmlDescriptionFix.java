@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -40,6 +39,7 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DescriptionNotFoundInspection;
 
 import javax.swing.*;
 import java.io.File;
@@ -72,7 +72,8 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final VirtualFile[] roots = prepare(ModuleRootManager.getInstance(myModule).getSourceRoots());
+    final List<VirtualFile> virtualFiles = DescriptionNotFoundInspection.getPotentialRoots(myModule);
+    final VirtualFile[] roots = prepare(virtualFiles.toArray(new VirtualFile[virtualFiles.size()]));
     if (roots.length == 1) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
