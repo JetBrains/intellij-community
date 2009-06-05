@@ -1,15 +1,13 @@
 package com.intellij.lang.ant;
 
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.TestLookupManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-
-import java.util.Arrays;
 
 /**
  * @author zhzhot
@@ -74,8 +72,6 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     final LookupElement[] items = getItems();
     assertNotNull(items);
     assertTrue(items.length > 0);
-    Arrays.sort(items);
-    //assertTrue(Arrays.binarySearch(items, "java.lang") > 0);
     select();
   }
 
