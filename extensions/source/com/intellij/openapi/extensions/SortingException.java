@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.extensions;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import org.jdom.Element;
 
 /**
@@ -24,7 +26,11 @@ public class SortingException extends RuntimeException {
   private final Element[] myConflictingElements;
 
   public SortingException(String message, Element[] conflictingElements) {
-    super(message);
+    super(message + ": " + StringUtil.join(conflictingElements, new Function<Element, String>() {
+      public String fun(Element element) {
+        return element.getAttributeValue("id") + "(" + element.getAttributeValue("order") + ")";
+      }
+    }, "; "));
     myConflictingElements = conflictingElements;
   }
 
