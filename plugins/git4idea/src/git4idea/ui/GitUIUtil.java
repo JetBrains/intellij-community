@@ -325,4 +325,39 @@ public class GitUIUtil {
     second.addActionListener(l);
     l.actionPerformed(null);
   }
+
+  /**
+   * Checks state of the {@code checked} checkbox and if state is {@code checkedState} than to disable {@code changed}
+   * text field and clean it. When the {@code checked} checkbox changes states to other state,
+   * than enable {@code changed} and restore its state. Note that the each text field should be implied by
+   * only one other checkbox.
+   *
+   * @param checked      the checkbox to monitor
+   * @param checkedState the state that triggers disabling changed state
+   * @param changed      the checkbox to change
+   */
+  public static void implyDisabled(final JCheckBox checked, final boolean checkedState, final JTextField changed) {
+    ActionListener l = new ActionListener() {
+      String previousState;
+
+      public void actionPerformed(ActionEvent e) {
+        if (checked.isSelected() == checkedState) {
+          if (previousState == null) {
+            previousState = changed.getText();
+          }
+          changed.setEnabled(false);
+          changed.setText("");
+        }
+        else {
+          changed.setEnabled(true);
+          if (previousState != null) {
+            changed.setText(previousState);
+            previousState = null;
+          }
+        }
+      }
+    };
+    checked.addActionListener(l);
+    l.actionPerformed(null);
+  }
 }

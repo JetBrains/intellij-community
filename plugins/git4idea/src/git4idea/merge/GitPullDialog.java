@@ -120,6 +120,7 @@ public class GitPullDialog extends DialogWrapper {
     myBranchChooser.addElementsMarkListener(listener);
     listener.elementMarkChanged(null, true);
     GitUIUtil.imply(mySquashCommitCheckBox, true, myNoCommitCheckBox, true);
+    GitUIUtil.imply(mySquashCommitCheckBox, true, myAddLogInformationCheckBox, false);
     GitUIUtil.exclusive(mySquashCommitCheckBox, true, myNoFastForwardCheckBox, true);
     GitMergeUtil.setupStrategies(myBranchChooser, myStrategy);
     init();

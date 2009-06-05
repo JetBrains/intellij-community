@@ -105,6 +105,8 @@ public class GitMergeDialog extends DialogWrapper {
     setOKButtonText(GitBundle.getString("merge.branch.button"));
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranchText);
     GitUIUtil.imply(mySquashCommitCheckBox, true, myNoCommitCheckBox, true);
+    GitUIUtil.imply(mySquashCommitCheckBox, true, myAddLogInformationCheckBox, false);
+    GitUIUtil.implyDisabled(mySquashCommitCheckBox, true, myCommitMessage);
     GitUIUtil.exclusive(mySquashCommitCheckBox, true, myNoFastForwardCheckBox, true);
     myGitRoot.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
