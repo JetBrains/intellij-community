@@ -241,6 +241,11 @@ public class ContainerUtil {
     return findAll(Arrays.asList(collection), instanceOf);
   }
 
+  public static <T,V> V[] findAllAsArray(T[] collection, Class<V> instanceOf) {
+    List<V> list = findAll(Arrays.asList(collection), instanceOf);
+    return list.toArray((V[])Array.newInstance(instanceOf, list.size()));
+  }
+
   public static <T,V> List<V> findAll(Collection<? extends T> collection, Class<V> instanceOf) {
     final ArrayList<V> result = new ArrayList<V>();
     for (final T t : collection) {
