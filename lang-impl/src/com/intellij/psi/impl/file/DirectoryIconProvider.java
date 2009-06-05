@@ -6,6 +6,7 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class DirectoryIconProvider extends IconProvider {
+public class DirectoryIconProvider extends IconProvider implements DumbAware {
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
     if (element instanceof PsiDirectory) {
       final PsiDirectory psiDirectory = (PsiDirectory)element;
