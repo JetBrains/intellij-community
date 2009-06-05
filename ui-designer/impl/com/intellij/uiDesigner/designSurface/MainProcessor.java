@@ -4,8 +4,8 @@ import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ui.UIUtil;
@@ -187,7 +187,7 @@ public final class MainProcessor extends EventProcessor{
     }
   }
 
-  private void updateDragger(final MouseEvent e){
+  private void updateDragger(final MouseEvent e) {
     final RadComponent component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
 
     LOG.assertTrue(component != null);
@@ -195,7 +195,7 @@ public final class MainProcessor extends EventProcessor{
     // Dragger
     final RadComponent oldDraggerHost = FormEditingUtil.getDraggerHost(myEditor);
     RadComponent newDraggerHost = null;
-    for (RadComponent c = component; !(c instanceof RadRootContainer); c = c.getParent()){
+    for (RadComponent c = component; c != null && !(c instanceof RadRootContainer); c = c.getParent()) {
       if (c.isSelected()) {
         newDraggerHost = c;
         break;
