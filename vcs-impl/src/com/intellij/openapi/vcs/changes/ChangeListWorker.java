@@ -62,7 +62,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       if (! myMap.isEmpty()) {
         defaultList = myMap.values().iterator().next();
       } else {
-        LOG.error("no changelists at all");
+        // can be when there's no vcs configured
+        ///LOG.error("no changelists at all");
       }
     }
     myDefault = defaultList;
