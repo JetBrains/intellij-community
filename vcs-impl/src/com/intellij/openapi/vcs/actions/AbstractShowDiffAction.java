@@ -45,6 +45,7 @@ public class AbstractShowDiffAction extends AbstractVcsAction{
     if (selectedFilePaths == null || selectedFilePaths.length != 1) return false;
 
     final VirtualFile selectedFile = selectedFilePaths[0];
+    if (selectedFile.isDirectory()) return false;
 
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(selectedFile);
     if (vcs == null) return false;
