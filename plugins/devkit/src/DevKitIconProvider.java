@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
@@ -18,7 +19,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class DevKitIconProvider extends IconProvider {
+public class DevKitIconProvider extends IconProvider implements DumbAware {
   private static final Icon ICON = IconLoader.getIcon("/plugin.png");
   
   @Nullable
