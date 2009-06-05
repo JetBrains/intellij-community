@@ -97,7 +97,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
       public void run() {
         myAlarm.addRequest(new Runnable() {
           public void run() {
-            if (myProject.isOpen()) {
+            if (myProject.isOpen() && !myProject.isDisposed()) {
               updatePanel();
             }
           }
