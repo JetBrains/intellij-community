@@ -5,20 +5,20 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.ide.IconProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author peter
  */
-public class MavenIconProvider extends IconProvider {
+public class MavenIconProvider extends IconProvider implements DumbAware {
   public static final Icon mavenIcon = IconLoader.getIcon("/images/mavenEmblem.png");
 
   @Nullable
