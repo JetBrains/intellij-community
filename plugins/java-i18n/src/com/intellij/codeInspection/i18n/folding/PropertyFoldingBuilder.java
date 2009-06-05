@@ -31,7 +31,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     final PsiJavaFile file = (PsiJavaFile) element;
     final List<FoldingDescriptor> result = new ArrayList<FoldingDescriptor>();
 
-    file.accept(new JavaRecursiveElementWalkingVisitor() {
+    file.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
         if (isI18nProperty(expression)) {
