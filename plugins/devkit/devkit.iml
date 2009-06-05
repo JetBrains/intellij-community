@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="lvcs-impl" />
+    <orderEntry type="module" module-name="jam-support-impl" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ACTIVE_VCS_NAME" value="svn" />
