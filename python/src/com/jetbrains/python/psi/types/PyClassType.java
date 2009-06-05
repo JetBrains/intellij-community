@@ -1,17 +1,14 @@
 package com.jetbrains.python.psi.types;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
-import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,30 +95,13 @@ public class PyClassType implements PyType {
     return null;
   }
 
-  public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression, ProcessingContext context) {
-    Set<String> names_already = context.get(PyType.CTX_NAMES);
+  public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
     final VariantsProcessor processor = new VariantsProcessor(new PyResolveUtil.FilterNotInstance(myClass));
     myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     List<Object> ret = new ArrayList<Object>();
-    if (names_already != null) {
-      for (LookupElement le : processor.getResultList()) {
-        String name = le.getLookupString();
-        if (names_already.contains(name)) continue;
-        names_already.add(name);
-        ret.add(le);
-      }
-    }
-    else ret.addAll(processor.getResultList());
+    ret.addAll(processor.getResultList());
     for (PyClass ancestor : myClass.getSuperClasses()) {
-      Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(referenceExpression, context);
-      for (Object ob : ancestry) {
-        if (ob instanceof LookupItem) {
-          LookupItem item = (LookupItem)ob;
-          item.setAttribute(item.TAIL_TEXT_ATTR, " | " + ancestor.getName()); // from where it's inherited
-          item.setAttribute(item.TAIL_TEXT_SMALL_ATTR, ""); // make it gray
-        }
-      }
-      ret.addAll(Arrays.asList(ancestry));
+      ret.addAll(Arrays.asList((new PyClassType(ancestor, true)).getCompletionVariants(referenceExpression)));
     }
     return ret.toArray();
   }
