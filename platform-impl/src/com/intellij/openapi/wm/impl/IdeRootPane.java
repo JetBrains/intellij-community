@@ -83,6 +83,7 @@ public class IdeRootPane extends JRootPane{
     final AppLifecycleListener lifecyclePublisher = application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
     lifecyclePublisher.appFrameCreated(commandLineArgs, willOpenProject);
     LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
+    PluginManager.dumpPluginClassStatistics();
     if (!willOpenProject.get()) {
       myWelcomePane = WelcomeScreen.createWelcomePanel();
       myContentPane.add(myWelcomePane);

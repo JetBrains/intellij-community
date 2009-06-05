@@ -1056,4 +1056,49 @@ public class PluginManager {
   public static Logger getLogger() {
     return LoggerHolder.ourLogger;
   }
+
+  private static class ClassCounter {
+    private String myPluginId;
+    private int myCount;
+
+    private ClassCounter(String pluginId) {
+      myPluginId = pluginId;
+      myCount = 1;
+    }
+
+    private void increment() {
+      myCount++;
+    }
+
+    @Override
+    public String toString() {
+      return myPluginId + ": " + myCount;
+    }
+  }
+
+  public static void dumpPluginClassStatistics() {
+    if (!Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue()) return;
+    Map<String, ClassCounter> pluginToClassMap = new HashMap<String, ClassCounter>();
+    synchronized (PLUGIN_CLASSES_LOCK) {
+      for (Map.Entry<String, PluginId> entry : ourPluginClasses.entrySet()) {
+        String id = entry.getValue().toString();
+        final ClassCounter counter = pluginToClassMap.get(id);
+        if (counter != null) {
+          counter.increment();
+        }
+        else {
+          pluginToClassMap.put(id, new ClassCounter(id));
+        }
+      }
+    }
+    List<ClassCounter> counters = new ArrayList<ClassCounter>(pluginToClassMap.values());
+    Collections.sort(counters, new Comparator<ClassCounter>() {
+      public int compare(ClassCounter o1, ClassCounter o2) {
+        return o2.myCount - o1.myCount;
+      }
+    });
+    for (ClassCounter counter : counters) {
+      getLogger().info(counter.toString());
+    }
+  }
 }
