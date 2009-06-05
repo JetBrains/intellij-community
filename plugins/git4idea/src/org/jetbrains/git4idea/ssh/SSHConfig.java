@@ -123,8 +123,9 @@ public class SSHConfig {
           continue;
         }
         if (host == null) {
-          // if the value is outside of the host section, ignore it
-          continue;
+          HostEntry entry = new HostEntry("*");
+          rc.myEntries.add(entry);
+          host = entry.myHost;
         }
         if ("BatchMode".equalsIgnoreCase(keyword)) {
           host.myBatchMode = parseBoolean(argument);
