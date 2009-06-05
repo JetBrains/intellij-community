@@ -34,7 +34,6 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -422,7 +421,7 @@ final class FindDialog extends DialogWrapper {
 
       if (mask.length() > 0) {
         try {
-          Pattern.compile(PatternUtil.convertToRegex(mask));
+          FindInProjectUtil.createFileMaskRegExp(mask);   // verify that the regexp compiles
           validateModel.setFileFilter(mask);
           FindSettings.getInstance().setFileMask(mask);
         }

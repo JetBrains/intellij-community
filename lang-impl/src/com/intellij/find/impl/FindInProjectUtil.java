@@ -47,6 +47,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -150,9 +151,27 @@ public class FindInProjectUtil {
 
   @Nullable
   private static Pattern createFileMaskRegExp(FindModel findModel) {
-    return findModel.getFileFilter() == null
-           ? null
-           : Pattern.compile(PatternUtil.convertToRegex(findModel.getFileFilter()), Pattern.CASE_INSENSITIVE);
+    final String filter = findModel.getFileFilter();
+    return createFileMaskRegExp(filter);
+  }
+
+  public static Pattern createFileMaskRegExp(String filter) {
+    if (filter == null) {
+      return null;
+    }
+    String pattern;
+    final String[] strings = filter.split(",");
+    if (strings.length == 1) {
+      pattern = PatternUtil.convertToRegex(filter);
+    }
+    else {
+      pattern = StringUtil.join(strings, new Function<String, String>() {
+        public String fun(String s) {
+          return "(" + PatternUtil.convertToRegex(s) + ")";
+        }
+      }, "|");
+    }
+    return Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
   }
 
   public static void findUsages(final FindModel findModel,
