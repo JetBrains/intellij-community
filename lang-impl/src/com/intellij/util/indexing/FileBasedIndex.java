@@ -371,6 +371,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void flushCaches() {
+    IndexingStamp.flushCache();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         for (ID<?, ?> indexId : myIndices.keySet()) {
@@ -981,8 +982,6 @@ public class FileBasedIndex implements ApplicationComponent {
     if (psiFile != null) {
       psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
     }
-
-    IndexingStamp.flushCache();
   }
 
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
@@ -1348,6 +1347,7 @@ public class FileBasedIndex implements ApplicationComponent {
       final boolean reallyRemoved = myFilesToUpdate.remove(file);
       if (reallyRemoved && file.isValid()) {
         indexFileContent(fileContent);
+        IndexingStamp.flushCache();
       }
     }
   }

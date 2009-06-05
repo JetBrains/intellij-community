@@ -17,7 +17,6 @@
 package com.intellij.ide.startup;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -127,50 +126,22 @@ public class FileSystemSynchronizer {
 
     final int updaterCount = myUpdaters.size();
     int totalFiles = myFilesToUpdate.size();
-    final FileContentQueue contentQueue = new FileContentQueue();
+    final FileContentQueue contentQueue = new FileContentQueue() {
+      @Override
+      protected void addLast(VirtualFile file) throws InterruptedException {
+        if (!myIndexingSets.contains(file)) {
+          return;
+        }
 
-    final Runnable contentLoadingRunnable = new Runnable() {
-      public void run() {
-        try {
-          for (VirtualFile file : myFilesToUpdate) {
-            if (indicator != null) {
-              indicator.checkCanceled();
-            }
-
-            if (myContentSets.contains(file)) {
-              contentQueue.put(file);
-            }
-          }
-        }
-        catch (ProcessCanceledException e) {
-          // Do nothing, exit the thread.
-        }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-        finally {
-          try {
-            contentQueue.put(new FileContent(null));
-          }
-          catch (InterruptedException e) {
-            LOG.error(e);
-          }
-        }
+        super.addLast(file);
       }
     };
 
-    ApplicationManager.getApplication().executeOnPooledThread(contentLoadingRunnable);
+    contentQueue.queue(myFilesToUpdate, indicator);
 
     int count = 0;
     while (true) {
-      final FileContent content;
-      try {
-        content = contentQueue.take();
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-        break;
-      }
+      final FileContent content = contentQueue.take();
       if (content == null) break;
       final VirtualFile file = content.getVirtualFile();
       if (file == null) break;
