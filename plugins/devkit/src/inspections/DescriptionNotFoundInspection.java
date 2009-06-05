@@ -43,6 +43,7 @@ import java.util.List;
  */
 public class DescriptionNotFoundInspection extends DevKitInspectionBase{
   @NonNls private static final String INSPECTION_PROFILE_ENTRY = "com.intellij.codeInspection.InspectionProfileEntry";
+  @NonNls private static final String INSPECTION_DESCRIPTIONS = "inspectionDescriptions";
 
   @Override
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -61,17 +62,13 @@ public class DescriptionNotFoundInspection extends DevKitInspectionBase{
     final String filename = PsiUtil.getReturnedLiteral(method, aClass);
     if (filename == null) return null;
 
-    for (VirtualFile root : getPotentialRoots(module)) {
-      for (VirtualFile top : root.getChildren()) {
-        if (top.isDirectory() && top.getName().equals("inspectionDescriptions")) {
-          for (VirtualFile description : top.getChildren()) {
-            if (!description.isDirectory() && description.getNameWithoutExtension().equals(filename)) {
-              return null;
-            }
-          }
-        }
+
+    for (PsiDirectory description : getInspectionDescriptionsDirs(module)) {
+      if (description.getVirtualFile().getNameWithoutExtension().equals(filename)) {
+        return null;
       }
     }
+
 
     final PsiElement problem = getProblemElement(aClass, method);
     final ProblemDescriptor problemDescriptor = manager
@@ -111,12 +108,26 @@ public class DescriptionNotFoundInspection extends DevKitInspectionBase{
   }
 
   public static List<VirtualFile> getPotentialRoots(Module module) {
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>(Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots()));
-    //TODO: traverse all roots
-    for (Module m : ModuleRootManager.getInstance(module).getDependencies()) {
-      roots.addAll(Arrays.asList(ModuleRootManager.getInstance(m).getSourceRoots()));
+    final PsiDirectory[] dirs = getInspectionDescriptionsDirs(module);
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    if (dirs.length != 0) {
+      for (PsiDirectory dir : dirs) {
+        final PsiDirectory parent = dir.getParentDirectory();
+        if (parent != null) result.add(parent.getVirtualFile());
+      }
+    } else {
+      result.addAll(Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots()));
     }
-    return roots;
+    return result;
+  }
+
+  public static PsiDirectory[] getInspectionDescriptionsDirs(Module module) {
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(module.getProject()).findPackage(INSPECTION_DESCRIPTIONS);
+    if (aPackage != null) {
+      return aPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
+    } else {
+      return PsiDirectory.EMPTY_ARRAY;
+    }
   }
 
   @Nullable
