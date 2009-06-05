@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -41,6 +40,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author ilyas
@@ -76,17 +77,18 @@ public class GroovyFacetEditor {
   }
 
   private static Library[] getGroovyLibraries(final Project project) {
-    Library[] versions = GroovyConfigUtils.getInstance().getAllSDKLibraries(project);
-    versions = ArrayUtil.mergeArrays(versions, GrailsConfigUtils.getInstance().getAllSDKLibraries(project), Library.class);
-    Arrays.sort(versions, new Comparator<Library>() {
+    final Comparator<Library> c = new Comparator<Library>() {
       public int compare(Library o1, Library o2) {
         final String name1 = o1.getName();
         final String name2 = o2.getName();
         if (name1 == null || name2 == null) return 1;
         return -name1.compareToIgnoreCase(name2);
       }
-    });
-    return versions;
+    };
+    Set<Library> libs = new TreeSet<Library>(c);
+    libs.addAll(Arrays.asList(GroovyConfigUtils.getInstance().getAllSDKLibraries(project)));
+    libs.addAll(Arrays.asList(GrailsConfigUtils.getInstance().getAllSDKLibraries(project)));
+    return libs.toArray(new Library[libs.size()]);
   }
 
   private void addListenerToTables(@Nullable final Project project) {
