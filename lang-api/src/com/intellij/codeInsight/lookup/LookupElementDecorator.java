@@ -110,4 +110,15 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   public int hashCode() {
     return myDelegate.hashCode();
   }
+
+  @NotNull
+  public static <T extends LookupElement> LookupElementDecorator<T> delegate(@NotNull T element, @NotNull final InsertHandlerDecorator<T> insertHandler) {
+    return new LookupElementDecorator<T>(element) {
+      @Override
+      public void handleInsert(InsertionContext context) {
+        insertHandler.handleInsert(context, this);
+      }
+
+    };
+  }
 }
