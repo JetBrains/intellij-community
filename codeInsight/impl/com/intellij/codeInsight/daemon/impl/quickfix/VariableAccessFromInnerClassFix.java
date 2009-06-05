@@ -16,7 +16,7 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +115,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @NotNull
   private Collection<PsiVariable> getVariablesToFix() {
     Map<PsiVariable, Boolean> vars = myClass.getUserData(VARS[myFixType]);
-    if (vars == null) myClass.putUserData(VARS[myFixType], vars = new WeakHashMap<PsiVariable, Boolean>(1));
+    if (vars == null) myClass.putUserData(VARS[myFixType], vars = new ConcurrentWeakHashMap<PsiVariable, Boolean>(1));
     final Map<PsiVariable, Boolean> finalVars = vars;
     return new AbstractCollection<PsiVariable>() {
       @Override
