@@ -101,10 +101,11 @@ public class GitMergeDialog extends DialogWrapper {
     setTitle(GitBundle.getString("merge.branch.title"));
     myProject = project;
     initBranchChooser();
-    GitMergeUtil.setupNoCommitCheckbox(myAddLogInformationCheckBox, myCommitMessage, myNoCommitCheckBox);
     setOKActionEnabled(false);
     setOKButtonText(GitBundle.getString("merge.branch.button"));
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranchText);
+    GitUIUtil.imply(mySquashCommitCheckBox, true, myNoCommitCheckBox, true);
+    GitUIUtil.exclusive(mySquashCommitCheckBox, true, myNoFastForwardCheckBox, true);
     myGitRoot.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         updateBranches();
@@ -128,7 +129,7 @@ public class GitMergeDialog extends DialogWrapper {
     c.weighty = 1;
     c.fill = GridBagConstraints.BOTH;
     myBranchToMergeContainer.add(myBranchChooser, c);
-    GitMergeUtil.setupStrategies(myBranchChooser, myNoCommitCheckBox, myStrategy);
+    GitMergeUtil.setupStrategies(myBranchChooser, myStrategy);
     final ElementsChooser.ElementsMarkListener<String> listener = new ElementsChooser.ElementsMarkListener<String>() {
       public void elementMarkChanged(final String element, final boolean isMarked) {
         setOKActionEnabled(myBranchChooser.getMarkedElements().size() != 0);
@@ -176,14 +177,12 @@ public class GitMergeDialog extends DialogWrapper {
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");
     }
-    else {
-      if (myAddLogInformationCheckBox.isSelected()) {
-        h.addParameters("--log");
-      }
-      final String msg = myCommitMessage.getText().trim();
-      if (msg.length() != 0) {
-        h.addParameters("-m", msg);
-      }
+    if (myAddLogInformationCheckBox.isSelected()) {
+      h.addParameters("--log");
+    }
+    final String msg = myCommitMessage.getText().trim();
+    if (msg.length() != 0) {
+      h.addParameters("-m", msg);
     }
     if (mySquashCommitCheckBox.isSelected()) {
       h.addParameters("--squash");

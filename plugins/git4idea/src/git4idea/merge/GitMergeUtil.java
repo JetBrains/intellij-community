@@ -107,13 +107,10 @@ public class GitMergeUtil {
   /**
    * Setup strategies combobox. The set of strategies changes according to amount of selected elements in branchChooser.
    *
-   * @param branchChooser    a branch chooser
-   * @param noCommitCheckBox no commit checkbox
-   * @param strategy         a strategy selector
+   * @param branchChooser a branch chooser
+   * @param strategy      a strategy selector
    */
-  public static void setupStrategies(final ElementsChooser<String> branchChooser,
-                                     final JCheckBox noCommitCheckBox,
-                                     final JComboBox strategy) {
+  public static void setupStrategies(final ElementsChooser<String> branchChooser, final JComboBox strategy) {
     final ElementsChooser.ElementsMarkListener<String> listener = new ElementsChooser.ElementsMarkListener<String>() {
       private void updateStrategies(final List<String> elements) {
         strategy.removeAllItems();
@@ -129,17 +126,9 @@ public class GitMergeUtil {
           strategy.setEnabled(false);
           updateStrategies(elements);
         }
-        else if (elements.size() == 1) {
-          strategy.setEnabled(true);
-          updateStrategies(elements);
-          noCommitCheckBox.setEnabled(true);
-          noCommitCheckBox.setSelected(false);
-        }
         else {
           strategy.setEnabled(true);
           updateStrategies(elements);
-          noCommitCheckBox.setEnabled(false);
-          noCommitCheckBox.setSelected(false);
         }
       }
     };

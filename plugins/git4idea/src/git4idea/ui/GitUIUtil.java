@@ -248,4 +248,81 @@ public class GitUIUtil {
       GitVcs.getInstance(project).showErrors(Collections.singletonList(e), GitBundle.getString("pull.retriving.remotes"));
     }
   }
+
+  /**
+   * Checks state of the {@code checked} checkbox and if state is {@code checkedState} than to disable {@code changed}
+   * checkbox and change its state to {@code impliedState}. When the {@code checked} checkbox changes states to other state,
+   * than enable {@code changed} and restore its state. Note that the each checkbox should be implied by only one other checkbox.
+   *
+   * @param checked      the checkbox to monitor
+   * @param checkedState the state that triggers disabling changed state
+   * @param changed      the checkbox to change
+   * @param impliedState the implied state of checkbox
+   */
+  public static void imply(final JCheckBox checked, final boolean checkedState, final JCheckBox changed, final boolean impliedState) {
+    ActionListener l = new ActionListener() {
+      Boolean previousState;
+
+      public void actionPerformed(ActionEvent e) {
+        if (checked.isSelected() == checkedState) {
+          if (previousState == null) {
+            previousState = changed.isSelected();
+          }
+          changed.setEnabled(false);
+          changed.setSelected(impliedState);
+        }
+        else {
+          changed.setEnabled(true);
+          if (previousState != null) {
+            changed.setSelected(previousState);
+            previousState = null;
+          }
+        }
+      }
+    };
+    checked.addActionListener(l);
+    l.actionPerformed(null);
+  }
+
+  /**
+   * Declares states for two checkboxes to be mutually exclusive. When one of the checkboxes goes to the specified state, other is
+   * disabled and forced into reverse of the state (to prevent very fast users from selecting incorrect state or incorrect
+   * initial configuration).
+   *
+   * @param first       the first checkbox
+   * @param firstState  the state of the first checkbox
+   * @param second      the second checkbox
+   * @param secondState the state of the second checkbox
+   */
+  public static void exclusive(final JCheckBox first, final boolean firstState, final JCheckBox second, final boolean secondState) {
+    ActionListener l = new ActionListener() {
+      /**
+       * One way check for the condition
+       * @param checked the first to check
+       * @param checkedState the state to match
+       * @param changed the changed control
+       * @param impliedState the implied state
+       */
+      private void check(final JCheckBox checked, final boolean checkedState, final JCheckBox changed, final boolean impliedState) {
+        if (checked.isSelected() == checkedState) {
+          changed.setSelected(impliedState);
+          changed.setEnabled(false);
+        }
+        else {
+          changed.setEnabled(true);
+        }
+      }
+
+      /**
+       * {@inheritDoc}
+       */
+      public void actionPerformed(ActionEvent e) {
+        check(first, firstState, second, !secondState);
+        check(second, secondState, first, !firstState);
+      }
+    };
+    first.addActionListener(l);
+    second.addActionListener(l);
+    l.actionPerformed(null);
+  }
 }
