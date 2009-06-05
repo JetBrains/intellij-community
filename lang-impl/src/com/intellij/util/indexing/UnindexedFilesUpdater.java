@@ -37,8 +37,8 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
-*         Date: Jan 29, 2008
-*/
+ *         Date: Jan 29, 2008
+ */
 public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
   private static final Key<Boolean> DONT_INDEX_AGAIN_KEY = Key.create("DONT_INDEX_AGAIN_KEY");
@@ -103,15 +103,15 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
           queue.queue(remaining, indicator);
 
           final Consumer<VirtualFile> uiUpdater = new Consumer<VirtualFile>() {
-              final Set<VirtualFile> processed = new THashSet<VirtualFile>();
+            final Set<VirtualFile> processed = new THashSet<VirtualFile>();
 
-              public void consume(VirtualFile virtualFile) {
-                indicator.checkCanceled();
-                indicator.setFraction(processed.size() / count);
-                processed.add(virtualFile);
-                indicator.setText2(virtualFile.getPresentableUrl());
-              }
-            };
+            public void consume(VirtualFile virtualFile) {
+              indicator.checkCanceled();
+              indicator.setFraction(processed.size() / count);
+              processed.add(virtualFile);
+              indicator.setText2(virtualFile.getPresentableUrl());
+            }
+          };
 
           while (!myProject.isDisposed()) {
             indicator.checkCanceled();
@@ -142,28 +142,28 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
       public void run() {
         ApplicationManager.getApplication().addApplicationListener(canceller);
         try {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              while (true) {
-                if (myProject.isDisposed()) return;
+          while (true) {
+            if (myProject.isDisposed()) return;
 
-                final FileContent fileContent = queue.take();
-                if (fileContent == null) {
-                  finished.set(Boolean.TRUE);
-                  return;
-                }
+            final FileContent fileContent = queue.take();
+            if (fileContent == null) {
+              finished.set(Boolean.TRUE);
+              return;
+            }
 
-                final VirtualFile file = fileContent.getVirtualFile();
-                if (file == null) {
-                  finished.set(Boolean.TRUE);
-                  return;
-                }
+            final VirtualFile file = fileContent.getVirtualFile();
+            if (file == null) {
+              finished.set(Boolean.TRUE);
+              return;
+            }
 
-                try {
+            try {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                public void run() {
                   innerIndicator.checkCanceled();
 
                   if (!file.isValid()) {
-                    continue;
+                    return;
                   }
 
                   updateUi.consume(file);
@@ -172,21 +172,21 @@ public class UnindexedFilesUpdater implements BackgroundableCacheUpdater {
 
                   innerIndicator.checkCanceled();
                 }
-                catch (ProcessCanceledException e) {
-                  queue.pushback(fileContent);
-                  return;
-                }
-                catch (NoProjectForFileException ignored) {
-                  return;
-                }
-                catch (Throwable e) {
-                  LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted",
-                            e);
-                  file.putUserData(DONT_INDEX_AGAIN_KEY, Boolean.TRUE);
-                }
-              }
+              });
             }
-          });
+            catch (ProcessCanceledException e) {
+              queue.pushback(fileContent);
+              return;
+            }
+            catch (NoProjectForFileException ignored) {
+              return;
+            }
+            catch (Throwable e) {
+              LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted",
+                        e);
+              file.putUserData(DONT_INDEX_AGAIN_KEY, Boolean.TRUE);
+            }
+          }
         }
         finally {
           ApplicationManager.getApplication().removeApplicationListener(canceller);
