@@ -49,6 +49,7 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
     return getName();
   }
 
+  @Nullable
   public String[] getEnumeratedValues(@Nullable XmlElement context) {
     return getEnumeratedValues();
   }
