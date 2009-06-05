@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyIcons;
@@ -391,15 +392,24 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyExpression qualifier = getQualifier();
     if (qualifier != null) {
       PyType qualifierType = qualifier.getType();
+      ProcessingContext ctx = new ProcessingContext();
+      final HashSet<String> names_already = new HashSet<String>();
+      ctx.put(PyType.CTX_NAMES, names_already);
       if (qualifierType != null) {
         ArrayList<Object> variants = new ArrayList<Object>();
         if (qualifier instanceof PyQualifiedExpression) {
           Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
           variants.addAll(attrs);
-          Collections.addAll(variants, qualifierType.getCompletionVariants(this));
+          for (PyExpression ex : attrs) {
+            if (ex instanceof PyReferenceExpression) {
+              PyReferenceExpression refex = (PyReferenceExpression)ex;
+              names_already.add(refex.getReferencedName());
+            }
+          }
+          Collections.addAll(variants, qualifierType.getCompletionVariants(this, ctx));
           return variants.toArray();
         }
-        else return qualifierType.getCompletionVariants(this);
+        else return qualifierType.getCompletionVariants(this, null);
       }
       return NO_VARIANTS;
     }
