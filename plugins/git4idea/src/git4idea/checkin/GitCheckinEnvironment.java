@@ -21,6 +21,7 @@ package git4idea.checkin;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -125,6 +126,30 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
+    StringBuilder rc = new StringBuilder();
+    for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
+      VirtualFile mergeMsg = root.findFileByRelativePath(".git/MERGE_MSG");
+      VirtualFile squashMsg = root.findFileByRelativePath(".git/SQUASH_MSG");
+      if (mergeMsg != null || squashMsg != null) {
+        try {
+          String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
+          if (mergeMsg != null) {
+            rc.append(FileUtil.loadFileText(new File(mergeMsg.getPath()), encoding));
+          }
+          if (squashMsg != null) {
+            rc.append(FileUtil.loadFileText(new File(squashMsg.getPath()), encoding));
+          }
+        }
+        catch (IOException e) {
+          if (log.isDebugEnabled()) {
+            log.debug("Unable to load merge message", e);
+          }
+        }
+      }
+    }
+    if (rc.length() != 0) {
+      return rc.toString();
+    }
     return null;
   }
 
@@ -309,7 +334,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         throw ex;
       }
       catch (Exception ex) {
-        throw new RuntimeException("Unable to invoke a message box on awt thread", ex);
+        throw new RuntimeException("Unable to invoke a message box on AWT thread", ex);
       }
       if (rc[0] != 0) {
         return false;
