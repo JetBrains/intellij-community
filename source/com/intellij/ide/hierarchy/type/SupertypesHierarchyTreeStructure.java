@@ -1,12 +1,11 @@
 package com.intellij.ide.hierarchy.type;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 
 public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructure {
   public static final String TYPE = IdeBundle.message("title.hierarchy.supertypes");
@@ -18,7 +17,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
   protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
     final PsiClass psiClass = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
     final PsiClass[] supers = psiClass.getSupers();
-    final int supersLength = psiClass.isInterface() ? supers.length - 1 : supers.length;
+    final int supersLength = psiClass.isInterface() && supers.length > 0 ? supers.length - 1 : supers.length;
     final HierarchyNodeDescriptor[] descriptors = new HierarchyNodeDescriptor[supersLength];
     PsiClass objectClass = JavaPsiFacade.getInstance(myProject).findClass("java.lang.Object", psiClass.getResolveScope());
     for (int i = 0, j = 0; i < supers.length; i++) {
