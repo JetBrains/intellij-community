@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 
@@ -19,7 +20,7 @@ import java.util.ArrayList;
  * Time: 3:19:45 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ActionUninstallPlugin extends AnAction {
+public class ActionUninstallPlugin extends AnAction implements DumbAware {
   final private static String promptTitle = IdeBundle.message("title.plugin.uninstall");
 
   private final PluginTable pluginTable;
