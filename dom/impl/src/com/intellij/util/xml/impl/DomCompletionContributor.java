@@ -28,23 +28,25 @@ public class DomCompletionContributor extends CompletionContributor{
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) return;
 
-    final PsiElement element = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlTag.class, XmlAttributeValue.class);
+    if (domKnowsBetter(parameters, result)) {
+      result.stopHere();
+    }
+  }
 
-    if (element != null && !ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+  private boolean domKnowsBetter(final CompletionParameters parameters, final CompletionResultSet result) {
+    final PsiElement element = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlTag.class, XmlAttributeValue.class);
+    return element != null && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
         if (isSchemaEnumerated(element)) {
-          return true;
+          return false;
         }
         final PsiReference[] references = myProvider.getReferencesByElement(element, new ProcessingContext());
         if (references.length > 0) {
-          LegacyCompletionContributor.completeReference(parameters, result, new XmlCompletionData());
-          return false;
+          return LegacyCompletionContributor.completeReference(parameters, result, new XmlCompletionData());
         }
-        return true;
+        return false;
       }
-    }).booleanValue()) {
-      result.stopHere();
-    }
+    }).booleanValue();
   }
 
   public static boolean isSchemaEnumerated(final PsiElement element) {

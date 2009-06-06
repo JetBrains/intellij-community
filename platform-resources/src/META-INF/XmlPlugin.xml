@@ -36,7 +36,7 @@
     <renameHandler implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
 
 
-    <completion.contributor implementation="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"/>
+    <completion.contributor implementation="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml" order="first, before basic2ClassName"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.XmlCharFilter" id="xml"/>
 

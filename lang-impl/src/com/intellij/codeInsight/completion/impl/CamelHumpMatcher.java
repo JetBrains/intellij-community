@@ -8,6 +8,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -64,8 +65,13 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
 
   public boolean prefixMatches(@NotNull final LookupElement element) {
-    final boolean itemCaseInsensitive = element instanceof LookupItem && 
-                                        Boolean.TRUE.equals(((LookupItem)element).getAttribute(LookupItem.CASE_INSENSITIVE));
+    LookupElement toAsk = element;
+    while (toAsk instanceof LookupElementDecorator) {
+      toAsk = ((LookupElementDecorator) toAsk).getDelegate();
+    }
+
+    boolean itemCaseInsensitive =
+      toAsk instanceof LookupItem && Boolean.TRUE.equals(((LookupItem)toAsk).getAttribute(LookupItem.CASE_INSENSITIVE));
     boolean result = prefixMatchersInternal(element, itemCaseInsensitive);
 
     //todo dirty hack
@@ -77,7 +83,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
       });
       if (currentString != null) {
         final String newString = handleCaseInsensitiveVariant(myPrefix, currentString);
-        final LookupItem<?> item = (LookupItem)element;
+        final LookupItem<?> item = (LookupItem)toAsk;
         item.setLookupString(newString);
         if (item.getObject().equals(currentString)) {
           ((LookupItem)item).setObject(newString);

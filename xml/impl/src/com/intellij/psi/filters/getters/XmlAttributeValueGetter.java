@@ -2,7 +2,6 @@ package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -56,20 +55,11 @@ public class XmlAttributeValueGetter implements ContextGetter {
           values = ArrayUtil.mergeArrays(values, strings, String.class);
         }
 
-        if(values == null || values.length==0) {
-          final PsiReference[] references = ((XmlAttribute)context).getValueElement().getReferences();
-          if (references.length == 0) return getAllWordsFromDocument(context,completionContext);
-          if (values == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-        }
-        return values;
+        return values == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : values;
       }
     }
 
-    if (context.getReferences().length == 0) {
-      return getAllWordsFromDocument(context, completionContext);
-    } else {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Nullable
@@ -77,7 +67,4 @@ public class XmlAttributeValueGetter implements ContextGetter {
     return null;
   }
 
-  private static Object[] getAllWordsFromDocument(PsiElement context, CompletionContext completionContext) {
-    return new AllWordsGetter().get(context, completionContext);
-  }
 }

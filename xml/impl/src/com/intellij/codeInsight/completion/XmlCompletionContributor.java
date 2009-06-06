@@ -1,14 +1,20 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.InsertHandlerDecorator;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,6 +22,8 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.Consumer;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -33,8 +41,70 @@ import java.util.Set;
 public class XmlCompletionContributor extends CompletionContributor {
 
   @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
+  private static final InsertHandlerDecorator<LookupElement> QUOTE_EATER = new InsertHandlerDecorator<LookupElement>() {
+    public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+      final char completionChar = context.getCompletionChar();
+      if (completionChar == '\'' || completionChar == '\"') {
+        context.setAddCompletionChar(false);
+        item.getDelegate().handleInsert(context);
+
+        final Editor editor = context.getEditor();
+        final Document document = editor.getDocument();
+        int tailOffset = editor.getCaretModel().getOffset();
+        if (document.getTextLength() > tailOffset) {
+          final char c = document.getCharsSequence().charAt(tailOffset);
+          if (c == completionChar || completionChar == '\'') {
+            editor.getCaretModel().moveToOffset(tailOffset + 1);
+          }
+        }
+      } else {
+        item.getDelegate().handleInsert(context);
+      }
+    }
+  };
+
+  public XmlCompletionContributor() {
+    extend(CompletionType.BASIC,
+           XmlPatterns.psiElement().inside(XmlPatterns.xmlAttributeValue()),
+           new CompletionProvider<CompletionParameters>(false) {
+             @Override
+             protected void addCompletions(@NotNull CompletionParameters parameters,
+                                           ProcessingContext context,
+                                           @NotNull final CompletionResultSet result) {
+               final XmlAttributeValue attributeValue = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlAttributeValue.class, false);
+               if (attributeValue == null) {
+                 // we are injected, only getContext() returns attribute value
+                 return;
+               }
+
+               final Ref<Boolean> addWordVariants = Ref.create(true);
+               result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
+                 public void consume(LookupElement element) {
+                   addWordVariants.set(false);
+                   result.addElement(LookupElementDecorator.delegate(element, QUOTE_EATER));
+                 }
+               });
+               if (addWordVariants.get().booleanValue()) {
+                 ApplicationManager.getApplication().runReadAction(new Runnable() {
+                   public void run() {
+                     addWordVariants.set(attributeValue.getReferences().length == 0);
+                   }
+                 });
+               }
+
+               if (addWordVariants.get().booleanValue()) {
+                 WordCompletionContributor.addWordCompletionWariants(result, parameters);
+               }
+             }
+           });
+  }
 
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    super.fillCompletionVariants(parameters, result);
+    if (result.isStopped()) {
+      return;
+    }
+
     final PsiElement element = parameters.getPosition();
 
     if (parameters.getCompletionType() == CompletionType.CLASS_NAME) {
@@ -75,11 +145,11 @@ public class XmlCompletionContributor extends CompletionContributor {
 
         final XmlFile file = (XmlFile)parameters.getOriginalFile();
         final List<Pair<String,String>> names =
-            ApplicationManager.getApplication().runReadAction(new Computable<List<Pair<String, String>>>() {
-              public List<Pair<String, String>> compute() {
-                return XmlExtension.getExtension(file).getAvailableTagNames(file, parent);
-              }
-            });
+          ApplicationManager.getApplication().runReadAction(new Computable<List<Pair<String, String>>>() {
+            public List<Pair<String, String>> compute() {
+              return XmlExtension.getExtension(file).getAvailableTagNames(file, parent);
+            }
+          });
         for (Pair<String, String> pair : names) {
           final String name = pair.getFirst();
           final String ns = pair.getSecond();

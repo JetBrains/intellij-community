@@ -51,7 +51,7 @@
 
     <xml.elementDescriptorProvider implementation="com.intellij.util.xml.impl.DomDescriptorProvider"/>
 
-    <completion.contributor implementation="com.intellij.util.xml.impl.DomCompletionContributor" id="dom" order="before xml"/>
+    <completion.contributor implementation="com.intellij.util.xml.impl.DomCompletionContributor" id="dom" order="first, before xml"/>
 
     <nameSuggestionProvider implementation="com.intellij.util.xml.DomNameSuggestionProvider" id="dom" order="first, before java"/>
   </extensions>

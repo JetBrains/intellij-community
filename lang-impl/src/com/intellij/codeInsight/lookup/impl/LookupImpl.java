@@ -105,14 +105,17 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final PsiProximityComparator proximityComparator = new PsiProximityComparator(myElement == null ? psiFile : myElement);
     myComparator = new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
-        if (o1 instanceof LookupItem && o2 instanceof LookupItem) {
-          double priority1 = ((LookupItem)o1).getPriority();
-          double priority2 = ((LookupItem)o2).getPriority();
+        LookupElement c1 = getCoreElement(o1);
+        LookupElement c2 = getCoreElement(o2);
+
+        if (c1 instanceof LookupItem && c2 instanceof LookupItem) {
+          double priority1 = ((LookupItem)c1).getPriority();
+          double priority2 = ((LookupItem)c2).getPriority();
           if (priority1 > priority2) return -1;
           if (priority2 > priority1) return 1;
 
-          int grouping1 = ((LookupItem)o1).getGrouping();
-          int grouping2 = ((LookupItem)o2).getGrouping();
+          int grouping1 = ((LookupItem)c1).getGrouping();
+          int grouping2 = ((LookupItem)c2).getGrouping();
           if (grouping1 > grouping2) return -1;
           if (grouping2 > grouping1) return 1;
         }
@@ -156,6 +159,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     updateList();
     selectMostPreferableItem();
+  }
+
+  private LookupElement getCoreElement(LookupElement element) {
+    while (element instanceof LookupElementDecorator) {
+      element = ((LookupElementDecorator) element).getDelegate();
+    }
+    return element;
   }
 
   public AsyncProcessIcon getProcessIcon() {

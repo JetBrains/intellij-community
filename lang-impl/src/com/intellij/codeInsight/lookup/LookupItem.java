@@ -190,7 +190,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
       case '=': return TailType.EQ;
       case ' ': return TailType.SPACE;
       case ':': return TailType.CASE_COLON; //?
-      case '\'': return TailType.QUOTE;
       case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailType.SMART_COMPLETION;
     }
     return null;

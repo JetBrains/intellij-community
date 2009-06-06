@@ -5,8 +5,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
@@ -58,9 +56,8 @@ public class XmlCompletionData extends CompletionData {
     {
       final CompletionVariant variant = new CompletionVariant(createAttributeValueCompletionFilter());
       variant.includeScopeClass(XmlAttributeValue.class);
-      variant.addCompletion(getAttributeValueGetter());
+      variant.addCompletion(getAttributeValueGetter(), TailType.NONE);
       variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
-      variant.setInsertHandler(new XmlAttributeValueInsertHandler());
       registerVariant(variant);
     }
 
@@ -124,32 +121,6 @@ public class XmlCompletionData extends CompletionData {
   protected ElementFilter createTagCompletionFilter() {
     return TrueFilter.INSTANCE;
   }
-
-  private static class XmlAttributeValueInsertHandler extends BasicInsertHandler {
-    public void handleInsert(InsertionContext context, LookupElement item) {
-      final char c = context.getCompletionChar();
-      if (c == '\'' || c == '\"') {
-        context.setAddCompletionChar(false);
-        eatClosingQuote(c, context.getEditor());
-      }
-    }
-  }
-
-  public static int eatClosingQuote(char completionChar, final Editor editor) {
-    final Document document = editor.getDocument();
-    int tailOffset = editor.getCaretModel().getOffset();
-    if (completionChar == '\"' || completionChar == '\'') {
-      if (document.getTextLength() > tailOffset) {
-        final char c = document.getCharsSequence().charAt(tailOffset);
-        if (c == completionChar || completionChar == '\'') {
-          editor.getCaretModel().moveToOffset(tailOffset + 1);
-          return tailOffset + 1;
-        }
-      }
-    }
-    return tailOffset;
-  }
-
 
   private static class SimpleTagContentEnumerationValuesGetter implements ContextGetter {
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
@@ -284,7 +255,6 @@ public class XmlCompletionData extends CompletionData {
       final CaretModel caretModel = context.getEditor().getCaretModel();
       context.getEditor().getDocument().insertString(caretModel.getOffset(), ";");
       caretModel.moveToOffset(caretModel.getOffset() + 1);
-      eatClosingQuote(context.getCompletionChar(), context.getEditor());
     }
   }
 }

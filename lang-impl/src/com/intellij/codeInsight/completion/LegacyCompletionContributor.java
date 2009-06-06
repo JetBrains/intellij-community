@@ -7,14 +7,15 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -68,16 +69,21 @@ public class LegacyCompletionContributor extends CompletionContributor {
 
   }
 
-  public static void completeReference(final CompletionParameters parameters, final CompletionResultSet result, final CompletionData completionData) {
+  public static boolean completeReference(final CompletionParameters parameters, final CompletionResultSet result, final CompletionData completionData) {
+    final Ref<Boolean> hasVariants = Ref.create(false);
     processReferences(parameters, result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {
       public void consume(final PsiReference reference, final CompletionResultSet resultSet) {
         final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
         completionData.completeReference(reference, lookupSet, parameters.getPosition(), parameters.getOriginalFile(), parameters.getOffset());
         for (final LookupElement item : lookupSet) {
-          resultSet.addElement(item);
+          if (resultSet.getPrefixMatcher().prefixMatches(item)) {
+            hasVariants.set(true);
+            resultSet.addElement(item);
+          }
         }
       }
     });
+    return hasVariants.get().booleanValue();
   }
 
   public static void processReferences(final CompletionParameters parameters, final CompletionResultSet result, final CompletionData completionData,
