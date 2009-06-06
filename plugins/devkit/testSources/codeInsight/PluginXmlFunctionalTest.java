@@ -100,4 +100,14 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     }.execute();
   }
 
+  public void testNoWordCompletionInClassPlaces() throws Throwable {
+    myFixture.addClass("package foo; public class FooFooFooFooFoo { }");
+    myFixture.addClass("package foo; public interface ExtIntf { }");
+
+    myFixture.configureByFile(getTestName(false) + ".xml");
+    myFixture.completeBasic();
+    myFixture.type('\'');
+    myFixture.checkResultByFile(getTestName(false) + "_after.xml");
+  }
+
 }
